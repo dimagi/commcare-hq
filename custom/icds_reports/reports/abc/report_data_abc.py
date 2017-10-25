@@ -1,5 +1,6 @@
 import abc
 
+from dateutil.relativedelta import relativedelta
 from six import with_metaclass
 
 from custom.icds_reports.utils import apply_exclude
@@ -36,14 +37,22 @@ class ReportDataABC(with_metaclass(abc.ABCMeta)):
     def apply_exclude(self, queryset):
         return apply_exclude(self.location_filter_value.domain, queryset)
 
-    @property
+    @abc.abstractproperty
     def date_filter(self):
-        return {
-            'month': self.date
-        }
+        """
+        Returns:
+             dict
+        """
+        pass
 
     @property
     def filters(self):
+        """
+        Template method
+
+        Returns:
+            dict
+        """
         filters = {}
         filters.update(self.location_filter_data)
         filters.update(self.additional_filters)
@@ -53,3 +62,31 @@ class ReportDataABC(with_metaclass(abc.ABCMeta)):
     @abc.abstractmethod
     def get_data(self):
         pass
+
+
+class MapReportDataABC(ReportDataABC):
+
+    @property
+    def date_filter(self):
+        return {
+            'month': self.date
+        }
+
+
+class SectorReportDataABC(ReportDataABC):
+
+    @property
+    def date_filter(self):
+        return {
+            'month': self.date
+        }
+
+
+class ChartReportDataABC(ReportDataABC):
+
+    @property
+    def date_filter(self):
+        three_before = self.date - relativedelta(months=3)
+        return {
+            'month__range': (three_before, self.date)
+        }

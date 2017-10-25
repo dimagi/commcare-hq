@@ -6,17 +6,10 @@ from django.db.models.aggregates import Sum
 
 from custom.icds_reports.const import Colors, LocationTypes
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.reports.abc.report_data_abc import ReportDataABC
+from custom.icds_reports.reports.abc.report_data_abc import ChartReportDataABC
 
 
-class PrevalenceOfUndernutritionChartData(ReportDataABC):
-
-    @property
-    def date_filter(self):
-        three_before = self.date - relativedelta(months=3)
-        return {
-            'month__range': (three_before, self.date)
-        }
+class PrevalenceOfUndernutritionChartData(ChartReportDataABC):
 
     def get_data(self):
         chart_data = AggChildHealthMonthly.objects.filter(

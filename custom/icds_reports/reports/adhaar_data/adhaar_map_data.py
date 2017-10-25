@@ -5,15 +5,14 @@ from django.utils.translation import ugettext as _
 
 from custom.icds_reports.const import Colors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.reports.abc.report_data_abc import ReportDataABC
+from custom.icds_reports.reports.abc.report_data_abc import MapReportDataABC
 
 
-class AdhaarMapData(ReportDataABC):
+class AdhaarMapData(MapReportDataABC):
 
     def get_data(self):
         queryset = AggAwcMonthly.objects.filter(
-            month=self.date,
-            **self.location_filter_data
+            **self.filters
         ).values(
             '%s_name' % self.location_level
         ).annotate(

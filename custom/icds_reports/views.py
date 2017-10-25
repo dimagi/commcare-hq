@@ -1,3 +1,5 @@
+import abc
+
 import requests
 
 from datetime import datetime, date
@@ -25,8 +27,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
 
-from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
-from custom.icds_reports.reports.adhaar_data.adhaar_factory import get_adhaar_report_data_instance
+from custom.icds_reports.reports.adhaar_data.adhaar_factory import AdhaarReportFactory
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
 from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_chart, \
@@ -73,10 +74,8 @@ from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_s
     get_prevalence_of_severe_data_map, get_prevalence_of_severe_sector_data
 from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunning_data_chart, \
     get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_sector_data
-from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
-    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.prevalence_of_undernutrition_data.prevalence_of_undernutrition_factory import \
-    get_prevalence_of_undernutrition_report_data_instance
+    PrevalanceOfUndernutritionReportFactory
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
 
@@ -84,7 +83,7 @@ from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, Pregnant
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id, get_location_level
+    get_latest_issue_tracker_build_id, get_location_level, get_location_filter_value
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -255,6 +254,62 @@ class IcdsDynamicTemplateView(TemplateView):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
 
 
+class BaseReportJsonView(View):
+
+    @abc.abstractproperty
+    def report_factory(self):
+        """
+        Returns:
+             custom.icds_reports.reports.abc.report_factory_abc.ReportFactoryABC
+        """
+        pass
+
+    def get_report_instance(self, mode, domain, location_id, date, **kwargs):
+        """
+        Returns:
+            custom.icds_reports.reports.abc.report_data_abc.ReportDataABC
+        """
+        location_filter_value = get_location_filter_value(domain, location_id)
+
+        if mode == 'map':
+            if location_filter_value.location_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                return self.report_factory.get_sector_report_instance(
+                    location_filter_value=location_filter_value,
+                    date=date,
+                    **kwargs
+                )
+            else:
+                return self.report_factory.get_map_report_instance(
+                    location_filter_value=location_filter_value,
+                    date=date,
+                    **kwargs
+                )
+        elif mode == 'chart':
+            return self.report_factory.get_chart_report_instance(
+                location_filter_value=location_filter_value,
+                date=date,
+                **kwargs
+            )
+        else:
+            return None
+
+    @abc.abstractmethod
+    def get_filters(self, request):
+        """
+        Returns:
+             dict
+        """
+        pass
+
+    def get(self, request, *args, **kwargs):
+        data = self.get_report_instance(
+            **self.get_filters(request)
+        ).get_data()
+        return JsonResponse(data={
+            'report_data': data
+        })
+
+
 @method_decorator([login_and_domain_required], name='dispatch')
 class ProgramSummaryView(View):
 
@@ -341,21 +396,26 @@ class AwcOpenedView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfUndernutritionView(View):
+class PrevalenceOfUndernutritionView(BaseReportJsonView):
 
-    def get(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+    @property
+    def report_factory(self):
+        return PrevalanceOfUndernutritionReportFactory()
 
+    def get_filters(self, request):
         include_test = request.GET.get('include_test', False)
+        step = self.kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
-        gender = self.request.GET.get('gender', None)
-        age = self.request.GET.get('age', None)
+        location = request.GET.get('location_id', '')
+
+        gender = request.GET.get('gender', None)
+        age = request.GET.get('age', None)
 
         additional_filters = {}
         if gender:
@@ -363,20 +423,14 @@ class PrevalenceOfUndernutritionView(View):
         if age:
             additional_filters.update(get_age_filter(age))
 
-        location = request.GET.get('location_id', '')
-
-        data = get_prevalence_of_undernutrition_report_data_instance(
-            step,
-            domain,
-            location,
-            date=test_date,
-            include_test=include_test,
-            additional_filters=additional_filters
-        ).get_data()
-
-        return JsonResponse(data={
-            'report_data': data,
-        })
+        return {
+            'mode': step,
+            'domain': domain,
+            'location_id': location,
+            'date': test_date,
+            'include_test': include_test,
+            'additional_filters': additional_filters
+        }
 
 
 @location_safe
@@ -1227,10 +1281,15 @@ class AdolescentGirlsView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AdhaarBeneficiariesView(View):
-    def get(self, request, *args, **kwargs):
+class AdhaarBeneficiariesView(BaseReportJsonView):
+
+    @property
+    def report_factory(self):
+        return AdhaarReportFactory()
+
+    def get_filters(self, request):
         include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
+        step = self.kwargs.get('step')
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
@@ -1239,18 +1298,13 @@ class AdhaarBeneficiariesView(View):
         domain = self.kwargs['domain']
 
         location = request.GET.get('location_id', '')
-
-        data = get_adhaar_report_data_instance(
-            step,
-            domain,
-            location,
-            date=test_date,
-            include_test=include_test
-        ).get_data()
-
-        return JsonResponse(data={
-            'report_data': data,
-        })
+        return {
+            'mode': step,
+            'domain': domain,
+            'location_id': location,
+            'date': test_date,
+            'include_test': include_test
+        }
 
 
 @method_decorator([login_and_domain_required], name='dispatch')

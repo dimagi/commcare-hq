@@ -6,17 +6,16 @@ from django.db.models.aggregates import Sum
 
 from custom.icds_reports.const import Colors, LocationTypes
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.reports.abc.report_data_abc import ReportDataABC
+from custom.icds_reports.reports.abc.report_data_abc import ChartReportDataABC
 
 
-class AdhaarChartData(ReportDataABC):
+class AdhaarChartData(ChartReportDataABC):
 
     def get_data(self):
         three_before = self.date - relativedelta(months=3)
 
         chart_data = AggAwcMonthly.objects.filter(
-            month__range=(three_before, self.date),
-            **self.location_filter_data
+            **self.filters
         ).values(
             'month', '%s_name' % self.location_level
         ).annotate(

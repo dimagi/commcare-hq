@@ -1,18 +1,16 @@
-from custom.icds_reports.const import LocationTypes
+from custom.icds_reports.reports.abc.report_factory_abc import ReportFactoryABC
 from custom.icds_reports.reports.adhaar_data.adhaar_chart_data import AdhaarChartData
 from custom.icds_reports.reports.adhaar_data.adhaar_map_data import AdhaarMapData
 from custom.icds_reports.reports.adhaar_data.adhaar_sector_data import AdhaarSectorData
-from custom.icds_reports.utils import get_location_filter_value
 
 
-def get_adhaar_report_data_instance(mode, domain, location_id, date, **kwargs):
-    location_filter_value = get_location_filter_value(domain, location_id)
-    if mode == 'map':
-        if location_filter_value.location_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-            return AdhaarSectorData(location_filter_value=location_filter_value, date=date, **kwargs)
-        else:
-            return AdhaarMapData(location_filter_value=location_filter_value, date=date, **kwargs)
-    elif mode == 'chart':
+class AdhaarReportFactory(ReportFactoryABC):
+
+    def get_chart_report_instance(self, location_filter_value, date, **kwargs):
         return AdhaarChartData(location_filter_value=location_filter_value, date=date, **kwargs)
-    else:
-        return None
+
+    def get_sector_report_instance(self, location_filter_value, date, **kwargs):
+        return AdhaarSectorData(location_filter_value=location_filter_value, date=date, **kwargs)
+
+    def get_map_report_instance(self, location_filter_value, date, **kwargs):
+        return AdhaarMapData(location_filter_value=location_filter_value, date=date, **kwargs)

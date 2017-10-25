@@ -3,12 +3,12 @@ from django.db.models.aggregates import Sum
 
 from custom.icds_reports.const import Colors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.reports.abc.report_data_abc import ReportDataABC
+from custom.icds_reports.reports.abc.report_data_abc import SectorReportDataABC
 
 from django.utils.translation import ugettext as _
 
 
-class PrevalenceOfUndernutritionSectorData(ReportDataABC):
+class PrevalenceOfUndernutritionSectorData(SectorReportDataABC):
 
     def get_data(self):
         group_by = ['%s_name' % self.location_level]
@@ -84,4 +84,3 @@ class PrevalenceOfUndernutritionSectorData(ReportDataABC):
                 }
             ]
         }
-

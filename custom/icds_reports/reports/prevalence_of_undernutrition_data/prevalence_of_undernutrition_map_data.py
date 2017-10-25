@@ -4,12 +4,12 @@ from django.db.models.aggregates import Sum
 
 from custom.icds_reports.const import Colors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.reports.abc.report_data_abc import ReportDataABC
+from custom.icds_reports.reports.abc.report_data_abc import MapReportDataABC
 
 from django.utils.translation import ugettext as _
 
 
-class PrevalenceOfUndernutritionMapData(ReportDataABC):
+class PrevalenceOfUndernutritionMapData(MapReportDataABC):
 
     def get_data(self):
         queryset = AggChildHealthMonthly.objects.filter(
@@ -65,7 +65,7 @@ class PrevalenceOfUndernutritionMapData(ReportDataABC):
         fills.update({'35%-100%': Colors.RED})
         fills.update({'defaultFill': Colors.GREY})
 
-        average = ((moderately_underweight_total or 0) + (severely_underweight_total or 0)) * 100 / (valid_total or 1)
+        average = ((moderately_underweight_total + severely_underweight_total) * 100) / (valid_total or 1)
 
         return [
             {
