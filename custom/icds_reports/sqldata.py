@@ -1794,7 +1794,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         return self.get_columns_by_loc_level
 
 
-class ProgressReport(object):
+class FactSheetsReport(object):
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         self.loc_level = loc_level

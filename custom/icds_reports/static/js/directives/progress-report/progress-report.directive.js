@@ -114,13 +114,13 @@ function ProgressReportController($scope, $location, progressReportService,
     };
 
     vm.goToReport = function(reportName) {
-        $location.path('progress_report/' + reportName);
+        $location.path('fact_sheets/' + reportName);
     };
 
     vm.goBack = function() {
         vm.report = null;
         vm.title = null;
-        $location.path('progress_report/');
+        $location.path('fact_sheets/');
     };
 
     vm.loadData();
