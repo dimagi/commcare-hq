@@ -1,9 +1,10 @@
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl, isWebUser) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
+    $scope.isWebUser = isWebUser;
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
@@ -26,6 +27,7 @@ MainController.$inject = [
     '$uibModal',
     '$window',
     'reportAnIssueUrl',
+    'isWebUser',
 ];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy'])
