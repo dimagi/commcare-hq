@@ -1465,7 +1465,10 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    return json_response({'isBuilt': config.meta.build.finished or config.meta.build.rebuilt_asynchronously})
+    build = config.meta.build
+    return json_response({
+        'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
+    })
 
 
 def _get_report_filter(domain, report_id, filter_id):
