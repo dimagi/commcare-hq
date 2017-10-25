@@ -40,6 +40,7 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('log_filename')
         parser.add_argument('case_ids', nargs='*')
+        parser.add_argument('--exclude_case_ids', nargs='+')
         parser.add_argument('--commit', action='store_true')
 
     def handle(self, domain, log_filename, case_ids, **options):
@@ -47,7 +48,9 @@ class Command(BaseCommand):
         self.commit = options['commit']
         case_accessor = CaseAccessors(domain)
 
-        case_ids = case_ids or case_accessor.get_case_ids_in_domain(type=EPISODE_CASE_TYPE)
+        case_ids = set(case_ids or case_accessor.get_case_ids_in_domain(type=EPISODE_CASE_TYPE))
+        if options['exclude_case_ids']:
+            case_ids = case_ids - set(options['exclude_case_ids'])
 
         with open(log_filename, 'w') as log_file:
             self.writer = csv.writer(log_file)
