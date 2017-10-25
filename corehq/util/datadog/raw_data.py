@@ -30,10 +30,18 @@ OPTIONS = {
     'app_key': ''
 }
 METRICS = {
-    'submission_count': "sum:nginx.requests{environment:icds,url_group:receiver}",
-    'submission_count_success': "sum:nginx.requests{environment:icds,url_group:receiver,status_code:201}",
-    'restores_count': "sum:nginx.requests{environment:icds,url_group:phone}",
-    'restores_count_success': "sum:nginx.requests{environment:icds,url_group:phone,status_code:200}",
+    'submission_count': "sum:nginx.requests{environment:icds,url_group:receiver}.as_count().rollup(sum, %(rollup)s)",
+    'submission_count_success': """
+        sum:nginx.requests{environment:icds,url_group:receiver,status_code:201}.as_count().rollup(sum, %(rollup)s)
+        + sum:nginx.requests{environment:icds,url_group:receiver,status_code:401}.as_count().rollup(sum, %(rollup)s)
+    """,
+    'restores_count': "sum:nginx.requests{environment:icds,url_group:phone}.rollup(sum, %(rollup)s)",
+    'restores_count_success': """
+        sum:nginx.requests{environment:icds,status_code:412,url_group:phone}.rollup(sum, %(rollup)s)
+        + sum:nginx.requests{environment:icds,status_code:200,url_group:phone}.rollup(sum, %(rollup)s)
+        + sum:nginx.requests{environment:icds,status_code:202,url_group:phone}.rollup(sum, %(rollup)s)
+        + sum:nginx.requests{environment:icds,status_code:401,url_group:phone}.rollup(sum, %(rollup)s)
+    """,
     # 'storage': "sum:system.disk.used{environment:icds,device:/dev/mapper/consolidated-data1}",
 }
 INTERVALS = {
@@ -60,10 +68,7 @@ def get_query_results(lastX, startX, interval):
 
 def make_query(metric, interval):
     # modify the query to sample at given 'interval'
-    return "{metric}.rollup(sum, {interval})".format(
-        metric=METRICS[metric],
-        interval=INTERVALS[interval]
-    )
+    return METRICS[metric] % {'rollup': INTERVALS[interval]}
 
 
 def print_csv_series(results):
