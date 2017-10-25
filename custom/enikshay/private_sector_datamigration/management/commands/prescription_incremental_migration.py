@@ -1,3 +1,6 @@
+import csv
+import uuid
+
 from django.core.management import BaseCommand
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
@@ -5,27 +8,57 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.app_manager.models import CaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.log import with_progress_bar
 
 from custom.enikshay.private_sector_datamigration.factory import EPISODE_CASE_TYPE, PRESCRIPTION_CASE_TYPE
 from custom.enikshay.private_sector_datamigration.models import (
     EpisodePrescription_Jul7,
     EpisodePrescription_Jul19,
-    Voucher_Jul19)
+    Voucher_Jul19,
+)
 
 
 class Command(BaseCommand):
 
+    case_id_headers = [
+        'case_id',
+        'extension_case_id',
+    ]
+
+    case_properties = [
+        'date_ordered',
+        'name',
+        'number_of_days_prescribed',
+        'migration_comment',
+        'migration_created_case',
+        'migration_created_from_record',
+        'date_fulfilled',
+    ]
+
+    headers = case_id_headers + case_properties
+
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('log_filename')
+        parser.add_argument('case_ids', nargs='*')
+        parser.add_argument('--commit', action='store_true')
 
-    def handle(self, domain, **options):
+    def handle(self, domain, log_filename, case_ids, **options):
         self.domain = domain
+        self.commit = options['commit']
         case_accessor = CaseAccessors(domain)
-        for episode_case_id in case_accessor.get_case_ids_in_domain(type=EPISODE_CASE_TYPE):
-            episode_case = case_accessor.get_case(episode_case_id)
-            if self.should_run_incremental_migration(episode_case):
-                for prescription in self.get_incremental_prescriptions(episode_case):
-                    self.add_prescription(episode_case_id, prescription)
+
+        case_ids = case_ids or case_accessor.get_case_ids_in_domain(type=EPISODE_CASE_TYPE)
+
+        with open(log_filename, 'w') as log_file:
+            self.writer = csv.writer(log_file)
+            self.writer.writerow(self.headers)
+
+            for episode_case_id in with_progress_bar(case_ids):
+                episode_case = case_accessor.get_case(episode_case_id)
+                if self.should_run_incremental_migration(episode_case):
+                    for prescription in self.get_incremental_prescriptions(episode_case):
+                        self.add_prescription(episode_case_id, prescription)
 
     @staticmethod
     def should_run_incremental_migration(episode_case):
@@ -54,6 +87,7 @@ class Command(BaseCommand):
     def add_prescription(self, episode_case_id, prescription):
         kwargs = {
             'attrs': {
+                'case_id': uuid.uuid4().hex,
                 'case_type': PRESCRIPTION_CASE_TYPE,
                 'close': True,
                 'create': True,
@@ -83,4 +117,13 @@ class Command(BaseCommand):
         except Voucher_Jul19.DoesNotExist:
             pass
 
-        CaseFactory(self.domain).create_or_update_cases([CaseStructure(**kwargs)])
+        self.record_to_log_file(kwargs)
+
+        if self.commit:
+            CaseFactory(self.domain).create_or_update_cases([CaseStructure(**kwargs)])
+
+    def record_to_log_file(self, kwargs):
+        self.writer.writerow(
+            [kwargs['attrs']['case_id'], kwargs['indices'][0].related_structure.case_id]
+            + [kwargs[case_prop] for case_prop in self.case_properties]
+        )
