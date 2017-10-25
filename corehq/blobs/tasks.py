@@ -8,7 +8,7 @@ from corehq.blobs.models import BlobExpiration
 from corehq.blobs import get_blob_db
 
 
-@periodic_task(run_every=crontab(minute='*/5'))
+@periodic_task(run_every=crontab(minute=0, hour='0,12'))
 def delete_expired_blobs():
     blob_expirations = BlobExpiration.objects.filter(expires_on__lt=_utcnow(), deleted=False)
 

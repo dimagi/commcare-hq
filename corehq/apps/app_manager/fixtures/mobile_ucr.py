@@ -1,9 +1,7 @@
 from collections import defaultdict
-from cStringIO import StringIO
 from datetime import datetime
 import logging
 import random
-from xml.etree import cElementTree as ElementTree
 
 from couchdbkit.exceptions import NoResultFound
 from django.conf import settings
@@ -29,8 +27,6 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
-from corehq.blobs import get_blob_db
-from corehq.blobs.exceptions import NotFound
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -281,19 +277,15 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            fixtures.extend(self._v2_fixtures(restore_state, self._get_report_configs(apps)))
+            fixtures.extend(self._v2_fixture(restore_user, self._get_report_configs(apps)))
 
         return fixtures
 
-    def _v2_fixtures(self, restore_state, report_configs):
+    def _v2_fixtures(self, restore_user, report_configs):
         fixtures = []
         for report_config in report_configs:
             try:
-                fixture = self.report_config_to_v2_fixture(report_config, restore_state)
-                if isinstance(fixture, list):
-                    fixtures.extend(fixture)
-                else:
-                    fixtures.append(fixture)
+                fixtures.extend(self.report_config_to_v2_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -307,20 +299,8 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         return fixtures
 
     @staticmethod
-    def report_config_to_v2_fixture(report_config, restore_state):
-        restore_user = restore_state.restore_user
+    def report_config_to_v2_fixture(report_config, restore_user):
         domain = restore_user.domain
-        db = get_blob_db()
-
-        # make sure the sync delay is at least one hour
-        if not restore_state.overwrite_cache and report_config.sync_delay >= 1:
-            try:
-                return db.get(
-                    "{}-{}".format(restore_user.user_id, report_config.uuid)
-                ).read()
-            except NotFound:
-                pass
-
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
         report_fixture_id = 'commcare-reports:' + report_config.uuid
@@ -370,17 +350,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             indexed='true'
         )
         report_elem.append(rows_elem)
-        ret = [report_filter_elem, report_elem]
-        if report_config.sync_delay >= 1:
-            io = StringIO()
-            for element in ret:
-                io.write(ElementTree.tostring(element, encoding='utf-8'))
-            io.seek(0)
-            db.put(
-                io, "{}-{}".format(restore_user.user_id, report_config.uuid),
-                timeout=float(report_config.sync_delay) * 60 * 60
-            )
-        return ret
+        return [report_filter_elem, report_elem]
 
     @staticmethod
     def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field):
@@ -388,6 +358,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
+                # todo escape k to be valid xml tag
                 row_elem.append(E(k, value))
                 if not is_total_row and k in deferred_fields:
                     filter_options_by_field[k].add(value)
