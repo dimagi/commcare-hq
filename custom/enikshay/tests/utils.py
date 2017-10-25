@@ -288,6 +288,7 @@ class ENikshayCaseStructureMixin(object):
         self.lab_referral_id = u"lab_referral"
         self.prescription_id = "prescription_id"
         self.referral_id = 'referal'
+        self.trail_id = 'trail'
         self._prescription_created = False
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
@@ -431,6 +432,11 @@ class ENikshayCaseStructureMixin(object):
     def create_lab_referral_case(self):
         return self.factory.create_or_update_case(
             self.lab_referral,
+        )[0]
+
+    def create_trail_case(self):
+        return self.factory.create_or_update_case(
+            get_trail_case_structure(self.trail_id, self.occurrence_id)
         )[0]
 
 
