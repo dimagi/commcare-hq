@@ -24,13 +24,14 @@ from custom.enikshay.case_utils import (
     get_open_referral_case_from_person,
     get_fulfilled_prescription_vouchers_from_episode,
     get_private_diagnostic_test_cases_from_episode,
+    get_person_case_from_lab_referral,
 )
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
+class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, ENikshayLocationStructureMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         super(ENikshayCaseUtilsTests, cls).setUpClass()
@@ -103,6 +104,13 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
     def test_get_person_case_from_episode(self):
         self.assertEqual(
             get_person_case_from_episode(self.domain, self.episode_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_lab_referral(self):
+        self.create_lab_referral_case()
+        self.assertEqual(
+            get_person_case_from_lab_referral(self.domain, self.lab_referral_id).case_id,
             self.person_id
         )
 

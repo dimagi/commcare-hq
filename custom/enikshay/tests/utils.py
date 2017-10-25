@@ -427,6 +427,11 @@ class ENikshayCaseStructureMixin(object):
             get_test_case_structure(uuid.uuid4().hex, occurrence_id, extra_update)
         )[0]
 
+    def create_lab_referral_case(self):
+        return self.factory.create_or_update_case(
+            self.lab_referral,
+        )[0]
+
 
 class ENikshayLocationStructureMixin(object):
     def setUp(self):
