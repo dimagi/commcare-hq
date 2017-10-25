@@ -1954,6 +1954,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
