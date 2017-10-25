@@ -6,7 +6,6 @@ from django.core.management import BaseCommand
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
-from corehq.apps.app_manager.models import CaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 
@@ -125,5 +124,5 @@ class Command(BaseCommand):
     def record_to_log_file(self, kwargs):
         self.writer.writerow(
             [kwargs['attrs']['case_id'], kwargs['indices'][0].related_structure.case_id]
-            + [kwargs[case_prop] for case_prop in self.case_properties]
+            + [kwargs['attrs']['update'].get(case_prop, '') for case_prop in self.case_properties]
         )
