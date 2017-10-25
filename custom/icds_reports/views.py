@@ -225,18 +225,26 @@ class DashboardView(TemplateView):
     def couch_user(self):
         return self.request.couch_user
 
+    def _has_helpdesk_role(self):
+        user_roles = UserRole.by_domain(self.domain)
+        helpdesk_roles_id = [
+            role.get_id
+            for role in user_roles
+            if role.name in const.HELPDESK_ROLES
+        ]
+        domain_membership = self.couch_user.get_domain_membership(self.domain)
+        return domain_membership.role_id in helpdesk_roles_id
+
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
 
         is_commcare_user = self.couch_user.is_commcare_user()
-        is_web_user_with_edit_data_permissions = (
-            self.couch_user.is_web_user() and
-            self.couch_user.has_permission(self.domain, Permissions.edit_data.name)
-        )
 
-        if is_commcare_user or is_web_user_with_edit_data_permissions:
+        if self.couch_user.is_web_user():
+            kwargs['is_web_user'] = True
+        elif is_commcare_user and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_url(
                 domain=self.domain,
