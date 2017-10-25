@@ -1225,6 +1225,13 @@ UATBC_ADHERENCE_TASK = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+VIEW_APP_CHANGES = StaticToggle(
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
     "Domains to exclude from migrating to SQL backend. Includes the folling"
