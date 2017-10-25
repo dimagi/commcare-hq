@@ -896,8 +896,8 @@ INDEX_LOCATION_DATA = StaticToggle(
 
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
-    'Allow project to use multiple choice field in custom fields',
-    TAG_PRODUCT,
+    'EWS: Allow project to use multiple choice field in custom fields',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description='This flag allows multiple choice fields in custom user data, location data and product data',
 )
