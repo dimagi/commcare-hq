@@ -8,6 +8,7 @@ from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicAndPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
+from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
@@ -264,7 +265,8 @@ class ConstructedPillow(PillowBase):
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
     error_id = None
-    if pillow.retry_errors:
+    # always retry document missing errors, because the error is likely with couch
+    if pillow.retry_errors or isinstance(exception, DocumentMissingError):
         error = PillowError.get_or_create(change, pillow)
         error.add_attempt(exception, sys.exc_info()[2])
         error.save()
