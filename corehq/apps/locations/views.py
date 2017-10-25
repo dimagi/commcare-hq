@@ -377,9 +377,29 @@ class LocationTypesView(BaseDomainView):
                                                   if include_without_expanding_id else None)
         except KeyError:        # include_without_expanding location type was deleted
             loc_type.include_without_expanding = None
-        include_only_ids = loc_type_data['include_only']
-        loc_type.include_only.set([loc_type_db[lt_id] for lt_id in include_only_ids])
+        include_only = LocationTypesView._get_include_only(include_only_ids, loc_type_db)
+        loc_type.include_only.set(include_only)
         loc_type.save()
+
+    @staticmethod
+    def _get_include_only(include_only_ids, loc_type_db):
+        """The user specified that we include loc types `include_only_ids`, but
+        we need to insert any parent location types"""
+        loc_types_by_pk = {lt.pk: lt for lt in loc_type_db.values()}
+        include_only = {}
+
+        def insert_with_parents(pk):
+            if pk not in include_only:
+                loc_type = loc_types_by_pk[pk]
+                include_only[pk] = loc_type
+                if loc_type.parent_type_id:
+                    insert_with_parents(loc_type.parent_type_id)
+
+        # if these types were just created, the user-provided IDs were placeholders
+        user_specified = [loc_type_db[lt_id].pk for lt_id in include_only_ids]
+        for pk in user_specified:
+            insert_with_parents(pk)
+        return include_only
 
     def remove_old_location_types(self, pks):
         existing_pks = (LocationType.objects.filter(domain=self.domain)
