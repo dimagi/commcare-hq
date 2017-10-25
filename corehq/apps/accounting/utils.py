@@ -220,7 +220,7 @@ def get_customer_cards(username, domain):
             method_type=PaymentMethodType.STRIPE
         )
         stripe_customer = payment_method.customer
-        return stripe_customer.cards
+        return dict(stripe_customer.cards)
     except StripePaymentMethod.DoesNotExist:
         pass
     except stripe.error.AuthenticationError:

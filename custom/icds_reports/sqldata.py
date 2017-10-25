@@ -524,6 +524,15 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     alias='four'
                 ),
                 slug='four'
+            ),
+            AggregateColumn(
+                'Percent of children born in month with low birth weight',
+                percent_num,
+                [
+                    SumColumn('low_birth_weight_in_month'),
+                    AliasColumn('born_in_month')
+                ],
+                slug='low_birth_weight'
             )
         ]
 
@@ -765,7 +774,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 lambda x, y: (x or 0) * 100 / float(y or 1),
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    AliasColumn('cases_person')
+                    AliasColumn('cases_person_beneficiary')
                 ],
                 slug='aadhar'
             ),
@@ -899,7 +908,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='height_measurement'
             ),
             DatabaseColumn(
-                'Total number of unweighed children',
+                'Total number of unweighed children (0-5 Years)',
                 SumColumn('nutrition_status_unweighed'),
                 slug='total_number_unweighed'
             ),
@@ -1321,7 +1330,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    SumColumn('cases_person')
+                    SumColumn('cases_person_beneficiary')
                 ],
                 slug='num_people_with_aadhar'
             ),
@@ -1448,14 +1457,6 @@ class DemographicsExport(ExportableMixin):
             {
                 'header': 'Number of households',
                 'slug': 'num_households'
-            },
-            {
-                'header': 'Number of people',
-                'slug': 'num_people'
-            },
-            {
-                'header': 'Number of people enrolled for services',
-                'slug': 'num_people_enrolled_for_services'
             },
             {
                 'header': 'Percent Adhaar-seeded beneficaries',
@@ -1821,7 +1822,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Total number of unweighed children',
+                                'header': 'Total number of unweighed children (0-5 Years)',
                                 'slug': 'nutrition_status_unweighed',
                                 'reverseColors': True,
                             },
@@ -1899,6 +1900,13 @@ class ProgressReport(object):
                                 'slug': 'stunting_normal',
                                 'average': [],
                                 'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Percent of children born in month with low birth weight',
+                                'slug': 'low_birth_weight',
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     }
@@ -1933,7 +1941,8 @@ class ProgressReport(object):
                                 'header': 'Pregnant women who are anemic',
                                 'slug': 'severe_anemic',
                                 'average': [],
-                                'format': 'percent'
+                                'format': 'percent',
+                                'reverseColors': True
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',

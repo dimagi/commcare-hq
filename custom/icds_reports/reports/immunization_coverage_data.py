@@ -82,8 +82,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                 "info": _((
                     "Percentage of children 1 year+ who have received complete immunization as per "
                     "National Immunization Schedule of India required by age 1."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
@@ -146,10 +145,8 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
     return {
         "tooltips_data": tooltips_data,
         "info": _((
-            """
-                Percentage of children 1 year+ who have recieved
-                complete immunization as per National Immunization Schedule of India required by age 1
-            """
+            "Percentage of children 1 year+ who have recieved "
+            "complete immunization as per National Immunization Schedule of India required by age 1"
         )),
         "chart_data": [
             {

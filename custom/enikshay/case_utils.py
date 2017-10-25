@@ -443,12 +443,17 @@ def get_lab_referral_from_test(domain, test_case_id):
         )
 
 
-def get_adherence_cases_by_day(domain, episode_case_id):
+def get_adherence_cases_from_episode(domain, episode_case_id):
     indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
     adherence_cases = [
         case for case in indexed_cases
         if case.type == CASE_TYPE_ADHERENCE
     ]
+    return adherence_cases
+
+
+def get_adherence_cases_by_day(domain, episode_case_id):
+    adherence_cases = get_adherence_cases_from_episode(domain, episode_case_id)
 
     adherence = defaultdict(list)  # datetime.date -> list of adherence cases
 

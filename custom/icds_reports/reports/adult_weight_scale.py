@@ -79,8 +79,7 @@ def get_adult_weight_scale_data_map(domain, config, loc_level, show_test=False):
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for mother and child"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

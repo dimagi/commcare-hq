@@ -59,8 +59,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
                 "average_format": 'number',
                 "info": _((
                     "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
