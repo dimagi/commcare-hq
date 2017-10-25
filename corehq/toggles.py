@@ -1105,8 +1105,8 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
-    'UPDATE: HQ now automatically adds all known case properties to case exports ',
-    TAG_DEPRECATED,
+    'Allows users to specify their own export columns',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
 )
 
