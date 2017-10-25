@@ -65,7 +65,7 @@ class Command(BaseCommand):
         return (
             case_properties.get('enrolled_in_private') == 'true' and
             case_properties.get('migration_created_case') == 'true' and
-            case_properties.get('migration_comment') == 'jul7'  # TODO - double check
+            case_properties.get('migration_comment') == 'july_7'  # TODO - double check
         )
 
     @staticmethod
