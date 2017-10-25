@@ -3,11 +3,13 @@ from datetime import datetime
 import pytz
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import load_locs_json
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from custom.common.filters import RestrictedAsyncLocationFilter
+from custom.icds_reports.const import LOCATION_TYPES
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -218,3 +220,45 @@ class THRBeneficiaryType(ICDSTableauFilterMixin, BaseSingleOptionFilter):
             ('Pregnant', 'Pregnant'),
             ('Lactating', 'Lactating'),
         ]
+
+
+class LocationFilterValue(object):
+
+    def __init__(self, domain, state_id=None, district_id=None, block_id=None, supervisor_id=None, awc_id=None):
+        self.domain = domain
+        self.state_id = state_id
+        self.district_id = district_id
+        self.block_id = block_id
+        self.supervisor_id = supervisor_id
+        self.awc_id = awc_id
+        self._keys = tuple(['{}_id'.format(location_type) for location_type in LOCATION_TYPES])
+        self._values = (self.state_id, self.district_id, self.block_id, self.supervisor_id, self.awc_id)
+
+    @property
+    def aggregation_level(self):
+        return len(filter(bool, self._values)) + 1
+
+    @property
+    def location_level(self):
+        from custom.icds_reports.utils import get_location_level
+        return get_location_level(self.aggregation_level)
+
+    @property
+    def selected_location_id(self):
+        if self.aggregation_level == 1:
+            return None
+        else:
+            return self._values[self.aggregation_level - 2]
+
+    @property
+    def selected_location(self):
+        selected_location_id = self.selected_location_id
+        if not selected_location_id:
+            return
+        return SQLLocation.objects.get(location_id=selected_location_id, domain=self.domain)
+
+    def to_dict(self):
+        locations_dict = zip(self._keys, self._values)
+        data_dict = {k: v for (k, v) in locations_dict if v}
+        data_dict['aggregation_level'] = self.aggregation_level
+        return data_dict

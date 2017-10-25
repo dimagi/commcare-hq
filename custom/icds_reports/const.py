@@ -26,3 +26,11 @@ LOCATION_TYPES = [
     LocationTypes.SUPERVISOR,
     LocationTypes.AWC
 ]
+
+
+class Colors(object):
+    RED = '#de2d26'
+    ORANGE = '#fc9272'
+    BLUE = '#006fdf'
+    PINK = '#fee0d2'
+    GREY = '#9D9D9D'
