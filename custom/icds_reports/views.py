@@ -26,6 +26,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     TableauLocationFilter, ICDSYearFilter
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
+from custom.icds_reports.reports.adhaar_data.adhaar_factory import get_adhaar_report_data_instance
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_sector_data, get_adolescent_girls_data_chart
 from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_chart, \
@@ -1240,22 +1241,15 @@ class AdhaarBeneficiariesView(View):
 
         domain = self.kwargs['domain']
 
-        config = {
-            'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1,
-        }
         location = request.GET.get('location_id', '')
-        config.update(get_location_filter(location, self.kwargs['domain']))
-        loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
-        if step == "map":
-            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test)
-            else:
-                data = get_adhaar_data_map(domain, config, loc_level, include_test)
-        elif step == "chart":
-            data = get_adhaar_data_chart(domain, config, loc_level, include_test)
+        data = get_adhaar_report_data_instance(
+            step,
+            domain,
+            location,
+            date=test_date,
+            include_test=include_test
+        ).get_data()
 
         return JsonResponse(data={
             'report_data': data,

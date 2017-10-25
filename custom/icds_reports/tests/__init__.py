@@ -33,6 +33,20 @@ FILE_NAME_TO_TABLE_MAPPING = {
 }
 
 
+def create_location(location_id, location_type, parent=None):
+    return SQLLocation.objects.create(
+        domain='icds-cas',
+        name=location_id,
+        location_id=location_id,
+        location_type=LocationType.objects.get_or_create(
+            domain='icds-cas',
+            name=location_type,
+            parent_type=parent.location_type if parent else None
+        )[0],
+        parent=parent
+    )
+
+
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
         return
@@ -42,17 +56,13 @@ def setUpModule():
     )
     _call_center_domain_mock.start()
 
-    domain = create_domain('icds-cas')
-    location_type = LocationType.objects.create(
-        domain=domain.name,
-        name='block',
-    )
-    SQLLocation.objects.create(
-        domain=domain.name,
-        name='b1',
-        location_id='b1',
-        location_type=location_type
-    )
+    create_domain('icds-cas')
+
+    state = create_location('st1', 'state')
+    district = create_location('d1', 'district', state)
+    block = create_location('b1', 'block', district)
+    supervisor = create_location('s1', 'supervisor', block)
+    create_location('a1', 'awc', supervisor)
 
     with override_settings(SERVER_ENVIRONMENT='icds'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')

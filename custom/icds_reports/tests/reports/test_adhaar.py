@@ -1,7 +1,9 @@
+from datetime import datetime
 from django.test.utils import override_settings
 
-from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_data_chart, get_adhaar_sector_data
 from django.test import TestCase
+
+from custom.icds_reports.reports.adhaar_data.adhaar_factory import get_adhaar_report_data_instance
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
@@ -9,14 +11,12 @@ class TestAdhaar(TestCase):
 
     def test_map_data(self):
         self.assertDictEqual(
-            get_adhaar_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            )[0],
+            get_adhaar_report_data_instance(
+                mode='map',
+                domain='icds-cas',
+                location_id=None,
+                date=datetime(2017, 5, 1)
+            ).get_data()[0],
             {
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
@@ -48,14 +48,12 @@ class TestAdhaar(TestCase):
 
     def test_chart_data(self):
         self.assertDictEqual(
-            get_adhaar_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ),
+            get_adhaar_report_data_instance(
+                mode='chart',
+                domain='icds-cas',
+                location_id=None,
+                date=datetime(2017, 5, 1)
+            ).get_data(),
             {
                 "location_type": "State",
                 "bottom_five": [
@@ -123,18 +121,12 @@ class TestAdhaar(TestCase):
 
     def test_sector_data(self):
         self.assertDictEqual(
-            get_adhaar_sector_data(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b1',
-                    'aggregation_level': 4
-                },
-                loc_level='supervisor',
-                location_id='b1'
-            ),
+            get_adhaar_report_data_instance(
+                mode='map',
+                domain='icds-cas',
+                location_id='b1',
+                date=datetime(2017, 5, 1)
+            ).get_data(),
             {
                 "info": "Percentage of individuals registered using "
                         "CAS whose Adhaar identification has been captured",

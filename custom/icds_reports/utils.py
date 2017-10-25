@@ -15,6 +15,7 @@ from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.filters import LocationFilterValue
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
 
@@ -284,6 +285,33 @@ def get_location_filter(location_id, domain):
     )
     config['aggregation_level'] = len(config) + 1
     return config
+
+
+def get_location_filter_value(domain, location_id):
+    """
+    Args:
+        domain (str)
+        location_id (str)
+
+    Returns
+        LocationFilterValue
+    """
+
+    if not location_id:
+        return LocationFilterValue(domain)
+
+    config = {}
+    try:
+        sql_location = SQLLocation.objects.get(location_id=location_id, domain=domain)
+    except SQLLocation.DoesNotExist:
+        return LocationFilterValue(domain)
+    config.update(
+        {
+            ('%s_id' % ancestor.location_type.code): ancestor.location_id
+            for ancestor in sql_location.get_ancestors(include_self=True)
+        }
+    )
+    return LocationFilterValue(domain, **config)
 
 
 def get_location_level(aggregation_level):
