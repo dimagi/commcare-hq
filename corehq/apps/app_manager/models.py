@@ -6242,6 +6242,10 @@ class LinkedApplication(Application):
     remote_auth = SchemaProperty(RemoteLinkedAppAuth)
 
     @property
+    def _meta_fields(self):
+        return super(LinkedApplication, self)._meta_fields + ['remote_auth']
+
+    @property
     def remote_app_details(self):
         return RemoteAppDetails(
             self.remote_url_base,
