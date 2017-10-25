@@ -75,6 +75,8 @@ from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of
     get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_sector_data
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
+from custom.icds_reports.reports.prevalence_of_undernutrition_data.prevalence_of_undernutrition_factory import \
+    get_prevalence_of_undernutrition_report_data_instance
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
 
@@ -352,30 +354,25 @@ class PrevalenceOfUndernutritionView(View):
 
         domain = self.kwargs['domain']
 
-        config = {
-            'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1,
-        }
-
         gender = self.request.GET.get('gender', None)
         age = self.request.GET.get('age', None)
+
+        additional_filters = {}
         if gender:
-            config.update({'gender': gender})
+            additional_filters.update({'gender': gender})
         if age:
-            config.update(get_age_filter(age))
+            additional_filters.update(get_age_filter(age))
 
         location = request.GET.get('location_id', '')
-        config.update(get_location_filter(location, domain))
-        loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
-        if step == "map":
-            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location, include_test)
-            else:
-                data = get_prevalence_of_undernutrition_data_map(domain, config, loc_level, include_test)
-        elif step == "chart":
-            data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, include_test)
+        data = get_prevalence_of_undernutrition_report_data_instance(
+            step,
+            domain,
+            location,
+            date=test_date,
+            include_test=include_test,
+            additional_filters=additional_filters
+        ).get_data()
 
         return JsonResponse(data={
             'report_data': data,

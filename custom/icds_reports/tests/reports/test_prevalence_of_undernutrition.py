@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from django.test.utils import override_settings
 
-from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_map, \
-    get_prevalence_of_undernutrition_data_chart, get_prevalence_of_undernutrition_sector_data
 from django.test import TestCase
+
+from custom.icds_reports.reports.prevalence_of_undernutrition_data.prevalence_of_undernutrition_factory import \
+    get_prevalence_of_undernutrition_report_data_instance
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
@@ -10,14 +13,12 @@ class TestPrevalenceOfUndernutrition(TestCase):
 
     def test_map_data(self):
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            )[0],
+            get_prevalence_of_undernutrition_report_data_instance(
+                mode='map',
+                domain='icds-cas',
+                location_id=None,
+                date=datetime(2017, 5, 1)
+            ).get_data()[0],
             {
                 'rightLegend': {
                     'info': u'Percentage of children between 0-5 years enrolled for ICDS services'
@@ -56,14 +57,12 @@ class TestPrevalenceOfUndernutrition(TestCase):
 
     def test_chart_data(self):
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ),
+            get_prevalence_of_undernutrition_report_data_instance(
+                mode='chart',
+                domain='icds-cas',
+                location_id=None,
+                date=datetime(2017, 5, 1)
+            ).get_data(),
             {
                 "location_type": "State",
                 "bottom_five": [
@@ -187,18 +186,12 @@ class TestPrevalenceOfUndernutrition(TestCase):
 
     def test_sector_data(self):
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_sector_data(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b1',
-                    'aggregation_level': 4
-                },
+            get_prevalence_of_undernutrition_report_data_instance(
+                mode='map',
+                domain='icds-cas',
                 location_id='b1',
-                loc_level='supervisor'
-            ),
+                date=datetime(2017, 5, 1)
+            ).get_data(),
             {
                 "info": "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age"
                         " less than -2 standard deviations of the WHO Child Growth Standards median."
