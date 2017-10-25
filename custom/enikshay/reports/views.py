@@ -78,19 +78,9 @@ class DuplicateIdsReport(TemplateView):
                 case['device_number_in_form'] = form_device_number
                 case['form_device_id'] = form.metadata.deviceID
                 case['form_user_id'] = form.user_id
+                case['auth_user_id'] = form.auth_context.user_id
 
-        user_info = self.get_user_info(case['form_user_id'] for case in bad_cases
-                                       if 'form_user_id' in case)
-        for case in bad_cases:
-            user_dict = user_info.get(case.get('form_user_id'))
-            if user_dict:
-                case['username'] = user_dict['username']
-                try:
-                    device_number = user_dict['device_ids'].index(case['form_device_id']) + 1
-                except ValueError:
-                    device_number = -1
-                case['real_device_number'] = unicode(device_number)
-
+        self.add_user_info_to_cases(bad_cases)
         context = {
             'case_type': self.case_type,
             'num_bad_cases': len(bad_cases),
@@ -99,6 +89,29 @@ class DuplicateIdsReport(TemplateView):
             'bad_cases': sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
         }
         return render(request, 'enikshay/duplicate_ids_report.html', context)
+
+    def add_user_info_to_cases(self, bad_cases):
+        user_info = self.get_user_info(
+            case['form_user_id'] for case in bad_cases if 'form_user_id' in case)
+
+        auth_user_ids = [case['auth_user_id'] for case in bad_cases
+                         if 'auth_user_id' in case]
+        auth_usernames = [user_doc['username'] for user_doc in
+                          iter_docs(CommCareUser.get_db(), auth_user_ids)]
+        for case in bad_cases:
+            user_dict = user_info.get(case.get('form_user_id'))
+            if user_dict:
+                case['username'] = user_dict['username']
+                device_id = case['form_device_id']
+                if device_id == 'Formplayer':
+                    auth_username = auth_usernames.get(case['auth_user_id'])
+                    device_id = "WebAppsLogin*{}*as*{}".format(
+                        auth_username, user_dict['username'])
+                try:
+                    device_number = user_dict['device_ids'].index(device_id) + 1
+                except ValueError:
+                    device_number = -1
+                case['real_device_number'] = unicode(device_number)
 
     def get_cases_with_duplicate_ids(self, all_case_ids):
         id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[self.case_type]
