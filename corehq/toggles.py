@@ -555,8 +555,8 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 
 ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
-    'Toggle which webapps to see based on role',
-    TAG_PRODUCT,
+    'Enikshay/ICDS: Toggle which webapps to see based on role',
+    TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
 
