@@ -27,7 +27,6 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
-from django.urls import reverse
 from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
@@ -63,6 +62,7 @@ from corehq.apps.userreports.util import (
     get_ucr_class_name)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
+from corehq.util.view_utils import reverse
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -315,11 +315,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             raise Http403()
 
     def has_permissions(self, domain, user):
-        if domain is None:
-            return False
-        if not user.is_active:
-            return False
-        return user.can_view_report(domain, get_ucr_class_name(self.report_config_id))
+        return _has_permission(domain, user, self.report_config_id)
 
     def add_warnings(self, request):
         for warning in self.data_source.column_warnings:
@@ -668,18 +664,27 @@ class DownloadUCRStatusView(BaseDomainView):
         return "#"
 
     def get(self, request, *args, **kwargs):
-        context = super(DownloadUCRStatusView, self).main_context
-        context.update({
-            'domain': self.domain,
-            'download_id': kwargs['download_id'],
-            'poll_url': reverse('ucr_download_job_poll', args=[self.domain, kwargs['download_id']]),
-            'title': _("Download Report Status"),
-            'progress_text': _("Preparing report download."),
-            'error_text': _("There was an unexpected error! Please try again or report an issue."),
-            'next_url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
-            'next_url_text': _("Go back to report"),
-        })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        if _has_permission(self.domain, request.couch_user, self.report_config_id):
+            context = super(DownloadUCRStatusView, self).main_context
+            context.update({
+                'domain': self.domain,
+                'download_id': kwargs['download_id'],
+                'poll_url': reverse('ucr_download_job_poll',
+                                    args=[self.domain, kwargs['download_id']],
+                                    params={'config_id': self.report_config_id}),
+                'title': _("Download Report Status"),
+                'progress_text': _("Preparing report download."),
+                'error_text': _("There was an unexpected error! Please try again or report an issue."),
+                'next_url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+                'next_url_text': _("Go back to report"),
+            })
+            return render(request, 'hqwebapp/soil_status_full.html', context)
+        else:
+            raise Http403()
+
+    @conditionally_location_safe(has_location_filter)
+    def dispatch(self, *args, **kwargs):
+        return super(DownloadUCRStatusView, self).dispatch(*args, **kwargs)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -704,16 +709,35 @@ class DownloadUCRStatusView(BaseDomainView):
         return report_config_id_is_static(self.report_config_id)
 
     @property
+    @memoized
     def report_config_id(self):
-        return self.kwargs['config_id']
+        return self.kwargs['subreport_slug']
 
 
+def _safe_download_poll(view_fn, request, domain, download_id, *args, **kwargs):
+    config_id = request.GET.get('config_id')
+    return config_id and has_location_filter(None, domain=domain, subreport_slug=config_id)
+
+
+@conditionally_location_safe(_safe_download_poll)
 def ucr_download_job_poll(request, domain,
                           download_id,
                           template="hqwebapp/partials/shared_download_status.html"):
-    try:
-        context = get_download_context(download_id, 'Preparing download')
-        context.update({'link_text': _('Download Report')})
-    except TaskFailedError as e:
-        return HttpResponseServerError(e.errors)
-    return render(request, template, context)
+    config_id = request.GET.get('config_id')
+    if config_id and _has_permission(domain, request.couch_user, config_id):
+        try:
+            context = get_download_context(download_id, 'Preparing download')
+            context.update({'link_text': _('Download Report')})
+        except TaskFailedError as e:
+            return HttpResponseServerError(e.errors)
+        return render(request, template, context)
+    else:
+        raise Http403()
+
+
+def _has_permission(domain, user, config_id):
+    if domain is None:
+        return False
+    if not user.is_active:
+        return False
+    return user.can_view_report(domain, get_ucr_class_name(config_id))

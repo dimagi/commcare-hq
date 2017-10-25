@@ -1680,7 +1680,7 @@
 +    return report_filter
 +
 +
-+def _is_location_safe_choice_list(view_fn, domain, report_id, filter_id, **view_kwargs):
++def _is_location_safe_choice_list(view_fn, request, domain, report_id, filter_id, **view_kwargs):
 +    return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
 +
 +

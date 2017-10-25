@@ -2011,7 +2011,7 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-def _is_location_safe_report_class(request, domain, export_hash, format):
+def _is_location_safe_report_class(view_fn, request, domain, export_hash, format):
     cache = get_redis_client()
 
     content = cache.get(export_hash)
