@@ -259,7 +259,7 @@ class ReportBuilderTypeSelect(HQJSONResponseMixin, ReportBuilderView):
                 context_processor_class=IconContext,
                 url=reverse('report_builder_select_source', args=[self.domain, 'chart']),
                 help_text=_('A bar graph or a pie chart to show data from your cases or forms.'
-                            ' You choose the property to graph.'),
+                            ' You giose the property to graph.'),
             ),
             TileConfiguration(
                 title=_('Form or Case List'),
