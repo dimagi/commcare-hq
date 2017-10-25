@@ -26,6 +26,7 @@ from custom.enikshay.case_utils import (
     get_private_diagnostic_test_cases_from_episode,
     get_person_case_from_lab_referral,
     get_person_case_from_prescription,
+    get_person_case_from_referral,
 )
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
@@ -119,6 +120,13 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, ENikshayLocationStructu
         self.create_prescription_case()
         self.assertEqual(
             get_person_case_from_prescription(self.domain, self.prescription_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_referral(self):
+        self.create_referral_case(self.referral_id)
+        self.assertEqual(
+            get_person_case_from_referral(self.domain, self.referral_id).case_id,
             self.person_id
         )
 

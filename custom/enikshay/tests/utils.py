@@ -153,7 +153,7 @@ def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, ex
     )
 
 
-def get_referral_case_structure(case_id, indexed_person_id, extra_update=None):
+def get_referral_case_structure(case_id, indexed_occurrence_id, extra_update=None):
     extra_update = extra_update or {}
     return CaseStructure(
         case_id=case_id,
@@ -163,10 +163,10 @@ def get_referral_case_structure(case_id, indexed_person_id, extra_update=None):
             "update": extra_update
         },
         indices=[CaseIndex(
-            CaseStructure(case_id=indexed_person_id, attrs={"create": False}),
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
-            related_type='episode',
+            related_type='occurrence',
         )],
         walk_related=False,
     )
@@ -287,6 +287,7 @@ class ENikshayCaseStructureMixin(object):
         self.test_id = u"test"
         self.lab_referral_id = u"lab_referral"
         self.prescription_id = "prescription_id"
+        self.referral_id = 'referal'
         self._prescription_created = False
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
@@ -418,7 +419,7 @@ class ENikshayCaseStructureMixin(object):
 
     def create_referral_case(self, case_id):
         return self.factory.create_or_update_cases([
-            get_referral_case_structure(case_id, self.person_id)
+            get_referral_case_structure(case_id, self.occurrence_id)
         ])
 
     @nottest

@@ -454,6 +454,11 @@ def get_person_case_from_prescription(domain, prescription_case_id):
     return get_person_case_from_episode(domain, episode_case.case_id)
 
 
+def get_person_case_from_referral(domain, referral_case_id):
+    occurrence_case = get_first_parent_of_case(domain, referral_case_id, CASE_TYPE_OCCURRENCE)
+    return get_person_case_from_occurrence(domain, occurrence_case.case_id)
+
+
 def get_adherence_cases_from_episode(domain, episode_case_id):
     indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
     adherence_cases = [
@@ -502,6 +507,8 @@ def get_person_case(domain, case_id):
         return get_person_case_from_lab_referral(domain, case.case_id)
     elif case_type == CASE_TYPE_PRESCRIPTION:
         return get_person_case_from_prescription(domain, case.case_id)
+    elif case_type == CASE_TYPE_REFERRAL:
+        return get_person_case_from_referral(domain, case.case_id)
     else:
         raise ENikshayCaseTypeNotFound(u"Unknown case type: {}".format(case_type))
 
