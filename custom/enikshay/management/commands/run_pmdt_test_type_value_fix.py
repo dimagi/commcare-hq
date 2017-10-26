@@ -14,14 +14,14 @@ class Command(BaseEnikshayCaseMigration):
     include_private_cases = False
 
     @staticmethod
-    def get_case_property_updates(episode, domain):
+    def get_case_property_updates(test, domain):
         if (
-            episode.get_case_property(DATAMIGRATION_CASE_PROPERTY) != 'yes'
-            and episode.get_case_property('migration_type') == 'pmdt_excel'
-            and episode.get_case_property('test_type')
+            test.get_case_property(DATAMIGRATION_CASE_PROPERTY) != 'yes'
+            and test.get_case_property('migration_type') == 'pmdt_excel'
+            and test.get_case_property('test_type')
         ):
             return {
-                TEST_TYPE_VALUE: episode.get_case_property('test_type')
+                TEST_TYPE_VALUE: test.get_case_property('test_type')
             }
         else:
             return {}
