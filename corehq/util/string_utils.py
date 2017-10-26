@@ -9,7 +9,8 @@ def random_string(n=6):
 
 
 def ensure_unicode(s):
-    if not s or isinstance(s, six.text_type):
+    if isinstance(s, six.text_type):
         return s
-    else:
+    elif isinstance(s, six.binary_type):
         return s.decode('utf-8')
+    return six.text_type(s)
