@@ -651,6 +651,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'profile_url',
         'manage_urls',
         'mobile_ucr_sync_interval',
+        'mobile_ucr_restore_version',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -687,6 +688,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
         ('mobile_ucr_sync_interval', parse_sync_interval),
+        ('mobile_ucr_restore_version', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
