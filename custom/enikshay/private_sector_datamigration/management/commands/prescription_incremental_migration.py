@@ -63,7 +63,7 @@ class Command(BaseCommand):
             for prescription_cases in chunked(self.new_prescriptions(case_ids), CHUNKSIZE):
                 prescription_cases = list(prescription_cases)
                 for prescription_case in prescription_cases:
-                    self.record_to_log_file(prescription_case.attrs, prescription_case.indices)
+                    self.record_to_log_file(prescription_case.case_id, prescription_case.attrs, prescription_case.indices)
                 if self.commit:
                     CaseFactory(self.domain).create_or_update_cases(prescription_cases)
 
@@ -104,8 +104,8 @@ class Command(BaseCommand):
 
     def add_prescription(self, episode_case_id, prescription):
         kwargs = {
+            'case_id': uuid.uuid4().hex,
             'attrs': {
-                'case_id': uuid.uuid4().hex,
                 'case_type': PRESCRIPTION_CASE_TYPE,
                 'close': True,
                 'create': True,
@@ -137,8 +137,8 @@ class Command(BaseCommand):
 
         return CaseStructure(**kwargs)
 
-    def record_to_log_file(self, attrs, indices):
+    def record_to_log_file(self, case_id, attrs, indices):
         self.writer.writerow(
-            [attrs['case_id'], indices[0].related_structure.case_id]
+            [case_id, indices[0].related_structure.case_id]
             + [attrs['update'].get(case_prop, '') for case_prop in self.case_properties]
         )
