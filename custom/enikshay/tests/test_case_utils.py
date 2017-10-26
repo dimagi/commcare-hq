@@ -118,7 +118,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, ENikshayLocationStructu
         )
 
     def test_get_person_case_from_prescription(self):
-        self.create_prescription_case()
+        self.create_prescription_case(prescription_id=self.prescription_id)
         self.assertEqual(
             get_person_case_from_prescription(self.domain, self.prescription_id).case_id,
             self.person_id
