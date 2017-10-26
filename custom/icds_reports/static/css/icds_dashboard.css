@@ -655,3 +655,7 @@ table.no-footer {
 #detailsChart line.nv-guideline {
     stroke: #ccc;
 }
+
+.headers-overflow-unset .dataTables_scrollHead {
+    overflow: unset !important;
+}
