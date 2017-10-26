@@ -78,7 +78,9 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     fills.update({'35%-100%': RED})
     fills.update({'defaultFill': GREY})
 
-    average = ((moderately_underweight_total or 0) + (severely_underweight_total or 0)) * 100 / (valid_total or 1)
+    average = (
+        (moderately_underweight_total or 0) + (severely_underweight_total or 0)
+    ) * 100 / float(valid_total or 1)
 
     return [
         {

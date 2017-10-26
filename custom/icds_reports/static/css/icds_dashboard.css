@@ -459,7 +459,9 @@ h4 {
 
 .kpi-numbers {
     position: absolute;
-    top: 50%; left: 50%;
+    width: 100%;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%,-50%);
 }
 
@@ -654,4 +656,14 @@ table.no-footer {
 
 #detailsChart line.nv-guideline {
     stroke: #ccc;
+}
+
+.headers-overflow-unset .dataTables_scrollHead {
+    overflow: unset !important;
+}
+
+.scroller {
+    overflow-x: hidden;
+    position: relative; /* relative or absolute positioning required by Perfect Scrollbar */
+    max-height: 500px;  /* height must be limited to induce scrolling behavior */
 }

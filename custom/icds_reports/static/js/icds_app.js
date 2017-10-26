@@ -30,7 +30,7 @@ MainController.$inject = [
     'isWebUser',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy'])
+window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -92,10 +92,10 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/download", {
                 template : "<download></download>",
             })
-            .when("/progress_report", {
+            .when("/fact_sheets", {
                 template : "<progress-report></progress-report>",
             })
-            .when("/progress_report/:report", {
+            .when("/fact_sheets/:report", {
                 template : "<progress-report></progress-report>",
             })
             .when("/exclusive_breastfeeding", {

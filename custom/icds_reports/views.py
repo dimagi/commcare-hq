@@ -77,7 +77,7 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
 
-from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
+from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
@@ -641,7 +641,7 @@ class ExportIndicatorView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ProgressReportView(View):
+class FactSheetsView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
@@ -667,7 +667,7 @@ class ProgressReportView(View):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = ProgressReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
+        data = FactSheetsReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
         return JsonResponse(data=data)
 
 
