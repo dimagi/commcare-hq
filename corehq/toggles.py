@@ -457,6 +457,13 @@ MM_CASE_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+NEW_MULTIMEDIA_UPLOADER = StaticToggle(
+    'new_multimedia_uploader',
+    'Display new multimedia uploader',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 VISIT_SCHEDULER = StaticToggle(
     'app_builder_visit_scheduler',
     'ICDS: Visit Scheduler',
