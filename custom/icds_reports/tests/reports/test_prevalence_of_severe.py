@@ -1,7 +1,7 @@
 from django.test.utils import override_settings
 
-from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_map, \
-    get_prevalence_of_undernutrition_data_chart, get_prevalence_of_undernutrition_sector_data
+from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_map, \
+    get_prevalence_of_severe_data_chart, get_prevalence_of_severe_sector_data
 from django.test import TestCase
 
 
@@ -10,7 +10,7 @@ class TestPrevalenceOfSevere(TestCase):
 
     def test_map_data(self):
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_data_map(
+            get_prevalence_of_severe_data_map(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -20,42 +20,41 @@ class TestPrevalenceOfSevere(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of children between 0-5 years enrolled for ICDS services"
-                            " with weight-for-age less than -2 standard deviations "
-                            "of the WHO Child Growth Standards median. <br/><br/>"
-                            "Children who are moderately or severely underweight have a higher risk of mortality",
-                    "average": 17
+                    "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. <br/><br/>Wasting in children is a symptom of acute undernutrition usually as a consequence of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.",
+                    "average": "1.05"
                 },
                 "fills": {
-                    "0%-20%": "#fee0d2",
-                    "20%-35%": "#fc9272",
-                    "35%-100%": "#de2d26",
+                    "0%-5%": "#fee0d2",
+                    "5%-7%": "#fc9272",
+                    "7%-100%": "#de2d26",
                     "defaultFill": "#9D9D9D"
                 },
                 "data": {
                     "st1": {
-                        "total": 475,
-                        "severely_underweight": 8,
-                        "moderately_underweight": 90,
-                        "fillKey": "20%-35%",
-                        "normal": 364
+                        "severe": 0,
+                        "moderate": 4,
+                        "normal": 5,
+                        "total_measured": 7,
+                        "total": 454,
+                        "fillKey": "0%-5%"
                     },
                     "st2": {
-                        "total": 514,
-                        "severely_underweight": 14,
-                        "moderately_underweight": 84,
-                        "fillKey": "0%-20%",
-                        "normal": 395
+                        "severe": 2,
+                        "moderate": 4,
+                        "normal": 16,
+                        "total_measured": 25,
+                        "total": 497,
+                        "fillKey": "0%-5%"
                     }
                 },
-                "slug": "moderately_underweight",
-                "label": "Percent of Children Underweight (0-5 years)"
+                "slug": "severe",
+                "label": "Percent of Children Wasted (6 - 60 months)"
             }
         )
 
     def test_chart_data(self):
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_data_chart(
+            get_prevalence_of_severe_data_chart(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -67,22 +66,22 @@ class TestPrevalenceOfSevere(TestCase):
                 "location_type": "State",
                 "bottom_five": [
                     {
-                        "loc_name": "st2",
-                        "percent": 14.648729446935725
+                        "loc_name": "st1",
+                        "percent": 0.8810572687224669
                     },
                     {
-                        "loc_name": "st1",
-                        "percent": 15.857605177993527
+                        "loc_name": "st2",
+                        "percent": 1.2072434607645874
                     }
                 ],
                 "top_five": [
                     {
-                        "loc_name": "st2",
-                        "percent": 14.648729446935725
+                        "loc_name": "st1",
+                        "percent": 0.8810572687224669
                     },
                     {
-                        "loc_name": "st1",
-                        "percent": 15.857605177993527
+                        "loc_name": "st2",
+                        "percent": 1.2072434607645874
                     }
                 ],
                 "chart_data": [
@@ -102,17 +101,17 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.4976228209191759,
+                                "y": 0.0061162079510703364,
                                 "x": 1491004800000,
-                                "all": 1262
+                                "all": 981
                             },
                             {
-                                "y": 0.5897435897435898,
+                                "y": 0.022082018927444796,
                                 "x": 1493596800000,
-                                "all": 1287
+                                "all": 951
                             }
                         ],
-                        "key": "% Normal"
+                        "key": "% normal"
                     },
                     {
                         "color": "#fc9272",
@@ -130,17 +129,17 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.1434231378763867,
+                                "y": 0.0010193679918450561,
                                 "x": 1491004800000,
-                                "all": 1262
+                                "all": 981
                             },
                             {
-                                "y": 0.1351981351981352,
+                                "y": 0.008412197686645636,
                                 "x": 1493596800000,
-                                "all": 1287
+                                "all": 951
                             }
                         ],
-                        "key": "% Moderately Underweight (-2 SD)"
+                        "key": "% moderately wasted (moderate acute malnutrition)"
                     },
                     {
                         "color": "#de2d26",
@@ -158,27 +157,27 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.011885895404120444,
+                                "y": 0.0020387359836901123,
                                 "x": 1491004800000,
-                                "all": 1262
+                                "all": 981
                             },
                             {
-                                "y": 0.017094017094017096,
+                                "y": 0.002103049421661409,
                                 "x": 1493596800000,
-                                "all": 1287
+                                "all": 951
                             }
                         ],
-                        "key": "% Severely Underweight (-3 SD) "
+                        "key": "% severely wasted (severe acute malnutrition)"
                     }
                 ],
                 "all_locations": [
                     {
-                        "loc_name": "st2",
-                        "percent": 14.648729446935725
+                        "loc_name": "st1",
+                        "percent": 0.8810572687224669
                     },
                     {
-                        "loc_name": "st1",
-                        "percent": 15.857605177993527
+                        "loc_name": "st2",
+                        "percent": 1.2072434607645874
                     }
                 ]
             }
@@ -186,7 +185,7 @@ class TestPrevalenceOfSevere(TestCase):
 
     def test_sector_data(self):
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_sector_data(
+            get_prevalence_of_severe_sector_data(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -199,22 +198,25 @@ class TestPrevalenceOfSevere(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children between 0-5 years enrolled"
-                        " for ICDS services with weight-for-age less than -2 standard deviations of"
-                        " the WHO Child Growth Standards median. <br/><br/>Children "
-                        "who are moderately or severely underweight have a higher risk of mortality",
+                "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+                        "weight-for-height below -3 standard deviations of the WHO Child Growth Standards"
+                        " median.<br/><br/>Severe Acute Malnutrition (SAM) or wasting in"
+                        " children is a symptom of acute undernutrition usually as "
+                        "a consequence of insufficient food intake or a high incidence of infectious diseases.",
                 "tooltips_data": {
                     "s2": {
-                        "total": 163,
-                        "severely_underweight": 2,
-                        "moderately_underweight": 37,
-                        "normal": 118
+                        "total": 153,
+                        "severe": 0,
+                        "moderate": 3,
+                        "total_measured": 4,
+                        "normal": 1
                     },
                     "s1": {
-                        "total": 72,
-                        "severely_underweight": 4,
-                        "moderately_underweight": 21,
-                        "normal": 46
+                        "total": 71,
+                        "severe": 0,
+                        "moderate": 0,
+                        "total_measured": 0,
+                        "normal": 0
                     }
                 },
                 "chart_data": [
@@ -225,11 +227,11 @@ class TestPrevalenceOfSevere(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.3472222222222222
+                                0.0
                             ],
                             [
                                 "s2",
-                                0.2392638036809816
+                                0.0196078431372549
                             ]
                         ],
                         "key": ""
