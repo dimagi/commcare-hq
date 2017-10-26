@@ -6,6 +6,8 @@ from django.core.management import BaseCommand
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
+from dimagi.utils.chunked import chunked
+
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 
@@ -15,6 +17,8 @@ from custom.enikshay.private_sector_datamigration.models import (
     EpisodePrescription_Jul19,
     Voucher_Jul19,
 )
+
+CHUNKSIZE = 300
 
 
 class Command(BaseCommand):
@@ -56,10 +60,19 @@ class Command(BaseCommand):
             self.writer = csv.writer(log_file)
             self.writer.writerow(self.headers)
 
-            for episode_case in case_accessor.iter_cases(with_progress_bar(case_ids)):
-                if self.should_run_incremental_migration(episode_case):
-                    for prescription in self.get_incremental_prescriptions(episode_case):
-                        self.add_prescription(episode_case.case_id, prescription)
+            for prescription_cases in chunked(self.new_prescriptions(case_ids), CHUNKSIZE):
+                prescription_cases = list(prescription_cases)
+                for prescription_case in prescription_cases:
+                    self.record_to_log_file(prescription_case.attrs, prescription_case.indices)
+                if self.commit:
+                    CaseFactory(self.domain).create_or_update_cases(prescription_cases)
+
+
+    def new_prescriptions(self, case_ids):
+        for episode_case in CaseAccessors(self.domain).iter_cases(with_progress_bar(case_ids)):
+            if self.should_run_incremental_migration(episode_case):
+                for prescription in self.get_incremental_prescriptions(episode_case):
+                    yield self.add_prescription(episode_case.case_id, prescription)
 
     @staticmethod
     def should_run_incremental_migration(episode_case):
@@ -122,13 +135,10 @@ class Command(BaseCommand):
         except Voucher_Jul19.DoesNotExist:
             pass
 
-        self.record_to_log_file(kwargs)
+        return CaseStructure(**kwargs)
 
-        if self.commit:
-            CaseFactory(self.domain).create_or_update_cases([CaseStructure(**kwargs)])
-
-    def record_to_log_file(self, kwargs):
+    def record_to_log_file(self, attrs, indices):
         self.writer.writerow(
-            [kwargs['attrs']['case_id'], kwargs['indices'][0].related_structure.case_id]
-            + [kwargs['attrs']['update'].get(case_prop, '') for case_prop in self.case_properties]
+            [attrs['case_id'], indices[0].related_structure.case_id]
+            + [attrs['update'].get(case_prop, '') for case_prop in self.case_properties]
         )
