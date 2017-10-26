@@ -12,7 +12,8 @@ def delete_sync_logs(before_date, limit=1000, num_tries=10):
     for i in range(num_tries):
         try:
             sync_log_ids = get_synclog_ids_before_date(before_date, limit)
-            return iter_bulk_delete_with_doc_type_verification(SyncLog.get_db(), sync_log_ids, 'SyncLog', chunksize=25)
+            return iter_bulk_delete_with_doc_type_verification(
+                SyncLog.get_db(), sync_log_ids, 'SyncLog', chunksize=25)
         except BulkSaveError:
             pass
 
