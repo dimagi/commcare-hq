@@ -2247,7 +2247,7 @@
               "expression": {
                 "from_date_expression": {
                   "type": "named",
-                  "name": "month_start"
+                  "name": "month_end"
                 },
                 "type": "diff_days",
                 "to_date_expression": {
