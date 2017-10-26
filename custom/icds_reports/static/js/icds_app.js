@@ -28,7 +28,7 @@ MainController.$inject = [
     'reportAnIssueUrl',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy'])
+window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');

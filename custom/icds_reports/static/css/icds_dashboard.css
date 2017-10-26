@@ -661,3 +661,9 @@ table.no-footer {
 .headers-overflow-unset .dataTables_scrollHead {
     overflow: unset !important;
 }
+
+.scroller {
+    overflow-x: hidden;
+    position: relative; /* relative or absolute positioning required by Perfect Scrollbar */
+    max-height: 500px;  /* height must be limited to induce scrolling behavior */
+}

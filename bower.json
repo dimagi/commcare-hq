@@ -16,6 +16,7 @@
     "angular-sanitize": "1.4.4",
     "angular-animate": "1.4.4",
     "angular-leaflet-directive": "angular-leaflet#^0.10.0",
+    "angular-perfect-scrollbar": "^0.1.0",
     "angular-busy": "^4.1.4",
     "ui-select": "angular-ui/ui-select#v0.13.2",
     "backbone": "0.9.1",
