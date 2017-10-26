@@ -6237,8 +6237,8 @@ class LinkedApplication(Application):
     """
     # This is the id of the master application
     master = StringProperty()
+    master_domain = StringProperty()
     remote_url_base = StringProperty()
-    remote_domain = StringProperty()
     remote_auth = SchemaProperty(RemoteLinkedAppAuth)
 
     @property
@@ -6249,7 +6249,7 @@ class LinkedApplication(Application):
     def remote_app_details(self):
         return RemoteAppDetails(
             self.remote_url_base,
-            self.remote_domain,
+            self.master_domain,
             self.remote_auth.username,
             self.remote_auth.api_key,
             self.master
@@ -6259,7 +6259,7 @@ class LinkedApplication(Application):
         if self.master_is_remote:
             return get_remote_version(self.remote_app_details)
         else:
-            return get_latest_released_app_version(self.domain, self.master)
+            return get_latest_released_app_version(self.master_domain, self.master)
 
     @property
     def master_is_remote(self):
