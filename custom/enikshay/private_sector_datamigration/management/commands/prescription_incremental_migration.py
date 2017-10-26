@@ -56,11 +56,10 @@ class Command(BaseCommand):
             self.writer = csv.writer(log_file)
             self.writer.writerow(self.headers)
 
-            for episode_case_id in with_progress_bar(case_ids):
-                episode_case = case_accessor.get_case(episode_case_id)
+            for episode_case in case_accessor.iter_cases(with_progress_bar(case_ids)):
                 if self.should_run_incremental_migration(episode_case):
                     for prescription in self.get_incremental_prescriptions(episode_case):
-                        self.add_prescription(episode_case_id, prescription)
+                        self.add_prescription(episode_case.case_id, prescription)
 
     @staticmethod
     def should_run_incremental_migration(episode_case):
