@@ -358,7 +358,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
-                # todo escape k to be valid xml tag
                 row_elem.append(E(k, value))
                 if not is_total_row and k in deferred_fields:
                     filter_options_by_field[k].add(value)
