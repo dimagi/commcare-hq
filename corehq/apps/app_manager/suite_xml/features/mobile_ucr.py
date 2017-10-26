@@ -430,17 +430,15 @@ class MobileSelectFilterHelpers(object):
     @staticmethod
     def get_data_filter_xpath(config, domain, new_mobile_ucr_restore):
         if new_mobile_ucr_restore:
-            return ''.join([
-                "[{column_id}=instance('commcaresession')/session/data/{datum_id}]".format(
-                    column_id=config.report(domain).get_ui_filter(slug).field,
-                    datum_id=MobileSelectFilterHelpers.get_datum_id(config, slug))
-                for slug, f in MobileSelectFilterHelpers.get_filters(config, domain)])
+            base_xpath = "[{column_id}=instance('commcaresession')/session/data/{datum_id}]"
         else:
-            return ''.join([
-                "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
-                    column_id=config.report(domain).get_ui_filter(slug).field,
-                    datum_id=MobileSelectFilterHelpers.get_datum_id(config, slug))
-                for slug, f in MobileSelectFilterHelpers.get_filters(config, domain)])
+            base_xpath = "[column[@id='{column_id}'=instance('commcaresession')/session/data/{datum_id}]"
+
+        return ''.join([
+            base_xpath.format(
+                column_id=config.report(domain).get_ui_filter(slug).field,
+                datum_id=MobileSelectFilterHelpers.get_datum_id(config, slug))
+            for slug, f in MobileSelectFilterHelpers.get_filters(config, domain)])
 
 
 def is_valid_mobile_select_filter_type(ui_filter):
