@@ -13,6 +13,7 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core import management, cache
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import mail_admins
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -23,6 +24,7 @@ from django.http import (
 )
 from django.http.response import Http404
 from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -81,6 +83,7 @@ from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
@@ -790,6 +793,33 @@ class DisableTwoFactorView(FormView):
             disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
+
+        mail_admins(
+            "Two-Factor account reset",
+            "Two-Factor auth was reset. Details: \n"
+            "    Account reset: {username}\n"
+            "    Reset by: {reset_by}\n"
+            "    Request Verificatoin Mode: {verification}\n"
+            "    Verified by: {verified_by}\n"
+            "    Two-Factor disabled for {days} days.".format(
+                username=username,
+                reset_by=self.request.user.username,
+                verification=form.cleaned_data['verification_mode'],
+                verified_by=form.cleaned_data['via_who'] or self.request.user.username,
+                days=disable_for_days
+            ),
+        )
+        send_HTML_email(
+            "%sTwo-Factor authentication reset" % settings.EMAIL_SUBJECT_PREFIX,
+            username,
+            render_to_string('hqadmin/email/two_factor_reset_email.html', context={
+                'until': disable_until.strftime('%Y-%m-%d %H:%M:%S UTC') if disable_for_days else None,
+                'support_email': settings.SUPPORT_EMAIL,
+                'email_subject': "[URGENT] Possible Account Breach",
+                'email_body': "Two Factor Auth on my CommCare account "
+                              "was disabled without my request. My username is: %s" % username,
+            }),
+        )
 
         messages.success(self.request, _('Two-Factor Auth successfully disabled.'))
         return redirect('{}?q={}'.format(reverse('web_user_lookup'), username))
