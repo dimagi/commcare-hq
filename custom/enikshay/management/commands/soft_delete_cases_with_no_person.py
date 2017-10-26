@@ -31,6 +31,7 @@ class Command(BaseCommand):
         with open(log_file_name, 'w') as log_file:
             logger = self.get_logger(log_file)
             for case_ids_to_delete in chunked(self.get_case_ids_to_delete(domain, case_ids), 100):
+                case_ids_to_delete = list(case_ids_to_delete)
                 self.delete_cases(case_ids_to_delete, commit, deletion_id, domain, logger, case_type)
 
     @staticmethod
