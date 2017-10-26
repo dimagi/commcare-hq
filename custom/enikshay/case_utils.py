@@ -50,7 +50,10 @@ def get_all_parents_of_case(domain, case_id):
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
 
-    return parent_cases
+    return [
+        parent_case for parent_case in parent_cases
+        if not parent_case.deleted
+    ]
 
 
 def get_parent_of_case(domain, case_id, parent_case_type):

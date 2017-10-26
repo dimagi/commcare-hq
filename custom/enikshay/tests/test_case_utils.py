@@ -7,7 +7,10 @@ from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
-from custom.enikshay.exceptions import NikshayLocationNotFound
+from custom.enikshay.exceptions import (
+    ENikshayCaseNotFound,
+    NikshayLocationNotFound,
+)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from custom.enikshay.case_utils import (
@@ -103,6 +106,11 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, ENikshayLocationStructu
             get_person_case_from_occurrence(self.domain, self.occurrence_id).case_id,
             self.person_id
         )
+
+    def test_get_person_case_from_occurrence_with_deleted_person(self):
+        CaseAccessors(self.domain).soft_delete_cases([self.person_id])
+        with self.assertRaises(ENikshayCaseNotFound):
+            get_person_case_from_occurrence(self.domain, self.occurrence_id)
 
     def test_get_person_case_from_episode(self):
         self.assertEqual(
