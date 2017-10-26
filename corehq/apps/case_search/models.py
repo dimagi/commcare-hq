@@ -164,7 +164,7 @@ def replace_custom_query_variables(query_addition, criteria, ignore_patterns):
         to_add = re.escape(value)
         query_addition = re.sub(key, to_add, query_addition)
 
-    query_addition = re.sub(re.escape('\\'), re.escape('\\\\'), query_addition)
+    query_addition = query_addition.replace('\\', '\\\\')
 
     return json.loads(query_addition)
 
