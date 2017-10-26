@@ -460,7 +460,7 @@ MM_CASE_PROPERTIES = StaticToggle(
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
     'new_multimedia_uploader',
     'Display new multimedia uploader',
-    TAG_EXPERIMENTAL,
+    TAG_PREVIEW,
     [NAMESPACE_DOMAIN]
 )
 
