@@ -190,9 +190,11 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         )
 
     def test_voucher_generation_dates(self):
-        prescription1 = self.create_prescription_case({
-            'drugs_ordered_readable': "Happy Pills, Sad Pills, Buggy Pillz"
-        })
+        prescription1 = self.create_prescription_case(
+            extra_update={
+                'drugs_ordered_readable': "Happy Pills, Sad Pills, Buggy Pillz",
+            },
+        )
         voucher11 = get_voucher_case_structure(None, prescription1.case_id, {
             'date_issued': '2012-01-01',
             'state': "available",
@@ -201,9 +203,11 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             'date_issued': '2012-01-01',
             'state': "available",
         })
-        prescription2 = self.create_prescription_case({
-            'drugs_ordered_readable': "Other pillz"
-        })
+        prescription2 = self.create_prescription_case(
+            extra_update={
+                'drugs_ordered_readable': "Other pillz",
+            },
+        )
         voucher21 = get_voucher_case_structure(None, prescription2.case_id, {
             'date_fulfilled': '2014-01-02',
             'date_issued': '2014-01-01',
