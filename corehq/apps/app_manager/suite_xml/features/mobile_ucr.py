@@ -390,7 +390,7 @@ class MobileSelectFilterHelpers(object):
         else:
             instance = "instance('reports')/reports/report[@id='{report_id}']"
 
-        nodeset = "{instance}/filters/filter[@field='{filter_slug}']/option".format(instance=instance)
+        nodeset = instance + "/filters/filter[@field='{filter_slug}']/option"
         return nodeset.format(report_id=config.uuid, filter_slug=filter_slug)
 
     @staticmethod
