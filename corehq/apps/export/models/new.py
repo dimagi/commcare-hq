@@ -2508,7 +2508,7 @@ class StockExportColumn(ExportColumn):
 
     def _get_product_name(self, product_id):
         try:
-            return SQLProduct.objects.values_list('name', flat=True).get(product_id=product_id)
+            return SQLProduct.objects.values_list('name', flat=True).get(product_id=product_id, domain=self.domain)
         except SQLProduct.DoesNotExist:
             return product_id
 
