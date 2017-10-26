@@ -7,7 +7,6 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
-from corehq.util.string_utils import ensure_unicode
 
 J2ME = 'j2me'
 ANDROID = 'android'
@@ -68,6 +67,13 @@ def guess_phone_type_from_user_agent(user_agent):
 def get_username_and_password_from_request(request):
     from corehq.apps.hqwebapp.utils import decode_password
 
+    def _decode(string):
+        try:
+            return string.decode('utf-8')
+        except UnicodeDecodeError:
+            # https://sentry.io/dimagi/commcarehq/issues/391378081/
+            return string.decode('latin1')
+
     username, password = None, None
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION'].split()
@@ -76,6 +82,7 @@ def get_username_and_password_from_request(request):
                 username, password = base64.b64decode(auth[1]).split(':', 1)
                 # decode password submitted from mobile app login
                 password = decode_password(password)
+                username, password = _decode(username), _decode(password)
 
     return username, password
 
@@ -85,7 +92,6 @@ def basicauth(realm=''):
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
             uname, passwd = get_username_and_password_from_request(request)
-            uname, passwd = ensure_unicode(uname), ensure_unicode(passwd)
             if uname and passwd:
                 user = authenticate(username=uname, password=passwd)
                 if user is not None and user.is_active:
