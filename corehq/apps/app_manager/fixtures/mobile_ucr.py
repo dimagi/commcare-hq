@@ -277,7 +277,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            fixtures.extend(self._v2_fixture(restore_user, self._get_report_configs(apps)))
+            fixtures.extend(self._v2_fixtures(restore_user, self._get_report_configs(apps)))
 
         return fixtures
 
