@@ -726,17 +726,16 @@ def web_user_lookup(request):
         return render(request, template, {})
 
     web_user = WebUser.get_by_username(web_user_email)
-    context = {}
+    context = {
+        'audit_report_url': reverse('admin_report_dispatcher', args=('user_audit_report',))
+    }
     if web_user is None:
         messages.error(
             request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
     else:
         from django_otp import user_has_device
-        context = {
-            'web_user': web_user
-        }
-
+        context['web_user'] = web_user
         django_user = web_user.get_django_user()
         context['has_two_factor'] = user_has_device(django_user)
     return render(request, template, context)
