@@ -353,102 +353,127 @@ DRUG_MAP = {
     "r": {
         "sort_order": "01",
         "drug_name": "R",
+        "drug_class": "first_line",
     },
     "s": {
         "sort_order": "04",
         "drug_name": "S",
+        "drug_class": "first_line",
     },
     "h_inha": {
         "sort_order": "02",
         "drug_name": "H (inhA)",
+        "drug_class": "first_line",
     },
     "h_katg": {
         "sort_order": "03",
         "drug_name": "H (katG)",
+        "drug_class": "first_line",
     },
     "e": {
         "sort_order": "05",
         "drug_name": "E",
+        "drug_class": "first_line",
     },
     "z": {
         "sort_order": "06",
         "drug_name": "Z",
+        "drug_class": "first_line",
     },
     "slid_class": {
         "sort_order": "07",
         "drug_name": "SLID Drugs",
+        "drug_class": "slid",
     },
     "km": {
         "sort_order": "08",
         "drug_name": "Km",
+        "drug_class": "slid",
     },
     "cm": {
         "sort_order": "09",
         "drug_name": "Cm",
+        "drug_class": "slid",
     },
     "am": {
         "sort_order": "10",
         "drug_name": "Am",
+        "drug_class": "slid",
     },
     "fq_class": {
         "sort_order": "11",
         "drug_name": "FQ Drugs",
+        "drug_class": "fq",
     },
     "lfx": {
         "sort_order": "12",
         "drug_name": "Lfx",
+        "drug_class": "fq",
     },
     "mfx_05": {
         "sort_order": "14",
         "drug_name": "Mfx (0.5)",
+        "drug_class": "fq",
     },
     "mfx_20": {
         "sort_order": "15",
         "drug_name": "Mfx (2.0)",
+        "drug_class": "fq",
     },
     "eto": {
         "sort_order": "16",
         "drug_name": "Eto",
+        "drug_class": "other",
     },
     "pas": {
         "sort_order": "17",
         "drug_name": "PAS",
+        "drug_class": "other",
     },
     "lzd": {
         "sort_order": "18",
         "drug_name": "Lzd",
+        "drug_class": "other",
     },
     "cfz": {
         "sort_order": "19",
         "drug_name": "Cfz",
+        "drug_class": "other",
     },
     "clr": {
         "sort_order": "20",
         "drug_name": "Clr",
+        "drug_class": "other",
     },
     "azi": {
         "sort_order": "21",
         "drug_name": "Azi",
+        "drug_class": "other",
     },
     "bdq": {
         "sort_order": "22",
         "drug_name": "Bdq",
+        "drug_class": "other",
     },
     "dlm": {
         "sort_order": "23",
         "drug_name": "Dlm",
+        "drug_class": "other",
     },
     "cs": {
         "sort_order": "24",
         "drug_name": "CS",
+        "drug_class": "other",
     },
     "ofx": {
         "sort_order": "25",
         "drug_name": "OFX",
+        "drug_class": "fq",
     },
     "amx_clv": {
         "sort_order": "26",
         "drug_name": "AMX/CLV",
+        "drug_class": "other",
     },
 }
 
