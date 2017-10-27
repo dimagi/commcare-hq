@@ -11,6 +11,13 @@ from custom.enikshay.case_utils import get_person_case
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
+MIGRATION_CASE_PROPERTIES = [
+    'migration_created_case',
+    'migration_comment',
+    'migration_created_from_record',
+]
+
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -37,10 +44,13 @@ class Command(BaseCommand):
     @staticmethod
     def get_logger(log_file):
         logger = csv.writer(log_file)
-        logger.writerow([
-            'case_id', 'deletion_id', 'case_type',
-            'date_form_created', 'date_form_modified', 'date_form_modified_non_system', 'last_user_to_modify',
-        ])
+        logger.writerow(
+            [
+                'case_id', 'deletion_id', 'case_type',
+                'date_form_created', 'date_form_modified',
+                'date_form_modified_non_system', 'last_user_to_modify',
+            ] + MIGRATION_CASE_PROPERTIES
+        )
         return logger
 
     @staticmethod
@@ -84,7 +94,10 @@ def _log_case_to_delete(case_id, deletion_id, domain, logger, case_type):
             date_form_modified_non_system = form.received_on
             break
 
-    logger.writerow([
-        case_id, deletion_id, case_type,
-        date_form_created, date_form_modified, date_form_modified_non_system, last_user_to_modify,
-    ])
+    logger.writerow(
+        [
+            case_id, deletion_id, case_type,
+            date_form_created, date_form_modified,
+            date_form_modified_non_system, last_user_to_modify,
+        ] + [(case.get_case_property(case_prop) or '') for case_prop in MIGRATION_CASE_PROPERTIES]
+    )
