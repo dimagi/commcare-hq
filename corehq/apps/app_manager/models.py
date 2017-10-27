@@ -6270,7 +6270,7 @@ class LinkedApplication(Application):
             return get_remote_master_release(self.remote_app_details, self.domain)
         else:
             master_app = get_app(None, self.master)
-            if self.domain in master_app.linked_whitelist:
+            if self.domain not in master_app.linked_whitelist:
                 raise ActionNotPermitted
             return get_latest_released_app(master_app.domain, self.master)
 
