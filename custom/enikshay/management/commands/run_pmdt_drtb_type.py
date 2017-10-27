@@ -2,13 +2,6 @@ from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import DRUG_MAP, get_drtb_type
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-DRUG_R = 'r'
-DRUG_H_INHA = 'h_inha'
-DRUG_H_KATG = 'h_katg'
-DRUG_CLASS_FQ = 'fq'
-DRUG_CLASS_SLID = 'slid'
-DRUG_CLASS_FIRST = 'first_line'
-RESISTANT = 'resistant'
 SENSITIVITY = 'sensitivity'
 DRTB_TYPE = 'drtb_type'
 DRUG_CLASS = 'drug_class'
@@ -34,7 +27,7 @@ class Command(BaseEnikshayCaseMigration):
         ):
             return {}
 
-        drug_resistance_cases = get_drug_resistance_cases(domain, case.case_id)
+        drug_resistance_cases = _get_drug_resistance_cases(domain, case.case_id)
         drug_resistance_info = [
             {
                 DRUG_ID: drug.get_case_property(DRUG_ID),
@@ -48,10 +41,10 @@ class Command(BaseEnikshayCaseMigration):
             DRTB_TYPE: get_drtb_type(drug_resistance_info)
         }
 
-    @staticmethod
-    def get_drug_resistance_cases(domain, occurrence_case_id):
-        case_accessor = CaseAccessors(domain)
-        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
-        cases = [case for case in all_cases
-                 if not case.closed and case.type == CASE_TYPE_DRUG_RESISTANCE]
-        return cases
+
+def _get_drug_resistance_cases(domain, occurrence_case_id):
+    case_accessor = CaseAccessors(domain)
+    all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
+    cases = [case for case in all_cases
+             if not case.closed and case.type == CASE_TYPE_DRUG_RESISTANCE]
+    return cases
