@@ -1,7 +1,7 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-    {% if search_help_title and search_help_content %}
+    {% if help_title and help_content %}
     <div class="row">
         <div class="col-xs-11">
     {% endif %}
@@ -9,19 +9,19 @@
                    name="{{ slug }}"
                    type="text"
                    {% if required %}required{% endif %}
-                   class="form-control {% block input_css_class %}{% endblock %}" value="{{ search_query }}">
-            {% if search_help_inline %}
+                   class="form-control {% block input_css_class %}{% endblock %}" value="{{ default }}">
+            {% if help_inline %}
             <p class="help-block">
                 <i class="fa fa-info-circle"></i>
-                {{ search_help_inline }}
+                {{ help_inline }}
             </p>
             {% endif %}
-    {% if search_help_title and search_help_content %}
+    {% if help_title and help_content %}
         </div>
         <div class="col-xs-1">
             <span class="hq-help-template"
-               data-title="{{ search_help_title }}"
-               data-content="{{ search_help_content }}"
+               data-title="{{ help_title }}"
+               data-content="{{ help_content }}"
                data-placement="left"
             ></span>
         </div>

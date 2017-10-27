@@ -26,9 +26,8 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
 )
 from corehq.apps.reports.filters.base import (
-    BaseReportFilter, BaseSingleOptionFilter
-)
-from corehq.apps.reports.filters.search import SearchFilter
+    BaseReportFilter, BaseSingleOptionFilter,
+    BaseSimpleFilter)
 from corehq.util.dates import iso_string_to_date
 from six.moves import range
 
@@ -411,7 +410,7 @@ class BillingContactFilter(BaseAccountingSingleOptionFilter):
     async_action = 'contact_name'
 
 
-class PaymentTransactionIdFilter(SearchFilter):
+class PaymentTransactionIdFilter(BaseSimpleFilter):
     slug = "transaction_id"
     label = _("Transaction ID")
-    search_help_inline = _("Usually begins with 'ch_'")
+    help_inline = _("Usually begins with 'ch_'")
