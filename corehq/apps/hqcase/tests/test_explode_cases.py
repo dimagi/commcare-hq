@@ -13,7 +13,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.hqcase.tasks import explode_cases
+from corehq.apps.hqcase.tasks import explode_cases_2 as explode_cases
 from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
@@ -146,7 +146,7 @@ class ExplodeCasesDbTest(TestCase):
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
-        explode_cases(self.user_id, self.domain.name, 10)
+        explode_cases(self.domain.name, self.user_id, 10)
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases_back = list(self.accessor.iter_cases(case_ids))
@@ -165,7 +165,7 @@ class ExplodeCasesDbTest(TestCase):
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
-        explode_cases(self.user_id, self.domain.name, 10)
+        explode_cases(self.domain.name, self.user_id, 10)
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases_back = list(self.accessor.iter_cases(case_ids))
@@ -198,7 +198,7 @@ class ExplodeCasesDbTest(TestCase):
         submit_case_blocks([parent_block, child_block], self.domain.name)
         self.assertEqual(2, len(self.accessor.get_case_ids_in_domain()))
 
-        explode_cases(self.user_id, self.domain.name, 5)
+        explode_cases(self.domain.name, self.user_id, 5)
         case_ids = self.accessor.get_case_ids_in_domain()
         cases_back = list(self.accessor.iter_cases(case_ids))
         self.assertEqual(10, len(cases_back))
