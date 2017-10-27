@@ -726,6 +726,7 @@ def web_user_lookup(request):
         return render(request, template, {})
 
     web_user = WebUser.get_by_username(web_user_email)
+    context = {}
     if web_user is None:
         messages.error(
             request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
