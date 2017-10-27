@@ -1084,9 +1084,14 @@ def get_beneficiary_details(case_id, month):
         case_id=case_id, month__lte=datetime(*month)
     ).order_by('month')
 
-    i = 45
+    min_height = 45
     wfl = []
-    while i <= 120.0:
+
+    max_height = 120.0
+
+    i = min_height
+
+    while i <= max_height:
         wfl.append({'x': i, 'y': 0})
         i += 0.5
 
@@ -1113,5 +1118,6 @@ def get_beneficiary_details(case_id, month):
                 'x': int(row.age_in_months),
                 'y': float(row.recorded_height or 0)
             }
-        beneficiary['wfl'][int((row.recorded_height - 45) * 2)]['y'] = float(row.recorded_weight or 0)
+        if row.recorded_height and min_height <= row.recorded_height <= max_height:
+            beneficiary['wfl'][int((row.recorded_height - min_height) * 2)]['y'] = float(row.recorded_weight or 0)
     return beneficiary
