@@ -2051,7 +2051,7 @@ def get_drtb_type(drug_resistance):
     pdr:
     count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_class = 'first_line']) > 1
     and (count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'r'])
-        + count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'h_inha' or drug_id = 'h_katg'])) < 2
+    + count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'h_inha' or drug_id = 'h_katg'])) < 2
 
     mr:
     count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_class = 'first_line']) = 1 and
