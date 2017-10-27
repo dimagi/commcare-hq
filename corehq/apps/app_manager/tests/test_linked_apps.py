@@ -126,7 +126,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
             self.linked_app.get_latest_master_release()
 
 
-
 class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
     @classmethod
