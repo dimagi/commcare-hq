@@ -1,17 +1,32 @@
+from datetime import timedelta
 from django.utils.datastructures import OrderedSet
 
 from auditcare.models import NavigationEventAudit
 from dimagi.utils.couch.database import iter_docs
 
 
-def navigation_event_ids_by_user(user):
+def navigation_event_ids_by_user(user, start_date=None, end_date=None):
     database = NavigationEventAudit.get_db()
+
+    def _date_key(date):
+        return [date.year, date.month, date.day]
+
+    startkey = [user]
+    if start_date:
+        startkey.extend(_date_key(start_date))
+
+    endkey = [user]
+    if end_date:
+        end = end_date + timedelta(days=1)
+        endkey.extend(_date_key(end))
+    else:
+        endkey.append({})
 
     ids = OrderedSet()
     results = database.view(
         'auditcare/urlpath_by_user_date',
-        startkey=[user],
-        endkey=[user, {}],
+        startkey=startkey,
+        endkey=endkey,
         reduce=False,
         include_docs=False,
     )
@@ -20,8 +35,9 @@ def navigation_event_ids_by_user(user):
     return ids
 
 
-def write_log_events(writer, user, domain=None, override_user=None):
-    for event in iter_docs(NavigationEventAudit.get_db(), navigation_event_ids_by_user(user)):
+def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
+    event_ids = navigation_event_ids_by_user(user, start_date, end_date)
+    for event in iter_docs(NavigationEventAudit.get_db(), event_ids):
         doc = NavigationEventAudit.wrap(event)
         if not domain or domain == doc.domain:
             write_log_event(writer, doc, override_user)
