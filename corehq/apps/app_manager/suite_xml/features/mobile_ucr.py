@@ -432,7 +432,7 @@ class MobileSelectFilterHelpers(object):
         if new_mobile_ucr_restore:
             base_xpath = "[{column_id}=instance('commcaresession')/session/data/{datum_id}]"
         else:
-            base_xpath = "[column[@id='{column_id}'=instance('commcaresession')/session/data/{datum_id}]"
+            base_xpath = "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]"
 
         return ''.join([
             base_xpath.format(
