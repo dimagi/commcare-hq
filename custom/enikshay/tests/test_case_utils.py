@@ -31,6 +31,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_prescription,
     get_person_case_from_referral,
     get_person_case_from_trail,
+    get_person_case_from_prescription_item,
 )
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
@@ -129,6 +130,14 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, ENikshayLocationStructu
         self.create_prescription_case(prescription_id=self.prescription_id)
         self.assertEqual(
             get_person_case_from_prescription(self.domain, self.prescription_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_prescription_item(self):
+        self.create_prescription_case(prescription_id=self.prescription_id)
+        self.create_prescription_item_case(self.prescription_id, self.prescription_item_id)
+        self.assertEqual(
+            get_person_case_from_prescription_item(self.domain, self.prescription_item_id).case_id,
             self.person_id
         )
 
