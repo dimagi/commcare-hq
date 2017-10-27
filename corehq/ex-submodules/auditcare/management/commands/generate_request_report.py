@@ -20,27 +20,29 @@ def navigation_event_ids_by_user(user):
         include_docs=False,
     )}
 
-def request_was_made_to_domain(domain, request_path):
-    return request_path.startswith('/a/' + domain + '/')
 
-def log_events(writer, domain, user, override_user=""):
+def log_events(writer, user, domain=None, override_user=None):
     for event in iter_docs(NavigationEventAudit.get_db(), navigation_event_ids_by_user(user)):
         doc = NavigationEventAudit.wrap(event)
-        if request_was_made_to_domain(domain, doc.request_path):
+        if not domain or domain == doc.domain:
             log_event(writer, doc, override_user)
 
-def log_event(writer, event, override_user=""):
+
+def log_event(writer, event, override_user=None):
     if override_user:
         event.user = override_user
-    writer.writerow([event.user, event.event_date, event.ip_address, event.request_path])
+    writer.writerow([event.event_date, event.user, event.domain, event.ip_address, event.request_path])
 
 
 class Command(BaseCommand):
     help = """Generate request report"""
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
         parser.add_argument('filename')
+        parser.add_argument(
+            '--domain',
+            help="Limit logs to only this domain"
+        )
         parser.add_argument(
             '--display-superuser',
             action='store_true',
@@ -49,7 +51,8 @@ class Command(BaseCommand):
             help="Include superusers in report, otherwise 'Dimagi User'",
         )
 
-    def handle(self, domain, filename, **options):
+    def handle(self, filename, **options):
+        domain = options["domain"]
         display_superuser = options["display_superuser"]
         dimagi_username = ""
 
@@ -62,8 +65,9 @@ class Command(BaseCommand):
 
         with open(filename, 'wb') as csvfile:
             writer = csv.writer(csvfile)
+            writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Path'])
             for user in users:
-                log_events(writer, domain, user)
+                log_events(writer, user, domain)
 
             for user in super_users:
-                log_events(writer, domain, user, dimagi_username)
+                log_events(writer, user, domain, dimagi_username)
