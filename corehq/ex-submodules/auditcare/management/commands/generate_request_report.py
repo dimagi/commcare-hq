@@ -6,7 +6,7 @@ import argparse
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 
-from auditcare.utils.export import write_log_events
+from auditcare.utils.export import write_log_events, get_users_to_export
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 
@@ -70,17 +70,12 @@ class Command(BaseCommand):
         if not domain and not user:
             raise CommandError("Please provide one of 'domain' or 'user'")
 
-        if user:
-            users = [user]
-            super_users = []
-        else:
+        if domain:
             domain_object = Domain.get_by_name(domain)
             if not domain_object:
                 raise CommandError("Domain not found")
 
-            users = {u.username for u in WebUser.by_domain(domain)}
-            super_users = {u['username'] for u in User.objects.filter(is_superuser=True).values('username')}
-            super_users = super_users - users
+        users, super_users = get_users_to_export(user, domain)
 
         with open(filename, 'wb') as csvfile:
             writer = csv.writer(csvfile)

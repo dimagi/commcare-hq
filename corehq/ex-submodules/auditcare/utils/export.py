@@ -1,7 +1,10 @@
 from datetime import timedelta
+
+from django.contrib.auth.models import User
 from django.utils.datastructures import OrderedSet
 
 from auditcare.models import NavigationEventAudit
+from corehq.apps.users.models import WebUser
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -47,3 +50,15 @@ def write_log_event(writer, event, override_user=None):
     if override_user:
         event.user = override_user
     writer.writerow([event.event_date, event.user, event.domain, event.ip_address, event.request_path])
+
+
+def get_users_to_export(username, domain):
+    if username:
+        users = [username]
+        super_users = []
+    else:
+        users = {u.username for u in WebUser.by_domain(domain)}
+        super_users = {u['username'] for u in User.objects.filter(is_superuser=True).values('username')}
+        super_users = super_users - users
+
+    return users, super_users
