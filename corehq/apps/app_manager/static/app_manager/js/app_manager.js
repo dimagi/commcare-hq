@@ -146,7 +146,7 @@ hqDefine('app_manager/js/app_manager', function () {
             $.ajax({
                 url: currentAppVersionUrl,
                 success: function (data) {
-                    module.setPublishStatus((!data.latestRelease && data.currentVersion > 1) || (data.latestRelease !== null && data.latestRelease < data.currentVersion));
+                    module.setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
                 },
             });
         };

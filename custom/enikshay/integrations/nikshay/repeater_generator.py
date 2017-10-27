@@ -568,7 +568,8 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
         # 2B is currently setting age_entered but we are in the short term moving it to use age instead
         "page": _get_person_age(person_case_properties),
         "paddress": person_case_properties.get('current_address', ''),
-        "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
+        # send 0 since that is accepted by Nikshay for this mandatory field
+        "pmob": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
         "caddress": person_case_properties.get('secondary_contact_name_address', ''),
         "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),

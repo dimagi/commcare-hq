@@ -8,7 +8,6 @@ from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 
-
 J2ME = 'j2me'
 ANDROID = 'android'
 
@@ -68,6 +67,13 @@ def guess_phone_type_from_user_agent(user_agent):
 def get_username_and_password_from_request(request):
     from corehq.apps.hqwebapp.utils import decode_password
 
+    def _decode(string):
+        try:
+            return string.decode('utf-8')
+        except UnicodeDecodeError:
+            # https://sentry.io/dimagi/commcarehq/issues/391378081/
+            return string.decode('latin1')
+
     username, password = None, None
     if 'HTTP_AUTHORIZATION' in request.META:
         auth = request.META['HTTP_AUTHORIZATION'].split()
@@ -76,6 +82,7 @@ def get_username_and_password_from_request(request):
                 username, password = base64.b64decode(auth[1]).split(':', 1)
                 # decode password submitted from mobile app login
                 password = decode_password(password)
+                username, password = _decode(username), _decode(password)
 
     return username, password
 

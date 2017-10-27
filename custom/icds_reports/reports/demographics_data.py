@@ -59,7 +59,6 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
         prev_data = get_data_for(AggAwcMonthly, config)
         frequency = 'month'
 
-
     return {
         'records': [
             [

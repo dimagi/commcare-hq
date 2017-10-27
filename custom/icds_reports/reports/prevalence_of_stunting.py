@@ -92,8 +92,7 @@ def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=Fal
                     "<br/><br/>"
                     "Stunting is a sign of chronic undernutrition and has long lasting harmful "
                     "consequences on the growth of a child"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

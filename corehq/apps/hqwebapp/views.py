@@ -204,7 +204,11 @@ def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
     domain = Domain.get_by_name(domain_name)
     if domain:
-        return domain.two_factor_auth and not request.user.is_verified()
+        return (
+            domain.two_factor_auth
+            and not request.couch_user.two_factor_disabled
+            and not request.user.is_verified()
+        )
 
 
 def yui_crossdomain(req):

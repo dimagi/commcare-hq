@@ -154,8 +154,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
                     "in the last month. "
                     "<br/><br/>"
                     "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

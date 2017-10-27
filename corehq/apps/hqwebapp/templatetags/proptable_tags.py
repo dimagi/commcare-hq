@@ -109,7 +109,7 @@ def _to_html(val, key=None, level=0, timeago=False):
         ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
             "class='timeago'" if timeago else "", iso, iso, safe_strftime(val, fmt)))
     else:
-        if val is None or val == '':
+        if val is None:
             val = '---'
 
         ret = escape(val)

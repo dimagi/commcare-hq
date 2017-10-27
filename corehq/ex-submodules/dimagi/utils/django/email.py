@@ -26,9 +26,15 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
 
     recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
 
+    if not isinstance(html_content, unicode):
+        html_content = html_content.decode('utf-8')
+
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
+    elif not isinstance(text_content, unicode):
+        text_content = text_content.decode('utf-8')
+
 
     if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
         ga_data = {

@@ -1237,7 +1237,7 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
 
     for t in test_cases:
         t['dataset'] = 'real'
-        t['name'] = '{}-{}'.format(t.get('test_type'), t.get('date_reported'))
+        t['name'] = '{}-{}'.format(t.get('test_type_value'), t.get('date_reported'))
 
     return test_cases
 
@@ -1575,7 +1575,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                     lab_name = column_mapping.get_follow_up_culture_lab(month, row)
                     properties = {
                         "owner_id": "-",
-                        "test_type": "culture",
+                        "test_type_value": "culture",
                         "test_type_label": "Culture",
                         "testing_facility_name": lab_name,
                         "rft_general": "follow_up_drtb",
@@ -1667,7 +1667,7 @@ def clean_treatment_regimen(value):
             "Regimen for MDR/RR TB": "mdr_rr",
             "Modified Regimen for MDR/RR-TB + FQ/SLI resistance": "mdr_rr_fq_sli",
             "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance": "new_drug_mdr_rr_fq_sli",
-            "Regimen with New Drug for XDR-TB": "new_drug_xdr",
+            "Regimen with New Drug for XDR-TB": "new_xdr",
             "Modified regimen for mixed pattern resistance": "mixed_pattern",
             "Regimen for INH mono/poly resistant TB": "inh_poly_mono",
             "Regimen with New Drug for failures of regimen for MDR TB": "new_fail_mdr",

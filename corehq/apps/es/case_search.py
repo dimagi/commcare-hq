@@ -73,6 +73,16 @@ class CaseSearchES(CaseES):
         )
         return result._add_query(exact_query, clause)
 
+    def regexp_case_property_query(self, key, regex, clause=queries.MUST):
+        new_query = queries.nested(
+            PATH,
+            queries.filtered(
+                filters.term('{}.key'.format(PATH), key),
+                queries.regexp('{}.value'.format(PATH), regex)
+            )
+        )
+        return self._add_query(new_query, clause)
+
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
         if current_query is None:

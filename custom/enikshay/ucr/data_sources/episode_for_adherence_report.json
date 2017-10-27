@@ -1,13 +1,9 @@
 {
     "domains": [
-        "enikshay",
-        "sheel-enikshay",
-        "enikshay-reports-qa",
-        "enikshay-performance-test"
+        "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
@@ -16,8 +12,8 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "episode",
-        "display_name": "episode",
+        "table_id": "episode_for_adherence_report",
+        "display_name": "Episode for adherence report",
         "configured_filter": {
             "type": "and",
             "filters": [
@@ -30,6 +26,15 @@
                     },
                     "type": "boolean_expression",
                     "property_value": "episode"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "enrolled_in_private"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "true"
                 }
             ]
         },
@@ -1396,40 +1401,24 @@
                         "expression_if_true": {
                             "type": "conditional",
                             "test": {
-                                "operator": "in",
+                                "operator": "eq",
                                 "expression": {
                                     "type": "property_name",
-                                    "property_name": "treatment_initiating_facility_id"
+                                    "property_name": "diagnosing_facility_id"
                                 },
                                 "type": "boolean_expression",
-                                "property_value": [null, ""]
+                                "property_value": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiating_facility_id"
+                                }
                             },
                             "expression_if_true": {
                                 "type": "constant",
-                                "constant": "NA"
+                                "constant": "Initiated on first line treatment in the same health facility"
                             },
                             "expression_if_false": {
-                                "type": "conditional",
-                                "test": {
-                                    "operator": "eq",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "diagnosing_facility_id"
-                                    },
-                                    "type": "boolean_expression",
-                                    "property_value": {
-                                        "type": "property_name",
-                                        "property_name": "treatment_initiating_facility_id"
-                                    }
-                                },
-                                "expression_if_true": {
-                                    "type": "constant",
-                                    "constant": "Initiated on first line treatment in the same health facility"
-                                },
-                                "expression_if_false": {
-                                    "type": "constant",
-                                    "constant": "Initiated on treatment outside health facility"
-                                }
+                                "type": "constant",
+                                "constant": "Initiated on treatment outside health facility"
                             }
                         },
                         "expression_if_false": {
@@ -4769,22 +4758,6 @@
                 }
             },
             {
-                "comment": null,
-                "create_index": false,
-                "display_name": null,
-                "datatype": "string",
-                "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "diagnostic_tests"
-                },
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "diagnostic_tests_from_case"
-            },
-            {
                 "type": "expression",
                 "datatype": "integer",
                 "column_id": "positive_microscopy_tests",
@@ -6391,26 +6364,6 @@
                 "expression":{
                     "type": "property_name",
                     "property_name": "date_last_refilled"
-                }
-            },
-            {
-                "display_name": "one_week_adherence_score",
-                "column_id": "one_week_adherence_score",
-                "datatype": "string",
-                "type": "expression",
-                "expression":{
-                    "type": "property_name",
-                    "property_name": "one_week_adherence_score"
-                }
-            },
-            {
-                "display_name": "month_adherence_score",
-                "column_id": "month_adherence_score",
-                "datatype": "string",
-                "type": "expression",
-                "expression":{
-                    "type": "property_name",
-                    "property_name": "month_adherence_score"
                 }
             },
             {
@@ -8424,31 +8377,6 @@
                     "value_expression": {
                         "datatype": "string",
                         "type": "property_name",
-                        "property_name": "fo"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "column_id": "fo"
-            },
-            {
-                "comment": null,
-                "create_index": false,
-                "display_name": null,
-                "datatype": "string",
-                "type": "expression",
-                "transform": {},
-                "is_primary_key": false,
-                "is_nullable": true,
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
                         "property_name": "registered_by"
                     },
                     "type": "related_doc",
@@ -8487,21 +8415,766 @@
                 "column_id": "registered_by_id"
             },
             {
-                "filter": {
-                    "operator": "eq",
-                    "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "enrolled_in_private"
-                    },
-                    "type": "boolean_expression",
-                    "comment": null,
-                    "property_value": "true"
-                },
-                "type": "boolean",
-                "display_name": "is_enrolled_in_private",
                 "comment": null,
-                "column_id": "is_enrolled_in_private"
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_address_block_taluka_mandal"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "current_address_block_taluka_mandal"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "column_id": "date_of_99d_registration"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "column_id": "date_of_merm_registration"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "column_id": "adherence_registered"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score_99DOTS"
+                },
+                "column_id": "three_day_adherence_score_99DOTS"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score_99DOTS"
+                },
+                "column_id": "one_week_adherence_score_99DOTS"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score_99DOTS"
+                },
+                "column_id": "two_week_adherence_score_99DOTS"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score_99DOTS"
+                },
+                "column_id": "month_adherence_score_99DOTS"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score_treatment_supervisor"
+                },
+                "column_id": "three_day_adherence_score_treatment_supervisor"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score_treatment_supervisor"
+                },
+                "column_id": "one_week_adherence_score_treatment_supervisor"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score_treatment_supervisor"
+                },
+                "column_id": "two_week_adherence_score_treatment_supervisor"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score_treatment_supervisor"
+                },
+                "column_id": "month_adherence_score_treatment_supervisor"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score_field_officer"
+                },
+                "column_id": "three_day_adherence_score_field_officer"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score_field_officer"
+                },
+                "column_id": "one_week_adherence_score_field_officer"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score_field_officer"
+                },
+                "column_id": "two_week_adherence_score_field_officer"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score_field_officer"
+                },
+                "column_id": "month_adherence_score_field_officer"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score_patient"
+                },
+                "column_id": "three_day_adherence_score_patient"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score_patient"
+                },
+                "column_id": "one_week_adherence_score_patient"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score_patient"
+                },
+                "column_id": "two_week_adherence_score_patient"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score_patient"
+                },
+                "column_id": "month_adherence_score_patient"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score_provider"
+                },
+                "column_id": "three_day_adherence_score_provider"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score_provider"
+                },
+                "column_id": "one_week_adherence_score_provider"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score_provider"
+                },
+                "column_id": "two_week_adherence_score_provider"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score_provider"
+                },
+                "column_id": "month_adherence_score_provider"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score_other"
+                },
+                "column_id": "three_day_adherence_score_other"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score_other"
+                },
+                "column_id": "one_week_adherence_score_other"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score_other"
+                },
+                "column_id": "two_week_adherence_score_other"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score_other"
+                },
+                "column_id": "month_adherence_score_other"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score_MERM"
+                },
+                "column_id": "three_day_adherence_score_MERM"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score_MERM"
+                },
+                "column_id": "one_week_adherence_score_MERM"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score_MERM"
+                },
+                "column_id": "two_week_adherence_score_MERM"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score_MERM"
+                },
+                "column_id": "month_adherence_score_MERM"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "column_id": "unknown_doses"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "column_id": "missed_doses"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "current_interim_outcome"
+                },
+                "column_id": "current_interim_outcome"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "contact_tracing_and_home_visit_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": ["form", "ql_visit_details", "visit_date"]
+                    }
+                },
+                "column_id": "visit_date"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_adherence_score"
+                },
+                "column_id": "three_day_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score"
+                },
+                "column_id": "one_week_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_adherence_score"
+                },
+                "column_id": "two_week_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_adherence_score"
+                },
+                "column_id": "month_adherence_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_unknown_score"
+                },
+                "column_id": "three_day_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_unknown_score"
+                },
+                "column_id": "one_week_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_unknown_score"
+                },
+                "column_id": "two_week_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_unknown_score"
+                },
+                "column_id": "month_unknown_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "three_day_missed_score"
+                },
+                "column_id": "three_day_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "one_week_missed_score"
+                },
+                "column_id": "one_week_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "two_week_missed_score"
+                },
+                "column_id": "two_week_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "month_missed_score"
+                },
+                "column_id": "month_missed_score"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "fo"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "fo"
             }
         ],
         "named_filters": {
@@ -11114,10 +11787,61 @@
                 }
             },
             "key_populations": {
-                "datatype": "string",
-                "type": "property_name",
-                "property_name": "key_populations"
-
+                "value_expression": {
+                    "datatype": "string",
+                    "type": "property_path",
+                    "property_path": [
+                        "form",
+                        "ql_patient_details",
+                        "key_populations"
+                    ]
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "value_expression": {
+                        "type": "nested",
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    }
+                }
             },
             "treatment_outcome": {
                 "datatype": "string",
@@ -13994,7 +14718,16 @@
                     },
                     "DESC": "DESC"
                 }
-            }
+            },
+            "contact_tracing_and_home_visit_form": {
+                    "type": "first_case_form_with_xmlns",
+                    "case_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                    },
+                    "xmlns": "http://openrosa.org/formdesigner/A8D76F0B-8086-4B8C-8731-631609FE6345",
+                    "reverse": true
+                }
         }
     }
 }

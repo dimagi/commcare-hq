@@ -138,3 +138,13 @@ def filtered(query, filter_):
             "filter": filter_,
         }
     }
+
+
+def regexp(field, regex):
+    return {
+        'regexp': {
+            field: {
+                'value': regex,
+            }
+        }
+    }

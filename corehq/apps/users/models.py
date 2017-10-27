@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
+from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -869,6 +870,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     has_built_app = BooleanProperty(default=False)
     analytics_enabled = BooleanProperty(default=True)
 
+    two_factor_auth_disabled_until = DateTimeProperty()
+
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
     _user = None
@@ -917,6 +920,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 key=key,
                 value=getattr(self, key)
             ) for key in properties),
+        )
+
+    @property
+    def two_factor_disabled(self):
+        return (
+            self.two_factor_auth_disabled_until
+            and datetime.utcnow() < self.two_factor_auth_disabled_until
         )
 
     @property
@@ -1526,6 +1536,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def clear_quickcache_for_user(self):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
+        get_loadtest_factor_for_user.clear(self.domain, self.user_id)
 
         if self._is_demo_user_cached_value_is_stale():
             get_practice_mode_mobile_workers.clear(self.domain)

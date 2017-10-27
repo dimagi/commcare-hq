@@ -35,30 +35,55 @@ Please note that these instructions are targeted toward UNIX-based systems.
 
 ### Downloading and configuring CommCare HQ
 
+#### Prerequisites
+
+- [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- [Python 2.7](https://www.python.org/downloads/)
+- [Virtualenv](https://virtualenv.pypa.io/en/stable/)
+- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
+
+#### Setup virtualenv
+
+`mkvirtualenv --no-site-packages commcare-hq -p python2.7`
+
+#### Clone and setup repo / requirements
+
 Once all the dependencies are in order, please do the following:
 
     $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
-    $ workon cchq  # if your "cchq" virtualenv is not already activated
-    $ pip install -r requirements/requirements.txt -r requirements/prod-requirements.txt
-    $ cp localsettings.example.py localsettings.py
+    $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
+    $ pip install -r requirements/requirements.txt
 
 There is also a separate collection of Dimagi dev oriented tools that you can install:
 
     $ pip install -r requirements/dev-requirements.txt
 
-Enter localsettings.py and do the following:
+And for production environments you may want:
+
+    $ pip install -r requirements/prod-requirements.txt
+
+#### Setup localsettings
+
+First create your `localsettings.py` file:
+
+    $ cp localsettings.example.py localsettings.py
+
+
+Enter `localsettings.py` and do the following:
     - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist
 and are writeable. If they do not exist, create them.
     - You may also want to add the line `from dev_settings import *` at the top of the file, which
       includes some useful default settings.
 
-Once you have completed the above steps, you can use Docker to build and run all of the service containers. The steps for setting up Docker can be found in the [docker folder](docker/README.md).  
+Once you have completed the above steps, you can use Docker to build and run all of the service containers.
+The steps for setting up Docker can be found in the [docker folder](docker/README.md).
 
 ### Set up your django environment
 
 Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
+The easiest way to do this is using the docker instructions below.
 
 Populate your database:
 
@@ -532,12 +557,13 @@ postgres role has been created, and run the same commands without first logging 
 
 ### Setting up a virtualenv
 
-A virtualenv is not required, but it may make your life easier. If you're on Windows see the section `Alternate steps
-for Windows` below. Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching
+A virtualenv is not required, but it is very strongly encouraged and will make your life much easier.
+If you're on Windows see the section `Alternate steps for Windows` below.
+Ubuntu offers a convenient package for virtualenvwrapper, which makes managing and switching
 between environments easy:
 
-    $ sudo apt-get install virtualenvwrapper
-    $ mkvirtualenv cchq
+    $ sudo pip install virtualenvwrapper
+    $ mkvirtualenv commcare-hq
 
 
 ### Installing required dev packages

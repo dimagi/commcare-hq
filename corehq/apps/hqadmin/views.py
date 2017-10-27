@@ -3,7 +3,7 @@ import json
 import socket
 from StringIO import StringIO
 from collections import defaultdict, namedtuple, OrderedDict
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime
 
 import dateutil
 from couchdbkit import ResourceNotFound
@@ -13,6 +13,7 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core import management, cache
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import mail_admins
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -22,7 +23,8 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.http.response import Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
@@ -81,6 +83,7 @@ from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
@@ -89,8 +92,8 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import (
     AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm
-)
+    ReprocessMessagingCaseUpdatesForm,
+    DisableTwoFactorForm)
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
@@ -723,13 +726,104 @@ def web_user_lookup(request):
         return render(request, template, {})
 
     web_user = WebUser.get_by_username(web_user_email)
+    context = {}
     if web_user is None:
         messages.error(
-            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+            request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
-    return render(request, template, {
-        'web_user': web_user
-    })
+    else:
+        from django_otp import user_has_device
+        context = {
+            'web_user': web_user
+        }
+
+        django_user = web_user.get_django_user()
+        context['has_two_factor'] = user_has_device(django_user)
+    return render(request, template, context)
+
+
+@method_decorator(require_superuser, name='dispatch')
+class DisableTwoFactorView(FormView):
+    """
+    View for disabling two-factor for a user's account.
+    """
+    template_name = 'hqadmin/disable_two_factor.html'
+    success_url = None
+    form_class = DisableTwoFactorForm
+    urlname = 'disable_two_factor'
+
+    def get_initial(self):
+        return {
+            'username': self.request.GET.get("q"),
+            'disable_for_days': 0,
+        }
+
+    def get(self, request, *args, **kwargs):
+        from django_otp import user_has_device
+
+        username = request.GET.get("q")
+        redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), username)
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            messages.warning(request, _('User with username %(username)s not found.') % {
+                'username': username
+            })
+            return redirect(redirect_url)
+
+        if not user_has_device(user):
+            messages.warning(request, _(
+                'User with username %(username)s does not have Two-Factor Auth enabled.') % {
+                'username': username
+            })
+            return redirect(redirect_url)
+
+        return super(DisableTwoFactorView, self).get(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        from django_otp import devices_for_user
+
+        username = form.cleaned_data['username']
+        user = User.objects.get(username__iexact=username)
+        for device in devices_for_user(user):
+            device.delete()
+
+        disable_for_days = form.cleaned_data['disable_for_days']
+        if disable_for_days:
+            couch_user = CouchUser.from_django_user(user)
+            disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
+            couch_user.two_factor_auth_disabled_until = disable_until
+            couch_user.save()
+
+        mail_admins(
+            "Two-Factor account reset",
+            "Two-Factor auth was reset. Details: \n"
+            "    Account reset: {username}\n"
+            "    Reset by: {reset_by}\n"
+            "    Request Verificatoin Mode: {verification}\n"
+            "    Verified by: {verified_by}\n"
+            "    Two-Factor disabled for {days} days.".format(
+                username=username,
+                reset_by=self.request.user.username,
+                verification=form.cleaned_data['verification_mode'],
+                verified_by=form.cleaned_data['via_who'] or self.request.user.username,
+                days=disable_for_days
+            ),
+        )
+        send_HTML_email(
+            "%sTwo-Factor authentication reset" % settings.EMAIL_SUBJECT_PREFIX,
+            username,
+            render_to_string('hqadmin/email/two_factor_reset_email.html', context={
+                'until': disable_until.strftime('%Y-%m-%d %H:%M:%S UTC') if disable_for_days else None,
+                'support_email': settings.SUPPORT_EMAIL,
+                'email_subject': "[URGENT] Possible Account Breach",
+                'email_body': "Two Factor Auth on my CommCare account "
+                              "was disabled without my request. My username is: %s" % username,
+            }),
+        )
+
+        messages.success(self.request, _('Two-Factor Auth successfully disabled.'))
+        return redirect('{}?q={}'.format(reverse('web_user_lookup'), username))
 
 
 @require_superuser
