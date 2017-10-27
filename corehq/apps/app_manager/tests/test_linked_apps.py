@@ -17,12 +17,12 @@ from corehq.apps.app_manager.views.utils import overwrite_app
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 
 
-class TestLinkedApps(TestCase, TestXmlMixin):
+class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     file_path = ('data',)
 
     @classmethod
     def setUpClass(cls):
-        super(TestLinkedApps, cls).setUpClass()
+        super(BaseLinkedAppsTest, cls).setUpClass()
         cls.master_app = Application.new_app('domain', "Master Application")
         cls.linked_app = Application.new_app('domain-2', "Linked Application")
         module = cls.master_app.add_module(ReportModule.new_module('Reports', None))
@@ -31,27 +31,17 @@ class TestLinkedApps(TestCase, TestXmlMixin):
         ]
         cls.linked_app.save()
 
-        image_data = cls._get_image_data('commcare-hq-logo.png')
-        cls.image = CommCareImage.get_by_data(image_data)
-        cls.image.attach_data(image_data, original_filename='logo.png')
-        cls.image.add_domain(cls.master_app.domain)
-
     @classmethod
     def tearDownClass(cls):
         cls.linked_app.delete()
-        cls.image.delete()
-        super(TestLinkedApps, cls).tearDownClass()
+        super(BaseLinkedAppsTest, cls).tearDownClass()
 
     def setUp(self):
         # re-fetch app
         self.linked_app = Application.get(self.linked_app._id)
 
-    @staticmethod
-    def _get_image_data(filename):
-        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', filename)
-        with open(image_path, 'r') as f:
-            return f.read()
 
+class TestLinkedApps(BaseLinkedAppsTest):
     def test_missing_ucrs(self):
         with self.assertRaises(AppEditingError):
             overwrite_app(self.linked_app, self.master_app, {})
@@ -68,6 +58,28 @@ class TestLinkedApps(TestCase, TestXmlMixin):
 
         linked_app = _mock_pull_remote_master(self.master_app, self.linked_app, {'id': 'mapped_id'})
         self.assertEqual(self.master_app.get_attachments(), linked_app.get_attachments())
+
+
+class TestRemoteLinkedApps(BaseLinkedAppsTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestRemoteLinkedApps, cls).setUpClass()
+        image_data = cls._get_image_data('commcare-hq-logo.png')
+        cls.image = CommCareImage.get_by_data(image_data)
+        cls.image.attach_data(image_data, original_filename='logo.png')
+        cls.image.add_domain(cls.master_app.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.image.delete()
+        super(TestRemoteLinkedApps, cls).tearDownClass()
+
+    @staticmethod
+    def _get_image_data(filename):
+        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', filename)
+        with open(image_path, 'r') as f:
+            return f.read()
 
     def test_get_missing_media_list(self):
         image_path = 'jr://file/commcare/case_list_image.jpg'
