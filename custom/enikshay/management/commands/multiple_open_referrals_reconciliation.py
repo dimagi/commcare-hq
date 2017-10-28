@@ -56,9 +56,8 @@ class Command(BaseCommand):
             writer.writerow(row)
 
     def reconcile_cases(self, referral_cases, occurrence_case_id):
-        all_case_ids = [case.get_id for case in referral_cases]
-        retain_case_id = sorted(referral_cases, key=lambda x: x.opened_on)[0].get_id
-        self.close_cases(all_case_ids, occurrence_case_id, retain_case_id)
+        retain_case = sorted(referral_cases, key=lambda x: x.opened_on)[0]
+        self.close_cases(referral_cases, occurrence_case_id, retain_case)
 
     def public_app_case(self, occurrence_case_id):
         try:
@@ -91,16 +90,22 @@ class Command(BaseCommand):
                 if i % 1000 == 0:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
-    def close_cases(self, all_case_ids, occurrence_case_id, retain_case_id):
+    def close_cases(self, all_cases, occurrence_case_id, retain_case):
         # remove duplicates in case ids to remove so that we dont retain and close
         # the same case by mistake
-        all_case_ids = set(all_case_ids)
+        all_case_ids = set([case.case_id for case in all_cases])
+        retain_case_id = retain_case.case_id
         case_ids_to_close = all_case_ids.copy()
         case_ids_to_close.remove(retain_case_id)
+
+        case_accessor = CaseAccessors(DOMAIN)
+        closing_extension_case_ids = case_accessor.get_extension_case_ids(case_ids_to_close)
+
         self.writerow({
             "occurrence_case_id": occurrence_case_id,
             "retain_case_id": retain_case_id,
-            "closed_case_ids": case_ids_to_close
+            "closed_case_ids": ','.join(map(str, case_ids_to_close)),
+            "closed_extension_case_ids": ','.join(map(str, closing_extension_case_ids))
         })
         if not self.dry_run:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)

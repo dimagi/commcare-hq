@@ -75,37 +75,57 @@ class Command(BaseCommand):
 
         if active_episode_confirmed_drtb_cases_count == 1:
             episode_case_id = active_episode_confirmed_drtb_cases[0].get_id
-            retain_case_id = get_occurrence_case_from_episode(DOMAIN, episode_case_id).get_id
+            retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_id)
         elif active_episode_confirmed_drtb_cases_count > 1:
             relevant_occurrence_cases = []
             for active_episode_confirmed_drtb_case in active_episode_confirmed_drtb_cases:
                 relevant_occurrence_cases += [get_occurrence_case_from_episode(
                     DOMAIN, active_episode_confirmed_drtb_case.get_id)]
-            retain_case_id = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0].get_id
+            retain_case = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0]
         elif active_episode_confirmed_tb_cases_count == 1:
             episode_case_id = active_episode_confirmed_tb_cases[0].get_id
-            retain_case_id = get_occurrence_case_from_episode(DOMAIN, episode_case_id).get_id
+            retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_id)
         elif active_episode_confirmed_tb_cases_count > 1:
             relevant_occurrence_cases = []
             for active_episode_confirmed_tb_case in active_episode_confirmed_tb_cases:
                 relevant_occurrence_cases += [get_occurrence_case_from_episode(
                     DOMAIN, active_episode_confirmed_tb_case.get_id)]
-            retain_case_id = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0].get_id
+            retain_case = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0]
         else:
-            retain_case_id = sorted(open_occurrence_cases, key=lambda x: x.opened_on)[0].get_id
-        self.close_cases(open_occurrence_case_ids, retain_case_id, person_case_id, "occurrence")
+            retain_case = sorted(open_occurrence_cases, key=lambda x: x.opened_on)[0]
+        self.close_cases(open_occurrence_cases, retain_case, person_case_id, "occurrence")
 
-    def close_cases(self, all_case_ids, retain_case_id, associated_case_id, associated_case_type):
+    def close_cases(self, all_cases, retain_case, associated_case_id, reconcilling_case_type):
         # remove duplicates in case ids to remove so that we don't retain and close
         # the same case by mistake
-        all_case_ids = set(all_case_ids)
+        all_case_ids = set([case.case_id for case in all_cases])
+        retain_case_id = retain_case.case_id
         case_ids_to_close = all_case_ids.copy()
         case_ids_to_close.remove(retain_case_id)
+
+        case_accessor = CaseAccessors(DOMAIN)
+        closing_extension_case_ids = case_accessor.get_extension_case_ids(case_ids_to_close)
+
         self.writerow({
-            "case_type": associated_case_type,
+            "case_type": reconcilling_case_type,
             "associated_case_id": associated_case_id,
             "retain_case_id": retain_case_id,
-            "closed_case_ids": case_ids_to_close
+            "closed_case_ids": ','.join(map(str, case_ids_to_close)),
+            "closed_extension_case_ids": ','.join(map(str, closing_extension_case_ids)),
+            "retained_case_date_opened": str(retain_case.opened_on),
+            "retained_case_episode_type": retain_case.get_case_property("episode_type"),
+            "retained_case_is_active": retain_case.get_case_property("is_active"),
+            "closed_cases_details": (
+                {
+                    a_case.case_id: {
+                        "date_opened": str(a_case.opened_on),
+                        "episode_type": a_case.get_case_property("episode_type"),
+                        "is_active": a_case.get_case_property("is_active")
+                    }
+                    for a_case in all_cases
+                    if a_case.case_id != retain_case_id
+                }
+            )
         })
         if not self.dry_run:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
@@ -142,7 +162,12 @@ class Command(BaseCommand):
             "case_type",
             "associated_case_id",
             "retain_case_id",
-            "closed_case_ids"
+            "closed_case_ids",
+            "closed_extension_case_ids",
+            "retained_case_date_opened",
+            "retained_case_episode_type",
+            "retained_case_is_active",
+            "closed_cases_details"
         ]
 
     def setup_result_file(self):
@@ -180,16 +205,16 @@ class Command(BaseCommand):
         confirmed_tb_episode_cases_count = len(confirmed_tb_episode_cases)
 
         if confirmed_drtb_episode_cases_count == 1:
-            retain_case_id = confirmed_drtb_episode_cases[0].get_id
+            retain_case = confirmed_drtb_episode_cases[0]
         elif confirmed_drtb_episode_cases_count > 1:
-            retain_case_id = sorted(confirmed_drtb_episode_cases, key=lambda x: x.opened_on)[0].get_id
+            retain_case = sorted(confirmed_drtb_episode_cases, key=lambda x: x.opened_on)[0]
         elif confirmed_tb_episode_cases_count == 1:
-            retain_case_id = confirmed_tb_episode_cases[0].get_id
+            retain_case = confirmed_tb_episode_cases[0]
         elif confirmed_tb_episode_cases_count > 1:
-            retain_case_id = sorted(confirmed_tb_episode_cases, key=lambda x: x.opened_on)[0].get_id
+            retain_case = sorted(confirmed_tb_episode_cases, key=lambda x: x.opened_on)[0]
         else:
-            retain_case_id = sorted(episode_cases, key=lambda x: x.opened_on)[0]
-        self.close_cases(open_active_episode_ids, retain_case_id, occurrence_case_id, 'episode')
+            retain_case = sorted(episode_cases, key=lambda x: x.opened_on)[0]
+        self.close_cases(episode_cases, retain_case, occurrence_case_id, 'episode')
 
     def get_open_reconciled_episode_cases_for_occurrence(self, occurrence_case_id):
         def _get_open_episode_cases_for_occurrence(occurrence_case_id):
