@@ -191,7 +191,6 @@ class Command(BaseCommand):
             episode_type = confirmed_tb
             @date_opened (first opened)
         """
-        open_active_episode_ids = [case.get_id for case in episode_cases]
         confirmed_drtb_episode_cases = []
         confirmed_tb_episode_cases = []
         for episode_case in episode_cases:
