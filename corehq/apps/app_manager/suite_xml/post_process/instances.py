@@ -146,6 +146,18 @@ def commcare_fixture_instances(domain, instance_name):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
+@register_factory('commcare-reports')
+def commcare_reports_fixture_instances(domain, instance_name):
+    if instance_name.startswith('commcare-reports:') and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('commcare-reports-filters')
+def commcare_reports_filters_instances(domain, instance_name):
+    if instance_name.startswith('commcare-reports-filters:') and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
 @register_factory('locations')
 def location_fixture_instances(domain, instance_name):
     from corehq.apps.locations.models import LocationFixtureConfiguration
