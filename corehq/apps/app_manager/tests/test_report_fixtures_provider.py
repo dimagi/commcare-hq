@@ -54,7 +54,8 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             report_id=report_id,
             filters={'computed_owner_name_40cc88a0_1': StaticChoiceListFilter()}
         )
-        user = Mock(user_id='mock-user-id')
+        restore_user = Mock(user_id='mock-user-id')
+        restore_state = Mock(overwrite_cache=False, restore_user=restore_user)
 
         with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
                 patch('corehq.apps.app_manager.fixtures.mobile_ucr.ReportFactory') as report_factory_patch, \
@@ -62,7 +63,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
             report_factory_patch.from_spec.return_value = self.get_data_source_mock()
             utcnow_patch.return_value = datetime(2017, 9, 11, 6, 35, 20)
-            fixtures = provider.report_config_to_v2_fixture(report_app_config, user)
+            fixtures = provider.report_config_to_v2_fixture(report_app_config, restore_state)
             report = E.restore()
             report.extend(fixtures)
             self.assertXMLEqual(
