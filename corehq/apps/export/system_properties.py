@@ -23,9 +23,11 @@ from corehq.apps.export.models import (
     RowNumberColumn,
     SplitGPSExportColumn,
     GeopointItem,
+    ScalarItem,
 )
 
 # System properties to be displayed above the form questions
+
 TOP_MAIN_FORM_TABLE_PROPERTIES = [
     RowNumberColumn(
         tags=[PROPERTY_TAG_ROW],
@@ -234,7 +236,7 @@ TOP_MAIN_CASE_TABLE_PROPERTIES = [
     ),
     ExportColumn(
         label='name',
-        item=ExportItem(path=[PathNode(name='name')]),
+        item=ScalarItem(path=[PathNode(name='name')]),
         help_text=_("The name of the case"),
         selected=True
     ),
