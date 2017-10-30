@@ -28,6 +28,7 @@ CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
 CASE_TYPE_PRESCRIPTION = "prescription"
+CASE_TYPE_PRESCRIPTION_ITEM = "prescription_item"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
@@ -457,6 +458,11 @@ def get_person_case_from_prescription(domain, prescription_case_id):
     return get_person_case_from_episode(domain, episode_case.case_id)
 
 
+def get_person_case_from_prescription_item(domain, prescription_item_case_id):
+    prescription_case = get_first_parent_of_case(domain, prescription_item_case_id, CASE_TYPE_PRESCRIPTION)
+    return get_person_case_from_prescription(domain, prescription_case.case_id)
+
+
 def get_person_case_from_referral(domain, referral_case_id):
     occurrence_case = get_first_parent_of_case(domain, referral_case_id, CASE_TYPE_OCCURRENCE)
     return get_person_case_from_occurrence(domain, occurrence_case.case_id)
@@ -515,6 +521,8 @@ def get_person_case(domain, case_id):
         return get_person_case_from_lab_referral(domain, case.case_id)
     elif case_type == CASE_TYPE_PRESCRIPTION:
         return get_person_case_from_prescription(domain, case.case_id)
+    elif case_type == CASE_TYPE_PRESCRIPTION_ITEM:
+        return get_person_case_from_prescription_item(domain, case.case_id)
     elif case_type == CASE_TYPE_REFERRAL:
         return get_person_case_from_referral(domain, case.case_id)
     elif case_type == CASE_TYPE_TRAIL:
