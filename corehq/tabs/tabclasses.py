@@ -109,7 +109,7 @@ class ProjectReportsTab(UITab):
         Return the url for the start of the report builder, or the paywall.
         """
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-        if toggle_enabled(self._request, toggles.REPORT_BUILDER_V2):
+        if not toggle_enabled(self._request, toggles.REPORT_BUILDER_V1):
             from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
             return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
         else:

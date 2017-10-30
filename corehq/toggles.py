@@ -497,13 +497,13 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REPORT_BUILDER_V2 = StaticToggle(
-    "report_builder_v2",
-    "Report builder V2",
+REPORT_BUILDER_V1 = StaticToggle(
+    "report_builder_v1",
+    "Report builder V1",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
     description=(
-        'Enables the "new" report builder. Note that the project must already have access to report builder'
+        'Enables the old report builder. Note that the project must already have access to report builder.'
     )
 )
 
