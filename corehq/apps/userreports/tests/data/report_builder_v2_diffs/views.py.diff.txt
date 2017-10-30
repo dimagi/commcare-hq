@@ -920,7 +920,7 @@
  
      def _confirm_report_limit(self):
          """
-@@ -583,41 +749,765 @@
+@@ -583,41 +749,769 @@
              raise Http404()
  
  
@@ -1670,9 +1670,13 @@
 +def data_source_status(request, domain, config_id):
 +    config, _ = get_datasource_config_or_404(config_id, domain)
 +    build = config.meta.build
-+    return json_response({
-+        'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
-+    })
++    # there appears to be a way that these can be built, but not have initiated set
++    if build.initiated or build.initiated_in_place:
++        return JsonResponse({
++            'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
++        })
++
++    return JsonResponse({'isBuilt': True})
 +
 +
 +def _get_report_filter(domain, report_id, filter_id):
