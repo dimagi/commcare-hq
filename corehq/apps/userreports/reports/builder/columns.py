@@ -241,9 +241,19 @@ class CasePropertyColumnOption(ColumnOption):
 class UsernameComputedCasePropertyOption(ColumnOption):
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
-        return make_form_meta_block_indicator(
-            ('userID', 'Text'), column_id, root_doc=is_multiselect_chart_report
-        )
+        expression = {
+            'type': 'property_name',
+            'property_name': 'user_id',
+            'datatype': 'string',
+        }
+        if is_multiselect_chart_report:
+            expression = {"type": "root_doc", "expression": expression}
+        return {
+            'datatype': 'string',
+            'type': 'expression',
+            'column_id': column_id,
+            'expression': expression
+        }
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
         column_dicts = super(UsernameComputedCasePropertyOption, self).to_column_dicts(
