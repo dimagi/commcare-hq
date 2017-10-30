@@ -195,7 +195,7 @@ def get_prescription_case_structure(case_id, indexed_episode_id, extra_update=No
     )
 
 
-def get_prescription_item_case_structure(case_id, indexed_episode_id, extra_update=None):
+def get_prescription_item_case_structure(case_id, indexed_prescription_id, extra_update=None):
     extra_update = extra_update or {}
     update = {
         'state': 'fulfilled',
@@ -209,7 +209,7 @@ def get_prescription_item_case_structure(case_id, indexed_episode_id, extra_upda
             "update": update
         },
         indices=[CaseIndex(
-            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            CaseStructure(case_id=indexed_prescription_id, attrs={"create": False}),
             identifier='prescription',
             relationship=CASE_INDEX_EXTENSION,
             related_type='prescription',
