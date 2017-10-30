@@ -1473,7 +1473,7 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error alert-danger',
+    messages.WARNING: 'alert-error alert-warning',
     messages.ERROR: 'alert-error alert-danger',
 }
 
