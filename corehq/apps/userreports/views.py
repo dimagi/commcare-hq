@@ -1468,11 +1468,11 @@ def data_source_status(request, domain, config_id):
     build = config.meta.build
     # there appears to be a way that these can be built, but not have initiated set
     if build.initiated or build.initiated_in_place:
-        return json_response({
+        return JsonResponse({
             'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
         })
 
-    return json_response({'isBuilt': True})
+    return JsonResponse({'isBuilt': True})
 
 
 def _get_report_filter(domain, report_id, filter_id):
