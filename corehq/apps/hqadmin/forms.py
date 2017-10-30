@@ -235,3 +235,43 @@ class DisableTwoFactorForm(forms.Form):
             })
 
         return self.cleaned_data
+
+
+class DisableUserForm(forms.Form):
+    reason = forms.CharField(
+        label=_("Reason"),
+        help_text=_("Please give a reason for this action.")
+    )
+    reset_password = forms.BooleanField(
+        label=_("Reset account password"),
+        required=False,
+        help_text=_("Resetting the user's password will force them to follow the 'Forgot Password' workflow."
+                    " Use this if it is suspected that the password has been compromised.")
+    )
+
+    def __init__(self, initial, **kwargs):
+        self.user = initial.pop('user')
+        super(DisableUserForm, self).__init__(initial=initial, **kwargs)
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = '#'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+        action = _("Disable") if self.user.is_active else _("Enable")
+        css_class = 'btn-danger' if self.user.is_active else 'btn-success'
+        self.helper.layout = crispy.Layout(
+            crispy.Field('reason'),
+            crispy.Field('reset_password'),
+            hqcrispy.FormActions(
+                crispy.Submit(
+                    "submit",
+                    action,
+                    css_class="btn %s" % css_class,
+                ),
+                css_class='modal-footer',
+            ),
+        )
