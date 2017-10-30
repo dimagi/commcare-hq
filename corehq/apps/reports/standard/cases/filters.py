@@ -5,6 +5,7 @@ from corehq.apps.reports.filters.base import BaseSimpleFilter
 
 class CaseSearchFilter(BaseSimpleFilter):
     slug = 'search_query'
+    label = ugettext_lazy("Search")
     help_inline = mark_safe(ugettext_lazy(
         'Search any text, or use a targeted query. For more info see the '
         '<a href="https://wiki.commcarehq.org/display/commcarepublic/'
