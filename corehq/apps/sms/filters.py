@@ -72,6 +72,7 @@ class EventStatusFilter(BaseSingleOptionFilter):
 
 
 class PhoneNumberFilter(BaseSimpleFilter):
+    slug = "phone_number"
     label = ugettext_lazy("Phone Number")
     help_inline = ugettext_lazy("Enter a full or partial phone number to filter results")
 
