@@ -832,7 +832,7 @@
                         },
                         "type": "conditional",
                         "expression_if_false": {
-                            "constant": "NA",
+                            "constant": "",
                             "type": "constant"
                         }
                     }

@@ -189,15 +189,15 @@
                 "display_name": null,
                 "datatype": "date",
                 "expression": {
-                   "type": "coalesce",
-                   "expression": {
-                     "type": "property_name",
-                     "property_name": "sample_receipt_date"
-                   },
-                   "default_expression": {
-                     "type": "property_name",
-                     "property_name": "date_tested"
-                   }
+                    "type": "coalesce",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "sample_receipt_date"
+                    },
+                    "default_expression": {
+                        "type": "property_name",
+                        "property_name": "date_tested"
+                    }
                 },
                 "transform": {},
                 "is_primary_key": false,
@@ -2592,44 +2592,26 @@
                             }
                         },
                         {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "tu_name_at_request"
-                        },
-                        {
                             "value_expression": {
                                 "datatype": null,
                                 "type": "property_name",
-                                "property_name": "treatment_supporter_designation"
+                                "property_name": "name"
                             },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "episode_case"
-                            }
-                        },
-                        {
-                            "value_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "treatment_supporter_first_name"
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "episode_case"
-                            }
-                        },
-                        {
-                            "value_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "treatment_supporter_last_name"
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "episode_case"
+                            "type": "related_doc",
+                            "related_doc_type": "Location",
+                            "doc_id_expression": {
+                                "type": "location_parent_id",
+                                "location_id_expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "episode_case"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_initiating_facility_id"
+                                    }
+                                }
                             }
                         }
                     ],
