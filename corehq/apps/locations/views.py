@@ -24,6 +24,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
@@ -257,6 +258,7 @@ class LocationTypesView(BaseDomainView):
     @method_decorator(can_edit_location_types)
     @use_jquery_ui
     @method_decorator(check_pending_locations_import())
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
@@ -283,6 +285,7 @@ class LocationTypesView(BaseDomainView):
             'expand_to': loc_type.expand_to_id if loc_type.expand_to_id else None,
             'include_without_expanding': (loc_type.include_without_expanding_id
                                           if loc_type.include_without_expanding_id else None),
+            'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -359,6 +362,7 @@ class LocationTypesView(BaseDomainView):
         expand_from_id = loc_type_data['expand_from']
         expand_to_id = loc_type_data['expand_to']
         include_without_expanding_id = loc_type_data['include_without_expanding']
+        include_only_ids = loc_type_data['include_only']
         try:
             loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
         except KeyError:        # expand_from location type was deleted
@@ -373,7 +377,29 @@ class LocationTypesView(BaseDomainView):
                                                   if include_without_expanding_id else None)
         except KeyError:        # include_without_expanding location type was deleted
             loc_type.include_without_expanding = None
+        include_only = LocationTypesView._get_include_only(include_only_ids, loc_type_db)
+        loc_type.include_only.set(include_only)
         loc_type.save()
+
+    @staticmethod
+    def _get_include_only(include_only_ids, loc_type_db):
+        """The user specified that we include loc types `include_only_ids`, but
+        we need to insert any parent location types"""
+        loc_types_by_pk = {lt.pk: lt for lt in loc_type_db.values()}
+        include_only = {}
+
+        def insert_with_parents(pk):
+            if pk not in include_only:
+                loc_type = loc_types_by_pk[pk]
+                include_only[pk] = loc_type
+                if loc_type.parent_type_id:
+                    insert_with_parents(loc_type.parent_type_id)
+
+        # if these types were just created, the user-provided IDs were placeholders
+        user_specified = [loc_type_db[lt_id].pk for lt_id in include_only_ids]
+        for pk in user_specified:
+            insert_with_parents(pk)
+        return include_only
 
     def remove_old_location_types(self, pks):
         existing_pks = (LocationType.objects.filter(domain=self.domain)

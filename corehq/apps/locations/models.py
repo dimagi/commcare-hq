@@ -88,6 +88,8 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+
+    # Sync optimization controls
     _expand_from = models.ForeignKey(
         'self',
         null=True,
@@ -103,6 +105,9 @@ class LocationType(models.Model):
         related_name='+',
         on_delete=models.SET_NULL,
     )  # include all levels of this type and their ancestors
+    # If specified, include only the linked types
+    include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
+
     last_modified = models.DateTimeField(auto_now=True)
     has_user = models.BooleanField(default=False)
 
