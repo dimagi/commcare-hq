@@ -989,6 +989,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(schema.last_app_versions[app._id], self.first_build.version)
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
+        self.assertEqual(len(schema.group_schemas[0].items), 2)
+        self.assertEqual(len(schema.group_schemas[1].items), 8)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_case_application'))
@@ -996,6 +998,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build.copy_of = app.get_id
         second_build.version = 6
         second_build.has_submissions = True
+        second_build.get_module(0).get_form(0).actions.update_case.update['name'] = '/data/question2'
         with drop_connected_signals(app_post_save):
             second_build.save()
         self.addCleanup(second_build.delete)
@@ -1010,6 +1013,8 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema.last_app_versions[app._id], second_build.version)
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
+        self.assertEqual(len(schema.group_schemas[0].items), 2)
+        self.assertEqual(len(schema.group_schemas[1].items), 8)
 
     def test_build_with_inferred_schema(self):
         app = self.current_app
