@@ -238,6 +238,9 @@ def expected_bulk_app_sheet_headers(app):
         headers.append([module_string, ['case_property', 'list_or_detail'] + languages_list])
 
         for form_index, form in enumerate(module.get_forms()):
+            if form.form_type == 'shadow_form':
+                continue
+
             form_string = module_string + "_form" + str(form_index + 1)
             headers.append([
                 form_string,
@@ -340,6 +343,9 @@ def expected_bulk_app_sheet_rows(app):
                             )
 
             for form_index, form in enumerate(module.get_forms()):
+                if form.form_type == 'shadow_form':
+                    continue
+
                 form_string = module_string + "_form" + str(form_index + 1)
                 xform = form.wrapped_xform()
 
