@@ -68,7 +68,7 @@ class BaseReportFixturesProvider(FixtureProvider):
             return False
 
         apps = self._get_apps(restore_state, restore_user)
-        report_configs = self._get_report_configs(apps)
+        report_configs = self._get_report_configs(apps).values()
         if not report_configs:
             return False
 
@@ -99,12 +99,12 @@ class BaseReportFixturesProvider(FixtureProvider):
         return apps
 
     def _get_report_configs(self, apps):
-        return [
-            report_config
+        return {
+            report_config.uuid: report_config
             for app_ in apps
             for module in app_.modules if isinstance(module, ReportModule)
             for report_config in module.report_configs
-        ]
+        }
 
     @staticmethod
     def _get_report_and_data_source(report_id, domain):
@@ -152,7 +152,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
-            fixtures.extend(self._v1_fixture(restore_user, self._get_report_configs(apps)))
+            fixtures.extend(self._v1_fixture(restore_user, self._get_report_configs(apps).values()))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
 
@@ -277,7 +277,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            fixtures.extend(self._v2_fixtures(restore_user, self._get_report_configs(apps)))
+            fixtures.extend(self._v2_fixtures(restore_user, self._get_report_configs(apps).values()))
 
         return fixtures
 

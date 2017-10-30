@@ -61,11 +61,11 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         refresh_group_views()
 
     @classmethod
-    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+    def save_docs(cls, docs, use_uuids=True):
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
-        super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
+        super(Group, cls).save_docs(docs, use_uuids)
         refresh_group_views()
 
     bulk_save = save_docs

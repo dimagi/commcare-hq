@@ -19,8 +19,7 @@ new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '
 
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
-commcare_public_domain_url = '/a/public/'
-website_re = '(http(s?)\:\/\/|~/|/)?([a-zA-Z]{1}([\w\-]+\.)+([\w]{2,5}))(:[\d]{1,5})?/?(\w+\.[\w]{3,4})?((\?\w+=\w+)?(&\w+=\w+)*)?'
+domain_url_re = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re)
 
 
 def normalize_domain_name(domain):
@@ -34,7 +33,7 @@ def normalize_domain_name(domain):
 
 def get_domain_from_url(path):
     try:
-        domain, = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re).search(path).groups()
+        domain, = domain_url_re.search(path).groups()
     except Exception:
         domain = None
     return domain

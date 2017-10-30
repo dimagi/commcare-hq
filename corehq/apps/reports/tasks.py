@@ -296,7 +296,7 @@ def build_form_multimedia_zip(
         _, fpath = tempfile.mkstemp()
 
     _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
-    filename = zip_name.append('.zip')
+    filename = u"{}.zip".format(zip_name)
     expose_download(use_transfer, fpath, filename, download_id, 'zip')
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 

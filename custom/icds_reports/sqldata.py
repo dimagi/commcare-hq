@@ -1330,7 +1330,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    SumColumn('cases_person_beneficiary')
+                    AliasColumn('cases_person_beneficiary')
                 ],
                 slug='num_people_with_aadhar'
             ),
@@ -1794,7 +1794,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         return self.get_columns_by_loc_level
 
 
-class ProgressReport(object):
+class FactSheetsReport(object):
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         self.loc_level = loc_level

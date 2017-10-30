@@ -345,6 +345,7 @@ def _save_document_helper(indicator, doc):
             config = _get_config(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+            configs_to_remove.append(config_id)
             continue
         except ESError:
             celery_task_logger.info("ES errored when trying to retrieve config")
@@ -433,7 +434,7 @@ def _indicator_metrics(date_created=None):
 @task
 def export_ucr_async(export_table, download_id, title, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = '{}.xlsx'.format(title)
+    filename = u'{}.xlsx'.format(title)
     file_path = get_download_file_path(use_transfer, filename)
     export_from_tables(export_table, file_path, Format.XLS_2007)
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')

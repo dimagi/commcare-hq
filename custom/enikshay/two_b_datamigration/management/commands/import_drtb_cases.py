@@ -126,6 +126,16 @@ logger = logging.getLogger('two_b_datamigration')
 DETECTED = "tb_detected"
 NOT_DETECTED = "tb_not_detected"
 NO_RESULT = "no_result"
+DRUG_R = 'r'
+DRUG_H_INHA = 'h_inha'
+DRUG_H_KATG = 'h_katg'
+DRUG_CLASS_FQ = 'fq'
+DRUG_CLASS_SLID = 'slid'
+DRUG_CLASS_FIRST = 'first_line'
+RESISTANT = 'resistant'
+SENSITIVITY = 'sensitivity'
+DRUG_ID = 'drug_id'
+DRUG_CLASS = 'drug_class'
 
 
 class ValidationFailure(Exception):
@@ -353,102 +363,127 @@ DRUG_MAP = {
     "r": {
         "sort_order": "01",
         "drug_name": "R",
+        "drug_class": "first_line",
     },
     "s": {
         "sort_order": "04",
         "drug_name": "S",
+        "drug_class": "first_line",
     },
     "h_inha": {
         "sort_order": "02",
         "drug_name": "H (inhA)",
+        "drug_class": "first_line",
     },
     "h_katg": {
         "sort_order": "03",
         "drug_name": "H (katG)",
+        "drug_class": "first_line",
     },
     "e": {
         "sort_order": "05",
         "drug_name": "E",
+        "drug_class": "first_line",
     },
     "z": {
         "sort_order": "06",
         "drug_name": "Z",
+        "drug_class": "first_line",
     },
     "slid_class": {
         "sort_order": "07",
         "drug_name": "SLID Drugs",
+        "drug_class": "slid",
     },
     "km": {
         "sort_order": "08",
         "drug_name": "Km",
+        "drug_class": "slid",
     },
     "cm": {
         "sort_order": "09",
         "drug_name": "Cm",
+        "drug_class": "slid",
     },
     "am": {
         "sort_order": "10",
         "drug_name": "Am",
+        "drug_class": "slid",
     },
     "fq_class": {
         "sort_order": "11",
         "drug_name": "FQ Drugs",
+        "drug_class": "fq",
     },
     "lfx": {
         "sort_order": "12",
         "drug_name": "Lfx",
+        "drug_class": "fq",
     },
     "mfx_05": {
         "sort_order": "14",
         "drug_name": "Mfx (0.5)",
+        "drug_class": "fq",
     },
     "mfx_20": {
         "sort_order": "15",
         "drug_name": "Mfx (2.0)",
+        "drug_class": "fq",
     },
     "eto": {
         "sort_order": "16",
         "drug_name": "Eto",
+        "drug_class": "other",
     },
     "pas": {
         "sort_order": "17",
         "drug_name": "PAS",
+        "drug_class": "other",
     },
     "lzd": {
         "sort_order": "18",
         "drug_name": "Lzd",
+        "drug_class": "other",
     },
     "cfz": {
         "sort_order": "19",
         "drug_name": "Cfz",
+        "drug_class": "other",
     },
     "clr": {
         "sort_order": "20",
         "drug_name": "Clr",
+        "drug_class": "other",
     },
     "azi": {
         "sort_order": "21",
         "drug_name": "Azi",
+        "drug_class": "other",
     },
     "bdq": {
         "sort_order": "22",
         "drug_name": "Bdq",
+        "drug_class": "other",
     },
     "dlm": {
         "sort_order": "23",
         "drug_name": "Dlm",
+        "drug_class": "other",
     },
     "cs": {
         "sort_order": "24",
         "drug_name": "CS",
+        "drug_class": "other",
     },
     "ofx": {
         "sort_order": "25",
         "drug_name": "OFX",
+        "drug_class": "fq",
     },
     "amx_clv": {
         "sort_order": "26",
         "drug_name": "AMX/CLV",
+        "drug_class": "other",
     },
 }
 
@@ -663,6 +698,17 @@ def get_case_structures_from_row(commit, domain, migration_id, column_mapping, c
 
     # calculate episode_case_id so we can also set it on all tests
     episode_case_id = uuid.uuid4().hex
+
+    # update the drtb type based on the drug resistance info
+    drug_resistance_info = [
+        {
+            DRUG_ID: d[DRUG_ID],
+            SENSITIVITY: d[SENSITIVITY],
+            DRUG_CLASS: DRUG_MAP[d[DRUG_ID]][DRUG_CLASS],
+        }
+        for d in drug_resistance_case_properties
+    ]
+    episode_case_properties['drtb_type'] = get_drtb_type(drug_resistance_info)
 
     for test in test_case_properties:
         test['episode_case_id'] = episode_case_id
@@ -1237,7 +1283,7 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
 
     for t in test_cases:
         t['dataset'] = 'real'
-        t['name'] = '{}-{}'.format(t.get('test_type'), t.get('date_reported'))
+        t['name'] = '{}-{}'.format(t.get('test_type_value'), t.get('date_reported'))
 
     return test_cases
 
@@ -1575,7 +1621,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                     lab_name = column_mapping.get_follow_up_culture_lab(month, row)
                     properties = {
                         "owner_id": "-",
-                        "test_type": "culture",
+                        "test_type_value": "culture",
                         "test_type_label": "Culture",
                         "testing_facility_name": lab_name,
                         "rft_general": "follow_up_drtb",
@@ -1667,7 +1713,7 @@ def clean_treatment_regimen(value):
             "Regimen for MDR/RR TB": "mdr_rr",
             "Modified Regimen for MDR/RR-TB + FQ/SLI resistance": "mdr_rr_fq_sli",
             "Regimen with New Drug for MDR-TB Regimen + FQ/SLI resistance": "new_drug_mdr_rr_fq_sli",
-            "Regimen with New Drug for XDR-TB": "new_drug_xdr",
+            "Regimen with New Drug for XDR-TB": "new_xdr",
             "Modified regimen for mixed pattern resistance": "mixed_pattern",
             "Regimen for INH mono/poly resistant TB": "inh_poly_mono",
             "Regimen with New Drug for failures of regimen for MDR TB": "new_fail_mdr",
@@ -1982,6 +2028,81 @@ def get_drtb_center_location(domain, column_mapping, row, city_constants):
         return city_constants.drtb_center_name, city_constants.drtb_center_id
 
 
+def get_drtb_type(drug_resistance):
+    """
+    This function expects a list of dictionary objects specifying the drug_id, drug_class and the
+    sensitivity of each drug
+
+    it calculates drtb_type using the following rule (from the app):
+    xdr:
+    count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'r']) > 0
+    and count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'h_inha' or drug_id = 'h_katg']) > 0
+    and count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_class = 'fq']) > 0
+    and count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_class = 'slid']) > 0
+
+    mdr:
+    count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'r']) > 0
+    and count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'h_inha' or drug_id = 'h_katg']) > 0
+
+    rr:
+    count(/data/drug_resistance/item[sensitivity = 'resistant']) = 1
+    and /data/drug_resistance/item[sensitivity = 'resistant']/drug_id = 'r'
+
+    pdr:
+    count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_class = 'first_line']) > 1
+    and (count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'r'])
+    + count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'h_inha' or drug_id = 'h_katg'])) < 2
+
+    mr:
+    count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_class = 'first_line']) = 1 and
+    count(/data/drug_resistance/item[sensitivity = 'resistant'][drug_id = 'r']) = 0
+    """
+    def is_resistant_drug(drug_id):
+        return len([
+            d for d in drug_resistance
+            if d[DRUG_ID] == drug_id and d[SENSITIVITY] == RESISTANT
+        ]) > 0
+
+    def is_resistant_class(drug_class):
+        return len([
+            d for d in drug_resistance
+            if d[DRUG_CLASS] == drug_class and d[SENSITIVITY] == RESISTANT
+        ]) > 0
+
+    if (
+        is_resistant_drug(DRUG_R)
+        and (is_resistant_drug(DRUG_H_INHA) or is_resistant_drug(DRUG_H_KATG))
+        and is_resistant_class(DRUG_CLASS_FQ)
+        and is_resistant_class(DRUG_CLASS_SLID)
+    ):
+        return 'xdr'
+    elif (
+        is_resistant_drug(DRUG_R)
+        and (is_resistant_drug(DRUG_H_INHA) or is_resistant_drug(DRUG_H_KATG))
+    ):
+        return 'mdr'
+    elif (
+        len([d for d in drug_resistance if d[SENSITIVITY] == RESISTANT]) == 1
+        and is_resistant_drug(DRUG_R)
+    ):
+        return 'rr'
+    elif (
+        len([d for d in drug_resistance
+             if d[SENSITIVITY] == RESISTANT and d[DRUG_CLASS] == DRUG_CLASS_FIRST]) > 1
+        and is_resistant_drug(DRUG_R)
+            + (is_resistant_drug(DRUG_H_INHA) or is_resistant_drug(DRUG_H_KATG)) < 2
+    ):
+        return 'pdr'
+    elif (
+        len([d for d in drug_resistance
+             if d[SENSITIVITY] == RESISTANT and d[DRUG_CLASS] == DRUG_CLASS_FIRST]) == 1
+        and not is_resistant_drug(DRUG_R)
+    ):
+        return 'mr'
+    else:
+        return 'unknown'
+
+
 class _PersonIdGenerator(object):
     """
     Person cases in eNikshay require unique, human-readable ids.
@@ -2174,4 +2295,3 @@ class Command(BaseCommand):
             )
         else:
             raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
-

@@ -394,9 +394,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                 success: function(data) {
                     self.fetchState('');
                     self.currentAppVersion(data.currentVersion);
-                    if (!data.latestRelease) {
+                    if (!data.latestBuild) {
                         self.actuallyMakeBuild();
-                    } else if (data.latestRelease !== self.lastAppVersion()) {
+                    } else if (data.latestBuild !== self.lastAppVersion()) {
                         window.alert(gettext("The versions list has changed since you loaded the page."));
                         self.reloadApps();
                     } else if (self.lastAppVersion() !== self.currentAppVersion()) {

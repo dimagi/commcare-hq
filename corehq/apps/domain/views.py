@@ -2289,7 +2289,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
-        'corehq.apps.reports.filters.search.RepeaterPayloadIdFilter',
+        'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
 
     def _make_cancel_payload_button(self, record_id):

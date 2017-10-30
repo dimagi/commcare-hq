@@ -1,17 +1,15 @@
 {
     "domains": [
-        "enikshay-reports-qa",
-        "sheel-enikshay"
+        "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode_for_adherence_report",
     "report_id": "adherence",
     "config": {
         "description": "",
-        "title": "Adherence (QA)",
+        "title": "Adherence",
         "sort_expression": [],
         "visible": false,
         "configured_charts": [],

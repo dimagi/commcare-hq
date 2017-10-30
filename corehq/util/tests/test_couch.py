@@ -100,7 +100,7 @@ class TestLoggingDB(object):
         self.docs_saved = []
         self.num_writes = 0
 
-    def bulk_save(self, docs, use_uuids=True, all_or_nothing=False, new_edits=None, **params):
+    def bulk_save(self, docs, use_uuids=True, new_edits=None, **params):
         """Method signature matches coucdbkit.client.Database.bulk_save
         """
         self.docs_saved.extend(docs)

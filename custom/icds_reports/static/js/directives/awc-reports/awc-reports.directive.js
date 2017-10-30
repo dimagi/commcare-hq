@@ -1870,6 +1870,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     tickFormat: function(d) {
                         return d3.time.format('Week of %d/%m')(new Date(d));
                     },
+                    staggerLabels: true,
+                    showMaxMin: false,
                 },
                 yAxis: {
                     axisLabel: 'Number of Days',

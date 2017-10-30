@@ -26,3 +26,15 @@ LOCATION_TYPES = [
     LocationTypes.SUPERVISOR,
     LocationTypes.AWC
 ]
+
+
+HELPDESK_ROLES = [
+    'BHD',
+    'DHD',
+    'CPMU',
+    'SHD',
+    'Test BHD (For VL Dashboard QA)',
+    'Test DHD (For VL Dashboard QA)',
+    'Test SHD (For VL Dashboard QA)',
+    'Test CPMU (For VL Dashboard QA)'
+]

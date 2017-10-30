@@ -50,12 +50,12 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + total + '</strong></div>' +
-            '<div>% of individuals registered using CAS whose Adhaar identification has been captured: <strong>' + percent + '</strong></div>';
+            '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + in_month + '</strong></div>' +
+            '<div>% of ICDS beneficiaries whose Adhaar has been captured: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -182,7 +182,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                     var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
+                    tooltip_content += "<p>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month  ) + "</strong></p>";
                     tooltip_content += "<p>% of ICDS beneficiaries whose Adhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
 
                     return tooltip_content;

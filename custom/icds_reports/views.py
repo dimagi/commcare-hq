@@ -77,7 +77,7 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
 
-from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
+from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
@@ -225,18 +225,26 @@ class DashboardView(TemplateView):
     def couch_user(self):
         return self.request.couch_user
 
+    def _has_helpdesk_role(self):
+        user_roles = UserRole.by_domain(self.domain)
+        helpdesk_roles_id = [
+            role.get_id
+            for role in user_roles
+            if role.name in const.HELPDESK_ROLES
+        ]
+        domain_membership = self.couch_user.get_domain_membership(self.domain)
+        return domain_membership.role_id in helpdesk_roles_id
+
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
 
         is_commcare_user = self.couch_user.is_commcare_user()
-        is_web_user_with_edit_data_permissions = (
-            self.couch_user.is_web_user() and
-            self.couch_user.has_permission(self.domain, Permissions.edit_data.name)
-        )
 
-        if is_commcare_user or is_web_user_with_edit_data_permissions:
+        if self.couch_user.is_web_user():
+            kwargs['is_web_user'] = True
+        elif is_commcare_user and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_url(
                 domain=self.domain,
@@ -633,7 +641,7 @@ class ExportIndicatorView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ProgressReportView(View):
+class FactSheetsView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
         now = datetime.utcnow()
@@ -659,7 +667,7 @@ class ProgressReportView(View):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = ProgressReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
+        data = FactSheetsReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
         return JsonResponse(data=data)
 
 

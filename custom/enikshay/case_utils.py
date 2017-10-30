@@ -50,7 +50,10 @@ def get_all_parents_of_case(domain, case_id):
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
 
-    return parent_cases
+    return [
+        parent_case for parent_case in parent_cases
+        if not parent_case.deleted
+    ]
 
 
 def get_parent_of_case(domain, case_id, parent_case_type):
@@ -443,6 +446,27 @@ def get_lab_referral_from_test(domain, test_case_id):
         )
 
 
+def get_person_case_from_lab_referral(domain, lab_referral_case_id):
+    test_case = get_first_parent_of_case(domain, lab_referral_case_id, CASE_TYPE_TEST)
+    occurrence_case = get_occurrence_case_from_test(domain, test_case.case_id)
+    return get_person_case_from_occurrence(domain, occurrence_case.case_id)
+
+
+def get_person_case_from_prescription(domain, prescription_case_id):
+    episode_case = get_first_parent_of_case(domain, prescription_case_id, CASE_TYPE_EPISODE)
+    return get_person_case_from_episode(domain, episode_case.case_id)
+
+
+def get_person_case_from_referral(domain, referral_case_id):
+    occurrence_case = get_first_parent_of_case(domain, referral_case_id, CASE_TYPE_OCCURRENCE)
+    return get_person_case_from_occurrence(domain, occurrence_case.case_id)
+
+
+def get_person_case_from_trail(domain, trail_case_id):
+    occurrence_case = get_first_parent_of_case(domain, trail_case_id, CASE_TYPE_OCCURRENCE)
+    return get_person_case_from_occurrence(domain, occurrence_case.case_id)
+
+
 def get_adherence_cases_from_episode(domain, episode_case_id):
     indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
     adherence_cases = [
@@ -487,6 +511,14 @@ def get_person_case(domain, case_id):
         return get_person_case_from_occurrence(domain, case.case_id)
     elif case_type == CASE_TYPE_VOUCHER:
         return get_person_case_from_voucher(domain, case.case_id)
+    elif case_type == CASE_TYPE_LAB_REFERRAL:
+        return get_person_case_from_lab_referral(domain, case.case_id)
+    elif case_type == CASE_TYPE_PRESCRIPTION:
+        return get_person_case_from_prescription(domain, case.case_id)
+    elif case_type == CASE_TYPE_REFERRAL:
+        return get_person_case_from_referral(domain, case.case_id)
+    elif case_type == CASE_TYPE_TRAIL:
+        return get_person_case_from_trail(domain, case.case_id)
     else:
         raise ENikshayCaseTypeNotFound(u"Unknown case type: {}".format(case_type))
 

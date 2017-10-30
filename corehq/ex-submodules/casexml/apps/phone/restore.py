@@ -26,6 +26,7 @@ from casexml.apps.phone.exceptions import (
 )
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
+from casexml.apps.phone.utils import get_cached_items_with_count
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, ICDS_LIVEQUERY, NAMESPACE_USER
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
@@ -124,6 +125,8 @@ class RestoreContent(object):
     def append(self, xml_element):
         self.num_items += 1
         if isinstance(xml_element, six.binary_type):
+            xml_element, num = get_cached_items_with_count(xml_element)
+            self.num_items += num - 1
             self.response_body.write(xml_element)
         else:
             self.response_body.write(xml_util.tostring(xml_element))
