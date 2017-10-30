@@ -3,6 +3,7 @@ from collections import namedtuple
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.export.const import PROPERTY_TAG_CASE
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import (
     ExportItem,
     StockItem,
@@ -21,6 +22,7 @@ from corehq.apps.export.models import (
     MAIN_TABLE,
     FormExportInstanceDefaults,
     MultiMediaExportColumn,
+    ScalarItem,
 )
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
@@ -36,11 +38,11 @@ MockRequest = namedtuple('MockRequest', 'domain')
     'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
-class TestExportInstanceGeneration(SimpleTestCase):
+class TestFormExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestExportInstanceGeneration, cls).setUpClass()
+        super(TestFormExportInstanceGeneration, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[
@@ -168,6 +170,72 @@ class TestExportInstanceGeneration(SimpleTestCase):
         table = instance.tables[0]
         self.assertNotEqual(table.columns[0].item.path, ROW_NUMBER_COLUMN.item.path)
         self.assertTrue(table.columns[0].selected)
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.Domain.get_by_name',
+    return_value=Domain(commtrack_enabled=False),
+)
+class TestCaseExportInstanceGeneration(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCaseExportInstanceGeneration, cls).setUpClass()
+        cls.app_id = '1234'
+        cls.schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ScalarItem(
+                            path=[PathNode(name='p1')],
+                            label='p1',
+                            last_occurrences={},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+
+        cls.new_schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ScalarItem(
+                            path=[PathNode(name='p1')],
+                            label='p1',
+                            last_occurrences={},
+                        ),
+                        ScalarItem(
+                            path=[PathNode(name='name')],
+                            label='name',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+
+    def _generate_instance(self, build_ids_and_versions, schema, saved_export=None):
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+
+            return CaseExportInstance.generate_instance_from_schema(schema, saved_export=saved_export)
+
+    def test_generate_instance_from_schema(self, _):
+        instance = self._generate_instance({self.app_id: 3}, self.schema)
+
+        self.assertEqual(len(instance.tables), 1)
+        self.assertEqual(len(instance.tables[0].columns), 20)
+
+        # adding in 'name' shouldn't create any new columns
+        instance = self._generate_instance({self.app_id: 3}, self.new_schema, instance)
+        self.assertEqual(len(instance.tables), 1)
+        self.assertEqual(len(instance.tables[0].columns), 20)
 
 
 @mock.patch(
