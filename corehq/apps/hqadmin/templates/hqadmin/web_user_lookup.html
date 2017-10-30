@@ -31,9 +31,9 @@
             {% endfor %}
         </table>
         {% if has_two_factor %}
-        <h3>{% trans "Disable Two-Factor Authentication" %}</h3>
-        <a class="btn btn-danger" href="{% url 'disable_two_factor' %}?q={{ web_user.username }}">Disable Two-Factor Authentication</a>
+        <a class="btn btn-primary" href="{% url 'disable_two_factor' %}?q={{ web_user.username }}">Disable Two-Factor Authentication</a>
         {% endif %}
+        <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username }}">View User Audit Report</a>
         </div>
     {% endif %}
 {% endblock %}
