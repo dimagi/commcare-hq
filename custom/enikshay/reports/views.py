@@ -78,7 +78,7 @@ class DuplicateIdsReport(TemplateView):
                 case['device_number_in_form'] = form_device_number
                 case['form_device_id'] = form.metadata.deviceID
                 case['form_user_id'] = form.user_id
-                case['auth_user_id'] = form.auth_context.user_id
+                case['auth_user_id'] = form.auth_context.get('user_id')
 
         self.add_user_info_to_cases(bad_cases)
         context = {
@@ -96,8 +96,8 @@ class DuplicateIdsReport(TemplateView):
 
         auth_user_ids = [case['auth_user_id'] for case in bad_cases
                          if 'auth_user_id' in case]
-        auth_usernames = [user_doc['username'] for user_doc in
-                          iter_docs(CommCareUser.get_db(), auth_user_ids)]
+        auth_usernames = {user_doc['_id']: user_doc['username'] for user_doc in
+                          iter_docs(CommCareUser.get_db(), auth_user_ids)}
         for case in bad_cases:
             user_dict = user_info.get(case.get('form_user_id'))
             if user_dict:
@@ -106,7 +106,7 @@ class DuplicateIdsReport(TemplateView):
                 if device_id == 'Formplayer':
                     auth_username = auth_usernames.get(case['auth_user_id'])
                     device_id = "WebAppsLogin*{}*as*{}".format(
-                        auth_username, user_dict['username'])
+                        auth_username, user_dict['username']).replace('.', '_')
                 try:
                     device_number = user_dict['device_ids'].index(device_id) + 1
                 except ValueError:
@@ -129,7 +129,7 @@ class DuplicateIdsReport(TemplateView):
     def get_user_info(self, user_ids):
         return {
             user_doc['_id']: {
-                'username': user_doc['username'],
+                'username': user_doc['username'].split('@')[0],
                 'device_ids': [d['device_id'] for d in user_doc['devices']],
             }
             for user_doc in iter_docs(CommCareUser.get_db(), user_ids)
