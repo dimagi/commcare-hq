@@ -133,12 +133,22 @@ class AppManagerTest(TestCase):
         for new_form, old_form in zip(new_forms, old_forms):
             self.assertEqual(new_form.source, old_form.source)
             self.assertNotEqual(new_form.unique_id, old_form.unique_id)
+        for new_module, old_module in zip(new_app.get_modules(), self.app.get_modules()):
+            if isinstance(old_module, ReportModule):
+                old_config_ids = {config.uuid for config in old_module.report_configs}
+                new_config_ids = {config.uuid for config in new_module.report_configs}
+                self.assertEqual(old_config_ids.intersection(new_config_ids), set())
 
     def testImportApp_from_id(self):
         self.assertTrue(self.app.blobs)
         self._test_import_app(self.app.id)
 
     def testImportApp_from_source(self):
+        report_module = self.app.add_module(ReportModule.new_module('Reports', None))
+        report_module.report_configs = [
+            ReportAppConfig(report_id='config_id1', header={'en': 'CommBugz'}),
+            ReportAppConfig(report_id='config_id2', header={'en': 'CommBugz'})
+        ]
         app_source = self.app.export_json(dump_json=False)
         self._test_import_app(app_source)
 
