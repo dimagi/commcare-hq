@@ -85,7 +85,7 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN)
+    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -859,14 +859,20 @@ class ExportInstance(BlobMixin, Document):
         def consider(column):
             return not isinstance(column, UserDefinedExportColumn)
 
+        def is_case_name(column):
+            return (
+                column.item.path[-1].name == 'case_name'
+                or (column.item.path[-1].name == '@case_id' and column.item.transform == CASE_NAME_TRANSFORM)
+            )
+
         from corehq.apps.export.system_properties import get_case_name_column
         case_id_columns = {
             _path_nodes_to_string(column.item.path[:-1]): column
             for column in table.columns if consider(column) and column.item.path[-1].name == '@case_id'
         }
         case_name_columns = {
-            _path_nodes_to_string(column.item.path[:-2]): column
-            for column in table.columns if consider(column) and column.item.path[-1].name == 'case_name'
+            _path_nodes_to_string(column.item.path[:-1]): column
+            for column in table.columns if consider(column) and is_case_name(column)
         }
         for path, column in case_id_columns.items():
             if path not in case_name_columns:
