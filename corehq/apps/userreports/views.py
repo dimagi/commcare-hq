@@ -1466,9 +1466,13 @@ def export_data_source(request, domain, config_id):
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     build = config.meta.build
-    return json_response({
-        'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
-    })
+    # there appears to be a way that these can be built, but not have initiated set
+    if build.initiated or build.initiated_in_place:
+        return json_response({
+            'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
+        })
+
+    return json_response({'isBuilt': True})
 
 
 def _get_report_filter(domain, report_id, filter_id):
