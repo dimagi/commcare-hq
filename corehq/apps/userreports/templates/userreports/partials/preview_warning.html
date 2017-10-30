@@ -6,8 +6,16 @@
   <p>
     {% blocktrans %}
       You can try out creating reports
-      but won't be able to save them.  To save reports, please
-      <a href="{{ pricing_page_url }}" target="_blank">Subscribe to our Pro Plan</a>.
+      but won't be able to save them.
     {% endblocktrans %}
+      {% if pricing_page_url %}
+        {% blocktrans %}
+        To save reports, please <a href="{{ pricing_page_url }}" target="_blank">Subscribe to our Pro Plan</a>.
+        {% endblocktrans %}
+      {% else %}
+        {% blocktrans %}
+        To save more reports, please contact our Support Team.
+        {% endblocktrans %}
+      {% endif %}
   </p>
 </div>

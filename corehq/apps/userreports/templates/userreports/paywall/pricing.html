@@ -38,9 +38,13 @@
             </p>
             <p>
                 {% blocktrans %}
-                Report Builder is part of the <strong>Pro</strong> or higher software plans. See the
-                  <a href="{{ pricing_page_url }}">pricing plan options</a> for details.
+                Report Builder is part of the <strong>Pro</strong> or higher software plans.
                 {% endblocktrans %}
+                {% if pricing_page_url %}
+                    {% blocktrans %}
+                    See the <a href="{{ pricing_page_url }}">pricing plan options</a> for details.
+                    {% endblocktrans %}
+                {% endif %}
             </p>
         </div>
 
