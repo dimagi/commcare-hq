@@ -87,18 +87,18 @@ class ReportFixturesProvider(FixtureProvider):
         else:
             apps = get_apps_in_domain(restore_user.domain, include_remote=False)
 
-        report_configs = [
-            report_config
+        report_configs = {
+            report_config.uuid: report_config
             for app_ in apps
             for module in app_.modules if isinstance(module, ReportModule)
             for report_config in module.report_configs
-        ]
+        }
         if not report_configs:
             return []
 
         root = E.fixture(id=self.id, user_id=restore_user.user_id)
         reports_elem = E.reports(last_sync=datetime.utcnow().isoformat())
-        for report_config in report_configs:
+        for report_config in report_configs.values():
             try:
                 reports_elem.append(self.report_config_to_fixture(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
