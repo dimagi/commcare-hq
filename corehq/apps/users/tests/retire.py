@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 import mock
 
 import uuid
@@ -80,7 +80,7 @@ class RetireUserTestCase(TestCase):
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertFalse(form.is_deleted)
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_undelete_system_forms(self):
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
