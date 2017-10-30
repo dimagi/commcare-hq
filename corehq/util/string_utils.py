@@ -1,4 +1,5 @@
 import random
+import six
 import string
 
 
@@ -8,7 +9,12 @@ def random_string(n=6):
 
 
 def ensure_unicode(s):
-    if not s or isinstance(s, unicode):
+    if isinstance(s, six.text_type):
         return s
-    else:
-        return s.decode('utf-8')
+    elif isinstance(s, six.binary_type):
+        try:
+            return s.decode('utf-8')
+        except UnicodeDecodeError:
+            # https://sentry.io/dimagi/commcarehq/issues/391378081/
+            return s.decode('latin1')
+    return six.text_type(s)

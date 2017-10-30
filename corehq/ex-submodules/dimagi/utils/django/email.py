@@ -9,9 +9,9 @@ from django.core.mail.message import EmailMultiAlternatives
 from django.utils.translation import ugettext as _
 from requests.exceptions import SSLError
 
-from dimagi.utils.logging import notify_error
 import logging
 
+from corehq.util.string_utils import ensure_unicode
 
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
@@ -26,14 +26,13 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
 
     recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
 
-    if not isinstance(html_content, unicode):
-        html_content = html_content.decode('utf-8')
+    html_content = ensure_unicode(html_content)
 
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
-    elif not isinstance(text_content, unicode):
-        text_content = text_content.decode('utf-8')
+    else:
+        text_content = ensure_unicode(text_content)
 
 
     if ga_track and settings.ANALYTICS_IDS.get('GOOGLE_ANALYTICS_API_ID'):
