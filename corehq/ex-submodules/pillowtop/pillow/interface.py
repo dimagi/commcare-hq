@@ -265,6 +265,16 @@ class ConstructedPillow(PillowBase):
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
     error_id = None
+
+    # log in case PillowError.get_or_create errors
+    pillow_logging.exception(
+        u"[%s] Error on change: %s, %s." % (
+            pillow.get_name(),
+            change['id'],
+            exception
+        )
+    )
+
     # always retry document missing errors, because the error is likely with couch
     if pillow.retry_errors or isinstance(exception, DocumentMissingError):
         error = PillowError.get_or_create(change, pillow)
