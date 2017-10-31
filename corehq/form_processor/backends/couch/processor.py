@@ -158,7 +158,7 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
-        case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock)
+        case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock, wrap=True)
         found = bool(case)
         if not found:
             case = CommCareCase()
