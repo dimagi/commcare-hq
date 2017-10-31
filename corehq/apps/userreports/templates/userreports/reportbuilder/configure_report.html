@@ -219,7 +219,7 @@
 
             <!-- ko if: selectedChart() === 'none' -->
             <div data-bind="fadeVisible: isAggregationEnabled">
-                <div class="btn btn-primary" data-bind="click: function(){selectedChart('bar');}">{% trans 'Add Chart' %}</div>
+                <div class="btn btn-primary" data-bind="click: addChart">{% trans 'Add Chart' %}</div>
                 <div class="spacer"></div>
             </div>
             <!-- /ko -->
@@ -251,7 +251,7 @@
                  data-bind="fadeVisible: previewChart">
               <h3 style="display: inline-block">{% trans 'Chart Preview' %}</h3>
               <div class="pull-right">
-                <div class="btn btn-danger" data-bind="click: function(){selectedChart('none');}"><i class="fa fa-remove"></i></div>
+                <div class="btn btn-danger" data-bind="click: removeChart"><i class="fa fa-remove"></i></div>
               </div>
               <div data-bind="if: selectedChart() !== 'none'">
                   Type:
