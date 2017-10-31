@@ -3981,6 +3981,7 @@ class ReportAppConfig(DocumentSchema):
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
+    sync_delay = DecimalProperty(default=0.0)
 
     _report = None
 
@@ -4641,6 +4642,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # domains that are allowed to have linked apps with this master
     linked_whitelist = StringListProperty()
+
+    mobile_ucr_restore_version = StringProperty(
+        default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
+    )
 
     @classmethod
     def wrap(cls, data):
