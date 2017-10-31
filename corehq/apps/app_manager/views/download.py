@@ -239,16 +239,17 @@ def download_file(request, domain, app_id, path):
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     try:
-        assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
         try:
+            assert request.app.copy_of
             payload = request.app.fetch_attachment(full_path)
-        except ResourceNotFound:
+        except (AssertionError, ResourceNotFound):
             if build_profile in request.app.build_profiles and build_profile_access:
                 try:
                     # look for file guaranteed to exist if profile is created
+                    assert request.app.copy_of
                     request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
-                except ResourceNotFound:
+                except (AssertionError, ResourceNotFound):
                     request.app.create_build_files(save=True, build_profile_id=build_profile)
                     request.app.save()
                     payload = request.app.fetch_attachment(full_path)
@@ -264,7 +265,7 @@ def download_file(request, domain, app_id, path):
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response
-    except (ResourceNotFound, AssertionError):
+    except ResourceNotFound:
         if request.app.copy_of:
             if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
                 raise Http404()
