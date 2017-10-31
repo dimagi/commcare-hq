@@ -359,9 +359,11 @@
                 "datatype": "string",
                 "expression": {
                     "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "key_populations"
+                        "type": "enikshay_key_populations",
+                        "key_populations_expression": {
+                            "type": "property_name",
+                            "property_name": "key_populations"
+                        }
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -832,7 +834,7 @@
                         },
                         "type": "conditional",
                         "expression_if_false": {
-                            "constant": "NA",
+                            "constant": "",
                             "type": "constant"
                         }
                     }
