@@ -79,6 +79,7 @@
     - hq.secure_submissions
     - hq.translation_strategy
     - hq.mobile_ucr_sync_interval
+    - hq.mobile_ucr_restore_version
 
 - title: 'Disabled'
   id: app-settings-disabled
