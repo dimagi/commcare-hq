@@ -33902,6 +33902,10 @@ msgstr ""
 msgid "CommCare Reports"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
+#: corehq/trans_override.py:6
+msgid "Token generator"
+msgstr ""
+
 #: custom/_legacy/a5288/reports.py:15
 msgid "Missed Callbacks"
 msgstr ""

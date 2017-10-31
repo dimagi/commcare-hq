@@ -37909,6 +37909,10 @@ msgstr "Opérations administratives"
 msgid "CommCare Reports"
 msgstr "Rapports CommCare"
 
+#: corehq/trans_override.py:6
+msgid "Token generator"
+msgstr ""
+
 #: custom/_legacy/a5288/reports.py:15
 msgid "Missed Callbacks"
 msgstr "Rappels manqués"
