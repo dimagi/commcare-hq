@@ -1,6 +1,7 @@
 import HTMLParser
 import json
 import socket
+import uuid
 from StringIO import StringIO
 from collections import defaultdict, namedtuple, OrderedDict
 from datetime import timedelta, date, datetime
@@ -26,6 +27,7 @@ from django.http.response import Http404
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
@@ -93,7 +95,7 @@ from . import service_checks, escheck
 from .forms import (
     AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
-    DisableTwoFactorForm)
+    DisableTwoFactorForm, DisableUserForm)
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
@@ -726,20 +728,108 @@ def web_user_lookup(request):
         return render(request, template, {})
 
     web_user = WebUser.get_by_username(web_user_email)
-    context = {}
+    context = {
+        'audit_report_url': reverse('admin_report_dispatcher', args=('user_audit_report',))
+    }
     if web_user is None:
         messages.error(
             request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
     else:
         from django_otp import user_has_device
-        context = {
-            'web_user': web_user
-        }
-
+        context['web_user'] = web_user
         django_user = web_user.get_django_user()
         context['has_two_factor'] = user_has_device(django_user)
     return render(request, template, context)
+
+
+@method_decorator(require_superuser, name='dispatch')
+class DisableUserView(FormView):
+    template_name = 'hqadmin/disable_user.html'
+    success_url = None
+    form_class = DisableUserForm
+    urlname = 'disable_user'
+
+    def get_initial(self):
+        return {
+            'user': self.user,
+            'reset_password': False,
+        }
+
+    @property
+    def username(self):
+        return self.request.GET.get("username")
+
+    @cached_property
+    def user(self):
+        try:
+            return User.objects.get(username__iexact=self.username)
+        except User.DoesNotExist:
+            return None
+
+    @property
+    def redirect_url(self):
+        return '{}?q={}'.format(reverse('web_user_lookup'), self.username)
+
+    def get(self, request, *args, **kwargs):
+        if not self.user:
+            return self.redirect_response(request)
+
+        return super(DisableUserView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(DisableUserView, self).get_context_data(**kwargs)
+        context['verb'] = 'disable' if self.user.is_active else 'enable'
+        context['username'] = self.username
+        return context
+
+    def redirect_response(self, request):
+        messages.warning(request, _('User with username %(username)s not found.') % {
+            'username': self.username
+        })
+        return redirect(self.redirect_url)
+
+    def form_valid(self, form):
+        if not self.user:
+            return self.redirect_response(self.request)
+
+        reset_password = form.cleaned_data['reset_password']
+        if reset_password:
+            self.user.set_password(uuid.uuid4().hex)
+
+        # toggle active state
+        self.user.is_active = not self.user.is_active
+        self.user.save()
+
+        verb = 're-enabled' if self.user.is_active else 'disabled'
+        mail_admins(
+            "User account {}".format(verb),
+            "The following user account has been {verb}: \n"
+            "    Account: {username}\n"
+            "    Reset by: {reset_by}\n"
+            "    Password reset: {password_reset}\n"
+            "    Reason: {reason}".format(
+                verb=verb,
+                username=self.username,
+                reset_by=self.request.user.username,
+                password_reset=str(reset_password),
+                reason=form.cleaned_data['reason'],
+            )
+        )
+        send_HTML_email(
+            "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
+            self.username,
+            render_to_string('hqadmin/email/account_disabled_email.html', context={
+                'support_email': settings.SUPPORT_EMAIL,
+                'password_reset': reset_password,
+                'user': self.user,
+                'verb': verb,
+                'reason': form.cleaned_data['reason'],
+            }),
+        )
+
+        messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
+        return redirect('{}?q={}'.format(reverse('web_user_lookup'), self.username))
 
 
 @method_decorator(require_superuser, name='dispatch')

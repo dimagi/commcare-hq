@@ -195,6 +195,29 @@ def get_prescription_case_structure(case_id, indexed_episode_id, extra_update=No
     )
 
 
+def get_prescription_item_case_structure(case_id, indexed_prescription_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = {
+        'state': 'fulfilled',
+    }
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "prescription_item",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_prescription_id, attrs={"create": False}),
+            identifier='prescription',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='prescription',
+        )],
+        walk_related=False,
+    )
+
+
 def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=None):
     # https://india.commcarehq.org/a/enikshay/apps/view/9340429733463e58ae0e1518defee221/summary/#/cases
     # https://docs.google.com/spreadsheets/d/1MCG205FOcsYsmKXHoSTjZ6A1iuqCIAESyleBl7G7PR8/
@@ -287,6 +310,7 @@ class ENikshayCaseStructureMixin(object):
         self.test_id = u"test"
         self.lab_referral_id = u"lab_referral"
         self.prescription_id = "prescription_id"
+        self.prescription_item_id = 'prescription_item_id'
         self.referral_id = 'referal'
         self.trail_id = 'trail'
         self._prescription_created = False
@@ -411,6 +435,14 @@ class ENikshayCaseStructureMixin(object):
     def create_prescription_case(self, prescription_id=None, extra_update=None):
         return self.factory.create_or_update_case(
             get_prescription_case_structure(prescription_id or uuid.uuid4().hex, self.episode_id, extra_update)
+        )[0]
+
+    def create_prescription_item_case(self, prescription_case_id, prescription_item_case_id=None):
+        return self.factory.create_or_update_case(
+            get_prescription_item_case_structure(
+                prescription_item_case_id or uuid.uuid4().hex,
+                prescription_case_id
+            )
         )[0]
 
     def create_voucher_case(self, prescription_id, extra_update=None):

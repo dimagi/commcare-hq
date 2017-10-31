@@ -335,3 +335,25 @@ def episode_from_person_expression(spec, context):
         ExpressionFactory.from_spec(wrapped.person_id_expression, context)
     )
     return wrapped
+
+
+class KeyPopulationsExpression(JsonObject):
+    type = TypeProperty('enikshay_key_populations')
+    key_populations_expression = DefaultProperty(required=True)
+
+    def configure(self, key_populations_expression):
+        self._key_populations_expression = key_populations_expression
+
+    def __call__(self, item, context=None):
+        key_populations_value = self._key_populations_expression(item, context)
+        if not key_populations_value:
+            return ''
+        return ', '.join(key_populations_value.split(' '))
+
+
+def key_populations_expression(spec, context):
+    wrapped = KeyPopulationsExpression.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.key_populations_expression, context)
+    )
+    return wrapped

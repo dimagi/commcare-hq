@@ -14,7 +14,7 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
-    DeviceLogSoftAssertReport
+    DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
@@ -109,7 +109,7 @@ class ProjectReportsTab(UITab):
         Return the url for the start of the report builder, or the paywall.
         """
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-        if toggle_enabled(self._request, toggles.REPORT_BUILDER_V2):
+        if not toggle_enabled(self._request, toggles.REPORT_BUILDER_V1):
             from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
             return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
         else:
@@ -1839,6 +1839,7 @@ class AdminTab(UITab):
                     CommConnectProjectSpacesReport,
                     CommTrackProjectSpacesReport,
                     DeviceLogSoftAssertReport,
+                    UserAuditReport,
                 ]
             ]),
         ]

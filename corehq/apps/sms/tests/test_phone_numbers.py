@@ -159,12 +159,6 @@ class CaseContactPhoneNumberTestCase(TestCase):
                 pk=pk)
             self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
-            # If nothing changes, the phone entry should not be saved
-            with patch('corehq.apps.sms.models.PhoneNumber.save') as mock_save:
-                case = self.set_case_property(case, 'abc', 'def')
-                self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
-                mock_save.assert_not_called()
-
             # If phone entry is ahead of the case in terms of contact_last_modified, no update should happen
             v = self.get_case_phone_number(case)
             v.contact_last_modified += timedelta(days=1)
@@ -392,6 +386,7 @@ class SQLPhoneNumberTestCase(TestCase):
         self.assertEqual(owner.get_id, mobile_user.get_id)
 
         web_user = WebUser.create(self.domain, 'ghi', 'jkl')
+        self.addCleanup(web_user.delete)
         number = PhoneNumber(owner_doc_type='WebUser', owner_id=web_user.get_id)
         owner = number.owner
         self.assertTrue(isinstance(owner, WebUser))

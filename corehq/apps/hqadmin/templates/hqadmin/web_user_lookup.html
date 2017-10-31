@@ -10,6 +10,9 @@
         <hr>
         <div class="col-md-6">
         <h1>{% blocktrans with user_name=web_user.human_friendly_name %}{{ user_name }}'s Information{% endblocktrans %}</h1>
+        {% if not web_user.is_active %}
+        <div class="alert alert-warning" role="alert">{% trans "This account is disabled." %}</div>
+        {% endif %}
         <dl>
             <dt>{% trans "ID" %}</dt>
             <dd>{{ web_user.get_id }}
@@ -30,10 +33,9 @@
                 </tr>
             {% endfor %}
         </table>
-        {% if has_two_factor %}
-        <h3>{% trans "Disable Two-Factor Authentication" %}</h3>
-        <a class="btn btn-danger" href="{% url 'disable_two_factor' %}?q={{ web_user.username }}">Disable Two-Factor Authentication</a>
-        {% endif %}
+        <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username }}">View User Audit Report</a>
+        <a class="btn btn-primary" href="{% url 'disable_user' %}?username={{ web_user.username }}">Disable/Enable User Account</a>
+        <a class="btn btn-primary {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username }}">Disable Two-Factor Authentication</a>
         </div>
     {% endif %}
 {% endblock %}

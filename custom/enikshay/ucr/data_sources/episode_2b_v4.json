@@ -448,33 +448,79 @@
                 "display_name": "person/mobile_number",
                 "datatype": "string",
                 "expression": {
-                    "type": "coalesce",
-                    "expression": {
-                        "value_expression": {
-                            "datatype": "string",
-                            "type": "property_name",
-                            "property_name": "contact_phone_number"
+                    "separator": ", ",
+                    "expressions": [
+                        {
+                            "type": "coalesce",
+                            "expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "contact_phone_number"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            },
+                            "default_expression": {
+                                "value_expression": {
+                                    "datatype": "string",
+                                    "type": "property_name",
+                                    "property_name": "phone_number"
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "type": "named",
+                                    "name": "person_id"
+                                }
+                            }
+
                         },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "type": "named",
-                            "name": "person_id"
-                        }
-                    },
-                    "default_expression": {
-                        "value_expression": {
-                            "datatype": "string",
-                            "type": "property_name",
-                            "property_name": "phone_number"
+                        {
+                            "value_expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "phone_number_alternate_1"
+                            },
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "person_id"
+                            }
                         },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareCase",
-                        "doc_id_expression": {
-                            "type": "named",
-                            "name": "person_id"
+                        {
+                            "value_expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "phone_number_alternate_2"
+                            },
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "person_id"
+                            }
+                        },
+                        {
+                            "value_expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "phone_number_alternate_3"
+                            },
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "person_id"
+                            }
                         }
-                    }
+                    ],
+                    "type": "concatenate_strings"
                 },
                 "transform": {},
                 "is_primary_key": false,
@@ -499,8 +545,11 @@
                         "property_value": ""
                     },
                     "expression_if_true": {
-                        "type": "named",
-                        "name": "key_populations"
+                        "type": "enikshay_key_populations",
+                        "key_populations_expression": {
+                            "type": "named",
+                            "name": "key_populations"
+                        }
                     },
                     "type": "conditional",
                     "expression_if_false": {
@@ -821,6 +870,182 @@
             {
                 "comment": null,
                 "create_index": false,
+                "display_name": "microscopy_test_result_date",
+                "datatype": "date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_microscopy_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "microscopy_test_result_date"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "microscopy_test_testing_facility_name",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_microscopy_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "testing_facility_name"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "microscopy_test_testing_facility_name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "microscopy_test_lab_serial_number",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_microscopy_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "lab_serial_number"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "microscopy_test_lab_serial_number"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "microscopy_test_result_summary_display",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_microscopy_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result_summary_display"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "microscopy_test_result_summary_display"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "cbnaat_test_result_date",
+                "datatype": "date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_cbnaat_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "cbnaat_test_result_date"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "cbnaat_test_testing_facility_name",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_cbnaat_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "testing_facility_name"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "cbnaat_test_testing_facility_name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "cbnaat_test_lab_serial_number",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_cbnaat_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "lab_serial_number"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "cbnaat_test_lab_serial_number"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "cbnaat_test_result_summary_display",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_cbnaat_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result_summary_display"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "cbnaat_test_result_summary_display"
+            },
+            {
+                "comment": null,
+                "create_index": false,
                 "display_name": "microbiological_test_requested_date",
                 "datatype": "date",
                 "expression": {
@@ -978,7 +1203,7 @@
                             },
                             {
                                 "type": "property_name",
-                                "property_name": "result_summary_display"
+                                "property_name": "result"
                             }
                         ],
                         "separator": ", "
@@ -2735,6 +2960,382 @@
                     }
                 }
             },
+            "earliest_microscopy_tb_detected_test_case": {
+                "aggregation_fn": "first_item",
+                "type": "reduce_items",
+                "items_expression": {
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    },
+                    "type": "sort_items",
+                    "items_expression": {
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "test"
+                                },
+                                {
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": [
+                                        "microscopy-zn",
+                                        "microscopy-fluorescent"
+                                    ]
+                                },
+                                {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "rft_general"
+                                    },
+                                    "property_value": ["diagnosis_dstb", "diagnosis_drtb"]
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result_recorded"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "yes"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "tb_detected"
+                                }
+                            ]
+                        },
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "type": "array_index",
+                                    "index_expression": {
+                                        "constant": 0,
+                                        "type": "constant"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "earliest_microscopy_tb_not_detected_test_case": {
+                "aggregation_fn": "first_item",
+                "type": "reduce_items",
+                "items_expression": {
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    },
+                    "type": "sort_items",
+                    "items_expression": {
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "test"
+                                },
+                                {
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": [
+                                        "microscopy-zn",
+                                        "microscopy-fluorescent"
+                                    ]
+                                },
+                                {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "rft_general"
+                                    },
+                                    "property_value": ["diagnosis_dstb", "diagnosis_drtb"]
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result_recorded"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "yes"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "tb_not_detected"
+                                }
+                            ]
+                        },
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "type": "array_index",
+                                    "index_expression": {
+                                        "constant": 0,
+                                        "type": "constant"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "earliest_microscopy_test_case": {
+                "type": "coalesce",
+                "expression": {
+                    "type": "named",
+                    "name": "earliest_microscopy_tb_detected_test_case"
+                },
+                "default_expression": {
+                    "type": "named",
+                    "name": "earliest_microscopy_tb_not_detected_test_case"
+                }
+            },
+            "earliest_cbnaat_test_case": {
+                "type": "coalesce",
+                "expression": {
+                    "type": "named",
+                    "name": "earliest_cbnaat_tb_detected_test_case"
+                },
+                "default_expression": {
+                    "type": "named",
+                    "name": "earliest_cbnaat_tb_not_detected_test_case"
+                }
+            },
+            "earliest_cbnaat_tb_not_detected_test_case": {
+                "aggregation_fn": "first_item",
+                "type": "reduce_items",
+                "items_expression": {
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    },
+                    "type": "sort_items",
+                    "items_expression": {
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "test"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "cbnaat"
+                                },
+                                {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "rft_general"
+                                    },
+                                    "property_value": ["diagnosis_dstb", "diagnosis_drtb"]
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result_recorded"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "yes"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "tb_not_detected"
+                                }
+                            ]
+                        },
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "type": "array_index",
+                                    "index_expression": {
+                                        "constant": 0,
+                                        "type": "constant"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "earliest_cbnaat_tb_detected_test_case": {
+                "aggregation_fn": "first_item",
+                "type": "reduce_items",
+                "items_expression": {
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    },
+                    "type": "sort_items",
+                    "items_expression": {
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "test"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "cbnaat"
+                                },
+                                {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "rft_general"
+                                    },
+                                    "property_value": ["diagnosis_dstb", "diagnosis_drtb"]
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result_recorded"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "yes"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "tb_detected"
+                                }
+                            ]
+                        },
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "type": "array_index",
+                                    "index_expression": {
+                                        "constant": 0,
+                                        "type": "constant"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "s_drug_case": {
                 "aggregation_fn": "last_item",
                 "type": "reduce_items",
@@ -3270,9 +3871,7 @@
                                     },
                                     "property_value": [
                                         "microscopy-zn",
-                                        "microscopy-fluorescent",
-                                        "cbnaat",
-                                        "culture"
+                                        "microscopy-fluorescent"
                                     ]
                                 },
                                 {
@@ -4055,9 +4654,7 @@
                                     },
                                     "property_value": [
                                         "microscopy-zn",
-                                        "microscopy-fluorescent",
-                                        "cbnaat",
-                                        "culture"
+                                        "microscopy-fluorescent"
                                     ]
                                 },
                                 {

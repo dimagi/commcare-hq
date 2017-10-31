@@ -420,6 +420,10 @@ def update_unique_ids(app_source, id_map=None):
     if id_map is None:
         id_map = {}
     for m, module in enumerate(app_source['modules']):
+        if module['module_type'] == 'report':
+            for config in module['report_configs']:
+                config['uuid'] = uuid.uuid4().hex
+
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
             new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], id_map)

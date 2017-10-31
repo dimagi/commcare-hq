@@ -15,7 +15,7 @@ def get_form_ids_by_type(domain, type_, start=None, end=None):
     assert type_ in doc_types()
     startkey = [domain, type_]
     if end:
-        endkey = startkey + end.isoformat()
+        endkey = startkey + [end.isoformat()]
     else:
         endkey = startkey + [{}]
 

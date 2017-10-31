@@ -7,6 +7,7 @@ from corehq.apps.locations.dbaccessors import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
@@ -17,7 +18,6 @@ from corehq.apps.locations.dbaccessors import get_users_location_ids
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
@@ -78,7 +78,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         if not self.request.can_access_all_locations:
             query = query.OR(self.scope_filter())
 
-        search_string = SearchFilter.get_value(self.request, self.domain)
+        search_string = CaseSearchFilter.get_value(self.request, self.domain)
         if search_string:
             query = query.set_query({"query_string": {"query": search_string}})
 

@@ -978,6 +978,16 @@ try:
 except NameError:
     COUCH_DATABASES = _determine_couch_databases(None)
 
+# Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
+# hosting environments use pgBouncer with transaction pooling. For more information, see:
+# https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
+for database in DATABASES.values():
+    if (
+        database['ENGINE'] == 'django.db.backends.postgresql_psycopg2' and
+        database.get('DISABLE_SERVER_SIDE_CURSORS') is None
+    ):
+        database['DISABLE_SERVER_SIDE_CURSORS'] = True
+
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
@@ -1473,7 +1483,7 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error alert-danger',
+    messages.WARNING: 'alert-error alert-warning',
     messages.ERROR: 'alert-error alert-danger',
 }
 
@@ -1967,9 +1977,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v3.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
@@ -2052,6 +2064,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
     ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
+    ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

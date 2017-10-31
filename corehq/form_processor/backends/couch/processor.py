@@ -158,7 +158,7 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
-        case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock)
+        case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock, wrap=True)
         found = bool(case)
         if not found:
             case = CommCareCase()
@@ -206,19 +206,26 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+
+        def _get_case():
+            if wrap:
+                return CommCareCase.get(case_id)
+            else:
+                return CommCareCase.get_db().get(case_id)
+
         try:
             if strip_history:
                 case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
             elif lock:
                 try:
-                    return CommCareCase.get_locked_obj(_id=case_id)
+                    case, lock = CommCareCase.get_locked_obj(_id=case_id)
+                    if case and not wrap:
+                        case = case.to_json()
+                    return case, lock
                 except redis.RedisError:
-                    case_doc = CommCareCase.get(case_id)
+                    case_doc = _get_case()
             else:
-                if wrap:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    case_doc = CommCareCase.get_db().get(case_id)
+                case_doc = _get_case()
         except ResourceNotFound:
             return None, None
 
