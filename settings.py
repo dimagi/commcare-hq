@@ -978,6 +978,12 @@ try:
 except NameError:
     COUCH_DATABASES = _determine_couch_databases(None)
 
+if DATABASES['default'].get('DISABLE_SERVER_SIDE_CURSORS') is None:
+    # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and
+    # our hosting environments use pgBouncer with transaction pooling. More info:
+    # https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
+    DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
+
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
