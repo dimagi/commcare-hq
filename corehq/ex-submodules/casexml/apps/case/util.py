@@ -184,34 +184,37 @@ def iter_cases(case_ids, strip_history=False, wrap=True):
             yield case
 
 
-def get_datetime_case_property_changed(case, case_property_name, value):
+def get_case_property_changed_info(case, case_property_name, value):
     """Returns the datetime a particular case property was changed to a specific value
 
     Not performant!
     """
     from casexml.apps.case.xform import get_case_updates
-    PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'new_value modified_on')
+    PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'case_update new_value modified_on')
 
     def property_changed_in_action(action, case_property_name):
         update_actions = [
-            (update.modified_on_str, update.get_update_action())
+            (update.modified_on_str, update.get_update_action(), action)
             for update in get_case_updates(action.form)
             if update.id == case.case_id
         ]
-        for (modified_on, action) in update_actions:
-            if action:
-                property_changed = action.dynamic_properties.get(case_property_name)
+        for (modified_on, update_action, case_update) in update_actions:
+            if update_action:
+                property_changed = update_action.dynamic_properties.get(case_property_name)
                 if property_changed:
-                    return PropertyChangedInfo(property_changed, modified_on)
+                    return PropertyChangedInfo(case_update, property_changed, modified_on)
         return False
 
-    date_of_change = None
     actions = case.actions
     for i, transactions in enumerate(actions):
         property_changed_info = property_changed_in_action(transactions, case_property_name)
         if property_changed_info and property_changed_info.new_value == value:
             # get the date that case_property changed
-            date_of_change = parse_datetime(property_changed_info.modified_on)
-            break
+            return property_changed_info
 
-    return date_of_change
+
+def get_datetime_case_property_changed(case, case_property_name, value):
+    property_changed_info = get_case_property_changed_info(case, case_property_name, value)
+    if property_changed_info:
+        # get the date that case_property changed
+        return parse_datetime(property_changed_info.modified_on)
