@@ -76,18 +76,26 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         try:
             search_query = query_sections[2]
         except IndexError:
-            search_query = ""
+            search_query = None
         return parent_name, search_query
 
     def get_locations_query(self, query):
         if self.custom_locations_search():
             parent_name, search_query = self._get_location_specific_custom_filters(query)
-            parents = SQLLocation.active_objects.filter(name__iexact=parent_name, domain=self.domain)
-            if parent_name and parents.count():
-                descendants = SQLLocation.active_objects.get_queryset_descendants(parents, include_self=True)
-                locations = descendants.filter_by_user_input(self.domain, search_query)
+            if search_query is None:
+                # autocomplete parent names while user is looking for just the parent name
+                # and has not yet entered any child location name
+                locations = SQLLocation.active_objects.filter(name__istartswith=parent_name, domain=self.domain)
             else:
-                return SQLLocation.active_objects.none()
+                # if any parent locations with name entered then
+                #    find locations under them
+                # else just return empty queryset
+                parents = SQLLocation.active_objects.filter(name__iexact=parent_name, domain=self.domain)
+                if parent_name and parents.count():
+                    descendants = SQLLocation.active_objects.get_queryset_descendants(parents, include_self=True)
+                    locations = descendants.filter_by_user_input(self.domain, search_query)
+                else:
+                    return SQLLocation.active_objects.none()
         else:
             locations = SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
         return locations
