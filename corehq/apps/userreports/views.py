@@ -266,12 +266,16 @@ class ReportBuilderView(BaseDomainView):
     @property
     def main_context(self):
         main_context = super(ReportBuilderView, self).main_context
+        allowed_num_reports = allowed_report_builder_reports(self.request)
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit':
-                number_of_report_builder_reports(self.domain) >= allowed_report_builder_reports(self.request),
-            'report_limit': allowed_report_builder_reports(self.request),
+            'at_report_limit': (
+                number_of_report_builder_reports(self.domain) >= allowed_num_reports
+                and allowed_num_reports is not None
+            ),
+            'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
         })
         return main_context
 
@@ -388,15 +392,15 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     @property
     def page_context(self):
         context = super(ReportBuilderPaywallPricing, self).page_context
-        if has_report_builder_access(self.request):
-            max_allowed_reports = allowed_report_builder_reports(self.request)
-            num_builder_reports = number_of_report_builder_reports(self.domain)
-            if num_builder_reports >= max_allowed_reports:
-                context.update({
-                    'at_report_limit': True,
-                    'max_allowed_reports': max_allowed_reports,
-
-                })
+        max_allowed_reports = allowed_report_builder_reports(self.request)
+        num_builder_reports = number_of_report_builder_reports(self.domain)
+        context.update({
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
+            'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
+            'support_email': settings.SUPPORT_EMAIL,
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+        })
         return context
 
 
