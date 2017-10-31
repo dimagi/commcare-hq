@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import uuid
-from copy import copy
+from copy import copy, deepcopy
+from collections import defaultdict
 
 from celery.task import task
 from soil import DownloadBase
@@ -13,7 +14,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.ota.utils import get_restore_user
 from casexml.apps.phone.tests.utils import MockDevice
 from casexml.apps.case.mock.case_block import IndexAttrs
-from corehq.apps.hqcase.utils import submit_case_blocks
 
 
 @task
@@ -102,33 +102,109 @@ def submit_case(case, new_case_id, domain, source, new_parent_ids=dict()):
 
 
 def explode_cases_2(domain, user_id, factor):
-    explosion_id = uuid.uuid4().hex
+    queue = []
+
+    def queue_case(new_case, queue):
+        queue.append(new_case)
+        if len(queue) >= 500:   # submit 500 cases at a time
+            submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
+            del queue[:]
+
+    explosion_id = str(uuid.uuid4())
+
     couch_user = CommCareUser.get_by_user_id(user_id, domain)
     restore_user = get_restore_user(domain, couch_user, None)
     device = MockDevice(restore_user.project, restore_user, {"overwrite_cache": True})
     sync_result = device.sync()
-    cases = {
-        case_id: case
-        for case_id, case in sync_result.cases.iteritems()
-        if case.case_type != "commcare-user"
-    }
-    log = sync_result.log
 
-    for explosion in range(factor - 1):
-        new_case_id_map = {case_id: str(uuid.uuid4()) for case_id in cases.keys()}
+    cases = {}
+    new_case_ids = {}
+    for case_id, case in sync_result.cases.iteritems():
+        if case.case_type != "commcare-user":
+            cases[case_id] = case
+            new_case_ids[case_id] = [str(uuid.uuid4()) for _ in range(factor - 1)]
 
-        new_cases = {}
-        for old_case_id, case in cases.iteritems():
-            new_case = copy(case)
+    graph = CaseGraph(cases)
+    for old_case_id in graph.topological_sort():
+        for explosion in range(factor - 1):
+            new_case = copy(cases[old_case_id])
 
             new_case.create = True
-            new_case.case_id = new_case_id_map[old_case_id]
+            new_case.case_id = new_case_ids[old_case_id][explosion]
             new_case.update['cc_exploded_from'] = old_case_id
             new_case.update['cc_explosion_id'] = explosion_id
             new_case.index = {
                 key: IndexAttrs(
-                    i.case_type, new_case_id_map[i.case_id], i.relationship
-                ) for key, i in case.index.iteritems()
+                    i.case_type, new_case_ids[i.case_id][explosion], i.relationship
+                ) for key, i in cases[old_case_id].index.iteritems()
             }
-            new_cases[old_case_id] = ElementTree.tostring(new_case.as_xml())
-        submit_case_blocks(new_cases, domain=domain, device_id='explode_cases_2')
+            queue_case(ElementTree.tostring(new_case.as_xml()), queue)
+
+    if len(queue):
+        submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
+
+
+class CaseGraph(object):
+    def __init__(self, cases):
+        self.graph = {}         # case indices
+        self.inverse_graph = defaultdict(list)  # reverse indices
+        self.roots = []
+
+        for case_id, case in cases.iteritems():
+            indices = [idx.case_id for idx in case.index.itervalues()]
+            self.graph[case.case_id] = indices
+            for index in indices:
+                self.inverse_graph[index].append(case.case_id)
+
+            if not indices:
+                self.roots.append(case.case_id)
+
+    def get_paths_to_root(self, case_id):
+        """find all paths to the root node
+        """
+        def paths_to_root(case_id, path):
+            path = path + [case_id]
+            if case_id not in self.graph:
+                return [path]
+            if not self.graph[case_id]:  # we made it to the top
+                return [path]
+            paths = []
+            for node in self.graph[case_id]:
+                if node not in path:
+                    newpaths = paths_to_root(node, path)
+                    for newpath in newpaths:
+                        paths.append(newpath)
+            return paths
+
+        return paths_to_root(case_id, [])
+
+    def get_ancestors(self, case_id, include_self=False):
+        paths = self.get_paths_to_root(case_id)
+        ancestors = set()
+        for path in paths:
+            ancestors |= set(path)
+        if not include_self:
+            ancestors.remove(case_id)
+
+        return ancestors
+
+    def topological_sort(self):
+        """returns all cases in topological order
+
+        Using Kahn's algorithm from here:
+        https://en.wikipedia.org/wiki/Topological_sorting
+
+        Assumes there are no cycles in the graph
+        """
+        inverse_graph = self.inverse_graph
+        graph = deepcopy(self.graph)
+        L = []
+        S = copy(self.roots)
+        while len(S) > 0:
+            n = S.pop()
+            L.append(n)
+            for m in inverse_graph[n]:
+                graph[m].remove(n)
+                if len(graph[m]) == 0:
+                    S.append(m)
+        return L
