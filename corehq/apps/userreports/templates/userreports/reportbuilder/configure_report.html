@@ -229,7 +229,7 @@
                  data-bind="fadeVisible: reportType() === 'map'">
               <h3 style="display: inline-block">{% trans 'Map Preview' %}</h3>
               <div>
-                Location field:
+                {% trans 'Location field' %}:
                 <!-- ko ifnot: optionsContainQuestions -->
                 <input type="text" class="form-control" data-bind="select2: selectablePropertyOptions, value: location_field">
                 <!-- /ko -->
