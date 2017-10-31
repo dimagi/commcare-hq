@@ -5,7 +5,7 @@ dir: ./
 allowSourceOverwrites: true
 keepBuildDir: true
 skipDirOptimize: true   # could turn this off to minify everything
-fileExclusionRegExp: /(^\.)|(\.css$)|(CACHE)|(^formdesigner)/,
+fileExclusionRegExp: (^\.)|(\.css$)
 modules:
   - name: hqwebapp/js/common
     include:
