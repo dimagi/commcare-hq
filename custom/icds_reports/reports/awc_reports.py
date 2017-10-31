@@ -1078,7 +1078,7 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         )
 
     for row in data:
-        config['data'].append(base_data(row));
+        config['data'].append(base_data(row))
 
     config["draw"] = draw
     config["recordsTotal"] = data_count

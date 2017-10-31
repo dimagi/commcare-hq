@@ -1711,9 +1711,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('scrollX', '100%')
         .withOption('scrollCollapse', true)
         .withOption('ajax', {
-         url:  url('awc_reports', vm.step),
-         data: $location.search(),
-         type: 'GET'
+            url:  url('awc_reports', vm.step),
+            data: $location.search(),
+            type: 'GET',
         })
         .withDataProp('data')
         .withOption('processing', true)
@@ -1721,7 +1721,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('createdRow', compile)
         .withPaginationType('full_numbers')
         .withOption('oLanguage', {
-                "sProcessing": "Loading. Please wait..."
+            "sProcessing": "Loading. Please wait...",
         })
         .withDOM('ltipr');
 
@@ -1733,48 +1733,48 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight for Age Status').renderWith(renderWeightForAgeStatus),
         DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight for Height Status').renderWith(renderWeightForHeightStatus),
         DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height for Age status').renderWith(renderHeightForAgeStatus),
-        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended)
+        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended),
     ];
 
-    function compile(row, data, dataIndex) {
-        $compile(angular.element(row).contents())($scope);
+    function compile(row) {
+        $compile(window.angular.element(row).contents())($scope);
     }
 
-    function renderPersonName(data, type, full, meta) {
+    function renderPersonName(data, type, full) {
         return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)">' + full.person_name || 'Data not Entered' + '</span>';
     }
 
-    function renderDateOfBirth(data, type, full, meta) {
+    function renderDateOfBirth(data, type, full) {
         return full.dob || 'Data not Entered';
     }
 
-    function renderAge(data, type, full, meta) {
+    function renderAge(data, type, full) {
         return full.age || 'Data not Entered';
     }
 
-    function renderFullyImmunizedDate(data, type, full, meta) {
+    function renderFullyImmunizedDate(data, type, full) {
         return full.fully_immunized || 'Data not Entered';
     }
 
-    function renderWeightForAgeStatus(data, type, full, meta) {
+    function renderWeightForAgeStatus(data, type, full) {
         return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'weight\')" popover-placement="right"  popover-trigger="\'mouseenter\'">'
             + full.current_month_nutrition_status.value
             + '</span>';
     }
 
-    function renderHeightForAgeStatus(data, type, full, meta) {
+    function renderHeightForAgeStatus(data, type, full) {
         return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
             + full.current_month_stunting.value
             + '</span>';
     }
 
-    function renderWeightForHeightStatus(data, type, full, meta) {
+    function renderWeightForHeightStatus(data, type, full) {
         return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
             + full.current_month_wasting.value
             + '</span>';
     }
 
-    function renderPseDaysAttended(data, type, full, meta) {
+    function renderPseDaysAttended(data, type, full) {
         return full.pse_days_attended || 'Data not Entered';
     }
 
