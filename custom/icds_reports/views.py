@@ -548,11 +548,25 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:
+                start = request.GET.get('start', 0)
+                length = request.GET.get('length', 10)
+                draw = request.GET.get('draw', 0)
+
+                order_by_number_column = request.GET.get('order[0][column]')
+                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
+                order_dir = request.GET.get('order[0][dir]', 'asc')
+                if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
+                    order_by_name_column = 'dob'
+                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+
                 data = get_awc_report_beneficiary(
-                    domain,
+                    start,
+                    length,
+                    draw,
+                    order,
                     config['awc_id'],
                     tuple(month.timetuple())[:3],
-                    tuple(two_before.timetuple())[:3]
+                    tuple(two_before.timetuple())[:3],
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(

@@ -1011,17 +1011,21 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
     }
 
 
-def get_awc_report_beneficiary(domain, awc_id, month, two_before):
+def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
+
     data = ChildHealthMonthlyView.objects.filter(
         month=datetime(*month),
         awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
-    ).order_by('-month', 'person_name')
+    ).order_by('-month', order)
+
+    data_count = data.count()
+    data = data[start:(start + length)]
 
     config = {
-        'rows': {},
+        'data': [],
         'months': [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
@@ -1050,23 +1054,23 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             dob=row_data.dob,
             sex=row_data.sex,
             age=round((datetime(*month).date() - row_data.dob).days / 365.25),
-            fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
+            fully_immunized='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
-            nutrition_status=get_status(
+            current_month_nutrition_status=get_status(
                 row_data.current_month_nutrition_status,
                 'underweight',
                 'Normal weight for age'
             ),
             recorded_weight=row_data.recorded_weight or 0,
             recorded_height=row_data.recorded_height or 0,
-            stunning=get_status(
+            current_month_stunting=get_status(
                 row_data.current_month_stunting,
                 'stunted',
                 'Normal weight for height'
             ),
-            wasting=get_status(
-                row_data.current_month_stunting,
+            current_month_wasting=get_status(
+                row_data.current_month_wasting,
                 'wasted',
                 'Normal height for age'
             ),
@@ -1074,7 +1078,11 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
         )
 
     for row in data:
-        config['rows'][row.case_id] = base_data(row)
+        config['data'].append(base_data(row));
+
+    config["draw"] = draw
+    config["recordsTotal"] = data_count
+    config["recordsFiltered"] = data_count
 
     return config
 
