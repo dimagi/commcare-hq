@@ -487,7 +487,7 @@ class EditReportInBuilder(View):
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             try:
-                if not toggle_enabled(request, toggles.REPORT_BUILDER_V2):
+                if toggle_enabled(request, toggles.REPORT_BUILDER_V1):
                     from corehq.apps.userreports.v1.views import (
                         ConfigureChartReport,
                         ConfigureListReport,
