@@ -239,7 +239,7 @@ def download_file(request, domain, app_id, path):
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     try:
-        #assert request.app.copy_of
+        assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
         try:
             payload = request.app.fetch_attachment(full_path)
@@ -300,9 +300,12 @@ def download_file(request, domain, app_id, path):
                     _assert(False, 'Expected build resource %s not found' % path)
                 raise Http404()
         try:
-            callback, callback_args, callback_kwargs = resolve_path(path)
+            callback, callback_args, callback_kwargs = resolve_path(full_path)
         except Resolver404:
-            raise Http404()
+            try:
+                callback, callback_args, callback_kwargs = resolve_path(path)
+            except Resolver404:
+                raise Http404()
 
         return callback(request, domain, app_id, *callback_args, **callback_kwargs)
 
