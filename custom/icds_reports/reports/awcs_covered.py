@@ -42,7 +42,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         awcs = row['awcs']
         row_values = {
             'awcs': awcs,
-            'fillKey': 'Launched',
+            'fillKey': 'Launched' if awcs > 0 else 'Not launched',
         }
         map_data.update({name: row_values})
 
