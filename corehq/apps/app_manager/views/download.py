@@ -239,7 +239,7 @@ def download_file(request, domain, app_id, path):
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     try:
-        assert request.app.copy_of
+        #assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
         try:
             payload = request.app.fetch_attachment(full_path)
