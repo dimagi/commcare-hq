@@ -61,8 +61,36 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             'total': 0,
         })
 
+    def custom_locations_search(self):
+        """
+        When the query is specifically searching for just locations and not any other entity like user, group.
+        For ex: enter "/Bihar/patn" would match child locations under locations named Bihar, having name like
+        patn.
+        """
+        return self.q.startswith('/')
+
+    @staticmethod
+    def _get_location_specific_custom_filters(query):
+        query_sections = query.split("/")
+        parent_name = query_sections[1]
+        try:
+            search_query = query_sections[2]
+        except IndexError:
+            search_query = ""
+        return parent_name, search_query
+
     def get_locations_query(self, query):
-        return SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
+        if self.custom_locations_search():
+            parent_name, search_query = self._get_location_specific_custom_filters(query)
+            parents = SQLLocation.active_objects.filter(name__iexact=parent_name, domain=self.domain)
+            if parent_name and parents.count():
+                descendants = SQLLocation.active_objects.get_queryset_descendants(parents, include_self=True)
+                locations = descendants.filter_by_user_input(self.domain, search_query)
+            else:
+                return SQLLocation.active_objects.none()
+        else:
+            locations = SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
+        return locations
 
     def get_locations(self, query, start, size):
         """
@@ -77,6 +105,10 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     @property
     def data_sources(self):
+        # data sources for options for selection in filter
+        # when searcing for custom locations search limit to just locations
+        if self.custom_locations_search():
+            return [(self.get_locations_size, self.get_locations)]
         return [
             (self.get_static_options_size, self.get_static_options),
             (self.get_groups_size, self.get_groups),
@@ -155,9 +187,8 @@ class LocationRestrictedEmwfOptionsMixin(object):
         raise NotImplementedError('Not implemented yet')
 
     def get_locations_query(self, query):
-        return (SQLLocation.active_objects
-                .filter_path_by_user_input(self.domain, query)
-                .accessible_to_user(self.request.domain, self.request.couch_user))
+        locations = super(LocationRestrictedEmwfOptionsMixin, self).get_locations_query(query)
+        return locations.accessible_to_user(self.request.domain, self.request.couch_user)
 
     def get_users(self, query, start, size):
         """
@@ -177,6 +208,9 @@ class LocationRestrictedEmwfOptionsMixin(object):
     @property
     def data_sources(self):
         # data sources for options for selection in filter
+        # when searcing for custom locations search limit to just locations
+        if self.custom_locations_search():
+            return [(self.get_locations_size, self.get_locations)]
         sources = []
         if self.request.can_access_all_locations:
             sources.append((self.get_static_options_size, self.get_static_options))
