@@ -3,11 +3,12 @@ from datetime import datetime
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
 from custom.icds_reports.utils import percent_diff, get_value, apply_exclude
 
 
-# @quickcache(['config'], timeout=24 * 60 * 60)
+@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False):
 
     def get_data_for_child_health_monthly(date, filters):

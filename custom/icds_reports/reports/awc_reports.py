@@ -8,6 +8,7 @@ from dateutil.rrule import MONTHLY, rrule, DAILY
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
@@ -20,6 +21,8 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 DATA_NOT_ENTERED = "Data Not Entered"
 
+
+@quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, loc_level, show_test=False):
 
     def get_data_for(filters, date):
@@ -116,6 +119,7 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
     }
 
 
+@quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
 def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
     last_30_days = (selected_month - relativedelta(days=30))
@@ -310,6 +314,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     }
 
 
+@quickcache(['domain', 'config', 'month', 'prev_month', 'show_test'], timeout=30 * 60)
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False):
 
     def get_data_for(date):
@@ -667,6 +672,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
+@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
 def get_awc_report_demographics(domain, config, month, show_test=False):
     selected_month = datetime(*month)
 
@@ -922,7 +928,8 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
     }
 
 
-def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=False):
+@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
+def get_awc_report_infrastructure(domain, config, month, show_test=False):
     selected_month = datetime(*month)
 
     def get_data_for_kpi(filters, date):
@@ -1011,6 +1018,7 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
     }
 
 
+@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before'], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
 
     data = ChildHealthMonthlyView.objects.filter(
@@ -1087,6 +1095,7 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     return config
 
 
+@quickcache(['case_id', 'month'], timeout=30 * 60)
 def get_beneficiary_details(case_id, month):
     data = ChildHealthMonthlyView.objects.filter(
         case_id=case_id, month__lte=datetime(*month)

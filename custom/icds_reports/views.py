@@ -543,7 +543,6 @@ class AwcReportsView(View):
                 domain,
                 config,
                 tuple(month.timetuple())[:3],
-                tuple(prev_month.timetuple())[:3],
                 include_test
             )
         elif step == 'beneficiary':
@@ -803,7 +802,7 @@ class NewbornsWithLowBirthWeightView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, include_test)
+                data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_newborn_with_low_birth_weight_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -843,7 +842,7 @@ class EarlyInitiationBreastfeeding(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_early_initiation_breastfeeding_data(domain, config, loc_level, include_test)
+                data = get_early_initiation_breastfeeding_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_early_initiation_breastfeeding_map(domain, config, loc_level, include_test)
         elif step == "chart":
