@@ -1,4 +1,4 @@
-/* globals kmqPushSafe */
+/* globals kmqPushSafe, s */
 
 hqDefine("userreports/js/data_source_select", function() {
     $(function () {

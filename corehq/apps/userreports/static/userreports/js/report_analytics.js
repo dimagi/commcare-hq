@@ -1,4 +1,5 @@
-/* globals $ */
+/* globals $, kmqPushSafe */
+
 hqDefine('userreports/js/report_analytics', function() {
     $(function () {
         $('#js-click-preview-subscribe').click(function () {
