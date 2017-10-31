@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
@@ -219,6 +220,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
+    search_help_inline = mark_safe("Quick search a location by using /location1/location2 for case insensitive "
+                                   "search on parent and fuzzy search on descendants")
 
     @property
     @memoized
@@ -312,7 +315,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def filter_context(self):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
         url = reverse(self.options_url, args=[self.domain])
-        context.update({'endpoint': url})
+        context.update({'endpoint': url, 'search_help_inline': self.search_help_inline})
         return context
 
     @classmethod
