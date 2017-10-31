@@ -1675,7 +1675,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         deleted_case_ids = self._get_deleted_case_ids()
         CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
 
-        undelete_system_forms(self.domain, set(deleted_form_ids), set(deleted_case_ids))
+        undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
 
     def retire(self):
