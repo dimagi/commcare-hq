@@ -2053,6 +2053,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
     ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
+    ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
