@@ -85,18 +85,22 @@ def safe_cached_download(f):
     return _safe_cached_download
 
 
-def no_conflict_require_POST(f):
+def no_conflict_require_POST(fn):
     """
     Catches resource conflicts on save and returns a 409 error.
     Also includes require_POST decorator
     """
-    @require_POST
-    @wraps(f)
+    return require_POST(no_conflict(fn))
+
+
+def no_conflict(fn):
+    @wraps(fn)
     def _no_conflict(*args, **kwargs):
         try:
-            return f(*args, **kwargs)
+            return fn(*args, **kwargs)
         except ResourceConflict:
             return HttpResponse(status=409)
+
     return _no_conflict
 
 
