@@ -21,7 +21,7 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
     """
     This gets a pillow which iterates through all synclogs
     """
-    couch_db = SyncLog.get_db()
+    couch_db = SyncLog.get_db()  # only listen to changes from the current synclog DB
     change_feed = CouchChangeFeed(couch_db, include_docs=True)
     checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
     form_processor = UserSyncHistoryProcessor()

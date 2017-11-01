@@ -1,3 +1,4 @@
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -62,15 +63,14 @@ def _get_ids_by_last_modified(cls, doc_types, start_datetime, end_datetime):
             yield result['id']
 
 
-def get_synclog_ids_by_date(start_datetime, end_datetime):
+def get_synclog_ids_by_date(db, start_datetime, end_datetime):
     '''
     Returns all synclog ids that have been modified within a time range. The start date is
     exclusive while the end date is inclusive (start_datetime, end_datetime].
     '''
-    from casexml.apps.phone.models import SyncLog
     json_start_datetime = json_format_datetime(start_datetime)
 
-    results = SyncLog.view(
+    results = db.view(
         "sync_logs_by_date/view",
         startkey=[json_start_datetime],
         endkey=[json_format_datetime(end_datetime)],
