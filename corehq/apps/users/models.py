@@ -49,7 +49,8 @@ from corehq.apps.users.util import (
     username_to_user_id,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
-    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
+    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted, \
+    undelete_system_forms
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -1673,6 +1674,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         deleted_case_ids = self._get_deleted_case_ids()
         CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
+
+        undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
 
     def retire(self):
