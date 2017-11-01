@@ -5,8 +5,8 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext as _
 
-from casexml.apps.phone.analytics import get_sync_logs_for_user
-from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
+from casexml.apps.phone.models import SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
 
@@ -385,7 +385,7 @@ class SyncHistoryReport(DeploymentsReport):
             return columns
 
         return [_sync_log_to_row(sync_log)
-                for sync_log in get_sync_logs_for_user(user_id, self.limit)]
+                for sync_log in get_synclogs_for_user(user_id, self.limit, wrap=True)]
 
     @property
     def show_extra_columns(self):

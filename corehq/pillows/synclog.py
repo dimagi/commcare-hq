@@ -110,12 +110,12 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
         # of the given user, for the synclog pillow to process.
         # this means we wont have to iterate through all synclogs
         # when reindexing.
-        synclogs = get_synclogs_for_user(doc['_id'], limit=10)
+        synclogs = get_synclogs_for_user(doc['_id'], limit=10, wrap=False)
         changes = [Change(
-            id=res['doc']['_id'],
+            id=doc['_id'],
             sequence_id=None,
-            document=res['doc']
-        ) for res in synclogs]
+            document=doc
+        ) for doc in synclogs]
         return changes
 
 

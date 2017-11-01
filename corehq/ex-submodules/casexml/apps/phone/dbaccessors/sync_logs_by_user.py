@@ -53,8 +53,8 @@ def combine_views(dbs, view_name, **params):
         return rows
 
 
-def get_synclogs_for_user(user_id, limit=10):
-    return synclog_view(
+def get_synclogs_for_user(user_id, limit=10, wrap=True):
+    results = synclog_view(
         "phone/sync_logs_by_user",
         startkey=[user_id, {}],
         endkey=[user_id],
@@ -63,6 +63,16 @@ def get_synclogs_for_user(user_id, limit=10):
         reduce=False,
         include_docs=True,
     )
+
+    sync_log_docs = [row['doc'] for row in results]
+    if wrap:
+        return [properly_wrap_sync_log(sync_log_json) for sync_log_json in sync_log_docs]
+    else:
+        return sync_log_docs
+
+
+def update_synclog_indexes():
+    synclog_view("phone/sync_logs_by_user", limit=1, reduce=False)
 
 
 def get_synclog_ids_before_date(before_date, limit=1000, num_tries=10):

@@ -2,10 +2,10 @@ import datetime
 
 from django.conf import settings
 
-from casexml.apps.phone.analytics import get_sync_logs_for_user, update_analytics_indexes
 from dimagi.utils.couch.database import get_db
 from django.test import TestCase
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user, get_synclogs_for_user, \
+    update_synclog_indexes
 from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog, get_properly_wrapped_sync_log
 from corehq.util.test_utils import DocTestMixin
 
@@ -31,7 +31,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         ]
         for doc in cls.legacy_sync_logs:
             get_db(settings.SYNCLOGS_OLD_DB).save_doc(doc)
-        update_analytics_indexes()
+        update_synclog_indexes()
 
     @classmethod
     def tearDownClass(cls):
@@ -40,9 +40,9 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         get_db(settings.SYNCLOGS_OLD_DB).delete_docs(cls.legacy_sync_logs)
         super(DBAccessorsTest, cls).tearDownClass()
 
-    def test_get_sync_logs_for_user(self):
+    def test_get_synclogs_for_user(self):
         self.assert_doc_sets_equal(
-            get_sync_logs_for_user(self.user_id, 4),
+            get_synclogs_for_user(self.user_id, 4),
             self.sync_logs + self.legacy_sync_logs)
 
     def test_get_last_synclog_for_user(self):
