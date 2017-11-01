@@ -27,28 +27,6 @@ class BadStateException(RestoreException):
             (self.server_hash, self.phone_hash, len(self.case_ids))
 
 
-class DateOpenedBugException(RestoreException):
-    """We added a date_opened block to every case being synced on July 19, 2016.
-
-    This caused mobile to crash when accessing the caselist because it was
-    expecting a different date format.
-    http://manage.dimagi.com/default.asp?232602
-
-    This is solved by forcing a 412 for those users.
-    """
-    message = "Cases were sent down with a date_opened block that had bad time information"
-
-    def __init__(self, user, synclog_id, **kwargs):
-        super(DateOpenedBugException, self).__init__(user, **kwargs)
-        details = [
-            u"domain:{}".format(user.domain),
-            u"username:{}".format(user.username),
-            u"user_id:{}".format(user.user_id),
-            u"last_synclog_id:{}".format(synclog_id)
-        ]
-        datadog_counter(DATE_OPENED_CASEBLOCK_ERROR_COUNT, tags=details)
-
-
 class BadVersionException(RestoreException):
     """
     Bad ota version
