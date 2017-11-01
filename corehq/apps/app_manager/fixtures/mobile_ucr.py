@@ -332,11 +332,9 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         return configs_to_sync, extra_configs_on_phone
 
     def _empty_v2_fixtures(self, report_uuid):
-        report_fixture_id = 'commcare-reports:' + report_uuid
-        report_filter_id = 'commcare-reports-filters:' + report_uuid
         return [
-            E.fixture(id=report_fixture_id),
-            E.fixture(id=report_filter_id)
+            E.fixture(id=self._report_fixture_id(report_uuid)),
+            E.fixture(id=self._report_fixture_id(report_uuid))
         ]
 
     def _v2_fixtures(self, restore_user, report_configs):
@@ -361,8 +359,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         domain = restore_user.domain
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
-        report_fixture_id = 'commcare-reports:' + report_config.uuid
-        report_filter_id = 'commcare-reports-filters:' + report_config.uuid
 
         # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
@@ -395,7 +391,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
-        report_filter_elem = E.fixture(id=report_filter_id)
+        report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
 
         if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
@@ -403,7 +399,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.fixture(
-            id=report_fixture_id, user_id=restore_user.user_id,
+            id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
             report_id=report_config.report_id, last_sync=_utcnow().isoformat(),
             indexed='true'
         )
@@ -437,6 +433,14 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                 is_total_row=True,
             ))
         return rows_elem
+
+    @staticmethod
+    def _report_fixture_id(report_uuid):
+        return 'commcare-reports:' + report_uuid
+
+    @staticmethod
+    def _report_filter_id(report_uuid):
+        return 'commcare-reports-filters:' + report_uuid
 
 
 def _utcnow():
