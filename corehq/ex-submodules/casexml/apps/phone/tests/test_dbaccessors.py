@@ -7,7 +7,7 @@ from dimagi.utils.couch.database import get_db
 from django.test import TestCase
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user, get_synclogs_for_user, \
     update_synclog_indexes, get_synclog_ids_before_date
-from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog, get_properly_wrapped_sync_log
+from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
 from corehq.util.test_utils import DocTestMixin
 
 
@@ -60,4 +60,4 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         doc_ids = get_synclog_ids_before_date(get_db(settings.SYNCLOGS_OLD_DB), datetime.datetime.utcnow())
         self.assertEqual(doc_ids, [
             log._id for log in self.legacy_sync_logs
-            ])
+        ])

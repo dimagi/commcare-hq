@@ -114,10 +114,10 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
         # when reindexing.
         synclogs = get_synclogs_for_user(doc['_id'], limit=10, wrap=False)
         changes = [Change(
-            id=doc['_id'],
+            id=log['_id'],
             sequence_id=None,
-            document=doc
-        ) for doc in synclogs]
+            document=log
+        ) for log in synclogs]
         return changes
 
 

@@ -1,4 +1,4 @@
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
 
 from casexml.apps.phone.models import SimplifiedSyncLog, properly_wrap_sync_log
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import synclog_view
