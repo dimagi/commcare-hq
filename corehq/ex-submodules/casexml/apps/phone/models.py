@@ -11,6 +11,8 @@ from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
+
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
@@ -282,6 +284,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     cache_payload_paths = DictProperty()
 
     strict = True  # for asserts
+
+    @classmethod
+    def get(cls, doc_id):
+        doc = get_sync_log_doc(doc_id)
+        return cls.wrap(doc)
 
     @classmethod
     def wrap(cls, data):
@@ -1187,12 +1194,21 @@ def _domain_has_legacy_toggle_set():
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
+def get_sync_log_doc(doc_id):
+    try:
+        return SyncLog.get_db().get(doc_id)
+    except ResourceNotFound:
+        legacy_doc = get_db(None).get(doc_id, attachments=True)
+        del legacy_doc['_rev']  # remove the rev so we can save this to the new DB
+        return legacy_doc
+
+
 def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+    return properly_wrap_sync_log(get_sync_log_doc(doc_id))
 
 
 def properly_wrap_sync_log(doc):
