@@ -6,10 +6,12 @@ from corehq.apps.accounting.models import (
     CreditAdjustment,
     CreditAdjustmentReason,
 )
+from six.moves import map
+import six
 
 
 def _make_value_safe_for_csv(value):
-    return unicode(value).replace('\n', '\\n').replace(',', ';').replace('\t', '\\t').replace('\r', '\\r')
+    return six.text_type(value).replace('\n', '\\n').replace(',', ';').replace('\t', '\\t').replace('\r', '\\r')
 
 
 def _get_subscription_from_credit_adj(credit_adj):
