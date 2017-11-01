@@ -461,6 +461,9 @@ WebFormSession.prototype.submitForm = function(form) {
                     alert("Form submission failed with error: \n\n"
                         + resp.notification.message + ". \n\n " +
                         "This must be corrected before the form can be submitted.");
+                } else {
+                    alert("There are errors in this form's answers. " +
+                        "These must be corrected before the form can be submitted.");
                 }
             }
         },
