@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 
 from corehq.apps.accounting.models import (
