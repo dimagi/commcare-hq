@@ -9,7 +9,7 @@ def show_urls(urllist, depth=0):
         if hasattr(entry, '_callback_str'):
             ret.append((entry.regex.pattern, entry._callback_str))
         else:
-            print entry
+            print entry  # should trigger py3k linter
             if isinstance(entry.callback, FunctionType):
                 callback_str = "%s.%s" % (entry.callback.__module__, entry.callback.func_name)
                 ret.append((entry.regex.pattern, callback_str))
