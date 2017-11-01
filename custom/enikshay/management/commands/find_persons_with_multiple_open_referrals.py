@@ -25,6 +25,6 @@ class Command(BaseCommand):
 
             for person_case_id in with_progress_bar(case_ids):
                 try:
-                    get_open_referral_case_from_person(person_case_id)
+                    get_open_referral_case_from_person(domain, person_case_id)
                 except ENikshayException:
                     writer.writerow([person_case_id])
