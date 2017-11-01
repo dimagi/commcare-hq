@@ -158,6 +158,7 @@ $.ajaxSetup({
             xhr.setRequestHeader("X-CSRFToken", $csrf_token);
         }
     },
+});
 
     // Return something so that hqModules understands that the module has been defined
     return 1;
