@@ -1,6 +1,7 @@
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
 from casexml.apps.phone.models import SimplifiedSyncLog
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import synclog_view
 
 
 class Command(BaseCommand):
@@ -14,7 +15,7 @@ class Command(BaseCommand):
         parser.add_argument('date')
 
     def handle(self, user_id, date, **options):
-        results = SimplifiedSyncLog.view(
+        results = synclog_view(
             "phone/sync_logs_by_user",
             startkey=[user_id, {}],
             endkey=[user_id, date],
@@ -24,7 +25,8 @@ class Command(BaseCommand):
         )
 
         logs = []
-        for log in results:
+        for res in results:
+            log = SimplifiedSyncLog.wrap(res['doc'])
             log.case_ids_on_phone = {'broken to force 412'}
             logs.append(log)
         SimplifiedSyncLog.bulk_save(logs)
