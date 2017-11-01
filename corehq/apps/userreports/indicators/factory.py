@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -77,10 +78,10 @@ def _build_choice_list_indicator(spec, context):
     base_display_name = wrapped_spec.display_name
 
     def _construct_display(choice):
-        return u'{base} ({choice})'.format(base=base_display_name, choice=choice)
+        return '{base} ({choice})'.format(base=base_display_name, choice=choice)
 
     def _construct_column(choice):
-        return u'{col}_{choice}'.format(col=spec['column_id'], choice=choice)
+        return '{col}_{choice}'.format(col=spec['column_id'], choice=choice)
 
     choice_indicators = [
         BooleanIndicator(
@@ -156,6 +157,6 @@ class IndicatorFactory(object):
             raise BadSpecError(
                 _('Illegal indicator type: "{0}", must be one of the following choice: ({1})'.format(
                     spec['type'],
-                    ', '.join(self.constructor_map.keys())
+                    ', '.join(list(self.constructor_map.keys()))
                 ))
             )

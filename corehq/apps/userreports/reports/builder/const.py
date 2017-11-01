@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 COMPUTED_USER_NAME_PROPERTY_ID = "computed/user_name"
 COMPUTED_OWNER_NAME_PROPERTY_ID = "computed/owner_name"
 

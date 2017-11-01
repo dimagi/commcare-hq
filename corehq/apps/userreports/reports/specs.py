@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 import json
 
@@ -35,6 +36,7 @@ from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from corehq.apps.es import aggregations
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 SQLAGG_COLUMN_MAP = {
@@ -141,7 +143,7 @@ class FieldColumn(ReportColumn):
     type = TypeProperty('field')
     field = StringProperty(required=True)
     aggregation = StringProperty(
-        choices=SQLAGG_COLUMN_MAP.keys(),
+        choices=list(SQLAGG_COLUMN_MAP.keys()),
         required=True,
     )
     format = StringProperty(default='default', choices=[
@@ -216,7 +218,7 @@ class FieldColumn(ReportColumn):
             aggregation = aggregation.order('_term', order=order)
         else:
             aggregation = ES_AGG_MAP[self.aggregation](self.column_id, self.field)
-        return filter(None, [aggregation])
+        return [_f for _f in [aggregation] if _f]
 
     def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
         if not from_aggregation:
@@ -251,7 +253,7 @@ class LocationColumn(ReportColumn):
                     g=GeoPointProperty().wrap(row[column_name])
                 )
             except BadValueError:
-                row[column_name] = u'{} ({})'.format(row[column_name], _('Invalid Location'))
+                row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))
 
     def get_column_config(self, data_source_config, lang):
         return ColumnConfig(columns=[
@@ -528,7 +530,7 @@ class MultibarChartSpec(ChartSpec):
     def wrap(cls, obj):
         def _convert_columns_to_properly_dicts(cols):
             for column in cols:
-                if isinstance(column, basestring):
+                if isinstance(column, six.string_types):
                     yield {'column_id': column, 'display': column}
                 else:
                     yield column

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from django.http import HttpRequest
 from django.test import TestCase, override_settings
@@ -128,9 +129,9 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_number'],
+                    ['report_column_display_number'],
                     [3],
                     [6]
                 ]
@@ -165,11 +166,11 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_first_name', u'report_column_display_number'],
-                    [u'Ada', 3],
-                    [u'Alan', 6]
+                    ['report_column_display_first_name', 'report_column_display_number'],
+                    ['Ada', 3],
+                    ['Alan', 6]
                 ]
             ]]
         )
@@ -204,12 +205,12 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_first_name', u'report_column_display_number'],
-                    [u'Alan', 4],
-                    [u'Ada', 3],
-                    [u'Alan', 2],
+                    ['report_column_display_first_name', 'report_column_display_number'],
+                    ['Alan', 4],
+                    ['Ada', 3],
+                    ['Alan', 2],
                 ]
             ]]
         )
@@ -241,12 +242,12 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_percent'],
-                    [u'100%'],
-                    [u'100%'],
-                    [u'100%'],
+                    ['report_column_display_percent'],
+                    ['100%'],
+                    ['100%'],
+                    ['100%'],
                 ]
             ]]
         )
@@ -281,11 +282,11 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_first_name', u'report_column_display_number'],
-                    [u'Ada', 3],
-                    [u'Alan', 6]
+                    ['report_column_display_first_name', 'report_column_display_number'],
+                    ['Ada', 3],
+                    ['Alan', 6]
                 ]
             ]]
         )
@@ -306,11 +307,11 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             default_sorted_view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'indicator_col_id_first_name'],
-                    [u'Ada'],
-                    [u'Alan']
+                    ['indicator_col_id_first_name'],
+                    ['Ada'],
+                    ['Alan']
                 ]
             ]]
         )
@@ -324,11 +325,11 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             ascending_sorted_view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'indicator_col_id_first_name'],
-                    [u'Ada'],
-                    [u'Alan']
+                    ['indicator_col_id_first_name'],
+                    ['Ada'],
+                    ['Alan']
                 ]
             ]]
         )
@@ -342,11 +343,11 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             descending_sorted_view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
-                    [u'indicator_col_id_first_name'],
-                    [u'Alan'],
-                    [u'Ada']
+                    ['indicator_col_id_first_name'],
+                    ['Alan'],
+                    ['Ada']
                 ]
             ]]
         )
@@ -385,16 +386,16 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
                     [
-                        u'report_column_display_first_name',
-                        u'sum_report_column_display_number',
-                        u'min_report_column_display_number',
+                        'report_column_display_first_name',
+                        'sum_report_column_display_number',
+                        'min_report_column_display_number',
                     ],
-                    [u'Ada', 3, 3],
-                    [u'Alan', 6, 2],
-                    [u'Total', 9, ''],
+                    ['Ada', 3, 3],
+                    ['Alan', 6, 2],
+                    ['Total', 9, ''],
                 ]
             ]]
         )
@@ -433,15 +434,15 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
                     [
-                        u'report_column_display_first_name',
-                        u'sum_report_column_display_number',
-                        u'min_report_column_display_number',
+                        'report_column_display_first_name',
+                        'sum_report_column_display_number',
+                        'min_report_column_display_number',
                     ],
-                    [u'Ada', 3, 3],
-                    [u'Alan', 6, 2],
+                    ['Ada', 3, 3],
+                    ['Alan', 6, 2],
                 ]
             ]]
         )
@@ -480,15 +481,15 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
                     [
-                        u'sum_report_column_display_number',
-                        u'report_column_display_first_name',
-                        u'min_report_column_display_number',
+                        'sum_report_column_display_number',
+                        'report_column_display_first_name',
+                        'min_report_column_display_number',
                     ],
-                    [3, u'Ada', 3],
-                    [6, u'Alan', 2],
+                    [3, 'Ada', 3],
+                    [6, 'Alan', 2],
                     [9, '', ''],
                 ]
             ]]
@@ -547,13 +548,13 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
                     [
-                        u'sum_report_column_display_number',
-                        u'report_column_display_first_name-Ada',
-                        u'report_column_display_first_name-Alan',
-                        u'min_report_column_display_number',
+                        'sum_report_column_display_number',
+                        'report_column_display_first_name-Ada',
+                        'report_column_display_first_name-Alan',
+                        'min_report_column_display_number',
                     ],
                     [3, 1, 0, 3],
                     [6, 0, 2, 2],
@@ -599,13 +600,13 @@ class TestReportAggregationES(TestReportAggregationSQL):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
                     [
-                        u'sum_report_column_display_number',
-                        u'report_column_display_first_name-Ada',
-                        u'report_column_display_first_name-Alan',
-                        u'min_report_column_display_number',
+                        'sum_report_column_display_number',
+                        'report_column_display_first_name-Ada',
+                        'report_column_display_first_name-Alan',
+                        'min_report_column_display_number',
                     ],
                     [3, 1, 0, 3],
                     [6, 0, 2, 2],
@@ -753,16 +754,16 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
                     [
-                        u'report_column_display_state',
-                        u'report_column_display_city',
-                        u'report_column_display_number'
+                        'report_column_display_state',
+                        'report_column_display_city',
+                        'report_column_display_number'
                     ],
-                    [u'MA', u'Boston', 7],
-                    [u'MA', u'Cambridge', 2],
-                    [u'TN', u'Nashville', 1],
+                    ['MA', 'Boston', 7],
+                    ['MA', 'Cambridge', 2],
+                    ['TN', 'Nashville', 1],
                 ]
             ]]
         )
@@ -786,15 +787,15 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         self.assertEqual(
             view.export_table,
             [[
-                u'foo',
+                'foo',
                 [
                     [
-                        u'report_column_display_state',
-                        u'report_column_display_city',
-                        u'report_column_display_number'
+                        'report_column_display_state',
+                        'report_column_display_city',
+                        'report_column_display_number'
                     ],
-                    [u'MA', u'Boston', 7],
-                    [u'MA', u'Cambridge', 2],
+                    ['MA', 'Boston', 7],
+                    ['MA', 'Cambridge', 2],
                 ]
             ]]
         )

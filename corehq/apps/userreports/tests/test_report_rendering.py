@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.userreports.reports.view import ConfigurableReport
 
@@ -19,7 +20,7 @@ class ReportRenderingTest(SimpleTestCase):
 
     def test_email_response_unicode(self):
         report = VeryFakeReportView(data=[
-            ['hello', u'हिन्दी']
+            ['hello', 'हिन्दी']
         ])
         # this used to fail: https://manage.dimagi.com/default.asp?263803
         report.email_response

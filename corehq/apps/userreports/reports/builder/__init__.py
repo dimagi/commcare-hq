@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+import six
 DEFAULT_CASE_PROPERTY_DATATYPES = {
     "name": "string",
     "modified_on": "datetime",
@@ -200,7 +202,7 @@ def make_form_meta_block_indicator(spec, column_id=None, root_doc=False):
     form meta field and data type.
     """
     field_name = spec[0]
-    if isinstance(field_name, basestring):
+    if isinstance(field_name, six.string_types):
         field_name = [field_name]
     data_type = spec[1]
     column_id = column_id or field_name[0]
