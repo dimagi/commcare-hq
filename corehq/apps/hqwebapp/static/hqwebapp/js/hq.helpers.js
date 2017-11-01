@@ -149,6 +149,17 @@ $.fn.koApplyBindings = function (context) {
     this.removeClass('ko-template');
 };
 
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        // Don't pass csrftoken cross domain
+        // Ignore HTTP methods that do not require CSRF protection
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
+            $csrf_token = $("#csrfTokenContainer").val();
+            xhr.setRequestHeader("X-CSRFToken", $csrf_token);
+        }
+    },
+});
+
 
     // Return something so that hqModules understands that the module has been defined
     return 1;

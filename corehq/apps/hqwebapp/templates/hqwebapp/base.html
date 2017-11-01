@@ -449,7 +449,6 @@
         {% if not requirejs_main %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
         {% compress js %}
-        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
