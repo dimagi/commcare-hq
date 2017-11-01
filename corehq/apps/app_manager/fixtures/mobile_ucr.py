@@ -2,10 +2,13 @@ from collections import defaultdict
 from datetime import datetime
 import logging
 import random
+from xml.etree import cElementTree as ElementTree
 
 from couchdbkit.exceptions import NoResultFound
 from django.conf import settings
+from django.core.cache import cache
 from lxml.builder import E
+from six.moves import cStringIO as StringIO
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
@@ -27,6 +30,8 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
+from corehq.blobs import get_blob_db
+from corehq.blobs.exceptions import NotFound
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -277,15 +282,19 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            fixtures.extend(self._v2_fixtures(restore_user, self._get_report_configs(apps).values()))
+            fixtures.extend(self._v2_fixtures(restore_state, self._get_report_configs(apps).values()))
 
         return fixtures
 
-    def _v2_fixtures(self, restore_user, report_configs):
+    def _v2_fixtures(self, restore_state, report_configs):
         fixtures = []
         for report_config in report_configs:
             try:
-                fixtures.extend(self.report_config_to_v2_fixture(report_config, restore_user))
+                fixture = self.report_config_to_v2_fixture(report_config, restore_state)
+                if isinstance(fixture, list):
+                    fixtures.extend(fixture)
+                else:
+                    fixtures.append(fixture)
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -299,8 +308,19 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         return fixtures
 
     @staticmethod
-    def report_config_to_v2_fixture(report_config, restore_user):
+    def report_config_to_v2_fixture(report_config, restore_state):
+        restore_user = restore_state.restore_user
         domain = restore_user.domain
+        db = get_blob_db()
+        cache_key = "mobile-ucr-cache-{}-{}".format(restore_user.user_id, report_config.uuid)
+
+        # make sure the sync delay is at least one hour
+        if not restore_state.overwrite_cache and report_config.sync_delay >= 1 and cache.get(cache_key):
+            try:
+                return db.get(cache_key).read()
+            except NotFound:
+                pass
+
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
         report_fixture_id = 'commcare-reports:' + report_config.uuid
@@ -350,7 +370,16 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             indexed='true'
         )
         report_elem.append(rows_elem)
-        return [report_filter_elem, report_elem]
+        ret = [report_filter_elem, report_elem]
+        if report_config.sync_delay >= 1:
+            io = StringIO()
+            for element in ret:
+                io.write(ElementTree.tostring(element, encoding='utf-8'))
+            io.seek(0)
+            timeout = float(report_config.sync_delay) * 60 * 60
+            db.put(io, cache_key, timeout=timeout)
+            cache.set(cache_key, True, timeout)
+        return ret
 
     @staticmethod
     def _get_v2_report_elem(data_source, deferred_fields, filter_options_by_field):
