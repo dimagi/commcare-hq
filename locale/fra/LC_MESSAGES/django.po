@@ -34,7 +34,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-10 19:04+0000\n"
+"POT-Creation-Date: 2017-11-01 10:49+0000\n"
 "PO-Revision-Date: 2017-10-10 19:00+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -441,10 +441,10 @@ msgstr "Saisissez une role slug unique"
 msgid "A name is required for this new role."
 msgstr "Un nom est requis pour ce nouveau rôle."
 
-#: corehq/apps/accounting/forms.py:1610 corehq/apps/app_manager/forms.py:24
-#: corehq/apps/app_manager/models.py:2652
-#: corehq/apps/app_manager/models.py:3325
-#: corehq/apps/app_manager/models.py:4193
+#: corehq/apps/accounting/forms.py:1598 corehq/apps/app_manager/forms.py:24
+#: corehq/apps/app_manager/models.py:2653
+#: corehq/apps/app_manager/models.py:3326
+#: corehq/apps/app_manager/models.py:4195
 #: corehq/apps/case_search/templates/case_search/case_search.html:121
 #: corehq/apps/cloudcare/templates/formplayer/users.html:90
 #: corehq/apps/data_interfaces/forms.py:515
@@ -3916,8 +3916,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/forms.py:106
-#: corehq/apps/app_manager/static_strings.py:55
-#: corehq/apps/hqadmin/reports.py:1249
+#: corehq/apps/app_manager/static_strings.py:58
+#: corehq/apps/hqadmin/reports.py:1258
 #: corehq/apps/reports/standard/deployments.py:76
 #: corehq/ex-submodules/phonelog/reports.py:86 corehq/tabs/tabclasses.py:1824
 msgid "CommCare Version"
@@ -3986,9 +3986,9 @@ msgstr ""
 msgid "A case property must be assigned to the \"{}\" tile field."
 msgstr "Une propriété dossier doit être assigné au \"{}\" champ de carreau."
 
-#: corehq/apps/app_manager/models.py:2658
-#: corehq/apps/app_manager/models.py:3332
-#: corehq/apps/app_manager/models.py:4199
+#: corehq/apps/app_manager/models.py:2659
+#: corehq/apps/app_manager/models.py:3333
+#: corehq/apps/app_manager/models.py:4201
 msgid "Untitled Module"
 msgstr "Module sans titre"
 
@@ -4136,7 +4136,7 @@ msgstr "Le nom de l'utilisateur"
 msgid "The user's ID"
 msgstr "L'identifiant de l'utilisateur"
 
-#: corehq/apps/app_manager/models.py:4032
+#: corehq/apps/app_manager/models.py:4034
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:14
 #: corehq/apps/dashboard/views.py:222
 #: corehq/apps/userreports/reports/view.py:128
@@ -4146,7 +4146,7 @@ msgstr "L'identifiant de l'utilisateur"
 msgid "Reports"
 msgstr "Rapports"
 
-#: corehq/apps/app_manager/models.py:4738
+#: corehq/apps/app_manager/models.py:4744
 #, python-brace-format
 msgid ""
 "Your app requires {0} passwords but the admin password is not {0}. To "
@@ -4154,7 +4154,7 @@ msgid ""
 "and reset the Admin Password to something that is {0}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:4853
+#: corehq/apps/app_manager/models.py:4859
 msgid ""
 "Usage of lookup tables is not supported by your current subscription. Please "
 "upgrade your subscription before using this feature."
@@ -4163,7 +4163,7 @@ msgstr ""
 "actuelle. Veuillez mettre à jour votre inscription avant d'utiliser ces "
 "fonctions. "
 
-#: corehq/apps/app_manager/models.py:4868
+#: corehq/apps/app_manager/models.py:4874
 msgid ""
 "Usage of integrations is not supported by your current subscription. Please "
 "upgrade your subscription before using this feature."
@@ -4171,7 +4171,7 @@ msgstr ""
 "L'usage des intégrations n'est pas supporté par votre inscription actuelle. "
 "Veuillez mettre à jour votre inscription avant d'utiliser cette fonction."
 
-#: corehq/apps/app_manager/models.py:4876
+#: corehq/apps/app_manager/models.py:4882
 msgid ""
 "Usage of external integration is not supported by your current subscription. "
 "Please upgrade your subscription before using this feature."
@@ -4180,29 +4180,29 @@ msgstr ""
 "actuelle. Veuillez mettre à jour votre inscription avant d'utiliser ces "
 "fonctions."
 
-#: corehq/apps/app_manager/models.py:5643
+#: corehq/apps/app_manager/models.py:5649
 msgid ""
 "Unable to validate the forms due to a server error. Please try again later."
 msgstr ""
 "Impossible de valider les formulaires dû à une erreur de serveur. Veuillez "
 "réessayer plus tard."
 
-#: corehq/apps/app_manager/models.py:5646
+#: corehq/apps/app_manager/models.py:5652
 msgid "Error in form \"{}\": {}"
 msgstr "Erreur dans le formulaire \"{}\": {}"
 
-#: corehq/apps/app_manager/models.py:5665
+#: corehq/apps/app_manager/models.py:5671
 #, python-brace-format
 msgid "Could not find module with ID='{unique_id}' in app '{app_name}'."
 msgstr ""
 "Impossible de trouver des modules avec ID='{unique_id}' in app '{app_name}'."
 
-#: corehq/apps/app_manager/models.py:5826
+#: corehq/apps/app_manager/models.py:5832
 #, python-brace-format
 msgid "Copy of {name}"
 msgstr "Copie de {name}"
 
-#: corehq/apps/app_manager/models.py:5912
+#: corehq/apps/app_manager/models.py:5918
 msgid ""
 "Your application is using User Properties. You can remove User Properties "
 "functionality by opening the User Properties tab in a form that uses it, and "
@@ -4213,18 +4213,18 @@ msgstr ""
 "d'utilisateur dans un formulaire qui utilise cette fonctionnalité, et puis "
 "cliquez sur \"Supprimez les propriétés d'utilisateur\"."
 
-#: corehq/apps/app_manager/models.py:6056
+#: corehq/apps/app_manager/models.py:6062
 msgid "Error in case type hierarchy"
 msgstr "Erreur dans la hiérarchie de type de cas"
 
-#: corehq/apps/app_manager/models.py:6175
+#: corehq/apps/app_manager/models.py:6181
 msgid ""
 "Problem loading suite file from profile file. Is your profile file correct?"
 msgstr ""
 "Un problème est survenu lors du chargement du fichier de suite à partir du "
 "fichier de profil. Est-ce que votre fichier de profil est correct?"
 
-#: corehq/apps/app_manager/models.py:6321
+#: corehq/apps/app_manager/models.py:6371
 msgid "Could not find form '{}'"
 msgstr "Impossible de trouver le formulaire '{}'"
 
@@ -4443,8 +4443,7 @@ msgstr ""
 "Activer automatiquement une synchronisation bilatérale selon un horaire "
 "régulier"
 
-#: corehq/apps/app_manager/static_strings.py:46
-#: corehq/apps/domain/views.py:368
+#: corehq/apps/app_manager/static_strings.py:49 corehq/apps/domain/views.py:368
 #: corehq/apps/locations/templates/locations/manage/location.html:139
 #: corehq/apps/users/forms.py:294
 #: corehq/apps/users/templates/users/edit_commcare_user.html:32
@@ -9250,27 +9249,27 @@ msgstr ""
 msgid "Untitled"
 msgstr "Sans titre"
 
-#: corehq/apps/app_manager/util.py:566
+#: corehq/apps/app_manager/util.py:571
 #, python-brace-format
 msgid ""
 "Practice User with id {id} not found, please make sure you have not deleted "
 "this user"
 msgstr ""
 
-#: corehq/apps/app_manager/util.py:571
+#: corehq/apps/app_manager/util.py:576
 #, python-brace-format
 msgid ""
 "User {username} is not a practice user, please turn on practice mode for "
 "this user"
 msgstr ""
 
-#: corehq/apps/app_manager/util.py:576
+#: corehq/apps/app_manager/util.py:581
 #, python-brace-format
 msgid ""
 "User {username} has been deleted, you can't use that user as practice user"
 msgstr ""
 
-#: corehq/apps/app_manager/util.py:581
+#: corehq/apps/app_manager/util.py:586
 #, python-brace-format
 msgid ""
 "User {username} has been deactivated, you can't use that user as practice "
@@ -9352,11 +9351,11 @@ msgstr "Vous devriez spécifier un titre pour l'application que vous copiez."
 msgid "You must submit the source data."
 msgstr "Vous devez fournir la source de donnée."
 
-#: corehq/apps/app_manager/views/apps.py:783
+#: corehq/apps/app_manager/views/apps.py:791
 msgid "The form is incompatible with the destination menu and was not moved."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:790
+#: corehq/apps/app_manager/views/apps.py:798
 msgid ""
 "Oops. Looks like you got out of sync with us. The sidebar has been updated, "
 "so please try again."
@@ -9364,14 +9363,14 @@ msgstr ""
 "Oups ! Il semble que vous ne soyez plus synchronisé avec nous. L'encadré a "
 "été mis à jour. Veuillez donc essayer à nouveau."
 
-#: corehq/apps/app_manager/views/apps.py:823
+#: corehq/apps/app_manager/views/apps.py:831
 msgid "You have successfully removed User Properties from this application."
 msgstr ""
 "Vous avez supprimé les propriétés d'utilisateur de cette application avec "
 "succès."
 
-#: corehq/apps/app_manager/views/apps.py:842
-#: corehq/apps/app_manager/views/apps.py:862
+#: corehq/apps/app_manager/views/apps.py:844
+#: corehq/apps/app_manager/views/apps.py:864
 #, fuzzy
 #| msgid ""
 #| "Unable to validate the forms due to a server error. Please try again "
@@ -9382,7 +9381,7 @@ msgstr ""
 "Impossible de valider les formulaires dû à une erreur de serveur. Veuillez "
 "réessayer plus tard."
 
-#: corehq/apps/app_manager/views/apps.py:852
+#: corehq/apps/app_manager/views/apps.py:854
 msgid ""
 "This project is not authorized to update from the master application. Please "
 "contact the maintainer of the master app if you believe this is a mistake. "
@@ -9391,13 +9390,13 @@ msgstr ""
 "principale. Veuillez contacter le responsable de l'application principale si "
 "vous pensez que c'est une erreur."
 
-#: corehq/apps/app_manager/views/apps.py:857
+#: corehq/apps/app_manager/views/apps.py:859
 msgid ""
 "Authentication failure attempting to pull latest master from remote CommCare "
 "HQ.Please verify your authentication details for the remote link are correct."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:873
+#: corehq/apps/app_manager/views/apps.py:875
 msgid ""
 "This linked application uses dynamic mobile UCRs which are currently not "
 "supported. For this application to function correctly, you will need to "
@@ -9405,7 +9404,7 @@ msgid ""
 "them."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:884
+#: corehq/apps/app_manager/views/apps.py:886
 #, fuzzy
 #| msgid ""
 #| "Unable to validate the forms due to a server error. Please try again "
@@ -9415,7 +9414,7 @@ msgstr ""
 "Impossible de valider les formulaires dû à une erreur de serveur. Veuillez "
 "réessayer plus tard."
 
-#: corehq/apps/app_manager/views/apps.py:888
+#: corehq/apps/app_manager/views/apps.py:890
 msgid "Your linked application was successfully updated to the latest version."
 msgstr "Votre application liée a été mise à jour avec succès."
 
@@ -13815,8 +13814,8 @@ msgstr "Tarification SMS"
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:18
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:78
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/shared_pricing_table.html:50
-#: corehq/apps/prelogin/templates/prelogin/base.html:166
-#: corehq/apps/userreports/views.py:386
+#: corehq/apps/prelogin/templates/prelogin/base.html:171
+#: corehq/apps/userreports/views.py:390
 msgid "Pricing"
 msgstr "Tarifs"
 
@@ -37949,7 +37948,7 @@ msgstr "Opérations administratives"
 msgid "CommCare Reports"
 msgstr "Rapports CommCare"
 
-#: corehq/trans_override.py:6
+#: corehq/trans_override.py:7
 msgid "Token generator"
 msgstr ""
 
