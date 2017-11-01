@@ -9,18 +9,24 @@ from dimagi.utils.couch.database import get_db
 
 
 def delete_sync_logs(before_date, limit=1000, num_tries=10):
+    num_deleted = 0
+    for db in settings.SYNCLOGS_DBS:
+        num_deleted += _delete_synclogs_from_db(db, before_date, limit, num_tries)
+
+    return num_deleted
+
+
+def _delete_synclogs_from_db(db, before_date, limit, num_tries):
     from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclog_ids_before_date
     from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification
-
-    for db in settings.SYNCLOGS_DBS:
-        for i in range(num_tries):
-            try:
-                database = get_db(db)
-                sync_log_ids = get_synclog_ids_before_date(database, before_date, limit)
-                return iter_bulk_delete_with_doc_type_verification(
-                    database, sync_log_ids, 'SyncLog', chunksize=25)
-            except BulkSaveError:
-                pass
+    for i in range(num_tries):
+        try:
+            database = get_db(db)
+            sync_log_ids = get_synclog_ids_before_date(database, before_date, limit)
+            return iter_bulk_delete_with_doc_type_verification(
+                database, sync_log_ids, 'SyncLog', chunksize=25)
+        except BulkSaveError:
+            pass
 
     raise CouldNotPruneSyncLogs()
 
