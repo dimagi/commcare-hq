@@ -41,9 +41,8 @@ def download_odk_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
-    build_profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_profile(is_odk=True, build_profile_id=build_profile),
+        request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
     )
 
@@ -55,9 +54,8 @@ def download_odk_media_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
-    build_profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_profile(is_odk=True, with_media=True, build_profile_id=build_profile),
+        request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
     )
 
@@ -241,17 +239,17 @@ def download_file(request, domain, app_id, path):
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     try:
-        assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
         try:
+            assert request.app.copy_of
             payload = request.app.fetch_attachment(full_path)
-        except (ResourceNotFound):
+        except (AssertionError, ResourceNotFound):
             if build_profile in request.app.build_profiles and build_profile_access:
                 try:
                     # look for file guaranteed to exist if profile is created
                     assert request.app.copy_of
                     request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
-                except ResourceNotFound:
+                except (AssertionError, ResourceNotFound):
                     request.app.create_build_files(save=True, build_profile_id=build_profile)
                     request.app.save()
                     payload = request.app.fetch_attachment(full_path)
@@ -267,7 +265,7 @@ def download_file(request, domain, app_id, path):
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response
-    except (AssertionError, ResourceNotFound):
+    except ResourceNotFound:
         if request.app.copy_of:
             if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
                 raise Http404()
@@ -303,9 +301,12 @@ def download_file(request, domain, app_id, path):
                     _assert(False, 'Expected build resource %s not found' % path)
                 raise Http404()
         try:
-            callback, callback_args, callback_kwargs = resolve_path(path)
+            callback, callback_args, callback_kwargs = resolve_path(full_path)
         except Resolver404:
-            raise Http404()
+            try:
+                callback, callback_args, callback_kwargs = resolve_path(path)
+            except Resolver404:
+                raise Http404()
 
         return callback(request, domain, app_id, *callback_args, **callback_kwargs)
 
