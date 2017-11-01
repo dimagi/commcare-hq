@@ -149,7 +149,7 @@ hqDefine("reports/js/filters", [
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            hqMain.main.transformHelpTemplate($(this), true);
+            hqMain.transformHelpTemplate($(this), true);
         });
     };
 
