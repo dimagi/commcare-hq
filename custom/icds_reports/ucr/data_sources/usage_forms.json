@@ -916,6 +916,38 @@
             "property_name": "does_not_exist"
           }
         }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "datetime",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "form_time",
+        "expression": {
+          "datatype": "datetime",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "datetime",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "received_on",
+        "expression": {
+          "datatype": "datetime",
+          "type": "property_name",
+          "property_name": "received_on"
+        }
       }
     ],
     "named_expressions": {},

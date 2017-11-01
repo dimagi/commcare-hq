@@ -18,9 +18,25 @@
                       −{{ pr.deletions }}
                     </span>
                 </span>
+                {% for label in pr.labels %}
+                <span class="text-label" style="color:{{ label.color }}">
+                    {{ label.name }}
+                </span>
+                {% endfor %}
             </li>
             {% endfor %}
         </ul>
+        {% for label, prs in prs_by_label.items %}
+        <p>{{ label }}</p>
+        <ul>
+            {% for pr in prs %}
+            <li>
+                <a href="{{ pr.url }}">#{{ pr.number }} {{ pr.title }}</a>
+                : {{ pr.body }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
         {% else %}
         <p>No PRs were merged since last deploy.</p>
         {% endif %}

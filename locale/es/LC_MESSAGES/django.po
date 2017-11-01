@@ -13,8 +13,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-31 14:18+0000\n"
-"PO-Revision-Date: 2017-10-10 19:01+0000\n"
+"POT-Creation-Date: 2017-10-31 19:02+0000\n"
+"PO-Revision-Date: 2017-10-10 19:08+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
@@ -420,10 +420,10 @@ msgstr "Introduzca un slug de rol único."
 msgid "A name is required for this new role."
 msgstr "Se requiere un nombre para este nuevo rol."
 
-#: corehq/apps/accounting/forms.py:1598 corehq/apps/app_manager/forms.py:24
-#: corehq/apps/app_manager/models.py:2653
-#: corehq/apps/app_manager/models.py:3326
-#: corehq/apps/app_manager/models.py:4194
+#: corehq/apps/accounting/forms.py:1610 corehq/apps/app_manager/forms.py:24
+#: corehq/apps/app_manager/models.py:2652
+#: corehq/apps/app_manager/models.py:3325
+#: corehq/apps/app_manager/models.py:4193
 #: corehq/apps/case_search/templates/case_search/case_search.html:121
 #: corehq/apps/cloudcare/templates/formplayer/users.html:90
 #: corehq/apps/data_interfaces/forms.py:515
@@ -3428,7 +3428,7 @@ msgstr ""
 "crecientes de reportería."
 
 #: corehq/apps/accounting/user_text.py:25
-#: corehq/apps/app_manager/static_strings.py:25
+#: corehq/apps/app_manager/static_strings.py:28
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_settings.html:27
 #: corehq/apps/app_manager/templates/app_manager/partials/form_tab_settings.html:63
 #: corehq/apps/app_manager/templates/app_manager/partials/module_view_settings.html:32
@@ -3857,14 +3857,14 @@ msgid "Copy"
 msgstr "Copiar"
 
 #: corehq/apps/app_manager/forms.py:76
-#: corehq/apps/app_manager/static_strings.py:154
+#: corehq/apps/app_manager/static_strings.py:158
 msgid "Prompt Updates to Latest Released App Version"
 msgstr ""
 "Enviar Avisos de Actualizaciones de la Última Versión de la Aplicación "
 "Lanzada"
 
 #: corehq/apps/app_manager/forms.py:78 corehq/apps/app_manager/forms.py:93
-#: corehq/apps/app_manager/static_strings.py:140
+#: corehq/apps/app_manager/static_strings.py:144
 #: corehq/apps/groups/templates/groups/group_members.html:197
 #: corehq/apps/groups/templates/groups/group_members.html:213
 #: corehq/apps/reports/templates/reports/filters/location_async.html:11
@@ -3873,7 +3873,7 @@ msgid "Off"
 msgstr "Apagado"
 
 #: corehq/apps/app_manager/forms.py:79 corehq/apps/app_manager/forms.py:94
-#: corehq/apps/app_manager/static_strings.py:142
+#: corehq/apps/app_manager/static_strings.py:146
 #: corehq/apps/groups/templates/groups/group_members.html:196
 #: corehq/apps/groups/templates/groups/group_members.html:212
 #: corehq/apps/reports/templates/reports/filters/location_async.html:10
@@ -3898,7 +3898,7 @@ msgstr ""
 "continuar utilizando CommCare hasta que realicen la actualización)"
 
 #: corehq/apps/app_manager/forms.py:91
-#: corehq/apps/app_manager/static_strings.py:153
+#: corehq/apps/app_manager/static_strings.py:157
 msgid "Prompt Updates to Latest CommCare Version"
 msgstr "Enviar Avisos de Actualizaciones de la Última Versión CommCare"
 
@@ -3915,7 +3915,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/forms.py:106
 #: corehq/apps/app_manager/static_strings.py:55
-#: corehq/apps/hqadmin/reports.py:1258
+#: corehq/apps/hqadmin/reports.py:1249
 #: corehq/apps/reports/standard/deployments.py:76
 #: corehq/ex-submodules/phonelog/reports.py:86 corehq/tabs/tabclasses.py:1824
 msgid "CommCare Version"
@@ -3983,9 +3983,9 @@ msgstr ""
 msgid "A case property must be assigned to the \"{}\" tile field."
 msgstr "Se debe asignar una propiedad de caso al campo de ficha \"{}\". "
 
-#: corehq/apps/app_manager/models.py:2659
-#: corehq/apps/app_manager/models.py:3333
-#: corehq/apps/app_manager/models.py:4200
+#: corehq/apps/app_manager/models.py:2658
+#: corehq/apps/app_manager/models.py:3332
+#: corehq/apps/app_manager/models.py:4199
 msgid "Untitled Module"
 msgstr "Módulo sin Título"
 
@@ -4134,7 +4134,7 @@ msgstr "El nombre del usuario"
 msgid "The user's ID"
 msgstr "El ID del usuario"
 
-#: corehq/apps/app_manager/models.py:4033
+#: corehq/apps/app_manager/models.py:4032
 #: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:14
 #: corehq/apps/dashboard/views.py:222
 #: corehq/apps/userreports/reports/view.py:128
@@ -4144,7 +4144,7 @@ msgstr "El ID del usuario"
 msgid "Reports"
 msgstr "Reportes"
 
-#: corehq/apps/app_manager/models.py:4739
+#: corehq/apps/app_manager/models.py:4738
 #, python-brace-format
 msgid ""
 "Your app requires {0} passwords but the admin password is not {0}. To "
@@ -4156,7 +4156,7 @@ msgstr ""
 "aplicación, Configuraciones Avanzadas, Configuraciones Generales de Teléfono "
 "Java, y reestablezca la contraseña de la administración a algo que no sea {0}"
 
-#: corehq/apps/app_manager/models.py:4854
+#: corehq/apps/app_manager/models.py:4853
 msgid ""
 "Usage of lookup tables is not supported by your current subscription. Please "
 "upgrade your subscription before using this feature."
@@ -4164,7 +4164,7 @@ msgstr ""
 "El uso de las tablas de búsqueda no está disponible en su suscripción "
 "actual. Por favor suba de plan de suscripción antes de utilizar esta función."
 
-#: corehq/apps/app_manager/models.py:4869
+#: corehq/apps/app_manager/models.py:4868
 msgid ""
 "Usage of integrations is not supported by your current subscription. Please "
 "upgrade your subscription before using this feature."
@@ -4172,7 +4172,7 @@ msgstr ""
 "El uso de integraciones no está disponible en su suscripción actual. Por "
 "favor suba de plan de suscripción antes de utilizar esta función."
 
-#: corehq/apps/app_manager/models.py:4877
+#: corehq/apps/app_manager/models.py:4876
 msgid ""
 "Usage of external integration is not supported by your current subscription. "
 "Please upgrade your subscription before using this feature."
@@ -4181,29 +4181,29 @@ msgstr ""
 "actual. Por favor suba de plan de suscripción antes de utilizar esta "
 "función. "
 
-#: corehq/apps/app_manager/models.py:5644
+#: corehq/apps/app_manager/models.py:5643
 msgid ""
 "Unable to validate the forms due to a server error. Please try again later."
 msgstr ""
 "No fue posible validar los formularios debido a un error en el servidor. Por "
 "favor intente de nuevo más tarde."
 
-#: corehq/apps/app_manager/models.py:5647
+#: corehq/apps/app_manager/models.py:5646
 msgid "Error in form \"{}\": {}"
 msgstr "Error en el formulario \"{}\": {}"
 
-#: corehq/apps/app_manager/models.py:5666
+#: corehq/apps/app_manager/models.py:5665
 #, python-brace-format
 msgid "Could not find module with ID='{unique_id}' in app '{app_name}'."
 msgstr ""
 "No encontramos el módulo con ID='{unique_id}' en la aplicación '{app_name}'."
 
-#: corehq/apps/app_manager/models.py:5827
+#: corehq/apps/app_manager/models.py:5826
 #, python-brace-format
 msgid "Copy of {name}"
 msgstr "Copia de {name}"
 
-#: corehq/apps/app_manager/models.py:5913
+#: corehq/apps/app_manager/models.py:5912
 msgid ""
 "Your application is using User Properties. You can remove User Properties "
 "functionality by opening the User Properties tab in a form that uses it, and "
@@ -4214,18 +4214,18 @@ msgstr ""
 "Propiedades del Usuario en el formulario que lo utiliza, y luego hacer clic "
 "en \"Eliminar las Propiedades del Usuario\"."
 
-#: corehq/apps/app_manager/models.py:6057
+#: corehq/apps/app_manager/models.py:6056
 msgid "Error in case type hierarchy"
 msgstr "Error en la jerarquía del tipo de caso"
 
-#: corehq/apps/app_manager/models.py:6176
+#: corehq/apps/app_manager/models.py:6175
 msgid ""
 "Problem loading suite file from profile file. Is your profile file correct?"
 msgstr ""
 "Ocurrió un problema al subir el archivo suite del archivo de perfil. ¿Está "
 "bien su archivo de perfil?"
 
-#: corehq/apps/app_manager/models.py:6366
+#: corehq/apps/app_manager/models.py:6321
 msgid "Could not find form '{}'"
 msgstr "No encontramos el formulario '{}'"
 
@@ -4242,75 +4242,93 @@ msgid "1.x"
 msgstr "1.x"
 
 #: corehq/apps/app_manager/static_strings.py:8
+#, fuzzy
+#| msgid "10"
+msgid "1.0"
+msgstr "10"
+
+#: corehq/apps/app_manager/static_strings.py:9
+#, fuzzy
+#| msgid "1.x"
+msgid "1.5"
+msgstr "1.x"
+
+#: corehq/apps/app_manager/static_strings.py:10
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:113
 msgid "10"
 msgstr "10"
 
-#: corehq/apps/app_manager/static_strings.py:9
+#: corehq/apps/app_manager/static_strings.py:11
 msgid "12 hours"
 msgstr "12 horas"
 
-#: corehq/apps/app_manager/static_strings.py:10
+#: corehq/apps/app_manager/static_strings.py:12
 msgid "15 minutes"
 msgstr "15 minutos"
 
-#: corehq/apps/app_manager/static_strings.py:11
+#: corehq/apps/app_manager/static_strings.py:13
 msgid "160"
 msgstr "160"
 
-#: corehq/apps/app_manager/static_strings.py:12
+#: corehq/apps/app_manager/static_strings.py:14
 msgid "2 hours"
 msgstr "2 horas"
 
-#: corehq/apps/app_manager/static_strings.py:13
+#: corehq/apps/app_manager/static_strings.py:15
+#, fuzzy
+#| msgid "20"
+msgid "2.0"
+msgstr "20"
+
+#: corehq/apps/app_manager/static_strings.py:16
 msgid "2.x"
 msgstr "2.x"
 
-#: corehq/apps/app_manager/static_strings.py:14
+#: corehq/apps/app_manager/static_strings.py:17
 msgid "20"
 msgstr "20"
 
-#: corehq/apps/app_manager/static_strings.py:15
+#: corehq/apps/app_manager/static_strings.py:18
 msgid "24 hours"
 msgstr "24 horas"
 
-#: corehq/apps/app_manager/static_strings.py:16
+#: corehq/apps/app_manager/static_strings.py:19
 msgid "30 minutes"
 msgstr "30 minutos"
 
-#: corehq/apps/app_manager/static_strings.py:17
+#: corehq/apps/app_manager/static_strings.py:20
 msgid "4 hours"
 msgstr "4 horas"
 
-#: corehq/apps/app_manager/static_strings.py:18
+#: corehq/apps/app_manager/static_strings.py:21
 msgid "40"
 msgstr "40"
 
-#: corehq/apps/app_manager/static_strings.py:19
+#: corehq/apps/app_manager/static_strings.py:22
 msgid "5 Days"
 msgstr "5 Días"
 
-#: corehq/apps/app_manager/static_strings.py:20
+#: corehq/apps/app_manager/static_strings.py:23
 msgid "5"
 msgstr "5"
 
-#: corehq/apps/app_manager/static_strings.py:21
+#: corehq/apps/app_manager/static_strings.py:24
 msgid "6 hours"
 msgstr "6 horas"
 
-#: corehq/apps/app_manager/static_strings.py:22
+#: corehq/apps/app_manager/static_strings.py:25
 msgid "8 hours"
 msgstr "8 horas"
 
-#: corehq/apps/app_manager/static_strings.py:23
+#: corehq/apps/app_manager/static_strings.py:26
 msgid "80"
 msgstr "80"
 
-#: corehq/apps/app_manager/static_strings.py:24
+#: corehq/apps/app_manager/static_strings.py:27
 msgid "Admin Password"
 msgstr "Contraseña Admin"
 
-#: corehq/apps/app_manager/static_strings.py:26
+#: corehq/apps/app_manager/static_strings.py:29
 msgid ""
 "After login, the application will look at the profile's defined reference "
 "for the authoritative location of the newest version. This check will occur "
@@ -4322,7 +4340,7 @@ msgstr ""
 "revisión ocurrirá con cierta periodicidad desde la última revisión exitosa "
 "en esta propiedad. freq-never deshabilita la revisión automática."
 
-#: corehq/apps/app_manager/static_strings.py:27
+#: corehq/apps/app_manager/static_strings.py:30
 msgid ""
 "Allow mobile workers in the same case sharing group to share case lists.  "
 "Read more on the <a href=\"https://help.commcarehq.org/display/"
@@ -4332,7 +4350,7 @@ msgstr ""
 "puedan compartir listas de caso. Lea más sobre esto en el<a href=\"https://"
 "help.commcarehq.org/display/commcarepublic/Case+Sharing\">Sitio de Ayuda</a>"
 
-#: corehq/apps/app_manager/static_strings.py:28
+#: corehq/apps/app_manager/static_strings.py:31
 msgid ""
 "Allow mobile workers to access the web-based version of your application. "
 "Read more on the <a href=\"https://help.commcarehq.org/display/"
@@ -4342,17 +4360,17 @@ msgstr ""
 "su aplicación. Lea más sobre esto en el<a href=\"https://help.commcarehq.org/"
 "display/commcarepublic/Using+Web+Apps\">Sitio de Ayuda</a>"
 
-#: corehq/apps/app_manager/static_strings.py:29
+#: corehq/apps/app_manager/static_strings.py:32
 msgid "Allow visitors to use this application without a login."
 msgstr ""
 "Permitir que los visitantes utilicen esta aplicación sin tener que iniciar "
 "sesión."
 
-#: corehq/apps/app_manager/static_strings.py:30
+#: corehq/apps/app_manager/static_strings.py:33
 msgid "Alphanumeric"
 msgstr "Alfanumérico"
 
-#: corehq/apps/app_manager/static_strings.py:31
+#: corehq/apps/app_manager/static_strings.py:34
 msgid ""
 "Amount of time previously submitted forms remain accessible in the CommCare "
 "app."
@@ -4360,58 +4378,58 @@ msgstr ""
 "Tiempo en el que se puede acceder a formularios ingresados previamente en la "
 "aplicación CommCare."
 
-#: corehq/apps/app_manager/static_strings.py:32
+#: corehq/apps/app_manager/static_strings.py:35
 msgid "Android Settings"
 msgstr "Configuraciones Android"
 
-#: corehq/apps/app_manager/static_strings.py:33
+#: corehq/apps/app_manager/static_strings.py:36
 msgid "Anonymous Usage"
 msgstr "Uso Anónimo"
 
-#: corehq/apps/app_manager/static_strings.py:34
+#: corehq/apps/app_manager/static_strings.py:37
 msgid "Any positive integer. Represents period of purging in days."
 msgstr ""
 "Cualquier entero positivo. Representa el período de depuración en días."
 
-#: corehq/apps/app_manager/static_strings.py:35
+#: corehq/apps/app_manager/static_strings.py:38
 #: corehq/ex-submodules/phonelog/reports.py:85
 msgid "App Version"
 msgstr "Versión App"
 
-#: corehq/apps/app_manager/static_strings.py:36
+#: corehq/apps/app_manager/static_strings.py:39
 #: corehq/apps/hqmedia/models.py:395
 msgid "Audio"
 msgstr "Audio"
 
-#: corehq/apps/app_manager/static_strings.py:37
+#: corehq/apps/app_manager/static_strings.py:40
 msgid "Auto Capture Location<br />(all forms)"
 msgstr "Autocapturar la Ubicación <br />(todos los formularios)"
 
-#: corehq/apps/app_manager/static_strings.py:38
+#: corehq/apps/app_manager/static_strings.py:41
 msgid "Auto Update Frequency"
 msgstr "Frecuencia de Actualización Automática"
 
-#: corehq/apps/app_manager/static_strings.py:39
+#: corehq/apps/app_manager/static_strings.py:42
 msgid "Auto-Resize Images"
 msgstr "Ajustar Tamaño de Imágenes Automáticamente"
 
-#: corehq/apps/app_manager/static_strings.py:40
+#: corehq/apps/app_manager/static_strings.py:43
 msgid "Auto-Sync Frequency"
 msgstr "Frecuencia de Sincronización Automática"
 
-#: corehq/apps/app_manager/static_strings.py:41
+#: corehq/apps/app_manager/static_strings.py:44
 msgid "Auto-login"
 msgstr "Inicio de Sesión Automático"
 
-#: corehq/apps/app_manager/static_strings.py:42
+#: corehq/apps/app_manager/static_strings.py:45
 msgid "Auto-manage URLs"
 msgstr "Administrar Automáticamente URLs"
 
-#: corehq/apps/app_manager/static_strings.py:43
+#: corehq/apps/app_manager/static_strings.py:46
 msgid "Automatic"
 msgstr "Automático"
 
-#: corehq/apps/app_manager/static_strings.py:44
+#: corehq/apps/app_manager/static_strings.py:47
 msgid ""
 "Automatically resizes images within forms. Follow <a href='https://"
 "confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android'> "
@@ -4422,67 +4440,67 @@ msgstr ""
 "+Images+on+Android'> las instrucciones aquí </a> para determinar qué valor "
 "utilizar."
 
-#: corehq/apps/app_manager/static_strings.py:45
+#: corehq/apps/app_manager/static_strings.py:48
 msgid "Automatically trigger a two-way sync on a regular schedule"
 msgstr ""
 "Activar automáticamente una sincronización en ambas vías periódicamente."
 
-#: corehq/apps/app_manager/static_strings.py:46 corehq/apps/domain/views.py:368
+#: corehq/apps/app_manager/static_strings.py:49 corehq/apps/domain/views.py:368
 #: corehq/apps/locations/templates/locations/manage/location.html:139
 #: corehq/apps/users/forms.py:294
 #: corehq/apps/users/templates/users/edit_commcare_user.html:32
 msgid "Basic"
 msgstr "Básico"
 
-#: corehq/apps/app_manager/static_strings.py:47
+#: corehq/apps/app_manager/static_strings.py:50
 msgid "Build Settings"
 msgstr "Desarrollar Configuraciones"
 
-#: corehq/apps/app_manager/static_strings.py:48
+#: corehq/apps/app_manager/static_strings.py:51
 #: corehq/apps/groups/templates/groups/group_members.html:20
 #: corehq/apps/groups/templates/groups/group_members.html:193
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/06_user_management.html:35
 msgid "Case Sharing"
 msgstr "Caso Compartido"
 
-#: corehq/apps/app_manager/static_strings.py:49
+#: corehq/apps/app_manager/static_strings.py:52
 msgid "Choose an image to replace the default CommCare Home Screen logo"
 msgstr ""
 "Elija una imagen para reemplazar el logo predeterminado de la Pantalla de "
 "Inicio de Commcare"
 
-#: corehq/apps/app_manager/static_strings.py:50
+#: corehq/apps/app_manager/static_strings.py:53
 msgid "Choose to label the login buttons with Icons or Text"
 msgstr ""
 "Elija para etiquetar los botones de inicio de sesión con Íconos o Texto"
 
-#: corehq/apps/app_manager/static_strings.py:51
+#: corehq/apps/app_manager/static_strings.py:54
 msgid ""
 "Choose whether or not mobile workers can view previously submitted forms."
 msgstr ""
 "Elija si los usuarios móviles pueden o no visualizar formularios ingresados "
 "anteriormente."
 
-#: corehq/apps/app_manager/static_strings.py:52
+#: corehq/apps/app_manager/static_strings.py:55
 msgid ""
 "Choose whether or not to display the 'Incomplete' button on the ODK home "
 "screen"
 msgstr ""
 "Elija si mostrar o no el botón 'Incompleto' en la pantalla de inicio de ODK"
 
-#: corehq/apps/app_manager/static_strings.py:53
+#: corehq/apps/app_manager/static_strings.py:56
 msgid "CommCare Home Screen Logo"
 msgstr "Logo de Página de Inicio de CommCare"
 
-#: corehq/apps/app_manager/static_strings.py:54
+#: corehq/apps/app_manager/static_strings.py:57
 msgid "CommCare Sense"
 msgstr "CommCare Sense"
 
-#: corehq/apps/app_manager/static_strings.py:56
+#: corehq/apps/app_manager/static_strings.py:59
 msgid "Configure for low-literate users, J2ME only"
 msgstr "Configurar para usuarios con baja escolaridad, únicamente J2ME"
 
-#: corehq/apps/app_manager/static_strings.py:57
+#: corehq/apps/app_manager/static_strings.py:60
 msgid ""
 "Configure form menus display. For per-module option turn on grid view for "
 "the form's menu in a module under module's settings page. Read more on the "
@@ -4495,43 +4513,43 @@ msgstr ""
 "el <a target=\"_blank\" href=\"https://help.commcarehq.org/display/"
 "commcarepublic/Grid+View+for+Form+and+Module+Screens\">Sitio de Ayuda</a>. "
 
-#: corehq/apps/app_manager/static_strings.py:58
+#: corehq/apps/app_manager/static_strings.py:61
 msgid "Custom Base URL"
 msgstr "Base Personalizada URL"
 
-#: corehq/apps/app_manager/static_strings.py:59
+#: corehq/apps/app_manager/static_strings.py:62
 msgid "Custom Keys"
 msgstr "Teclas Personalizadas"
 
-#: corehq/apps/app_manager/static_strings.py:60
+#: corehq/apps/app_manager/static_strings.py:63
 msgid "Custom Suite File"
 msgstr "Archivo Suite Personalizado"
 
-#: corehq/apps/app_manager/static_strings.py:61
+#: corehq/apps/app_manager/static_strings.py:64
 msgid "Custom Suite"
 msgstr "Suite Personalizado"
 
-#: corehq/apps/app_manager/static_strings.py:62
+#: corehq/apps/app_manager/static_strings.py:65
 msgid "Daily Log Sending Frequency"
 msgstr "Frecuencia de Envío de Registro Diario"
 
-#: corehq/apps/app_manager/static_strings.py:63
+#: corehq/apps/app_manager/static_strings.py:66
 msgid "Daily"
 msgstr "Diariamente"
 
-#: corehq/apps/app_manager/static_strings.py:64
+#: corehq/apps/app_manager/static_strings.py:67
 msgid "Data and Sharing"
 msgstr "Datos y Uso Compartido"
 
-#: corehq/apps/app_manager/static_strings.py:65
+#: corehq/apps/app_manager/static_strings.py:68
 msgid "Days allowed without syncing before triggering a warning"
 msgstr "Días permitidos sin sincronizar antes de emitir una advertencia"
 
-#: corehq/apps/app_manager/static_strings.py:66
+#: corehq/apps/app_manager/static_strings.py:69
 msgid "Days for Review"
 msgstr "Días para Revisión"
 
-#: corehq/apps/app_manager/static_strings.py:67
+#: corehq/apps/app_manager/static_strings.py:70
 msgid ""
 "Determines if the server automatically attempts to send data to the phone "
 "(Two-Way), or only attempt to send data on demand (Push Only); projects "
@@ -4545,7 +4563,7 @@ msgstr ""
 "configuraciones de Frecuencia de Sincronización Automática y Límite de "
 "Tiempo Sin Sincronizar, no tendrán efecto. "
 
-#: corehq/apps/app_manager/static_strings.py:68
+#: corehq/apps/app_manager/static_strings.py:71
 msgid ""
 "Determines whether phone keys will type letters or numbers by default when "
 "typing in the password field."
@@ -4553,20 +4571,20 @@ msgstr ""
 "Determina si las teclas del teléfono escribirán letras o números de forma "
 "predeterminada al escribir en el campo de la contraseña."
 
-#: corehq/apps/app_manager/static_strings.py:69
+#: corehq/apps/app_manager/static_strings.py:72
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/disable.html:12
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:376
 #: corehq/apps/hqadmin/forms.py:216 corehq/apps/hqadmin/forms.py:264
 msgid "Disable"
 msgstr "Deshabilitar"
 
-#: corehq/apps/app_manager/static_strings.py:70 corehq/apps/sms/forms.py:38
+#: corehq/apps/app_manager/static_strings.py:73 corehq/apps/sms/forms.py:38
 #: custom/icds_reports/mpr_sqldata.py:593
 #: custom/icds_reports/mpr_sqldata.py:971
 msgid "Disabled"
 msgstr "Deshabilitado"
 
-#: corehq/apps/app_manager/static_strings.py:71
+#: corehq/apps/app_manager/static_strings.py:74
 msgid ""
 "Display root menu as a list or grid. Read more on the <a target=\"_blank\" "
 "href=\"https://help.commcarehq.org/display/commcarepublic/Grid+View+for+Form"
@@ -4576,11 +4594,11 @@ msgstr ""
 "esto en el <a target=\"_blank\" href=\"https://help.commcarehq.org/display/"
 "commcarepublic/Grid+View+for+Form+and+Module+Screens\">Sitio de Ayuda </a>. "
 
-#: corehq/apps/app_manager/static_strings.py:72
+#: corehq/apps/app_manager/static_strings.py:75
 msgid "Enable Menu Display Setting Per-Module"
 msgstr "Habilitar Configuración de Visualización de Menú por Módulo"
 
-#: corehq/apps/app_manager/static_strings.py:73
+#: corehq/apps/app_manager/static_strings.py:76
 #: corehq/apps/domain/templates/domain/admin/feature_previews.html:46
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:375
 #: corehq/apps/hqadmin/forms.py:264
@@ -4588,75 +4606,75 @@ msgstr "Habilitar Configuración de Visualización de Menú por Módulo"
 msgid "Enable"
 msgstr "Habilitar"
 
-#: corehq/apps/app_manager/static_strings.py:74 corehq/apps/sms/forms.py:39
+#: corehq/apps/app_manager/static_strings.py:77 corehq/apps/sms/forms.py:39
 msgid "Enabled"
 msgstr "Habilitado"
 
-#: corehq/apps/app_manager/static_strings.py:75
+#: corehq/apps/app_manager/static_strings.py:78
 msgid "Extra Key Action"
 msgstr "Acción de Tecla Extra"
 
-#: corehq/apps/app_manager/static_strings.py:76
+#: corehq/apps/app_manager/static_strings.py:79
 msgid "Form Entry Style"
 msgstr "Estilo de Entrada del Formulario"
 
-#: corehq/apps/app_manager/static_strings.py:77
+#: corehq/apps/app_manager/static_strings.py:80
 msgid "Forms Menu Display"
 msgstr "Visualización de Menú de los Formularios"
 
-#: corehq/apps/app_manager/static_strings.py:78
+#: corehq/apps/app_manager/static_strings.py:81
 msgid "Forms are Never Removed"
 msgstr "Los Formularios Nunca se Eliminan"
 
-#: corehq/apps/app_manager/static_strings.py:79
+#: corehq/apps/app_manager/static_strings.py:82
 msgid "Full Keyboard"
 msgstr "Teclado Completo"
 
-#: corehq/apps/app_manager/static_strings.py:80
+#: corehq/apps/app_manager/static_strings.py:83
 msgid "Full Resize"
 msgstr "Ajuste de Tamaño Completo"
 
-#: corehq/apps/app_manager/static_strings.py:81
+#: corehq/apps/app_manager/static_strings.py:84
 msgid "Full"
 msgstr "Completo"
 
-#: corehq/apps/app_manager/static_strings.py:82
+#: corehq/apps/app_manager/static_strings.py:85
 msgid "Fuzzy Search"
 msgstr "Búsqueda Difusa"
 
-#: corehq/apps/app_manager/static_strings.py:83 corehq/apps/sms/forms.py:345
+#: corehq/apps/app_manager/static_strings.py:86 corehq/apps/sms/forms.py:345
 #: corehq/apps/sms/forms.py:829 corehq/tabs/tabclasses.py:1140
 msgid "General Settings"
 msgstr "Configuración General"
 
-#: corehq/apps/app_manager/static_strings.py:84
+#: corehq/apps/app_manager/static_strings.py:87
 msgid "Generic"
 msgstr "Genérico"
 
-#: corehq/apps/app_manager/static_strings.py:85
+#: corehq/apps/app_manager/static_strings.py:88
 #: corehq/apps/app_manager/templates/app_manager/partials/module_view_settings.html:135
 msgid "Grid"
 msgstr "Red"
 
-#: corehq/apps/app_manager/static_strings.py:86
+#: corehq/apps/app_manager/static_strings.py:89
 msgid "Half Resize"
 msgstr "Ajuste de Tamaño Medio"
 
-#: corehq/apps/app_manager/static_strings.py:87
+#: corehq/apps/app_manager/static_strings.py:90
 msgid "High Density"
 msgstr "Densidad Alta"
 
-#: corehq/apps/app_manager/static_strings.py:88
+#: corehq/apps/app_manager/static_strings.py:91
 msgid "Horizontal Resize"
 msgstr "Ajuste de Tamaño Horizontal"
 
-#: corehq/apps/app_manager/static_strings.py:89
+#: corehq/apps/app_manager/static_strings.py:92
 msgid "How Send All Unsent functionality is presented to the user"
 msgstr ""
 "La forma en la que se muestra al usuario la función de Enviar Todo lo no "
 "Enviado"
 
-#: corehq/apps/app_manager/static_strings.py:90
+#: corehq/apps/app_manager/static_strings.py:93
 msgid ""
 "How often CommCare mobile should attempt to check for a new, released "
 "application version."
@@ -4664,7 +4682,7 @@ msgstr ""
 "Qué tan frecuente debe CommCare móvil intentar revisar si hay una nueva "
 "versión de aplicación lanzada."
 
-#: corehq/apps/app_manager/static_strings.py:91
+#: corehq/apps/app_manager/static_strings.py:94
 msgid ""
 "How often the phone should attempt to purge any cached storage which may "
 "have expired"
@@ -4672,11 +4690,11 @@ msgstr ""
 "Qué tan frecuente debe el teléfono intentar depurar cualquier almacenamiento "
 "capturado que pueda haber expirado"
 
-#: corehq/apps/app_manager/static_strings.py:92
+#: corehq/apps/app_manager/static_strings.py:95
 msgid "Icons"
 msgstr "Íconos"
 
-#: corehq/apps/app_manager/static_strings.py:93
+#: corehq/apps/app_manager/static_strings.py:96
 msgid ""
 "If automatic is enabled, forms will attempt to send on their own without "
 "intervention from the user. If manual is enabled, the user must manually "
@@ -4686,7 +4704,7 @@ msgstr ""
 "por sí mismos sin la intervención del usuario. Si el modo manual está "
 "habilitado, el usuario debe decidir cuándo intentar enviar los formularios. "
 
-#: corehq/apps/app_manager/static_strings.py:94
+#: corehq/apps/app_manager/static_strings.py:97
 msgid ""
 "If multimedia validation is enabled, CommCare will perform an additional "
 "check after installing your app to ensure that all of your multimedia is "
@@ -4699,11 +4717,11 @@ msgstr ""
 "se ejecute. Se recomienda para lanzamiento, pero no permitirá que su "
 "aplicación se ejecute si multimedia está habilitada."
 
-#: corehq/apps/app_manager/static_strings.py:95
+#: corehq/apps/app_manager/static_strings.py:98
 msgid "Image Compatibility on Multiple Devices"
 msgstr "Compatibilidad de Imagen en Múltiples Dispositivos"
 
-#: corehq/apps/app_manager/static_strings.py:96
+#: corehq/apps/app_manager/static_strings.py:99
 msgid ""
 "In normal mode, users log in each time with their username and password. In "
 "auto-login mode, once a user (not the 'admin' or 'demo' users) has logged "
@@ -4714,7 +4732,7 @@ msgstr ""
 "usuarios 'admin' o 'demo') haya iniciado sesión, la aplicación iniciará con "
 "el usuario ya en la sesión. "
 
-#: corehq/apps/app_manager/static_strings.py:97
+#: corehq/apps/app_manager/static_strings.py:100
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html:18
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html:74
 #: corehq/apps/cloudcare/templates/formplayer/session_list.html:7
@@ -4722,27 +4740,27 @@ msgstr ""
 msgid "Incomplete Forms"
 msgstr "Formularios Incompletos"
 
-#: corehq/apps/app_manager/static_strings.py:98
+#: corehq/apps/app_manager/static_strings.py:101
 msgid "Item Selection Mode"
 msgstr "Modo de Selección de Ítem"
 
-#: corehq/apps/app_manager/static_strings.py:99
+#: corehq/apps/app_manager/static_strings.py:102
 msgid "Java Phone General Settings"
 msgstr "Configuración General de Teléfono Java"
 
-#: corehq/apps/app_manager/static_strings.py:100
+#: corehq/apps/app_manager/static_strings.py:103
 msgid "Java Phone Platform"
 msgstr "Plataforma de Teléfono Java"
 
-#: corehq/apps/app_manager/static_strings.py:101
+#: corehq/apps/app_manager/static_strings.py:104
 msgid "Java Phone User Interface Settings"
 msgstr "Configuración de Interfaz de Usuario de Teléfono Java"
 
-#: corehq/apps/app_manager/static_strings.py:102
+#: corehq/apps/app_manager/static_strings.py:105
 msgid "Just One Day"
 msgstr "Solo un Día"
 
-#: corehq/apps/app_manager/static_strings.py:103
+#: corehq/apps/app_manager/static_strings.py:106
 msgid ""
 "Language cycles through any available translations. Audio plays the "
 "question's audio if available. NOTE: If audio is selected, a question's "
@@ -4753,7 +4771,7 @@ msgstr ""
 "audio de una pregunta no se reproducirá de forma predeterminada cuando se "
 "muestra la pregunta."
 
-#: corehq/apps/app_manager/static_strings.py:104
+#: corehq/apps/app_manager/static_strings.py:107
 #: corehq/apps/app_manager/templates/app_manager/partials/app-settings.html:194
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles.html:36
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:50
@@ -4762,75 +4780,81 @@ msgstr ""
 msgid "Languages"
 msgstr "Idiomas"
 
-#: corehq/apps/app_manager/static_strings.py:105
+#: corehq/apps/app_manager/static_strings.py:108
 msgid "Length of time after which you will be logged out automatically"
 msgstr ""
 "Período de tiempo después del cual se cerrará su sesión automáticamente."
 
-#: corehq/apps/app_manager/static_strings.py:106
+#: corehq/apps/app_manager/static_strings.py:109
 #: corehq/apps/app_manager/templates/app_manager/partials/module_view_settings.html:133
 msgid "List"
 msgstr "Lista"
 
-#: corehq/apps/app_manager/static_strings.py:107
+#: corehq/apps/app_manager/static_strings.py:110
 msgid "Log Case Detail Views"
 msgstr "Visualizaciones del Detalle de Inicio de Sesión del Caso. "
 
-#: corehq/apps/app_manager/static_strings.py:108
+#: corehq/apps/app_manager/static_strings.py:111
 msgid "Logging Enabled"
 msgstr "Inicio de Sesión Habilitado"
 
-#: corehq/apps/app_manager/static_strings.py:109
+#: corehq/apps/app_manager/static_strings.py:112
 msgid "Login Buttons"
 msgstr "Botones de Inicio de Sesión"
 
-#: corehq/apps/app_manager/static_strings.py:110
+#: corehq/apps/app_manager/static_strings.py:113
 msgid "Login Duration"
 msgstr "Duración de Inicio de Sesión"
 
-#: corehq/apps/app_manager/static_strings.py:111
+#: corehq/apps/app_manager/static_strings.py:114
 msgid "Login Logo"
 msgstr "Logo de Inicio de Sesión"
 
-#: corehq/apps/app_manager/static_strings.py:112
+#: corehq/apps/app_manager/static_strings.py:115
 msgid "Loose Media Mode"
 msgstr "Modo de Pérdida de Medios"
 
-#: corehq/apps/app_manager/static_strings.py:113
+#: corehq/apps/app_manager/static_strings.py:116
 msgid "Loose"
 msgstr "Pérdida"
 
-#: corehq/apps/app_manager/static_strings.py:114
+#: corehq/apps/app_manager/static_strings.py:117
 msgid "Low Density"
 msgstr "Densidad Baja"
 
-#: corehq/apps/app_manager/static_strings.py:115
+#: corehq/apps/app_manager/static_strings.py:118
 msgid "Manual"
 msgstr "Manual"
 
-#: corehq/apps/app_manager/static_strings.py:116
+#: corehq/apps/app_manager/static_strings.py:119
 msgid "Medium Density"
 msgstr "Densidad Media"
 
-#: corehq/apps/app_manager/static_strings.py:117
+#: corehq/apps/app_manager/static_strings.py:120
 msgid "Minimum duration between updates to mobile report data (hours)."
 msgstr ""
 "Duración mínima entre las actualizaciones para datos de reporte del móvil "
 "(horas)."
 
-#: corehq/apps/app_manager/static_strings.py:118
+#: corehq/apps/app_manager/static_strings.py:121
 msgid "Mobile Reports Update Frequency"
 msgstr "Frecuencia de Actualización de Reportes del Móvil"
 
-#: corehq/apps/app_manager/static_strings.py:119
+#: corehq/apps/app_manager/static_strings.py:122
+#, fuzzy
+#| msgid "Mobile Users"
+msgid "Mobile UCR Restore Version"
+msgstr "Usuarios Móviles"
+
+#: corehq/apps/app_manager/static_strings.py:123
 msgid "Modules Menu Display"
 msgstr "Visualización del Menú de Módulos"
 
-#: corehq/apps/app_manager/static_strings.py:120
+#: corehq/apps/app_manager/static_strings.py:124
 msgid "Multimedia Validation"
 msgstr "Validación Multimedia"
 
-#: corehq/apps/app_manager/static_strings.py:121
+#: corehq/apps/app_manager/static_strings.py:125
 msgid ""
 "Multiple Questions per Screen displays a running list of questions on the "
 "screen at the same time. One Question per Screen displays each question "
@@ -4840,37 +4864,37 @@ msgstr ""
 "en la pantalla de manera simultánea. Una Pregunta por Pantalla muestra cada "
 "pregunta de manera independiente. Nota: OQPS no soporta algunas funciones."
 
-#: corehq/apps/app_manager/static_strings.py:122
+#: corehq/apps/app_manager/static_strings.py:126
 msgid "Multiple Questions per Screen"
 msgstr "Múltiples Preguntas por Pantalla"
 
-#: corehq/apps/app_manager/static_strings.py:123
+#: corehq/apps/app_manager/static_strings.py:127
 msgid "Must correspond to the password format specified below."
 msgstr "Debe corresponder al formato de contraseña que se especifica abajo."
 
-#: corehq/apps/app_manager/static_strings.py:124
+#: corehq/apps/app_manager/static_strings.py:128
 msgid "Native (International)"
 msgstr "Nativo (Internacional)"
 
-#: corehq/apps/app_manager/static_strings.py:125
+#: corehq/apps/app_manager/static_strings.py:129
 #: corehq/apps/reports/commtrack/standard.py:400
 #: corehq/apps/reports/standard/deployments.py:414
 msgid "Never"
 msgstr "Nunca"
 
-#: corehq/apps/app_manager/static_strings.py:126
+#: corehq/apps/app_manager/static_strings.py:130
 msgid "No (NOT RECOMMENDED)"
 msgstr "No (NO RECOMENDADO)"
 
-#: corehq/apps/app_manager/static_strings.py:127
+#: corehq/apps/app_manager/static_strings.py:131
 msgid "No Users Mode"
 msgstr "Modo No Usuarios"
 
-#: corehq/apps/app_manager/static_strings.py:128
+#: corehq/apps/app_manager/static_strings.py:132
 msgid "No Validation"
 msgstr "No Validación"
 
-#: corehq/apps/app_manager/static_strings.py:129
+#: corehq/apps/app_manager/static_strings.py:133
 #: corehq/apps/data_interfaces/forms.py:208
 #: corehq/apps/data_interfaces/forms.py:225
 #: corehq/apps/data_interfaces/forms.py:275 corehq/apps/domain/forms.py:1051
@@ -4885,15 +4909,15 @@ msgstr "No Validación"
 msgid "No"
 msgstr "No"
 
-#: corehq/apps/app_manager/static_strings.py:130
+#: corehq/apps/app_manager/static_strings.py:134
 msgid "Nokia S40 (default)"
 msgstr "Nokia S40 (predeterminado)"
 
-#: corehq/apps/app_manager/static_strings.py:131
+#: corehq/apps/app_manager/static_strings.py:135
 msgid "Nokia S60"
 msgstr "Nokia S60"
 
-#: corehq/apps/app_manager/static_strings.py:132
+#: corehq/apps/app_manager/static_strings.py:136
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:29
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:55
 #: corehq/apps/appstore/templates/appstore/project_info.html:92
@@ -4907,21 +4931,21 @@ msgstr "Nokia S60"
 msgid "None"
 msgstr "Ninguna"
 
-#: corehq/apps/app_manager/static_strings.py:133
+#: corehq/apps/app_manager/static_strings.py:137
 msgid "Normal Scrolling"
 msgstr "Desplazamiento Normal"
 
-#: corehq/apps/app_manager/static_strings.py:134
+#: corehq/apps/app_manager/static_strings.py:138
 msgid "Normal"
 msgstr "Normal"
 
-#: corehq/apps/app_manager/static_strings.py:135
+#: corehq/apps/app_manager/static_strings.py:139
 msgid "Number of unsent forms on phone before triggering warning text"
 msgstr ""
 "Número de formularios no enviados en el teléfono antes de emitir un texto de "
 "advertencia"
 
-#: corehq/apps/app_manager/static_strings.py:136
+#: corehq/apps/app_manager/static_strings.py:140
 msgid ""
 "Numeric Selection mode will display information about questions for longer "
 "and require more input from the user. Normal Scrolling will proceed to the "
@@ -4931,19 +4955,19 @@ msgstr ""
 "tiempo y necesitará más aporte del usuario. El Desplazamiento Normal pasará "
 "a la próxima pregunta cuando se provea suficiente información."
 
-#: corehq/apps/app_manager/static_strings.py:137
+#: corehq/apps/app_manager/static_strings.py:141
 msgid "Numeric Selection"
 msgstr "Selección Numérica"
 
-#: corehq/apps/app_manager/static_strings.py:138
+#: corehq/apps/app_manager/static_strings.py:142
 msgid "Numeric"
 msgstr "Numérico"
 
-#: corehq/apps/app_manager/static_strings.py:139
+#: corehq/apps/app_manager/static_strings.py:143
 msgid "OTA Restore Tolerance"
 msgstr "Tolerancia de Restauración OTA"
 
-#: corehq/apps/app_manager/static_strings.py:141
+#: corehq/apps/app_manager/static_strings.py:145
 msgid ""
 "On CommCare Android, have this form automatically capture the user's current "
 "geo-location.\n"
@@ -4951,31 +4975,31 @@ msgstr ""
 "En CommCare Android, haga que este formulario capture automáticamente la "
 "localización geográfica actual del usuario.\n"
 
-#: corehq/apps/app_manager/static_strings.py:143
+#: corehq/apps/app_manager/static_strings.py:147
 msgid "Once a Month"
 msgstr "Una vez al Mes"
 
-#: corehq/apps/app_manager/static_strings.py:144
+#: corehq/apps/app_manager/static_strings.py:148
 msgid "Once a Week"
 msgstr "Una vez a la Semana"
 
-#: corehq/apps/app_manager/static_strings.py:145
+#: corehq/apps/app_manager/static_strings.py:149
 msgid "One Month"
 msgstr "Un Mes"
 
-#: corehq/apps/app_manager/static_strings.py:146
+#: corehq/apps/app_manager/static_strings.py:150
 msgid "One Question per Screen"
 msgstr "Una Pregunta por Pantalla"
 
-#: corehq/apps/app_manager/static_strings.py:147
+#: corehq/apps/app_manager/static_strings.py:151
 msgid "One Week"
 msgstr "Una Semana"
 
-#: corehq/apps/app_manager/static_strings.py:148
+#: corehq/apps/app_manager/static_strings.py:152
 msgid "One Year"
 msgstr "Un Año"
 
-#: corehq/apps/app_manager/static_strings.py:149
+#: corehq/apps/app_manager/static_strings.py:153
 msgid ""
 "Oops! This setting has been discontinued. We recommend you change this "
 "setting to Version 2, and it will no longer appear on your settings page."
@@ -4984,28 +5008,28 @@ msgstr ""
 "esta configuración a la Versión 2, y esta ya no aparecerá en su pantalla de "
 "configuraciones."
 
-#: corehq/apps/app_manager/static_strings.py:150
+#: corehq/apps/app_manager/static_strings.py:154
 msgid "Password Format"
 msgstr "Formato de la Contraseña"
 
-#: corehq/apps/app_manager/static_strings.py:151
+#: corehq/apps/app_manager/static_strings.py:155
 #: corehq/apps/app_manager/templates/app_manager/partials/build_profiles.html:38
 msgid "Practice Mobile Worker"
 msgstr "Usuario Móvil de Práctica"
 
-#: corehq/apps/app_manager/static_strings.py:152
+#: corehq/apps/app_manager/static_strings.py:156
 msgid "Profile URL"
 msgstr "Perfil URL"
 
-#: corehq/apps/app_manager/static_strings.py:155
+#: corehq/apps/app_manager/static_strings.py:159
 msgid "Purge Frequency"
 msgstr "Frecuencia de Depuración"
 
-#: corehq/apps/app_manager/static_strings.py:156
+#: corehq/apps/app_manager/static_strings.py:160
 msgid "Push Only"
 msgstr "Solo Presionar"
 
-#: corehq/apps/app_manager/static_strings.py:157
+#: corehq/apps/app_manager/static_strings.py:161
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config.html:166
 #: corehq/apps/app_manager/templates/app_manager/partials/case_config_ko_templates.html:60
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:105
@@ -5022,37 +5046,37 @@ msgstr "Solo Presionar"
 msgid "Required"
 msgstr "Obligatorio"
 
-#: corehq/apps/app_manager/static_strings.py:158
+#: corehq/apps/app_manager/static_strings.py:162
 msgid "Roman"
 msgstr "Romano"
 
-#: corehq/apps/app_manager/static_strings.py:159
+#: corehq/apps/app_manager/static_strings.py:163
 msgid "Saved Forms"
 msgstr "Formularios Guardados"
 
-#: corehq/apps/app_manager/static_strings.py:160
+#: corehq/apps/app_manager/static_strings.py:164
 msgid "Select the mobile worker to use as a practice user for this application"
 msgstr ""
 "Seleccione el usuario móvil que desea utilizar como usuario de práctica para "
 "esta aplicación"
 
-#: corehq/apps/app_manager/static_strings.py:161
+#: corehq/apps/app_manager/static_strings.py:165
 msgid "Send Data Over HTTP"
 msgstr "Enviar Datos Vía HTTP"
 
-#: corehq/apps/app_manager/static_strings.py:162
+#: corehq/apps/app_manager/static_strings.py:166
 msgid "Send Data"
 msgstr "Enviar Datos"
 
-#: corehq/apps/app_manager/static_strings.py:163
+#: corehq/apps/app_manager/static_strings.py:167
 msgid "Send Forms Mode"
 msgstr "Modo de Enviar Formularios"
 
-#: corehq/apps/app_manager/static_strings.py:164
+#: corehq/apps/app_manager/static_strings.py:168
 msgid "Server User Registration"
 msgstr "Registro de Usuario del Servidor"
 
-#: corehq/apps/app_manager/static_strings.py:165
+#: corehq/apps/app_manager/static_strings.py:169
 msgid ""
 "Set to skip if your deployment does not require users to register with the "
 "server. Note that this will likely result in OTA Restore and other features "
@@ -5062,11 +5086,11 @@ msgstr ""
 "registren con el servidor. Note que esto probablemente resultará en que la "
 "Restauración OTA y otras funciones no estén disponibles. "
 
-#: corehq/apps/app_manager/static_strings.py:166
+#: corehq/apps/app_manager/static_strings.py:170
 msgid "Short"
 msgstr "Corto"
 
-#: corehq/apps/app_manager/static_strings.py:167
+#: corehq/apps/app_manager/static_strings.py:171
 msgid ""
 "Simple (FOR TESTING ONLY: crashes with any unrecognized user-defined "
 "translations)"
@@ -5074,28 +5098,28 @@ msgstr ""
 "Simple (SOLO PARA PRUEBA: falla con cualquier traducción definida por el "
 "usuario no reconocida)"
 
-#: corehq/apps/app_manager/static_strings.py:168
+#: corehq/apps/app_manager/static_strings.py:172
 msgid "Skip"
 msgstr "Omitir"
 
-#: corehq/apps/app_manager/static_strings.py:169
+#: corehq/apps/app_manager/static_strings.py:173
 msgid "Strict"
 msgstr "Estricto"
 
-#: corehq/apps/app_manager/static_strings.py:170
+#: corehq/apps/app_manager/static_strings.py:174
 msgid "Sync Mode"
 msgstr "Modo de Sincronización"
 
-#: corehq/apps/app_manager/static_strings.py:171
+#: corehq/apps/app_manager/static_strings.py:175
 msgid "Text Input"
 msgstr "Entrada de Texto"
 
-#: corehq/apps/app_manager/static_strings.py:172
+#: corehq/apps/app_manager/static_strings.py:176
 #: custom/ilsgateway/tanzania/reports/facility_details.py:123
 msgid "Text"
 msgstr "Texto"
 
-#: corehq/apps/app_manager/static_strings.py:173
+#: corehq/apps/app_manager/static_strings.py:177
 msgid ""
 "This value will set whether the login screen uses customizable icons for "
 "login and demo mode options or uses the standard buttons with labels."
@@ -5104,7 +5128,7 @@ msgstr ""
 "personalizables para las opciones de inicio de sesión y demo, o si utiliza "
 "los botones estándar con etiquetas."
 
-#: corehq/apps/app_manager/static_strings.py:174
+#: corehq/apps/app_manager/static_strings.py:178
 msgid ""
 "This will determine how images you select for your questions will be resized "
 "to fit the screen. Horizontal will stretch/compress the image to fit "
@@ -5120,7 +5144,7 @@ msgstr ""
 "ampliación vertical/horizontal ideal para la pantalla. El Ajuste de Tamaño "
 "Medio hará lo mismo, pero con la mitad del área."
 
-#: corehq/apps/app_manager/static_strings.py:175
+#: corehq/apps/app_manager/static_strings.py:179
 msgid ""
 "This will set the amount of time you will remain logged in before "
 "automatically being logged out."
@@ -5128,7 +5152,7 @@ msgstr ""
 "Esto establecerá la cantidad de tiempo que permanecerá en la sesión, antes "
 "de que se finalice su sesión automáticamente."
 
-#: corehq/apps/app_manager/static_strings.py:176
+#: corehq/apps/app_manager/static_strings.py:180
 msgid ""
 "This will show or hide the 'Incomplete' button on the CommCare ODK home "
 "screen. Turning this off will prevent users from saving incomplete forms."
@@ -5137,7 +5161,7 @@ msgstr ""
 "CommCare ODK. Apagar esto evitará que los usuarios guarden formularios "
 "incompletos. "
 
-#: corehq/apps/app_manager/static_strings.py:177
+#: corehq/apps/app_manager/static_strings.py:181
 msgid ""
 "This will show or hide the 'Saved' button on the CommCare ODK home screen. "
 "Turning this off will prevent users from saving forms locally."
@@ -5146,53 +5170,53 @@ msgstr ""
 "CommCare ODK. Apagar esto evitará que los usuarios guarden formularios "
 "localmente."
 
-#: corehq/apps/app_manager/static_strings.py:178
+#: corehq/apps/app_manager/static_strings.py:182
 msgid "Three Months"
 msgstr "Tres Meses"
 
-#: corehq/apps/app_manager/static_strings.py:179
+#: corehq/apps/app_manager/static_strings.py:183
 msgid "Translations Strategy"
 msgstr "Estrategia de Traducciones"
 
-#: corehq/apps/app_manager/static_strings.py:180
+#: corehq/apps/app_manager/static_strings.py:184
 msgid "Twice a Month"
 msgstr "Dos Veces al Mes"
 
-#: corehq/apps/app_manager/static_strings.py:181
+#: corehq/apps/app_manager/static_strings.py:185
 msgid "Two Weeks"
 msgstr "Dos Semanas"
 
-#: corehq/apps/app_manager/static_strings.py:182
+#: corehq/apps/app_manager/static_strings.py:186
 msgid "Two-Way Sync"
 msgstr "Sincronización en Dos Vías"
 
-#: corehq/apps/app_manager/static_strings.py:183
+#: corehq/apps/app_manager/static_strings.py:187
 msgid "Unsent Form Limit"
 msgstr "Límite de Formularios sin Enviar"
 
-#: corehq/apps/app_manager/static_strings.py:184
+#: corehq/apps/app_manager/static_strings.py:188
 msgid "Unsynced Time Limit"
 msgstr "Límite de Tiempo Sin Sicronizar"
 
-#: corehq/apps/app_manager/static_strings.py:185
+#: corehq/apps/app_manager/static_strings.py:189
 msgid "Update on every sync"
 msgstr "Actualizar en cada sincronización"
 
-#: corehq/apps/app_manager/static_strings.py:186
+#: corehq/apps/app_manager/static_strings.py:190
 msgid "Upload a file to serve as a login logo on Android phones"
 msgstr ""
 "Cargue un archivo que sirva como logo para el ingreso en los teléfonos "
 "Android."
 
-#: corehq/apps/app_manager/static_strings.py:187
+#: corehq/apps/app_manager/static_strings.py:191
 msgid "Use Secure Submissions"
 msgstr "Utilice Ingresos Seguros"
 
-#: corehq/apps/app_manager/static_strings.py:188
+#: corehq/apps/app_manager/static_strings.py:192
 msgid "Use project level setting"
 msgstr "Utilice configuración de nivel de proyecto"
 
-#: corehq/apps/app_manager/static_strings.py:189
+#: corehq/apps/app_manager/static_strings.py:193
 msgid ""
 "Use a different base URL for all app URLs. This makes the phone send forms, "
 "sync and look for updates from a differnent URL. Main use case is to allow "
@@ -5203,23 +5227,38 @@ msgstr ""
 "un URL diferente. El uso principal de caso es para permitir la migración de "
 "ICDS a un nuevo grupo."
 
-#: corehq/apps/app_manager/static_strings.py:190
+#: corehq/apps/app_manager/static_strings.py:194
 msgid "User Login Mode"
 msgstr "Modo de Ingreso de Usuario"
 
-#: corehq/apps/app_manager/static_strings.py:191
+#: corehq/apps/app_manager/static_strings.py:195
 msgid "Validate Multimedia"
 msgstr "Validar Multimedia"
 
-#: corehq/apps/app_manager/static_strings.py:192
+#: corehq/apps/app_manager/static_strings.py:196
 msgid "Version 1 translations (old)"
 msgstr "Versión 1 de traducciones (antiguas)"
 
-#: corehq/apps/app_manager/static_strings.py:193
+#: corehq/apps/app_manager/static_strings.py:197
 msgid "Version 2 translations (recommended)"
 msgstr "Versión 2 de traducciones (recomendado)"
 
-#: corehq/apps/app_manager/static_strings.py:194
+#: corehq/apps/app_manager/static_strings.py:198
+#, fuzzy
+#| msgid ""
+#| "Display root menu as a list or grid. Read more on the <a target=\"_blank"
+#| "\" href=\"https://help.commcarehq.org/display/commcarepublic/Grid+View+for"
+#| "+Form+and+Module+Screens\">Help Site</a>."
+msgid ""
+"Version of mobile UCRs to use. Read more on the  <a target=\"_blank\" href="
+"\"https://help.commcarehq.org/display/ccinternal/Moving+to+Mobile+UCR"
+"+V2\">Help Site</a>"
+msgstr ""
+"Mostrar el menú origen como una lista o como cuadrícula. Lea más acerca de "
+"esto en el <a target=\"_blank\" href=\"https://help.commcarehq.org/display/"
+"commcarepublic/Grid+View+for+Form+and+Module+Screens\">Sitio de Ayuda </a>. "
+
+#: corehq/apps/app_manager/static_strings.py:199
 msgid ""
 "We frequently release new versions of CommCare Mobile. Use the latest "
 "version to take advantage of new features and bug fixes. Note that if you "
@@ -5231,7 +5270,7 @@ msgstr ""
 "Note que si está utilizando CommCare para Android, debe actualizar su "
 "versión de CommCare de Google Play Store."
 
-#: corehq/apps/app_manager/static_strings.py:195
+#: corehq/apps/app_manager/static_strings.py:200
 msgid ""
 "We suggest moving to CommCare 2.0 and above, unless your project is using "
 "referrals"
@@ -5239,20 +5278,20 @@ msgstr ""
 "Le sugerimos subir a la versión CommCare 2.0 y superior, a menos que su "
 "proyecto utilice referencias"
 
-#: corehq/apps/app_manager/static_strings.py:196
+#: corehq/apps/app_manager/static_strings.py:201
 msgid "Web App"
 msgstr "Aplicación Web"
 
-#: corehq/apps/app_manager/static_strings.py:197
+#: corehq/apps/app_manager/static_strings.py:202
 msgid "Weekly Log Sending Frequency"
 msgstr "Frecuencia de Envío de Inicio de Sesión Semanal"
 
-#: corehq/apps/app_manager/static_strings.py:198
+#: corehq/apps/app_manager/static_strings.py:203
 #: corehq/motech/openmrs/const.py:14
 msgid "Weekly"
 msgstr "Semanal"
 
-#: corehq/apps/app_manager/static_strings.py:199
+#: corehq/apps/app_manager/static_strings.py:204
 msgid ""
 "What kind of log transmission the phone should attempt on a daily basis "
 "(submitted to PostURL)"
@@ -5260,7 +5299,7 @@ msgstr ""
 "Qué tipo de registro de transmisión debe intentar el teléfono diariamente "
 "(ingresado a PostURL)"
 
-#: corehq/apps/app_manager/static_strings.py:200
+#: corehq/apps/app_manager/static_strings.py:205
 msgid ""
 "What kind of log transmission the phone should attempt on a weekly basis "
 "(submitted to PostURL)"
@@ -5268,17 +5307,17 @@ msgstr ""
 "Qué tipo de registro de transmisión debe intentar el teléfono semanalmente "
 "(ingresado a PostURL)"
 
-#: corehq/apps/app_manager/static_strings.py:201
+#: corehq/apps/app_manager/static_strings.py:206
 msgid "What the 'Extra Key' (# on Nokia Phones) does when pressed"
 msgstr "Qué hace la 'Tecla Extra' (# en Teléfonos Nokia) al presionarla"
 
-#: corehq/apps/app_manager/static_strings.py:202
+#: corehq/apps/app_manager/static_strings.py:207
 msgid "What user interface style should be used during form entry."
 msgstr ""
 "Qué estilo de interfaz de usuario debe utilizarse durante la entrada del "
 "formulario."
 
-#: corehq/apps/app_manager/static_strings.py:203
+#: corehq/apps/app_manager/static_strings.py:208
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
@@ -5294,7 +5333,7 @@ msgstr ""
 "commcarepublic/Image+Sizing+with+Multiple+Android+Device+Models'>las "
 "instrucciones aquí </a>para determinar qué valor desea utilizar. "
 
-#: corehq/apps/app_manager/static_strings.py:204
+#: corehq/apps/app_manager/static_strings.py:209
 msgid ""
 "When auto-sync is enabled CommCare will attempt to submit forms and "
 "synchronize the user's data after logging in with the frequency chosen."
@@ -5303,7 +5342,7 @@ msgstr ""
 "ingresar formularios y sincronizar los datos del usuario luego de iniciar "
 "sesión con la frecuencia elegida."
 
-#: corehq/apps/app_manager/static_strings.py:205
+#: corehq/apps/app_manager/static_strings.py:210
 msgid ""
 "When loose media mode is set to yes, CommCare will search for alternative "
 "media formats for any media that it cannot play. If CommCare attempts to "
@@ -5320,7 +5359,7 @@ msgstr ""
 "alternativas que puedan ser compatibles, por ejemplo prompt_one.wav, y "
 "reproducirá esa en su lugar."
 
-#: corehq/apps/app_manager/static_strings.py:206
+#: corehq/apps/app_manager/static_strings.py:211
 msgid ""
 "When the phone has this number of unsynced forms stored locally CommCare "
 "will trigger a warning"
@@ -5328,7 +5367,7 @@ msgstr ""
 "Cuando el teléfono tenga este número de formularios sin sincronizar "
 "guardados localmente, CommCare emitirá una advertencia"
 
-#: corehq/apps/app_manager/static_strings.py:207
+#: corehq/apps/app_manager/static_strings.py:212
 msgid ""
 "When this many days have passed without the user syncing CommCare will "
 "trigger a warning"
@@ -5336,7 +5375,7 @@ msgstr ""
 "Cuando hayan pasado esta cantidad de días sin que el usuario sincronice, "
 "CommCare activará una advertencia"
 
-#: corehq/apps/app_manager/static_strings.py:208
+#: corehq/apps/app_manager/static_strings.py:213
 msgid ""
 "When you select this box, your data will no longer be encrypted.  Because of "
 "changes regarding Java phone security certificates, it will be necessary to "
@@ -5346,11 +5385,11 @@ msgstr ""
 "a cambios en certificados de seguridad de teléfonos Java, será necesario "
 "enviar datos vía HTTP para continuar enviando datos a CommCare. "
 
-#: corehq/apps/app_manager/static_strings.py:209
+#: corehq/apps/app_manager/static_strings.py:214
 msgid "Whenever Possible"
 msgstr "Cuando sea Posible"
 
-#: corehq/apps/app_manager/static_strings.py:210
+#: corehq/apps/app_manager/static_strings.py:215
 msgid ""
 "Whether CommCare should search for alternative formats of incompatible media "
 "files."
@@ -5358,7 +5397,7 @@ msgstr ""
 "Si CommCare debe buscar formatos alternativos de archivos de medios "
 "incompatibles."
 
-#: corehq/apps/app_manager/static_strings.py:211
+#: corehq/apps/app_manager/static_strings.py:216
 msgid ""
 "Whether CommCare should validate that all external multimedia is installed "
 "before letting the user run the app."
@@ -5366,7 +5405,7 @@ msgstr ""
 "Si CommCare debe validar que toda la multimedia externa esté instalada antes "
 "de permitir que el usuario ejecute la aplicación."
 
-#: corehq/apps/app_manager/static_strings.py:212
+#: corehq/apps/app_manager/static_strings.py:217
 msgid ""
 "Whether OTA Restore is tolerant of failures, ambiguity, duplicate "
 "registrations, etc (and proceeds as best it can), or whether it fails "
@@ -5375,25 +5414,25 @@ msgstr ""
 "Si Restauración OTA tolera fallas, ambigüedades, registros duplicados, etc. "
 "(y procede lo mejor que puede), o si falla inmediatamente en estos casos. "
 
-#: corehq/apps/app_manager/static_strings.py:213
+#: corehq/apps/app_manager/static_strings.py:218
 msgid "Whether form entry is optimized for speed, or for new users."
 msgstr ""
 "Si la entrada de formularios se optimiza para velocidad, o para usuarios "
 "nuevos."
 
-#: corehq/apps/app_manager/static_strings.py:214
+#: corehq/apps/app_manager/static_strings.py:219
 msgid "Whether logging of incidents should be activated on the client."
 msgstr "Si el registro de incidentes debe activarse en el cliente."
 
-#: corehq/apps/app_manager/static_strings.py:215
+#: corehq/apps/app_manager/static_strings.py:220
 msgid "Whether or not the phone collects, saves, and sends data."
 msgstr "Si el teléfono recolecta, guarda y envía datos, o no."
 
-#: corehq/apps/app_manager/static_strings.py:216
+#: corehq/apps/app_manager/static_strings.py:221
 msgid "Whether searches can match similar strings"
 msgstr "Si las búsquedas pueden coincidir con cadenas similares"
 
-#: corehq/apps/app_manager/static_strings.py:217
+#: corehq/apps/app_manager/static_strings.py:222
 msgid ""
 "Whether searches on the phone will match similar strings. IE: 'Jhon' will "
 "match 'John'"
@@ -5401,7 +5440,7 @@ msgstr ""
 "Si las búsquedas en el teléfono coincidirán con cadenas similares. Por "
 "ejemplo: 'Jhon' coincidirá con 'John'"
 
-#: corehq/apps/app_manager/static_strings.py:218
+#: corehq/apps/app_manager/static_strings.py:223
 msgid ""
 "Whether to log each time a user views case details. May reduce mobile "
 "performance."
@@ -5409,11 +5448,11 @@ msgstr ""
 "Si se debe registrar cada vez que un usuario ve los detalles del caso. Puede "
 "reducir el desempeño del dispositivo móvil."
 
-#: corehq/apps/app_manager/static_strings.py:219
+#: corehq/apps/app_manager/static_strings.py:224
 msgid "Whether to show the user login screen"
 msgstr "Si mostrar la pantalla de ingreso del usuario"
 
-#: corehq/apps/app_manager/static_strings.py:220
+#: corehq/apps/app_manager/static_strings.py:225
 msgid ""
 "Whether users registered on the phone need to be registered with the "
 "submission server."
@@ -5421,23 +5460,23 @@ msgstr ""
 "Si los usuarios registrados en el teléfono deben registrarse en el servidor "
 "de ingreso."
 
-#: corehq/apps/app_manager/static_strings.py:221
+#: corehq/apps/app_manager/static_strings.py:226
 msgid "WinMo"
 msgstr "WinMo"
 
-#: corehq/apps/app_manager/static_strings.py:222
+#: corehq/apps/app_manager/static_strings.py:227
 msgid "X-High Density"
 msgstr "Densidad X-Alta"
 
-#: corehq/apps/app_manager/static_strings.py:223
+#: corehq/apps/app_manager/static_strings.py:228
 msgid "XX-High Density"
 msgstr "Densidad XX-Alta"
 
-#: corehq/apps/app_manager/static_strings.py:224
+#: corehq/apps/app_manager/static_strings.py:229
 msgid "XXX-High Density"
 msgstr "Densidad XXX-Alta"
 
-#: corehq/apps/app_manager/static_strings.py:225
+#: corehq/apps/app_manager/static_strings.py:230
 #: corehq/apps/data_interfaces/forms.py:207
 #: corehq/apps/data_interfaces/forms.py:223 corehq/apps/domain/forms.py:1051
 #: corehq/apps/reminders/forms.py:85
@@ -5451,7 +5490,7 @@ msgstr "Densidad XXX-Alta"
 msgid "Yes"
 msgstr "Sí"
 
-#: corehq/apps/app_manager/static_strings.py:226
+#: corehq/apps/app_manager/static_strings.py:231
 msgid "disabled"
 msgstr "deshabilitado"
 
@@ -7700,7 +7739,7 @@ msgid "Case Tile Mapping"
 msgstr "Mapeo de Ficha de Caso"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/case_list_properties.html:108
-#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:95
+#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:97
 #: corehq/apps/case_search/templates/case_search/case_search.html:81
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:141
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/custom_data_fields.html:196
@@ -8640,19 +8679,19 @@ msgstr "Reporte"
 msgid "Data Table"
 msgstr "Tabla de Datos"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:76
+#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:78
 msgid "Use xpath expression"
 msgstr "Utilizar la expresión xpath"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:81
+#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:83
 msgid "Must be a valid xpath expression."
 msgstr "Debe ser una expresión xpath válida"
 
-#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:85
+#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:87
 msgid "Not localizable."
 msgstr "No es localizable."
 
-#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:106
+#: corehq/apps/app_manager/templates/app_manager/partials/mobile_report_configs.html:108
 msgid "Add Report"
 msgstr "Agregar Reporte"
 
@@ -9411,7 +9450,7 @@ msgstr ""
 msgid "Untitled"
 msgstr "Sin Título"
 
-#: corehq/apps/app_manager/util.py:570
+#: corehq/apps/app_manager/util.py:566
 #, python-brace-format
 msgid ""
 "Practice User with id {id} not found, please make sure you have not deleted "
@@ -9420,7 +9459,7 @@ msgstr ""
 "No se encontró al Usuario de Práctica con id {id}. Por favor asegúrese de "
 "que no haya eliminado este usuario."
 
-#: corehq/apps/app_manager/util.py:575
+#: corehq/apps/app_manager/util.py:571
 #, python-brace-format
 msgid ""
 "User {username} is not a practice user, please turn on practice mode for "
@@ -9429,7 +9468,7 @@ msgstr ""
 "El usuario {username} no es un usuario de práctica. Por favor active el modo "
 "de práctica para este usuario."
 
-#: corehq/apps/app_manager/util.py:580
+#: corehq/apps/app_manager/util.py:576
 #, python-brace-format
 msgid ""
 "User {username} has been deleted, you can't use that user as practice user"
@@ -9437,7 +9476,7 @@ msgstr ""
 "El usuario {username} ha sido eliminado. No puede utilizar a este usuario "
 "como un usuario de práctica"
 
-#: corehq/apps/app_manager/util.py:585
+#: corehq/apps/app_manager/util.py:581
 #, python-brace-format
 msgid ""
 "User {username} has been deactivated, you can't use that user as practice "
@@ -9521,11 +9560,11 @@ msgstr "Usted debe ingresar un nombre para la aplicación a importar."
 msgid "You must submit the source data."
 msgstr "Usted debe ingresar la información fuente."
 
-#: corehq/apps/app_manager/views/apps.py:789
+#: corehq/apps/app_manager/views/apps.py:783
 msgid "The form is incompatible with the destination menu and was not moved."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:796
+#: corehq/apps/app_manager/views/apps.py:790
 msgid ""
 "Oops. Looks like you got out of sync with us. The sidebar has been updated, "
 "so please try again."
@@ -9533,7 +9572,7 @@ msgstr ""
 "Vaya. Parece que no se ha sincronizado con nosotros. La barra lateral ha "
 "sido actualizada, por favor vuelva a intentar."
 
-#: corehq/apps/app_manager/views/apps.py:829
+#: corehq/apps/app_manager/views/apps.py:823
 msgid "You have successfully removed User Properties from this application."
 msgstr ""
 "Ha eliminado exitosamente las Propiedades del Usuario de esta aplicación."
@@ -9740,17 +9779,17 @@ msgstr "Aplicación diff"
 msgid "Upload failed. We found problems with the following translations:"
 msgstr "La carga falló. Encontramos problemas con las siguientes traducciones:"
 
-#: corehq/apps/app_manager/views/translations.py:55
+#: corehq/apps/app_manager/views/translations.py:54
 msgid "Upload succeeded, but we found following issues for some properties"
 msgstr ""
 "La carga fue exitosa pero encontramos los siguientes problemas con algunas "
 "propiedades"
 
-#: corehq/apps/app_manager/views/translations.py:62
+#: corehq/apps/app_manager/views/translations.py:61
 msgid "Something went wrong! Update failed. We're looking into it"
 msgstr "¡Algo salió mal! La actualización falló. Estamos revisando esto."
 
-#: corehq/apps/app_manager/views/translations.py:65
+#: corehq/apps/app_manager/views/translations.py:64
 msgid "UI Translations Updated!"
 msgstr "¡Las Traducciones UI han sido actualizadas!"
 
@@ -13984,8 +14023,8 @@ msgstr "Precios SMS"
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:18
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:78
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/shared_pricing_table.html:50
-#: corehq/apps/prelogin/templates/prelogin/base.html:171
-#: corehq/apps/userreports/views.py:390
+#: corehq/apps/prelogin/templates/prelogin/base.html:166
+#: corehq/apps/userreports/views.py:386
 msgid "Pricing"
 msgstr "Precios"
 

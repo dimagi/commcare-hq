@@ -1,16 +1,26 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager import models
+from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
+from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
-    SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
-    ConfigurationItem, GraphTemplate, Graph, Xpath, XpathVariable
+    SessionDatum, Detail, Header, Field, Template, GraphTemplate, Xpath, XpathVariable
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
 
 
 COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
+COLUMN_XPATH_TEMPLATE_V2 = "{}"
 COLUMN_XPATH_CLIENT_TEMPLATE = "column[@id='<%= id %>']"
+COLUMN_XPATH_CLIENT_TEMPLATE_V2 = "<%= id %>"
+
+
+def _get_column_xpath_template(new_mobile_ucr_restore):
+    return COLUMN_XPATH_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_TEMPLATE
+
+
+def get_column_xpath_client_template(new_mobile_ucr_restore):
+    return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_CLIENT_TEMPLATE
 
 
 @quickcache(['report_module.unique_id'])
@@ -30,8 +40,20 @@ class ReportModuleSuiteHelper(object):
     def __init__(self, report_module):
         assert isinstance(report_module, ReportModule)
         self.report_module = report_module
-        self.domain = self.report_module.get_app().domain
+        self.domain = self.app.domain
         self._loaded = None
+
+    @property
+    def app(self):
+        return self.report_module.get_app()
+
+    @property
+    def mobile_ucr_restore_version(self):
+        return self.app.mobile_ucr_restore_version
+
+    @property
+    def new_mobile_ucr_restore(self):
+        return self.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2)
 
     def get_details(self):
         _load_reports(self.report_module)
@@ -41,15 +63,20 @@ class ReportModuleSuiteHelper(object):
                        MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
             yield (_get_select_detail_id(config), _get_select_details(config), True)
             yield (_get_summary_detail_id(config),
-                   _get_summary_details(config, self.domain, self.report_module), True)
+                   _get_summary_details(config, self.domain, self.report_module, self.new_mobile_ucr_restore), True)
 
     def get_custom_entries(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            yield _get_config_entry(config, self.domain)
+            yield _get_config_entry(config, self.domain, self.new_mobile_ucr_restore)
 
 
-def _get_config_entry(config, domain):
+def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
+    if new_mobile_ucr_restore:
+        datum_string = "instance('commcare-reports:{}')/rows"
+    else:
+        datum_string = "instance('reports')/reports/report[@id='{}']"
+
     return Entry(
         command=Command(
             id='reports.{}'.format(config.uuid),
@@ -61,7 +88,7 @@ def _get_config_entry(config, domain):
             SessionDatum(
                 detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                 id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, new_mobile_ucr_restore),
                 value='./@value',
             )
             for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, domain)
@@ -70,7 +97,7 @@ def _get_config_entry(config, domain):
                 detail_confirm=_get_summary_detail_id(config),
                 detail_select=_get_select_detail_id(config),
                 id='report_id_{}'.format(config.uuid),
-                nodeset="instance('reports')/reports/report[@id='{}']".format(config.uuid),
+                nodeset=datum_string.format(config.uuid),
                 value='./@id',
                 autoselect="true"
             ),
@@ -109,17 +136,19 @@ def _get_select_details(config):
     ).serialize().decode('utf-8'))
 
 
-def get_data_path(config, domain):
-    return (
-        "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-        .format(
-            config.uuid,
-            MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
-        )
+def get_data_path(config, domain, new_mobile_ucr_restore=False):
+    if new_mobile_ucr_restore:
+        data_path_string = "instance('commcare-reports:{}')/rows/row[@is_total_row='False']{}"
+    else:
+        data_path_string = "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+
+    return data_path_string.format(
+        config.uuid,
+        MobileSelectFilterHelpers.get_data_filter_xpath(config, domain, new_mobile_ucr_restore)
     )
 
 
-def _get_summary_details(config, domain, module):
+def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
     def _get_graph_fields():
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
         from corehq.apps.app_manager.models import GraphConfiguration, GraphSeries
@@ -162,15 +191,15 @@ def _get_summary_details(config, domain, module):
                 for index, column in enumerate(chart_config.y_axis_columns):
                     graph_config.series[index].data_path = (
                         graph_config.series[index].data_path or
-                        get_data_path(config, domain)
+                        get_data_path(config, domain, new_mobile_ucr_restore)
                     )
                     graph_config.series[index].x_function = (
                         graph_config.series[index].x_function
-                        or COLUMN_XPATH_TEMPLATE.format(chart_config.x_axis_column)
+                        or _get_column_xpath_template(new_mobile_ucr_restore).format(chart_config.x_axis_column)
                     )
                     graph_config.series[index].y_function = (
                         graph_config.series[index].y_function
-                        or COLUMN_XPATH_TEMPLATE.format(column.column_id)
+                        or _get_column_xpath_template(new_mobile_ucr_restore).format(column.column_id)
                     )
                 yield Field(
                     header=Header(text=Text()),
@@ -179,6 +208,19 @@ def _get_summary_details(config, domain, module):
                                                  locale_series_config=_locale_series_config,
                                                  locale_annotation=_locale_annotation)
                 )
+
+    def _get_last_sync(report_config):
+        if new_mobile_ucr_restore:
+            last_sync_string = "format-date(date(instance('commcare-reports:{}')/@last_sync), '%Y-%m-%d %H:%M')"
+            last_sync_string = last_sync_string.format(report_config.uuid)
+        else:
+            last_sync_string = "format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+
+        return Text(
+            xpath=Xpath(
+                function=last_sync_string
+            )
+        )
 
     def _get_description_text(report_config):
         if report_config.use_xpath_description:
@@ -225,13 +267,7 @@ def _get_summary_details(config, domain, module):
                         locale=Locale(id=id_strings.report_last_sync())
                     )
                 ),
-                template=Template(
-                    text=Text(
-                        xpath=Xpath(
-                            function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
-                        )
-                    )
-                )
+                template=Template(text=_get_last_sync(config))
             ),
         ] + list(_get_graph_fields()),
     )
@@ -241,14 +277,17 @@ def _get_summary_details(config, domain, module):
             title=Text(
                 locale=Locale(id=id_strings.report_menu()),
             ),
-            details=[detail, _get_data_detail(config, domain)]
+            details=[detail, _get_data_detail(config, domain, new_mobile_ucr_restore)]
         ).serialize().decode('utf-8'))
     else:
         detail.id = detail_id
         return models.Detail(custom_xml=detail.serialize().decode('utf-8'))
 
 
-def _get_data_detail(config, domain):
+def _get_data_detail(config, domain, new_mobile_ucr_restore):
+    """
+    Adds a data table to the report
+    """
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
@@ -278,7 +317,10 @@ def _get_data_detail(config, domain):
                 transform = {}
 
             if transform.get('type') == 'translation':
-                default_val = "column[@id='{column_id}']"
+                if new_mobile_ucr_restore:
+                    default_val = "{column_id}"
+                else:
+                    default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
                     if isinstance(translations, basestring):
@@ -301,9 +343,14 @@ def _get_data_detail(config, domain):
                     variables=[XpathVariable(name='lang', locale_id='lang.current')],
                 )
             else:
-                return Xpath(
-                    function="column[@id='{}']".format(col.column_id),
-                )
+                if new_mobile_ucr_restore:
+                    return Xpath(
+                        function="{}".format(col.column_id),
+                    )
+                else:
+                    return Xpath(
+                        function="column[@id='{}']".format(col.column_id),
+                    )
 
         return Field(
             header=Header(
@@ -320,23 +367,31 @@ def _get_data_detail(config, domain):
             ),
         )
 
+    nodeset_string = 'row{}' if new_mobile_ucr_restore else 'rows/row{}'
     return Detail(
         id='reports.{}.data'.format(config.uuid),
-        nodeset='rows/row{}'.format(MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)),
+        nodeset=(
+            nodeset_string.format(
+                MobileSelectFilterHelpers.get_data_filter_xpath(config, domain, new_mobile_ucr_restore))
+        ),
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[_column_to_field(c) for c in config.report(domain).report_columns]
+        fields=[_column_to_field(c) for c in config.report(domain).report_columns if c.type != 'expanded']
     )
 
 
 class MobileSelectFilterHelpers(object):
 
     @staticmethod
-    def get_options_nodeset(config, filter_slug):
-        return (
-            "instance('reports')/reports/report[@id='{report_id}']/filters/filter[@field='{filter_slug}']/option"
-            .format(report_id=config.uuid, filter_slug=filter_slug))
+    def get_options_nodeset(config, filter_slug, new_mobile_ucr_restore=False):
+        if new_mobile_ucr_restore:
+            instance = "instance('commcare-reports-filters:{report_id}')"
+        else:
+            instance = "instance('reports')/reports/report[@id='{report_id}']"
+
+        nodeset = instance + "/filters/filter[@field='{filter_slug}']/option"
+        return nodeset.format(report_id=config.uuid, filter_slug=filter_slug)
 
     @staticmethod
     def get_filters(config, domain):
@@ -373,9 +428,14 @@ class MobileSelectFilterHelpers(object):
         return models.Detail(custom_xml=detail.decode('utf-8'))
 
     @staticmethod
-    def get_data_filter_xpath(config, domain):
+    def get_data_filter_xpath(config, domain, new_mobile_ucr_restore):
+        if new_mobile_ucr_restore:
+            base_xpath = "[{column_id}=instance('commcaresession')/session/data/{datum_id}]"
+        else:
+            base_xpath = "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]"
+
         return ''.join([
-            "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
+            base_xpath.format(
                 column_id=config.report(domain).get_ui_filter(slug).field,
                 datum_id=MobileSelectFilterHelpers.get_datum_id(config, slug))
             for slug, f in MobileSelectFilterHelpers.get_filters(config, domain)])

@@ -50,11 +50,10 @@ def upload_bulk_ui_translations(request, domain, app_id):
             app.translations = dict(trans_dict)
             app.save()
             success = True
-
-        if warnings:
-            message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
-                                    warnings)
-            messages.warning(request, message, extra_tags='html')
+            if warnings:
+                message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
+                                        warnings)
+                messages.warning(request, message, extra_tags='html')
     except InvalidExcelFileException as e:
         messages.error(request, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
     except Exception:
