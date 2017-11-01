@@ -301,12 +301,9 @@ def download_file(request, domain, app_id, path):
                     _assert(False, 'Expected build resource %s not found' % path)
                 raise Http404()
         try:
-            callback, callback_args, callback_kwargs = resolve_path(full_path)
+            callback, callback_args, callback_kwargs = resolve_path(path)
         except Resolver404:
-            try:
-                callback, callback_args, callback_kwargs = resolve_path(path)
-            except Resolver404:
-                raise Http404()
+            raise Http404()
 
         return callback(request, domain, app_id, *callback_args, **callback_kwargs)
 
