@@ -6,13 +6,17 @@ import zipfile
 from collections import defaultdict
 from wsgiref.util import FileWrapper
 
+from django.http.request import QueryDict
+from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
-from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.contrib import messages
 
@@ -56,7 +60,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-)
+    api_key_auth)
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app
 from corehq.apps.app_manager.models import (
     Application,
@@ -70,7 +74,7 @@ from corehq.apps.app_manager.models import (
     ReportModule)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
+    require_can_edit_apps, require_deploy_apps, no_conflict
 from django_prbac.utils import has_privilege
 from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
 from corehq.apps.analytics.utils import get_meta
@@ -899,3 +903,42 @@ def update_linked_whitelist(request, domain, app_id):
     app.linked_whitelist = new_whitelist
     app.save()
     return HttpResponse()
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(api_key_auth, name='dispatch')
+@method_decorator(no_conflict, name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class PatchLinkedAppWhitelist(View):
+    urlname = 'patch_linked_app_whitelist'
+
+    def patch(self, request, domain, app_id):
+        app, item = self._get_app_and_item(app_id, domain, request)
+        if not item:
+            return HttpResponseBadRequest()
+
+        if item not in app.linked_whitelist:
+            app.linked_whitelist.append(item)
+            app.save()
+
+        return HttpResponse()
+
+    def delete(self, request, domain, app_id):
+        app, item = self._get_app_and_item(app_id, domain, request)
+        try:
+            app.linked_whitelist.remove(item)
+            app.save()
+        except ValueError:
+            return HttpResponseBadRequest()
+
+        return HttpResponse()
+
+    def _get_app_and_item(self, app_id, domain, request):
+        try:
+            app = get_current_app(domain, app_id)
+        except ResourceNotFound:
+            raise Http404
+        item = request.GET.get('whitelist_item')
+        if not item:
+            item = QueryDict(request.body).get('whitelist_item')
+        return app, item
