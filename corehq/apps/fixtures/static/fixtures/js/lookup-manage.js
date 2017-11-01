@@ -6,6 +6,7 @@ define([
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/hq.helpers",
+    "hqwebapp/js/knockout_bindings.ko",
 ], function(
     $,
     ko,
