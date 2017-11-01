@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
