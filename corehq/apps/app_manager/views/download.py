@@ -245,7 +245,7 @@ def download_file(request, domain, app_id, path):
         # lazily create language profiles to avoid slowing initial build
         try:
             payload = request.app.fetch_attachment(full_path)
-        except ResourceNotFound:
+        except (ResourceNotFound):
             if build_profile in request.app.build_profiles and build_profile_access:
                 try:
                     # look for file guaranteed to exist if profile is created
@@ -267,7 +267,7 @@ def download_file(request, domain, app_id, path):
         response.write(payload)
         response['Content-Length'] = len(response.content)
         return response
-    except (ResourceNotFound, AssertionError):
+    except (AssertionError, ResourceNotFound):
         if request.app.copy_of:
             if request.META.get('HTTP_USER_AGENT') == 'bitlybot':
                 raise Http404()
