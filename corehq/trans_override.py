@@ -1,8 +1,7 @@
 # coding: utf-8
-def _(s):
-    return s
+from django.utils.translation import ugettext_noop
 
 messages_to_override = [
     # two_factor/models.py#L47
-    _("Token generator"),
+    ugettext_noop("Token generator"),
 ]
