@@ -75,13 +75,13 @@ def update_synclog_indexes():
     synclog_view("phone/sync_logs_by_user", limit=1, reduce=False)
 
 
-def get_synclog_ids_before_date(before_date, limit=1000, num_tries=10):
+def get_synclog_ids_before_date(db, before_date, limit=1000, num_tries=10):
     if isinstance(before_date, date):
         before_date = before_date.strftime("%Y-%m-%d")
 
     for i in range(num_tries):
         try:
-            return [r['id'] for r in synclog_view(
+            return [r['id'] for r in db.view(
                 "sync_logs_by_date/view",
                 endkey=[before_date],
                 limit=limit,

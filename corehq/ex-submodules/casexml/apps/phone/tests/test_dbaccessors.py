@@ -2,10 +2,11 @@ import datetime
 
 from django.conf import settings
 
+from casexml.apps.case.tests.util import delete_all_sync_logs
 from dimagi.utils.couch.database import get_db
 from django.test import TestCase
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user, get_synclogs_for_user, \
-    update_synclog_indexes
+    update_synclog_indexes, get_synclog_ids_before_date
 from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog, get_properly_wrapped_sync_log
 from corehq.util.test_utils import DocTestMixin
 
@@ -16,13 +17,14 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     @classmethod
     def setUpClass(cls):
         super(DBAccessorsTest, cls).setUpClass()
+        delete_all_sync_logs()
         cls.user_id = 'lkasdhfadsloi'
         cls.sync_logs = [
             SyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 7, 1, 0, 0)),
             SimplifiedSyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 3, 1, 0, 0)),
-            SyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 1, 1, 0, 0))
+            SyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 2, 1, 0, 0))
         ]
-        sync_logs_other = [SyncLog(user_id='other')]
+        sync_logs_other = [SyncLog(user_id='other', date=datetime.datetime(2015, 1, 1, 0, 0))]
         cls.docs = cls.sync_logs + sync_logs_other
         for doc in cls.docs:
             doc.save()
@@ -67,3 +69,14 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
         self.addCleanup(del_attachment)
         self.addCleanup(sync_log.delete)
+
+    def test_get_synclog_ids_before_date(self):
+        doc_ids = get_synclog_ids_before_date(SyncLog.get_db(), datetime.datetime.utcnow())
+        self.assertEqual(doc_ids, [
+            log._id for log in reversed(self.docs)
+        ])
+
+        doc_ids = get_synclog_ids_before_date(get_db(settings.SYNCLOGS_OLD_DB), datetime.datetime.utcnow())
+        self.assertEqual(doc_ids, [
+            log._id for log in self.legacy_sync_logs
+            ])
