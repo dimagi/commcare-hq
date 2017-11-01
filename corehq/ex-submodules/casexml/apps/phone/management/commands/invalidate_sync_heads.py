@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand, CommandError
 
-from casexml.apps.phone.models import SimplifiedSyncLog
+from casexml.apps.phone.models import SimplifiedSyncLog, properly_wrap_sync_log
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import synclog_view
 
 
@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
         logs = []
         for res in results:
-            log = SimplifiedSyncLog.wrap(res['doc'])
+            log = properly_wrap_sync_log(res['doc'])
             log.case_ids_on_phone = {'broken to force 412'}
             logs.append(log)
         SimplifiedSyncLog.bulk_save(logs)

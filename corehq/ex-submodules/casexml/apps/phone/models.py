@@ -3,6 +3,8 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from django.conf import settings
+
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
@@ -1198,9 +1200,10 @@ def get_sync_log_doc(doc_id):
     try:
         return SyncLog.get_db().get(doc_id)
     except ResourceNotFound:
-        legacy_doc = get_db(None).get(doc_id, attachments=True)
-        del legacy_doc['_rev']  # remove the rev so we can save this to the new DB
-        return legacy_doc
+        if len(settings.SYNCLOGS_DBS) > 1:
+            doc = get_db(settings.SYNCLOGS_DBS[1]).get(doc_id, attachments=True)
+            del doc['_rev']  # remove the rev so we can save this to the new DB
+            return doc
 
 
 def get_properly_wrapped_sync_log(doc_id):

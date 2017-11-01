@@ -1,8 +1,10 @@
 from datetime import date
-from casexml.apps.phone.exceptions import CouldNotRetrieveSyncLogIds
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
+
+from django.conf import settings
 from restkit.errors import RequestFailed
-from casexml.apps.phone.models import SyncLog
+
+from casexml.apps.phone.exceptions import CouldNotRetrieveSyncLogIds
+from casexml.apps.phone.models import properly_wrap_sync_log
 from dimagi.utils.couch.database import get_db
 
 
@@ -24,7 +26,13 @@ def get_last_synclog_for_user(user_id):
 
 
 def synclog_view(view_name, **params):
-    return combine_views([SyncLog.get_db(), get_db(None)], view_name, **params)
+    return combine_views(synclog_dbs(), view_name, **params)
+
+
+def synclog_dbs():
+    return [
+        get_db(prefix) for prefix in settings.SYNCLOGS_DBS
+    ]
 
 
 def combine_views(dbs, view_name, **params):
