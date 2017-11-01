@@ -35,7 +35,7 @@
                 <div class="col-md-6">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>Top 5 {$ $ctrl.location_type $}s</span>
+                            <span>Top 5 {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -52,7 +52,7 @@
                 <div class="col-md-6">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>Bottom 5 {$ $ctrl.location_type $}s</span>
+                            <span>Bottom 5 {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -71,7 +71,7 @@
                 <div class="col-md-12">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>{$ $ctrl.location_type $}s Ranking</span>
+                            <span>{$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>

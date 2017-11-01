@@ -13,7 +13,7 @@ def tmpfile(*args, **kwargs):
     return (os.fdopen(fd, 'w'), path)
 
 
-def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, auth=None):
+def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, auth=None, verify=None):
     """
     POST with a cleaner API, and return the actual HTTPResponse object, so
     that error codes can be interpreted.
@@ -33,20 +33,23 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
     if auth:
         kwargs["auth"] = auth
 
+    if verify is not None:
+        kwargs["verify"] = verify
+
     return requests.post(url, data, **kwargs)
 
 
-def get_SOAP_client(url):
+def get_SOAP_client(url, verify=True):
     # http://docs.python-zeep.org/en/master/transport.html#ssl-verification
     # Disable SSL cert verification meanwhile a better way is found
     session = requests.Session()
-    session.verify = False
+    session.verify = verify
     transport = Transport(cache=InMemoryCache(), session=session)
     return Client(url, transport=transport)
 
 
-def perform_SOAP_operation(data, url, operation):
-    client = get_SOAP_client(url)
+def perform_SOAP_operation(data, url, operation, verify=True):
+    client = get_SOAP_client(url, verify)
     # for just response message use
     # with client.options(raw_response=False) # explicitly set it to avoid caching mysteries
     #     return client.service[operation](**data)
@@ -54,9 +57,9 @@ def perform_SOAP_operation(data, url, operation):
         return client.service[operation](**data)
 
 
-def parse_SOAP_response(url, operation, response):
+def parse_SOAP_response(url, operation, response, verify=True):
     # parse the xml content on response object to return just the message
-    client = get_SOAP_client(url)
+    client = get_SOAP_client(url, verify)
     binding = client.service[operation]._proxy._binding
     return binding.process_reply(client, binding.get(operation), response)
 

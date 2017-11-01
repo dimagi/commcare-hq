@@ -8,7 +8,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "test_drtb",
+    "data_source_table": "test_drtb_v2",
     "report_id": "lab_register_for_culture",
     "config": {
         "description": "",
@@ -67,6 +67,15 @@
                 },
                 "type": "multi_field_dynamic_choice_list",
                 "slug": "village"
+            },
+            {
+                "pre_value": "pmdt_excel",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "migration_type",
+                "type": "pre",
+                "slug": "migration_type"
             }
         ],
         "columns": [
@@ -88,6 +97,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "testing_facility_name",
+                "width": "140px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Testing Facility Name"
@@ -139,9 +149,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "person_details",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Address and Contact Details"
@@ -176,12 +188,12 @@
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
+                        "tribal_population": "Tribal Population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "health_care_worker": "Health Care Worker",
-                        "tribal_population": "Tribal Population",
                         "slum_dweller": "Slum Dweller",
+                        "health_care_worker": "Health Care Worker",
                         "prison_inmate": "Prison Inmate"
                     },
                     "type": "translation"
@@ -325,6 +337,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_tested",
+                "width": "80px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Specimen Collection"
@@ -381,6 +394,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_reported2",
+                "width": "85px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Reporting Results"
@@ -409,6 +423,7 @@
                 },
                 "aggregation": "simple",
                 "field": "result",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "TB Detection Results"

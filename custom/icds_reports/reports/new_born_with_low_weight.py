@@ -80,8 +80,7 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                     "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
                     "mortality and morbidity, inhibited growth and cognitive development, and chronic "
                     "diseases later in life"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }

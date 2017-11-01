@@ -8,6 +8,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.models import MessagingEvent
 from casexml.apps.case.models import CommCareCase
 from corehq.motech.repeaters.dbaccessors import (
     iter_repeat_records_by_domain,
@@ -176,6 +177,7 @@ class ENikshayVoucherReport(GenericTabularReport):
             DataTablesColumn('Bank Name'),
             DataTablesColumn('Reason Rejected'),
             DataTablesColumn('Date Rejected'),
+            DataTablesColumn('Messaging Activity'),
 
             DataTablesColumn('BETS Sent Date'),
             DataTablesColumn('Forwading Status'),
@@ -233,6 +235,24 @@ class ENikshayVoucherReport(GenericTabularReport):
         )
         return possible_location_ids
 
+    def get_messaging_event_detail_link(self, messaging_event_id):
+        return (
+            '<a target="_blank" href="/a/%s/reports/message_event_detail/?id=%s">[%s]</a>' %
+            (self.domain, messaging_event_id, messaging_event_id)
+        )
+
+    def get_messaging_event_links(self, voucher_case_id):
+        event_pks = (
+            MessagingEvent
+            .objects
+            .filter(domain=self.domain, messagingsubevent__case_id=voucher_case_id)
+            .values_list('pk', flat=True)
+            .distinct()
+            .order_by('date')
+        )
+
+        return ', '.join([self.get_messaging_event_detail_link(pk) for pk in event_pks])
+
     def _make_rows(self, voucher):
         default_row = [
             voucher.case_id,
@@ -252,6 +272,7 @@ class ENikshayVoucherReport(GenericTabularReport):
             voucher.get_case_property('bank_name'),
             voucher.get_case_property('reason_rejected'),
             voucher.get_case_property('date_rejected'),
+            self.get_messaging_event_links(voucher.case_id),
         ]
 
         repeat_records = self._get_voucher_repeat_records(voucher.case_id)

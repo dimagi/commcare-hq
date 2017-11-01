@@ -66,6 +66,7 @@ def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
     interface = FormProcessorInterface(domain=metadata.domain)
     wrapped_form = interface.new_xform(form_json)
     wrapped_form.domain = metadata.domain
+    wrapped_form.received_on = metadata.received_on
     interface.store_attachments(wrapped_form, [Attachment('form.xml', xml, 'text/xml')])
     if save:
         interface.save_processed_models([wrapped_form])

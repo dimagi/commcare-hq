@@ -10,7 +10,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "Percent Adhaar Seeded Beneficiaries";
+    vm.label = "Percent Adhaar-seeded Beneficiaries";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adhaar/map', label: 'Map View'},
@@ -50,12 +50,12 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + total + '</strong></div>' +
-            '<div>% of individuals registered using CAS whose Adhaar identification has been captured: <strong>' + percent + '</strong></div>';
+            '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + in_month + '</strong></div>' +
+            '<div>% of ICDS beneficiaries whose Adhaar has been captured: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -92,7 +92,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                         return d3.max(line.values, function(d) {
                             return d.y;
                         });
-                    })) + 10,
+                    }) * 100) / 100 + 0.01,
                 ];
             }
         });
@@ -152,8 +152,6 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             },
             x: function(d){ return d.x; },
             y: function(d){ return d.y; },
-
-            color: d3.scale.category10().range(),
             useInteractiveGuideline: true,
             clipVoronoi: false,
             tooltips: true,
@@ -172,7 +170,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -181,12 +179,11 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    var all = _.find(vm.chartData[1].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>" + $filter('indiaNumbers')(all.y) + "</strong></p>";
-                    tooltip_content += "<p>% of ICDS beneficiaries whose Adhaar has been captured: <strong>" + d3.format('.2%')(in_month.y / (all.y || 1)) + "</strong></p>";
+                    tooltip_content += "<p>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month  ) + "</strong></p>";
+                    tooltip_content += "<p>% of ICDS beneficiaries whose Adhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
 
                     return tooltip_content;
                 });

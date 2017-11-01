@@ -189,7 +189,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
             enable: true,
             html: '<i class="fa fa-info-circle"></i> Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
             '\n' +
-            'Stunting in children is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
+            'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',

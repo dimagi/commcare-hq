@@ -315,6 +315,8 @@ class EndOfFormNavigationWorkflow(object):
             if form.post_form_workflow_fallback:
                 # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
                 link_xpaths = [link.xpath for link in form.form_links]
+                # remove any empty string
+                link_xpaths = filter(lambda x: x.strip(), link_xpaths)
                 if link_xpaths:
                     negate_of_all_link_paths = (
                         ' and '.join(

@@ -156,3 +156,15 @@ class PracticeUserException(AppManagerException):
     def __init__(self, *args, **kwargs):
         self.build_profile_id = kwargs.pop('build_profile_id', None)
         super(PracticeUserException, self).__init__(*args, **kwargs)
+
+
+class ActionNotPermitted(AppManagerException):
+    pass
+
+
+class RemoteRequestError(AppManagerException):
+    pass
+
+
+class RemoteAuthError(RemoteRequestError):
+    pass

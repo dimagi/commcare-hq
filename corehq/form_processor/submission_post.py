@@ -88,7 +88,6 @@ class SubmissionPost(object):
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
         # used on forms and errors
-        xform.auth_context = self.auth_context.to_json()
         xform.submit_ip = self.submit_ip
         xform.path = self.path
 
@@ -138,7 +137,7 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-        result = process_xform_xml(self.domain, self.instance, self.attachments)
+        result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
@@ -198,7 +197,7 @@ class SubmissionPost(object):
                         if existing_form.is_error:
                             response_nature = ResponseNature.PROCESSING_FAILURE
                         else:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
+                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
                     else:
                         self.interface.save_processed_models([instance])
                 elif not instance.is_error:
@@ -221,7 +220,7 @@ class SubmissionPost(object):
                         instance.initial_processing_complete = True
                         error_message = self.save_processed_models(case_db, xforms, case_stock_result)
                         if error_message:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
+                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
                 elif instance.is_error:

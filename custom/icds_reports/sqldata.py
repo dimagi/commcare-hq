@@ -524,6 +524,15 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     alias='four'
                 ),
                 slug='four'
+            ),
+            AggregateColumn(
+                'Percent of children born in month with low birth weight',
+                percent_num,
+                [
+                    SumColumn('low_birth_weight_in_month'),
+                    AliasColumn('born_in_month')
+                ],
+                slug='low_birth_weight'
             )
         ]
 
@@ -765,7 +774,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 lambda x, y: (x or 0) * 100 / float(y or 1),
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    AliasColumn('cases_person')
+                    AliasColumn('cases_person_beneficiary')
                 ],
                 slug='aadhar'
             ),
@@ -899,7 +908,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='height_measurement'
             ),
             DatabaseColumn(
-                'Total number of unweighed children',
+                'Total number of unweighed children (0-5 Years)',
                 SumColumn('nutrition_status_unweighed'),
                 slug='total_number_unweighed'
             ),
@@ -1022,7 +1031,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_initiated_on_cf'
             ),
             AggregateColumn(
-                'Percentage of children initiated appropriate complementary feeding (cumulative)',
+                'Percentage of children initiated appropriate complementary feeding',
                 percent,
                 [
                     SumColumn('cf_in_month'),
@@ -1321,7 +1330,7 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    SumColumn('cases_person')
+                    AliasColumn('cases_person_beneficiary')
                 ],
                 slug='num_people_with_aadhar'
             ),
@@ -1450,15 +1459,7 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_households'
             },
             {
-                'header': 'Number of people',
-                'slug': 'num_people'
-            },
-            {
-                'header': 'Number of people enrolled for services',
-                'slug': 'num_people_enrolled_for_services'
-            },
-            {
-                'header': 'Percent adhaar seeded beneficaries',
+                'header': 'Percent Adhaar-seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
@@ -1793,7 +1794,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         return self.get_columns_by_loc_level
 
 
-class ProgressReport(object):
+class FactSheetsReport(object):
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         self.loc_level = loc_level
@@ -1821,7 +1822,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Total number of unweighed children',
+                                'header': 'Total number of unweighed children (0-5 Years)',
                                 'slug': 'nutrition_status_unweighed',
                                 'reverseColors': True,
                             },
@@ -1899,6 +1900,13 @@ class ProgressReport(object):
                                 'slug': 'stunting_normal',
                                 'average': [],
                                 'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Percent of children born in month with low birth weight',
+                                'slug': 'low_birth_weight',
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     }
@@ -1933,7 +1941,8 @@ class ProgressReport(object):
                                 'header': 'Pregnant women who are anemic',
                                 'slug': 'severe_anemic',
                                 'average': [],
-                                'format': 'percent'
+                                'format': 'percent',
+                                'reverseColors': True
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -1944,28 +1953,28 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 1 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 1 ANC visit by delivery',
                                 'slug': 'anc_1',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 2 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 2 ANC visits by delivery',
                                 'slug': 'anc_2',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 3 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 3 ANC visits by delivery',
                                 'slug': 'anc_3',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Percent women had at least 4 ANC visit by delivery',
+                                'header': 'Pregnant women who had at least 4 ANC visits by delivery',
                                 'slug': 'anc_4',
                                 'average': [],
                                 'format': 'percent'
@@ -1979,21 +1988,21 @@ class ProgressReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': '% AWCs with Medicine Kit',
+                                'header': 'AWCs with Medicine Kit',
                                 'slug': 'medicine_kits',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': '% AWCs with Weighing Scale: infants',
+                                'header': 'AWCs with weighing scale for infants',
                                 'slug': 'baby_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': '% AWCs with Weighing Scale: Mother and Child',
+                                'header': 'AWCs with weighing scale for mother and child',
                                 'slug': 'adult_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
@@ -2013,7 +2022,9 @@ class ProgressReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children who were put to the breast within one hour of birth.',
+                                'header': (
+                                    'Percentage of children who were put to the breast within one hour of birth.'
+                                ),
                                 'slug': 'breastfed_at_birth',
                                 'average': [],
                                 'format': 'percent'
@@ -2160,7 +2171,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adhaar seeded beneficiaries',
+                                'header': 'Percent Adhaar-seeded beneficiaries',
                                 'slug': 'aadhar',
                                 'format': 'percent',
                                 'average': [],
@@ -2175,7 +2186,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Total pregnant women enrolled for servics at AWC',
+                                'header': 'Total pregnant women enrolled for services at AWC',
                                 'slug': 'cases_ccs_pregnant',
                                 'average': [],
 

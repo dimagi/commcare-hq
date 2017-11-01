@@ -16,7 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_latest_released_app_doc,
     get_apps_by_id,
-    get_brief_app)
+    get_brief_app, get_latest_released_app_version)
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
@@ -282,3 +282,7 @@ class TestAppGetters(TestCase):
         apps = get_apps_by_id(self.domain, [self.app_id])
         self.assertEqual(1, len(apps))
         self.assertEqual(apps[0].version, 4)
+
+    def test_get_latest_released_app_version(self):
+        version = get_latest_released_app_version(self.domain, self.app_id)
+        self.assertEqual(version, 2)

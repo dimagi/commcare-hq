@@ -134,7 +134,7 @@ def copy_form(request, domain, app_id, form_unique_id):
 
     if new_form:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module.id, form.id]))
+    return HttpResponseRedirect(reverse('view_form', args=(domain, app._id, form.unique_id)))
 
 
 @no_conflict_require_POST

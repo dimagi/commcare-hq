@@ -5,12 +5,16 @@
     <li><strong>Attempt #{{ attempt_number }}</strong>
     {% if attempt.succeeded %}
         <br/><i class="fa fa-check"></i> {% trans "Success" %}
-        <a href="#" class="toggle-next-pre">…</a>
-        <pre style="display: none">{{ attempt.success_response }}</pre>
+        <a href="#" class="toggle-next-attempt">…</a>
+        <div class="well record-attempt" style="display: none; font-family: monospace;">
+            {{ attempt.success_response }}
+        </div>
     {% elif attempt.failure_reason %}
         <br/><i class="fa fa-exclamation-triangle"></i> {% trans "Failed" %}
-        <a href="#" class="toggle-next-pre">…</a>
-        <pre style="display: none">{{ attempt.failure_reason }}</pre>
+        <a href="#" class="toggle-next-attempt">…</a>
+        <div class="well record-attempt" style="display: none; font-family: monospace;">
+            {{ attempt.failure_reason }}
+        </div>
     {% endif %}
     {% if attempt.cancelled %}
         <br/><i class="fa fa-remove"></i> {% trans "Cancelled" %}

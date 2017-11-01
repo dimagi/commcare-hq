@@ -12,6 +12,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.apps.domain.decorators import login_and_domain_required
 
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 def safe_download(f):
     """
@@ -29,11 +30,17 @@ def safe_download(f):
 
         try:
             request.app = get_app(domain, app_id, latest=latest, target=target)
-            return f(request, *args, **kwargs)
+            if not request.app.doc_type.endswith(DELETED_SUFFIX):
+                return f(request, *args, **kwargs)
+            else:
+                message = 'User attempted to install deleted application: {}'.format(app_id)
         except (AppEditingError, CaseError, ValueError) as e:
-            logging.exception(e)
-            messages.error(request, "Problem downloading file: %s" % e)
-            return HttpResponseRedirect(reverse("view_app", args=[domain, app_id]))
+            message = e
+        logging.exception(message)
+        messages.error(request, "Problem downloading file: %s" % message)
+        return HttpResponseRedirect(reverse("view_app", args=[domain, app_id]))
+
+
     return _safe_download
 
 
@@ -60,17 +67,21 @@ def safe_cached_download(f):
 
         try:
             request.app = get_app(domain, app_id, latest=latest, target=target)
-            response = f(request, *args, **kwargs)
-            if request.app.copy_of is not None and request.app.is_released:
-                if latest:
-                    response._cache_max_age = 60
-                response._always_allow_browser_caching = True
-                response._remember_domain = False
-            return response
+            if not request.app.doc_type.endswith(DELETED_SUFFIX):
+                response = f(request, *args, **kwargs)
+                if request.app.copy_of is not None and request.app.is_released:
+                    if latest:
+                        response._cache_max_age = 60
+                    response._always_allow_browser_caching = True
+                    response._remember_domain = False
+                return response
+            else:
+                message = 'User attempted to install deleted application: {}'.format(app_id)
         except (AppEditingError, CaseError, ValueError) as e:
-            logging.exception(e)
-            messages.error(request, "Problem downloading file: %s" % e)
-            return HttpResponseRedirect(reverse("view_app", args=[domain, app_id]))
+            message = e
+        logging.exception(message)
+        messages.error(request, "Problem downloading file: %s" % message)
+        return HttpResponseRedirect(reverse("view_app", args=[domain, app_id]))
     return _safe_cached_download
 
 

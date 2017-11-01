@@ -11,6 +11,7 @@ from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq import toggles
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
@@ -123,33 +124,53 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
         _rebuild_case_with_retries.delay(domain, case_id, detail)
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
-def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
-    form_ids_to_delete = set()
-    for case_id in deleted_cases:
-        xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
-        form_ids_to_delete |= set(xform_ids) - deleted_forms
+def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
+    """Used on user.retire() and user.unretire()
 
-    def _is_safe_to_delete(form):
+    Returns a list of IDs of forms which only modify the cases passed in and
+    which aren't already listed in `modified_forms`.
+    """
+    form_ids_to_modify = set()
+    for case_id in modified_cases:
+        try:
+            xform_ids = CaseAccessors(domain).get_case(case_id).xform_ids
+        except CaseNotFound:
+            xform_ids = []
+        form_ids_to_modify |= set(xform_ids) - modified_forms
+
+    def _is_safe_to_modify(form):
         if form.domain != domain:
             return False
 
         case_ids = get_case_ids_from_form(form)
-        cases_touched_by_form_not_deleted = case_ids - deleted_cases
-        for case in CaseAccessors(domain).iter_cases(cases_touched_by_form_not_deleted):
-            if not case.is_deleted:
+        # all cases touched by the form and not already modified
+        for case in CaseAccessors(domain).iter_cases(case_ids - modified_cases):
+            if case.is_deleted != is_deletion:
+                # we can't delete/undelete this form - this would change the state of `case`
                 return False
 
         # all cases touched by this form are deleted
         return True
 
-    safe_form_ids_to_delete = [
-        form.form_id
-        for form in FormAccessors(domain).iter_forms(form_ids_to_delete)
-        if _is_safe_to_delete(form)
-    ]
+    if is_deletion or Domain.get_by_name(domain).use_sql_backend:
+        all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
+    else:
+        # accessor.iter_forms doesn't include deleted forms on the couch backend
+        all_forms = map(FormAccessors(domain).get_form, form_ids_to_modify)
+    return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
-    FormAccessors(domain).soft_delete_forms(safe_form_ids_to_delete, deletion_date, deletion_id)
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_id, deletion_date):
+    to_delete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=True)
+    FormAccessors(domain).soft_delete_forms(to_delete, deletion_date, deletion_id)
+
+
+@task(queue='background_queue', ignore_result=True, acks_late=True)
+def undelete_system_forms(domain, deleted_forms, deleted_cases):
+    """The reverse of tag_system_forms_as_deleted; called on user.unretire()"""
+    to_undelete = _get_forms_to_modify(domain, deleted_forms, deleted_cases, is_deletion=False)
+    FormAccessors(domain).soft_undelete_forms(to_undelete)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)

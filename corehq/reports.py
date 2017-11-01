@@ -15,10 +15,12 @@ from corehq.apps.hqadmin.reports import (
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
     CommCareVersionReport,
-)
+    UserAuditReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
-from corehq.apps.reports.standard import (monitoring, inspect, export,
-    deployments, sms, ivr)
+from corehq.apps.reports.standard import (
+    monitoring, inspect, export,
+    deployments, sms, ivr
+)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -369,6 +371,7 @@ ADMIN_REPORTS = (
         DeviceLogSoftAssertReport,
         CommCareVersionReport,
         AdminPhoneNumberReport,
+        UserAuditReport,
     )),
 )
 

@@ -2,6 +2,8 @@ import mock
 from collections import namedtuple
 from django.test import TestCase, SimpleTestCase
 
+from corehq.apps.export.const import PROPERTY_TAG_CASE
+from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import (
     ExportItem,
     StockItem,
@@ -20,6 +22,7 @@ from corehq.apps.export.models import (
     MAIN_TABLE,
     FormExportInstanceDefaults,
     MultiMediaExportColumn,
+    ScalarItem,
 )
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
@@ -35,11 +38,11 @@ MockRequest = namedtuple('MockRequest', 'domain')
     'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
-class TestExportInstanceGeneration(SimpleTestCase):
+class TestFormExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestExportInstanceGeneration, cls).setUpClass()
+        super(TestFormExportInstanceGeneration, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[
@@ -167,6 +170,72 @@ class TestExportInstanceGeneration(SimpleTestCase):
         table = instance.tables[0]
         self.assertNotEqual(table.columns[0].item.path, ROW_NUMBER_COLUMN.item.path)
         self.assertTrue(table.columns[0].selected)
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.Domain.get_by_name',
+    return_value=Domain(commtrack_enabled=False),
+)
+class TestCaseExportInstanceGeneration(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestCaseExportInstanceGeneration, cls).setUpClass()
+        cls.app_id = '1234'
+        cls.schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ScalarItem(
+                            path=[PathNode(name='p1')],
+                            label='p1',
+                            last_occurrences={},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+
+        cls.new_schema = CaseExportDataSchema(
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ScalarItem(
+                            path=[PathNode(name='p1')],
+                            label='p1',
+                            last_occurrences={},
+                        ),
+                        ScalarItem(
+                            path=[PathNode(name='name')],
+                            label='name',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+
+    def _generate_instance(self, build_ids_and_versions, schema, saved_export=None):
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
+                return_value=build_ids_and_versions):
+
+            return CaseExportInstance.generate_instance_from_schema(schema, saved_export=saved_export)
+
+    def test_generate_instance_from_schema(self, _):
+        instance = self._generate_instance({self.app_id: 3}, self.schema)
+
+        self.assertEqual(len(instance.tables), 1)
+        self.assertEqual(len(instance.tables[0].columns), 20)
+
+        # adding in 'name' shouldn't create any new columns
+        instance = self._generate_instance({self.app_id: 3}, self.new_schema, instance)
+        self.assertEqual(len(instance.tables), 1)
+        self.assertEqual(len(instance.tables[0].columns), 20)
 
 
 @mock.patch(
@@ -415,6 +484,14 @@ class TestExportInstanceFromSavedInstance(TestCase):
                             last_occurrences={
                                 cls.app_id: 3,
                             },
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='@case_id')],
+                            label='@case_id',
+                            tag=PROPERTY_TAG_CASE,
+                            last_occurrences={
+                                cls.app_id: 3,
+                            },
                         )
                     ],
                     last_occurrences={
@@ -431,6 +508,14 @@ class TestExportInstanceFromSavedInstance(TestCase):
                         ExportItem(
                             path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
+                            last_occurrences={
+                                cls.app_id: 3,
+                            },
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='@case_id')],
+                            label='@case_id',
+                            tag=PROPERTY_TAG_CASE,
                             last_occurrences={
                                 cls.app_id: 3,
                             },
@@ -476,15 +561,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         build_ids_and_versions = {
             self.app_id: 3,
         }
-        with mock.patch(
-                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
-                return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(self.schema)
-
-        instance.save()
-        self.assertEqual(len(instance.tables), 1)
-        self.assertEqual(len(instance.tables[0].columns), 1 + len(MAIN_FORM_TABLE_PROPERTIES))
-        self.assertTrue(instance.tables[0].columns[first_non_system_property].selected)
+        instance = self._get_instance(build_ids_and_versions)
         item = instance.tables[0].columns[first_non_system_property].item
 
         # Simulate a selection
@@ -493,17 +570,10 @@ class TestExportInstanceFromSavedInstance(TestCase):
         instance.save()
         self.assertFalse(instance.tables[0].columns[first_non_system_property].selected)
 
-        with mock.patch(
-                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
-                return_value=build_ids_and_versions):
-
-            instance = FormExportInstance.generate_instance_from_schema(
-                self.new_schema,
-                saved_export=instance
-            )
+        instance = self._update_instance(build_ids_and_versions, instance)
 
         self.assertEqual(len(instance.tables), 2)
-        self.assertEqual(len(instance.tables[0].columns), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
+        self.assertEqual(len(instance.tables[0].columns), 4 + len(MAIN_FORM_TABLE_PROPERTIES))
 
         # Selection from previous instance should hold the same and not revert to defaults
         idx, column = instance.tables[0].get_column(item.path, item.doc_type, item.transform)
@@ -516,35 +586,42 @@ class TestExportInstanceFromSavedInstance(TestCase):
         build_ids_and_versions = {
             self.app_id: 3,
         }
-        with mock.patch(
-                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
-                return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(self.schema)
-
-        instance.save()
-        self.assertEqual(len(instance.tables), 1)
-        self.assertEqual(len(instance.tables[0].columns), 1 + len(MAIN_FORM_TABLE_PROPERTIES))
-        self.assertTrue(instance.tables[0].columns[len(TOP_MAIN_FORM_TABLE_PROPERTIES)].selected)
+        instance = self._get_instance(build_ids_and_versions)
 
         # Every column should now be marked as advanced
         build_ids_and_versions = {
             self.app_id: 4,
         }
+        instance = self._update_instance(build_ids_and_versions, instance)
+
+        self.assertEqual(len(instance.tables), 2)
+        self.assertEqual(len(instance.tables[0].columns), 4 + len(MAIN_FORM_TABLE_PROPERTIES))
+        self.assertEqual(
+            len(filter(lambda c: c.is_advanced, instance.tables[0].columns)),
+            len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced]) + 2  # + @case_id, case_name
+        )
+
+    def _get_instance(self, build_ids_and_versions):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
+            instance = FormExportInstance.generate_instance_from_schema(self.schema)
+        instance.save()
+        self.addCleanup(instance.delete)
+        self.assertEqual(len(instance.tables), 1)
+        self.assertEqual(len(instance.tables[0].columns), 3 + len(MAIN_FORM_TABLE_PROPERTIES))
+        self.assertTrue(instance.tables[0].columns[len(TOP_MAIN_FORM_TABLE_PROPERTIES)].selected)
+        return instance
 
+    def _update_instance(self, build_ids_and_versions, instance):
+        with mock.patch(
+                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
+                return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(
                 self.new_schema,
                 saved_export=instance
             )
-
-        self.assertEqual(len(instance.tables), 2)
-        self.assertEqual(len(instance.tables[0].columns), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
-        self.assertEqual(
-            len(filter(lambda c: c.is_advanced, instance.tables[0].columns)),
-            len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])
-        )
+        return instance
 
     def test_copy_instance(self, _):
         build_ids_and_versions = {
@@ -556,6 +633,8 @@ class TestExportInstanceFromSavedInstance(TestCase):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
         instance.save()
+        self.addCleanup(instance.delete)
+
         new_export = instance.copy_export()
         new_export.save()
         self.assertNotEqual(new_export._id, instance._id)
