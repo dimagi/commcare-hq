@@ -278,7 +278,10 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            fixtures.extend(self._v2_fixtures(restore_user, self._relevant_report_configs(restore_state, apps)))
+            synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, apps)
+            fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
+            for report_uuid in purged_fixture_ids:
+                fixtures.extend(self._empty_v2_fixtures(report_uuid))
 
         return fixtures
 
@@ -291,7 +294,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         last_sync_log = restore_state.last_sync_log
 
         if not last_sync_log or restore_state.overwrite_cache:
-            return all_configs
+            return all_configs, []
 
         current_sync_log = restore_state.current_sync_log
         now = _utcnow()
@@ -323,8 +326,18 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     UCRSyncLog(report_uuid=config.uuid, datetime=last_sync)
                 )
 
-        # TODO: Figure out purging here
-        return configs_to_sync
+        config_uuids = {config.uuid for config in all_configs}
+        extra_configs_on_phone = set(last_ucr_syncs.keys()).difference(config_uuids)
+
+        return configs_to_sync, extra_configs_on_phone
+
+    def _empty_v2_fixtures(self, report_uuid):
+        report_fixture_id = 'commcare-reports:' + report_uuid
+        report_filter_id = 'commcare-reports-filters:' + report_uuid
+        return [
+            E.fixture(id=report_fixture_id),
+            E.fixture(id=report_filter_id)
+        ]
 
     def _v2_fixtures(self, restore_user, report_configs):
         fixtures = []
