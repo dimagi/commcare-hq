@@ -1,5 +1,15 @@
-/* globals hqDefine, hqImport */
-hqDefine("reports/js/filters", function() {
+hqDefine("reports/js/filters", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/main',
+    'reports/js/standard_hq_report',
+    'select2-3.5.2-legacy/select2',
+], function(
+    $,
+    ko,
+    hqMain,
+    standardHQReportModule
+) {
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
         // see the user filter for sample usage.
@@ -37,7 +47,7 @@ hqDefine("reports/js/filters", function() {
             if ($filterRange.data("init")) {
                 var separator = $filterRange.data('separator');
                 var report_labels = $filterRange.data('reportLabels');
-                var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+                var standardHQReport = standardHQReportModule.getStandardHQReport();
 
                 $filterRange.createDateRangePicker(
                     report_labels, separator,
@@ -68,10 +78,12 @@ hqDefine("reports/js/filters", function() {
         }
 
         // Date ranges (used in accounting)
-        $('.date-range').datepicker({
-            changeMonth: true,
-            changeYear: true,
-            dateFormat: 'yy-mm-dd',
+        $('.date-range').each(function() {
+            $(this).datepicker({
+                changeMonth: true,
+                changeYear: true,
+                dateFormat: 'yy-mm-dd',
+            });
         });
 
         // Optional date ranges, optional month+year (used in accounting)
@@ -137,7 +149,7 @@ hqDefine("reports/js/filters", function() {
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+            hqMain.transformHelpTemplate($(this), true);
         });
     };
 
