@@ -278,23 +278,25 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, apps)
+            report_configs = self._get_report_configs(apps).values()
+            synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
             fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
             for report_uuid in purged_fixture_ids:
                 fixtures.extend(self._empty_v2_fixtures(report_uuid))
 
         return fixtures
 
-    def _relevant_report_configs(self, restore_state, apps):
+    def _relevant_report_configs(self, restore_state, report_configs):
         """
         Filter out any UCRs that are already synced. This can't exist in V1,
         because in V1 we send all reports as one fixture.
+
+        Returns a list of full ReportConfigs to sync and a set of report ids to purge
         """
-        all_configs = self._get_report_configs(apps).values()
         last_sync_log = restore_state.last_sync_log
 
         if not last_sync_log or restore_state.overwrite_cache:
-            return all_configs, []
+            return report_configs, []
 
         current_sync_log = restore_state.current_sync_log
         now = _utcnow()
@@ -305,7 +307,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
         configs_to_sync = []
 
-        for config in all_configs:
+        for config in report_configs:
             if config.uuid not in last_ucr_syncs:
                 configs_to_sync.append(config)
                 current_sync_log.last_ucr_sync_times.append(
@@ -326,7 +328,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                     UCRSyncLog(report_uuid=config.uuid, datetime=last_sync)
                 )
 
-        config_uuids = {config.uuid for config in all_configs}
+        config_uuids = {config.uuid for config in report_configs}
         extra_configs_on_phone = set(last_ucr_syncs.keys()).difference(config_uuids)
 
         return configs_to_sync, extra_configs_on_phone
