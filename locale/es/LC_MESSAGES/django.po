@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-31 19:02+0000\n"
+"POT-Creation-Date: 2017-11-01 10:49+0000\n"
 "PO-Revision-Date: 2017-10-10 19:08+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -6212,7 +6212,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_eula.html:6
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_eula.html:28
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/modal_report_issue.html:18
-#: corehq/apps/prelogin/templates/prelogin/base.html:217
+#: corehq/apps/prelogin/templates/prelogin/base.html:222
 #: corehq/apps/reports/templates/reports/partials/export_download_modal.html:15
 #: corehq/apps/reports/templates/reports/standard/base_template.html:152
 #: corehq/apps/reports/templates/reports/standard/submission_error_report.html:26
@@ -14023,7 +14023,7 @@ msgstr "Precios SMS"
 #: corehq/apps/domain/templates/domain/admin/global_sms_rates.html:18
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:78
 #: corehq/apps/prelogin/templates/prelogin/_sections/software_services/shared_pricing_table.html:50
-#: corehq/apps/prelogin/templates/prelogin/base.html:166
+#: corehq/apps/prelogin/templates/prelogin/base.html:171
 #: corehq/apps/userreports/views.py:390
 msgid "Pricing"
 msgstr "Precios"
@@ -15747,7 +15747,7 @@ msgstr "Utilizar Identificador de Respaldo"
 #: corehq/apps/domain/templates/login_and_password/password_reset_complete.html:9
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html:9
 #: corehq/apps/hqwebapp/templates/hqwebapp/base.html:294
-#: corehq/apps/prelogin/templates/prelogin/base.html:175
+#: corehq/apps/prelogin/templates/prelogin/base.html:180
 msgid "Sign In"
 msgstr "Iniciar Sesión"
 
@@ -23256,31 +23256,31 @@ msgstr ""
 "Apoye hasta 10 usuarios móviles de forma gratuita. Despúes de esto, vea "
 "nuestros <a href=\"%(pricing_url)s\">planes de precio de software</a>."
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:11
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:12
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:23
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:24
 msgid "Build mobile apps in days, not months."
 msgstr "Desarrolle aplicaciones móviles en días, no meses."
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:18
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:19
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:30
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:31
 msgid "Apps that improve service delivery."
 msgstr "Aplicaciones que mejoran la entrega del servicio."
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:25
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:26
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:37
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:38
 msgid "Make data-driven decisions in real time."
 msgstr "Tome decisiones basadas en datos en tiempo real."
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:32
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:33
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:44
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:45
 msgid "Do more with case management."
 msgstr "Haga más con el administrador de caso."
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:40
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:53
 msgid "Welcome to CommCare."
 msgstr "Bienvenido a CommCare."
 
-#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:42
+#: corehq/apps/prelogin/templates/prelogin/_sections/home/lead.html:55
 msgid ""
 "\n"
 "                                Build your mobile app today.\n"
@@ -25542,23 +25542,23 @@ msgstr ""
 "\n"
 "¿Tiene preguntas o quiere solicitar una demostración?"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:147
+#: corehq/apps/prelogin/templates/prelogin/base.html:152
 msgid "Toggle Navigation"
 msgstr "Navegación de Tecla"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:164
+#: corehq/apps/prelogin/templates/prelogin/base.html:169
 msgid "Solutions"
 msgstr "Soluciones"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:165
+#: corehq/apps/prelogin/templates/prelogin/base.html:170
 msgid "Impact"
 msgstr "Impacto"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:171
+#: corehq/apps/prelogin/templates/prelogin/base.html:176
 msgid "Ask for a Demo"
 msgstr "Solicite una Demostración."
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:204
+#: corehq/apps/prelogin/templates/prelogin/base.html:209
 #, python-format
 msgid ""
 "\n"
@@ -25574,11 +25574,11 @@ msgstr ""
 "Lea el <a href=\"https://www.commcarehq.org/eula/\"> Acuerdo de Licencia de "
 "Usuario Final</a>."
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:219
+#: corehq/apps/prelogin/templates/prelogin/base.html:224
 msgid "Get in Touch With Us: Contact Dimagi"
 msgstr "Contáctenos: Contacte a Dimagi"
 
-#: corehq/apps/prelogin/templates/prelogin/base.html:224
+#: corehq/apps/prelogin/templates/prelogin/base.html:229
 msgid ""
 "\n"
 "                            Please fill out the form below and someone from "
@@ -25612,7 +25612,7 @@ msgstr ""
 "CommCare es una herramienta muy poderosa y flexible. Nos gustaría darle "
 "algunas ideas sobre cómo utilizarla."
 
-#: corehq/apps/prelogin/templates/prelogin/home.html:14
+#: corehq/apps/prelogin/templates/prelogin/home.html:15
 msgid ""
 "\n"
 "                        Used in 50+ countries, CommCare is the most widely\n"
@@ -25629,7 +25629,7 @@ msgstr ""
 "<br class=\"visible-sm visible-md visible-lg\" />\n"
 "y fundamentada en evidencia."
 
-#: corehq/apps/prelogin/templates/prelogin/home.html:31
+#: corehq/apps/prelogin/templates/prelogin/home.html:32
 msgid "Request free Demo"
 msgstr "Solicite una Demostración Gratis"
 
@@ -38072,6 +38072,10 @@ msgstr "Operaciones Administrativas"
 #: corehq/tabs/tabclasses.py:1830
 msgid "CommCare Reports"
 msgstr "Reportes CommCare"
+
+#: corehq/trans_override.py:7
+msgid "Token generator"
+msgstr ""
 
 #: custom/_legacy/a5288/reports.py:15
 msgid "Missed Callbacks"
