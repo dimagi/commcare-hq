@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import random
 
@@ -8,6 +8,7 @@ from django.conf import settings
 from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from casexml.apps.phone.models import UCRSyncLog
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_1,
@@ -277,9 +278,53 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            fixtures.extend(self._v2_fixtures(restore_user, self._get_report_configs(apps).values()))
+            fixtures.extend(self._v2_fixtures(restore_user, self._relevant_report_configs(restore_state, apps)))
 
         return fixtures
+
+    def _relevant_report_configs(self, restore_state, apps):
+        """
+        Filter out any UCRs that are already synced. This can't exist in V1,
+        because in V1 we send all reports as one fixture.
+        """
+        all_configs = self._get_report_configs(apps).values()
+        last_sync_log = restore_state.last_sync_log
+
+        if not last_sync_log or restore_state.overwrite_cache:
+            return all_configs
+
+        current_sync_log = restore_state.current_sync_log
+        now = _utcnow()
+
+        last_ucr_syncs = {
+            log.report_uuid: log.datetime
+            for log in last_sync_log.last_ucr_sync_times
+        }
+        configs_to_sync = []
+
+        for config in all_configs:
+            if config.uuid not in last_ucr_syncs:
+                configs_to_sync.append(config)
+                current_sync_log.last_ucr_sync_times.append(
+                    UCRSyncLog(report_uuid=config.uuid, datetime=now)
+                )
+                continue
+
+            last_sync = last_ucr_syncs[config.uuid]
+            next_sync = last_sync + timedelta(hours=float(config.sync_delay))
+
+            if now > next_sync:
+                configs_to_sync.append(config)
+                current_sync_log.last_ucr_sync_times.append(
+                    UCRSyncLog(report_uuid=config.uuid, datetime=now)
+                )
+            else:
+                current_sync_log.last_ucr_sync_times.append(
+                    UCRSyncLog(report_uuid=config.uuid, datetime=last_sync)
+                )
+
+        # TODO: Figure out purging here
+        return configs_to_sync
 
     def _v2_fixtures(self, restore_user, report_configs):
         fixtures = []
