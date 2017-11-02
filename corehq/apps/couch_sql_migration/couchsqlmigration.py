@@ -211,22 +211,22 @@ class CouchSqlDomainMigrator(object):
         from corehq.apps.tzmigration.timezonemigration import json_diff
         self.log_debug('Calculating case diffs for {} cases'.format(len(couch_cases)))
         case_ids = list(couch_cases)
-        sql_cases = CaseAccessorSQL.get_cases(case_ids)
-        for sql_case in sql_cases:
-            couch_case = couch_cases[sql_case.case_id]
-            sql_case_json = sql_case.to_json()
-            diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
-            diffs = filter_case_diffs(
-                couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
-            )
-            if diffs and not sql_case.is_deleted:
-                couch_case, diffs = self._rebuild_couch_case_and_re_diff(couch_case, sql_case_json)
-
-            if diffs:
-                self.diff_db.add_diffs(
-                    couch_case['doc_type'], sql_case.case_id,
-                    diffs
-                )
+        # sql_cases = CaseAccessorSQL.get_cases(case_ids)
+        # for sql_case in sql_cases:
+        #     couch_case = couch_cases[sql_case.case_id]
+        #     sql_case_json = sql_case.to_json()
+        #     diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
+        #     diffs = filter_case_diffs(
+        #         couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions
+        #     )
+        #     if diffs and not sql_case.is_deleted:
+        #         couch_case, diffs = self._rebuild_couch_case_and_re_diff(couch_case, sql_case_json)
+        #
+        #     if diffs:
+        #         self.diff_db.add_diffs(
+        #             couch_case['doc_type'], sql_case.case_id,
+        #             diffs
+        #         )
 
         self._diff_ledgers(case_ids)
 
