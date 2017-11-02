@@ -34,6 +34,7 @@ from corehq.apps.app_manager.views.apps import (
     export_gzip,
     pull_master_app,
     update_linked_whitelist,
+    PatchLinkedAppWhitelist,
 )
 from corehq.apps.app_manager.views.cli import (
     direct_ccz,
