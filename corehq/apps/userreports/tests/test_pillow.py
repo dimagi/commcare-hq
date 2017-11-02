@@ -629,7 +629,7 @@ class RebuildTableTest(TestCase):
         insp = reflection.Inspector.from_engine(self.engine)
         table_name = get_table_name(self.config.domain, self.config.table_id)
         self.assertEqual(
-            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 0
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
 
         # add the column to the config
@@ -655,7 +655,7 @@ class RebuildTableTest(TestCase):
         # column doesn't exist because rebuild table was mocked
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
-            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 0
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
 
         # Another time without the mock to ensure the column is there
@@ -663,7 +663,7 @@ class RebuildTableTest(TestCase):
         pillow.bootstrap([config])
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
-            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 1
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
         )
 
     def test_add_nullable_column(self):
@@ -673,7 +673,7 @@ class RebuildTableTest(TestCase):
         insp = reflection.Inspector.from_engine(self.engine)
         table_name = get_table_name(self.config.domain, self.config.table_id)
         self.assertEqual(
-            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 0
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
 
         # add the column to the config
@@ -698,5 +698,5 @@ class RebuildTableTest(TestCase):
         self.assertFalse(pillow.processors[0].rebuild_table.called)
         insp = reflection.Inspector.from_engine(engine)
         self.assertEqual(
-            len(filter(lambda c: c['name'] == 'new_date', insp.get_columns(table_name))), 1
+            len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 1
         )
