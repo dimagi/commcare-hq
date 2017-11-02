@@ -175,7 +175,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.schedule_form.is_valid():
             # TODO editing should not create a new one
             values = self.schedule_form.cleaned_data
-            if values['send_frequency'] == 'immediately':
+            if values['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
                 if values['translate']:
                     messages = {}
                     for lang in self.project_languages:
@@ -234,7 +234,7 @@ class EditScheduleView(CreateScheduleView):
             recipients.append({"id": doc_id, "text": user.raw_username})
         initial = {
             'schedule_name': broadcast.name,
-            'send_frequency': 'immediately',
+            'send_frequency': ScheduleForm.SEND_IMMEDIATELY,
             'recipients': recipients,
             'content': 'sms',
             # only works for SMS
@@ -244,6 +244,6 @@ class EditScheduleView(CreateScheduleView):
 
     def post(self, request, *args, **kwargs):
         values = self.schedule_form.cleaned_data
-        if values['send_frequency'] == 'immediately':
+        if values['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
             raise ImmediateMessageEditAttempt("Cannot edit an immediate message")
         super(EditScheduleView, self).post(request, *args, **kwargs)

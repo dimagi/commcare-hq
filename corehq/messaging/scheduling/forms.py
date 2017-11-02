@@ -24,6 +24,8 @@ class RecipientField(CharField):
 
 
 class ScheduleForm(Form):
+    SEND_IMMEDIATELY = 'immediately'
+
     schedule_name = CharField(
         required=True,
         label=_('Schedule Name'),
@@ -33,7 +35,7 @@ class ScheduleForm(Form):
         required=True,
         label=_('Send'),
         choices=(
-            ('immediately', _('Immediately')),
+            (SEND_IMMEDIATELY, _('Immediately')),
         )
     )
     recipients = RecipientField(
@@ -60,7 +62,7 @@ class ScheduleForm(Form):
         initial = kwargs.get('initial')
         readonly = False
         if initial:
-            readonly = (initial.get('send_frequency') == 'immediately')
+            readonly = (initial.get('send_frequency') == self.SEND_IMMEDIATELY)
             message = initial.get('message', {})
             kwargs['initial']['translate'] = '*' not in message
             kwargs['initial']['non_translated_message'] = message.get('*', '')
