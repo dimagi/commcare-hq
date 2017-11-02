@@ -81,7 +81,7 @@ APP_BUILDER_ADD_ONS = StaticUINotify(
 )
 
 REPORT_BUILDER_V2 = StaticUINotify(
-    'report_builder_v2_oct2017',
+    'report_builder_v2_nov2017',
     ends_on=datetime(2017, 12, 22, 20),
     only_visible_for_users_created_before=datetime(2017, 11, 5, 20),
 )
