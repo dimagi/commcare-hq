@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -44,7 +46,7 @@ class ReportColumnFactory(object):
             raise BadSpecError(
                 'Unknown or missing column type: {} must be in [{}]'.format(
                     column_type,
-                    ', '.join(cls.class_map.keys())
+                    ', '.join(list(cls.class_map.keys()))
                 )
             )
         try:
@@ -70,7 +72,7 @@ class ChartFactory(object):
         if spec.get('type') not in cls.spec_map:
             raise BadSpecError(_('Illegal chart type: {0}, must be one of the following choice: ({1})').format(
                 spec.get('type', _('(missing from spec)')),
-                ', '.join(cls.spec_map.keys())
+                ', '.join(list(cls.spec_map.keys()))
             ))
         try:
             return cls.spec_map[spec['type']].wrap(spec)

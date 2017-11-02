@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_case_property_indicator,
@@ -9,6 +11,7 @@ from corehq.apps.userreports.reports.builder import (
 from corehq.apps.userreports.reports.builder.const import COUNT_PER_CHOICE
 from corehq.apps.userreports.sql import get_column_name
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class ColumnOption(object):
@@ -141,7 +144,7 @@ class FormMetaColumnOption(ColumnOption):
         # aggregation parameter is never used because we need not infer the data type
         # self._question_source is a tuple of (identifier, datatype)
         identifier = self._meta_property_spec[0]
-        if isinstance(identifier, basestring):
+        if isinstance(identifier, six.string_types):
             identifier = [identifier]
         identifier = "/".join(identifier)
         column_id = get_column_name(identifier.strip("/"))

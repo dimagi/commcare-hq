@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from collections import namedtuple
 
@@ -31,8 +33,8 @@ from dimagi.utils.dates import DateSpan
 
 
 SHOW_ALL_CHOICE = '_all'  # todo: if someone wants to name an actually choice "_all" this will break
-NONE_CHOICE = u"\u2400"
-CHOICE_DELIMITER = u"\u001f"
+NONE_CHOICE = "\u2400"
+CHOICE_DELIMITER = "\u001f"
 
 
 class FilterValue(object):

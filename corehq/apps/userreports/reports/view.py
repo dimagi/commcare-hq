@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from StringIO import StringIO
 from contextlib import contextmanager, closing
@@ -76,6 +78,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
 from corehq.apps.reports.datatables import DataTablesHeader
+import six
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -92,7 +95,7 @@ def get_filter_values(filters, request_dict, user=None):
             for filter in filters
         }
     except FilterException as e:
-        raise UserReportsFilterError(unicode(e))
+        raise UserReportsFilterError(str(e))
 
 
 def query_dict_to_dict(query_dict, domain, string_type_params):
@@ -112,7 +115,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     # json.loads casts strings 'true'/'false' to booleans, so undo it
     for key in string_type_params:
-        u_key = unicode(key)  # QueryDict's key/values are unicode strings
+        u_key = str(key)  # QueryDict's key/values are unicode strings
         if u_key in query_dict:
             request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
     return request_dict
@@ -290,7 +293,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                         'You may need to delete and recreate the report. '
                         'If you believe you are seeing this message in error, please report an issue.'
                     )
-                    details = unicode(e)
+                    details = str(e)
                 self.template_name = 'userreports/report_error.html'
                 context = {
                     'report_id': self.report_config_id,
@@ -491,7 +494,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 if isinstance(value, Choice):
                     values.append(value.display)
                 else:
-                    values.append(unicode(value))
+                    values.append(str(value))
             return ', '.join(values)
         elif isinstance(filter_value, DateSpan):
             return filter_value.default_serialization()
@@ -499,7 +502,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             if isinstance(filter_value, Choice):
                 return filter_value.display
             else:
-                return unicode(filter_value)
+                return str(filter_value)
 
     def _get_filter_values(self):
         slug_to_filter = {
@@ -509,11 +512,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
         filters_without_prefilters = {
             filter_slug: filter_value
-            for filter_slug, filter_value in self.filter_values.iteritems()
+            for filter_slug, filter_value in six.iteritems(self.filter_values)
             if not isinstance(slug_to_filter[filter_slug], PreFilter)
         }
 
-        for filter_slug, filter_value in filters_without_prefilters.iteritems():
+        for filter_slug, filter_value in six.iteritems(filters_without_prefilters):
             label = slug_to_filter[filter_slug].label
             yield label, self._get_filter_export_format(filter_value)
 

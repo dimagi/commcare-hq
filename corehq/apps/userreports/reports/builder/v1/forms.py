@@ -1,4 +1,6 @@
 
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
@@ -51,6 +53,7 @@ from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -70,7 +73,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in REPORT_BUILDER_FILTER_TYPE_MAP.keys() + [""]:
+            if filter_conf.get('format', None) not in list(REPORT_BUILDER_FILTER_TYPE_MAP.keys()) + [""]:
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -90,11 +93,11 @@ class Select2(Widget):
         final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
-            u'<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
+            '<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
             final_attrs=flatatt(final_attrs),
             value=self.value,
             choices=json.dumps(self._choices_for_binding(choices)),
-            ko_binding=u"value: {}".format(self.ko_value) if self.ko_value else "",
+            ko_binding="value: {}".format(self.ko_value) if self.ko_value else "",
         )
 
     def _choices_for_binding(self, choices):
@@ -117,7 +120,7 @@ class QuestionSelect(Widget):
         final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
-            u"""
+            """
             <input{final_attrs} value="{value}" data-bind='
                questionsSelect: {choices},
                optionsCaption: " ",
@@ -190,7 +193,7 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
+                self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES.keys()),
                 include_parent_properties=False
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
@@ -463,9 +466,9 @@ class DataSourceBuilder(object):
     @memoized
     def data_source_name(self):
         if self.source_type == 'form':
-            return u"{} (v{})".format(self.source_form.default_name(), self.app.version)
+            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
         if self.source_type == 'case':
-            return u"{} (v{})".format(self.source_id, self.app.version)
+            return "{} (v{})".format(self.source_id, self.app.version)
 
 
 def _legend(title, subtext):
@@ -473,7 +476,7 @@ def _legend(title, subtext):
     Return a string to be used in a crispy form Fieldset legend.
     This function is just a light wrapped around some simple templating.
     """
-    return u'{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
+    return '{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
         title=title, subtext=subtext
     )
 
@@ -579,7 +582,7 @@ class DataSourceForm(forms.Form):
         cleaned_data = super(DataSourceForm, self).clean()
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
-        builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
+        builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
         if len(builder_reports) >= self.max_allowed_reports:
             raise forms.ValidationError(_(
                 "Too many reports!\n"
@@ -706,7 +709,7 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in self.data_source_properties.iteritems():
+        for id_, prop in six.iteritems(self.data_source_properties):
             if prop.type == "question":
                 if prop.source['type'] == "MSelect":
                     option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
@@ -823,7 +826,7 @@ class ConfigureNewReportBase(forms.Form):
         else:
             indicators = self.ds_builder.indicators(self._number_columns)
             if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
+                for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
                     setattr(data_source, property_name, value)
                 data_source.save()
                 tasks.rebuild_indicators.delay(data_source._id)
@@ -1245,8 +1248,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         error_messages={"required": ugettext_lazy("At least one column is required")},
     )
     column_legend_fine_print = ugettext_noop(
-        u"Add columns to your report to display information from cases or form submissions. You may rearrange "
-        u"the order of the columns by dragging the arrows next to the column."
+        "Add columns to your report to display information from cases or form submissions. You may rearrange "
+        "the order of the columns by dragging the arrows next to the column."
     )
 
     @property
@@ -1346,9 +1349,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop(
-        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
-        u'that property.  For example, if you add a column for a yes or no question, the report will show a '
-        u'column for "yes" and a column for "no."'
+        'Add columns for this report to aggregate. Each property you add will create a column for every value of '
+        'that property.  For example, if you add a column for a yes or no question, the report will show a '
+        'column for "yes" and a column for "no."'
     )
     group_by = forms.ChoiceField(label=_("Show one row for each"), required=False)
 
@@ -1460,9 +1463,9 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
     report_type = 'worker'
     column_legend_fine_print = ugettext_noop(
-        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
-        u'that property. For example, if you add a column for a yes or no question, the report will show a '
-        u'column for "yes" and a column for "no".'
+        'Add columns for this report to aggregate. Each property you add will create a column for every value of '
+        'that property. For example, if you add a column for a yes or no question, the report will show a '
+        'column for "yes" and a column for "no".'
     )
 
     def __init__(self, *args, **kwargs):

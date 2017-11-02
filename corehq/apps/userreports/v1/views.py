@@ -1,6 +1,7 @@
 
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
@@ -160,7 +161,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
             self.edit_form.save(commit=True)
-            messages.success(request, _(u'Report "{}" saved!').format(self.config.title))
+            messages.success(request, _('Report "{}" saved!').format(self.config.title))
             return HttpResponseRedirect(reverse(
                 'edit_configurable_report', args=[self.domain, self.config._id])
             )
@@ -420,7 +421,7 @@ class ConfigureChartReport(ReportBuilderView):
                     'is_static': self.existing_report.is_static,
                 })
             return self._handle_exception(error_response, e)
-        field_names = report_form.fields.keys()
+        field_names = list(report_form.fields.keys())
         return {
             'report': {
                 "title": self.page_name
