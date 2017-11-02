@@ -1,4 +1,4 @@
-hqDefine("scheduling/js/create_message.ko", function() {
+hqDefine("scheduling/js/create_schedule.ko", function() {
     var CreateMessageViewModel = function (initial_values) {
         var self = this;
 
