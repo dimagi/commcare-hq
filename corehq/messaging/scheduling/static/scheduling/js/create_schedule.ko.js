@@ -1,4 +1,4 @@
-hqDefine("scheduling/js/create_message.ko", function() {
+hqDefine("scheduling/js/create_schedule.ko", function() {
     var CreateMessageViewModel = function (initial_values) {
         var self = this;
 
@@ -36,7 +36,7 @@ hqDefine("scheduling/js/create_message.ko", function() {
 
     $(function () {
         var cmvm = new CreateMessageViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
-        $('#create-message-form').koApplyBindings(cmvm);
+        $('#create-schedule-form').koApplyBindings(cmvm);
         cmvm.init();
     });
 });

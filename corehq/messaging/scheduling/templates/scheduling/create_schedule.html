@@ -6,12 +6,12 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
-    <script src="{% static 'scheduling/js/create_message.ko.js' %}"></script>
+    <script src="{% static 'scheduling/js/create_schedule.ko.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
     {% initial_page_data 'current_values' form.current_values %}
-    <div id="create-message-form">
+    <div id="create-schedule-form">
         {% crispy form %}
     </div>
 {% endblock %}

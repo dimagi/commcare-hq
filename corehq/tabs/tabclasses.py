@@ -1007,11 +1007,11 @@ class MessagingTab(UITab):
                         'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
-                                'title': _("New Message"),
+                                'title': _("New"),
                                 'urlname': CreateScheduleView.urlname,
                             },
                             {
-                                'title': _("Edit Message"),
+                                'title': _("Edit"),
                                 'urlname': EditScheduleView.urlname,
                             },
                         ],
