@@ -29,9 +29,6 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
-from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
-    get_alert_schedule_instances_for_schedule,
-)
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -188,13 +185,15 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                     content = SMSContent(message=messages)
                 else:
                     content = SMSContent(message={'*': values['non_translated_message']})
+
                 with transaction.atomic():
                     schedule = AlertSchedule.create_simple_alert(self.domain, content)
                     broadcast = ImmediateBroadcast(
                         domain=self.domain, name=values['schedule_name'], schedule=schedule
                     )
+                    recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
+                    broadcast.recipients = recipients
                     broadcast.save()
-                recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
                 refresh_alert_schedule_instances.delay(schedule, recipients)
 
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
@@ -229,20 +228,14 @@ class EditScheduleView(CreateScheduleView):
 
         broadcast = self.broadcast
         schedule = broadcast.schedule
-        schedule_instances = get_alert_schedule_instances_for_schedule(schedule)
-        recipients = [
-            (instance.recipient_type, instance.recipient_id)
-            for instance in schedule_instances
-        ]
-        ret = []
-        if recipients:
-            for doc_type, doc_id in recipients:
-                user = CommCareUser.wrap(CommCareUser.get_db().get(doc_id))
-                ret.append({"id": doc_id, "text": user.raw_username})
+        recipients = []
+        for doc_type, doc_id in broadcast.recipients:
+            user = CommCareUser.get_by_user_id(doc_id, domain=self.domain)
+            recipients.append({"id": doc_id, "text": user.raw_username})
         initial = {
             'schedule_name': broadcast.name,
             'send_frequency': 'immediately',
-            'recipients': ret,
+            'recipients': recipients,
             'content': 'sms',
             # only works for SMS
             'message': schedule.memoized_events[0].content.message,
