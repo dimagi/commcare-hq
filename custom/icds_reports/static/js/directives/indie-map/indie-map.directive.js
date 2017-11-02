@@ -178,7 +178,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             if (this.options.rightLegend['average_format'] === 'number') {
                                 html += '<strong>' + loc_name + ' average:</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']);
                             } else {
-                                html += '<strong>' + loc_name + ' average:</strong> ' + d3.format('.2f')(this.options.rightLegend['average']);
+                                html += '<strong>' + loc_name + ' average:</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%';
                             }
                             html +='</div>';
                             html +='</br>';

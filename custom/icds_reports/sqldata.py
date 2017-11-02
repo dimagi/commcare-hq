@@ -1321,15 +1321,20 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 slug='num_people'
             ),
             DatabaseColumn(
-                'num_people_enrolled_for_services',
+                'beneficiary_persons',
                 SumColumn('cases_person_beneficiary'),
-                slug='num_people_enrolled_for_services'
+                slug='beneficiary_persons'
+            ),
+            DatabaseColumn(
+                'person_has_aadhaar',
+                SumColumn('cases_person_has_aadhaar'),
+                slug='person_has_aadhaar'
             ),
             AggregateColumn(
                 'num_people_with_aadhar',
                 percent,
                 [
-                    SumColumn('cases_person_has_aadhaar'),
+                    AliasColumn('cases_person_has_aadhaar'),
                     AliasColumn('cases_person_beneficiary')
                 ],
                 slug='num_people_with_aadhar'
@@ -1457,6 +1462,19 @@ class DemographicsExport(ExportableMixin):
             {
                 'header': 'Number of households',
                 'slug': 'num_households'
+            },
+            {
+                'header': (
+                    'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                    'old, alive and seeking services) who have an aadhaar ID'
+                ),
+                'slug': 'person_has_aadhaar'
+            },
+            {
+                'header': (
+                    'Total number of beneficiaries (under 6 years old and women '
+                    'between 11 and 49 years old, alive and seeking services)'),
+                'slug': 'beneficiary_persons'
             },
             {
                 'header': 'Percent Adhaar-seeded beneficaries',
