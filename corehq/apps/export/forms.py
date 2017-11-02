@@ -117,7 +117,7 @@ class CreateExportTagForm(forms.Form):
         ]
     )
     app_type = forms.CharField()
-    application = forms.CharField()
+    application = forms.CharField(required=False)
 
     # Form export fields
     module = forms.CharField(required=False)
@@ -160,24 +160,24 @@ class CreateExportTagForm(forms.Form):
                 ng_show="!staticModelType"
             ),
             crispy.Div(
-                crispy.Div(
-                    crispy.Field(
-                        'app_type',
-                        placeholder=_("Select Application Type"),
-                        ng_model="formData.app_type",
-                        ng_change="updateAppChoices()",
-                        ng_required="true",
-                    ),
-                    ng_show="hasSpecialAppTypes || formData.model_type === 'case'",
-                ),
-                crispy.Field(
-                    'application',
-                    placeholder=_("Select Application"),
-                    ng_model="formData.application",
-                    ng_change="formData.model_type === 'case' ? updateCaseTypeChoices() : updateModuleChoices()",
-                    ng_required="true",
-                ),
                 crispy.Div(  # Form export fields
+                    crispy.Div(
+                        crispy.Field(
+                            'app_type',
+                            placeholder=_("Select Application Type"),
+                            ng_model="formData.app_type",
+                            ng_change="updateAppChoices()",
+                            ng_required="true",
+                        ),
+                        ng_show="hasSpecialAppTypes && formData.model_type === 'form'",
+                    ),
+                    crispy.Field(
+                        'application',
+                        placeholder=_("Select Application"),
+                        ng_model="formData.application",
+                        ng_change="formData.model_type === updateModuleChoices()",
+                        ng_required="formData.model_type === 'form'",
+                    ),
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
@@ -200,7 +200,6 @@ class CreateExportTagForm(forms.Form):
                         'case_type',
                         placeholder=_("Select Case Type"),
                         ng_model="formData.case_type",
-                        ng_disabled="!formData.application",
                         ng_required="formData.model_type === 'case'",
                     ),
                     ng_show="formData.model_type === 'case'",
@@ -230,8 +229,10 @@ class CreateExportTagForm(forms.Form):
         model_type = cleaned_data.get("model_type")
 
         if model_type == "form":
-            # Require module and form fields if model_type is form
+            # Require application, module and form fields if model_type is form
             errors = []
+            if not cleaned_data.get("application"):
+                errors.append(forms.ValidationError(_("Application is required")))
             if not cleaned_data.get("module"):
                 errors.append(forms.ValidationError(_("Menu is required")))
             if not cleaned_data.get("form"):
