@@ -1425,8 +1425,10 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
         def get_non_agged_columns():
             return [c for c in self._report_columns if c['aggregation'] != "simple"]
+
         def get_agged_columns():
             return [c for c in self._report_columns if c['aggregation'] == "simple"]
+        
         if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
                 spec = [{
