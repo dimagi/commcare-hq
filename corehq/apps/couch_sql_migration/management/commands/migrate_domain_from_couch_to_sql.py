@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
-            set_couch_sql_migration_started(domain)
+            # set_couch_sql_migration_started(domain)
             do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:

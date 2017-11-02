@@ -66,9 +66,9 @@ class CouchSqlDomainMigrator(object):
         print('[ERROR] {}'.format(message))
 
     def migrate(self):
-        self._process_main_forms()
-        self._copy_unprocessed_forms()
-        self._copy_unprocessed_cases()
+        # self._process_main_forms()
+        # self._copy_unprocessed_forms()
+        # self._copy_unprocessed_cases()
         self._calculate_case_diffs()
 
     def _process_main_forms(self):
