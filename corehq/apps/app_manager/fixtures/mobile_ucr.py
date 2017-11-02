@@ -338,7 +338,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
     def _empty_v2_fixtures(self, report_uuid):
         return [
             E.fixture(id=self._report_fixture_id(report_uuid)),
-            E.fixture(id=self._report_fixture_id(report_uuid))
+            E.fixture(id=self._report_filter_id(report_uuid))
         ]
 
     def _v2_fixtures(self, restore_user, report_configs):
