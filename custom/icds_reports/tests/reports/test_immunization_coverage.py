@@ -20,12 +20,12 @@ class TestImmunizationCoverage(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info":  "Percentage of children 1 year+ who have received complete immunization as per "
-                             "National Immunization Schedule of India required by age 1."
-                             "<br/><br/>"
-                             "This includes the following immunizations:<br/>"
-                             "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
-                             "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
+                    "info": "Percentage of children 1 year+ who have received complete immunization as per "
+                            "National Immunization Schedule of India required by age 1."
+                            "<br/><br/>"
+                            "This includes the following immunizations:<br/>"
+                            "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                            "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
                     "average": 10.896898575020955
                 },
                 "fills": {
@@ -145,12 +145,12 @@ class TestImmunizationCoverage(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info":  "Percentage of children 1 year+ who have received complete immunization as per "
-                         "National Immunization Schedule of India required by age 1."
-                         "<br/><br/>"
-                         "This includes the following immunizations:<br/>"
-                         "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
-                         "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
+                "info": "Percentage of children 1 year+ who have received complete immunization as per "
+                        "National Immunization Schedule of India required by age 1."
+                        "<br/><br/>"
+                        "This includes the following immunizations:<br/>"
+                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
                 "tooltips_data": {
                     "s2": {
                         "all": 193,

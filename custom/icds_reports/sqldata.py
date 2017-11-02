@@ -3,7 +3,6 @@ from collections import OrderedDict
 import datetime
 
 import pytz
-from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn

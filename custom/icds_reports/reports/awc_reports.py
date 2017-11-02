@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
-import math
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY
 
@@ -12,7 +11,8 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
-from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, match_age, get_status, \
+from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
+    match_age, get_status, \
     current_age
 
 RED = '#de2d26'
