@@ -294,6 +294,8 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.renderReportPreview = function (data) {
             self.previewError(false);
+            self.noChartForConfigWarning(false);
+            self.tooManyChartCategoriesWarning(false);
             self._renderTablePreview(data['table']);
             self._renderChartPreview(data['chart_configs'], data['aaData']);
             self._renderMapPreview(data['map_config'], data["aaData"]);
@@ -436,7 +438,7 @@ var reportBuilder = function () {  // eslint-disable-line
         if (!self.existingReportId) {
             self.saveButton.fire('change');
         }
-        self.refreshPreview();
+        self.refreshPreview(self.columnList.serializedProperties());
         if (config['initialChartType']) {
             self.selectedChart(config['initialChartType']);
         }
