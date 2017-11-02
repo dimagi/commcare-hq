@@ -1431,7 +1431,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             if self.cleaned_data['chart'] == "bar":
                 spec = [{
                     "type": "multibar",
-                    'x_axis_column': "",
+                    "x_axis_column": "",
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()

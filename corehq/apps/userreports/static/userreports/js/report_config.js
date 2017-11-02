@@ -105,7 +105,7 @@ var reportBuilder = function () {  // eslint-disable-line
             self._suspendPreviewRefresh = true;
             var wasAggregationEnabled = self.isAggregationEnabled();
             self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
-            self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== constants.CHART_TYPE_NONE);
+            self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== "none");
             if (self.isAggregationEnabled() && !wasAggregationEnabled) {
                 self.columnList.columns().forEach(function(val, index) {
                     if (index === 0) {
@@ -120,11 +120,11 @@ var reportBuilder = function () {  // eslint-disable-line
             self.saveButton.fire('change');
         });
 
-        self.isAggregationEnabled = ko.observable(self.reportType() === constants.REPORT_TYPE_TABLE);
+        self.isAggregationEnabled = ko.observable(self.reportType() === 'none');
 
         self.selectedChart = ko.observable(constants.CHART_TYPE_NONE);
         self.selectedChart.subscribe(function (newValue) {
-            if (newValue === constants.CHART_TYPE_NONE) {
+            if (newValue === "none") {
                 self.previewChart(false);
             } else {
                 self.previewChart(true);
