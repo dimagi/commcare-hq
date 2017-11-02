@@ -20,7 +20,7 @@ from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
-from corehq.messaging.scheduling.forms import MessageForm
+from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -155,15 +155,15 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         }
 
     @cached_property
-    def message_form(self):
+    def schedule_form(self):
         if self.request.method == 'POST':
-            return MessageForm(self.request.POST, **self.form_kwargs)
-        return MessageForm(**self.form_kwargs)
+            return ScheduleForm(self.request.POST, **self.form_kwargs)
+        return ScheduleForm(**self.form_kwargs)
 
     @property
     def page_context(self):
         return {
-            'form': self.message_form,
+            'form': self.schedule_form,
         }
 
     @cached_property
@@ -175,9 +175,9 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
 
-        if self.message_form.is_valid():
+        if self.schedule_form.is_valid():
             # TODO editing should not create a new one
-            values = self.message_form.cleaned_data
+            values = self.schedule_form.cleaned_data
             if values['send_frequency'] == 'immediately':
                 if values['translate']:
                     messages = {}
@@ -223,9 +223,9 @@ class EditScheduleView(CreateScheduleView):
         return broadcast
 
     @cached_property
-    def message_form(self):
+    def schedule_form(self):
         if self.request.method == 'POST':
-            return MessageForm(self.request.POST, **self.form_kwargs)
+            return ScheduleForm(self.request.POST, **self.form_kwargs)
 
         broadcast = self.broadcast
         schedule = broadcast.schedule
@@ -247,10 +247,10 @@ class EditScheduleView(CreateScheduleView):
             # only works for SMS
             'message': schedule.memoized_events[0].content.message,
         }
-        return MessageForm(initial=initial, **self.form_kwargs)
+        return ScheduleForm(initial=initial, **self.form_kwargs)
 
     def post(self, request, *args, **kwargs):
-        values = self.message_form.cleaned_data
+        values = self.schedule_form.cleaned_data
         if values['send_frequency'] == 'immediately':
             raise ImmediateMessageEditAttempt("Cannot edit an immediate message")
         super(EditScheduleView, self).post(request, *args, **kwargs)
