@@ -380,17 +380,6 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         var button = hqImport("hqwebapp/js/main").SaveButton;
-        if (config['existingReport']) {
-            button = hqImport("hqwebapp/js/main").makeSaveButton({
-                // The SAVE text is the only thing that distringuishes this from SaveButton
-                SAVE: django.gettext("Update Report"),
-                SAVING: django.gettext("Saving..."),
-                SAVED: django.gettext("Saved"),
-                RETRY: django.gettext("Try Again"),
-                ERROR_SAVING: django.gettext("There was an error saving"),
-            }, 'btn btn-success');
-        }
-
         self.saveButton = button.init({
             unsavedMessage: "You have unsaved settings.",
             save: function () {

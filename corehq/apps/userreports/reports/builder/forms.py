@@ -722,7 +722,7 @@ class ConfigureNewReportBase(forms.Form):
 
         if self.existing_report:
             self._bootstrap(self.existing_report)
-            self.button_text = _('Update Report')
+            self.button_text = _('Save')
         else:
             self.report_name = report_name
             assert source_type in ['case', 'form']
