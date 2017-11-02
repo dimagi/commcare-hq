@@ -8,6 +8,7 @@ from dateutil.rrule import MONTHLY, rrule, DAILY
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
@@ -20,6 +21,8 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 DATA_NOT_ENTERED = "Data Not Entered"
 
+
+@quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, loc_level, show_test=False):
 
     def get_data_for(filters, date):
@@ -116,6 +119,7 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
     }
 
 
+@quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
 def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
     last_30_days = (selected_month - relativedelta(days=30))
@@ -310,6 +314,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     }
 
 
+@quickcache(['domain', 'config', 'month', 'prev_month', 'show_test'], timeout=30 * 60)
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False):
 
     def get_data_for(date):
@@ -667,6 +672,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
+@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
 def get_awc_report_demographics(domain, config, month, show_test=False):
     selected_month = datetime(*month)
 
@@ -922,7 +928,8 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
     }
 
 
-def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=False):
+@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
+def get_awc_report_infrastructure(domain, config, month, show_test=False):
     selected_month = datetime(*month)
 
     def get_data_for_kpi(filters, date):
@@ -1011,17 +1018,22 @@ def get_awc_report_infrastructure(domain, config, month, prev_month, show_test=F
     }
 
 
-def get_awc_report_beneficiary(domain, awc_id, month, two_before):
+@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before'], timeout=30 * 60)
+def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
+
     data = ChildHealthMonthlyView.objects.filter(
         month=datetime(*month),
         awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
-    ).order_by('-month', 'person_name')
+    ).order_by('-month', order)
+
+    data_count = data.count()
+    data = data[start:(start + length)]
 
     config = {
-        'rows': {},
+        'data': [],
         'months': [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
@@ -1050,23 +1062,23 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
             dob=row_data.dob,
             sex=row_data.sex,
             age=round((datetime(*month).date() - row_data.dob).days / 365.25),
-            fully_immunized_date='Yes' if row_data.fully_immunized else 'No',
+            fully_immunized='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
-            nutrition_status=get_status(
+            current_month_nutrition_status=get_status(
                 row_data.current_month_nutrition_status,
                 'underweight',
                 'Normal weight for age'
             ),
             recorded_weight=row_data.recorded_weight or 0,
             recorded_height=row_data.recorded_height or 0,
-            stunning=get_status(
+            current_month_stunting=get_status(
                 row_data.current_month_stunting,
                 'stunted',
                 'Normal weight for height'
             ),
-            wasting=get_status(
-                row_data.current_month_stunting,
+            current_month_wasting=get_status(
+                row_data.current_month_wasting,
                 'wasted',
                 'Normal height for age'
             ),
@@ -1074,11 +1086,16 @@ def get_awc_report_beneficiary(domain, awc_id, month, two_before):
         )
 
     for row in data:
-        config['rows'][row.case_id] = base_data(row)
+        config['data'].append(base_data(row))
+
+    config["draw"] = draw
+    config["recordsTotal"] = data_count
+    config["recordsFiltered"] = data_count
 
     return config
 
 
+@quickcache(['case_id', 'month'], timeout=30 * 60)
 def get_beneficiary_details(case_id, month):
     data = ChildHealthMonthlyView.objects.filter(
         case_id=case_id, month__lte=datetime(*month)
