@@ -256,7 +256,11 @@ class CouchSqlDomainMigrator(object):
 
         for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
             couch_state = couch_state_map.get(ledger_value.ledger_reference, None)
-            diffs = json_diff(couch_state.to_json(), ledger_value.to_json(), track_list_indices=False)
+            diffs = json_diff(
+                Ellipsis if couch_state is None else couch_state.to_json(),
+                ledger_value.to_json(),
+                track_list_indices=False
+            )
             self.diff_db.add_diffs(
                 'stock state', ledger_value.ledger_reference.as_id(),
                 filter_ledger_diffs(diffs)
