@@ -45,6 +45,14 @@ class TestEpisode2B(SimpleTestCase):
             if ind['column_id'] == column_id
         ][0]
 
+    def _get_expression(self, column_id, column_type):
+        column = self._get_column(column_id)
+        self.assertEqual(column['datatype'], column_type)
+        return ExpressionFactory.from_spec(
+            column['expression'],
+            context=FactoryContext(self.named_expressions, {})
+        )
+
     def test_treating_phi_property_when_clause_true(self):
         episode_case = {
             '_id': 'episode_case_id',
@@ -85,6 +93,48 @@ class TestEpisode2B(SimpleTestCase):
         )
 
         self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), 'owner-id')
+
+    def test_key_populations(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': None,
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ],
+            'key_populations': 'test test2 test3'
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        column = self._get_column('key_populations')
+        self.assertEqual(column['datatype'], 'string')
+        expression = ExpressionFactory.from_spec(
+            column['expression'],
+            context=FactoryContext(self.named_expressions, {})
+        )
+
+        self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), 'test, test2, test3')
 
     def test_treating_phi_property_when_clause_treatment_initiation_date_is_null(self):
         episode_case = {
@@ -663,7 +713,7 @@ class TestEpisode2B(SimpleTestCase):
                 'rft_dstb_followup': 'end_of_cp',
                 'test_requested_date': '2017-09-28',
                 'date_tested': '2017-08-10',
-                'test_type_value': 'cbnaat',
+                'test_type_value': 'microscopy-zn',
                 'result': 'result',
                 'result_recorded': 'yes',
                 'result_summary_display': 'result'
@@ -746,7 +796,8 @@ class TestEpisode2B(SimpleTestCase):
                 'test_type_label': 'Cytopathology',
                 'result_grade': 'result_grade',
                 'result_recorded': 'yes',
-                'result_summary_display': 'result_cytopathology'
+                'result_summary_display': 'result_cytopathology',
+                'result': 'result_cytopathology',
             },
             {
                 'domain': 'enikshay-test',
@@ -790,6 +841,394 @@ class TestEpisode2B(SimpleTestCase):
             self.assertEqual(
                 not_microbiological_result_expression(episode_case, EvaluationContext(episode_case, 0)),
                 'Cytopathology, result_cytopathology'
+            )
+
+    def test_microscopy_expressions(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': 'test',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ]
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        subcases = [
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-10',
+                'test_type_value': 'microscopy-zn',
+                'test_type_label': 'Microscopy ZN',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result microscopy',
+                'lab_serial_number': '1'
+            },
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-12',
+                'test_type_value': 'microscopy-zn',
+                'test_type_label': 'Microscopy ZN',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result microscopy',
+                'lab_serial_number': '2'
+            },
+        ]
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        date_reported_expression = self._get_expression('microscopy_test_result_date', 'date')
+        testing_facility_name_expression = self._get_expression('microscopy_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self._get_expression('microscopy_test_lab_serial_number', 'string')
+        result_summary_display_expression = self._get_expression(
+            'microscopy_test_result_summary_display',
+            'string'
+        )
+
+        with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
+            self.assertEqual(
+                date_reported_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2017-08-12'
+            )
+            self.assertEqual(
+                testing_facility_name_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'Test Facility'
+            )
+            self.assertEqual(
+                lab_serial_number_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2'
+            )
+            self.assertEqual(
+                result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'result microscopy'
+            )
+
+    def test_microscopy_tb_not_detected_expressions(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': 'test',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ]
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        subcases = [
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-10',
+                'test_type_value': 'microscopy-zn',
+                'test_type_label': 'Microscopy ZN',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result microscopy',
+                'lab_serial_number': '1'
+            },
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-12',
+                'test_type_value': 'microscopy-zn',
+                'test_type_label': 'Microscopy ZN',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result microscopy',
+                'lab_serial_number': '2'
+            },
+        ]
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        date_reported_expression = self._get_expression('microscopy_test_result_date', 'date')
+        testing_facility_name_expression = self._get_expression('microscopy_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self._get_expression('microscopy_test_lab_serial_number', 'string')
+        result_summary_display_expression = self._get_expression(
+            'microscopy_test_result_summary_display',
+            'string'
+        )
+
+        with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
+            self.assertEqual(
+                date_reported_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2017-08-10'
+            )
+            self.assertEqual(
+                testing_facility_name_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'Test Facility'
+            )
+            self.assertEqual(
+                lab_serial_number_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '1'
+            )
+            self.assertEqual(
+                result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'result microscopy'
+            )
+
+    def test_cbnaat_expressions(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': 'test',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ]
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        subcases = [
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-10',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '1'
+            },
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-12',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '2'
+            },
+        ]
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self._get_expression(
+            'cbnaat_test_result_summary_display',
+            'string'
+        )
+
+        with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
+            self.assertEqual(
+                date_reported_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2017-08-12'
+            )
+            self.assertEqual(
+                testing_facility_name_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'Test Facility'
+            )
+            self.assertEqual(
+                lab_serial_number_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2'
+            )
+            self.assertEqual(
+                result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'result cbnaat'
+            )
+
+    def test_cbnaat_tb_not_detected_expressions(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': 'test',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ]
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        subcases = [
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-10',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '1'
+            },
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-12',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '2'
+            },
+        ]
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self._get_expression(
+            'cbnaat_test_result_summary_display',
+            'string'
+        )
+
+        with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
+            self.assertEqual(
+                date_reported_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2017-08-10'
+            )
+            self.assertEqual(
+                testing_facility_name_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'Test Facility'
+            )
+            self.assertEqual(
+                lab_serial_number_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '1'
+            )
+            self.assertEqual(
+                result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'result cbnaat'
             )
 
     def test_disease_classification_pulmonary(self):

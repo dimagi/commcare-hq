@@ -12,8 +12,8 @@
         "engine_id": "ucr",
         "description": "updated to include combined diagnostic and followup TLs",
         "base_item_expression": {},
-        "table_id": "test_tasklist_v3",
-        "display_name": "test (task list) v3",
+        "table_id": "test_tasklist_v4",
+        "display_name": "test (task list) v4",
         "configured_filter": {
           "filters": [
               {
@@ -153,7 +153,7 @@
                   },
                   "type": "location_parent_id"
               },
-              "is_nullable": false,
+              "is_nullable": true,
               "is_primary_key": false,
               "transform": {},
               "type": "expression"
@@ -174,7 +174,7 @@
                   },
                   "type": "location_parent_id"
               },
-              "is_nullable": false,
+              "is_nullable": true,
               "is_primary_key": false,
               "transform": {},
               "type": "expression"

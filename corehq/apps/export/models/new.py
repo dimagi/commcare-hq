@@ -47,7 +47,7 @@ from corehq.apps.app_manager.models import (
     Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
@@ -2514,7 +2514,10 @@ class StockExportColumn(ExportColumn):
         return section_and_product_ids
 
     def _get_product_name(self, product_id):
-        return Product.get(product_id).name
+        try:
+            return SQLProduct.objects.values_list('name', flat=True).get(product_id=product_id, domain=self.domain)
+        except SQLProduct.DoesNotExist:
+            return product_id
 
     def get_headers(self, **kwargs):
         for product_id, section in self._column_tuples:

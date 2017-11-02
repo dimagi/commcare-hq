@@ -7,6 +7,7 @@ from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
@@ -19,6 +20,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -42,7 +44,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         awcs = row['awcs']
         row_values = {
             'awcs': awcs,
-            'fillKey': 'Launched',
+            'fillKey': 'Launched' if awcs > 0 else 'Not launched',
         }
         map_data.update({name: row_values})
 
@@ -69,6 +71,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -121,7 +124,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
             "Number of AWCs launched"
@@ -138,6 +141,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     }
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)

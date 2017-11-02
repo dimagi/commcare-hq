@@ -29,7 +29,8 @@ from corehq.apps.hqadmin.views import (
     pillow_operation_api,
     web_user_lookup,
     top_five_projects_by_country,
-    DisableTwoFactorView
+    DisableTwoFactorView,
+    DisableUserView
 )
 
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
@@ -59,6 +60,7 @@ urlpatterns = [
     url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
     url(r'^web_user_lookup/$', web_user_lookup, name='web_user_lookup'),
     url(r'^disable_two_factor/$', DisableTwoFactorView.as_view(), name=DisableTwoFactorView.urlname),
+    url(r'^disable_account/$', DisableUserView.as_view(), name=DisableUserView.urlname),
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
     url(r'^raw_couch/$', raw_couch, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),

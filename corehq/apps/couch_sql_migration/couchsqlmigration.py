@@ -514,7 +514,7 @@ def _get_case_iterator(domain, doc_types=None):
 
 
 def get_diff_db_filepath(domain):
-    return os.path.join(settings.SHARED_DRIVE_CONF.restore_dir,
+    return os.path.join(settings.SHARED_DRIVE_CONF.tzmigration_planning_dir,
                         '{}-tzmigration.db'.format(domain))
 
 

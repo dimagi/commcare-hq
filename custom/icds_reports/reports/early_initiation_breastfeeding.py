@@ -6,6 +6,8 @@ from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
@@ -17,6 +19,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -85,6 +88,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -160,7 +164,8 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
     }
 
 
-def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_early_initiation_breastfeeding_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -185,9 +190,13 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
         'birth': 0,
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         in_month = row['in_month']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         birth = row['birth']
 
@@ -200,8 +209,14 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
             name, value
         ])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of children who were put to the breast within one hour of birth."
             "<br/><br/>"

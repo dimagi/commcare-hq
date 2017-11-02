@@ -214,20 +214,30 @@ def get_location_fixture_queryset(user):
 
     for user_location in user_locations:
         location_type = user_location.location_type
-        expand_from = location_type.expand_from or location_type
-        expand_to_level = (SQLLocation.active_objects
-                           .filter(domain__exact=user.domain, location_type=location_type.expand_to)
-                           .values_list('level', flat=True)
-                           .first())
-        expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
-        all_locations |= _get_children(expand_from_locations, expand_to_level)
-        all_locations |= (SQLLocation.active_objects
-                          .get_queryset_ancestors(expand_from_locations, include_self=True))
+        expand_to_level = _get_level_to_expand_to(user.domain, location_type.expand_to)
+        expand_from_level = location_type.expand_from or location_type
+        expand_from_locations = _get_locs_to_expand_from(user.domain, user_location, expand_from_level)
+        locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
+        locs_at_or_above_expand_from = (SQLLocation.active_objects
+                                        .get_queryset_ancestors(expand_from_locations, include_self=True))
+        locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
+        if location_type.include_only.exists():
+            locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
+        all_locations |= locations_to_sync
 
     return all_locations
 
 
-def _get_expand_from_level(domain, user_location, expand_from):
+def _get_level_to_expand_to(domain, expand_to):
+    if expand_to is None:
+        return None
+    return (SQLLocation.active_objects
+            .filter(domain__exact=domain, location_type=expand_to)
+            .values_list('level', flat=True)
+            .first())
+
+
+def _get_locs_to_expand_from(domain, user_location, expand_from):
     """From the users current location, return all locations of the highest
     level they want to start expanding from.
     """
@@ -246,7 +256,9 @@ def _get_expand_from_level(domain, user_location, expand_from):
 def _get_children(expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
-    children = SQLLocation.active_objects.get_queryset_descendants(expand_from_locations).prefetch_related('location_type')
+    children = (SQLLocation.active_objects
+                .get_queryset_descendants(expand_from_locations)
+                .prefetch_related('location_type'))
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)
     return children

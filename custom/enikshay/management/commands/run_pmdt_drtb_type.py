@@ -46,5 +46,5 @@ def _get_drug_resistance_cases(domain, occurrence_case_id):
     case_accessor = CaseAccessors(domain)
     all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
     cases = [case for case in all_cases
-             if not case.closed and case.type == CASE_TYPE_DRUG_RESISTANCE]
+             if case.type == CASE_TYPE_DRUG_RESISTANCE]
     return cases

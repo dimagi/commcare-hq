@@ -50,16 +50,15 @@ branches:
   - nh/new_rb  # Norman 11/22
   - br/kill-old-cloucare  # Danny 7/21
   - jls/fixtures-require-js-2017-qa # Jenny 9/18
-  - je/mobile-ucr-v2-attempt-2 # j$ 9/29
+  - je/mobile-ucr-caching # j$ 11/1
   - mk-search-under-location # Manish 4-Oct
+  - jls/drop-assert # Jenny 10/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
   submodules/django-digest-src:
-    branches: []
-  submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
     branches: []

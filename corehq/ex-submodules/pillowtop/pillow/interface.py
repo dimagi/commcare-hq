@@ -3,6 +3,8 @@ from datetime import datetime
 
 import sys
 
+from django.db.utils import DatabaseError, InterfaceError
+
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
@@ -265,12 +267,18 @@ class ConstructedPillow(PillowBase):
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
     error_id = None
+    e = None
+
     # always retry document missing errors, because the error is likely with couch
     if pillow.retry_errors or isinstance(exception, DocumentMissingError):
-        error = PillowError.get_or_create(change, pillow)
-        error.add_attempt(exception, sys.exc_info()[2])
-        error.save()
-        error_id = error.id
+        try:
+            error = PillowError.get_or_create(change, pillow)
+        except (DatabaseError, InterfaceError) as e:
+            error_id = 'PillowError.get_or_create failed'
+        else:
+            error.add_attempt(exception, sys.exc_info()[2])
+            error.save()
+            error_id = error.id
 
     pillow_logging.exception(
         u"[%s] Error on change: %s, %s. Logged as: %s" % (
@@ -280,3 +288,6 @@ def handle_pillow_error(pillow, change, exception):
             error_id
         )
     )
+
+    if e:
+        raise e
