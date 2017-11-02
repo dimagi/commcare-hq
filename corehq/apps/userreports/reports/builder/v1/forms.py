@@ -71,7 +71,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in REPORT_BUILDER_FILTER_TYPE_MAP.keys() + [""]:
+            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -191,7 +191,7 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
+                self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=False
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})

@@ -141,7 +141,7 @@ class FieldColumn(ReportColumn):
     type = TypeProperty('field')
     field = StringProperty(required=True)
     aggregation = StringProperty(
-        choices=SQLAGG_COLUMN_MAP.keys(),
+        choices=list(SQLAGG_COLUMN_MAP),
         required=True,
     )
     format = StringProperty(default='default', choices=[
