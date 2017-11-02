@@ -617,8 +617,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
                         """
-                        Percentage of children 1 year+ who have recieved complete immunization as per
-                        National Immunization Schedule of India required by age 1.
+                            Percentage of children 1 year+ who have received complete immunization as per
+                            National Immunization Schedule of India required by age 1.
+                            <br/><br/>
+                            This includes the following immunizations:<br/>
+                            If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>
+                            If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1
                         """
                     )),
                     'percent': percent_diff(
