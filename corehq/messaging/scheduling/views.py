@@ -124,8 +124,8 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
-    urlname = 'create_message'
-    page_title = _('Create a Message')
+    urlname = 'create_schedule'
+    page_title = _('Schedule a Message')
     template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
 
@@ -202,8 +202,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 
 class EditScheduleView(CreateScheduleView):
-    urlname = 'edit_message'
-    page_title = _('Edit Message')
+    urlname = 'edit_schedule'
+    page_title = _('Edit Scheduled Message')
 
     @property
     def page_url(self):
