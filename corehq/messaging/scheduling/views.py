@@ -126,7 +126,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_message'
     page_title = _('Create a Message')
-    template_name = 'scheduling/create_message.html'
+    template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
 
     @method_decorator(_requires_new_reminder_framework())
