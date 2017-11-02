@@ -1,4 +1,7 @@
 from collections import defaultdict
+
+from future.utils import lmap
+
 from corehq.apps.userreports.util import truncate_value
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from fluff import TYPE_INTEGER
@@ -128,7 +131,7 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         return ret
 
     def get_columns(self):
-        return map(self._make_column, self.product_codes)
+        return lmap(self._make_column, self.product_codes)
 
     def get_values(self, item, context=None):
         case_id = self.case_id_expression(item)
