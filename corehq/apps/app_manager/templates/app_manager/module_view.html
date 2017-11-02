@@ -151,10 +151,19 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
+{{ request|toggle_tag_info:"NEW_MULTIMEDIA_UPLOADER" }}
+{% if request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
+{% include "app_manager/partials/new_multimedia_uploader.html" %}
+{% else %}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endif %}
 {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
     {% with print_uploader as uploader %}
+        {% if request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
+        {% include "app_manager/partials/new_multimedia_uploader.html" %}
+        {% else %}
         {% include 'hqmedia/partials/multimedia_uploader.html' %}
+        {% endif %}
     {% endwith %}
 {% endif %}
 {% endblock modals %}

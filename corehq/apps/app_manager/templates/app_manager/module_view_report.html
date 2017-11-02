@@ -39,7 +39,12 @@
 {% endblock %}
 
 {% block modals %}{{ block.super }}
+{{ request|toggle_tag_info:"NEW_MULTIMEDIA_UPLOADER" }}
+{% if request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
+{% include "app_manager/partials/new_multimedia_uploader.html" %}
+{% else %}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endif %}
 {% include 'hqwebapp/partials/key_value_mapping.html' %}
 {% include 'app_manager/partials/graph_configuration_modal.html' %}
 {% endblock modals %}

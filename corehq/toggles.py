@@ -1344,3 +1344,10 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )
+
+NEW_MULTIMEDIA_UPLOADER = StaticToggle(
+    'new_multimedia_uploader',
+    'Display new multimedia uploader',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
