@@ -16,7 +16,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
-from custom.icds_reports.utils import ICDSMixin
+from custom.icds_reports.utils import ICDSMixin, get_status, current_age
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -1738,10 +1738,6 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
     @property
     def get_columns_by_loc_level(self):
-
-        def current_age(dob):
-            return int(round((self.config['month'] - dob).days / 365.25))
-
         columns = [
             DatabaseColumn(
                 'Name',
@@ -1756,7 +1752,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Current Age (In years)',
                 AliasColumn('dob'),
-                format_fn=current_age,
+                format_fn=lambda x: current_age(x, self.config['month']),
                 slug='current_age'
             ),
             DatabaseColumn(
@@ -1777,26 +1773,43 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Weight recorded',
                 SimpleColumn('recorded_weight'),
+                format_fn=lambda x: "%.2f" % x,
                 slug='recorded_weight'
             ),
             DatabaseColumn(
                 'Height recorded',
                 SimpleColumn('recorded_height'),
+                format_fn=lambda x: "%.2f" % x,
                 slug='recorded_height'
             ),
             DatabaseColumn(
                 'Weight-for-Age Status',
                 SimpleColumn('current_month_nutrition_status'),
+                format_fn=lambda x: get_status(
+                    x,
+                    'underweight',
+                    'Normal weight for age'
+                ),
                 slug='current_month_nutrition_status'
             ),
             DatabaseColumn(
                 'Weight-for-Height Status',
                 SimpleColumn('current_month_wasting'),
+                format_fn=lambda x: get_status(
+                    x,
+                    'wasted',
+                    'Normal height for age'
+                ),
                 slug="current_month_wasting"
             ),
             DatabaseColumn(
                 'Height-for-Age status',
                 SimpleColumn('current_month_stunting'),
+                format_fn=lambda x: get_status(
+                    x,
+                    'stunted',
+                    'Normal weight for height'
+                ),
                 slug="current_month_stunting"
             ),
             DatabaseColumn(

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import operator
 
+from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
@@ -37,6 +38,7 @@ GREY = '#9D9D9D'
 
 DEFAULT_VALUE = "Data not Entered"
 
+DATA_NOT_ENTERED = "Data Not Entered"
 
 class MPRData(object):
     resource_file = 'resources/block_mpr.json'
@@ -297,3 +299,25 @@ def get_location_level(aggregation_level):
 @quickcache([])
 def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
+
+
+def get_status(value, second_part='', normal_value=''):
+    if not value or value in ['unweighed', 'unmeasured', 'unknown']:
+        return {'value': DATA_NOT_ENTERED, 'color': 'black'}
+    elif value in ['severely_underweight', 'severe']:
+        return {'value': 'Severely ' + second_part, 'color': 'red'}
+    elif value in ['moderately_underweight', 'moderate']:
+        return {'value': 'Moderately ' + second_part, 'color': 'black'}
+    elif value in ['normal']:
+        return {'value': normal_value, 'color': 'black'}
+    return value
+
+
+def current_age(dob, selected_date):
+    age = relativedelta(selected_date, dob)
+    age_format = ""
+    if age.years:
+        age_format += "%s year%s " % (age.years, '' if age.years == 1 else 's')
+    if age.months:
+        age_format += "%s month%s " % (age.months, '' if age.months == 1 else 's')
+    return age_format

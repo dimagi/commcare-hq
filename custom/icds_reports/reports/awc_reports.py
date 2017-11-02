@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
 
-import math
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule, DAILY
 
@@ -12,14 +11,15 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
-from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, match_age
+from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
+    match_age, get_status, \
+    current_age
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
 BLUE = '#006fdf'
 PINK = '#fee0d2'
 GREY = '#9D9D9D'
-DATA_NOT_ENTERED = "Data Not Entered"
 
 
 @quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -617,8 +617,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
                         """
-                        Percentage of children 1 year+ who have recieved complete immunization as per
-                        National Immunization Schedule of India required by age 1.
+                            Percentage of children 1 year+ who have received complete immunization as per
+                            National Immunization Schedule of India required by age 1.
+                            <br/><br/>
+                            This includes the following immunizations:<br/>
+                            If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>
+                            If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1
                         """
                     )),
                     'percent': percent_diff(
@@ -1045,23 +1049,12 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     }
 
     def base_data(row_data):
-        def get_status(value, second_part='', normal_value=''):
-            if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-                return {'value': DATA_NOT_ENTERED, 'color': 'black'}
-            elif value in ['severely_underweight', 'severe']:
-                return {'value': 'Severely ' + second_part, 'color': 'red'}
-            elif value in ['moderately_underweight', 'moderate']:
-                return {'value': 'Moderately ' + second_part, 'color': 'black'}
-            elif value in ['normal']:
-                return {'value': normal_value, 'color': 'black'}
-            return value
-
         return dict(
             case_id=row_data.case_id,
             person_name=row_data.person_name,
             dob=row_data.dob,
             sex=row_data.sex,
-            age=round((datetime(*month).date() - row_data.dob).days / 365.25),
+            age=current_age(row_data.dob, datetime(*month).date()),
             fully_immunized='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
@@ -1122,7 +1115,7 @@ def get_beneficiary_details(case_id, month):
             'person_name': row.person_name,
             'mother_name': row.mother_name,
             'dob': row.dob,
-            'age': round((datetime(*month).date() - row.dob).days / 365.25),
+            'age': current_age(row.dob, datetime(*month).date()),
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })

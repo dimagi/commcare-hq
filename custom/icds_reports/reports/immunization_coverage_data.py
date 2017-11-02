@@ -84,6 +84,10 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                 "info": _((
                     "Percentage of children 1 year+ who have received complete immunization as per "
                     "National Immunization Schedule of India required by age 1."
+                    "<br/><br/>"
+                    "This includes the following immunizations:<br/>"
+                    "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                    "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
                 ))
             },
             "data": map_data,
@@ -148,8 +152,12 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of children 1 year+ who have recieved "
-            "complete immunization as per National Immunization Schedule of India required by age 1"
+            "Percentage of children 1 year+ who have received complete immunization as per "
+            "National Immunization Schedule of India required by age 1."
+            "<br/><br/>"
+            "This includes the following immunizations:<br/>"
+            "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+            "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
         )),
         "chart_data": [
             {

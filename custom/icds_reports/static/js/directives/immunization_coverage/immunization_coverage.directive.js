@@ -26,7 +26,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.loaded = false;
     vm.filters = ['age'];
     vm.rightLegend = {
-        info: 'Percentage of children at age 3 who have recieved complete immunization as per National Immunization Schedule of India.',
+        info: 'Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -198,7 +198,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.',
+            html: '<i class="fa fa-info-circle"></i> Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1. <br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
