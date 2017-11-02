@@ -46,7 +46,7 @@
       {% endif %}
       {% if has_report_builder_access %}
         {% if not at_report_limit or existing_report %}
-          <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+          <button id="btnSaveView" class="btn btn-info">{% trans 'View Report' %}</button>
         {% endif %}
       {% endif %}
       &nbsp;<span id="saveButtonHolder"></span>
