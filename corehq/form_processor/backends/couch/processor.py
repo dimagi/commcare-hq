@@ -13,6 +13,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.utils import extract_meta_instance_id
+from couchforms import UnexpectedDeletedXForm
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog,
@@ -201,8 +202,13 @@ class FormProcessorCouch(object):
         Get all forms that have submitted against a case (including archived and deleted forms)
         wrapped by the appropriate form type.
         """
-        form_ids = get_case_xform_ids(case_id)
-        return [fetch_and_wrap_form(id) for id in form_ids]
+        forms = []
+        for form_id in get_case_xform_ids(case_id):
+            try:
+                forms.append(fetch_and_wrap_form(form_id))
+            except UnexpectedDeletedXForm:
+                continue
+        return forms
 
     @staticmethod
     def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
