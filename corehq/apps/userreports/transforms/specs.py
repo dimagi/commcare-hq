@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 from django.utils.translation import get_language
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty

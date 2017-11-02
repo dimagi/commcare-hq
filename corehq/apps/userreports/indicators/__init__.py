@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from corehq.apps.userreports.util import truncate_value
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors

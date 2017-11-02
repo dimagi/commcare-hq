@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
