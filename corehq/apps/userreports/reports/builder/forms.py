@@ -1337,8 +1337,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
             calculation=COUNT_PER_CHOICE
         ))
-        questions = filter(lambda x: x.get_type() == PROPERTY_TYPE_QUESTION,
-            self.data_source_properties.values())
+        questions = [prop for prop in self.data_source_properties.values()
+                     if prop.get_type() == PROPERTY_TYPE_QUESTION]
         if len(questions) > 9:
             questions = questions[:9]
         for q in questions:
