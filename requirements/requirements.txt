@@ -48,7 +48,7 @@ sh==1.09
 gevent==1.0.2
 greenlet==0.4.12
 numpy==1.7.1
-six==1.10.0
+six==1.11.0
 socketpool==0.5.3
 markdown==2.2.1
 amqp==1.4.7
