@@ -120,9 +120,9 @@ var reportBuilder = function () {  // eslint-disable-line
             self.saveButton.fire('change');
         });
 
-        self.isAggregationEnabled = ko.observable(self.reportType() === 'none');
+        self.isAggregationEnabled = ko.observable(self.reportType() === constants.REPORT_TYPE_TABLE);
 
-        self.selectedChart = ko.observable(constants.CHART_TYPE_NONE);
+        self.selectedChart = ko.observable('none');
         self.selectedChart.subscribe(function (newValue) {
             if (newValue === "none") {
                 self.previewChart(false);
