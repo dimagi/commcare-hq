@@ -1,4 +1,4 @@
-/* global _, s, $, django, window, kmqPushSafe */
+/* global _, s, $, django, window, kmqPushSafe, s */
 var reportBuilder = function () {  // eslint-disable-line
     var self = this;
 
