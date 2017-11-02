@@ -24,6 +24,7 @@ class RecipientField(CharField):
 
 
 class ScheduleForm(Form):
+    SEND_DAILY = 'daily'
     SEND_IMMEDIATELY = 'immediately'
 
     schedule_name = CharField(
@@ -36,6 +37,7 @@ class ScheduleForm(Form):
         label=_('Send'),
         choices=(
             (SEND_IMMEDIATELY, _('Immediately')),
+            (SEND_DAILY, _('Daily')),
         )
     )
     recipients = RecipientField(
@@ -57,6 +59,18 @@ class ScheduleForm(Form):
         required=False
     )
 
+    def update_send_frequency_choices(self, initial_value):
+        if not initial_value:
+            return
+
+        def filter_function(two_tuple):
+            if initial_value == self.SEND_IMMEDIATELY:
+                return two_tuple[0] == self.SEND_IMMEDIATELY
+            else:
+                return two_tuple[0] != self.SEND_IMMEDIATELY
+
+        self.fields['send_frequency'].choices = filter(filter_function, self.fields['send_frequency'].choices)
+
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')
         initial = kwargs.get('initial')
@@ -70,6 +84,7 @@ class ScheduleForm(Form):
                 kwargs['initial']['message_%s' % lang] = message.get(lang, '')
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
+        self.update_send_frequency_choices(initial.get('send_frequency') if initial else None)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
