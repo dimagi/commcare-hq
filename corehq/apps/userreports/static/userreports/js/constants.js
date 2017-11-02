@@ -12,5 +12,9 @@ hqDefine('userreports/js/constants', function () {
 
         REPORT_TYPE_LIST: "list",
         REPORT_TYPE_TABLE: "table",
+
+        CHART_TYPE_BAR: "bar",
+        CHART_TYPE_PIE: "pie",
+        CHART_TYPE_NONE: "none",
     };
 });

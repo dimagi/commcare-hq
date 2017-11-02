@@ -212,15 +212,6 @@ var reportBuilder = function () {  // eslint-disable-line
             self.saveButton.fire('change');
         });
 
-        var _isMissingAggColumn = function() {
-            return (self.reportType() === constants.REPORT_TYPE_TABLE) && (
-                ! _.some(self.columnList.columns(), function (c) {
-                    return c.calculation() === constants.GROUP_BY;
-                })
-            );
-        };
-        self.missingAggColumn = ko.computed(_isMissingAggColumn, this);
-
         self.filterList = new PropertyList({
             hasFormatCol: self._sourceType === "case",
             hasCalculationCol: false,
@@ -263,8 +254,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 $('#preview').hide();
 
                 // Check if a preview should be requested from the server
-                // Note: We can't use self.missingAggColumn() because it gets updated after this function is called.
-                if (serializedColumns === "[]" || _isMissingAggColumn()) {
+                if (serializedColumns === "[]") {
                     return;  // Nothing to do.
                 }
                 $.ajax({
@@ -343,9 +333,6 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.validate = function () {
             var isValid = true;
-            if (self.missingAggColumn()) {
-                isValid = false;
-            }
             if (!self.columnList.validate()) {
                 isValid = false;
                 $("#report-config-columns").collapse('show');

@@ -1424,16 +1424,20 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
         def get_non_agged_columns():
             return [c for c in self._report_columns if c['aggregation'] != "simple"]
+        def get_agged_columns():
+            return [c for c in self._report_columns if c['aggregation'] == "simple"]
         if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
-                return [{
+                spec = [{
                     "type": "multibar",
-                    "x_axis_column": "column_agg_0",
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
                     ],
                 }]
+                if get_agged_columns():
+                    spec['x_axis_column'] = get_agged_columns()[0]
+                return spec
             elif self.cleaned_data['chart'] == "pie":
                 return [{
                     "type": "pie",
