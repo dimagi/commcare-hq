@@ -54,7 +54,6 @@ branches:
   - mk-search-under-location # Manish 4-Oct
   - jls/drop-assert # Jenny 10/31
   - es/auth-testing  # Ethan 11/1
-  - es/loc-safe-reports  # Ethan 11/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
