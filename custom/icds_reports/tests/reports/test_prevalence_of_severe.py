@@ -193,18 +193,6 @@ class TestPrevalenceOfSevere(TestCase):
         )
 
     def test_sector_data(self):
-        print(get_prevalence_of_severe_sector_data(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b1',
-                    'aggregation_level': 4
-                },
-                location_id='b1',
-                loc_level='supervisor'
-            ))
         self.assertDictEqual(
             get_prevalence_of_severe_sector_data(
                 'icds-cas',

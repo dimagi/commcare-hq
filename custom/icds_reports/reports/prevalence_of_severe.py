@@ -132,7 +132,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         chart_data = apply_exclude(domain, chart_data)
     if 'age_tranche' not in config:
         chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
-        
+
     data = {
         'red': OrderedDict(),
         'orange': OrderedDict(),

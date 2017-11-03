@@ -323,8 +323,8 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
             DatabaseColumn(
                 'Total number Unweighed',
                 SumColumn('nutrition_status_unweighed', filters=self.filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ])
+                    NOT(EQ('age_tranche', 'age_72'))
+                ])
             ),
             AggregateColumn(
                 'Percent Children severely underweight (weight for age)',
