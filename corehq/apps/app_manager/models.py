@@ -3988,7 +3988,7 @@ class ReportAppConfig(DocumentSchema):
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
-    sync_delay = DecimalProperty(default=0.0)
+    sync_delay = DecimalProperty(default=0.0)  # in hours
 
     _report = None
 
