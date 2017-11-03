@@ -1440,7 +1440,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                     ],
                 }]
                 if get_agged_columns():
-                    spec['x_axis_column'] = get_agged_columns()[0]
+                    spec[0]['x_axis_column'] = get_agged_columns()[0]
                 return spec
             elif self.cleaned_data['chart'] == "pie":
                 return [{
