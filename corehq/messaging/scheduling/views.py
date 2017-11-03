@@ -15,7 +15,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datatables, use_select2
+from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
@@ -128,6 +128,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @use_jquery_ui
+    @use_timepicker
     @use_select2
     def dispatch(self, *args, **kwargs):
         return super(CreateScheduleView, self).dispatch(*args, **kwargs)

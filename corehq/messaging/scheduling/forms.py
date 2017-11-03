@@ -1,3 +1,4 @@
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
@@ -5,11 +6,12 @@ from django.forms.fields import (
     BooleanField,
     CharField,
     ChoiceField,
+    IntegerField,
 )
 from django.forms.forms import Form
 from django.forms.widgets import Textarea
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ugettext
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -27,6 +29,9 @@ class ScheduleForm(Form):
     SEND_DAILY = 'daily'
     SEND_IMMEDIATELY = 'immediately'
 
+    STOP_AFTER_OCCURRENCES = 'after_occurrences'
+    STOP_NEVER = 'never'
+
     schedule_name = CharField(
         required=True,
         label=_('Schedule Name'),
@@ -39,6 +44,19 @@ class ScheduleForm(Form):
             (SEND_IMMEDIATELY, _('Immediately')),
             (SEND_DAILY, _('Daily')),
         )
+    )
+    send_time = CharField(required=False)
+    start_date = CharField(required=False)
+    stop_type = ChoiceField(
+        required=False,
+        choices=(
+            (STOP_AFTER_OCCURRENCES, _('After days:')),
+            (STOP_NEVER, _('Never')),
+        )
+    )
+    occurrences = IntegerField(
+        required=False,
+        min_value=1,
     )
     recipients = RecipientField(
         label=_("Recipient(s)"),
@@ -97,7 +115,11 @@ class ScheduleForm(Form):
 
         layout_fields = [
             crispy.Field('schedule_name'),
-            crispy.Field('send_frequency'),
+        ]
+
+        layout_fields.extend(self.get_scheduling_layout_fields())
+
+        layout_fields.extend([
             crispy.Field(
                 'recipients',
                 data_bind='value: message_recipients.value',
@@ -109,7 +131,8 @@ class ScheduleForm(Form):
                 crispy.Field('non_translated_message'),
                 data_bind='visible: !translate()',
             ),
-        ]
+        ])
+
         translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
         layout_fields.append(
             crispy.Div(*translated_fields, data_bind='visible: translate()')
@@ -126,6 +149,65 @@ class ScheduleForm(Form):
                 ),
             ]
         self.helper.layout = crispy.Layout(*layout_fields)
+
+    def get_scheduling_layout_fields(self):
+        return [
+            crispy.Field(
+                'send_frequency',
+                data_bind='value: send_frequency',
+            ),
+            crispy.Div(
+                hqcrispy.B3MultiField(
+                    ugettext("At"),
+                    crispy.Div(
+                        template='scheduling/partial/time_picker.html',
+                    ),
+                ),
+                hqcrispy.ErrorsOnlyField('send_time'),
+                data_bind='visible: showTimeInput',
+            ),
+            hqcrispy.B3MultiField(
+                ugettext("Start"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date',
+                        data_bind='value: start_date',
+                    ),
+                    hqcrispy.ErrorsOnlyField('start_date'),
+                    css_class='col-sm-6',
+                ),
+                data_bind='visible: showStartDateInput',
+            ),
+            hqcrispy.B3MultiField(
+                ugettext("Stop"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'stop_type',
+                        data_bind='value: stop_type',
+                    ),
+                    hqcrispy.ErrorsOnlyField('stop_type'),
+                    css_class='col-sm-6',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'occurrences',
+                        data_bind='value: occurrences',
+                    ),
+                    hqcrispy.ErrorsOnlyField('occurrences'),
+                    css_class='col-sm-6',
+                    data_bind="visible: stop_type() != '%s'" % self.STOP_NEVER,
+                ),
+                data_bind='visible: showStopInput',
+            ),
+            hqcrispy.B3MultiField(
+                ugettext(""),
+                crispy.HTML(
+                    '<span>%s</span> <span data-bind="text: computedEndDate"></span>'
+                    % ugettext("Date of final occurrence:"),
+                ),
+                data_bind="visible: computedEndDate() !== ''",
+            ),
+        ]
 
     @cached_property
     def project_languages(self):

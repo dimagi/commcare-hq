@@ -9,6 +9,20 @@
     <script src="{% static 'scheduling/js/create_schedule.ko.js' %}"></script>
 {% endblock %}
 
+{% block stylesheets %}{{ block.super }}
+<style>
+    .form-horizontal .form-group > .controls-multiple > .row {
+        margin-left: 0px;
+    }
+    .form-horizontal .form-group > div .row select {
+        margin-left: 0px;
+    }
+    .controls-multiple .row div {
+        padding-left: 0px;
+    }
+</style>
+{% endblock %}
+
 {% block page_content %}
     {% initial_page_data 'current_values' form.current_values %}
     <div id="create-schedule-form">
