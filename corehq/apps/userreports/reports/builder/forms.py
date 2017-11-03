@@ -1431,17 +1431,14 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
         if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
-                spec = [{
+                return [{
                     "type": "multibar",
-                    "x_axis_column": "",
+                    "x_axis_column": get_agged_columns()[0] if get_agged_columns() else '',
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
                     ],
                 }]
-                if get_agged_columns():
-                    spec[0]['x_axis_column'] = get_agged_columns()[0]
-                return spec
             elif self.cleaned_data['chart'] == "pie":
                 return [{
                     "type": "pie",
