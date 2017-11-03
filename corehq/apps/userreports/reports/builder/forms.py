@@ -263,6 +263,10 @@ class DataSourceProperty(object):
         }
         if configuration['format'] == 'Date':
             filter.update({'compare_as_string': True})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "owner"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "user"}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
