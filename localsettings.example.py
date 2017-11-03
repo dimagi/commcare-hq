@@ -99,6 +99,7 @@ EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@example.com']
 SERVER_EMAIL = 'commcarehq-noreply@example.com'  # the physical server emailing - differentiate if needed
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "commcarehq-support@example.com"
+DAILY_DEPLOY_EMAIL = "tech-announce-daily@example.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SERVER_ENVIRONMENT = 'changeme' #Modify this value if you are deploying multiple environments of HQ to the same machine. Identify the target type of this running environment
 
