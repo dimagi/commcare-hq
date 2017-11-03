@@ -6,7 +6,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode",
+    "data_source_table": "episode_v3",
     "report_id": "beneficiary_register",
     "config": {
         "description": "",
@@ -20,10 +20,10 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Date of Notification",
-                "field": "date_of_notification",
+                "display": "Treatment Initiation Date",
+                "field": "treatment_initiation_date",
                 "type": "date",
-                "slug": "date_of_notification"
+                "slug": "treatment_initiation_date"
             },
             {
                 "compare_as_string": false,
@@ -110,6 +110,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "weight",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Weight"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "phone_number",
                 "calculate_total": false,
                 "type": "field",
@@ -182,6 +193,20 @@
                     "custom_type": "owner_display"
                 },
                 "aggregation": "simple",
+                "field": "current_address_block_taluka_mandal_choice",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Block / Taluka / Mandal"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
                 "field": "current_address_state_choice",
                 "calculate_total": false,
                 "type": "field",
@@ -225,18 +250,7 @@
                 "calculate_total": false,
                 "column_id": "treating_provider_name",
                 "type": "field",
-                "display": "Treating Provider Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "person_owner_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Treating Provider ID"
+                "display": "Treating Provider Name - ID"
             },
             {
                 "sortable": false,
@@ -447,6 +461,23 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "fdc": "FDC",
+                        "private_drugs": "Private Drugs"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "treatment_options",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Regimen"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "first_voucher_generation_date",
@@ -567,17 +598,17 @@
                     "type": "evaluator",
                     "context_variables": {
                         "a": {
-                            "datatype": "date",
+                            "datatype": "integer",
                             "type": "property_name",
-                            "property_name": "treatment_initiation_date"
+                            "property_name": "total_expected_doses_taken"
                         },
                         "b": {
                             "datatype": "integer",
                             "type": "property_name",
-                            "property_name": "aggregated_score_count_taken"
+                            "property_name": "adherence_total_doses_taken"
                         }
                     },
-                    "statement": "str(round(float(b * 100) / (days(today - a)), 2)) + '%' if days(today - a) != 0 else ''"
+                    "statement": "str(round(float(b * 100) / a, 2)) + '%'"
                 },
                 "type": "expression",
                 "display": "Total Adherence Score",
@@ -594,6 +625,32 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Treatment Outcome"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "total_expected_doses_taken",
+                "calculate_total": false,
+                "column_id": "total_expected_doses_taken",
+                "type": "field",
+                "display": "total_expected_doses_taken"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "adherence_total_doses_taken",
+                "calculate_total": false,
+                "column_id": "adherence_total_doses_taken",
+                "type": "field",
+                "display": "adherence_total_doses_taken"
             },
             {
                 "sortable": false,

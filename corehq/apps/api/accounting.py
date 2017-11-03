@@ -3,7 +3,7 @@ from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
 from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVersion, LineItem, PaymentMethod, \
     BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
-    SoftwareProduct, SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
+    SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
     SubscriptionAdjustment, BillingRecord, Invoice
 from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
@@ -79,14 +79,6 @@ class AccountingCurrencyResource(ModelResource):
         resource_name = 'accounting_currency'
 
 
-class SoftwareProductResource(ModelResource):
-
-    class Meta(AccountingResourceMeta):
-        queryset = SoftwareProduct.objects.all().order_by('pk')
-        fields = ['id', 'name', 'last_modified']
-        resource_name = 'software_product'
-
-
 class SoftwarePlanResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
@@ -100,7 +92,7 @@ class DefaultProductPlanResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = DefaultProductPlan.objects.all().order_by('pk')
-        fields = ['id', 'product_type', 'edition', 'is_trial', 'last_modified']
+        fields = ['id', 'edition', 'is_trial', 'last_modified']
         resource_name = 'default_product_plan'
 
 
@@ -109,7 +101,7 @@ class SoftwareProductRateResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = SoftwareProductRate.objects.all().order_by('pk')
-        fields = ['id', 'monthly_fee', 'date_created', 'is_active', 'last_modified']
+        fields = ['id', 'name', 'monthly_fee', 'date_created', 'is_active', 'last_modified']
         resource_name = 'software_product_rate'
 
 
@@ -235,7 +227,7 @@ class CreditLineResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = CreditLine.objects.all().order_by('pk')
-        fields = ['id', 'product_type', 'feature_type', 'date_created', 'balance', 'is_active', 'last_modified']
+        fields = ['id', 'is_product', 'feature_type', 'date_created', 'balance', 'is_active', 'last_modified']
         resource_name = 'credit_line'
 
 

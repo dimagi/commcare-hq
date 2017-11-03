@@ -109,7 +109,7 @@
             $scope.updateBulkStatus();
         };
         $scope.sendExportAnalytics = function() {
-            analytics.workflow("Clicked Export button");
+            window.analytics.workflow("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
@@ -120,10 +120,27 @@
             })
                 .success(function (data) {
                     if (data.success) {
-                        var exportType = _(exp.exportType).capitalize();
-                        analytics.usage("Update Saved Export", exportType, "Saved");
+                        var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
+                        window.analytics.usage("Update Saved Export", exportType, "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
+                    }
+                });
+        };
+        $scope.updateDisabledState = function (component, exp) {
+            $('#modalEnableDisableAutoRefresh-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
+            component.savingAutoRebuildChange = true;
+            djangoRMI.toggle_saved_export_enabled_state({
+                'component': component,
+                'export': exp,
+            })
+                .success(function (data) {
+                    if (data.success) {
+                        var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
+                        var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
+                        window.analytics.usage(event, exportType, "Saved");
+                        exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
+                        component.savingAutoRebuildChange = false;
                     }
                 });
         };

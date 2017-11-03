@@ -1,16 +1,16 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
-    {% include 'style/includes/ui_element_js.html' %}
+    {% include 'hqwebapp/includes/ui_element_js.html' %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script type="text/javascript">
         $(function () {
-            var multiselect_utils = hqImport('style/js/multiselect_utils');
+            var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
             multiselect_utils.createFullMultiselectWidget(
                 'id_selected_ids',
                 django.gettext("Available Locations"),

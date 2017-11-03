@@ -68,7 +68,7 @@ def update_celery_state(sender=None, body=None, **kwargs):
 
 
 @periodic_task(
-    run_every=crontab(hour="23", minute="0"),
+    run_every=crontab(hour="1", minute="0"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def prune_synclogs():

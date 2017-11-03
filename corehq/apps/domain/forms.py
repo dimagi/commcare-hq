@@ -9,6 +9,7 @@ from urlparse import urlparse, parse_qs
 from captcha.fields import CaptchaField
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
+from corehq.apps.users.models import CouchUser
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -60,6 +61,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
+    cancel_future_subscriptions,
     domain_has_privilege,
     get_account_name_from_default_name,
     get_privileges,
@@ -74,8 +76,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
-from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
@@ -1183,21 +1185,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
 
 
-########################################################################################################
-
-min_pwd = 4
-max_pwd = 20
-pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
-
-
 def clean_password(txt):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         strength = legacy_get_password_strength(txt)
         message = _('Password is not strong enough. Requirements: 1 special character, '
                     '1 number, 1 capital letter, minimum length of 8 characters.')
     else:
-        # TODO: waiting on upstream PR to fix TypeError https://github.com/taxpon/pyzxcvbn/pull/1
-        # until then, we are using a dimagi hosted fork
         strength = zxcvbn(txt, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
         message = _('Password is not strong enough. Try making your password more complex.')
     if strength['score'] < 2:
@@ -1313,8 +1306,17 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 domain = current_site.domain
             else:
                 site_name = domain = domain_override
+
+            couch_user = CouchUser.from_django_user(user)
+            if couch_user.is_web_user():
+                user_email = user.username
+            elif user.email:
+                user_email = user.email
+            else:
+                continue
+
             c = {
-                'email': user.email,
+                'email': user_email,
                 'domain': domain,
                 'site_name': site_name,
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
@@ -1326,7 +1328,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
             email = render_to_string(email_template_name, c)
-            send_mail_async.delay(subject, email, from_email, [user.email])
+            send_mail_async.delay(subject, email, from_email, [user_email])
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
@@ -1544,14 +1546,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                # changing a plan overrides future subscriptions
-                future_subscriptions = Subscription.objects.filter(
-                    subscriber__domain=self.domain,
-                    date_start__gt=datetime.date.today()
-                )
-                if future_subscriptions.count() > 0:
-                    future_subscriptions.update(date_end=F('date_start'))
-
+                cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
                     self.current_subscription.change_plan(
                         self.plan_version,
@@ -1650,20 +1645,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                for later_subscription in Subscription.objects.filter(
-                    subscriber__domain=self.domain,
-                    date_start__gt=self.current_subscription.date_start
-                ).order_by('date_start').all():
-                    later_subscription.date_start = datetime.date.today()
-                    later_subscription.date_end = datetime.date.today()
-                    later_subscription.save()
-                    SubscriptionAdjustment.record_adjustment(
-                        later_subscription,
-                        reason=SubscriptionAdjustmentReason.CANCEL,
-                        web_user=self.creating_user,
-                        note="Cancelled due to changing subscription",
-                    )
-
+                cancel_future_subscriptions(self.domain, self.current_subscription.date_start, self.creating_user)
                 self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,

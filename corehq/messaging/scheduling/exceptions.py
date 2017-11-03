@@ -14,3 +14,7 @@ class UnknownRecipientType(Exception):
 
 class InvalidMonthlyScheduleConfiguration(Exception):
     pass
+
+
+class ImmediateMessageEditAttempt(Exception):
+    pass

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -11,8 +12,8 @@ from corehq.apps.userreports.ui import help_text
 from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 
 
@@ -277,7 +278,7 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Create Data Source from Application"),
-                *report_source_fields.keys()
+                *list(report_source_fields)
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

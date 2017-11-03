@@ -350,16 +350,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     )
                 )
 
-    def process_request(self, request):
-        response = super(CreditStripePaymentHandler, self).process_request(request)
-        if self.credit_lines:
-            response.update({
-                'balances': [{'type': cline.product_type if cline.product_type else cline.feature_type,
-                              'balance': fmt_dollar_amount(cline.balance)}
-                             for cline in self.credit_lines]
-            })
-        return response
-
 
 class AutoPayInvoicePaymentHandler(object):
 
@@ -395,8 +385,8 @@ class AutoPayInvoicePaymentHandler(object):
                     amount_in_dollars=amount,
                     description='Auto-payment for Invoice %s' % invoice.invoice_number,
                 )
-        except stripe.error.CardError:
-            self._handle_card_declined(invoice, payment_method)
+        except stripe.error.CardError as e:
+            self._handle_card_declined(invoice, payment_method, e)
         except payment_method.STRIPE_GENERIC_ERROR as e:
             self._handle_card_errors(invoice, e)
         else:
@@ -424,13 +414,19 @@ class AutoPayInvoicePaymentHandler(object):
             self._handle_email_failure(payment_record)
 
     @staticmethod
-    def _handle_card_declined(invoice, payment_method):
+    def _handle_card_declined(invoice, payment_method, e):
         from corehq.apps.accounting.tasks import send_autopay_failed
+
+        # https://stripe.com/docs/api/python#error_handling
+        body = e.json_body
+        err = body.get('error', {})
+
         log_accounting_error(
             "[Autopay] An automatic payment failed for invoice: {} "
             "because the card was declined. This invoice will not be automatically paid. "
-            "Not necessarily actionable, but be aware that this happened."
-            .format(invoice.id)
+            "Not necessarily actionable, but be aware that this happened. "
+            "error = {}"
+            .format(invoice.id, err)
         )
         send_autopay_failed.delay(invoice, payment_method)
 

@@ -26,6 +26,10 @@ from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
+def get_registration_xml(restore_user):
+    return xml.tostring(xml.get_registration_element(restore_user))
+
+
 class SimpleOtaRestoreTest(TestCase):
 
     def setUp(self):
@@ -39,11 +43,11 @@ class SimpleOtaRestoreTest(TestCase):
     def test_registration_xml(self):
         user = create_restore_user()
         check_xml_line_by_line(self, dummy_user_xml(user),
-                               xml.get_registration_xml(user))
+                               get_registration_xml(user))
 
     def test_username_doesnt_have_domain(self):
         user = create_restore_user(username=normalize_username('withdomain', domain='thedomain'))
-        restore_payload = xml.get_registration_xml(user)
+        restore_payload = get_registration_xml(user)
         self.assertTrue('thedomain' not in restore_payload)
 
     def test_name_and_number(self):
@@ -52,7 +56,7 @@ class SimpleOtaRestoreTest(TestCase):
             last_name=None,
             phone_number='555555',
         )
-        payload = xml.get_registration_xml(user)
+        payload = get_registration_xml(user)
 
         def assertRegistrationData(key, val):
             if val is None:
@@ -331,124 +335,3 @@ class WebUserOtaRestoreTest(OtaRestoreTest):
         super(WebUserOtaRestoreTest, self).setUp()
         delete_all_users()
         self.restore_user = create_restore_user(self.project.name, is_mobile_user=False)
-
-
-@override_settings(SERVER_ENVIRONMENT="production")  # This is only relevant for production
-class DateOpenedForceCloseTest(BaseOtaRestoreTest):
-    def setUp(self):
-        super(DateOpenedForceCloseTest, self).setUp()
-        self.introduced_date = datetime(2016, 7, 19, 19, 15)
-        self.reverted_date = datetime(2016, 7, 20, 9, 15)  # date bug was reverted on HQ
-        self.resolved_date = datetime(2016, 7, 21, 0, 0)  # approximate date this fix was deployed
-
-    def test_return_412_between_bug_dates(self):
-        log = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            date=datetime(2016, 7, 19, 19, 20)
-        )
-        log.save()
-        restore_config = RestoreConfig(
-            project=self.project,
-            restore_user=self.restore_user,
-            params=RestoreParams(
-                sync_log_id=log._id,
-                version="2.0",
-            ),
-            cache_settings=RestoreCacheSettings()
-        )
-        response = restore_config.get_response()
-        self.assertEqual(response.status_code, 412)
-
-    def test_synced_after_bug_date_but_not_fixed(self):
-        before = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            date=datetime(2016, 7, 19, 18, 0)  # synced before bug was introduced
-        )
-        before.save()
-        during = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            previous_log_id=before._id,
-            date=datetime(2016, 7, 19, 20, 0)  # during bug
-        )
-        during.save()
-        after = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            previous_log_id=during._id,
-            date=datetime(2016, 7, 20, 19, 0)  # after bug, before resolution
-        )
-        after.save()
-
-        restore_config = RestoreConfig(
-            project=self.project,
-            restore_user=self.restore_user,
-            params=RestoreParams(
-                sync_log_id=after._id,
-                version="2.0",
-            ),
-            cache_settings=RestoreCacheSettings()
-        )
-        response = restore_config.get_response()
-        self.assertEqual(response.status_code, 412)
-
-    def test_synced_before_and_after_bug_resolution_200(self):
-        before = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            date=datetime(2016, 7, 19, 18, 0)  # synced before bug was introduced
-        )
-        before.save()
-        restore_config = RestoreConfig(
-            project=self.project,
-            restore_user=self.restore_user,
-            params=RestoreParams(
-                sync_log_id=before._id,
-                version="2.0",
-            ),
-            cache_settings=RestoreCacheSettings()
-        )
-        response = restore_config.get_response()
-        self.assertEqual(response.status_code, 200)
-
-        after = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            previous_log_id=before._id,
-            date=datetime(2016, 7, 21, 19, 0)  # after resolution
-        )
-        after.save()
-
-        restore_config = RestoreConfig(
-            project=self.project,
-            restore_user=self.restore_user,
-            params=RestoreParams(
-                sync_log_id=after._id,
-                version="2.0",
-            ),
-            cache_settings=RestoreCacheSettings()
-        )
-        response = restore_config.get_response()
-        self.assertEqual(response.status_code, 200)
-
-    def test_synced_during_and_after_bug_resolution_returns_200(self):
-        during = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            date=datetime(2016, 7, 19, 20, 0)  # during bug
-        )
-        during.save()
-
-        after = SimplifiedSyncLog(
-            user_id=self.restore_user.user_id,
-            previous_log_id=during._id,
-            date=datetime(2016, 7, 21, 19, 0)  # after resolution
-        )
-        after.save()
-
-        restore_config = RestoreConfig(
-            project=self.project,
-            restore_user=self.restore_user,
-            params=RestoreParams(
-                sync_log_id=after._id,
-                version="2.0",
-            ),
-            cache_settings=RestoreCacheSettings()
-        )
-        response = restore_config.get_response()
-        self.assertEqual(response.status_code, 200)

@@ -15,6 +15,10 @@ import xlwt
 from couchexport.models import Format
 
 
+def _encode_if_needed(val):
+    return val.encode("utf8") if isinstance(val, unicode) else val
+
+
 class UniqueHeaderGenerator(object):
 
     def __init__(self, max_column_size=None):
@@ -255,10 +259,15 @@ class OnDiskExportWriter(ExportWriter):
 
     def _write_row(self, sheet_index, row):
 
-        def _encode_if_needed(val):
-            return val.encode("utf8") if isinstance(val, unicode) else val
-        row = map(_encode_if_needed, row)
+        def _transform(val):
+            if isinstance(val, unicode):
+                return val.encode("utf8")
+            elif val is None:
+                return ''
+            else:
+                return val
 
+        row = map(_transform, row)
         self.tables[sheet_index].write_row(row)
 
     def _close(self):
@@ -298,7 +307,8 @@ class ZippedExportWriter(OnDiskExportWriter):
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
+        path = _encode_if_needed(self.archive_basepath)
+        return os.path.join(path, '{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):

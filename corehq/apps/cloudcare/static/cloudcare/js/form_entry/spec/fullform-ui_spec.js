@@ -232,11 +232,11 @@ describe('Fullform UI', function() {
         $.extend(formJSON2, formJSON);
         var form = new Form(formJSON),
             form2 = new Form(formJSON2),
-            spy = sinon.spy();
+            spy = sinon.spy(),
             spy2 = sinon.spy();
 
-        sinon.stub(form, 'fromJS', spy);
-        sinon.stub(form2, 'fromJS', spy2);
+        sinon.stub(form, 'fromJS').callsFake(spy);
+        sinon.stub(form2, 'fromJS').callsFake(spy2);
 
         $.publish('session.reconcile', [{}, new Question(questionJSON, form)]);
         assert.isFalse(spy.calledOnce);

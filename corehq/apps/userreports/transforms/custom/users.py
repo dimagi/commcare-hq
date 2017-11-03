@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.users.util import cached_user_id_to_username, cached_owner_id_to_display
 
 # these are just aliased here to make it clear what is supported

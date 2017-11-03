@@ -30,6 +30,9 @@ function NavigationController($window, $scope, $route, $routeParams, $location) 
             page_path += '?';
         }
         window.angular.forEach(params, function(v, k) {
+            if (v === undefined || v === null) {
+                v = '';
+            }
             page_path += (k + '=' + v + '&');
         });
         return page_path;

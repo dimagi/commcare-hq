@@ -12,7 +12,7 @@ from custom.nic_compliance.const import EXPIRE_LOGIN_ATTEMPTS_IN, REDIS_LOGIN_AT
 
 PASSWORD_HASHER = get_hasher()
 # Passwords set with expected padding length and format would respect this regex
-PASSWORD_REGEX = r"^sha256\$([a-z0-9A-Z]{6})([a-zA-Z0-9=]*)([a-z0-9A-Z]{6})=$"
+PASSWORD_REGEX = r"^sha256\$([a-z0-9A-Z]{6})(\S*)([a-z0-9A-Z]{6})=$"
 PASSWORD_REGEX_COMPILER = re.compile(PASSWORD_REGEX)
 
 

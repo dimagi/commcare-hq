@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
-from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
+from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.hqwebapp.utils import decode_password
@@ -22,7 +22,7 @@ import re
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
@@ -253,7 +253,6 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                              help_text=_('You will use this email to log in.'),
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_('Create Password'),
-                               max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False,
                                                           attrs={
                                                             'data-bind': "value: password, valueUpdate: 'input'",

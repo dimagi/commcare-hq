@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util */
+/*global FormplayerFrontend, Formplayer */
 
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
@@ -9,7 +9,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     Menus.API = {
 
         queryFormplayer: function (params, route) {
-
             var user = FormplayerFrontend.request('currentUser'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
@@ -38,16 +37,22 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                         }
                     }
                 },
-                error: function () {
-                    FormplayerFrontend.trigger(
-                        'showError',
-                        gettext('Unable to connect to form playing service. ' +
-                                'Please report an issue if you continue to see this message.')
-                    );
+                error: function (_, response) {
+                    if (response.status === 423) {
+                        FormplayerFrontend.trigger(
+                            'showError',
+                            Formplayer.Errors.LOCK_TIMEOUT_ERROR
+                        );
+                    } else {
+                        FormplayerFrontend.trigger(
+                            'showError',
+                            gettext('Unable to connect to form playing service. ' +
+                                    'Please report an issue if you continue to see this message.')
+                        );
+                    }
                     defer.reject();
                 },
             };
-
             options.data = JSON.stringify({
                 "username": user.username,
                 "restoreAs": user.restoreAs,
@@ -64,6 +69,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                 "isPersistent": params.isPersistent,
                 "useLiveQuery": user.useLiveQuery,
+                "sortIndex": params.sortIndex,
+                "preview": params.preview,
             });
             options.url = formplayerUrl + '/' + route;
 
@@ -78,7 +85,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
-        return Menus.API.queryFormplayer(options, 'navigate_menu');
+        var isInitial = options.isInitial;
+        return Menus.API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
     });
 
     FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {

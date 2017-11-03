@@ -6,7 +6,7 @@ from crispy_forms import bootstrap as twbs
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 
-from corehq.apps.style.crispy import FormActions
+from corehq.apps.hqwebapp.crispy import FormActions
 
 
 class ImportIndicatorsFromJsonFileForm(forms.Form):

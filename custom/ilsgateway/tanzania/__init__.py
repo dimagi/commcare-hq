@@ -7,7 +7,7 @@ from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import SqlTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
-from corehq.apps.style.decorators import use_nvd3
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from couchexport.models import Format
 from custom.common import ALL_OPTION
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary

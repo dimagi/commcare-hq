@@ -7,6 +7,8 @@ from corehq.motech.openmrs.views import (
     openmrs_test_fire,
     OpenmrsRepeaterView,
     openmrs_edit_config,
+    OpenmrsImporterView,
+    openmrs_import_now,
 )
 
 urlpatterns = [
@@ -40,6 +42,15 @@ urlpatterns = [
         r'^(?P<repeater_id>\w+)/test_fire/(?P<record_id>\w+)/$',
         openmrs_test_fire,
         name='openmrs_test_fire',
-
+    ),
+    url(
+        r'^importers/$',
+        OpenmrsImporterView.as_view(),
+        name=OpenmrsImporterView.urlname
+    ),
+    url(
+        r'^importers/now/$',
+        openmrs_import_now,
+        name='openmrs_import_now',
     ),
 ]

@@ -4,7 +4,7 @@ We use multiple Analytics platforms. Google Analytics and Kissmetrics calls are 
 [Directory of events and properties we track in these platforms](https://docs.google.com/spreadsheets/d/1frMdFeznNcMAIyMW3pG3zes6mmY03UG67HyMUHXlb-s/edit#gid=1804103672)
 
 ### Google Analytics and Kissmetrics JS
-See [analytics_all.html](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/style/templates/style/includes/analytics_all.html) and see example usages
+See [analytics_all.html](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/templates/hqwebapp/includes/analytics_all.html) and see example usages
 
 ### Server Side Kissmetrics
 All kissmetrics actions can be done server side instead of client side using the `track_workflow` and `identify` functions in the [analytics tasks](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py) file. `track_workflow` is used to register events and accepts an optional argument to update properties as well. `identify` can be used if you are only looking to update a property.

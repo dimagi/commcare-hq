@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from collections import namedtuple
 
@@ -137,11 +138,18 @@ class QuarterFilterValue(FilterValue):
         }
 
 
+class IsDistinctFromFilter(BasicFilter):
+
+    def build_expression(self, table):
+        return get_column(table, self.column_name).is_distinct_from(bindparam(self.parameter))
+
+
 class NumericFilterValue(FilterValue):
     DBSpecificFilter = namedtuple('DBSpecificFilter', ['sql', 'es'])
     operators_to_filters = {
         '=': DBSpecificFilter(EQFilter, filters.term),
         '!=': DBSpecificFilter(NOTEQFilter, filters.not_term),
+        'distinct from': DBSpecificFilter(IsDistinctFromFilter, filters.not_term),
         '>=': DBSpecificFilter(GTEFilter, lambda field, val: filters.range_filter(field, gte=val)),
         '>': DBSpecificFilter(GTFilter, lambda field, val: filters.range_filter(field, gt=val)),
         '<=': DBSpecificFilter(LTEFilter, lambda field, val: filters.range_filter(field, lte=val)),

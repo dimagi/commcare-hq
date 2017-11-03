@@ -33,7 +33,7 @@ hqDefine('users/js/edit_commcare_user', function () {
                 expires: 1});
     });
 
-    var alert_user = hqImport("style/js/alert_user").alert_user;
+    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
     $('#reset-password-form').submit(function(){
         $(this).ajaxSubmit({
             url: $(this).attr('action'),
@@ -90,7 +90,7 @@ hqDefine('users/js/edit_commcare_user', function () {
     }
 
     // Groups form
-    var multiselect_utils = hqImport('style/js/multiselect_utils');
+    var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
         multiselect_utils.createFullMultiselectWidget(
             'id_selected_ids',
             gettext("Available Groups"),
@@ -111,5 +111,40 @@ hqDefine('users/js/edit_commcare_user', function () {
     });
     $("#groups").submit(function () {
         $(window).unbind("beforeunload");
+    });
+
+    // Input handling
+    $('#id_add_phone_number').on('paste', function (event) {
+        var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
+        var pasteText = clipboardData.getData("Text");
+        var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');
+        if (/^[0-9]*$/.test(text)) {
+            $("#phone_number_paste_error").css("display", "none");
+            $('#id_add_phone_number').val(text);
+        } else {
+            $("#phone_number_paste_error").css("display", "inline");
+        }
+        return false;
+    });
+
+    var $userInformationForm = $('form[name="user_information"]');
+    $userInformationForm.on("change", null, null, function() {
+        $(":submit").prop("disabled", false);
+    }).on("input", null, null, function() {
+        $(":submit").prop("disabled", false);
+    });
+
+    if ($('#js-unrecognized-data').length > 0) {
+        $(":submit").prop("disabled", false);
+    }
+
+    // Analytics
+    $("button:submit", $userInformationForm).on("click", function(){
+        ga_track_event("Edit Mobile Worker", "Updated user info", couch_user_id, {
+            'hitCallback': function() {
+                $userInformationForm.submit();
+            },
+        });
+        return false;
     });
 });

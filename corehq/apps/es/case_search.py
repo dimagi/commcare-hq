@@ -49,13 +49,36 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        fuzziness = "AUTO" if fuzzy else "0"
         # Filter by case_properties.key and do a text search in case_properties.value
+        result = self
+        if fuzzy:
+            # Results must at least match the fuzzy value, and exact matches are weighted higher. `clause` param
+            # is overridden to do this.
+            fuzzy_query = queries.nested(
+                PATH,
+                queries.filtered(
+                    queries.match(value, '{}.value'.format(PATH), fuzziness='AUTO'),
+                    filters.term('{}.key'.format(PATH), key),
+                )
+            )
+            result = result._add_query(fuzzy_query, queries.MUST)
+            clause = queries.SHOULD
+
+        exact_query = queries.nested(
+            PATH,
+            queries.filtered(
+                queries.match(value, '{}.value'.format(PATH), fuzziness='0'),
+                filters.term('{}.key'.format(PATH), key),
+            )
+        )
+        return result._add_query(exact_query, clause)
+
+    def regexp_case_property_query(self, key, regex, clause=queries.MUST):
         new_query = queries.nested(
             PATH,
             queries.filtered(
-                queries.match(value, "{}.value".format(PATH), fuzziness),
-                filters.term("{}.key".format(PATH), key)
+                filters.term('{}.key'.format(PATH), key),
+                queries.regexp('{}.value'.format(PATH), regex)
             )
         )
         return self._add_query(new_query, clause)

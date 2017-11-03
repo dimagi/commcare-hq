@@ -108,6 +108,7 @@
                         <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
                         {% endif %}
                         <th class="col-sm-1">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
+                        {% block fourth_column_header %}{% endblock %}
                         {%  if allow_bulk_export %}
                         <th class="col-sm-3">
                             {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
@@ -129,12 +130,13 @@
                     <tr ng-repeat="export in exports">
                         <td>
                             {% angularjs %}
-                            <h4>{{ export.name }}
+                            <h4 ng-class="{'text-muted': export.emailedExport && !export.isAutoRebuildEnabled}">
+                                {{ export.name }}
                                 <label class="label label-default label-default"
                                    ng-show="!!export.isDeid">
                                 {% trans 'De-Identified' %}
                                 </label></h4>
-                            <p ng-show="!!export.formname">
+                            <p ng-show="!!export.formname" ng-class="{'text-muted': export.emailedExport && !export.isAutoRebuildEnabled}">
                                 <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
                             </p>
                             {% endangularjs %}
@@ -144,6 +146,14 @@
                                 This export is filtered to data you don't have access to.
                                 {% endblocktrans %}
                             </div>
+                            <p class="text-warning"
+                               ng-if="export.emailedExport && !export.isAutoRebuildEnabled">
+                                <i class="fa fa-exclamation-triangle"></i>
+                                {% blocktrans %}
+                                    Automatic updates for this saved {{ export_type }} have been disabled. Click 'Enable'
+                                    to re-enable automatic updates.
+                                {% endblocktrans %}
+                            </p>
                             <div class="alert alert-neutral alert-small"
                                  ng-show="export.emailedExport && isLocationSafeForUser(export)">
                                 <div class="h5">
@@ -201,7 +211,7 @@
 
                                 <div ng-if="isLocationSafeForUser(export)">
                                 <p class="text-warning"
-                                   ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered">
+                                   ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered && export.isAutoRebuildEnabled">
                                     <i class="fa fa-exclamation-triangle"></i>
                                     {% blocktrans %}
                                         This saved {{ export_type }} has expired because it has not been used in
@@ -270,9 +280,49 @@
                                             </div>
                                         </div>
                                     </div>
+                                {% endangularjs %}
+                                {% angularjs %}
+                                <div class="modal fade"
+                                         id="modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                                        {% endangularjs %}
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                                                    <h4 class="modal-title">{% trans "Confirm data updates." %}</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p ng-if="export.isDailySaved && !export.isAutoRebuildEnabled">
+                                                        {% blocktrans %}
+                                                        This will enable the daily automatic updates of this export.
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                    <p ng-if="export.isDailySaved && export.isAutoRebuildEnabled">
+                                                        {% blocktrans %}
+                                                        This will disable the daily automatic updates of this export.
+                                                        {% endblocktrans %}
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <a href="#"
+                                                       class="btn btn-default"
+                                                       data-dismiss="modal">{% trans "Cancel" %}</a>
+                                                    <button type="button"
+                                                            class="btn btn-primary"
+                                                            ng-click="updateDisabledState(export.emailedExport, export)">
+                                                        <span ng-if="export.isAutoRebuildEnabled">
+                                                            {% trans "Disable auto update" %}
+                                                        </span>
+                                                        <span ng-if="!export.isAutoRebuildEnabled">
+                                                            {% trans "Enable auto update" %}
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            {% endangularjs %}
                         </td>
                         {% if has_edit_permissions %}
                         {% angularjs %}
@@ -315,6 +365,17 @@
                                 {% trans "Edit Filters" %}
                             </a>
                             {% endif %}
+                        </td>
+                        <td ng-show="export.emailedExport">
+                            {% angularjs %}
+                            <a class="btn btn-default"
+                                    ng-disabled="export.emailedExport.savingAutoRebuildChange"
+                                    data-toggle="modal"
+                                    data-target="#modalEnableDisableAutoRefresh-{{ export.id }}-{{ export.emailedExport.groupId }}">
+                                <span ng-show="!export.isAutoRebuildEnabled">{% trans "Enable" %}</span>
+                                <span ng-show="export.isAutoRebuildEnabled">{% trans "Disable" %}</span>
+                            </a>
+                            {% endangularjs %}
                         </td>
                         {% if allow_bulk_export %}
                         {% angularjs %}

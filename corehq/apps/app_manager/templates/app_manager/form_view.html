@@ -24,20 +24,26 @@
     <script src="{% static 'syntaxhighlighter/scripts/XRegExp.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
-    <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/knockout_subscribables.ko.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_view.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
+    {% compress js %}
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
+    {% endcompress %}
     {% if module.doc_type == 'AdvancedModule' %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
+        {% endcompress %}
     {% else %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
+        {% endcompress %}
     {% endif %}
     <style>
         #open-referral-action,
@@ -51,25 +57,33 @@
         }
     </style>
 
+    {% compress js %}
     <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
+    {% endcompress %}
 
     {% include "app_manager/partials/xpathValidator.html" %}
     {% include 'hqmedia/partials/multimedia_js.html' %}
+    {% compress js %}
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
+    {% endcompress %}
     {% if allow_form_workflow %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
+        {% endcompress %}
     {% endif %}
     {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
+        {% endcompress %}
     {% endif %}
 {% endblock %}
 
 {% block pre_form_content %}
     <div class="appmanager-page-actions">
         {% include 'app_manager/partials/app_summary_button.html' %}
-        <a class="btn btn-primary" href="{% url "form_source" domain app.id module.id form.id %}">
+        <a class="btn btn-primary" href="{% url "form_source" domain app.id form.unique_id %}">
             <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
         </a>
     </div>
@@ -80,6 +94,8 @@
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
       {% elif form.requires_case %}
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave %}
+      {% elif form.form_type == 'shadow_form' %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-moon-o' postSave=postSave %}
       {% else %}
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave %}
       {% endif %}
@@ -295,7 +311,7 @@
     {{ block.super }}
     {% include 'app_manager/partials/module_view_breadcrumbs.html' %}
     <li>
-        <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+        <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
            data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>

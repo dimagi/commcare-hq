@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 from iso8601 import iso8601
 
@@ -12,6 +13,8 @@ from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_prog
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
+
+from corehq.util.soft_assert import soft_assert
 
 
 def _validate_length(length):

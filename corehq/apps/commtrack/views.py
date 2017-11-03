@@ -14,7 +14,7 @@ from corehq import toggles
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.style.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.decorators.memoized import memoized

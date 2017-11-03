@@ -2,8 +2,22 @@
 
 import os
 
+ICDS_UCR_DATABASE_ALIAS = 'default'
+ICDS_UCR_TEST_DATABASE_ALIAS = 'default'
+
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'commcarehq',
+        'USER': 'commcarehq',
+        'PASSWORD': 'commcarehq',
+        'HOST': 'postgres',
+        'PORT': '5432',
+        'TEST': {
+            'SERIALIZE': False,
+        },
+    },
+    'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
@@ -137,7 +151,6 @@ COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 CELERY_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
-CSRF_SOFT_MODE = False
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))

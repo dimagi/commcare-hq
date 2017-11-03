@@ -1,11 +1,12 @@
 import datetime
 import logging
 import uuid
-from contextlib2 import ExitStack
 
 import redis
 from PIL import Image
+from contextlib2 import ExitStack
 from django.db import transaction
+
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -16,12 +17,12 @@ from corehq.form_processor.change_publishers import (
     republish_all_changes_for_form)
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
-from couchforms.const import ATTACHMENT_NAME
-
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment)
+    CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
+from couchforms.const import ATTACHMENT_NAME
+from dimagi.utils.couch import acquire_lock, release_lock
 
 
 class FormProcessorSQL(object):
@@ -60,6 +61,13 @@ class FormProcessorSQL(object):
                 blob_bucket=att.blobdb_bucket(),
                 md5=att.md5,
             ))
+
+    @classmethod
+    def copy_form_operations(cls, from_form, to_form):
+        for op in from_form.history:
+            op.id = None
+            op.form = to_form
+            to_form.track_create(op)
 
     @classmethod
     def new_xform(cls, form_data):
@@ -108,7 +116,7 @@ class FormProcessorSQL(object):
 
             # Save deprecated form first to avoid ID conflicts
             if processed_forms.deprecated:
-                FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
+                FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
 
             FormAccessorSQL.save_new_form(processed_forms.submitted)
             if cases:
@@ -145,6 +153,13 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
+        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        operation = XFormOperationSQL(
+            user_id=user_id,
+            date=new_xform.edited_on,
+            operation=XFormOperationSQL.EDIT
+        )
+        new_xform.track_create(operation)
         return existing_xform, new_xform
 
     @classmethod
@@ -156,8 +171,12 @@ class FormProcessorSQL(object):
 
     @classmethod
     def assign_new_id(cls, xform):
-        new_id = unicode(uuid.uuid4())
-        xform.form_id = new_id
+        from corehq.sql_db.util import new_id_in_same_dbalias
+        if xform.is_saved():
+            # avoid moving to a separate sharded db
+            xform.form_id = new_id_in_same_dbalias(xform.form_id)
+        else:
+            xform.form_id = unicode(uuid.uuid4())
         return xform
 
     @classmethod
@@ -243,23 +262,27 @@ class FormProcessorSQL(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id, detail):
-        try:
-            case = CaseAccessorSQL.get_case(case_id)
-            assert case.domain == domain
-            found = True
-        except CaseNotFound:
+    def hard_rebuild_case(domain, case_id, detail, lock=True):
+        case, lock_obj = FormProcessorSQL.get_case_with_lock(case_id, lock=lock)
+        found = bool(case)
+        if not found:
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
-            found = False
+            if lock:
+                lock_obj = CommCareCaseSQL.get_obj_lock_by_id(case_id)
+                acquire_lock(lock_obj, degrade_gracefully=False)
 
-        case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
-        if case.is_deleted and not found:
-            return None
+        try:
+            assert case.domain == domain, (case.domain, domain)
+            case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
+            if case.is_deleted and not case.is_saved():
+                return None
 
-        case.server_modified_on = rebuild_transaction.server_date
-        CaseAccessorSQL.save_case(case)
-        publish_case_saved(case)
-        return case
+            case.server_modified_on = rebuild_transaction.server_date
+            CaseAccessorSQL.save_case(case)
+            publish_case_saved(case)
+            return case
+        finally:
+            release_lock(lock_obj, degrade_gracefully=True)
 
     @staticmethod
     def _rebuild_case_from_transactions(case, detail, updated_xforms=None):

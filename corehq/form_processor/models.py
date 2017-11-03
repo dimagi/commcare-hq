@@ -205,6 +205,36 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
+    # keep track to avoid refetching to check whether value is updated
+    __original_form_id = None
+
+    def __init__(self, *args, **kwargs):
+        super(XFormInstanceSQL, self).__init__(*args, **kwargs)
+        self.__original_form_id = self.form_id
+
+    def form_id_updated(self):
+        return self.__original_form_id != self.form_id
+
+    @property
+    @memoized
+    def original_attachments(self):
+        """
+        Returns attachments based on self.__original_form_id, useful
+            to lookup correct attachments while modifying self.form_id
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_attachments(self.__original_form_id)
+
+    @property
+    @memoized
+    def original_operations(self):
+        """
+        Returns operations based on self.__original_form_id, useful
+            to lookup correct attachments while modifying self.form_id
+        """
+        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        return FormAccessorSQL.get_form_operations(self.__original_form_id)
+
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
         # SQL 'id' field which won't be unique across all the DB's
@@ -501,6 +531,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
 
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
+    EDIT = 'edit'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
@@ -713,8 +744,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     def indices(self):
         indices = self._saved_indices()
 
-        to_delete = [to_delete.identifier for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
-        indices = [index for index in indices if index.identifier not in to_delete]
+        to_delete = [
+            (to_delete.id, to_delete.identifier)
+            for to_delete in self.get_tracked_models_to_delete(CommCareCaseIndexSQL)
+        ]
+        indices = [index for index in indices if (index.id, index.identifier) not in to_delete]
 
         indices += self.get_tracked_models_to_create(CommCareCaseIndexSQL)
 
@@ -725,7 +759,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return self.indices or self.reverse_indices
 
     def has_index(self, index_id):
-        return index_id in (i.identifier for i in self.indices)
+        return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
         found = filter(lambda i: i.identifier == index_id, self.indices)
@@ -793,6 +827,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @memoized
     def get_opening_transactions(self):
         return self._transactions_by_type(CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_CREATE)
+
+    @memoized
+    def get_form_transactions(self):
+        return self._transactions_by_type(CaseTransaction.TYPE_FORM)
 
     def _transactions_by_type(self, transaction_type):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -1036,6 +1074,9 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             self.relationship_id == other.relationship_id,
         )
 
+    def __hash__(self):
+        return hash((self.case_id, self.identifier, self.referenced_id, self.relationship_id))
+
     def __unicode__(self):
         return (
             "CaseIndex("
@@ -1052,6 +1093,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             ["domain", "case"],
             ["domain", "referenced_id"],
         ]
+        unique_together = ('case', 'identifier')
         db_table = CommCareCaseIndexSQL_DB_TABLE
         app_label = "form_processor"
 
@@ -1504,6 +1546,8 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     class Meta:
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
+        # note: can't put a unique constraint here (case_id, form_id, section_id, entry_id)
+        # since a single form can make multiple updates to a ledger
         index_together = [
             ["case", "section_id", "entry_id"],
         ]

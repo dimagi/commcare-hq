@@ -4,6 +4,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     Menus.Controller = {
         selectMenu: function (options) {
 
+            options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+
             var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
 
             /*
@@ -40,7 +42,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
                 Menus.Controller.showMenu(menuResponse);
             }).fail(function() {
-                FormplayerFrontend.trigger('navigateHome');
+                // if it didn't go through, then it displayed an error message.
+                // the right thing to do is then to just stay in the same place.
             });
         },
 
@@ -63,7 +66,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
-            if (menuResponse.persistentCaseTile) {
+            if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
                 Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
                 FormplayerFrontend.regions.persistentCaseTile.empty();
@@ -230,6 +233,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 maxWidth: menuResponse.maxWidth,
                 useUniformUnits: menuResponse.useUniformUnits,
                 isPersistentDetail: menuResponse.isPersistentDetail,
+                sortIndices: menuResponse.sortIndices,
             };
             if (menuResponse.type === "commands") {
                 return new Menus.Views.MenuListView(menuData);

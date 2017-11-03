@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from uuid import uuid4
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 

@@ -13,24 +13,30 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.label = "Children (0-6 years) who are enrolled for ICDS services";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/enrolled_children/map', label: 'Map'},
-        'chart': {route: '/enrolled_children/chart', label: 'Chart'},
+        'map': {route: '/enrolled_children/map', label: 'Map View'},
+        'chart': {route: '/enrolled_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Number of Children',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['month'];
+    if (vm.step === 'chart') {
+        vm.filters = ['age'];
+    } else {
+        vm.filters = [];
+    }
 
     vm.rightLegend = {
         info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
     };
 
     vm.message = storageService.getKey('message') || false;
+
+    vm.hideRanking = true;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -59,12 +65,21 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
 
     vm.loadData = function () {
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
+        }
+
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = loc_type + ' View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
         }
 
         vm.myPromise = demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
@@ -73,10 +88,18 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                vm.chartOptions.chart.forceY = [
+                    0,
+                    Math.ceil(d3.max(vm.chartData, function(line) {
+                        return d3.max(line.values, function(d) {
+                            return d.y;
+                        });
+                    })) + 10,
+                ];
             }
         });
     };
@@ -121,7 +144,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                 var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
 
                 var content = "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(data.all) + "</strong></p>";
-                content += "<p>% of children " + x + ": <strong>" + d3.format(".2%")(data.y / data.all) + "</strong></p>";
+                var average = (data.all !== 0) ? d3.format(".2%")(data.y / data.all) : 0;
+
+                content += "<p>% of children " + x + ": <strong>" + average + "</strong></p>";
                 return content;
             },
             clipVoronoi: false,
@@ -139,6 +164,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                     return d3.format(",")(d);
                 },
                 axisLabelDistance: 20,
+                forceY: [0],
             },
         },
         caption: {
@@ -164,8 +190,8 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         }
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

@@ -1,6 +1,7 @@
 # Case property names used in integrations
 PRIMARY_PHONE_NUMBER = 'phone_number'
 BACKUP_PHONE_NUMBER = 'secondary_contact_phone_number'
+PRIVATE_SECONDARY_PHONE_NUMBER = 'secondary_phone'
 OTHER_NUMBER = "phone_number_other"
 ALTERNATE_NUMBER_1 = "phone_number_alternate_1"
 ALTERNATE_NUMBER_2 = "phone_number_alternate_2"
@@ -8,6 +9,7 @@ ALTERNATE_NUMBER_3 = "phone_number_alternate_3"
 NINETYNINEDOTS_NUMBERS = [
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
+    PRIVATE_SECONDARY_PHONE_NUMBER,
     OTHER_NUMBER,
     ALTERNATE_NUMBER_1,
     ALTERNATE_NUMBER_2,
@@ -15,7 +17,7 @@ NINETYNINEDOTS_NUMBERS = [
 ]
 
 MERM_ID = 'merm_id'
-MERM_DAILY_REMINDER_STATUS = 'merm_daily_reminder_status'
+MERM_DAILY_REMINDER_STATUS = 'merm_alarm_enabled'
 MERM_DAILY_REMINDER_TIME = "merm_daily_reminder_time"
 MERM_REFILL_REMINDER_STATUS = "merm_refill_reminder_status"
 MERM_REFILL_REMINDER_DATE = "merm_refill_reminder_date"
@@ -53,6 +55,9 @@ BETS_DATE_PRESCRIPTION_THRESHOLD_MET = 'bets_date_prescription_threshold_met'
 
 CURRENT_ADDRESS = 'current_address'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
+
+TEST_RESULT_TB_DETECTED = 'tb_detected'
+TEST_RESULT_TB_NOT_DETECTED = 'tb_not_detected'
 
 NINETYNINEDOTS_PERSON_PROPERTIES = [
     ENIKSHAY_ID,
@@ -107,6 +112,8 @@ AMOUNT_APPROVED = "amount_approved"
 INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
+HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD = ['pcp', 'pac', 'pcc', 'plc']
+HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX = r'^HE_ID: (\d*)$'
 
 DEFAULT_MOBILE_WORKER_ROLE = "Default Mobile Worker"
 PRIVATE_SECTOR_WORKER_ROLE = "Private Sector Worker"
@@ -190,6 +197,7 @@ AGENCY_LOCATION_FIELDS = [
 DSTB_EPISODE_TYPE = "confirmed_tb"
 PERSON_CASE_2B_VERSION = '20'
 REAL_DATASET_PROPERTY_VALUE = 'real'
+TREATMENT_INITIATED_IN_PHI = 'yes_phi'
 
 USERTYPE_DISPLAYS = {
     'pac': 'AYUSH / Other Provider',

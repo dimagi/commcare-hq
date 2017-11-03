@@ -23,14 +23,14 @@ def get_cancelled_repeat_record_count(domain, repeater_id):
     return get_repeat_record_count(domain, repeater_id, RECORD_CANCELLED_STATE)
 
 
-def get_repeat_record_count(domain, repeater_id=None, state=None):
+def get_repeat_record_count(domain, repeater_id=None, state=None, last_checked_after=None):
     from .models import RepeatRecord
     kwargs = dict(
         include_docs=False,
         reduce=True,
         descending=True,
     )
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state, last_checked_after))
 
     result = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).one()
 
@@ -106,7 +106,7 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=No
         yield RepeatRecord.wrap(doc['doc'])
 
 
-def get_repeat_records_by_payload_id(domain, payload_id, chunk_size=1000):
+def get_repeat_records_by_payload_id(domain, payload_id):
     from .models import RepeatRecord
     results = RepeatRecord.get_db().view(
         'repeaters/repeat_records_by_payload_id',

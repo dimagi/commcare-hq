@@ -92,6 +92,8 @@ var reportBuilder = function () {  // eslint-disable-line
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
 
+        self.dateRangeOptions = config['dateRangeOptions'];
+
         self.existingReportId = config['existingReport'];
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
@@ -294,6 +296,8 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.renderReportPreview = function (data) {
             self.previewError(false);
+            self.noChartForConfigWarning(false);
+            self.tooManyChartCategoriesWarning(false);
             self._renderTablePreview(data['table']);
             self._renderChartPreview(data['chart_configs'], data['aaData']);
             self._renderMapPreview(data['map_config'], data["aaData"]);
@@ -379,18 +383,7 @@ var reportBuilder = function () {  // eslint-disable-line
             };
         };
 
-        var button = hqImport("style/js/main").SaveButton;
-        if (config['existingReport']) {
-            button = hqImport("style/js/main").makeSaveButton({
-                // The SAVE text is the only thing that distringuishes this from SaveButton
-                SAVE: django.gettext("Update Report"),
-                SAVING: django.gettext("Saving..."),
-                SAVED: django.gettext("Saved"),
-                RETRY: django.gettext("Try Again"),
-                ERROR_SAVING: django.gettext("There was an error saving"),
-            }, 'btn btn-success');
-        }
-
+        var button = hqImport("hqwebapp/js/main").SaveButton;
         self.saveButton = button.init({
             unsavedMessage: "You have unsaved settings.",
             save: function () {
@@ -436,7 +429,7 @@ var reportBuilder = function () {  // eslint-disable-line
         if (!self.existingReportId) {
             self.saveButton.fire('change');
         }
-        self.refreshPreview();
+        self.refreshPreview(self.columnList.serializedProperties());
         if (config['initialChartType']) {
             self.selectedChart(config['initialChartType']);
         }

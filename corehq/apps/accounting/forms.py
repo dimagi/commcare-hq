@@ -21,7 +21,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
 
 from dimagi.utils.decorators.memoized import memoized
@@ -59,9 +59,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
-    SoftwareProduct,
     SoftwareProductRate,
-    SoftwareProductType,
     Subscription,
     SubscriptionType,
     WireBillingRecord,
@@ -841,8 +839,7 @@ class CreditForm(forms.Form):
     def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-        product_type = (SoftwareProductType.ANY
-                        if self.cleaned_data['rate_type'] == 'Product' else None)
+        is_product = self.cleaned_data['rate_type'] == 'Product'
         feature_type = (self.cleaned_data['feature_type']
                         if self.cleaned_data['rate_type'] == 'Feature' else None)
         CreditLine.add_credit(
@@ -850,7 +847,7 @@ class CreditForm(forms.Form):
             account=self.account,
             subscription=self.subscription,
             feature_type=feature_type,
-            product_type=product_type,
+            is_product=is_product,
             note=note,
             web_user=web_user,
             permit_inactive=True,
@@ -1044,13 +1041,9 @@ class SoftwarePlanVersionForm(forms.Form):
         widget=forms.HiddenInput,
     )
 
-    product_id = forms.CharField(
+    product_rate_id = forms.CharField(
         required=False,
         label="Search for or Create Product"
-    )
-    new_product_type = forms.ChoiceField(
-        required=False,
-        choices=SoftwareProductType.CHOICES,
     )
     product_rates = forms.CharField(
         required=False,
@@ -1214,7 +1207,7 @@ class SoftwarePlanVersionForm(forms.Form):
                 InlineField('product_rates', data_bind="value: productRates.ratesString"),
                 hqcrispy.B3MultiField(
                     "Add Product",
-                    InlineField('product_id', css_class="input-xxlarge",
+                    InlineField('product_rate_id', css_class="input-xxlarge",
                                 data_bind="value: productRates.select2.value"),
                     StrictButton(
                         "Select Product",
@@ -1230,10 +1223,6 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
                 hqcrispy.B3MultiField(
                     "Product Type",
-                    InlineField(
-                        'new_product_type',
-                        data_bind="value: productRates.rateType",
-                    ),
                     crispy.Div(
                         StrictButton(
                             "Create Product",
@@ -1299,7 +1288,7 @@ class SoftwarePlanVersionForm(forms.Form):
             'currentValue': self['product_rates'].value(),
             'handlerSlug': SoftwareProductRateAsyncHandler.slug,
             'select2Options': {
-                'fieldName': 'product_id',
+                'fieldName': 'product_rate_id',
             }
         }
 
@@ -1324,17 +1313,6 @@ class SoftwarePlanVersionForm(forms.Form):
     def current_features_to_rates(self):
         if self.plan_version is not None:
             return dict([(r.feature.id, r) for r in self.plan_version.feature_rates.all()])
-        else:
-            return {}
-
-    @property
-    @memoized
-    def current_products_to_rates(self):
-        if self.plan_version is not None:
-            product_rate = self.plan_version.product_rate
-            return {
-                product_rate.product.id: product_rate
-            }
         else:
             return {}
 
@@ -1366,32 +1344,28 @@ class SoftwarePlanVersionForm(forms.Form):
         else:
             current_rate = self.current_features_to_rates[feature.id]
         # note: custom implementation of FeatureRate.__eq__ here...
-        if not current_rate == new_rate:
+        if not (current_rate == new_rate):
             self.is_update = True
             return new_rate
         return current_rate
 
     def _retrieve_product_rate(self, rate_form):
-        product = SoftwareProduct.objects.get(id=rate_form['product_id'].value())
-        new_rate = rate_form.get_instance(product)
+        new_rate = rate_form.get_instance()
         if rate_form.is_new():
             # a brand new rate
             self.is_update = True
             return new_rate
-        if product.id not in self.current_products_to_rates:
-            # the plan does not have this rate yet, compare any changes to the feature's current latest rate
-            # also mark the form as updated
-            current_rate = product.get_rate(default_instance=False)
-            if current_rate is None:
+        try:
+            current_rate = SoftwareProductRate.objects.get(id=rate_form['rate_id'].value())
+            # note: custom implementation of SoftwareProductRate.__eq__ here...
+            if not (current_rate == new_rate):
+                self.is_update = True
                 return new_rate
-            self.is_update = True
-        else:
-            current_rate = self.current_products_to_rates[product.id]
-        # note: custom implementation of SoftwareProductRate.__eq__ here...
-        if not current_rate == new_rate:
+            else:
+                return current_rate
+        except SoftwareProductRate.DoesNotExist:
             self.is_update = True
             return new_rate
-        return current_rate
 
     def clean_feature_rates(self):
         original_data = self.cleaned_data['feature_rates']
@@ -1583,11 +1557,12 @@ class ProductRateForm(forms.ModelForm):
     """
     A form for creating a new ProductRate.
     """
-    # product id will point to a  select2 field, hence the CharField here.
-    product_id = forms.CharField(
-        required=False,
+
+    name = forms.CharField(
+        required=True,
         widget=forms.HiddenInput,
     )
+
     rate_id = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
@@ -1595,7 +1570,7 @@ class ProductRateForm(forms.ModelForm):
 
     class Meta:
         model = SoftwareProductRate
-        fields = ['monthly_fee']
+        fields = ['monthly_fee', 'name']
 
     def __init__(self, data=None, *args, **kwargs):
         super(ProductRateForm, self).__init__(data, *args, **kwargs)
@@ -1605,10 +1580,7 @@ class ProductRateForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.HTML("""
-                        <h4><span data-bind="text: name"></span>
-                        <span class="label label-default"
-                            style="display: inline-block; margin: 0 10px;"
-                            data-bind="text: product_type"></span></h4>
+                        <h4><span data-bind="text: name"></span></h4>
                         <hr />
             """),
             crispy.Field('monthly_fee', data_bind="value: monthly_fee"),
@@ -1617,10 +1589,8 @@ class ProductRateForm(forms.ModelForm):
     def is_new(self):
         return not self['rate_id'].value()
 
-    def get_instance(self, product):
-        instance = self.save(commit=False)
-        instance.product = product
-        return instance
+    def get_instance(self):
+        return self.save(commit=False)
 
 
 class EnterprisePlanContactForm(forms.Form):

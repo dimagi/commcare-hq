@@ -54,6 +54,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
+    primary_sort_prop = None
 
     @property
     def headers(self):
@@ -84,9 +85,28 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @property
     def default_sort(self):
         if self.selected_app_id:
-            return {'reporting_metadata.last_submissions.submission_date': 'desc'}
+            self.primary_sort_prop = 'reporting_metadata.last_submissions.submission_date'
+            return {
+                self.primary_sort_prop: {
+                    'order': 'desc',
+                    'nested_filter': {
+                        'term': {
+                            self.sort_filter: self.selected_app_id
+                        }
+                    }
+                }
+            }
         else:
+            self.primary_sort_prop = 'reporting_metadata.last_submission_for_user.submission_date'
             return {'reporting_metadata.last_submission_for_user.submission_date': 'desc'}
+
+    @property
+    def sort_base(self):
+        return '.'.join(self.primary_sort_prop.split('.')[:2])
+
+    @property
+    def sort_filter(self):
+        return self.sort_base + '.app_id'
 
     def get_sorting_block(self):
         sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
@@ -100,7 +120,21 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 col_id = int(self.request.GET[col_key])
                 col = self.headers.header[col_id]
                 sort_prop = getattr(col, sort_prop_name) or col.prop_name
-                sort_dict = {sort_prop: sort_dir}
+                if x == 0:
+                    self.primary_sort_prop = sort_prop
+                if self.selected_app_id:
+                    sort_dict = {
+                        sort_prop: {
+                            "order": sort_dir,
+                            "nested_filter": {
+                                "term": {
+                                    self.sort_filter: self.selected_app_id
+                                }
+                            }
+                        }
+                    }
+                else:
+                    sort_dict = {sort_prop: sort_dir}
                 res.append(sort_dict)
         if len(res) == 0 and self.default_sort is not None:
             res.append(self.default_sort)
@@ -146,15 +180,16 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                           .size(self.pagination.count)
                           .start(self.pagination.start))
         if self.selected_app_id:
-            user_query = user_query.filter(
-                filters.term('reporting_metadata.last_submissions.app_id', self.selected_app_id)
+            user_query = user_query.nested(
+                self.sort_base,
+                filters.term(self.sort_filter, self.selected_app_id)
             )
         return user_query
 
     def process_rows(self, users, fmt_for_export=False):
         rows = []
         for user in users:
-            last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
+            last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             build_version = _("Unknown")
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
@@ -173,7 +208,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
                 last_build = reporting_metadata.get('last_build_for_user', {})
-            commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
+            if last_sub and last_sub.get('commcare_version'):
+                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -187,7 +223,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
-                app_name or "---", build_version, commcare_version
+                app_name or "---", build_version, commcare_version or '---'
             ])
         return rows
 

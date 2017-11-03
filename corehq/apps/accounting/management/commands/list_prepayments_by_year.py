@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from datetime import date
 from django.core.management import BaseCommand
 
@@ -6,10 +7,12 @@ from corehq.apps.accounting.models import (
     CreditAdjustment,
     CreditAdjustmentReason,
 )
+from six.moves import map
+import six
 
 
 def _make_value_safe_for_csv(value):
-    return unicode(value).replace('\n', '\\n').replace(',', ';').replace('\t', '\\t').replace('\r', '\\r')
+    return six.text_type(value).replace('\n', '\\n').replace(',', ';').replace('\t', '\\t').replace('\r', '\\r')
 
 
 def _get_subscription_from_credit_adj(credit_adj):
@@ -30,23 +33,25 @@ class Command(BaseCommand):
     help = 'Print to the console a CSV of credit adjustment info for the given year.'
 
     def add_arguments(self, parser):
-        parser.add_argument('year', type=int)
+        parser.add_argument('year', nargs='?', type=int)
 
     def handle(self, year, **options):
         print('Note,Project Space,Web User,Date Created,Amount,Subscription Type,ID in database')
 
-        start = date(year, 1, 1)
-        end = date(year, 12, 31)
-        for credit_adj in CreditAdjustment.objects.filter(
-            date_created__gte=start,
-            date_created__lte=end
-        ).filter(
+        credit_adjs = CreditAdjustment.objects.filter(
             reason=CreditAdjustmentReason.MANUAL,
         ).exclude(
             web_user__isnull=True
         ).exclude(
             web_user=''
-        ):
+        )
+
+        if year is not None:
+            credit_adjs = credit_adjs.filter(
+                date_created__year=year,
+            )
+
+        for credit_adj in credit_adjs:
             related_subscription = _get_subscription_from_credit_adj(credit_adj)
             print(u','.join(map(
                 _make_value_safe_for_csv,

@@ -4,7 +4,7 @@ hqDefine("groups/js/group_members", function() {
 
     $(function () {
         // custom data
-        var customDataEditor = hqImport('style/js/ui-element').map_list(initial_page_data("group_id"), gettext("Group Information"));
+        var customDataEditor = hqImport('hqwebapp/js/ui-element').map_list(initial_page_data("group_id"), gettext("Group Information"));
         customDataEditor.val(initial_page_data("group_metadata"));
         customDataEditor.on("change", function () {
             $("#group-data").val(JSON.stringify(this.val()));

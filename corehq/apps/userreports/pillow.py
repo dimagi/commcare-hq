@@ -13,7 +13,9 @@ from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError, UserReportsWarning
+from corehq.apps.userreports.exceptions import (
+    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
+)
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
@@ -156,7 +158,11 @@ class ConfigurableReportTableManagerMixin(object):
         tables_by_engine = defaultdict(dict)
         for adapter in adapters:
             sql_adapter = get_indicator_adapter(adapter.config)
-            tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
+            try:
+                tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
+            except BadSpecError:
+                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+                _soft_assert(False, "Broken data source {}".format(adapter.config.get_id))
 
         _assert = soft_assert(notify_admins=True)
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
@@ -278,11 +284,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     # we could easily remove the class and push all the stuff in __init__ to
     # get_kafka_ucr_pillow below if we wanted.
 
-    # don't retry errors until we figure out how to distinguish between
-    # doc save errors and data source config errors
-    retry_errors = False
-
-    def __init__(self, processor, pillow_name, topics, num_processes, process_num):
+    def __init__(self, processor, pillow_name, topics, num_processes, process_num, retry_errors=False):
         change_feed = KafkaChangeFeed(
             topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
@@ -303,6 +305,10 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         assert len(self.processors) == 1
         self._processor = self.processors[0]
         assert self._processor.bootstrapped is not None
+
+        # retry errors defaults to False because there is not a solution to
+        # distinguish between doc save errors and data source config errors
+        self.retry_errors = retry_errors
 
     def bootstrap(self, configs=None):
         self._processor.bootstrap(configs)
@@ -348,4 +354,5 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
         topics=topics,
         num_processes=num_processes,
         process_num=process_num,
+        retry_errors=True
     )

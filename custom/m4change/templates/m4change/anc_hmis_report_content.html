@@ -1,0 +1,17 @@
+{% extends 'reports/async/tabular.html' %}
+{% load hq_shared_tags %}
+{% load report_tags %}
+{% load compress %}
+{% load i18n %}
+
+{% block pretable %}
+    <div id="logo-top" class="row">
+        <div class="col-sm-3" id="logo-top-left"></div>
+        <div class="col-sm-6" id="logo-title">
+            {{ block.super }}
+        </div>
+        <div class="col-sm-3" id="logo-top-right">
+            <img src="{% static 'm4change/images/NigeriaCoatofArms.png' %}" alt="nigeria_coat_of_arms"/>
+        </div>
+    </div>
+{% endblock %}

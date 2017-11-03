@@ -84,7 +84,7 @@ class MyView(SomeTemplateView):
         return super(MyView, self).dispatch(request, *args, **kwargs)
 ```
 
-Then in your `View`'s template, as long as somewhere along the line it extends `style/base.html`:
+Then in your `View`'s template, as long as somewhere along the line it extends `hqwebapp/base.html`:
 
 ```
 {% block js-inline %}{{ block.super }}

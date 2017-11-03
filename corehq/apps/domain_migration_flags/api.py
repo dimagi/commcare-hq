@@ -1,4 +1,5 @@
 from corehq.apps.domain_migration_flags.exceptions import DomainMigrationProgressError
+from corehq.toggles import DATA_MIGRATION
 from corehq.util.quickcache import quickcache
 from models import DomainMigrationProgress, MigrationStatus
 
@@ -56,7 +57,10 @@ def migration_in_progress(domain, slug):
 
 @quickcache(['domain'], skip_arg='strict', timeout=60 * 60, memoize_timeout=60)
 def any_migrations_in_progress(domain, strict=False):
-    return DomainMigrationProgress.objects.filter(
+    """Returns True if there are any migrations in progress where modifications to
+    project forms and cases should be prevented
+    """
+    return DATA_MIGRATION.enabled(domain) or DomainMigrationProgress.objects.filter(
         domain=domain, migration_status=MigrationStatus.IN_PROGRESS
     ).exists()
 

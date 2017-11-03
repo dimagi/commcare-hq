@@ -1,10 +1,10 @@
-{% extends 'style/base_section.html' %}
+{% extends 'hqwebapp/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
 
 {% block js %}
-<script src="{% static 'style/js/pagination.ng.js' %}"></script>
+<script src="{% static 'hqwebapp/js/pagination.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

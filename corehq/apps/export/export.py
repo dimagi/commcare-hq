@@ -46,7 +46,7 @@ class ExportFile(object):
         os.remove(self.path)
 
 
-class _Writer(object):
+class _ExportWriter(object):
     """
     An object that provides a friendlier interface to couchexport.ExportWriters.
     """
@@ -124,7 +124,7 @@ class _Writer(object):
         return self._path
 
 
-class _PaginatedWriter(object):
+class _PaginatedExportWriter(object):
 
     def __init__(self, writer, page_length=None):
         self.format = writer.format
@@ -284,7 +284,7 @@ class _PaginatedWriter(object):
         return self._path
 
 
-def _get_writer(export_instances):
+def get_export_writer(export_instances, allow_pagination=True):
     """
     Return a new _Writer
     """
@@ -293,10 +293,10 @@ def _get_writer(export_instances):
         format = export_instances[0].export_format
 
     legacy_writer = get_writer(format)
-    if PAGINATED_EXPORTS.enabled(export_instances[0].domain):
-        writer = _PaginatedWriter(legacy_writer)
+    if allow_pagination and PAGINATED_EXPORTS.enabled(export_instances[0].domain):
+        writer = _PaginatedExportWriter(legacy_writer)
     else:
-        writer = _Writer(legacy_writer)
+        writer = _ExportWriter(legacy_writer)
     return writer
 
 
@@ -318,18 +318,17 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     Return an export file for the given ExportInstance and list of filters
     # TODO: Add a note about cleaning up the file?
     """
-
-    writer = _get_writer(export_instances)
+    writer = get_export_writer(export_instances)
     with writer.open(export_instances):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
-            docs = _get_export_documents(export_instance, filters)
-            _write_export_instance(writer, export_instance, docs, progress_tracker)
+            docs = get_export_documents(export_instance, filters)
+            write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
 
-def _get_export_documents(export_instance, filters):
+def get_export_documents(export_instance, filters):
     query = _get_export_query(export_instance, filters)
     # size here limits each scroll request, not the total number of results
     # We believe we can occasionally hit the 5m limit to process a single scroll window
@@ -349,7 +348,7 @@ def get_export_size(export_instance, filters):
     return _get_export_query(export_instance, filters).count()
 
 
-def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
+def write_export_instance(writer, export_instance, documents, progress_tracker=None):
     """
     Write rows to the given open _Writer.
     Rows will be written to each table in the export instance for each of
@@ -466,28 +465,33 @@ def _get_base_query(export_instance):
         )
 
 
-def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+def rebuild_export(export_instance, filters=None):
     """
     Rebuild the given daily saved ExportInstance
     """
-    if _should_not_rebuild_export(export_instance, last_access_cutoff):
-        return
     filters = filters or export_instance.get_filters()
     export_file = get_export_file([export_instance], filters or [])
     with export_file as payload:
-        _save_export_payload(export_instance, payload)
+        save_export_payload(export_instance, payload)
 
 
-def _should_not_rebuild_export(export, last_access_cutoff):
-    # Don't rebuild exports that haven't been accessed since last_access_cutoff
-    return (
-        last_access_cutoff
-        and export.last_accessed
-        and export.last_accessed < last_access_cutoff
+def should_rebuild_export(export, last_access_cutoff):
+    """
+    :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
+    :return: True if export should be rebuilt
+    """
+    # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
+    is_auto_rebuild = last_access_cutoff is not None
+    return not is_auto_rebuild or (
+        export.auto_rebuild_enabled
+        and (
+            export.last_accessed is None
+            or export.last_accessed > last_access_cutoff
+        )
     )
 
 
-def _save_export_payload(export, payload):
+def save_export_payload(export, payload):
     """
     Save the contents of an export file to disk for later retrieval.
     """

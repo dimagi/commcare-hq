@@ -102,7 +102,9 @@ class SMSRatesSelect2AsyncHandler(BaseAsyncHandler):
 
 class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
     slug = 'public_sms_rate_calc'
-    allowed_actions = 'public_rate'
+    allowed_actions = [
+        'public_rate',
+    ]
 
     @property
     def public_rate_response(self):

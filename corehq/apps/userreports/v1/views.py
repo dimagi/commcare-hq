@@ -26,7 +26,7 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
     use_datatables,
@@ -420,7 +420,7 @@ class ConfigureChartReport(ReportBuilderView):
                     'is_static': self.existing_report.is_static,
                 })
             return self._handle_exception(error_response, e)
-        field_names = report_form.fields.keys()
+        field_names = report_form.fields
         return {
             'report': {
                 "title": self.page_name

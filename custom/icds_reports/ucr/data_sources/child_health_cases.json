@@ -1198,6 +1198,7 @@
         }
       },
       {
+        "comment": "NOTE: This is not correct. To fix we must get the task cases",
         "display_name": null,
         "transform": {},
         "datatype": "date",
@@ -1497,10 +1498,30 @@
     },
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
-      {"column_ids": ["awc_id", "date_death"]},
-      {"column_ids": ["awc_id", "dob"]},
-      {"column_ids": ["supervisor_id", "dob"]},
-      {"column_ids": ["supervisor_id", "modified_on"]}
+      {
+        "column_ids": [
+          "awc_id",
+          "date_death"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "supervisor_id",
+          "modified_on"
+        ]
+      }
     ]
   }
 }

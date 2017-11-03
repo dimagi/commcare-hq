@@ -34,6 +34,7 @@ from corehq.apps.app_manager.views.apps import (
     export_gzip,
     pull_master_app,
     update_linked_whitelist,
+    PatchLinkedAppWhitelist,
 )
 from corehq.apps.app_manager.views.cli import (
     direct_ccz,
@@ -71,6 +72,7 @@ from corehq.apps.app_manager.views.forms import (
     new_form,
     patch_xform,
     undo_delete_form,
+    view_form_legacy,
     view_form,
     xform_display,
     get_form_questions,
@@ -84,6 +86,7 @@ from corehq.apps.app_manager.views.modules import (
     overwrite_module_case_list,
     undo_delete_module,
     validate_module_for_build,
+    view_module_legacy,
     view_module,
 )
 from corehq.apps.app_manager.views.multimedia import (
@@ -124,6 +127,7 @@ from corehq.apps.app_manager.views.translations import (
     upload_bulk_ui_translations,
 )
 from corehq.apps.app_manager.views.formdesigner import (
-    form_designer,
+    form_source,
+    form_source_legacy,
     get_form_data_schema,
 )

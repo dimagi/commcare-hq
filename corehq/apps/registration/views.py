@@ -31,7 +31,7 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
 from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
     send_domain_registration_email
-from corehq.apps.style.decorators import use_jquery_ui, \
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
 from django.contrib.auth.models import User
@@ -203,6 +203,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             'atypical_user': True if self.atypical_user else False
         }
         return {
+            'is_production': settings.SERVER_ENVIRONMENT == 'production',
             'reg_form': RegisterWebUserForm(
                 initial=prefills,
                 show_number=self.ab_show_number,

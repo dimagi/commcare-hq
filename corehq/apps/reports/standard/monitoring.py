@@ -1316,7 +1316,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
-def _worker_activity_is_location_safe(view, *args, **kwargs):
+def _worker_activity_is_location_safe(view, request, *args, **kwargs):
     return toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(kwargs.get("domain", None))
 
 

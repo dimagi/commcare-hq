@@ -4,16 +4,16 @@
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
-                <span class="breadcrump-element">
+                <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
                     {$ $ctrl.label $}
                     <i ng-if="$ctrl.title" class="fa fa-chevron-right" aria-hidden="true"></i>
                 </span>
-                <span class="breadcrump-element">{$ $ctrl.title $}</span>
+                <span id="reportTitle" class="breadcrump-element">{$ $ctrl.title $}</span>
             </div>
             <div class="row">
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
                 </span>
             </div>
         </div>
@@ -21,14 +21,11 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="report-content">
+    <div class="report-content" cg-busy="$ctrl.myPromise">
         <div ng-if="$ctrl.data === void(0)">
             <h2>No Data</h2>
         </div>
         <div ng-if="!$ctrl.report">
-            <div class="row">
-                <h2 class="black center" style="margin-bottom: 10px">ICDS-CAS Outcomes</h2>
-            </div>
             <div class="row">
                 <div class="col-md-4">
                     <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
@@ -71,33 +68,41 @@
             </div>
 
         </div>
-        <div cg-busy="$ctrl.myPromise" ng-if="$ctrl.report">
+        <div ng-if="$ctrl.report">
             <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
                 <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
             </div>
-            <div>
-                <button class="btn btn-info btn-sm right" ng-click="$ctrl.report = null">Back</button>
+            <div class="row">
+                <button class="btn btn-info btn-sm right" ng-click="$ctrl.goBack()">Back</button>
             </div>
-            <div class="row no-margin" ng-repeat="section in $ctrl.data">
-                <table class="table black">
+            <div class="row no-margin headers-overflow-unset" ng-repeat="section in $ctrl.data"  style="margin-bottom: 50px !important;">
+                <table datatable="ng" dt-column-defs="$ctrl.dtColumnDefs" dt-options="$ctrl.dtOptions" class="table black">
                     <thead>
                     <tr>
                         <th class="col-md-6"><span ng-bind-html="section.section_title"></span></th>
                         <th class="col-md-1" ng-repeat="month in section.months">
                             <span ng-bind-html="month"></span>
                         </th>
-                        <th class="col-md-1">National Average</th>
+                        <th class="col-md-1">
+                            <span class="pointer" uib-popover="National average of ICDS-CAS data is calculated using the previous calendar month's data."
+                               popover-placement="top"
+                               popover-trigger="'mouseenter'">
+                                <span>National Average </span>
+                                <i class="fa fa-info-circle"></i>
+                            </span>
+                        </th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-if="row.data" ng-repeat="row in section.rows_config">
                         <td ng-repeat="cell in row.data">
                             <span ng-if="$index === 0">{$ cell.html $}</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data, row.reverseColors), 'red fa fa-arrow-down': $ctrl.checkColor('red', $index, row.data, row.reverseColors), 'green fa fa-arrow-up': $ctrl.checkColor('green', $index, row.data, row.reverseColors)}" ng-if="$index !== 0 && (row.average !== void(0) || row.format === 'percent')">{$ cell.html | number:2 $} %</span>
-                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data, row.reverseColors), 'red fa fa-arrow-down': $ctrl.checkColor('red', $index, row.data, row.reverseColors), 'green fa fa-arrow-up': $ctrl.checkColor('green', $index, row.data, row.reverseColors)}" ng-if="$index !== 0 && row.average === void(0) && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && row.format === 'percent'">{$ cell.html | number:2 $} %</span>
+                            <span ng-class="$ctrl.getCSS(row.data, $index, row.reverseColors)" ng-if="$index !== 0 && row.format !== 'percent'">{$ cell.html | indiaNumbers $}</span>
                         </td>
                         <td>
-                            <span ng-if="row.average.html !== void(0)">{$ row.average.html | number:2 $} %</span>
+                            <span ng-if="row.average.html !== void(0) && row.format === 'percent'">{$ row.average.html | number:2 $} %</span>
+                            <span ng-if="row.average.html !== void(0) && row.format !== 'percent'">{$ row.average.html | indiaNumbers $}</span>
                             <span ng-if="row.average.html === void(0)">---</span>
                         </td>
                     </tr>

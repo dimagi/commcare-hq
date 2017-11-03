@@ -27,7 +27,7 @@ from corehq.apps.fixtures.exceptions import (
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.upload import upload_fixture_file, validate_fixture_file_format
-from corehq.apps.fixtures.utils import is_identifier_invalid
+from corehq.apps.fixtures.utils import clear_fixture_cache, is_identifier_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
@@ -105,6 +105,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         elif request.method == 'DELETE':
             with CouchTransaction() as transaction:
                 data_type.recursive_delete(transaction)
+            clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()
@@ -147,6 +148,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                     return HttpResponseBadRequest("DuplicateFixture")
                 else:
                     data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
+        clear_fixture_cache(domain)
         return json_response(strip_json(data_type))
 
 
@@ -205,7 +207,9 @@ def update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    transaction.add_post_commit_action(
+        lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    )
 
 
 def create_types(fields_patches, domain, data_tag, is_global, transaction):
@@ -363,7 +367,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'next_url': reverse('edit_lookup_tables', args=[self.domain]),
             'next_url_text': _("Return to manage lookup tables"),
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

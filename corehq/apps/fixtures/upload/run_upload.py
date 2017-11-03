@@ -8,6 +8,7 @@ from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
 from corehq.apps.fixtures.upload.location_cache import get_memoized_location_getter
 from corehq.apps.fixtures.upload.workbook import get_workbook
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.bulk import CouchTransaction
@@ -191,6 +192,7 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                                                    transaction=transaction)
 
     clear_fixture_quickcache(data_types)
+    clear_fixture_cache(domain)
     return return_val
 
 

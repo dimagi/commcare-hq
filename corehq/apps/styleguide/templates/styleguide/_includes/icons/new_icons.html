@@ -38,7 +38,7 @@
         </a>
         <div class="media-body">
             <h4 class="media-heading">Create a new private domain glyph in the CommCare HQ Font</h4>
-            Open <code>corehq/apps/style/_fonts/commcarehq_font/CommCareHQFont.glyphs</code>
+            Open <code>corehq/apps/hqwebapp/_fonts/commcarehq_font/CommCareHQFont.glyphs</code>
             in Glyph.app and follow the steps in the
             <a href="http://www.glyphsapp.com/tutorials/creating-an-icon-webfont">tutorial</a>
             to add a new glyph in the private domain. Make sure the unicode
@@ -86,7 +86,7 @@
     </p>
     <p>
         Save the final <code>*.otf</code> font to
-        <code>corehq/apps/style/static/style/font/CommCareHQFont-Regular.otf</code>.
+        <code>corehq/apps/hqwebapp/static/hqwebapp/font/CommCareHQFont-Regular.otf</code>.
     </p>
     <h2>Prepping the Font for Cross Browser Compatibility</h2>
     <p>
@@ -115,11 +115,11 @@
     <h2>Adding the New Glyph to the Stylesheet</h2>
     <p>
         Add a reference to the icon's font unicode value as a variable in
-        <code>corehq/apps/style/static/style/less/font-commcare/variables.less</code>.
+        <code>corehq/apps/style/static/hqwebapp/less/font-commcare/variables.less</code>.
     </p>
     <p>
         Add the <code>:before</code> styling for the class of the icon in
-        <code>corehq/apps/style/static/style/less/font-commcare/icons.less</code>.
+        <code>corehq/apps/style/static/hqwebapp/less/font-commcare/icons.less</code>.
     </p>
     <p>
         Use your new icon! <i class="fcc fcc-fd-signature"></i>

@@ -30,31 +30,6 @@ class TestGetFormData(SimpleTestCase):
         self.assertEqual(modules[0]['forms'][0]['action_type'], 'load (load_0)')
 
 
-class TestOverwriteApp(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestOverwriteApp, cls).setUpClass()
-        cls.master_app = Application.new_app('domain', "Master Application")
-        cls.linked_app = Application.new_app('domain-2', "Linked Application")
-        module = cls.master_app.add_module(ReportModule.new_module('Reports', None))
-        module.report_configs = [
-            ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
-        ]
-        cls.linked_app.save()
-        cls.target_json = cls.linked_app.to_json()
-
-    def test_missing_ucrs(self):
-        with self.assertRaises(AppEditingError):
-            overwrite_app(self.target_json, self.master_app, {})
-
-    def test_report_mapping(self):
-        report_map = {'id': 'mapped_id'}
-        overwrite_app(self.target_json, self.master_app, report_map)
-        linked_app = Application.get(self.linked_app._id)
-        self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
-
-
 class TestLatestAppInfo(TestCase):
     domain = 'test-latest-app'
 
@@ -100,7 +75,7 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_apk_version(),
                 response
@@ -120,7 +95,7 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_apk_version(),
                 response
@@ -136,7 +111,7 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_app_version(),
                 response
@@ -156,7 +131,7 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.copy_of or self.app.id, self.domain)
+            latest_info = LatestAppInfo(self.app.master_id, self.domain)
             self.assertEquals(
                 latest_info.get_latest_app_version(),
                 response

@@ -18,6 +18,7 @@ from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
+from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -97,14 +98,13 @@ from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.style.decorators import (
+from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
     use_jquery_ui,
     use_ko_validation,
     use_angular_js)
-from corehq.apps.style.forms.widgets import DateRangePickerWidget
-from corehq.apps.style.utils import format_angular_error, format_angular_success
+from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
@@ -285,11 +285,18 @@ class BaseExportView(BaseProjectDataView):
             else:
                 raise
         else:
+            try:
+                post_data = json.loads(self.request.body)
+                url = self.export_home_url
+                if post_data['is_daily_saved_export']:
+                    url = reverse(DailySavedExportListView.urlname, args=[self.domain])
+            except ValueError:
+                url = self.export_home_url
             if self.is_async:
                 return json_response({
-                    'redirect': self.export_home_url,
+                    'redirect': url,
                 })
-            return HttpResponseRedirect(self.export_home_url)
+            return HttpResponseRedirect(url)
 
 
 class BaseCreateCustomExportView(BaseExportView):
@@ -1247,6 +1254,19 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         return format_angular_success({})
 
     @allow_remote_invocation
+    def toggle_saved_export_enabled_state(self, in_data):
+        if in_data['export']['isLegacy']:
+            format_angular_error('Legacy export not supported', True)
+
+        export_instance_id = in_data['export']['id']
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        export_instance.auto_rebuild_enabled = not in_data['export']['isAutoRebuildEnabled']
+        export_instance.save()
+        return format_angular_success({
+            'isAutoRebuildEnabled': export_instance.auto_rebuild_enabled
+        })
+
+    @allow_remote_invocation
     def update_emailed_export_data(self, in_data):
         if not in_data['export']['isLegacy']:
             return self.update_emailed_es_export_data(in_data)
@@ -1386,6 +1406,7 @@ class DailySavedExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'isDailySaved': True,
+            'isAutoRebuildEnabled': export.auto_rebuild_enabled,
             'emailedExport': emailed_export,
             'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': reverse(download_view.urlname, args=(self.domain, export.get_id)),
@@ -1910,11 +1931,15 @@ class BaseNewExportView(BaseExportView):
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
             raise BadExportConfiguration()
 
+        if not export._rev and getattr(settings, "ENTERPRISE_MODE"):
+            # default auto rebuild to False for enterprise clusters
+            # only do this on first save to prevent disabling on every edit
+            export.auto_rebuild_enabled = False
         export.save()
         messages.success(
             request,
             mark_safe(
-                _(u"Export <strong>{}</strong> created.").format(
+                _(u"Export <strong>{}</strong> saved.").format(
                     export.name
                 )
             )
@@ -2076,19 +2101,6 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.export_id])
-
-    def commit(self, request):
-        export = self.export_instance_cls.wrap(json.loads(request.body))
-        export.save()
-        messages.success(
-            request,
-            mark_safe(
-                _(u"Export <strong>{}</strong> was saved.").format(
-                    export.name
-                )
-            )
-        )
-        return export._id
 
     def get(self, request, *args, **kwargs):
         auto_select = True
@@ -2355,6 +2367,10 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     page_title = ugettext_noop("Download Form Exports")
     filter_form_class = EmwfFilterFormExport
     export_filter_class = ExpandedMobileWorkerFilter
+
+    @allow_remote_invocation
+    def has_multimedia(self, in_data):
+        return False
 
 
 @location_safe

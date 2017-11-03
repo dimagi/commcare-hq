@@ -2,7 +2,7 @@ import os
 import mock
 from datetime import date
 from dateutil.relativedelta import relativedelta
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
 from corehq.util.test_utils import TestFileMixin

@@ -28,16 +28,17 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
-from corehq.apps.style.decorators import use_angular_js
+from corehq.apps.hqwebapp.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.timezones.utils import get_timezone_for_user
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id, \
+    get_latest_released_app_version
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
@@ -154,17 +155,19 @@ def get_releases_context(request, domain, app_id):
     return context
 
 
-@login_and_domain_required
+@login_or_api_key
 @location_safe
 def current_app_version(request, domain, app_id):
     """
     Return current app version and the latest release
     """
     app = get_app(domain, app_id)
-    latest = get_latest_build_doc(domain, app_id)
+    latest_build = get_latest_build_doc(domain, app_id)
+    latest_released_version = get_latest_released_app_version(domain, app_id)
     return json_response({
         'currentVersion': app.version,
-        'latestRelease': latest['version'] if latest else None,
+        'latestBuild': latest_build['version'] if latest_build else None,
+        'latestReleasedBuild': latest_released_version if latest_released_version else None,
     })
 
 

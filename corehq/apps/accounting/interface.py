@@ -987,7 +987,8 @@ class PaymentRecordInterface(GenericTabularReport):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             queryset = queryset.filter(
-                creditadjustment__credit_line__subscription__subscriber__domain=subscriber
+                Q(creditadjustment__credit_line__subscription__subscriber__domain=subscriber)
+                | Q(creditadjustment__credit_line__account__created_by_domain=subscriber)
             )
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
@@ -1119,7 +1120,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 return ['', '', '', '']
 
             types = [
-                "Any" if credit_line.product_type is not None else '',
+                "Any" if credit_line.is_product else '',
                 dict(FeatureType.CHOICES).get(
                     credit_line.feature_type,
                     "Any"

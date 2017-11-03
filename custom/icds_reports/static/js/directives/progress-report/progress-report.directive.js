@@ -3,7 +3,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgressReportController($scope, $location, progressReportService,
-                                  storageService, $routeParams, userLocationId) {
+                                  storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -18,6 +18,25 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.now = new Date().getMonth() + 1;
     vm.showWarning = storageService.getKey('search') === void(0) && (storageService.getKey('search')['month'] === void(0) || vm.now === storageService.getKey('search')['month']);
     vm.report = $routeParams.report;
+
+    vm.dtOptions = DTOptionsBuilder
+        .newOptions()
+        .withOption('scrollY', '400px')
+        .withOption('scrollX', false)
+        .withOption('scrollCollapse', true)
+        .withOption('paging', false)
+        .withOption('order', false)
+        .withOption('sortable', false)
+        .withDOM('<t>');
+
+    vm.dtColumnDefs = [
+        DTColumnDefBuilder.newColumnDef(0).notSortable(),
+        DTColumnDefBuilder.newColumnDef(1).notSortable(),
+        DTColumnDefBuilder.newColumnDef(2).notSortable(),
+        DTColumnDefBuilder.newColumnDef(3).notSortable(),
+        DTColumnDefBuilder.newColumnDef(4).notSortable(),
+    ];
+    vm.showTable = true;
 
     $scope.$on('filtersChange', function() {
         vm.showWarning =  vm.now === storageService.getKey('search')['month'];
@@ -60,20 +79,22 @@ function ProgressReportController($scope, $location, progressReportService,
         return sum / values.length;
     };
 
-    vm.checkColor = function(color, index, data, reverseColors) {
-        if (color === 'black') {
-            return index === 1 || (index > 0 && data[index]['html'] === data[index - 1]['html']);
-        }
-        if (reverseColors === 'true') {
-            color = color === 'green' ? 'red': 'green';
+    vm.getCSS = function(data, index, reverse) {
+        if (index === 0 || index === 1) {
+            return 'black';
         }
 
-        if (color ==='red') {
-            return index > 0 && data[index]['html'] < data[index - 1]['html'];
-        } else if (color === 'green') {
-            return  index > 0 && data[index]['html'] > data[index - 1]['html'];
-        } else {
-            return false;
+        var currentData = data[index].html;
+        var previousMonthData = data[index - 1].html;
+
+        var colors = (reverse ? ['red', 'green'] : ['green', 'red']);
+
+        if (currentData === previousMonthData) {
+            return 'black';
+        } else if (previousMonthData < currentData) {
+            return colors[0] + ' fa fa-arrow-up';
+        } else if (previousMonthData > currentData) {
+            return colors[1] + ' fa fa-arrow-down';
         }
     };
 
@@ -101,14 +122,20 @@ function ProgressReportController($scope, $location, progressReportService,
     };
 
     vm.goToReport = function(reportName) {
-        $location.path('progress_report/' + reportName);
+        $location.path('fact_sheets/' + reportName);
+    };
+
+    vm.goBack = function() {
+        vm.report = null;
+        vm.title = null;
+        $location.path('fact_sheets/');
     };
 
     vm.loadData();
 }
 
 ProgressReportController.$inject = [
-    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId',
+    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder',
 ];
 
 window.angular.module('icdsApp').directive('progressReport', function() {

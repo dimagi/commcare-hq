@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(
     Convert a yaml file for static analyzable strings
 
     Example:
-    python scripts/yaml_static_strings.py -f corehq/apps/app_manager/static/app_manager/json/v2/commcare-app-settings.yaml --fields name description value_names disabled_txt values_txt
+    python scripts/yaml_static_strings.py -f corehq/apps/app_manager/static/app_manager/json/commcare-app-settings.yaml --fields name description value_names disabled_txt values_txt
     '''
 )
 

@@ -6,12 +6,13 @@
         <img src="{% static "img/logo.png" %}" alt="Logo" style="width: 60%;">
     </div>
     <div>
-        <ul class="nav nav-list">
+        <perfect-scrollbar class="scroller" suppress-scroll-x="true" wheel-propagation="true" wheel-speed="5" min-scrollbar-length="10" min-scrollbar-length="10">
+            <ul class="nav nav-list" >
             <li ng-class="{'active': $location.path().indexOf('/program_summary') !== -1}">
-                <div class="row pointer" ng-click="$location.path('/');  healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true">
+                <a class="row pointer" href="{$ goToStep('', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true">
                     <div class="col-sm-1"><i class="fa fa-home" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "Program Summary" %}</div>
-                </div>
+                </a>
             </li>
             <li class="nav-header" >
                 <div class="row pointer" ng-click="healthCollapsed = !healthCollapsed; icdsCasReach = true; demographics = true; infrastructure = true;">
@@ -91,11 +92,11 @@
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/adolescent_girls') !== -1}">
-                        <a href="{$ goToStep('adolescent_girls', $location.search()) $}" >{% trans "Adolescent Girls (11-18 years)" %}
+                        <a href="{$ goToStep('adolescent_girls', $location.search()) $}" >{% trans "Adolescent Girls (11-18 Years) enrolled for ICDS Services" %}
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/adhaar') !== -1}">
-                        <a href="{$ goToStep('adhaar', $location.search()) $}" >{% trans "Percent Adhaar seeded beneficaries" %}
+                        <a href="{$ goToStep('adhaar', $location.search()) $}" >{% trans "Percent Adhaar-seeded Beneficiaries" %}
                         </a>
                     </li>
                 </ul>
@@ -131,22 +132,22 @@
             </li>
             <hr>
             <li ng-class="{'active': $location.path().indexOf('/awc_reports') !== -1}">
-                <div class="row pointer" ng-click="$location.path('/awc_reports'); healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
+                <a class="row pointer" href="{$ goToStep('awc_reports', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-tasks" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "AWC Report" %}</div>
-                </div>
+                </a>
             </li>
-            <li ng-class="{'active': $location.path().indexOf('/progress_report') !== -1}">
-                <div class="row pointer" ng-click="$location.path('/progress_report'); healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
+            <li ng-class="{'active': $location.path().indexOf('/fact_sheets') !== -1}">
+                <a class="row pointer" href="{$ goToStep('fact_sheets', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-file-text-o" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "ICDS-CAS Fact Sheets" %}</div>
-                </div>
+                </a>
             </li>
             <li ng-class="{'active': $location.path().indexOf('/download') !== -1}">
-                <div class="row pointer" ng-click="$location.path('/download'); healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
+                <a class="row pointer" href="{$ goToStep('download', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-download" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "Tabular Reports" %}</div>
-                </div>
+                </a>
             </li>
             <li>
                 <div class="row">
@@ -161,6 +162,7 @@
                 </div>
             </li>
         </ul>
+        </perfect-scrollbar>
 
     <div style="padding: 5px; margin: 0 auto; text-align: center;">
         <img src="{% static "img/BBBP_Logo.png" %}" alt="Logo" style="width: 40%;">

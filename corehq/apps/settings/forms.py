@@ -9,7 +9,7 @@ from two_factor.forms import (
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.models import CouchUser
 
 from django.utils.translation import ugettext as _
@@ -182,6 +182,13 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
                 )
             )
         )
+
+    def save(self):
+        couch_user = CouchUser.from_django_user(self.user)
+        if couch_user.two_factor_auth_disabled_until:
+            couch_user.two_factor_auth_disabled_until = None
+            couch_user.save()
+        return super(HQTOTPDeviceForm, self).save()
 
 
 class HQPhoneNumberForm(PhoneNumberForm):

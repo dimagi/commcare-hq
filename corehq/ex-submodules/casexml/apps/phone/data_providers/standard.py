@@ -15,15 +15,15 @@ class RestoreDataProvider(TimedProvider):
         raise NotImplementedError('Need to implement this method')
 
 
-class FullResponseDataProvider(TimedProvider):
+class AsyncDataProvider(TimedProvider):
     """
     Base class for things that deal with their own response.
     """
     def __init__(self, timing_context, async_task=None):
-        super(FullResponseDataProvider, self).__init__(timing_context)
+        super(AsyncDataProvider, self).__init__(timing_context)
         self.async_task = async_task
 
-    def get_response(self, restore_state):
+    def extend_response(self, restore_state, response):
         raise NotImplementedError('Need to implement this method')
 
 

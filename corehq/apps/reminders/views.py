@@ -17,7 +17,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Form
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, DataTablesAJAXPaginationMixin
-from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui, \
     use_timepicker, use_select2
 
 from corehq.apps.reminders.forms import (

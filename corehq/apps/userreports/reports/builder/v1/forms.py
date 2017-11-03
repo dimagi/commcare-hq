@@ -1,4 +1,5 @@
 
+from __future__ import absolute_import
 from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
@@ -19,7 +20,7 @@ from corehq.apps.userreports.reports.builder.v1.columns import \
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.apps.app_manager.fields import ApplicationDataSourceUIHelper
 from corehq.apps.app_manager.models import (
@@ -27,7 +28,6 @@ from corehq.apps.app_manager.models import (
     Form,
 )
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.style.crispy import FieldWithHelpBubble
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import (
@@ -71,7 +71,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in REPORT_BUILDER_FILTER_TYPE_MAP.keys() + [""]:
+            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -88,7 +88,7 @@ class Select2(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
             u'<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
@@ -115,7 +115,7 @@ class QuestionSelect(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
             u"""
@@ -191,7 +191,7 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
+                self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=False
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
@@ -520,7 +520,7 @@ class DataSourceForm(forms.Form):
 
         chart_type_crispy_field = None
         if self.report_type == 'chart':
-            chart_type_crispy_field = FieldWithHelpBubble(
+            chart_type_crispy_field = hqcrispy.FieldWithHelpBubble(
                 'chart_type',
                 help_bubble_text=_(
                     "<strong>Bar</strong> shows one vertical bar for each value in your case or form. "
@@ -530,14 +530,14 @@ class DataSourceForm(forms.Form):
         report_source_crispy_fields = []
         for k in report_source_fields.keys():
             if k in report_source_help_texts:
-                report_source_crispy_fields.append(FieldWithHelpBubble(
+                report_source_crispy_fields.append(hqcrispy.FieldWithHelpBubble(
                     k, help_bubble_text=report_source_help_texts[k]
                 ))
             else:
                 report_source_crispy_fields.append(k)
 
         top_fields = [
-            FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'report_name',
                 help_bubble_text=_(
                     'Web users will see this name in the "Reports" section of CommCareHQ and can click to view '
@@ -1116,7 +1116,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         return crispy.Div(
             crispy.Fieldset(
                 _('Chart'),
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'group_by',
                     help_bubble_text=_(
                         "The values of the selected property will be aggregated "
@@ -1201,7 +1201,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
         return crispy.Div(
             crispy.Fieldset(
                 _('Chart Properties'),
-                FieldWithHelpBubble(
+                hqcrispy.FieldWithHelpBubble(
                     'group_by',
                     help_bubble_text=_(
                         "The values of the selected property will be aggregated "
@@ -1281,7 +1281,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 id="columns-table",
                 data_bind='with: columnsList'
             ),
-            hqcrispy.HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
+            hqcrispy.B3HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
         )
 
     @property

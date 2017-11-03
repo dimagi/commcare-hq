@@ -1,21 +1,26 @@
 {% extends "app_manager/managed_app.html" %}
-{% load xforms_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
-{% load reports_core_tags %}
 {% load i18n %}
+{% load reports_core_tags %}
+{% load xforms_extras %}
 
 {% block js %}{{ block.super }}
+    {% compress js %}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/report_module.js' %}"></script>
     <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
+    {% endcompress %}
     {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include 'hqmedia/partials/multimedia_js.html' %}
+    {% compress js %}
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/module_view_report.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 {% block form-view %}
     {% initial_page_data 'lang' lang %}
@@ -27,15 +32,15 @@
     {% initial_page_data 'report_module_options' report_module_options %}
     {% initial_page_data 'static_data_options' static_data_options %}
     {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
-    {% registerurl "edit_report_module" domain app.id module.id %}
-    {% registerurl "validate_module_for_build" domain app.id module.id %}
+    {% registerurl "edit_report_module" domain app.id module.unique_id %}
+    {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
     {% include 'app_manager/partials/module_view_heading.html' %}
     {% include 'app_manager/partials/mobile_report_configs.html' %}
 {% endblock %}
 
 {% block modals %}{{ block.super }}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
-{% include 'style/partials/key_value_mapping.html' %}
+{% include 'hqwebapp/partials/key_value_mapping.html' %}
 {% include 'app_manager/partials/graph_configuration_modal.html' %}
 {% endblock modals %}
 

@@ -5,6 +5,7 @@ hqDefine("hqwebapp/js/select2_handler", function() {
         'use strict';
         var self = this;
         self.fieldName = options.fieldName;
+        self.multiple = options.multiple || false;
         self.value = ko.observable();
     
         self.clear = function () {
@@ -54,6 +55,7 @@ hqDefine("hqwebapp/js/select2_handler", function() {
             fieldInput.select2({
                 minimumInputLength: 0,
                 allowClear: true,
+                multiple: self.multiple,
                 ajax: {
                     quietMillis: 150,
                     url: '',

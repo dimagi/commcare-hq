@@ -3,7 +3,7 @@ from django import forms
 from corehq.apps.users.forms import MultipleSelectionForm
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 
 
 class SLABEditLocationForm(MultipleSelectionForm):

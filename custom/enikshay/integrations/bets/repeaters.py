@@ -1,10 +1,10 @@
-from dateutil.parser import parse
+import json
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.locations.models import SQLLocation
-from corehq.motech.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
+from corehq.motech.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater, RepeatRecord
 from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
@@ -14,6 +14,7 @@ from custom.enikshay.case_utils import CASE_TYPE_PERSON
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET)
+from custom.enikshay.exceptions import ENikshayException
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT,
@@ -26,7 +27,9 @@ from custom.enikshay.integrations.bets.repeater_generators import (
     BETSBeneficiaryPayloadGenerator)
 from custom.enikshay.integrations.utils import (
     case_properties_changed, is_valid_episode_submission, is_valid_voucher_submission,
-    is_valid_archived_submission, is_valid_person_submission, case_was_created)
+    is_valid_archived_submission, is_valid_person_submission, case_was_created,
+    is_migrated_uatbc_episode, string_to_date_or_None)
+from .utils import get_bets_location_json, queued_payload, get_bets_user_json
 
 
 class BETSRepeaterMixin(object):
@@ -215,6 +218,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
             and not_sent
             and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
+            and not is_migrated_uatbc_episode(episode_case)
         )
 
 
@@ -237,27 +241,15 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
         return PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(n)
 
     @staticmethod
-    def _property_as_date(properties, property_name):
-        """
-        Parse the given value of the given property_name in the given property dict as a date.
-        If the property is not a date, return None
-        """
-        try:
-            return parse(properties.get(property_name, "nope"))
-        except ValueError:
-            return None
-
-    @staticmethod
     def prescription_total_days_threshold_in_trigger_state(episode_case_properties, n, check_already_sent=True):
         threshold_case_prop = BETSDrugRefillRepeater._get_threshold_case_prop(n)
         if check_already_sent:
             return bool(
-                BETSDrugRefillRepeater._property_as_date(episode_case_properties, threshold_case_prop)
+                string_to_date_or_None(episode_case_properties.get(threshold_case_prop))
                 and episode_case_properties.get("event_{}_{}".format(DRUG_REFILL_EVENT, n)) != "sent"
             )
         else:
-            return BETSDrugRefillRepeater._property_as_date(
-                episode_case_properties, threshold_case_prop) is not None
+            return string_to_date_or_None(episode_case_properties.get(threshold_case_prop)) is not None
 
     def allowed_to_forward(self, episode_case):
         if not self.case_types_and_users_allowed(episode_case):
@@ -269,8 +261,8 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
 
         for n in TOTAL_DAY_THRESHOLDS:
             threshold_case_prop = self._get_threshold_case_prop(n)
-            threshold_prop_values_by_threshold[n] = self._property_as_date(
-                episode_case_properties, threshold_case_prop
+            threshold_prop_values_by_threshold[n] = string_to_date_or_None(
+                episode_case_properties.get(threshold_case_prop)
             )
             trigger_for_n = bool(
                 self.prescription_total_days_threshold_in_trigger_state(
@@ -357,12 +349,13 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
             and enrolled_in_private_sector
             and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and is_valid_episode_submission(episode_case)
+            and not is_migrated_uatbc_episode(episode_case)
         )
 
 
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - AYUSH/Other provider: Registering and referral of a presumptive TB case"
-                      " in UATBC/e-Nikshay (episode case type)")
+                      " in eNikshay (episode case type)")
 
     payload_generator_classes = (BETSAYUSHReferralPayloadGenerator,)
 
@@ -385,6 +378,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
             and enrolled_in_private_sector
             and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and is_valid_episode_submission(episode_case)
+            and not is_migrated_uatbc_episode(episode_case)
         )
 
 
@@ -398,7 +392,38 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
 
+    def get_attempt_info(self, repeat_record):
+        """Store the payload as extra information
+        """
+        try:
+            return unicode(self.get_payload(repeat_record))
+        except ENikshayException:
+            return None
+
     def allowed_to_forward(self, user):
+        # if this user is already in the repeater queue don't add another one
+        if queued_payload(user.domain, user.user_id):
+            return False
+
+        # If this user has already been forwarded without any changes, then
+        # don't send it to BETS again
+        successful_records = user.user_data.get('BETS_user_repeat_record_ids')
+        if successful_records:
+            latest_record_id = successful_records.split(" ")[-1]
+            latest_record = RepeatRecord.get(latest_record_id)
+            previous_payload = latest_record.attempts[-1].info if latest_record.attempts else "{}"
+            try:
+                previous_payload_json = json.loads(previous_payload)
+                current_payload = get_bets_user_json(user.domain, user)
+                del previous_payload_json['user_data']['id_device_number']
+                del previous_payload_json['user_data']['id_device_body']
+                del current_payload['user_data']['id_device_number']
+                del current_payload['user_data']['id_device_body']
+                if current_payload == previous_payload_json:
+                    return False
+            except (TypeError, ValueError):
+                pass
+
         return (user.user_data.get('user_level', None) == 'real'
                 and any(self._is_relevant_location(loc)
                         for loc in user.get_sql_locations(self.domain)))
@@ -419,9 +444,34 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
                         'pac',
     )
 
+    def get_attempt_info(self, repeat_record):
+        """Store the payload as extra information
+        """
+        return unicode(self.get_payload(repeat_record))
+
     def allowed_to_forward(self, location):
+        # if this location is already in the repeater queue, don't forward again
+        if queued_payload(location.domain, location.location_id):
+            return False
+
+        # If this location has already been forwarded without any changes, then
+        # don't send it to BETS again
+        successful_records = location.metadata.get('BETS_location_repeat_record_ids')
+        if successful_records:
+            latest_record_id = successful_records.split(" ")[-1]
+            latest_record = RepeatRecord.get(latest_record_id)
+            previous_payload = latest_record.attempts[-1].info if latest_record.attempts else "{}"
+            try:
+                previous_payload_json = json.loads(previous_payload)
+                current_payload = get_bets_location_json(location)
+                if current_payload == previous_payload_json:
+                    return False
+            except (TypeError, ValueError):
+                pass
+
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
+
 
 class BETSBeneficiaryRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patient (beneficiary) registration and update")
@@ -430,11 +480,13 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
         'phone_number',
         'current_address_district_choice',
         'current_address_state_choice',
+        'current_episode_type',
     )
 
     def allowed_to_forward(self, person_case):
         return (person_case.type == CASE_TYPE_PERSON
                 and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+                and person_case.get_case_property('current_episode_type') == 'confirmed_tb'
                 and is_valid_person_submission(person_case)
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))

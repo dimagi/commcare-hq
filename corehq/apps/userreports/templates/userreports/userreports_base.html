@@ -1,4 +1,4 @@
-{% extends "style/base_section.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
@@ -60,6 +60,9 @@
                 {{ data_source.display_name }}
                 {% if data_source.is_static %}
                     <span class="label label-default">static</span>
+                {% endif %}
+                {% if data_source.is_deactivated %}
+                    <span class="label label-default">deactivated</span>
                 {% endif %}
             </a>
         </li>

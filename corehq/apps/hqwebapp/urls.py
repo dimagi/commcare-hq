@@ -12,6 +12,7 @@ from corehq.apps.hqwebapp.views import (
     yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
     retrieve_download, toggles_js, couch_doc_counts, server_up)
+from corehq.apps.hqwebapp.session_details_endpoint.views import SessionDetailsView
 
 urlpatterns = [
     url(r'^$', redirect_to_default),
@@ -44,7 +45,10 @@ urlpatterns = [
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
     url(r'', include((tf_urls + tf_twilio_urls, 'two_factor'), namespace='two_factor')),
-    url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
+    url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname),
+    url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
+        name=SessionDetailsView.urlname),
+
 ]
 
 domain_specific = [
@@ -53,7 +57,7 @@ domain_specific = [
     url(r'^login/mobile/$', domain_login, name='domain_mobile_login',
         kwargs={'template_name': 'login_and_password/mobile_login.html'}),
     url(r'^retreive_download/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
-        retrieve_download, {'template': 'style/includes/file_download.html'},
+        retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
     url(r'toggles.js$', toggles_js, name='toggles_js'),
     url(r'couch_doc_counts', couch_doc_counts),

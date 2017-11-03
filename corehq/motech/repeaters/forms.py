@@ -9,7 +9,7 @@ from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 
 from corehq.apps.es.users import UserES
-from corehq.apps.style import crispy as hqcrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.util import raw_username
 
 from dimagi.utils.decorators.memoized import memoized
@@ -203,4 +203,15 @@ class SOAPCaseRepeaterForm(CaseRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields + ['operation']
+
+
+class SOAPLocationRepeaterForm(GenericRepeaterForm):
+    operation = forms.CharField(
+        required=False,
+        label='SOAP operation',
+    )
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(SOAPLocationRepeaterForm, self).get_ordered_crispy_form_fields()
         return fields + ['operation']

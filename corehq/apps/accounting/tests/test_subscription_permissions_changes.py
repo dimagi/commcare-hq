@@ -143,7 +143,6 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             is_deactivated=False,
             referenced_doc_type="XFormInstance",
             table_id="foo",
-
         )
         other_data_source = DataSourceConfiguration(
             domain=self.project.name,

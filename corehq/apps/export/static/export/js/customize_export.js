@@ -394,11 +394,10 @@ var CustomExportView = {
                 self.valid(newFormat !== "html");
             }
         });
-        
 
         self.save_no_preview = function() {
             var exportType = self.export_type();
-            exportType = _(exportType).capitalize();
+            exportType = hqImport('export/js/utils').capitalize(exportType);
             var action = "Regular";
             if (self.presave()) {
                 action = "Saved";

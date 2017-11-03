@@ -21,7 +21,7 @@ from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty, PROPERTY_TYPE_CHOICES
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.style.decorators import use_jquery_ui
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format

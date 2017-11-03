@@ -11,7 +11,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 return;
             }
             if (newValue[0].data) {
-                vm.map.data = newValue[0].data;
+                vm.map.data = getData(newValue[0]);
             }
             vm.map.fills = newValue[0].fills;
             vm.map.rightLegend = newValue[0].rightLegend;
@@ -74,11 +74,28 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             vm.indicator = value;
         };
 
+        var capitalize = function(str) {
+            return str.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+        };
+
+        var getData = function(data) {
+            var mapData = data && data[0] !== void(0) ? data[0].data : null;
+            if (!mapData) {
+                return null;
+            }
+            
+            var formattedData = {};
+            Object.keys(mapData).forEach(function(key) {
+                formattedData[capitalize(key.toLowerCase())] = mapData[key];
+            });
+            return formattedData;
+        };
+
         vm.map = {
             scope: vm.scope,
             rightLegend: vm.data && vm.data[0] !== void(0) ? vm.data[0].rightLegend : null,
             label: vm.data && vm.data[0] !== void(0) ? vm.data[0].label : null,
-            data: vm.data && vm.data[0] !== void(0) ? vm.data[0].data : null,
+            data: getData(vm.data),
             fills: vm.data && vm.data[0] !== void(0) ? vm.data[0].fills : null,
             height: Datamap.prototype[vm.type].objects[vm.scope].height,
             geographyConfig: {
@@ -111,6 +128,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         vm.updateMap = function (geography) {
             locationsService.getLocationByNameAndParent(geography.id, location_id).then(function(locations) {
                 var location = locations[0];
+                if (!location) {
+                    return;
+                }
                 $location.search('location_name', geography.id);
                 $location.search('location_id', location.location_id);
                 storageService.setKey('search', $location.search());
@@ -143,7 +163,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     html.push('</div>');
                     d3.select(this.options.element).append('div')
                         .attr('class', 'datamaps-legend')
-                        .attr('style', 'width: 300px; left: 5%; top: 5%;')
+                        .attr('style', 'width: 300px; left: 1%; bottom: 20%;')
                         .html(html.join(''));
                 },
             });
@@ -152,29 +172,28 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     if (this.options.rightLegend !== null) {
                         var loc_name = $location.search()['location_name'] || "National";
                         var period = this.options.rightLegend['period'] || 'Monthly';
-                        var html = '<table style="width: 250px;">';
+                        var html = '<div class="map-kpi" style="width: 300px;">';
                         if (this.options.rightLegend['average'] !== void(0)) {
-                            html += '<tr>';
-                            html += '<td style="border-right: 1px solid black; padding-right: 10px; border-bottom: 1px solid black; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>';
+                            html += '<div class="row no-margin">';
                             if (this.options.rightLegend['average_format'] === 'number') {
-                                html += '<td style="padding-left: 10px; border-bottom: 1px solid black;">' + loc_name + ' average: ' + $filter('indiaNumbers')(this.options.rightLegend['average']) + '</td>';
+                                html += '<strong>' + loc_name + ' average:</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']);
                             } else {
-                                html += '<td style="padding-left: 10px; border-bottom: 1px solid black;">' + loc_name + ' average: ' + d3.format('.2f')(this.options.rightLegend['average']) + '%</td>';
+                                html += '<strong>' + loc_name + ' average:</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%';
                             }
-                            html += '<tr/>';
+                            html +='</div>';
+                            html +='</br>';
+                            html += '<div class="row no-margin">';
+                            html += this.options.rightLegend['info'];
+                            html +='</div>';
+                        } else {
+                            html += '<div class="row no-margin">';
+                            html += this.options.rightLegend['info'];
+                            html +='</div>';
                         }
-                        html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; border-bottom: 1px solid black; padding-top: 5px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-top: 5px; padding-bottom: 5px; border-bottom: 1px solid black;">' + this.options.rightLegend['info'] + '</td>';
-                        html += '<tr/>';
-                        html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; font-size: 2em; "><i class="fa fa-clock-o" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-top: 5px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: ' + period + '</td>';
-                        html += '<tr/>';
-                        html += '</table>';
+                        html += '</div>';
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
-                            .attr('style', 'position: absolute; width: 150px; bottom: 20%; left: 0; z-index: -1;')
+                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1;')
                             .html(html);
                     }
                 },

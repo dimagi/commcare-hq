@@ -6,21 +6,26 @@ import zipfile
 from collections import defaultdict
 from wsgiref.util import FileWrapper
 
+from django.http.request import QueryDict
+from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.http import urlencode as django_urlencode
-from couchdbkit.exceptions import ResourceConflict
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
-from django.http import HttpResponseRedirect
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError, \
+    ActionNotPermitted, RemoteRequestError, RemoteAuthError
+from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
+    validate_langs, overwrite_app
 from corehq import toggles, privileges
 from corehq.elastic import ESError
 from dimagi.utils.logging import notify_exception
@@ -31,7 +36,6 @@ from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
-from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
@@ -56,8 +60,8 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-)
-from corehq.apps.app_manager.dbaccessors import get_app, get_current_app_doc, wrap_app
+    api_key_auth)
+from corehq.apps.app_manager.dbaccessors import get_app, get_current_app
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -70,9 +74,9 @@ from corehq.apps.app_manager.models import (
     ReportModule)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps
+    require_can_edit_apps, require_deploy_apps, no_conflict
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, identify
+from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.util.view_utils import reverse as reverse_util
 
@@ -260,7 +264,10 @@ def get_app_view_context(request, app):
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
     if app.get_doc_type() == 'LinkedApplication':
-        context['master_version'] = get_app(None, app.master, latest=True).version
+        try:
+            context['master_version'] = app.get_master_version()
+        except RemoteRequestError:
+            pass
     return context
 
 
@@ -360,6 +367,8 @@ def copy_app(request, domain):
                         break
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
+        # having login_and_domain_required validates that the user
+        # has access to the domain we're copying the app to
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
@@ -381,7 +390,7 @@ def app_from_template(request, domain, slug):
         app.get_module(module_id).get_form(form_id)
     except (ModuleNotFoundException, FormNotFoundException):
         return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module_id, form_id]))
+    return HttpResponseRedirect(reverse('view_form_legacy', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -646,6 +655,7 @@ def edit_app_attr(request, domain, app_id, attr):
         'profile_url',
         'manage_urls',
         'mobile_ucr_sync_interval',
+        'mobile_ucr_restore_version',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
@@ -682,6 +692,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
         ('mobile_ucr_sync_interval', parse_sync_interval),
+        ('mobile_ucr_restore_version', None),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -780,15 +791,21 @@ def rearrange(request, domain, app_id, key):
             app.rearrange_forms(to_module_id, from_module_id, i, j)
         elif "modules" == key:
             app.rearrange_modules(i, j)
-    except IncompatibleFormTypeException:
-        messages.error(request, _('The form can not be moved into the desired menu.'))
+    except IncompatibleFormTypeException as e:
+        error = "{} {}".format(_('The form is incompatible with the destination menu and was not moved.'), str(e))
+        if ajax:
+            return json_response({'error': error}, status_code=400)
+        messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
-        messages.error(request, _(
+        error = _(
             'Oops. '
             'Looks like you got out of sync with us. '
             'The sidebar has been updated, so please try again.'
-        ))
+        )
+        if ajax:
+            return json_response(error, status_code=400)
+        messages.error(request, error)
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     app.save(resp)
     if ajax:
@@ -823,11 +840,39 @@ def drop_user_case(request, domain, app_id):
 @require_GET
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
-    app = get_current_app_doc(domain, app_id)
-    master_app = get_app(None, app['master'])
-    latest_master_build = get_app(None, app['master'], latest=True)
-    if app['domain'] in master_app.linked_whitelist:
-        report_map = get_static_report_mapping(master_app.domain, app['domain'], {})
+    app = get_current_app(domain, app_id)
+    try:
+        master_version = app.get_master_version()
+    except RemoteRequestError:
+        messages.error(request, _(
+            'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+        ))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+    if master_version > app.version:
+        exception_message = None
+        try:
+            latest_master_build = app.get_latest_master_release()
+        except ActionNotPermitted:
+            exception_message = _(
+                'This project is not authorized to update from the master application. '
+                'Please contact the maintainer of the master app if you believe this is a mistake. '
+            )
+        except RemoteAuthError:
+            exception_message = _(
+                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+                'Please verify your authentication details for the remote link are correct.'
+            )
+        except RemoteRequestError:
+            exception_message = _(
+                'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+            )
+
+        if exception_message:
+            messages.error(request, exception_message)
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
         try:
             overwrite_app(app, latest_master_build, report_map)
         except AppEditingError:
@@ -835,22 +880,65 @@ def pull_master_app(request, domain, app_id):
                                       'which are currently not supported. For this application '
                                       'to function correctly, you will need to remove those modules '
                                       'or revert to a previous version that did not include them.'))
-        else:
-            messages.success(request,
-                             _('Your linked application was successfully updated to the latest version.'))
-    else:
-        messages.error(request, _(
-            'This project is not authorized to update from the master application. '
-            'Please contact the maintainer of the master app if you believe this is a mistake. ')
-        )
-    return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+    if app.master_is_remote:
+        try:
+            pull_missing_multimedia_from_remote(app)
+        except RemoteRequestError:
+            messages.error(request, _(
+                'Error fetching multimedia from remote server. Please try again later.'
+            ))
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+    messages.success(request, _('Your linked application was successfully updated to the latest version.'))
+    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
 
 @no_conflict_require_POST
 @require_can_edit_apps
 def update_linked_whitelist(request, domain, app_id):
-    app = wrap_app(get_current_app_doc(domain, app_id))
+    app = get_current_app(domain, app_id)
     new_whitelist = json.loads(request.POST.get('whitelist'))
     app.linked_whitelist = new_whitelist
     app.save()
     return HttpResponse()
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(api_key_auth, name='dispatch')
+@method_decorator(no_conflict, name='dispatch')
+@method_decorator(require_can_edit_apps, name='dispatch')
+class PatchLinkedAppWhitelist(View):
+    urlname = 'patch_linked_app_whitelist'
+
+    def patch(self, request, domain, app_id):
+        app, item = self._get_app_and_item(app_id, domain, request)
+        if not item:
+            return HttpResponseBadRequest()
+
+        if item not in app.linked_whitelist:
+            app.linked_whitelist.append(item)
+            app.save()
+
+        return HttpResponse()
+
+    def delete(self, request, domain, app_id):
+        app, item = self._get_app_and_item(app_id, domain, request)
+        try:
+            app.linked_whitelist.remove(item)
+            app.save()
+        except ValueError:
+            return HttpResponseBadRequest()
+
+        return HttpResponse()
+
+    def _get_app_and_item(self, app_id, domain, request):
+        try:
+            app = get_current_app(domain, app_id)
+        except ResourceNotFound:
+            raise Http404
+        item = request.GET.get('whitelist_item')
+        if not item:
+            item = QueryDict(request.body).get('whitelist_item')
+        return app, item

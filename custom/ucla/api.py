@@ -81,10 +81,10 @@ def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
 
     if len(custom_messages) != 1:
         if not custom_messages:
-            message = u"No message for risk {}, seq {} in domain {} in fixture {}"
+            message = u"No message for case {}, risk {}, seq {} in domain {} in fixture {}"
         else:
-            message = u"Multiple messages for risk {}, seq {} in domain {} in fixture {}"
-        message = message.format(risk_profile, current_message_seq_num, domain, fixture_name)
+            message = u"Multiple messages for case {}, risk {}, seq {} in domain {} in fixture {}"
+        message = message.format(recipient.case_id, risk_profile, current_message_seq_num, domain, fixture_name)
         notify_dimagi_project_admins(domain, message=message)
         return None
 

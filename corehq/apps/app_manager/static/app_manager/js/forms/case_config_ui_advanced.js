@@ -40,7 +40,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
 
         self.descriptionDict = params.propertyDescriptions;
 
-        self.saveButton = hqImport("style/js/main").initSaveButton({
+        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: "You have unchanged case settings",
             save: function () {
                 var actions = JSON.stringify(self.caseConfigViewModel.unwrap());
@@ -131,13 +131,19 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             return modules;
         };
 
-        var questionMap = {};
-        _(self.questions()).each(function (question) {
-            questionMap[question.value] = question;
-        });
+        self.questionMap = {};
+        var _buildQuestionMap = function() {
+            self.questionMap = {};
+            _(self.questions()).each(function (question) {
+                self.questionMap[question.value] = question;
+            });
+        };
+        _buildQuestionMap();
+        self.questions.subscribe(_buildQuestionMap);
+
         self.get_repeat_context = function(path) {
-            if (path && questionMap[path]) {
-                return questionMap[path].repeat;
+            if (path && self.questionMap[path]) {
+                return self.questionMap[path].repeat;
             } else {
                 return undefined;
             }
@@ -151,8 +157,8 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
         };
 
-        self.refreshQuestions = function(url, moduleId, formId, event){
-            return caseConfigUtils.refreshQuestions(self.questions,url, moduleId, formId, event);
+        self.refreshQuestions = function(url, formUniqueId, event){
+            return caseConfigUtils.refreshQuestions(self.questions,url, formUniqueId, event);
         };
 
         self.getAnswers = function (condition) {
@@ -213,7 +219,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                 });
 
                 $('.hq-help-template').each(function () {
-                    hqImport("style/js/main").transformHelpTemplate($(this), true);
+                    hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
                 });
             });
         };
@@ -666,7 +672,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
 
                     _.defer(function () {
                         $('.hq-help-template').each(function () {
-                            hqImport("style/js/main").transformHelpTemplate($(this), true);
+                            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
                         });
                     });
                 });

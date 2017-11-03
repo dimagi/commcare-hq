@@ -49,6 +49,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 3, name: 'Demographics'},
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
+        {id: 6, name: 'Child Beneficiary List'},
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -108,7 +109,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
                 initHierarchy();
 
                 var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
-                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type);
+                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
                 });
                 vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
                 vm.onSelect(selectedLocation, levelOfSelectedLocation);
@@ -151,18 +152,11 @@ function DownloadController($location, locationHierarchy, locationsService, user
         }).join(', ');
     };
 
-    vm.getInfoMessage = function() {
-        if (vm.selectedLevel <= 1) {
-            return null;
-        } else {
-            return "Please choose " + vm.levels[vm.selectedLevel - 2].name + " to download data by " + vm.levels[vm.selectedLevel - 1].name;
-        }
+    vm.showErrorMessage = function () {
+        return vm.selectedIndicator === 6 && selectedLocationIndex() !== 4;
     };
 
     vm.getLocationsForLevel = function(level) {
-        if (vm.selectedLevel === 1) {
-            return [NATIONAL_OPTION];
-        }
         if (level === 0) {
             return locationsCache.root;
         } else {
@@ -213,11 +207,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
             }
         });
         vm.groupByLevels = levels;
-        if (selectedLocationIndex() === -1) {
-            vm.selectedLevel = 1;
-        } else {
-            vm.selectedLevel = selectedLocationIndex() + 1;
-        }
+        vm.selectedLevel = selectedLocationIndex() + 1;
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];

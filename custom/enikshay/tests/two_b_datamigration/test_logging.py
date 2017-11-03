@@ -13,7 +13,7 @@ from corehq.apps.users.models import DeviceIdLastUsed
 from corehq.util.workbook_reading.adapters.xlsx import _XLSXWorkbookAdaptor
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import (
     Command as ImportDRTBCasesCommand,
-    ALL_DRUGS,
+    DRUG_MAP,
 )
 from custom.enikshay.two_b_datamigration.management.commands.drtb_import_history import (
     Command as DRTBImportHistoryCommand
@@ -48,6 +48,7 @@ class ImportDRTBTestMixin(object):
         get_users_path = \
             "custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases.get_users_by_location_id"
         mock_user = MagicMock(
+            domain=self.domain,
             devices=[DeviceIdLastUsed(device_id="drtb-case-import-script")],
             is_demo_user=False,
             user_data={"id_issuer_body": "FOO"},
@@ -58,7 +59,7 @@ class ImportDRTBTestMixin(object):
                 patch(match_phi_path, return_value=(None, None)),\
                 patch(get_users_path, return_value=[mock_user]), \
                 patch(open_any_workbook_path) as open_any_workbook_mock:
-            rows = [[]] + import_rows  # Add headers to the row list
+            rows = [[]] + [[]] + import_rows  # Add headers to the row list
             open_any_workbook_mock.return_value.__enter__.return_value = self._create_workbook(rows)
             with patch.object(ImportDRTBCasesCommand, 'generate_id', return_value="foo"):
                 try:
@@ -105,7 +106,7 @@ class TestLogCreation(SimpleTestCase, ImportDRTBTestMixin):
                 len(result_rows[0].get("case_ids", "").split(",")),
                 # A person, occurrence, episode, and two secondary_owner cases, plus one drug_resistance case for
                 # each drug
-                5 + len(ALL_DRUGS)
+                5 + len(DRUG_MAP)
             )
             self.assertIsNone(result_rows[0]['exception'])
 
@@ -123,25 +124,25 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
             csv_file.seek(0)
             self.assertEqual(output, "case not found\n")
 
-            row_1_case_ids = csv_rows[0]['case_ids'].split(",")
-            for case_id in row_1_case_ids:
+            row_case_ids = csv_rows[0]['case_ids'].split(",")
+            for case_id in row_case_ids:
                 output = DRTBImportHistoryCommand.handle_get_row(case_id, csv_file)
                 csv_file.seek(0)
-                self.assertEqual(output, "row: 1\n")
+                self.assertEqual(output, "row: 2\n")
 
     def test_get_outcome(self):
         with self.drtb_import(IMPORT_ROWS, "mumbai") as (csv_file, csv_rows):
-            output = DRTBImportHistoryCommand.handle_get_outcome("1", csv_file)
+            output = DRTBImportHistoryCommand.handle_get_outcome("2", csv_file)
             csv_file.seek(0)
 
             # Confirm that the outcome contains all the expected case ids
             self.assertNotIn("Traceback", output, "Expected list of case ids, but output was: {}".format(output))
             self.assertEqual(
                 len(output.split()),
-                5 + len(ALL_DRUGS)
+                5 + len(DRUG_MAP)
             )
 
-            output = DRTBImportHistoryCommand.handle_get_outcome("2", csv_file)
+            output = DRTBImportHistoryCommand.handle_get_outcome("3", csv_file)
             csv_file.seek(0)
 
             # Confirm that the outcome contains the exception raised for the row

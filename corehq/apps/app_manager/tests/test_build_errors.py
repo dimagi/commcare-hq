@@ -11,6 +11,14 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 class BuildErrorsTest(SimpleTestCase):
 
+    @staticmethod
+    def _clean_unique_id(errors):
+        for error in errors:
+            if 'form' in error and 'unique_id' in error['form']:
+                del error['form']['unique_id']
+            if 'module' in error and 'unique_id' in error['module']:
+                del error['module']['unique_id']
+
     def test_subcase_errors(self, mock):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json')) as f:
             source = json.load(f)
@@ -31,11 +39,13 @@ class BuildErrorsTest(SimpleTestCase):
             'module': {'name': {'en': "Parent"}, 'id': 0},
             'form': {'id': 0, 'name': {'en': "Register"}},
         }
+        self._clean_unique_id(errors)
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
         form = app.get_module(0).get_form(0)
         errors = form.validate_for_build()
+        self._clean_unique_id(errors)
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
@@ -59,6 +69,7 @@ class BuildErrorsTest(SimpleTestCase):
             'type': 'no forms or case list',
             'module': {'id': 1, 'name': {'en': u'update module'}},
         }
+        self._clean_unique_id(errors)
         self.assertEqual(len(errors), 2)
         self.assertIn(standard_module_error, errors)
         self.assertIn(advanced_module_error, errors)
@@ -73,7 +84,7 @@ class BuildErrorsTest(SimpleTestCase):
 
             app = Application.wrap(source)
             errors = app.validate_app()
-
+            self._clean_unique_id(errors)
             self.assertIn(cycle_error, errors)
 
     def test_case_tile_configuration_errors(self, mock):
@@ -88,6 +99,7 @@ class BuildErrorsTest(SimpleTestCase):
             source = json.load(f)
             app = Application.wrap(source)
             errors = app.validate_app()
+            self._clean_unique_id(errors)
             self.assertIn(case_tile_error, errors)
 
     def test_case_list_form_advanced_module_different_case_config(self, mock):
@@ -109,4 +121,5 @@ class BuildErrorsTest(SimpleTestCase):
         factory.form_requires_case(m1f1)  # only loads a person case and not a house case
 
         errors = factory.app.validate_app()
+        self._clean_unique_id(errors)
         self.assertIn(case_tile_error, errors)

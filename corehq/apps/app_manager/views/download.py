@@ -238,6 +238,19 @@ def download_file(request, domain, app_id, path):
         return RegexURLResolver(
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
+    def create_build_files_if_necessary_handling_conflicts(is_retry=False):
+        try:
+            try:
+                # look for file guaranteed to exist if profile is created
+                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
+            except ResourceNotFound:
+                request.app.create_build_files(save=True, build_profile_id=build_profile)
+                request.app.save()
+        except ResourceConflict:
+            if is_retry:
+                raise
+            create_build_files_if_necessary_handling_conflicts(True)
+
     try:
         assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
@@ -245,16 +258,8 @@ def download_file(request, domain, app_id, path):
             payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
             if build_profile in request.app.build_profiles and build_profile_access:
-                try:
-                    # look for file guaranteed to exist if profile is created
-                    request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
-                except ResourceNotFound:
-                    request.app.create_build_files(save=True, build_profile_id=build_profile)
-                    request.app.save()
-                    payload = request.app.fetch_attachment(full_path)
-                else:
-                    # if profile.xml is found the profile has been built and its a bad request
-                    raise
+                create_build_files_if_necessary_handling_conflicts()
+                payload = request.app.fetch_attachment(full_path)
             else:
                 raise
         if type(payload) is unicode:

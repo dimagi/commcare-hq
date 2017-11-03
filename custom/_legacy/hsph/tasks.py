@@ -4,7 +4,7 @@ from itertools import chain
 from celery.task import periodic_task
 from celery.schedules import crontab
 from django.conf import settings
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.models import Domain

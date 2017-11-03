@@ -188,7 +188,7 @@ class TestConvertBase(TestCase, TestFileMixin):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 @mock.patch(
@@ -231,7 +231,7 @@ class TestConvertMissingAppID(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 @mock.patch(
@@ -301,7 +301,7 @@ class TestForceConvertFormExport(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestForceConvertCaseExport(TestConvertBase):
@@ -361,9 +361,8 @@ class TestForceConvertCaseExport(TestConvertBase):
         self.assertTrue(index > index_dob)
 
 
-
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='my-domain'),
 )
 class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
@@ -511,7 +510,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
@@ -742,13 +741,6 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
 
         expected_paths = [
             ([PathNode(name='xmlns')], None, True),
-            ([PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')], None, True),
-            ([PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')], None, True),
-            (
-                [PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')],
-                CASE_NAME_TRANSFORM,
-                True
-            ),
         ]
         for path, transform, selected in expected_paths:
             index, column = table.get_column(path, 'ExportItem', transform)
@@ -777,7 +769,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
@@ -843,7 +835,7 @@ class TestConversionOrdering(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(
@@ -902,7 +894,7 @@ class TestSingleNodeRepeatConversion(TestConvertBase):
 
 
 @mock.patch(
-    'corehq.apps.export.models.new.get_request',
+    'corehq.apps.export.models.new.get_request_domain',
     return_value=MockRequest(domain='convert-domain'),
 )
 @mock.patch(

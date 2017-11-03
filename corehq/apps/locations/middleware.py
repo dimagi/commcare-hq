@@ -41,7 +41,7 @@ class LocationAccessMiddleware(MiddlewareMixin):
             request.can_access_all_locations = True
         else:
             request.can_access_all_locations = False
-            if not is_location_safe(view_fn, view_args, view_kwargs):
+            if not is_location_safe(view_fn, request, view_args, view_kwargs):
                 return location_restricted_response(request)
             elif not user.get_sql_location(domain):
                 return no_permissions(request, message=RESTRICTED_USER_UNASSIGNED_MSG)

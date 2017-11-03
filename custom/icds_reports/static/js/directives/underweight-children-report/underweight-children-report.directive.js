@@ -13,15 +13,15 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.label = "Prevalence of Underweight (Weight-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/underweight_children/map', label: 'Map'},
-        'chart': {route: '/underweight_children/chart', label: 'Chart'},
+        'map': {route: '/underweight_children/map', label: 'Map View'},
+        'chart': {route: '/underweight_children/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = [];
@@ -29,6 +29,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         info: 'Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.',
     };
     vm.message = storageService.getKey('message') || false;
+
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -51,24 +52,35 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var underweight = row ? d3.format(".0%")((row.total - (row.severely_underweight + row.moderately_underweight + row.normal)) / (row.total || 1)) : "N/A";
         var severely_underweight = row ? d3.format(".0%")(row.severely_underweight / (row.total || 1)) : 'N/A';
         var moderately_underweight = row ? d3.format(".0%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
         var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>% Underweight: <strong>' + underweight + '</strong></div>' +
             '<div>% Severely Underweight: <strong>' + severely_underweight + '</strong></div>' +
             '<div>% Moderately Underweight: <strong>' + moderately_underweight +'</strong></div>' +
             '<div>% Normal: <strong>' + normal + '</strong></div>';
     };
 
     vm.loadData = function () {
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
+        }
+
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector';
+            vm.steps['map'].label = loc_type + ' View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
         }
 
         vm.myPromise = maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
@@ -77,10 +89,18 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
-                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x;});
+                vm.chartOptions.chart.forceY = [
+                    0,
+                    Math.ceil(d3.max(vm.chartData, function(line) {
+                        return d3.max(line.values, function(d) {
+                            return d.y;
+                        });
+                    }) * 100) / 100 + 0.01,
+                ];
             }
         });
     };
@@ -155,26 +175,32 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 },
                 axisLabelDistance: -100,
             },
-
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(".0%")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
             },
+            forceY: [0],
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var findValue = function (values, date) {
+                    var findValue = function(values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(".2%")(day['y']);
+                        return day;
                     };
 
+                    var normal = findValue(vm.chartData[0].values, d.value).y;
+                    var moderately = findValue(vm.chartData[1].values, d.value).y;
+                    var severely = findValue(vm.chartData[2].values, d.value).y;
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children moderately underweight: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children severely underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children normal: <strong>" + d3.format(".2%")(normal) + "</strong></p>";
+                    tooltip_content += "<p>% children moderately underweight: <strong>" + d3.format(".2%")(moderately) + "</strong></p>";
+                    tooltip_content += "<p>% children severely underweight: <strong>" + d3.format(".2%")(severely) + "</strong></p>";
+                    tooltip_content += "<p>% underweight: <strong>" + d3.format(".2%")(1 - (normal + moderately + severely)) + "</strong></p>";
 
                     return tooltip_content;
                 });
@@ -183,7 +209,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i>',
+            html: '<i class="fa fa-info-circle"></i> Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+            + 'Children who are moderately or severely underweight have a higher risk of mortality.',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -192,8 +219,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         },
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

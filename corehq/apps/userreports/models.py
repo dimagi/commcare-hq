@@ -87,6 +87,7 @@ class DataSourceBuildInformation(DocumentSchema):
     # same as previous attributes but used for rebuilding tables in place
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
+    rebuilt_asynchronously = BooleanProperty(default=False)
 
 
 class DataSourceMeta(DocumentSchema):
@@ -348,6 +349,27 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         es_index_settings = self.es_index_settings.to_json()
         es_index_settings.pop('doc_type')
         return {"settings": es_index_settings}
+
+    def get_case_type_or_xmlns_filter(self):
+        def _get_property_value(config_filter, prop_name):
+            if (config_filter.get('type') != 'boolean_expression'
+                    or config_filter['operator'] != 'eq'):
+                return None
+            expression = config_filter['expression']
+            if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
+                return config_filter['property_value']
+            return None
+
+        if self.referenced_doc_type == 'CommCareCase':
+            prop_value = _get_property_value(self.configured_filter, 'type')
+            if prop_value:
+                return prop_value
+        elif self.referenced_doc_type == 'XFormInstance':
+            prop_value = _get_property_value(self.configured_filter, 'xmlns')
+            if prop_value:
+                return prop_value
+
+        return None
 
 
 class ReportMeta(DocumentSchema):
@@ -643,9 +665,9 @@ class StaticReportConfiguration(JsonObject):
         return mapping
 
     @classmethod
-    def all(cls):
+    def all(cls, ignore_server_environment=False):
         for wrapped, path in StaticReportConfiguration._all():
-            if (wrapped.server_environment and
+            if (not ignore_server_environment and wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 
@@ -784,9 +806,16 @@ class AsyncIndicator(models.Model):
                 if config_ids - current_config_ids:
                     new_config_ids = sorted(list(current_config_ids.union(config_ids)))
                     indicator.indicator_config_ids = new_config_ids
+                    indicator.unsuccessful_attempts = 0
                     indicator.save()
 
         return indicator
+
+    def update_failure(self, to_remove):
+        self.refresh_from_db(fields=['indicator_config_ids'])
+        new_indicators = set(self.indicator_config_ids) - set(to_remove)
+        self.indicator_config_ids = sorted(list(new_indicators))
+        self.unsuccessful_attempts += 1
 
 
 def get_datasource_config(config_id, domain):

@@ -2,13 +2,16 @@
 
 import json
 import os
+
 from mock import patch
 from collections import namedtuple
-from datetime import datetime
+from datetime import date, datetime
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import flag_enabled
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.domain.models import Domain
+from corehq.util.test_utils import flag_enabled, capture_log_output
 from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
@@ -16,17 +19,22 @@ from custom.enikshay.const import (
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
     ENROLLED_IN_PRIVATE,
     PERSON_CASE_2B_VERSION,
-)
+    REAL_DATASET_PROPERTY_VALUE)
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
+from custom.enikshay.integrations.nikshay.field_mappings import health_establishment_sector
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
     NikshayHIVTestRepeater,
     NikshayTreatmentOutcomeRepeater,
     NikshayFollowupRepeater,
     NikshayRegisterPrivatePatientRepeater,
+    NikshayHealthEstablishmentRepeater,
 )
-from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
-
+from custom.enikshay.tests.utils import (
+    ENikshayCaseStructureMixin,
+    ENikshayLocationStructureMixin,
+    setup_enikshay_locations,
+)
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
     NikshayTreatmentOutcomePayload,
@@ -34,6 +42,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayFollowupPayloadGenerator,
     NikshayRegisterPrivatePatientPayloadGenerator,
     ENIKSHAY_ID,
+    NikshayHealthEstablishmentPayloadGenerator,
 )
 from custom.enikshay.case_utils import update_case
 
@@ -44,7 +53,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"
 
-MockNikshayRegisterPrivatePatientRepeater = namedtuple('MockRepeater', 'url operation')
+MockNikshayRegisterPrivatePatientRepeater = namedtuple('MockRepeater', 'url operation verify')
 MockNikshayRegisterPrivatePatientRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
 
 
@@ -79,6 +88,29 @@ SUCCESSFUL_SOAP_RESPONSE = (
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
     '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
+
+DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
+
+SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?>'
+    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+        '<soap:Body>'
+            '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
+                '<HE_RegistrationResult>'
+                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" '
+                            'xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
+                        '<NewDataSet xmlns="">'
+                            '<HE_DETAILS diffgr:id="HE_DETAILS1" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
+                                '<Message>HE_ID: {dummy_id}</Message>'
+                            '</HE_DETAILS>'
+                        '</NewDataSet>'
+                    '</diffgr:diffgram>'
+                '</HE_RegistrationResult>'
+            '</HE_RegistrationResponse>'
+        '</soap:Body>'
+    '</soap:Envelope>'
+).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID)
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
@@ -134,6 +166,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
     def set_up_to_use_2b_version(self):
         update_case(self.domain, self.person_id, {
             'case_version': PERSON_CASE_2B_VERSION,
+            'dataset': REAL_DATASET_PROPERTY_VALUE,
         })
 
         update_case(self.domain, self.occurrence_id, {
@@ -185,12 +218,16 @@ class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(0, len(self.repeat_records().all()))
 
         person = self.create_case(self.person)[0]
-        with self.assertRaisesMessage(
-                NikshayLocationNotFound,
-                "Location with id {location_id} not found. This is the owner for person with "
-                "id: {person_id}".format(location_id=person.owner_id, person_id=self.person_id)
-        ):
+        with capture_log_output('notify') as logoutput:
             self._create_nikshay_enabled_case()
+        self.assertIn(NikshayLocationNotFound.__name__, logoutput.get_output())
+        expected_message = (
+            "Location with id {location_id} not found. "
+            "This is the owner for person with id: {person_id}".format(
+                location_id=person.owner_id, person_id=self.person_id)
+        )
+        self.assertIn(expected_message, logoutput.get_output())
+
         # nikshay enabled, should register a repeat record
         self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case()
@@ -270,7 +307,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
 
         # From Episode
         self.assertEqual(payload['sitedetail'], 2)
-        self.assertEqual(payload['Ptype'], '6')
+        self.assertEqual(payload['Ptype'], '4')
         self.assertEqual(payload['poccupation'], 4)
         self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
@@ -288,6 +325,22 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['poccupation'], 4)
+
+    def test_age(self):
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {'age': '2.6'})
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        payload = (json.loads(
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['page'], '2')
+
+        update_case(self.domain, self.person_id, {'age': '0.6'})
+        episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        payload = (json.loads(
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(None, episode_case))
+        )
+        self.assertEqual(payload['page'], '1')
 
     def test_username_password(self):
         episode_case = self._create_nikshay_enabled_case()
@@ -428,6 +481,10 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
     def test_trigger(self):
         # nikshay not enabled
         self.create_case(self.episode)
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
@@ -452,6 +509,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self.phi.metadata['is_test'] = 'yes'
         self.phi.save()
         self.create_case(self.episode)
+        self._create_nikshay_enabled_case()
         self._create_nikshay_registered_case()
         update_case(self.domain, self.person_id, {
             "hiv_status": "unknown",
@@ -475,6 +533,10 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self.phi.metadata['is_test'] = 'no'
         self.phi.save()
         self.create_case(self.episode)
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
         self._create_nikshay_registered_case()
         update_case(self.domain, self.person_id, {
             "hiv_status": "unknown",
@@ -752,19 +814,10 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
-
-        # skip if episode case not nikshay registered
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_registered": 'true'})
-
-        # skip if episode case has no nikshay_id
-        update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
-        self.assertFalse(check_repeat_record_added())
-
-        update_case(self.domain, self.episode_id, {"nikshay_id": DUMMY_NIKSHAY_ID})
-
+        self._create_nikshay_enabled_case()
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
         update_case(self.domain, self.test_id, {"date_reported": datetime.now()})
         self.assertTrue(check_repeat_record_added())
 
@@ -827,6 +880,10 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.dmc.metadata['is_test'] = 'yes'
         self.dmc.save()
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
+        self._create_nikshay_enabled_case()
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
         update_case(self.domain, self.test_id, {
@@ -838,6 +895,10 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.dmc.metadata['is_test'] = 'no'
         self.dmc.save()
         self.factory.create_or_update_cases([self.lab_referral, self.episode])
+        update_case(self.domain, self.person_id, {
+            "owner_id": self.phi.location_id,
+        })
+        self._create_nikshay_enabled_case()
         self._create_nikshay_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
         update_case(self.domain, self.test_id, {
@@ -942,7 +1003,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
     def test_result_grade(self):
         update_case(self.domain, self.test_id, {
             "purpose_of_testing": "diagnostic",
-            "result_grade": "1+"
+            "result_grade": "1plus"
         })
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         payload = (json.loads(
@@ -960,6 +1021,15 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
         )
         self.assertEqual(payload['SmearResult'], 1)
+
+        update_case(self.domain, self.test_id, {
+            "max_bacilli_count": '10'
+        })
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        payload = (json.loads(
+            NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case))
+        )
+        self.assertEqual(payload['SmearResult'], 9)
 
     def test_mandatory_field_interval_id(self):
         update_case(self.domain, self.test_id, {
@@ -1015,36 +1085,49 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
 
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
-                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
-                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}, "
+                "Max Bacilli Count: {max_bacilli_count}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty",
+                    max_bacilli_count=None
+                )
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "10"})
+        update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "a"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
-                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
-                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty")
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}, "
+                "Max Bacilli Count: {max_bacilli_count}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="scanty",
+                    max_bacilli_count="a"
+                )
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        update_case(self.domain, self.test_id, {"result_grade": "5+"})
+        update_case(self.domain, self.test_id, {"result_grade": "5plus"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
 
         with self.assertRaisesMessage(
                 NikshayRequiredValueMissing,
-                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}".format(
-                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5+")
+                "Mandatory value missing in one of the following LabSerialNo: {lsn}, ResultGrade: {rg}, "
+                "Max Bacilli Count: {max_bacilli_count}".format(
+                    lsn=test_case.dynamic_case_properties().get('lab_serial_number'), rg="5plus",
+                    max_bacilli_count=""
+                )
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
-        update_case(self.domain, self.test_id, {"result_grade": "1+"})
+        update_case(self.domain, self.test_id, {"result_grade": "1plus"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
         update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "1"})
+        test_case = CaseAccessors(self.domain).get_case(self.test_id)
+        NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+        update_case(self.domain, self.test_id, {"result_grade": "scanty", "max_bacilli_count": "10"})
         test_case = CaseAccessors(self.domain).get_case(self.test_id)
         NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
@@ -1118,12 +1201,16 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self.assertEqual(0, len(self.repeat_records().all()))
         person = self.create_case(self.person)[0]
         update_case(self.domain, self.person_id, {ENROLLED_IN_PRIVATE: "true"})
-        with self.assertRaisesMessage(
-                NikshayLocationNotFound,
-                "Location with id {location_id} not found. This is the owner for person with "
-                "id: {person_id}".format(location_id=person.owner_id, person_id=self.person_id)
-        ):
+        with capture_log_output('notify') as logoutput:
             self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        self.assertIn(NikshayLocationNotFound.__name__, logoutput.get_output())
+        expected_message = (
+            "Location with id {location_id} not found. "
+            "This is the owner for person with id: {person_id}".format(
+                location_id=person.owner_id, person_id=self.person_id)
+        )
+        self.assertIn(expected_message, logoutput.get_output())
+
         # nikshay enabled, should register a repeat record
         self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
@@ -1218,17 +1305,22 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
                 url=WSDL_URL,
-                operation='InsertHFIDPatient_UATBC')
+                operation='InsertHFIDPatient_UATBC',
+                verify=False,
+            )
         )
-
-        payload_generator.handle_success(
-            MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE),
-            self.cases[self.episode_id],
-            repeat_record,
-        )
+        mock_date = date(2016, 9, 8)
+        with patch('custom.enikshay.integrations.nikshay.repeater_generator.datetime') as mock_datetime:
+            mock_datetime.date.today.return_value = mock_date
+            payload_generator.handle_success(
+                MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE),
+                self.cases[self.episode_id],
+                repeat_record,
+            )
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'private_nikshay_registered', 'true')
         self._assert_case_property_equal(updated_episode_case, 'private_nikshay_error', '')
+        self._assert_case_property_equal(updated_episode_case, 'date_private_nikshay_notification', str(mock_date))
         nikshay_id = '-'.join([self.pcp.metadata['nikshay_code'], nikshay_response_id])
         self._assert_case_property_equal(updated_episode_case, 'nikshay_id', nikshay_id)
         self.assertEqual(updated_episode_case.external_id, nikshay_id)
@@ -1240,7 +1332,9 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
             MockNikshayRegisterPrivatePatientRepeater(
                 url=WSDL_URL,
-                operation='InsertHFIDPatient_UATBC')
+                operation='InsertHFIDPatient_UATBC',
+                verify=False,
+            )
         )
 
         payload_generator.handle_failure(
@@ -1253,3 +1347,129 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         self._assert_case_property_equal(updated_episode_case, 'private_nikshay_error', 'Invalid data format')
         self._assert_case_property_equal(updated_episode_case, 'nikshay_id', None)
         self.assertEqual(updated_episode_case.external_id, None)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
+
+    def setUp(self):
+        super(TestNikshayHealthEstablishmentRepeater, self).setUp()
+        self.domain = 'domain'
+        self.project = Domain(name=self.domain)
+        self.project.save()
+
+        self.repeater = NikshayHealthEstablishmentRepeater(
+            domain=self.domain,
+            url=WSDL_URL,
+            username='test-user',
+            operation='HE_Registration'
+        )
+        self.repeater.save()
+
+    def test_not_available_for_domain(self):
+        self.assertFalse(NikshayHealthEstablishmentRepeater.available_for_domain(self.domain))
+
+    @flag_enabled('NIKSHAY_INTEGRATION')
+    def test_available_for_domain(self):
+        self.assertTrue(NikshayHealthEstablishmentRepeater.available_for_domain(self.domain))
+
+    def test_trigger(self):
+        self.assertEqual(0, len(self.repeat_records().all()))
+        # on create
+        _, locations = setup_enikshay_locations(self.domain)
+        # all locations have been created with nikshay code so nothing should get queued here
+        self.assertEqual(0, len(self.repeat_records().all()))
+        # on update
+        self.pcp = locations['PCP']
+        self.pcp.name = "Nikshay PCP"
+        self.pcp.metadata.update({
+            'email_address': 'pcp@email.com',
+            # clean nikshay code to have trigger
+            'nikshay_code': '',
+        })
+        self.pcp.save()
+        self.assertTrue(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
+
+        # update on test location
+        delete_all_repeat_records()
+        self.pcp.metadata['is_test'] = 'yes'
+        self.pcp.save()
+        self.assertFalse(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, ENIKSHAY_PRIVATE_API_PASSWORD="123",
+                   ENIKSHAY_PRIVATE_API_USERS={'nikshay_code': 'test-mh14'})
+class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestNikshayHealthEstablishmentPayloadGenerator, self).setUp()
+        self.domain = 'domain'
+        self.project = Domain(name=self.domain)
+        self.project.save()
+
+        self.repeater = NikshayHealthEstablishmentRepeater(
+            domain=self.domain,
+            url=WSDL_URL,
+            username='test-user',
+            operation='HE_Registration'
+        )
+        self.repeater.save()
+
+    def test_payload_properties(self):
+        _, locations = setup_enikshay_locations(self.domain)
+
+        self.pcp = locations['PCP']
+        self.pcp.name = "Nikshay PCP"
+        self.pcp.metadata.update({
+            'establishment_type': 'lab',
+            'sector': 'public',
+            'registration_number': '123',
+            'contact_name': 'PCP contact person name',
+            'contact_designation': 'Lab Manager',
+            'phone_number': '01127477587',
+            'mobile_number': '9818710071',
+            'address': 'PCP Address',
+            'address_pincode': '110088',
+            'email_address': 'pcp@email.com',
+            'tbu_code': '123',
+        })
+        self.pcp.save()
+
+        payload = NikshayHealthEstablishmentPayloadGenerator(None).get_payload(None, self.pcp)
+        self.assertEqual(payload['ESTABLISHMENT_TYPE'], 'L')
+        self.assertEqual(payload['SECTOR'], health_establishment_sector.get(self.pcp.metadata['sector'], ''))
+        self.assertEqual(payload['ESTABLISHMENT_NAME'], self.pcp.name)
+        self.assertEqual(payload['MCI_HR_NO'], self.pcp.metadata['registration_number'])
+        self.assertEqual(payload['CONTACT_PNAME'], self.pcp.metadata['contact_name'])
+        self.assertEqual(payload['CONTACT_PDESIGNATION'], self.pcp.metadata['contact_designation'])
+        self.assertEqual(payload['TELEPHONE_NO'], self.pcp.metadata['phone_number'])
+        self.assertEqual(payload['MOBILE_NO'], self.pcp.metadata['mobile_number'])
+        self.assertEqual(payload['COMPLETE_ADDRESS'], self.pcp.metadata['address'])
+        self.assertEqual(payload['PINCODE'], self.pcp.metadata['address_pincode'])
+        self.assertEqual(payload['EMAILID'], self.pcp.metadata['email_address'])
+        self.assertEqual(payload['STATE_CODE'], locations['STO'].metadata['nikshay_code'])
+        self.assertEqual(payload['DISTRICT_CODE'], locations['DTO'].metadata['nikshay_code'])
+        self.assertEqual(payload['TBU_CODE'], self.pcp.metadata.get('tbu_code', ''))
+        self.assertEqual(payload['MUST_CREATE_NEW'], 'N')
+        self.assertEqual(payload['USER_ID'], 'test-mh14')
+        self.assertEqual(payload['PASSWORD'], '123')
+        self.assertEqual(payload['Source'], ENIKSHAY_ID)
+
+    def test_handle_success(self):
+        _, locations = setup_enikshay_locations(self.domain)
+        payload_generator = NikshayHealthEstablishmentPayloadGenerator(None)
+        self.pcp = locations["PCP"]
+        self.pcp.metadata['nikshay_code'] = ''
+        # save with no nikshay code to add a repeat record
+        self.pcp.save()
+        repeat_record = [record for record in RepeatRecord.all() if record.payload_id == self.pcp.location_id][0]
+
+        self.pcp.metadata['nikshay_code'] = 'old_id_value'
+
+        payload_generator.handle_success(
+            MockSoapResponse(200, SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE),
+            self.pcp,
+            repeat_record,
+        )
+        updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
+        self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)
+        self.assertEqual(updated_location.metadata['old_nikshay_code'], 'old_id_value')

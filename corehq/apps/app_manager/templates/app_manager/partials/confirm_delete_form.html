@@ -2,13 +2,13 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-<a href="#form_confirm_delete_{{ module.id }}_{{ form.id }}"
+<a href="#form_confirm_delete_{{ module.unique_id }}_{{ form.unique_id }}"
    class="appnav-delete"
    data-toggle="modal">
   <i class="fa fa-trash-o"></i>
 </a>
 
-<div id="form_confirm_delete_{{ module.id }}_{{ form.id }}" class="modal fade" tabindex="-1" role="dialog">
+<div id="form_confirm_delete_{{ module.unique_id }}_{{ form.unique_id }}" class="modal fade" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">

@@ -41,7 +41,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     require_can_edit_data,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.style.decorators import use_typeahead, use_angular_js
+from corehq.apps.hqwebapp.decorators import use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface
@@ -577,7 +577,7 @@ class XFormManagementStatusView(DataInterfaceSection):
             'title': mode.status_page_title,
             'error_text': mode.error_text,
         })
-        return render(request, 'style/soil_status_full.html', context)
+        return render(request, 'hqwebapp/soil_status_full.html', context)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)

@@ -1,5 +1,5 @@
-from django.urls import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
+from django.urls import reverse
 from tastypie import fields
 from tastypie.authentication import Authentication
 from tastypie.bundle import Bundle
@@ -24,14 +24,14 @@ from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist, get_obj
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_all_built_app_results
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.groups.models import Group
-from corehq.motech.repeaters.models import Repeater
-from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
+from corehq.motech.repeaters.models import Repeater
+from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
 from couchforms.models import doc_types
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
@@ -366,14 +366,53 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['post']
 
 
-class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return get_apps_in_domain(domain, include_remote=False)
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
+
+    class Meta(CustomResourceMeta):
+        authentication = LoginAndDomainAuthentication()
+        object_class = Application
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'application'
+
+
+class ApplicationResource(BaseApplicationResource):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
     version = fields.IntegerField(attribute='version')
+    is_released = fields.BooleanField(attribute='is_released', null=True)
+    built_on = fields.DateTimeField(attribute='built_on', null=True)
+    build_comment = fields.CharField(attribute='build_comment', null=True)
+    built_from_app_id = fields.CharField(attribute='copy_of', null=True)
     modules = fields.ListField()
+    versions = fields.ListField(use_in='detail')
 
-    def dehydrate_module(self, app, module, langs):
+    @staticmethod
+    def dehydrate_versions(bundle):
+        app = bundle.obj
+        if app.copy_of:
+            return []
+        results = get_all_built_app_results(app.domain, app.get_id)
+        return [
+            {
+                'id': result['value']['_id'],
+                'built_on': result['value']['built_on'],
+                'build_comment': result['value']['build_comment'],
+                'is_released': result['value']['is_released'],
+                'version': result['value']['version'],
+            }
+            for result in results
+        ]
+
+    @staticmethod
+    def dehydrate_module(app, module, langs):
         """
         Convert a Module object to a JValue representation
         with just the good parts.
@@ -424,19 +463,6 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
             app_data.update(bundle.obj._doc)
             app_data.update(bundle.data)
             return app_data
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        return get_apps_in_domain(domain, include_remote=False)
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
-
-    class Meta(CustomResourceMeta):
-        authentication = LoginAndDomainAuthentication()
-        object_class = Application
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'application'
 
 
 class HOPECaseResource(CommCareCaseResource):

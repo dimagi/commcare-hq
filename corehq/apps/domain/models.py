@@ -47,6 +47,8 @@ from .exceptions import InactiveTransferDomainException, NameUnavailableExceptio
 
 from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
 
+from .project_access.models import SuperuserProjectEntryRecord  # noqa
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
