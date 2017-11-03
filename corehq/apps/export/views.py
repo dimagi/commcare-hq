@@ -2250,7 +2250,7 @@ class GenericDownloadNewExportMixin(object):
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
     mobile_user_and_group_slugs_regex = re.compile(
-        '(emw=|case_list_filter=|emw=){1}([^&]*)(&){0,1}'
+        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
     )
 
     def _get_download_task(self, in_data):
