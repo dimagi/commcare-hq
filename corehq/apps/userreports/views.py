@@ -28,6 +28,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -658,6 +659,7 @@ class ConfigureReport(ReportBuilderView):
             'preview_datasource_id': self._get_preview_data_source(),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
         }
 
     def _handle_exception(self, response, exception):

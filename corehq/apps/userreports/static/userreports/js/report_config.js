@@ -92,6 +92,8 @@ var reportBuilder = function () {  // eslint-disable-line
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
 
+        self.dateRangeOptions = config['dateRangeOptions'];
+
         self.existingReportId = config['existingReport'];
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
