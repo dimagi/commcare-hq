@@ -17,6 +17,7 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     MissingAggregation,
 )
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_users,
@@ -144,6 +145,7 @@ class CompletionOrSubmissionTimeMixin(object):
         return value == 'submission'
 
 
+@location_safe
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
     name = ugettext_lazy('Case Activity')
@@ -625,6 +627,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return self._header
 
 
+@location_safe
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin,
                               CompletionOrSubmissionTimeMixin):
@@ -718,7 +721,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     @memoized
     def _form_counts(self):
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        if EMWF.show_all_mobile_workers(mobile_user_and_group_slugs):
+        if (EMWF.show_all_mobile_workers(mobile_user_and_group_slugs)
+                and self.request.can_access_all_locations):
             user_ids = []
         else:
             user_ids = [simplified_user.user_id for simplified_user in self.selected_simplified_users]
@@ -732,6 +736,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
         )
 
 
+@location_safe
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_lazy("Daily Form Activity")
@@ -943,6 +948,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         return context
 
 
+@location_safe
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
     name = ugettext_lazy("Form Completion Time")
@@ -1054,6 +1060,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
         return rows
 
 
+@location_safe
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase,
                                              MultiFormDrilldownMixin, DatespanMixin):
     name = ugettext_noop("Form Completion vs. Submission Trends")
@@ -1200,6 +1207,7 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     report_template_path = "reports/async/basic.html"
 
 
+@location_safe
 class WorkerActivityTimes(WorkerMonitoringChartBase,
     MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
     name = ugettext_noop("Worker Activity Times")
