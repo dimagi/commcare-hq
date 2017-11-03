@@ -3,7 +3,7 @@
 <!-- Template for a Table (i.e. sheet) in the Export page -->
 <script type="text/html" id="ko-table-configuration-template">
     <div>
-        <legend data-bind="visible: table.isVisible()">
+        <legend data-bind="visible: table.isVisible(), visible: table.label() !== 'Case History'">
             <span>
                 <input type="checkbox" data-bind="checked: table.selected" />
             </span>
