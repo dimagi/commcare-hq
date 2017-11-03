@@ -21,6 +21,7 @@ Example usage:
     {some stack trace}
 
 """
+from __future__ import absolute_import
 import csv
 
 from django.core.management import BaseCommand
