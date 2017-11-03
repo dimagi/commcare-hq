@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
@@ -7,6 +8,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.commtrack.models import SQLLocation
@@ -312,8 +314,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user=None):
-        # passing in request_user makes this method location-safe
+    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
+        # The queryset returned by this method is location-safe
         can_access_all_locations = request_user.has_permission(domain, 'access_all_locations')
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
@@ -331,22 +333,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         q = user_es.UserES().domain(domain)
         if not can_access_all_locations:
-            # Make sure the passed in locations are accessible
-            location_ids = (SQLLocation.active_objects
-                            .get_locations(location_ids)
-                            .accessible_to_user(domain, request_user)
-                            .location_ids())
-            if HQUserType.REGISTERED in user_types:
-                all_accessible_loc_ids = (SQLLocation.active_objects
-                                          .accessible_to_user(domain, request_user)
-                                          .location_ids())
-                q = q.location(all_accessible_loc_ids)
-                return q.OR(
-                    filters.term("_id", user_ids),
-                    user_es.location(location_ids),
-                )
-            else:
-                return q.location(location_ids),
+            cls._verify_users_are_accessible(domain, request_user, user_ids)
+            return q.OR(
+                filters.term("_id", user_ids),
+                user_es.location(list(SQLLocation.active_objects
+                                      .get_locations_and_children(location_ids)
+                                      .accessible_to_user(domain, request_user)
+                                      .location_ids())),
+            )
         elif HQUserType.REGISTERED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
@@ -368,6 +362,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 )
             else:
                 return q.filter(id_filter)
+
+    @staticmethod
+    def _verify_users_are_accessible(domain, request_user, user_ids):
+        # This function would be very slow if called with many user ids
+        for user_id in user_ids:
+            other_user = CommCareUser.get(user_id)
+            if not user_can_access_other_user(domain, request_user, other_user):
+                raise PermissionDenied("One or more users are not accessible")
 
     @property
     def options(self):

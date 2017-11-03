@@ -683,7 +683,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
     @property
     def rows(self):
-        if util.is_query_too_big(self.domain, self.request.GET.getlist(EMWF.slug)):
+        if util.is_query_too_big(
+            self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user,
+        ):
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
@@ -1439,14 +1441,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             user_query = EMWF.user_es_query(
-                self.domain, self.request.GET.getlist(EMWF.slug)
+                self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
             )
-            if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
-                accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                    self.request.domain,
-                    self.request.couch_user)
-                )
-                user_query = user_query.location(accessible_location_ids)
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
@@ -1805,4 +1801,5 @@ def _get_selected_users(domain, request):
     return util.get_simplified_users(EMWF.user_es_query(
         domain,
         request.GET.getlist(EMWF.slug),
+        request.couch_user,
     ))

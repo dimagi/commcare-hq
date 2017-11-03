@@ -62,7 +62,10 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         return datespan_from_beginning(self.domain_object, self.timezone)
 
     def _get_users_filter(self, mobile_user_and_group_slugs):
-        user_ids = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).values_list('_id', flat=True)
+        user_ids = (EMWF.user_es_query(self.domain,
+                                       mobile_user_and_group_slugs,
+                                       self.request.couch_user)
+                    .values_list('_id', flat=True))
         return form_es.user_id(user_ids)
 
     @staticmethod

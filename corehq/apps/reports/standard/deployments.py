@@ -172,6 +172,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
+            self.request.couch_user,
         )
         user_query = (user_query
                       .set_sorting_block(self.get_sorting_block()))
