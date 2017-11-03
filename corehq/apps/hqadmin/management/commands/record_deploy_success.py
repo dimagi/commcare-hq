@@ -140,7 +140,7 @@ class Command(BaseCommand):
                 send_HTML_email(subject=subject,
                                 recipient=recipient,
                                 html_content=message_body)
-            except Exception:
+            except AttributeError:
                 pass
 
         if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
