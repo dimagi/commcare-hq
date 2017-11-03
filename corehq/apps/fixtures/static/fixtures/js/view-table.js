@@ -5,6 +5,7 @@ define([
     "reports/js/standard_hq_report",
     "reports/js/config.dataTables.bootstrap",
     "reports/js/filters",
+    "datatables.fixedColumns",
 ], function(
     $,
     django,
