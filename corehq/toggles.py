@@ -1349,5 +1349,5 @@ NEW_MULTIMEDIA_UPLOADER = StaticToggle(
     'new_multimedia_uploader',
     'Display new multimedia uploader',
     TAG_INTERNAL,
-    [NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
