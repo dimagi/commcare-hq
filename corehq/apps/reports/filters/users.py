@@ -312,7 +312,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def user_es_query(cls, domain, mobile_user_and_group_slugs):
+    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user=None):
+        # passing in request_user makes this method location-safe
+        can_access_all_locations = request_user.has_permission(domain, 'access_all_locations')
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
@@ -328,7 +330,24 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.demo_users())
 
         q = user_es.UserES().domain(domain)
-        if HQUserType.REGISTERED in user_types:
+        if not can_access_all_locations:
+            # Make sure the passed in locations are accessible
+            location_ids = (SQLLocation.active_objects
+                            .get_locations(location_ids)
+                            .accessible_to_user(domain, request_user)
+                            .location_ids())
+            if HQUserType.REGISTERED in user_types:
+                all_accessible_loc_ids = (SQLLocation.active_objects
+                                          .accessible_to_user(domain, request_user)
+                                          .location_ids())
+                q = q.location(all_accessible_loc_ids)
+                return q.OR(
+                    filters.term("_id", user_ids),
+                    user_es.location(location_ids),
+                )
+            else:
+                return q.location(location_ids),
+        elif HQUserType.REGISTERED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
             return q.OR(*user_type_filters)
