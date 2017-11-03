@@ -163,7 +163,7 @@ class TestDetermineAuthType(SimpleTestCase):
         self.assertEqual('basic', determine_authtype_from_request(self._mock_request()))
 
     def test_override_default(self):
-        self.assertEqual('digest', determine_authtype_from_request(self._mock_request(), default='digest'))
+        self.assertEqual('digest', determine_authtype_from_request(self._mock_request()))
 
     def test_digest_header_overrides_default(self):
         self.assertEqual('digest',
