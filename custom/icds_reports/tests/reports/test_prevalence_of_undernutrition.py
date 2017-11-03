@@ -72,21 +72,21 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st2",
-                        "percent": 14.648729446935725
+                        "percent": 19.06614785992218
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 15.857605177993527
+                        "percent": 20.63157894736842
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st2",
-                        "percent": 14.648729446935725
+                        "percent": 19.06614785992218
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 15.857605177993527
+                        "percent": 20.63157894736842
                     }
                 ],
                 "chart_data": [
@@ -106,14 +106,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.4976228209191759,
+                                "y": 0.6144814090019569,
                                 "x": 1491004800000,
-                                "all": 6310
+                                "all": 5110
                             },
                             {
-                                "y": 0.5897435897435898,
+                                "y": 0.7674418604651163,
                                 "x": 1493596800000,
-                                "all": 6435
+                                "all": 4945
                             }
                         ],
                         "key": "% Normal"
@@ -134,14 +134,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.1434231378763867,
+                                "y": 0.1771037181996086,
                                 "x": 1491004800000,
-                                "all": 6310
+                                "all": 5110
                             },
                             {
-                                "y": 0.1351981351981352,
+                                "y": 0.17593528816986856,
                                 "x": 1493596800000,
-                                "all": 6435
+                                "all": 4945
                             }
                         ],
                         "key": "% Moderately Underweight (-2 SD)"
@@ -162,14 +162,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.011885895404120444,
+                                "y": 0.014677103718199608,
                                 "x": 1491004800000,
-                                "all": 6310
+                                "all": 5110
                             },
                             {
-                                "y": 0.017094017094017096,
+                                "y": 0.022244691607684528,
                                 "x": 1493596800000,
-                                "all": 6435
+                                "all": 4945
                             }
                         ],
                         "key": "% Severely Underweight (-3 SD) "
@@ -178,11 +178,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st2",
-                        "percent": 14.648729446935725
+                        "percent": 19.06614785992218
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 15.857605177993527
+                        "percent": 20.63157894736842
                     }
                 ]
             }

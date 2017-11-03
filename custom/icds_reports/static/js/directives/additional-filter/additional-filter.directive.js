@@ -19,6 +19,14 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
         {id: '72', name: '60-72 months'},
     ];
 
+    var path = $location.path();
+    if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunning') !== -1) {
+        vm.ages.pop();
+        if (path.indexOf('wasting') !== -1 || path.indexOf('stunning') !== -1) {
+            vm.ages.splice(1,1);
+        }
+    }
+
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
 

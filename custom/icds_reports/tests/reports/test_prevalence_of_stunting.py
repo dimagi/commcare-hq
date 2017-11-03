@@ -28,7 +28,7 @@ class TestPrevalenceOfStunting(TestCase):
                             "the WHO Child Growth Standards median.<br/><br/>Stunting "
                             "is a sign of chronic undernutrition and has long "
                             "lasting harmful consequences on the growth of a child",
-                    "average": "2.73"
+                    "average": "2.77"
                 },
                 "fills": {
                     "0%-25%": "#fee0d2",
@@ -42,15 +42,15 @@ class TestPrevalenceOfStunting(TestCase):
                         "moderate": 5,
                         "normal": 2,
                         "total_measured": 7,
-                        "total": 454,
+                        "total": 449,
                         "fillKey": "0%-25%"
                     },
                     "st2": {
                         "severe": 13,
                         "moderate": 5,
-                        "normal": 14,
+                        "normal": 13,
                         "total_measured": 25,
-                        "total": 497,
+                        "total": 490,
                         "fillKey": "0%-25%"
                     }
                 },
@@ -74,21 +74,21 @@ class TestPrevalenceOfStunting(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 1.7621145374449338
+                        "percent": 1.78173719376392
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 3.6217303822937628
+                        "percent": 3.673469387755102
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 1.7621145374449338
+                        "percent": 1.78173719376392
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 3.6217303822937628
+                        "percent": 3.673469387755102
                     }
                 ],
                 "chart_data": [
@@ -108,14 +108,14 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.0030581039755351682,
+                                "y": 0.0031120331950207467,
                                 "x": 1491004800000,
-                                "all": 981
+                                "all": 964
                             },
                             {
-                                "y": 0.016824395373291272,
+                                "y": 0.01597444089456869,
                                 "x": 1493596800000,
-                                "all": 951
+                                "all": 939
                             }
                         ],
                         "key": "% normal"
@@ -136,14 +136,14 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.004077471967380225,
+                                "y": 0.004149377593360996,
                                 "x": 1491004800000,
-                                "all": 981
+                                "all": 964
                             },
                             {
-                                "y": 0.010515247108307046,
+                                "y": 0.010649627263045794,
                                 "x": 1493596800000,
-                                "all": 951
+                                "all": 939
                             }
                         ],
                         "key": "% moderately stunted"
@@ -164,14 +164,14 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.00815494393476045,
+                                "y": 0.008298755186721992,
                                 "x": 1491004800000,
-                                "all": 981
+                                "all": 964
                             },
                             {
-                                "y": 0.016824395373291272,
+                                "y": 0.01703940362087327,
                                 "x": 1493596800000,
-                                "all": 951
+                                "all": 939
                             }
                         ],
                         "key": "% severely stunted"
@@ -180,11 +180,11 @@ class TestPrevalenceOfStunting(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 1.7621145374449338
+                        "percent": 1.78173719376392
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 3.6217303822937628
+                        "percent": 3.673469387755102
                     }
                 ]
             }

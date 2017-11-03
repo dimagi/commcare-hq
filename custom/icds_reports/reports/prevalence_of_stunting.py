@@ -38,6 +38,8 @@ def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=Fal
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+        if 'age_tranche' not in config:
+            queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     map_data = {}
@@ -123,6 +125,9 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
+
+    if 'age_tranche' not in config:
+        chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
 
     data = {
         'red': OrderedDict(),
@@ -233,6 +238,8 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, location_i
 
     if not show_test:
         data = apply_exclude(domain, data)
+    if 'age_tranche' not in config:
+        data = data.exclude(age_tranche__in=[0, 6, 72])
 
     chart_data = {
         'blue': [],
