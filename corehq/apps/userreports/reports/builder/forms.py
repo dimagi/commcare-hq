@@ -1377,7 +1377,8 @@ class ConfigureTableReportForm(ConfigureListReportForm):
         u'of that property.  For example, if you add a column for a yes or no question, the report will show a '
         u'column for "yes" and a column for "no."'
     )
-    group_by = forms.MultipleChoiceField(label=_("Show one row for each"))
+    group_by = forms.MultipleChoiceField(label=_("Show one row for each"),
+                                         required=False)
     chart = forms.CharField(widget=forms.HiddenInput)
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -1425,11 +1426,15 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
         def get_non_agged_columns():
             return [c for c in self._report_columns if c['aggregation'] != "simple"]
+
+        def get_agged_columns():
+            return [c for c in self._report_columns if c['aggregation'] == "simple"]
+
         if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
                 return [{
                     "type": "multibar",
-                    "x_axis_column": "column_agg_0",
+                    "x_axis_column": get_agged_columns()[0]['column_id'] if get_agged_columns() else '',
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
