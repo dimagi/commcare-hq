@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import uuid
 from django.test import TestCase, override_settings, Client

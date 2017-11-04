@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration
 
 TREATMENT_REGIMEN = 'treatment_regimen'

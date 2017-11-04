@@ -92,6 +92,7 @@ with the CaseFactory if this isn't a dry run. Various helper functions extract c
 for each case, then convert these to CaseStructure objects.
 """
 
+from __future__ import absolute_import
 import csv
 import decimal
 import logging

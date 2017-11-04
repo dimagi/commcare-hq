@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from collections import namedtuple, defaultdict
 from django.utils.dateparse import parse_datetime
