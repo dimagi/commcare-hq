@@ -6,6 +6,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.util.couch import IterDB, get_db_by_doc_type, IterDBCallback, get_document_class_by_doc_type
+from corehq.util.exceptions import DocumentClassNotFound
 
 
 class CouchDataLoader(DataLoader):
@@ -19,6 +20,8 @@ class CouchDataLoader(DataLoader):
     def _get_db_for_doc_type(self, doc_type):
         if doc_type not in self._dbs:
             couch_db = get_db_by_doc_type(doc_type)
+            if couch_db is None:
+                raise DocumentClassNotFound('No Document class with name "{}" could be found.'.format(doc_type))
             callback = LoaderCallback(self.success_counter, self.stdout)
             db = IterDB(couch_db, new_edits=False, callback=callback)
             db.__enter__()
