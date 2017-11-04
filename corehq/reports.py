@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.urls import reverse
 from corehq import privileges
@@ -40,7 +41,7 @@ from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInte
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
-import toggles
+from . import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
