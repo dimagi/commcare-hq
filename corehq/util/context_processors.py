@@ -72,13 +72,11 @@ def current_url_name(request):
 
 
 def js_api_keys(request):
-    from corehq import toggles
     if hasattr(request, 'couch_user') and request.couch_user and not request.couch_user.analytics_enabled:
         return {}  # disable js analytics
     return {
         'ANALYTICS_IDS': settings.ANALYTICS_IDS,
-        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
-        'USE_NEW_ANALYTICS': toggles.ANALYTICS_DEBUG.enabled_for_request(request) or hasattr(request, 'use_new_analytics'),
+        'USE_NEW_ANALYTICS': hasattr(request, 'use_new_analytics'),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
 
