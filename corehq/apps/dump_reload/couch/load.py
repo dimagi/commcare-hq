@@ -9,6 +9,12 @@ from corehq.util.couch import IterDB, get_db_by_doc_type, IterDBCallback, get_do
 from corehq.util.exceptions import DocumentClassNotFound
 
 
+def drop_suffix(doc_type):
+    if any(doc_type.endswith(suffix) for suffix in ('-Failed', '-Deleted')):
+        doc_type, __ = doc_type.split('-')
+    return doc_type
+
+
 class CouchDataLoader(DataLoader):
     slug = 'couch'
 
@@ -33,7 +39,8 @@ class CouchDataLoader(DataLoader):
         for obj_string in object_strings:
             total_object_count += 1
             doc = json.loads(obj_string)
-            db = self._get_db_for_doc_type(doc['doc_type'])
+            doc_type = drop_suffix(doc['doc_type'])
+            db = self._get_db_for_doc_type(doc_type)
             db.save(doc)
 
         for db in self._dbs.values():
@@ -54,7 +61,7 @@ class LoaderCallback(IterDBCallback):
         success_doc_types = []
         for doc in committed_docs:
             doc_id = doc['_id']
-            doc_type = doc['doc_type']
+            doc_type = drop_suffix(doc['doc_type'])
             doc_class = get_document_class_by_doc_type(doc_type)
             doc_label = '(couch) {}.{}'.format(doc_class._meta.app_label, doc_type)
             if doc_id in success_ids:
