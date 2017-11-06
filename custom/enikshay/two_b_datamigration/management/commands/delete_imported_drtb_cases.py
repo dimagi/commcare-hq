@@ -10,6 +10,7 @@ Example usage:
     1e46363c005532d180b3f9124ea5b5a8
     ...
 """
+from __future__ import absolute_import
 from corehq.apps.es import CaseSearchES
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.chunked import chunked

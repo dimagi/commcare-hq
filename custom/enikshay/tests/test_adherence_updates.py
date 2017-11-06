@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import mock
 import datetime
 from django.test import TestCase

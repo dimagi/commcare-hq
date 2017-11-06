@@ -13,8 +13,8 @@ from unittest2 import skipIf, skipUnless
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor
-)
+    CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
+    iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
@@ -79,9 +79,8 @@ class FormProcessorTestUtils(object):
             LedgerAccessorSQL.delete_ledger_values(case_id)
 
         if not domain:
-            for db in get_sql_db_aliases_in_use():
-                for ledger in LedgerReindexAccessor().get_docs(db, None, limit=10000):
-                    _delete_ledgers_for_case(ledger.case_id)
+            for ledger in iter_all_rows(LedgerReindexAccessor()):
+                _delete_ledgers_for_case(ledger.case_id)
         else:
             for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
                 _delete_ledgers_for_case(case_id)

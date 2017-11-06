@@ -1,5 +1,6 @@
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_with_low_birth_weight_map, \
     get_newborn_with_low_birth_weight_chart, get_newborn_with_low_birth_weight_data
 from django.test import TestCase
@@ -84,7 +85,7 @@ class TestNewBornWithLowWeight(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

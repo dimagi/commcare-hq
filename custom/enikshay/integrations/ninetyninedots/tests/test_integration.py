@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import pytz
 from django.test import SimpleTestCase, TestCase, override_settings

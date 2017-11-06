@@ -1,5 +1,6 @@
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_map, \
     get_children_initiated_data_chart, get_children_initiated_sector_data
 from django.test import TestCase
@@ -82,7 +83,7 @@ class TestChildrenInitiated(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

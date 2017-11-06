@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
@@ -756,7 +757,7 @@ class AddSavedReportConfigView(View):
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
     from corehq.apps.hqwebapp.tasks import send_html_email_async
-    from forms import EmailReportForm
+    from .forms import EmailReportForm
     user_id = request.couch_user._id
 
     form = EmailReportForm(request.GET)

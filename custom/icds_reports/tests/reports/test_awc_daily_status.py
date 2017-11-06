@@ -1,5 +1,6 @@
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_map, \
     get_awc_daily_status_data_chart, get_awc_daily_status_sector_data
 from django.test import TestCase
@@ -63,7 +64,7 @@ class TestAWCDailyStatus(TestCase):
                 "top_five": [],
                 "chart_data": [
                     {
-                        "color": "#fee0d2",
+                        "color": ChartColors.PINK,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -226,7 +227,7 @@ class TestAWCDailyStatus(TestCase):
                         "key": "Number of AWCs launched"
                     },
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
