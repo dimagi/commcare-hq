@@ -38,8 +38,8 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     track_workflow, send_hubspot_form,
-    HUBSPOT_INVITATION_SENT_FORM, HUBSPOT_NEW_USER_INVITE_FORM
-)
+    HUBSPOT_INVITATION_SENT_FORM, HUBSPOT_NEW_USER_INVITE_FORM,
+    HUBSPOT_EXISTING_USER_INVITE_FORM)
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
