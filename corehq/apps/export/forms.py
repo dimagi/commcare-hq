@@ -175,7 +175,7 @@ class CreateExportTagForm(forms.Form):
                         'application',
                         placeholder=_("Select Application"),
                         ng_model="formData.application",
-                        ng_change="formData.model_type === updateModuleChoices()",
+                        ng_change="updateModuleChoices()",
                         ng_required="formData.model_type === 'form'",
                     ),
                     crispy.Field(
