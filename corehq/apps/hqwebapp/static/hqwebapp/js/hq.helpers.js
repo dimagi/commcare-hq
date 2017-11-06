@@ -50,7 +50,7 @@ hqDefine("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], functio
             page: window.location.href,
             file: file,
             line: line,
-            stack: error ? error.stack : null
+            stack: error ? error.stack : null,
         });
         return false; // let default handler run
     };
