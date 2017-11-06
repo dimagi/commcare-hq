@@ -54,7 +54,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<p>' + vm.rightLegend.info + '</p>' +
-            '<div>Number of AWSs Launched: <strong>' + awcs + '</strong></div>';
+            '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div>';
     };
 
     vm.loadData = function () {
