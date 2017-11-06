@@ -1280,7 +1280,7 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
     if dst_test_case_properties:
         test_cases.append(dst_test_case_properties)
 
-    test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
+    test_cases.extend(get_follow_up_test_case_properties(domain, column_mapping, row, treatment_initiation_date))
 
     for t in test_cases:
         t['dataset'] = 'real'
@@ -1582,7 +1582,7 @@ def clean_patient_type(value):
         raise FieldValidationFailure(value, "type of patient")
 
 
-def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
+def get_follow_up_test_case_properties(domain, column_mapping, row, treatment_initiation_date):
     properties_list = []
 
     # Mehsana
@@ -1619,12 +1619,13 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                 result = column_mapping.get_follow_up_culture_result(month, row)
                 if result:
                     date_reported = clean_date(column_mapping.get_follow_up_culture_date(month, row))
-                    lab_name = column_mapping.get_follow_up_culture_lab(month, row)
+                    lab_name, lab_id = match_facility(domain, column_mapping.get_follow_up_culture_lab(month, row))
                     properties = {
                         "owner_id": "-",
                         "test_type_value": "culture",
                         "test_type_label": "Culture",
                         "testing_facility_name": lab_name,
+                        "testing_facility_id": lab_id,
                         "rft_general": "follow_up_drtb",
                         "rft_drtb_follow_up_treatment_month": month,
                         "date_reported": date_reported,
