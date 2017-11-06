@@ -34,7 +34,7 @@ class Command(BaseCommand):
         not_found = len(doc_ids) - len(iter_db.saved_ids) - len(iter_db.error_ids)
         print("{} docs not found".format(not_found))
 
-        filename = '_{}.csv'.format(ids_file, datetime.datetime.now())
+        filename = '{}_{}.csv'.format(ids_file.split('/')[-1], datetime.datetime.now())
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['doc_id', 'status'])
