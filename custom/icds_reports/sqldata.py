@@ -925,6 +925,19 @@ class ChildrenExport(ExportableMixin, SqlData):
     title = 'Children'
     table_name = 'agg_child_health_monthly'
 
+    def __init__(self, config=None):
+        super(ChildrenExport, self).__init__(config)
+        self.config.update({
+            'age_0': '0',
+            'age_6': '6',
+            'age_12': '12',
+            'age_24': '24',
+            'age_36': '36',
+            'age_48': '48',
+            'age_60': '60',
+            'age_72': '72',
+        })
+
     @property
     def get_columns_by_loc_level(self):
         columns = [
@@ -949,10 +962,10 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('nutrition_status_weighed', filters=self.filters + [
-                        RawFilter("age_tranche != '72'")
+                        NOT(EQ('age_tranche', 'age_72'))
                     ]),
                     SumColumn('wer_eligible', filters=self.filters + [
-                        RawFilter("age_tranche != '72'")
+                        NOT(EQ('age_tranche', 'age_72'))
                     ])
                 ],
                 slug='percent_weight_efficiency'
@@ -964,9 +977,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('height_measured_in_month'),
                     SumColumn('height_eligible', filters=self.filters + [
                         AND([
-                            RawFilter("age_tranche != '0'"),
-                            RawFilter("age_tranche != '6'"),
-                            RawFilter("age_tranche != '72'")
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ])
                 ],
@@ -975,7 +988,7 @@ class ChildrenExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Total number of unweighed children (0-5 Years)',
                 SumColumn('nutrition_status_unweighed', filters=self.filters + [
-                    RawFilter("age_tranche != '72'")
+                    NOT(EQ('age_tranche', 'age_72'))
                 ]),
                 slug='total_number_unweighed'
             ),
@@ -984,7 +997,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
-                        RawFilter("age_tranche != '72'")
+                        NOT(EQ('age_tranche', 'age_72'))
                     ]),
                     AliasColumn('wer_eligible')
                 ],
@@ -995,7 +1008,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
-                        RawFilter("age_tranche != '72'")
+                        NOT(EQ('age_tranche', 'age_72'))
                     ]),
                     AliasColumn('wer_eligible')
                 ],
@@ -1006,7 +1019,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('nutrition_status_normal', filters=self.filters + [
-                        RawFilter("age_tranche != '72'")
+                        NOT(EQ('age_tranche', 'age_72'))
                     ]),
                     AliasColumn('wer_eligible')
                 ],
@@ -1018,9 +1031,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 [
                     SumColumn('wasting_severe', filters=self.filters + [
                         AND([
-                            RawFilter("age_tranche != '0'"),
-                            RawFilter("age_tranche != '6'"),
-                            RawFilter("age_tranche != '72'")
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
                     AliasColumn('height_eligible')
@@ -1033,9 +1046,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 [
                     SumColumn('wasting_moderate', filters=self.filters + [
                         AND([
-                            RawFilter("age_tranche != '0'"),
-                            RawFilter("age_tranche != '6'"),
-                            RawFilter("age_tranche != '72'")
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
                     AliasColumn('height_eligible')
@@ -1063,9 +1076,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 [
                     SumColumn('stunting_severe', filters=self.filters + [
                         AND([
-                            RawFilter("age_tranche != '0'"),
-                            RawFilter("age_tranche != '6'"),
-                            RawFilter("age_tranche != '72'")
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
                     AliasColumn('height_eligible')
@@ -1078,9 +1091,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 [
                     SumColumn('stunting_moderate', filters=self.filters + [
                         AND([
-                            RawFilter("age_tranche != '0'"),
-                            RawFilter("age_tranche != '6'"),
-                            RawFilter("age_tranche != '72'")
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
                     AliasColumn('height_eligible')
@@ -1093,9 +1106,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 [
                     SumColumn('stunting_normal', filters=self.filters + [
                         AND([
-                            RawFilter("age_tranche != '0'"),
-                            RawFilter("age_tranche != '6'"),
-                            RawFilter("age_tranche != '72'")
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
                     AliasColumn('height_eligible')
