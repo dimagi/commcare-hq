@@ -3125,13 +3125,6 @@ class ShadowForm(AdvancedForm):
         return get_blank_form_xml("")
 
     @property
-    def validation_cache(self):
-        if not self.shadow_parent_form:
-            return None
-        else:
-            return self.shadow_parent_form.validation_cache
-
-    @property
     def xmlns(self):
         if not self.shadow_parent_form:
             return None
