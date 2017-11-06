@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.decorators import method_decorator
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback

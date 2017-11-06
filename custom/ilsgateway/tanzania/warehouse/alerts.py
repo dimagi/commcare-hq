@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from corehq.apps.products.models import SQLProduct
 from custom.ilsgateway.tanzania.warehouse import const

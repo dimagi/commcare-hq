@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date
 from django.urls import reverse
 from django.utils.safestring import mark_safe

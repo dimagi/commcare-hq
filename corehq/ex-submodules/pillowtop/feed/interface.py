@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases

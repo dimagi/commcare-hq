@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe

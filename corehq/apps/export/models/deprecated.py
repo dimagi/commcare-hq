@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import hashlib
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import (

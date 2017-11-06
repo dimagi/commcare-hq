@@ -6,6 +6,7 @@ The server name or IP is printed on stdout on success.
 Errors and help output are printed on stderr.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 import sys
 import argparse

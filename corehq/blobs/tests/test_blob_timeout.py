@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from io import StringIO
 from mock import patch
 from datetime import datetime, timedelta

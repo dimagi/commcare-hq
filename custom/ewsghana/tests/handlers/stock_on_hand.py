@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.stock.models import StockTransaction
 from corehq.toggles import EWS_INVALID_REPORT_RESPONSE, NAMESPACE_DOMAIN
 from custom.ewsghana.handlers import INVALID_MESSAGE, MS_STOCKOUT

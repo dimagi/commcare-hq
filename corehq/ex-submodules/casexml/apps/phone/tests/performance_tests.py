@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from unittest import skip
 from casexml.apps.case.mock import CaseBlock, CaseStructure
 from casexml.apps.phone.tests.test_sync_mode import (

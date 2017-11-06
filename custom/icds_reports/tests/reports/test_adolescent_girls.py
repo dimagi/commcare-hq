@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors

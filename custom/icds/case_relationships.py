@@ -2,6 +2,7 @@
 Some utility functions for traversing case relationships used in CAS.
 These utility functions assume the SQL case and form processing backend is used.
 """
+from __future__ import absolute_import
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from custom.icds.exceptions import CaseRelationshipError
 

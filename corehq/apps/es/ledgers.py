@@ -9,6 +9,7 @@ LedgerES
          .domain('testproject')
          .section('stock')
 """
+from __future__ import absolute_import
 from corehq.pillows.mappings import NULL_VALUE
 from .es_query import HQESQuery
 from . import filters

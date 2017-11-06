@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from elasticsearch import ElasticsearchException
 
 from corehq.apps.es import CaseES, GroupES, LedgerES

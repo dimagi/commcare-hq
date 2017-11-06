@@ -22,6 +22,7 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
+from __future__ import absolute_import
 from copy import deepcopy
 from .es_query import HQESQuery
 from . import filters

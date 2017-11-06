@@ -11,6 +11,7 @@ See render_case() in casexml for an example of the display definition format.
 
 """
 
+from __future__ import absolute_import
 import collections
 import datetime
 import itertools

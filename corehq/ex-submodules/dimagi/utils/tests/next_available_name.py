@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from dimagi.utils.next_available_name import next_available_name
 

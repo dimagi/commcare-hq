@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, date
 import uuid
 from xml.etree import cElementTree as ElementTree

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 import json
 from crispy_forms.bootstrap import InlineField, StrictButton

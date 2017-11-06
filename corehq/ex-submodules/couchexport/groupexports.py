@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound

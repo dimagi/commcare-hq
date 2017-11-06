@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import absolute_import
 import doctest
 from django.test import SimpleTestCase
 import re

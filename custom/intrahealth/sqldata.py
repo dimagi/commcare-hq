@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import HTMLParser
 import json
 import socket

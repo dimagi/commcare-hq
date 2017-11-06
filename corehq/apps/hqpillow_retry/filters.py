@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from django.db.models.aggregates import Count
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter

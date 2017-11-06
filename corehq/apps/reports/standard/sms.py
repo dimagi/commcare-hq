@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import cgi
 from django.db.models import Q, Count
