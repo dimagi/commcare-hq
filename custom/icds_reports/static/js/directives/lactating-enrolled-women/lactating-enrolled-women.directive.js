@@ -91,7 +91,13 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
                         return d.y;
                     });
                 }));
-                vm.chartOptions.chart.forceY = [0, max + max/10];
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [(min - range/10).toFixed(2), (max + range/10).toFixed(2)];
             }
         });
     };
