@@ -1,0 +1,38 @@
+{% extends "reports/async/tabular.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
+    <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'champ/js/champ_app.js' %}"></script>
+{% endblock %}
+
+{% block reportcontent %}
+    <div id="champApp" ng-controller="MainController as mainCtrl">
+        {% registerurl 'champ_pva' domain %}
+        <h2 ng-bind="mainCtrl.title"></h2>
+        <nvd3 id="chart_test" options="mainCtrl.chartOptions" data="mainCtrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
+    </div>
+    <div class="commcarehq-urls" class="hide">
+        {% block registered_urls %}
+            {# do not override this block, use registerurl template tag to populate #}
+        {% endblock %}
+    </div>
+{% endblock %}
+
+
+
+{% block js-inline %}
+    <script>
+        angular.bootstrap(document.getElementById('champApp'), ['champApp']);
+        $(document).ready(function () {
+            $('#reportFiltersAccordion').css('display', 'none');
+        });
+    </script>
+{% endblock %}

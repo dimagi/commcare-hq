@@ -236,11 +236,11 @@
         "type": "expression",
         "expression": {
           "type": "property_path",
-          "property_path": ["form", "load", "date_last_vi_test"]
+          "property_path": ["form", "load", "date_last_vl_test"]
         },
-        "column_id": "date_last_vi_test",
+        "column_id": "date_last_vl_test",
         "datatype": "string",
-        "display_name": "date_last_vi_test"
+        "display_name": "date_last_vl_test"
       },
       {
         "type": "expression",
