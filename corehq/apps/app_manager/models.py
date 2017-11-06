@@ -1034,10 +1034,10 @@ class FormBase(DocumentSchema):
                     "validation_problems": e.validation_problems,
                     "version": e.version,
                 }
-                self.set_validation_cache(json.dumps(validation_dict))
-                vc = self.get_validation_cache()
+                vc = json.dumps(validation_dict)
             else:
-                vc = self.set_validation_cache("")
+                vc = ""
+            self.set_validation_cache(vc)
         if vc:
             try:
                 raise XFormValidationError(**json.loads(vc))
