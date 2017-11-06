@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import hashlib
 import json
 import os
+import six
 from django.core.management.base import BaseCommand
 from django.contrib.staticfiles import finders
 from django.conf import settings
@@ -50,7 +51,7 @@ class Command(BaseCommand):
 
         current_sha = self.current_sha()
         existing_resources = rcache.get(RESOURCE_PREFIX % current_sha, None)
-        if existing_resources and not isinstance(existing_resources, basestring):
+        if existing_resources and not isinstance(existing_resources, six.string_types):
             print("getting resource dict from cache")
             self.output_resources(existing_resources)
             return
