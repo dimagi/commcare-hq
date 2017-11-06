@@ -159,8 +159,8 @@ class TestDetermineAuthType(SimpleTestCase):
 
         return FakeRequest(user_agent, auth_header)
 
-    def test_basic_is_default(self):
-        self.assertEqual('basic', determine_authtype_from_request(self._mock_request()))
+    def test_digest_is_default(self):
+        self.assertEqual('digest', determine_authtype_from_request(self._mock_request()))
 
     def test_override_default(self):
         self.assertEqual('digest', determine_authtype_from_request(self._mock_request()))
@@ -171,8 +171,7 @@ class TestDetermineAuthType(SimpleTestCase):
 
     def test_basic_header_overrides_default(self):
         self.assertEqual('basic',
-                         determine_authtype_from_request(self._mock_request(auth_header='Basic whatever'),
-                                                         default='digest'))
+                         determine_authtype_from_request(self._mock_request(auth_header='Basic whatever')))
 
     def test_user_agent_beats_header(self):
         # todo: we may want to change the behavior of this test and have the header win.
@@ -213,8 +212,7 @@ class TestDetermineAuthTypeFromRequest(SimpleTestCase):
 
     def test_digest_auth(self):
         request = self.get_django_request(auth=requests.auth.HTTPDigestAuth('foo', 'bar'))
-        # FIXME This is wrong - this should return digest auth
-        self.assertEqual('basic', determine_authtype_from_request(request))
+        self.assertEqual('digest', determine_authtype_from_request(request))
 
     def test_token_auth(self):
         # http://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
