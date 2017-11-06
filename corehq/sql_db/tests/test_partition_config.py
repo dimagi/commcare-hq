@@ -58,6 +58,10 @@ TEST_DATABASES = {
 @override_settings(DATABASES=TEST_DATABASES)
 class TestPartitionConfig(SimpleTestCase):
 
+    def test_num_shards(self):
+        config = PartitionConfig()
+        self.assertEqual(4, config.num_shards)
+
     def test_dbs_by_group(self):
         config = PartitionConfig()
         dbs = config.get_form_processing_dbs()
