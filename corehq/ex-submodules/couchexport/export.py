@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 import itertools
 from couchexport.exceptions import SchemaMismatchException,\

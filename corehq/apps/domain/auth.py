@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64
 import re
 from rest_framework.authentication import TokenAuthentication

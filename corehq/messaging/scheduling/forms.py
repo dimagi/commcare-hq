@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper

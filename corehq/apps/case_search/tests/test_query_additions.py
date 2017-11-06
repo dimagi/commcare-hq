@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.case_search.models import merge_queries, QueryMergeException
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns

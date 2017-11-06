@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from django.test.testcases import TestCase
 
 from casexml.apps.case.tests.util import delete_all_xforms

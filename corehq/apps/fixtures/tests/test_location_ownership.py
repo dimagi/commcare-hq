@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership

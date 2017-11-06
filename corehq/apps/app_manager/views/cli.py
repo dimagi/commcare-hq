@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.text import slugify
 from django.template.loader import render_to_string
 

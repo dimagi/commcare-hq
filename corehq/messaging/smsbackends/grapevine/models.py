@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import urllib2
 import urlparse
 from xml.etree import cElementTree as ElementTree

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from corehq.apps.hqwebapp.crispy import FormActions, FieldWithHelpBubble
 from crispy_forms.helper import FormHelper

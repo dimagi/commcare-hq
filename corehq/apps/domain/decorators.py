@@ -1,4 +1,5 @@
 # Standard Library imports
+from __future__ import absolute_import
 from functools import wraps
 import logging
 from base64 import b64decode

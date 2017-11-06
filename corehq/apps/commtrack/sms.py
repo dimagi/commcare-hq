@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _

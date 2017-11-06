@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from pillowtop.feed.interface import ChangeFeed, Change
 

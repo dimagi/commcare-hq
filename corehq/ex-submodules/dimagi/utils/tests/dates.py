@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta, date
 from urllib import urlencode
 import pytz

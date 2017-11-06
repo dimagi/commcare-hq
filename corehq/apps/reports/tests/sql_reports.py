@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from numbers import Number
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport

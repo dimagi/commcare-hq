@@ -98,6 +98,7 @@ Language
     Add esquery.iter() method
 """
 from __future__ import print_function
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import deepcopy
 import json

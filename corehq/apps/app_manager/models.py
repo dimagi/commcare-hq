@@ -22,6 +22,7 @@ When a build is starred, this is called "releasing" the build.  The parameter
 You might also run in to remote applications and applications copied to be
 published on the exchange, but those are quite infrequent.
 """
+from __future__ import absolute_import
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain

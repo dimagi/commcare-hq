@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
 

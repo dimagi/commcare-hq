@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.task import task
 import sys
 from django.conf import settings

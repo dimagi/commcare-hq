@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.xform import is_device_report
 
 

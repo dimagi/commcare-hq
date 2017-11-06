@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from nose.tools import nottest
 
 from corehq.apps.commtrack.models import CommtrackConfig
