@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from casexml.apps.case.mock import CaseFactory
@@ -15,4 +16,4 @@ class Command(BaseCommand):
         date_string = datetime.now().isoformat()
         for i in range(count):
             factory.create_case(case_name='mock-data-{}-{}'.format(date_string, i))
-        print 'successfully created {} cases in domain {} with timestamp {}'.format(count, domain, date_string)
+        print('successfully created {} cases in domain {} with timestamp {}'.format(count, domain, date_string))
