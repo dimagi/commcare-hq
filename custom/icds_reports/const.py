@@ -19,6 +19,13 @@ class LocationTypes(object):
     AWC = 'awc'
 
 
+class ChartColors(object):
+    PINK = '#fcb18d'
+    ORANGE = '#fa683c'
+    RED = '#bf231d'
+    BLUE = '#005ebd'
+
+
 LOCATION_TYPES = [
     LocationTypes.STATE,
     LocationTypes.DISTRICT,

@@ -680,3 +680,7 @@ table.no-footer {
 		text-align: center;
 		font-size: 1.2em;
 }
+
+.tick line {
+    stroke-opacity: .1 !important;
+}

@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -246,7 +246,7 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
                 "key": "% Children received complete immunizations by 1 year",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,

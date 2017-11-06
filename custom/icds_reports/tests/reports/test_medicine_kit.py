@@ -1,5 +1,6 @@
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_map, get_medicine_kit_data_chart, \
     get_medicine_kit_sector_data
 from django.test import TestCase
@@ -80,7 +81,7 @@ class TestMedicineKit(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

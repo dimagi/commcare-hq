@@ -1,5 +1,6 @@
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_map, \
     get_exclusive_breastfeeding_data_chart, get_exclusive_breastfeeding_sector_data
 from django.test import TestCase
@@ -84,7 +85,7 @@ class TestExclusiveBreastfeeding(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
