@@ -209,7 +209,6 @@ def get_case_property_changed_info(case, case_property_name, value):
     for i, transactions in enumerate(actions):
         property_changed_info = property_changed_in_action(transactions, case_property_name)
         if property_changed_info and property_changed_info.new_value == value:
-            # get the date that case_property changed
             return property_changed_info
 
 
