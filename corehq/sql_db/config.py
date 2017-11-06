@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.conf import settings
@@ -141,7 +142,7 @@ class PartitionConfig(object):
         except KeyError:
             raise NoSuchShardDatabaseError('No database {} found in shard config'.format(db))
         else:
-            return range(shard_range[0], shard_range[1] + 1)
+            return list(range(shard_range[0], shard_range[1] + 1))
 
     @memoized
     def get_django_shard_map(self):

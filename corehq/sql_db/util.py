@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from collections import defaultdict
 
@@ -139,7 +140,6 @@ def get_all_sharded_models():
 def _get_all_nested_subclasses(cls):
     seen = set()
     for subclass in cls.__subclasses__():
-        print subclass
         for sub_subclass in _get_all_nested_subclasses(subclass):
             # in case of multiple inheritance
             if sub_subclass not in seen:

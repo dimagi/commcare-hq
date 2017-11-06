@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import connections
 from corehq.sql_db.config import partition_config
 
