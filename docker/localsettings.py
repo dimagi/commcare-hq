@@ -235,7 +235,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     ADMINS = (('Admin', 'admin@example.com'),)
 
     CELERY_SEND_TASK_ERROR_EMAILS = True
-r
     LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 
