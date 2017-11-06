@@ -1,7 +1,8 @@
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 import json
 import os
 import re
+import six
 import yaml
 from django.contrib.staticfiles import finders
 from django.conf import settings
@@ -44,7 +45,7 @@ class Command(ResourceStaticCommand):
                             all_modules.append(path[:-3])
 
             customized = {re.sub(r'/[^/]*$', '', m['name']): True for m in config['modules']}
-            for directory, inclusions in bundles.iteritems():
+            for directory, inclusions in six.iteritems(bundles):
                 if directory not in customized and not directory.startswith("app_manager/js/vellum"):
                     # Add this module's config to build config
                     config['modules'].append({
@@ -79,7 +80,7 @@ class Command(ResourceStaticCommand):
                 fout.write("requirejs.config({ paths: %s });" % json.dumps({
                     file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
                                                  ".js?version=%s" % version if version else "")
-                    for file, version in resource_versions.iteritems()
+                    for file, version in six.iteritems(resource_versions)
                     if file.endswith(".js") and not file.startswith("formdesigner")
                 }, indent=2))
             resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
