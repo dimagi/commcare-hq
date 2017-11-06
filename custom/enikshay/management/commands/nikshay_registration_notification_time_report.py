@@ -59,7 +59,7 @@ class Command(BaseCommand):
                 property_changed_info = get_case_property_changed_info(episode_case,
                                                                        "treatment_initiated",
                                                                        "yes_phi")
-                xform = property_changed_info.case_update.form
+                xform = property_changed_info.case_transaction.form
                 form_received_on = pytz.utc.localize(xform.received_on).astimezone(timezone)
                 property_modified_on = parse_datetime(property_changed_info.modified_on).astimezone(timezone)
                 writer.writerow({
