@@ -21,7 +21,7 @@ GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=False):
+def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -105,7 +105,7 @@ def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=Fal
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=False):
+def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -220,7 +220,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
 
 
 @quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_stunning_sector_data(domain, config, loc_level, location_id, show_test=False):
+def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])

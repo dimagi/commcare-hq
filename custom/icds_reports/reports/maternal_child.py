@@ -175,7 +175,7 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'stunning'
+                    'redirect': 'stunting'
                 },
                 {
                     'label': _('Newborns with Low Birth Weight'),

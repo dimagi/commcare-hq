@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function PrevalenceOfStunningReportController($scope, $routeParams, $location, $filter, maternalChildService,
+function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
@@ -14,8 +14,8 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     vm.label = "Prevalence of Stunting (Height-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
-        'map': {route: '/stunning/map', label: 'Map View'},
-        'chart': {route: '/stunning/chart', label: 'Chart View'},
+        'map': {route: '/stunting/map', label: 'Map View'},
+        'chart': {route: '/stunting/chart', label: 'Chart View'},
     };
     vm.data = {
         legendTitle: 'Percentage Children',
@@ -85,7 +85,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
             vm.steps['map'].label = 'Map View: ' + loc_type;
         }
 
-        vm.myPromise = maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
+        vm.myPromise = maternalChildService.getPrevalenceOfStuntingData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
@@ -229,9 +229,9 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     };
 }
 
-PrevalenceOfStunningReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
 
-window.angular.module('icdsApp').directive('prevalenceOfStunning', function() {
+window.angular.module('icdsApp').directive('prevalenceOfStunting', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'map-chart'),
@@ -239,7 +239,7 @@ window.angular.module('icdsApp').directive('prevalenceOfStunning', function() {
         scope: {
             data: '=',
         },
-        controller: PrevalenceOfStunningReportController,
+        controller: PrevalenceOfStuntingReportController,
         controllerAs: '$ctrl',
     };
 });

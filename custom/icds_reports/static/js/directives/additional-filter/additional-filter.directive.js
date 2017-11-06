@@ -20,9 +20,9 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
     ];
 
     var path = $location.path();
-    if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunning') !== -1) {
+    if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
         vm.ages.pop();
-        if (path.indexOf('wasting') !== -1 || path.indexOf('stunning') !== -1) {
+        if (path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
             vm.ages.splice(1,1);
         }
     }

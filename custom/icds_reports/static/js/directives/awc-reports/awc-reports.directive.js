@@ -1763,7 +1763,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderHeightForAgeStatus(data, type, full) {
-        return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+        return '<span ng-class="row.stunting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
             + full.current_month_stunting.value
             + '</span>';
     }

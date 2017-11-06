@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors
-from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunning_data_map, \
-    get_prevalence_of_stunning_data_chart
+from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunting_data_map, \
+    get_prevalence_of_stunting_data_chart
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_sector_data
 from django.test import TestCase
 
@@ -13,7 +13,7 @@ class TestPrevalenceOfStunting(TestCase):
 
     def test_map_data(self):
         self.assertDictEqual(
-            get_prevalence_of_stunning_data_map(
+            get_prevalence_of_stunting_data_map(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -61,7 +61,7 @@ class TestPrevalenceOfStunting(TestCase):
 
     def test_chart_data(self):
         self.assertDictEqual(
-            get_prevalence_of_stunning_data_chart(
+            get_prevalence_of_stunting_data_chart(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),

@@ -52,7 +52,7 @@ class TestMaternalChildData(TestCase):
                     ],
                     [
                         {
-                            "redirect": "stunning",
+                            "redirect": "stunting",
                             "color": "red",
                             "all": 939,
                             "frequency": "month",
