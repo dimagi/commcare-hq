@@ -1034,7 +1034,8 @@ class FormBase(DocumentSchema):
                     "validation_problems": e.validation_problems,
                     "version": e.version,
                 }
-                vc = self.set_validation_cache(json.dumps(validation_dict))
+                self.set_validation_cache(json.dumps(validation_dict))
+                vc = self.get_validation_cache()
             else:
                 vc = self.set_validation_cache("")
         if vc:
