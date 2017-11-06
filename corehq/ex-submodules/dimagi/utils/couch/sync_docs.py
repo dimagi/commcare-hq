@@ -18,6 +18,8 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     and then trigger an index of _design/myapp-tmp
 
     """
+    log.debug('Syncing design docs. db: "{}", app_label: "{}", design_path: "{}", temp: "{}"'.format(
+        db, design_name, design_dir, temp))
     design_name_ = '%s-%s' % (design_name, temp) if temp else design_name
     docid = "_design/%s" % design_name_
     push(design_dir, db, force=True, docid=docid)
