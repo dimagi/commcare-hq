@@ -1,5 +1,6 @@
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
 from django.test import TestCase
@@ -80,7 +81,7 @@ class TestCleanWater(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

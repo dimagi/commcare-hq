@@ -1,5 +1,6 @@
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_map, \
     get_immunization_coverage_data_chart, get_immunization_coverage_sector_data
 from django.test import TestCase
@@ -85,7 +86,7 @@ class TestImmunizationCoverage(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

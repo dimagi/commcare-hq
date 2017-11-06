@@ -3,6 +3,7 @@ from django.test.utils import override_settings
 
 from django.test import TestCase
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_map, \
     get_functional_toilet_data_chart, get_functional_toilet_sector_data
 
@@ -82,7 +83,7 @@ class TestFunctionalToilet(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
