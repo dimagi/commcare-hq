@@ -252,5 +252,5 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 BIGCOUCH = True
 
 LOCAL_APPS = (
-    'kombu.transport.django', # required for celery
+    'kombu.transport.django',  # required for celery
 )
