@@ -76,8 +76,7 @@ from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps, no_conflict
 from django_prbac.utils import has_privilege
-from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
-from corehq.apps.analytics.utils import get_meta
+from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
 from corehq.util.view_utils import reverse as reverse_util
 
 
@@ -121,8 +120,7 @@ def default_new_app(request, domain):
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
     """
-    meta = get_meta(request)
-    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
+    send_hubspot_form.delay(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
 
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
@@ -377,8 +375,7 @@ def copy_app(request, domain):
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
-    meta = get_meta(request)
-    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
+    send_hubspot_form.delay(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
     clear_app_cache(request, domain)
     template = load_app_template(slug)
     app = import_app_util(template, domain, {

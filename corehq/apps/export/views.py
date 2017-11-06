@@ -13,6 +13,8 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
+from corehq.apps.analytics.tasks import send_hubspot_form, \
+    HUBSPOT_CREATED_EXPORT_FORM_ID, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
@@ -23,8 +25,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
-from corehq.apps.reports.views import should_update_export, \
-    build_download_saved_export_response, require_form_export_permission
+from corehq.apps.reports.views import should_update_export, build_download_saved_export_response
 from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
@@ -46,8 +47,6 @@ from corehq.apps.domain.decorators import login_and_domain_required, \
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     revert_new_exports,
-    domain_has_daily_saved_export_access,
-    domain_has_excel_dashboard_access,
 )
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import generate_schema_for_all_builds
@@ -111,7 +110,6 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.soft_assert import soft_assert
 from couchexport.models import SavedExportSchema, ExportSchema
 from couchexport.schema import build_latest_schema
 from couchexport.util import SerializableFunction
@@ -324,6 +322,7 @@ class BaseCreateCustomExportView(BaseExportView):
                 )
             )
         )
+        send_hubspot_form(HUBSPOT_CREATED_EXPORT_FORM_ID, request)
         return export_id
 
     def get(self, request, *args, **kwargs):
@@ -799,6 +798,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             return format_angular_error(e.message, log_error=True)
         except Exception:
             return format_angular_error(_("There was an error."), log_error=True)
+        send_hubspot_form(HUBSPOT_DOWNLOADED_EXPORT_FORM_ID, self.request)
         return format_angular_success({
             'download_id': download.download_id,
         })

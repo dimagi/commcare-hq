@@ -49,6 +49,7 @@ from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
+
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -68,7 +69,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
@@ -84,7 +85,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
 )
 from corehq.apps.builds import get_default_build_spec
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -5144,9 +5144,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         LatestAppInfo(self.master_id, self.domain).clear_caches()
 
-        user = getattr(view_utils.get_request(), 'couch_user', None)
+        request = view_utils.get_request()
+        user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
+        send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 

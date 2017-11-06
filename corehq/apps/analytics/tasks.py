@@ -7,7 +7,7 @@ from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.util.dates import unix_time
-from corehq.apps.analytics.utils import get_instance_string
+from corehq.apps.analytics.utils import get_instance_string, get_meta
 from datetime import datetime, date, timedelta
 import time
 import json
@@ -53,7 +53,9 @@ HUBSPOT_INVITATION_SENT_FORM = "5aa8f696-4aab-4533-b026-bd64c7e06942"
 HUBSPOT_NEW_USER_INVITE_FORM = "3e275361-72be-4e1d-9c68-893c259ed8ff"
 HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
-HUBSPOT_CLICKED_PREVIEW_FORM_ID = "43124a42-972b-479e-a01a-6b92a484f7bc"
+HUBSPOT_CREATED_EXPORT_FORM_ID = "f8a1ab5e-3fb5-4f68-948f-3355d09cf611"
+HUBSPOT_DOWNLOADED_EXPORT_FORM_ID = "7db9de47-2dd1-44d0-a4ec-bb67d8052a9e"
+HUBSPOT_SAVED_APP_FORM_ID = "8494a26a-8576-4241-97de-a28dc8bf927c"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
@@ -283,13 +285,10 @@ def track_confirmed_account_on_hubspot(webuser):
 
 
 @analytics_task()
-def track_entered_form_builder_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_FORM_BUILDER_FORM_ID, webuser, cookies, meta)
-
-
-@analytics_task()
-def track_app_from_template_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_APP_TEMPLATE_FORM_ID, webuser, cookies, meta)
+def send_hubspot_form(form_id, request):
+    if request and request.couch_user.is_web_user():
+        meta = get_meta(request)
+        _send_form_to_hubspot(form_id, request.couch_user, request.COOKIES, meta)
 
 
 @analytics_task()
@@ -309,29 +308,9 @@ def track_job_candidate_on_hubspot(user_email):
 
 
 @analytics_task()
-def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
-
-
-@analytics_task()
-def track_sent_invite_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_INVITATION_SENT_FORM, webuser, cookies, meta)
-
-
-@analytics_task()
-def track_existing_user_accepted_invite_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_EXISTING_USER_INVITE_FORM, webuser, cookies, meta)
-
-
-@analytics_task()
-def track_new_user_accepted_invite_on_hubspot(webuser, cookies, meta):
-    _send_form_to_hubspot(HUBSPOT_NEW_USER_INVITE_FORM, webuser, cookies, meta)
-
-
-@analytics_task()
-def track_clicked_preview_on_hubspot(couchuser, cookies, meta):
+def track_saved_app_on_hubspot(couchuser, cookies, meta):
     if couchuser.is_web_user():
-        _send_form_to_hubspot(HUBSPOT_CLICKED_PREVIEW_FORM_ID, couchuser, cookies, meta)
+        _send_form_to_hubspot(HUBSPOT_SAVED_APP_FORM_ID, couchuser, cookies, meta)
 
 
 @analytics_task()
