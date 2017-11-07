@@ -32,7 +32,9 @@ def urlencode(parser, token):
             except:
                 raise template.TemplateSyntaxError("%r tag has incomplete 'without'" % tag_name)
         else:
-            raise template.TemplateSyntaxError("%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd))
+            raise template.TemplateSyntaxError(
+                "%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd)
+            )
 
     return URLEncodeNode(path_var, params_var, params, delete)
 
