@@ -204,6 +204,9 @@ class EpisodeUpdater(object):
         case_accessor = CaseAccessors(self.domain)
         episode_cases = case_accessor.iter_cases(case_ids)
         for episode_case in episode_cases:
+            if episode_case.get_case_property('is_active') != 'true':
+                continue
+
             # if this episode is part of a deleted or archived person, don't update
             try:
                 person_case = get_person_case_from_episode(self.domain, episode_case.case_id)

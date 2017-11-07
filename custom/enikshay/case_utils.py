@@ -577,6 +577,9 @@ def iter_all_active_person_episode_cases(domain, case_ids):
         if episode_case.closed:
             continue
 
+        if episode_case.get_case_property('is_active') != 'true':
+            continue
+
         try:
             person_case = get_person_case_from_episode(domain, episode_case.case_id)
         except ENikshayCaseNotFound:
