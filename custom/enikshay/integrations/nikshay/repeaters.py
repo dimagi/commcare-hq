@@ -42,7 +42,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
 )
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
-    is_valid_test_submission,
+    is_valid_test_case_submission,
     is_valid_archived_submission,
 )
 
@@ -195,7 +195,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                     test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
-                not is_valid_test_submission(test_case) and
+                is_valid_test_case_submission(test_case) and
                 person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:

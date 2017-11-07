@@ -71,19 +71,18 @@ def is_valid_voucher_submission(voucher_case):
     return is_valid_person_submission(person_case)
 
 
-def is_valid_test_submission(test_case):
+def is_valid_test_case_submission(test_case):
     """
-    this checks if its a test submission i.e its not a real submission for test
-    :return: False if its a real submission
+    this checks if the test case is submitted by a valid/real user
     """
     person_case = get_person_case_from_test(test_case.domain, test_case.case_id)
     if is_invalid_person_submission(person_case):
-        return True
+        return False
 
     try:
         lab_referral_case = get_lab_referral_from_test(test_case.domain, test_case.get_id)
     except ENikshayCaseNotFound:
-        return False
+        return True
 
     try:
         dmc_location = SQLLocation.objects.get(location_id=lab_referral_case.owner_id)
@@ -93,7 +92,7 @@ def is_valid_test_submission(test_case):
             {lab_referral_id}"
             .format(location_id=lab_referral_case.owner_id, lab_referral_id=lab_referral_case.case_id)
         )
-    return dmc_location.metadata.get('is_test', "yes") == "yes"
+    return dmc_location.metadata.get('is_test', "yes") == "no"
 
 
 def is_valid_archived_submission(episode_case):
