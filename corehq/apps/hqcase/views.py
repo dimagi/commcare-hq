@@ -12,7 +12,6 @@ from soil import DownloadBase
 def explode_cases(request, domain, template="hqcase/explode_cases.html"):
     if request.method == 'POST':
         user_id = request.POST['user_id']
-        user = CommCareUser.get_by_user_id(user_id, domain)
         factor = request.POST.get('factor', '2')
         try:
             factor = int(factor)
