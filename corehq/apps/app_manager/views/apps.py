@@ -875,7 +875,7 @@ def pull_master_app(request, domain, app_id):
 
         report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
         try:
-            overwrite_app(app, latest_master_build, report_map)
+            app = overwrite_app(app, latest_master_build, report_map)
         except AppEditingError:
             messages.error(request, _('This linked application uses dynamic mobile UCRs '
                                       'which are currently not supported. For this application '
