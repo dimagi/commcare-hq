@@ -14,7 +14,7 @@ Initial setup
      * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 
 * If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
-* Bootstrap the setup. Skip this step if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/README.md#setup-localsettings).
+* Bootstrap the setup. Skip this step and go to [Configure your localsettings] below if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/README.md#setup-localsettings).
 
     ```
       $ ./scripts/docker runserver --bootstrap
@@ -40,7 +40,7 @@ Initial setup
 
 ### Configure your localsettings
 
-There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine.
+There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine. If you are planning on doing local development, it is recommended to run HQ on your local machine, and use docker only for supporting services
 
   * Running docker services only (do this if you came here from the CommCare HQ README)
     * If you are using _Docker Toolbox_ (not _Docker for Mac_): change all service host settings (DATABASES HOST, COUCH_SERVER_ROOT, etc.) in your localsettings.py file to point to the IP address of your virtualbox docker VM.
