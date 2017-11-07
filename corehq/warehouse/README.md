@@ -32,4 +32,5 @@ Use `commit_table <data_model_slug> <batch_id>` to load data of data_model along
 ```
 
 
-To flush staging data of a particular batch use `./manage.py clear_staging_records`. During the development, you could use `DROP TABLE` sql commands to clear fact/dimension data.
+To flush staging data of a particular batch use `./manage.py clear_staging_records`. During the development, you could use `DROP TABLE` (or `./manage.py migrate warehouse zero`) sql commands to clear fact/dimension data.
+
