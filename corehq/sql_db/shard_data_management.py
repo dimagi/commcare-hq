@@ -37,7 +37,7 @@ def _get_shard_count_query(model):
            from {table_name}
            group by shard_id
         ) as countsByShard
-        where not shard_id = ANY(%s);
+        where shard_id <> ANY(%s);
     """.format(
         shard_id_function=shard_id_function,
         table_name=model._meta.db_table,
