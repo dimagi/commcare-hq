@@ -1366,3 +1366,79 @@ class TestEpisode2B(SimpleTestCase):
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'Extra Pulmonary, Other, test detail'
         )
+
+    def test_type_of_regimen_confirmed_drtb(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb',
+            'treatment_regimen': 'test_regimen',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        expression = self._get_expression('type_of_regimen', 'string')
+        self.assertEqual(
+            expression(episode_case, EvaluationContext(episode_case, 0)),
+            'test_regimen'
+        )
+
+    def test_type_of_regimen_confirmed_tb_new(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb',
+            'treatment_initiated': 'yes_phi',
+            'patient_type_choice': 'new',
+            'treatment_regimen': 'test_regimen',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        expression = self._get_expression('type_of_regimen', 'string')
+        self.assertEqual(
+            expression(episode_case, EvaluationContext(episode_case, 0)),
+            'New'
+        )
+
+    def test_type_of_regimen_confirmed_tb_outside_rntcp(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb',
+            'treatment_initiated': 'yes_private',
+            'treatment_status': 'yes_private',
+            'patient_type_choice': 'recurrent',
+            'treatment_regimen': 'test_regimen',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        expression = self._get_expression('type_of_regimen', 'string')
+        self.assertEqual(
+            expression(episode_case, EvaluationContext(episode_case, 0)),
+            'Outside RNTCP'
+        )
+
+    def test_type_of_regimen_confirmed_tb_previously_treated(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb',
+            'treatment_initiated': 'yes_private',
+            'treatment_status': 'yes_phi',
+            'patient_type_choice': 'recurrent',
+            'treatment_regimen': 'test_regimen',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        expression = self._get_expression('type_of_regimen', 'string')
+        self.assertEqual(
+            expression(episode_case, EvaluationContext(episode_case, 0)),
+            'Previously Treated'
+        )
