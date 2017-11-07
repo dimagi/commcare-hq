@@ -25,12 +25,12 @@ Use `create_batch` to create a batch. This just creates a new batch record.
 ./manage.py create_batch 222617b9-8cf0-40a2-8462-7f872e1f1344 -s 2012-05-05 -e 2018-06-05
 ```
 
-Use `commit_table <data_model_slug> <batch_id>` to load data of data_model along with any of its dependencies' data for duration specified by the batch_id. For e.g.
+Use `commit_table <data_model_slug> <batch_id>` to load data of data_model for duration specified by the batch_id. For e.g.
 
 ```
 ./manage.py commit_table user_staging 222617b9-8cf0-40a2-8462-7f872e1f1344
 ```
-
+Note that you may have to run this for given data model's dependencies first to load data.
 
 To flush staging data of a particular batch use `./manage.py clear_staging_records`. During the development, you could use `DROP TABLE` (or `./manage.py migrate warehouse zero`) sql commands to clear fact/dimension data.
 
