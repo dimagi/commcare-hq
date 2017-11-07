@@ -44,7 +44,7 @@ class Command(BaseCommand):
             writer = csv.DictWriter(csvfile,
                                     fieldnames=["nikshay id", "form finished on", "form submitted on",
                                                 "notification completed on", "form to submission",
-                                                "submission to notification", "enikshay id"])
+                                                "submission to notification", "case id"])
             writer.writeheader()
             case_accessor = CaseAccessors(DOMAIN)
             for repeat_record in iter_repeat_records_by_domain(DOMAIN, repeater_id=REGISTRATION_REPEATER_ID,
