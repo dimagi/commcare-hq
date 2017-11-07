@@ -4,7 +4,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.schedule_name = ko.observable(initial_values.schedule_name);
         self.send_frequency = ko.observable(initial_values.send_frequency);
-        self.weekdays = ko.observable(initial_values.weekdays);
+        self.weekdays = ko.observableArray(initial_values.weekdays || []);
         self.start_date = ko.observable(initial_values.start_date);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
@@ -37,10 +37,28 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
                 var occurrences = parseInt(self.occurrences());
 
                 if(!isNaN(start_date_milliseconds) && !isNaN(occurrences)) {
+                    var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
                     if(self.send_frequency() == 'daily') {
-                        var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
                         var end_date = new Date(start_date_milliseconds + ((occurrences - 1) * milliseconds_in_a_day));
                         return end_date.toJSON().substr(0, 10);
+                    } else if(self.send_frequency() == 'weekly') {
+                        var js_start_day_of_week = new Date(start_date_milliseconds).getUTCDay();
+                        var python_start_day_of_week = (js_start_day_of_week + 6) % 7;
+                        var offset_to_last_weekday_in_schedule = null;
+                        for(var i = 0; i < 7; i++) {
+                            var current_weekday = (python_start_day_of_week + i) % 7;
+                            if(self.weekdays().indexOf(current_weekday.toString()) != -1) {
+                                offset_to_last_weekday_in_schedule = i;
+                            }
+                        }
+                        if(offset_to_last_weekday_in_schedule !== null) {
+                            var end_date = new Date(
+                                start_date_milliseconds +
+                                (occurrences - 1) * 7 * milliseconds_in_a_day +
+                                offset_to_last_weekday_in_schedule * milliseconds_in_a_day
+                            );
+                            return end_date.toJSON().substr(0, 10);
+                        }
                     }
                 }
             }

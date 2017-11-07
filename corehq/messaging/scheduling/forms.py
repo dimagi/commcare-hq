@@ -176,7 +176,7 @@ class ScheduleForm(Form):
             crispy.Div(
                 crispy.Field(
                     'weekdays',
-                    data_bind='value: weekdays',
+                    data_bind='checked: weekdays',
                 ),
                 data_bind='visible: showWeekdaysInput',
             ),
