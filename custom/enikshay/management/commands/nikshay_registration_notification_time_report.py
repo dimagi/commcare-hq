@@ -5,6 +5,7 @@ import pytz
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
 
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from casexml.apps.case.util import get_case_property_changed_info
@@ -19,8 +20,10 @@ DOMAIN = "enikshay"
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('days', type=int)
+        parser.add_argument('--email', type=int)
 
     def handle(self, days, *args, **options):
+        email_to = options.get('email')
         # to iterate over repeat records we need time zone independent datetime
         # so find the difference between timezone needed and utc
         # For ex: IST is 5 hours 30 mins ahead of utc, so reduce that time in since
@@ -69,5 +72,21 @@ class Command(BaseCommand):
                     'notification completed on': time_of_notification.strftime('%Y-%m-%d-%H:%M:%S'),
                     'form to submission': (form_received_on - property_modified_on),
                     'submission to notification': (time_of_notification - form_received_on),
-                    'enikshay id': episode_case.case_id
+                    'case id': episode_case.case_id
                 })
+
+            if email_to:
+                attachment = {
+                    'title': result_file_name,
+                    'mimetype': 'text/csv',
+                    'file_obj': csvfile,
+                }
+
+                message = "Report for time taken for registration notifications yesterday till now"
+                send_html_email_async(
+                    subject="Nikshay Registration Notification Time Report",
+                    recipient=email_to,
+                    html_content=message,
+                    text_content=message,
+                    file_attachments=[attachment]
+                )
