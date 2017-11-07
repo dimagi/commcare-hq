@@ -38,7 +38,7 @@ PROPERTIES_TO_BE_COALESCED = [
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        pass
+        parser.add_argument('--dry_run', action='store_true')
 
     def handle(self, *args, **options):
         self.dry_run = options.get('dry_run')
