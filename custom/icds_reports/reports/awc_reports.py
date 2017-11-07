@@ -14,7 +14,7 @@ from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, Da
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, get_status, \
-    current_age
+    current_age, exclude_records_by_age_for_column
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -123,7 +123,6 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
 @quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
 def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
-    last_30_days = (selected_month - relativedelta(days=30))
     last_months = (selected_month - relativedelta(months=1))
     last_three_months = (selected_month - relativedelta(months=3))
     last_day_of_selected_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
@@ -319,26 +318,55 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=False):
 
     def get_data_for(date):
+        moderately_underweight = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_moderately_underweight'
+        )
+        severely_underweight = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_severely_underweight'
+        )
+        wasting_moderate = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'wasting_moderate'
+        )
+        wasting_severe = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'wasting_severe'
+        )
+        stunting_moderate = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'stunting_moderate'
+        )
+        stunting_severe = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'stunting_severe'
+        )
+        wer_eligible = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'wer_eligible'
+        )
+        height_eligible = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'height_eligible'
+        )
+
         queryset = AggChildHealthMonthly.objects.filter(
             month=date, **config
         ).values(
             'month', 'aggregation_level'
         ).annotate(
             underweight=(
-                Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
+                Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid_in_month=Sum('valid_in_month'),
+            valid_wer_eligible=Sum(wer_eligible),
             immunized=(
                 Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
             ),
             eligible=Sum('fully_immunized_eligible'),
-            wasting=(
-                Sum('wasting_moderate') + Sum('wasting_severe')
-            ),
-            height=Sum('height_eligible'),
-            stunting=(
-                Sum('stunting_moderate') + Sum('stunting_severe')
-            ),
+            wasting=Sum(wasting_moderate) + Sum(wasting_severe),
+            height_eli=Sum(height_eligible),
+            stunting=Sum(stunting_moderate) + Sum(stunting_severe),
             low_birth=Sum('low_birth_weight_in_month'),
             birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
@@ -402,16 +430,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_in_month'
+                        'valid_wer_eligible'
                     ),
                     'color': 'red' if percent_diff(
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_in_month'
+                        'valid_wer_eligible'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'underweight'),
-                    'all': get_value(this_month_data, 'valid_in_month'),
+                    'all': get_value(this_month_data, 'valid_wer_eligible'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },

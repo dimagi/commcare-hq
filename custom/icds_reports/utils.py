@@ -19,6 +19,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
+from django.db.models import Case, When, Q, F, IntegerField
 
 
 OPERATORS = {
@@ -322,3 +323,11 @@ def current_age(dob, selected_date):
     if age.months:
         age_format += "%s month%s " % (age.months, '' if age.months == 1 else 's')
     return age_format
+
+
+def exclude_records_by_age_for_column(exclude_config, column):
+    return Case(
+        When(~Q(**exclude_config), then=F(column)),
+        default=0,
+        output_field=IntegerField()
+    )

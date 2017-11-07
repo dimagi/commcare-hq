@@ -71,11 +71,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/wasting/:step", {
                 template : "<prevalence-of-severe></prevalence-of-severe>",
             })
-            .when("/stunning", {
-                redirectTo : "/stunning/map",
+            .when("/stunting", {
+                redirectTo : "/stunting/map",
             })
-            .when("/stunning/:step", {
-                template : "<prevalence-of-stunning></prevalence-of-stunning>",
+            .when("/stunting/:step", {
+                template : "<prevalence-of-stunting></prevalence-of-stunting>",
             })
             .when("/comp_feeding", {
                 template : "comp_feeding",
