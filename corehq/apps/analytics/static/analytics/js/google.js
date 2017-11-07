@@ -27,7 +27,7 @@ hqDefine('analytics/js/google', function () {
 
     window.dataLayer = window.dataLayer || [];
     _gtag = function () {
-        dataLayer.push(arguments);
+        window.dataLayer.push(arguments);
         logger.verbose.log(arguments, 'gtag');
     };
     _gtag('js', new Date());
@@ -56,14 +56,6 @@ hqDefine('analytics/js/google', function () {
 
     // Configure Gtag with User Info
     _gtag('config', _init.apiId, _init.user);
-
-    var _fmtEvent = function (action, params) {
-        var messages = [];
-        messages.push({title: "Action", message: action, logGroup: true});
-        _.each(params, function (val, key) {
-            messages.push({title: key, message: val, logGroup: true});
-        });
-    };
 
     /**
      * Helper function for sending a Google Analytics Event.
@@ -126,9 +118,10 @@ hqDefine('analytics/js/google', function () {
              * @param {string} eventAction - The event action
              * @param {string} eventLabel - (optional) The event label
              * @param {string} eventValue - (optional) The event value
-             * @param {object} eventOptions - (optional) Options for the event call. Often used: hitCallback
+             * @param {object} eventParameters - (optional) Extra event parameters
+             * @param {function} eventCallback - (optional) Event callback fn
              */
-            event: function (eventAction, eventLabel, eventValue, eventOptions) {
+            event: function (eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
                 trackEvent.apply(null, _.union([eventCategory], Array.from(arguments)));
             },
             /**
@@ -136,8 +129,9 @@ hqDefine('analytics/js/google', function () {
              * @param {string} eventAction - The event action
              * @param {string} eventLabel - (optional) The event label
              * @param {string} eventValue - (optional) The event value
+             * @param {object} eventParameters - (optional) Extra event parameters
              */
-            click: function (element, eventAction, eventLabel, eventValue) {
+            click: function (element, eventAction, eventLabel, eventValue, eventParameters) {
                 trackClick.apply(null, _.union([arguments[0], eventCategory], Array.from(arguments).splice(1)));
             },
         };

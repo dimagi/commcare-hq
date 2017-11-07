@@ -55,7 +55,7 @@ hqDefine('analytics/js/initial', function () {
             if (optTrue !== undefined) {
                 data = data ? optTrue : optDefault;
             } else {
-                data = data || optDefault
+                data = data || optDefault;
             }
             return data;
         };

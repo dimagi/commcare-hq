@@ -69,7 +69,7 @@ hqDefine('analytics/js/deprecated', function () {
         return args;
     };
 
-    ga_track_event = _makeLegacyFn(_google, 'ga_track_event', _google.track.event, _addCallbackToArgs);
+    ga_track_event = _makeLegacyFn(_google, 'ga_track_event', _google.track.event, _addCallbackToArgs); // eslint-disable-line no-global-assign
 
     // Debug gtag's use of the ga function vs. the old usages
     var _oldGA = ga;
@@ -106,7 +106,7 @@ hqDefine('analytics/js/deprecated', function () {
                 userId = null;
             } else {
                 // uh-oh... can't tell what the first argument was intended to be.
-                throw "Unexpected argument types"
+                throw "Unexpected argument types";
             }
         }
         // Record identity

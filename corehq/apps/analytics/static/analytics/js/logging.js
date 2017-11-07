@@ -114,7 +114,7 @@ hqDefine('analytics/js/logging', function () {
             },
             setCategory: function (category) {
                 _log.category = category;
-            }
+            },
         };
     };
 

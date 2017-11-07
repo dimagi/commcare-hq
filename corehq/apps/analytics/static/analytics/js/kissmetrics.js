@@ -27,7 +27,7 @@ hqDefine('analytics/js/kissmetrics', function () {
     KmqWrapper.prototype.pushNew = function () {
         Array.prototype.push.apply(this, arguments);
     };
-    _kmq = new KmqWrapper(_kmq);
+    _kmq = new KmqWrapper(_kmq); // eslint-disable-line no-global-assign
 
     /**
      * Push data to _kmq by command type.
