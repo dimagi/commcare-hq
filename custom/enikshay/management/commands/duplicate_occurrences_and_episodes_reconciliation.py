@@ -118,7 +118,7 @@ class Command(BaseCommand):
             "closed_cases_details": (
                 {
                     a_case.case_id: {
-                        "date_opened": str(last_user_edit_at(a_case)),
+                        "last_modified_at(utc)": str(last_user_edit_at(a_case)),
                         "episode_type": a_case.get_case_property("episode_type"),
                         "is_active": a_case.get_case_property("is_active")
                     }
