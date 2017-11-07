@@ -14,7 +14,7 @@ Initial setup
      * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
 
 * If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
-* Bootstrap the setup. Skip this step and go to [Configure your localsettings] below if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/README.md#setup-localsettings).
+* Bootstrap the setup. Skip this step and go to [Configure your localsettings](#configure-your-localsettings) below if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/README.md#setup-localsettings).
 
     ```
       $ ./scripts/docker runserver --bootstrap
