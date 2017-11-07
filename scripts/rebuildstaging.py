@@ -314,7 +314,7 @@ def main():
     config = yaml.load(stdin)
     config = BranchConfig.wrap(config)
     config.normalize()
-    args = set(sys.argv[1:])
+    args = set(sys.argv[2:])
     verbose = '-v' in args
     do_push = '--no-push' not in args
     args.discard('-v')
