@@ -171,6 +171,7 @@ def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
     wrapped_app.copy_attachments(master_build)
     enable_usercase_if_necessary(wrapped_app)
     wrapped_app.save(increment_version=False)
+    return wrapped_app
 
 
 def _get_form_id_map(app):
