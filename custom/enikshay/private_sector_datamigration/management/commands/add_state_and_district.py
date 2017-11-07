@@ -3,6 +3,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseFactory
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.log import with_progress_bar
 
 from custom.enikshay.private_sector_datamigration.factory import PERSON_CASE_TYPE
 from custom.enikshay.private_sector_datamigration.models import Beneficiary
@@ -19,9 +20,7 @@ class Command(BaseCommand):
         case_accessor = CaseAccessors(domain)
         if not case_ids:
             case_ids = case_accessor.get_case_ids_in_domain(type=PERSON_CASE_TYPE)
-        for person_case_id in case_ids:
-            print person_case_id
-            person_case = case_accessor.get_case(person_case_id)
+        for person_case in case_accessor.iter_cases(with_progress_bar(case_ids)):
             case_properties = person_case.dynamic_case_properties()
             if self.should_add_state_and_district(case_properties):
                 beneficiary = Beneficiary.objects.get(caseId=case_properties['migration_created_from_record'])
