@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from django.db import connections
+from django.db.models import UUIDField, CharField
 from corehq.sql_db.config import partition_config
 
 
@@ -24,10 +25,19 @@ def get_count_of_unmatched_models_by_shard(database, model):
 
 def _get_shard_count_query(model):
     # have to cast to varchar because some tables have uuid types
-    shard_id_function = "hash_string({id_field}::varchar, 'siphash24') & {total_shard_count}".format(
-        total_shard_count=partition_config.num_shards - 1,
-        id_field=model.partition_attr,
-    )
+    field_type = model._meta.get_field(model.partition_attr)
+    if isinstance(field_type, UUIDField):
+        # magic: https://gist.github.com/cdmckay/a82261e48a42a3bbd78a
+        shard_id_function = "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24') & {total_shard_count}".format(
+            total_shard_count=partition_config.num_shards - 1,
+            id_field=model.partition_attr,
+        )
+    else:
+        # todo: are there any other types we need to worry about?
+        shard_id_function = "hash_string({id_field}, 'siphash24') & {total_shard_count}".format(
+            total_shard_count=partition_config.num_shards - 1,
+            id_field=model.partition_attr,
+        )
     # syntax of this query is a bit weird because of a couple django / postgres ARRAY oddities
     # https://stackoverflow.com/a/22008870/8207
     # https://stackoverflow.com/a/11730789/8207
