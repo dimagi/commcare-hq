@@ -24,6 +24,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.workbook_reading import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
+import six
 
 
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change
@@ -308,7 +309,7 @@ def populate_updated_fields(config, columns, row):
         if update_field_name in RESERVED_FIELDS:
             raise InvalidCustomFieldNameException(_('Field name "{}" is reserved').format(update_field_name))
 
-        if isinstance(update_value, basestring) and update_value.strip() == SCALAR_NEVER_WAS:
+        if isinstance(update_value, six.string_types) and update_value.strip() == SCALAR_NEVER_WAS:
             # If we find any instances of blanks ('---'), convert them to an
             # actual blank value without performing any data type validation.
             # This is to be consistent with how the case export works.

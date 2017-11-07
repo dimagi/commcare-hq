@@ -11,6 +11,7 @@ from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
 from pillowtop.pillow.interface import ChangeEventHandler
+import six
 
 MAX_CHECKPOINT_DELAY = 300
 DELAY_SENTINEL = object()
@@ -196,7 +197,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         return kafka_seq_to_str(self.get_current_sequence_as_dict())
 
     def update_to(self, seq):
-        if isinstance(seq, basestring):
+        if isinstance(seq, six.string_types):
             kafka_seq = str_to_kafka_seq(seq)
         else:
             kafka_seq = seq

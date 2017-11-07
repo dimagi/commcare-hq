@@ -28,6 +28,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext_lazy
+import six
 
 
 INCOMING = "I"
@@ -543,7 +544,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,

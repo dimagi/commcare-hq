@@ -10,6 +10,7 @@ from datetime import datetime
 from django.conf import settings
 from corehq.util.decorators import ContextDecorator
 from dimagi.utils.modules import to_function
+import six
 
 try:
     PROFILE_LOG_BASE = settings.PROFILE_LOG_BASE
@@ -103,7 +104,7 @@ try:
                     profiler = LineProfiler()
                     profiler.add_function(func)
                     for f in follow:
-                        if isinstance(f, basestring):
+                        if isinstance(f, six.string_types):
                             f = to_function(f)
                         profiler.add_function(f)
                     profiler.enable_by_count()

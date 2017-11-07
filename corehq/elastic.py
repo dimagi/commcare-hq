@@ -24,6 +24,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
+import six
 
 
 def _es_hosts():
@@ -84,7 +85,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     """
     Check if a document exists, by ID or the whole document.
     """
-    if isinstance(doc_id_or_dict, basestring):
+    if isinstance(doc_id_or_dict, six.string_types):
         doc_id = doc_id_or_dict
     else:
         assert isinstance(doc_id_or_dict, dict)

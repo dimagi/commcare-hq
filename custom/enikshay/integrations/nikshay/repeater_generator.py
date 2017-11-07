@@ -59,6 +59,7 @@ from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
 from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
@@ -358,7 +359,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
                     location_id=dmc_location_id, test_case_id=test_case.get_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
-        if not nikshay_code or (isinstance(nikshay_code, basestring) and not nikshay_code.isdigit()):
+        if not nikshay_code or (isinstance(nikshay_code, six.string_types) and not nikshay_code.isdigit()):
             raise NikshayRequiredValueMissing("Inappropriate value for dmc, got value: {}".format(nikshay_code))
         return dmc.metadata.get('nikshay_code')
 
