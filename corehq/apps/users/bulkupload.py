@@ -38,6 +38,7 @@ from soil.util import get_download_file_path, expose_download
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
+import six
 
 
 class UserUploadError(Exception):
@@ -183,7 +184,7 @@ class GroupMemoizer(object):
 
 
 def _fmt_phone(phone_number):
-    if phone_number and not isinstance(phone_number, basestring):
+    if phone_number and not isinstance(phone_number, six.string_types):
         phone_number = str(int(phone_number))
     return phone_number.lstrip("+")
 
@@ -293,7 +294,7 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def get_location_from_site_code(site_code, location_cache):
-    if isinstance(site_code, basestring):
+    if isinstance(site_code, six.string_types):
         site_code = site_code.lower()
     elif isinstance(site_code, (int, long)):
         site_code = str(site_code)
@@ -413,7 +414,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             }
 
             is_active = row.get('is_active')
-            if isinstance(is_active, basestring):
+            if isinstance(is_active, six.string_types):
                 try:
                     is_active = string_to_boolean(is_active) if is_active else None
                 except ValueError:

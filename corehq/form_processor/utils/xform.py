@@ -9,6 +9,7 @@ from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
+import six
 
 # The functionality below to create a simple wrapped XForm is used in production code (repeaters) and so is
 # not in the test utils
@@ -137,7 +138,7 @@ def adjust_datetimes(data, parent=None, key=None):
     """
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, basestring) and jsonobject.re_loose_datetime.match(data):
+    if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
         try:
             matching_datetime = iso8601.parse_date(data)
         except iso8601.ParseError:

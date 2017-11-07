@@ -174,6 +174,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_multiselect,
 )
+import six
 
 
 datespan_default = datespan_in_request(
@@ -1998,9 +1999,9 @@ def resave_form(request, domain, instance_id):
 
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
-    if isinstance(end, basestring):
+    if isinstance(end, six.string_types):
         end = parse_date(end)
-    if isinstance(start, basestring):
+    if isinstance(start, six.string_types):
         start = parse_date(start)
     if not end:
         end = datetime.utcnow()

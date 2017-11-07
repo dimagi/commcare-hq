@@ -22,6 +22,7 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from corehq.blobs.mixin import BlobMixin
+import six
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -443,7 +444,7 @@ class ApplicationMediaReference(object):
                  form_id=None, form_name=None, form_order=None,
                  media_class=None, is_menu_media=False, app_lang=None):
 
-        if not isinstance(path, basestring):
+        if not isinstance(path, six.string_types):
             path = ''
         self.path = path.strip()
 

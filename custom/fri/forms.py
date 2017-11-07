@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from corehq.util.workbook_json.excel import WorksheetNotFound, \
     WorkbookJSONReader, InvalidExcelFileException
 from django.utils.translation import ugettext as _
+import six
 
 
 class MessageBankForm(Form):
@@ -39,7 +40,7 @@ class MessageBankForm(Form):
             text = row.get("Message")
 
             try:
-                assert isinstance(msg_id, basestring)
+                assert isinstance(msg_id, six.string_types)
                 msg_id = msg_id.strip()
                 assert len(msg_id) > 1
                 assert msg_id[0].upper() in "ABCDEFGH"
@@ -50,7 +51,7 @@ class MessageBankForm(Form):
                 raise ValidationError(_("Duplicate ID at row %(row_num)s") % {"row_num" : row_num})
 
             try:
-                assert isinstance(text, basestring)
+                assert isinstance(text, six.string_types)
                 text = text.strip()
                 assert len(text) > 0
             except Exception:
