@@ -1789,7 +1789,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 format_fn=lambda x: get_status(
                     x,
                     'underweight',
-                    'Normal weight for age'
+                    'Normal weight for age',
+                    True
                 ),
                 slug='current_month_nutrition_status'
             ),
@@ -1799,7 +1800,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 format_fn=lambda x: get_status(
                     x,
                     'wasted',
-                    'Normal height for age'
+                    'Normal height for age',
+                    True
                 ),
                 slug="current_month_wasting"
             ),
@@ -1809,7 +1811,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 format_fn=lambda x: get_status(
                     x,
                     'stunted',
-                    'Normal weight for height'
+                    'Normal weight for height',
+                    True
                 ),
                 slug="current_month_stunting"
             ),
