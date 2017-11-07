@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import json
 import logging
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from couchdbkit.exceptions import ResourceConflict
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
@@ -269,7 +270,8 @@ def _get_vellum_plugins(domain, form, module):
     privileges.
     """
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
-    if toggles.COMMTRACK.enabled(domain):
+    if (toggles.COMMTRACK.enabled(domain)
+            or toggles.NON_COMMTRACK_LEDGERS.enabled(domain)):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
@@ -303,6 +305,8 @@ def _get_vellum_features(request, domain, app):
         'rich_text': True,
         'sorted_itemsets': app.enable_sorted_itemsets,
         'advanced_itemsets': add_ons.show("advanced_itemsets", request, app),
+        'remote_requests': (app.enable_remote_requests
+                            and toggles.REMOTE_REQUEST_QUESTION_TYPE.enabled(domain)),
     })
     return vellum_features
 

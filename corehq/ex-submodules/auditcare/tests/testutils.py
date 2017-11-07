@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from auditcare.models import AccessAudit
 
 def delete_all(couchmodel, view_name, key=None, startkey=None, endkey=None):

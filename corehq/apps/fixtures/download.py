@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound
 from datetime import datetime, timedelta

@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
+from corehq.motech.repeaters.models import CreateCaseRepeater, UpdateCaseRepeater
 from couchforms.signals import successful_form_received
 
 from corehq.apps.locations.models import SQLLocation
@@ -19,6 +21,8 @@ def create_form_repeat_records(sender, xform, **kwargs):
 def create_case_repeat_records(sender, case, **kwargs):
     from corehq.motech.repeaters.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
+    create_repeat_records(CreateCaseRepeater, case)
+    create_repeat_records(UpdateCaseRepeater, case)
 
 
 def create_short_form_repeat_records(sender, xform, **kwargs):

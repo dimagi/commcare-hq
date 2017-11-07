@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.preindex import get_preindex_plugin
 from corehq.util.couch_helpers import paginate_view
 from dimagi.utils.chunked import chunked

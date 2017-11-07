@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from corehq.blobs.mixin import BlobHelper
 

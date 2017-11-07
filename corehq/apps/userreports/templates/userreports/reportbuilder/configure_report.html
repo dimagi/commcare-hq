@@ -17,7 +17,6 @@
     <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
     <script src="{% static 'userreports/js/report_config.js' %}"></script>
     <script src="{% static 'userreports/js/utils.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
 {% endblock %}
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
@@ -47,7 +46,7 @@
       {% endif %}
       {% if has_report_builder_access %}
         {% if not at_report_limit or existing_report %}
-          <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+          <button id="btnSaveView" class="btn btn-info">{% trans 'View Report' %}</button>
         {% endif %}
       {% endif %}
       &nbsp;<span id="saveButtonHolder"></span>
@@ -127,7 +126,7 @@
             <div class="panel-collapse collapse in" id="report-config-columns">
               <div class="panel-body">
                 <div data-bind="with: columnList">
-                  {% if request|toggle_enabled:"REPORT_BUILDER_V2" %}
+                  {% if not request|toggle_enabled:"REPORT_BUILDER_V1" %}
                       {% include "userreports/partials/column_list_configuration.html" with parent="userreports/partials/property_list_configuration.html" %}
                   {% else %}
                       {% include "userreports/partials/column_list_configuration.html" with parent="userreports/partials/v1/property_list_configuration.html" %}
@@ -158,7 +157,7 @@
                     These filters will be displayed at the top of your report.
                   {% endblocktrans %}
                 </p>
-                {% if request|toggle_enabled:"REPORT_BUILDER_V2" %}
+                {% if not request|toggle_enabled:"REPORT_BUILDER_V1" %}
                     {% include 'userreports/partials/property_list_configuration.html' %}
                 {% else %}
                     {% include 'userreports/partials/v1/property_list_configuration.html' %}
@@ -187,7 +186,7 @@
                     These filters are not displayed to report viewers and are always applied to the data.
                   {% endblocktrans %}
                 </p>
-                {% if request|toggle_enabled:"REPORT_BUILDER_V2" %}
+                {% if not request|toggle_enabled:"REPORT_BUILDER_V1" %}
                   {% include 'userreports/partials/property_list_configuration.html' %}
                 {% else %}
                   {% include 'userreports/partials/v1/property_list_configuration.html' %}
@@ -291,11 +290,6 @@
                   If the issue persists, please report an issue.
                 {% endblocktrans %}
               </p>
-              <p data-bind="visible: missingAggColumn()" class="alert alert-warning">
-                  {% blocktrans %}
-                      Summary reports require at least one column with the "Group By" format.
-                  {% endblocktrans %}
-              </p>
               <table id="preview" class="table"></table>
             </div>
           </div>
@@ -333,6 +327,7 @@
             "initialLocation": {{ initial_location|JSON }},
             "initialChartType": {{ initial_chart_type|JSON }},
             "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
+            "dateRangeOptions": {{ date_range_options|JSON }},
             // In previewMode, report can't be saved.
             "previewMode":
               {# equivalent to: not has_report_builder_access or (at_report_limit and not existing_report) #}

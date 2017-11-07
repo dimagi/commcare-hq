@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import apply_exclude
 
@@ -13,6 +15,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'filters', 'show_test'], timeout=30 * 60)
 def get_awc_opened_data(domain, filters, show_test=False):
 
     def get_data_for(date):

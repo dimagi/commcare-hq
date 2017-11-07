@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django_prbac.utils import has_privilege
 from corehq import privileges

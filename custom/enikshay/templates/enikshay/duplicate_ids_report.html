@@ -1,0 +1,51 @@
+{% load hq_shared_tags %}
+
+<html>
+    <head>
+        <link type="text/css" rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
+        <title>eNikshay Duplicate {{ case_type }} IDs report</title>
+    </head>
+    <body>
+
+        <h1>eNikshay Duplicate {{ case_type }} IDs report</h1>
+
+        <p>{{ num_total_cases }} total {{ case_type }}s</p>
+        <p>{{ num_bad_cases }} {{ case_type }}s with duplicate ids</p>
+        <p>{{ num_good_cases }} {{ case_type }}s with unique ids</p>
+
+        <table class="table">
+            <thead>
+                <caption>Cases with duplicate ids</caption>
+                <tr>
+                    <th>Readable Case ID</th>
+                    <th>UUID</th>
+                    <th>Case Created</th>
+                    <th>Link to {{ case_type }} case</th>
+                    <th>Form</th>
+                    <th>User</th>
+                    <th>Device Number in Form</th>
+                    <th>Real Device Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in bad_cases %}
+                <tr>
+                    <td>{{ case.readable_id }}</td>
+                    <td>{{ case.case_id }}</td>
+                    <td>{{ case.opened_on }}</td>
+                    <td>
+                        <a href="{% url 'case_details' request.domain case.case_id %}">Case Details</a>
+                    </td>
+                    <td>{{ case.form_name }}</td>
+                    <td>{{ case.username }}</td>
+                    <td>{{ case.device_number_in_form }}</td>
+                    <td class="{% if case.device_number_in_form != case.real_device_number %}danger{% endif %}">
+                        {{ case.real_device_number }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </body>
+</html>

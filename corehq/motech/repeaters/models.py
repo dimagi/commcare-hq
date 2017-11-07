@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 import urllib
 import urlparse
@@ -128,18 +129,24 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def payload_doc(self, repeat_record):
         raise NotImplementedError
 
+    @memoized
     def get_payload(self, repeat_record):
         return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
+
+    def get_attempt_info(self, repeat_record):
+        return None
 
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
             return
 
+        now = datetime.utcnow()
         repeat_record = RepeatRecord(
             repeater_id=self.get_id,
             repeater_type=self.doc_type,
             domain=self.domain,
-            next_check=next_check or datetime.utcnow(),
+            registered_on=now,
+            next_check=next_check or now,
             payload_id=payload.get_id
         )
         repeat_record.save()
@@ -236,11 +243,17 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             return HTTPDigestAuth(self.username, self.password)
         return None
 
-    def send_request(self, repeat_record, payload):
+    @property
+    def verify(self):
+        # overwrite to skip certificate verification when sending request
+        # to https urls
+        return True
+
+    def send_request(self, repeat_record, payload, verify=None):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)
-        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
+        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth, verify=self.verify)
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
@@ -361,11 +374,34 @@ class CaseRepeater(Repeater):
         return "forwarding cases to: %s" % self.url
 
 
+class CreateCaseRepeater(CaseRepeater):
+    """
+    Just like CaseRepeater but only create records if the case is being created.
+    Used by the Zapier integration.
+    """
+    friendly_name = _("Forward Cases on Creation Only")
+
+    def allowed_to_forward(self, payload):
+        # assume if there's exactly 1 xform_id that modified the case it's being created
+        return super(CreateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) == 1
+
+
+class UpdateCaseRepeater(CaseRepeater):
+    """
+    Just like CaseRepeater but only create records if the case is being updated.
+    Used by the Zapier integration.
+    """
+    friendly_name = _("Forward Cases on Update Only")
+
+    def allowed_to_forward(self, payload):
+        return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
+
+
 class SOAPRepeaterMixin(Repeater):
     operation = StringProperty()
 
     def send_request(self, repeat_record, payload):
-        return perform_SOAP_operation(payload, self.url, self.operation)
+        return perform_SOAP_operation(payload, self.url, self.operation, verify=self.verify)
 
 
 class ShortFormRepeater(Repeater):
@@ -439,6 +475,7 @@ class RepeatRecordAttempt(DocumentSchema):
     success_response = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
+    info = StringProperty()     # extra information about this attempt
 
     @property
     def message(self):
@@ -462,6 +499,7 @@ class RepeatRecord(Document):
     attempts = ListProperty(RepeatRecordAttempt)
 
     cancelled = BooleanProperty(default=False)
+    registered_on = DateTimeProperty()
     last_checked = DateTimeProperty()
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
@@ -571,6 +609,9 @@ class RepeatRecord(Document):
     def get_payload(self):
         return self.repeater.get_payload(self)
 
+    def get_attempt_info(self):
+        return self.repeater.get_attempt_info(self)
+
     def handle_payload_exception(self, exception):
         now = datetime.utcnow()
         return RepeatRecordAttempt(
@@ -620,6 +661,7 @@ class RepeatRecord(Document):
             success_response=self._format_response(response) if response else None,
             next_check=None,
             succeeded=True,
+            info=self.get_attempt_info(),
         )
 
     def handle_failure(self, response):
@@ -647,6 +689,7 @@ class RepeatRecord(Document):
                 success_response=None,
                 next_check=None,
                 succeeded=False,
+                info=self.get_attempt_info(),
             )
 
     def cancel(self):

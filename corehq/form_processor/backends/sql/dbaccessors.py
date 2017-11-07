@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import itertools
 import logging
 import struct
@@ -65,6 +66,21 @@ doc_type_to_state = {
 def get_cursor(model):
     db = db_for_read_write(model)
     return connections[db].cursor()
+
+
+def iter_all_rows(reindex_accessor):
+    """Returns a generator that will iterate over all rows provided by the
+    reindex accessor
+    """
+    for db_alias in reindex_accessor.sql_db_aliases:
+        docs = reindex_accessor.get_docs(db_alias, reindex_accessor.startkey_min_value)
+        while docs:
+            for doc in docs:
+                yield doc
+
+            start_from_for_db = getattr(doc, reindex_accessor.startkey_attribute_name)
+            last_id = doc.id
+            docs = reindex_accessor.get_docs(db_alias, start_from_for_db, last_doc_pk=last_id)
 
 
 class ShardAccessor(object):
@@ -598,30 +614,33 @@ class FormAccessorSQL(AbstractFormAccessor):
         form.clear_tracked_models()
 
     @staticmethod
-    @transaction.atomic
-    def save_deprecated_form(form):
-        assert form.is_saved(), "Can't deprecate an unsaved form"
-        assert form.is_deprecated, 'Re-saving already saved forms not supported'
+    def update_form(form, publish_changes=True):
+        from corehq.form_processor.change_publishers import publish_form_saved
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        assert form.is_saved(), "this method doesn't support creating unsaved forms"
         assert getattr(form, 'unsaved_attachments', None) is None, \
             'Adding attachments to saved form not supported'
+        assert not form.has_tracked_models(), 'Adding other models to saved form not supported by this method'
 
-        logging.debug('Deprecating form: %s', form)
+        db_name = form.db
+        if form.orig_id:
+            old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
+            assert old_db_name == db_name, "this method doesn't support moving the form to new db"
 
-        attachments = form.get_attachments()
-        operations = form.history
+        with transaction.atomic(using=db_name):
+            if form.form_id_updated():
+                attachments = form.original_attachments
+                operations = form.original_operations
+                with transaction.atomic(db_name):
+                    form.save()
+                    for model in itertools.chain(attachments, operations):
+                        model.form = form
+                        model.save()
+            else:
+                form.save()
 
-        form.id = None
-        for attachment in attachments:
-            attachment.id = None
-        form.unsaved_attachments = attachments
-
-        for operation in operations:
-            operation.id = None
-            form.track_create(operation)
-
-        deleted = FormAccessorSQL.hard_delete_forms(form.domain, [form.orig_id], delete_attachments=False)
-        assert deleted == 1
-        FormAccessorSQL.save_new_form(form)
+        if publish_changes:
+            publish_form_saved(form)
 
     @staticmethod
     @transaction.atomic

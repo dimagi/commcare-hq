@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.exceptions import PermissionDenied
 from corehq.apps.es import UserES
 from corehq.apps.es.users import mobile_users
@@ -22,6 +23,7 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
     num_avg_intervals = 4
     ajax_pagination = True
     is_cacheable = False
+    fix_left_col = False
 
     @property
     def fields(self):

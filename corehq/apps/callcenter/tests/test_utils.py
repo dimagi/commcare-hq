@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
+from casexml.apps.case.xform import get_case_updates
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.apps.callcenter.utils import (
@@ -18,7 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase, override_settings
 
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.elastic import ensure_index_deleted
@@ -233,6 +235,26 @@ class CallCenterUtilsUserCaseTests(TestCase):
         sync_usercase(self.user)
         case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
+        self._check_update_matches(case, {'completed_training': 'yes'})
+
+    def test_sync_usercase_overwrite_hq_props(self):
+        """
+        Test that setting custom user data for owner_id and case_type don't change the case
+        """
+        self.user.user_data = {
+            'owner_id': 'someone else',
+            'case_type': 'bob',
+        }
+        self.user.save()
+        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        self.assertEqual(case.owner_id, self.user.get_id)
+        self.assertEqual(case.type, USERCASE_TYPE)
+        self.assertEqual(1, len(case.xform_ids))
+
+    def _check_update_matches(self, case, expected_update):
+        last_form = FormAccessors(TEST_DOMAIN).get_form(case.xform_ids[-1])
+        case_update = get_case_updates(last_form)[0]
+        self.assertDictEqual(case_update.update_block, expected_update)
 
     def test_reactivate_user(self):
         """Confirm that reactivating a user re-opens its user case."""
@@ -291,6 +313,19 @@ class CallCenterUtilsUserCaseTests(TestCase):
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertFalse(user_case.closed)
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
+
+    def test_update_no_change(self):
+        self.user.user_data = {
+            'numeric': 123,
+        }
+        self.user.save()
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        self.assertIsNotNone(user_case)
+        self.assertEqual(1, len(user_case.xform_ids))
+
+        self.user.save()
+        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        self.assertEqual(1, len(user_case.xform_ids))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

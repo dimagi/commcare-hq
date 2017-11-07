@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
@@ -22,7 +23,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import (
     ExpectedCallback, CALLBACK_PENDING, CALLBACK_RECEIVED,
     CALLBACK_MISSED, WORKFLOW_REMINDER, WORKFLOW_KEYWORD, WORKFLOW_BROADCAST,
-    WORKFLOW_CALLBACK, MessagingEvent,
+    WORKFLOW_CALLBACK, MessagingEvent, PhoneBlacklist,
 )
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
@@ -375,6 +376,15 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                 form_requires_input(form))
             if no_verified_number and cant_use_unverified_number:
                 logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
+                continue
+
+            if verified_number:
+                pb = PhoneBlacklist.get_by_phone_number_or_none(verified_number.phone_number)
+            else:
+                pb = PhoneBlacklist.get_by_phone_number_or_none(unverified_number)
+
+            if pb and not pb.send_sms:
+                logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
                 continue
 
             key = "start-sms-survey-for-contact-%s" % recipient.get_id

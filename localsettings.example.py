@@ -201,6 +201,7 @@ LOCAL_APPS = (
 #    'testapps.test_pillowtop',
 #    'django_fsm', # Adds the ability to generate state diagrams for models using django-fsm
 #    'kombu.transport.django', # required for celery
+#    'package_monitor',
 )
 
 LOCAL_MIDDLEWARE = [

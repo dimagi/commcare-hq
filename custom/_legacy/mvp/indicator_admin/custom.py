@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from corehq.apps.indicators.admin.couch_indicators import CouchIndicatorAdminInterface
 from corehq.apps.indicators.admin.dynamic_indicators import BaseDynamicIndicatorAdminInterface

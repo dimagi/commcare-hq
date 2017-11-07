@@ -28,6 +28,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -116,6 +117,7 @@ from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+from corehq.util.soft_assert import soft_assert
 from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
 
@@ -265,12 +267,16 @@ class ReportBuilderView(BaseDomainView):
     @property
     def main_context(self):
         main_context = super(ReportBuilderView, self).main_context
+        allowed_num_reports = allowed_report_builder_reports(self.request)
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit':
-                number_of_report_builder_reports(self.domain) >= allowed_report_builder_reports(self.request),
-            'report_limit': allowed_report_builder_reports(self.request),
+            'at_report_limit': (
+                number_of_report_builder_reports(self.domain) >= allowed_num_reports
+                and allowed_num_reports is not None
+            ),
+            'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
         })
         return main_context
 
@@ -387,15 +393,15 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     @property
     def page_context(self):
         context = super(ReportBuilderPaywallPricing, self).page_context
-        if has_report_builder_access(self.request):
-            max_allowed_reports = allowed_report_builder_reports(self.request)
-            num_builder_reports = number_of_report_builder_reports(self.domain)
-            if num_builder_reports >= max_allowed_reports:
-                context.update({
-                    'at_report_limit': True,
-                    'max_allowed_reports': max_allowed_reports,
-
-                })
+        max_allowed_reports = allowed_report_builder_reports(self.request)
+        num_builder_reports = number_of_report_builder_reports(self.domain)
+        context.update({
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
+            'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
+            'support_email': settings.SUPPORT_EMAIL,
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+        })
         return context
 
 
@@ -482,7 +488,7 @@ class EditReportInBuilder(View):
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             try:
-                if not toggle_enabled(request, toggles.REPORT_BUILDER_V2):
+                if toggle_enabled(request, toggles.REPORT_BUILDER_V1):
                     from corehq.apps.userreports.v1.views import (
                         ConfigureChartReport,
                         ConfigureListReport,
@@ -653,6 +659,7 @@ class ConfigureReport(ReportBuilderView):
             'preview_datasource_id': self._get_preview_data_source(),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
         }
 
     def _handle_exception(self, response, exception):
@@ -1127,7 +1134,20 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
         reports += ReportConfiguration.by_domain(self.domain)
-        return [report for report in reports if report.table_id == self.config.table_id]
+        ret = []
+        for report in reports:
+            try:
+                if report.table_id == self.config.table_id:
+                    ret.append(report)
+            except DataSourceConfigurationNotFoundError:
+                _soft_assert = soft_assert(to=[
+                    '{}@{}'.format(name, 'dimagi.com')
+                    for name in ['jemord', 'cellowitz', 'npellegrino', 'frener']
+                ])
+                _soft_assert(False, "Report {} on domain {} attempted to reference deleted table".format(
+                    report._id, self.domain
+                ))
+        return ret
 
     def get(self, request, *args, **kwargs):
         if self.config.is_deactivated:
@@ -1451,7 +1471,14 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    return json_response({'isBuilt': config.meta.build.finished or config.meta.build.rebuilt_asynchronously})
+    build = config.meta.build
+    # there appears to be a way that these can be built, but not have initiated set
+    if build.initiated or build.initiated_in_place:
+        return JsonResponse({
+            'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
+        })
+
+    return JsonResponse({'isBuilt': True})
 
 
 def _get_report_filter(domain, report_id, filter_id):
@@ -1462,7 +1489,7 @@ def _get_report_filter(domain, report_id, filter_id):
     return report_filter
 
 
-def _is_location_safe_choice_list(view_fn, domain, report_id, filter_id, **view_kwargs):
+def _is_location_safe_choice_list(view_fn, request, domain, report_id, filter_id, **view_kwargs):
     return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
 
 

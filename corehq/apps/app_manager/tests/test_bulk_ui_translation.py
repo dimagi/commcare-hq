@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from distutils.version import StrictVersion
 from django.test import SimpleTestCase
 from StringIO import StringIO

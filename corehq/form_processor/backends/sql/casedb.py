@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL

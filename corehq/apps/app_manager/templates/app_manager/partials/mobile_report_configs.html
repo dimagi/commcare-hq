@@ -39,6 +39,7 @@
                         <th>{% trans "Report" %}</th>
                         <th>{% trans "Display Text" %}</th>
                         <th>{% trans "Description" %}</th>
+                        <th data-bind="visible: $root.supportSyncDelay">{% trans "Sync Delay (in hours)" %}</th>
                         <th>
                             {% trans "Data Table" %}
                             <span class="hq-help-template"
@@ -60,6 +61,8 @@
                             <select class="form-control"
                                     data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
                             </select>
+                            <label>Report UUID to use in custom expressions: </label>
+                            <span data-bind="text: uuid"></span>
                             {% include 'app_manager/partials/filter_configs.html' %}
                             {% include 'app_manager/partials/graph_configs.html' %}
                         </td>
@@ -85,6 +88,9 @@
                                     {% trans "Not localizable." %}
                                 </p>
                             </div>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control" data-bind="value: syncDelay, visible: $root.supportSyncDelay">
                         </td>
                         <td>
                             <label>

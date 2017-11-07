@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from itertools import imap
 import time
@@ -46,6 +47,8 @@ from importlib import import_module
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
 from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
+
+from .project_access.models import SuperuserProjectEntryRecord  # noqa
 
 lang_lookup = defaultdict(str)
 

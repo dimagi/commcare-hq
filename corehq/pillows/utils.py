@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.users.models import CouchUser, LastBuild
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID

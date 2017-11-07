@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 from celery.schedules import crontab
 from celery.task import periodic_task
-from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.urls import reverse
 
 from django.utils.translation import ugettext
 

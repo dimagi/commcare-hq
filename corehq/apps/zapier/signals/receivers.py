@@ -1,11 +1,12 @@
+from __future__ import absolute_import
 from django.db.models.signals import pre_save, post_delete
 from django.dispatch import receiver
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpBadRequest
 
-from corehq.motech.repeaters.models import FormRepeater, CaseRepeater
+from corehq.motech.repeaters.models import FormRepeater
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
 
 
 @receiver(pre_save, sender=ZapierSubscription)
@@ -25,8 +26,8 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
             white_listed_form_xmlns=[instance.form_xmlns]
         )
 
-    elif instance.event_name == EventTypes.NEW_CASE:
-        repeater = CaseRepeater(
+    elif instance.event_name in CASE_TYPE_REPEATER_CLASS_MAP:
+        repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name](
             domain=instance.domain,
             url=instance.url,
             format='case_json',
@@ -48,8 +49,8 @@ def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
     """
     if instance.event_name == EventTypes.NEW_FORM:
         repeater = FormRepeater.get(instance.repeater_id)
-    elif instance.event_name == EventTypes.NEW_CASE:
-        repeater = CaseRepeater.get(instance.repeater_id)
+    elif instance.event_name in CASE_TYPE_REPEATER_CLASS_MAP:
+        repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name].get(instance.repeater_id)
     else:
         raise ImmediateHttpResponse(
             HttpBadRequest('The passed event type is not valid.')

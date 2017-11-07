@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from dimagi.ext.jsonobject import JsonObject
@@ -40,6 +41,8 @@ class CustomDataField(JsonObject):
     label = StringProperty()
     choices = StringListProperty()
     is_multiple_choice = BooleanProperty(default=False)
+    # Currently only relevant for location fields
+    index_in_fixture = BooleanProperty(default=False)
 
 
 class CustomDataFieldsDefinition(Document):

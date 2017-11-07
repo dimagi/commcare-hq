@@ -1,10 +1,13 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age
 
@@ -15,6 +18,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -58,14 +62,14 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
                 "average_format": 'number',
                 "info": _((
                     "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False):
     config['month'] = datetime(*config['month'])
 
@@ -118,18 +122,16 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
                 "key": "Children (0-6 years) who are enrolled",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_enrolled_children_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_enrolled_children_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggChildHealthMonthly.objects.filter(
@@ -143,12 +145,6 @@ def get_enrolled_children_sector_data(domain, config, loc_level, show_test=False
     if not show_test:
         data = apply_exclude(domain, data)
 
-    loc_data = {
-        'blue': 0,
-    }
-    tmp_name = ''
-    rows_for_location = 0
-
     chart_data = {
         'blue': []
     }
@@ -157,34 +153,41 @@ def get_enrolled_children_sector_data(domain, config, loc_level, show_test=False
         'valid': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
-
-        if tmp_name and name != tmp_name:
-            chart_data['blue'].append([tmp_name, loc_data['blue']])
-            loc_data = {
-                'blue': 0
-            }
+        result_set.add(name)
 
         row_values = {
             'valid': valid or 0,
         }
+
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += value
 
-        loc_data['blue'] += valid
-        tmp_name = name
-        rows_for_location += 1
+        chart_data['blue'].append([
+            name, valid
+        ])
 
-    chart_data['blue'].append([tmp_name, loc_data['blue']])
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
+        "format": "number",
+        "info": _((
+            "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
+        )),
         "chart_data": [
             {
                 "values": chart_data['blue'],
-                "key": "Number Of Children",
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE

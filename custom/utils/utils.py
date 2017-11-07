@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.reports.util import get_INFilter_element_bindparam
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.utils import DOMAIN_MODULE_KEY

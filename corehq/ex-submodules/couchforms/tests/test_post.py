@@ -1,13 +1,16 @@
+from __future__ import absolute_import
 import json
-from django.test import TestCase
-from django.conf import settings
 import os
+
+from django.conf import settings
+from django.test import TestCase
+
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.apps.tzmigration.test_utils import \
     run_pre_and_post_timezone_migration
-
-from corehq.util.test_utils import TestFileMixin
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
 class PostTestMixin(TestFileMixin):
@@ -45,7 +48,7 @@ class PostTestMixin(TestFileMixin):
         instance = self.get_xml(name)
         expected = self.get_json(self._get_expected_name(name, tz_differs))
 
-        xform = post_xform(instance)
+        xform = submit_form_locally(instance, 'test-domain').xform
         xform_json = json.loads(json.dumps(xform.to_json()))
 
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
@@ -62,6 +65,7 @@ class PostCouchOnlyTest(TestCase, PostTestMixin):
         FormProcessorTestUtils.delete_all_xforms()
         super(PostCouchOnlyTest, self).tearDown()
 
+    @softer_assert()
     @run_pre_and_post_timezone_migration
     def test_cloudant_template(self):
         self._test('cloudant-template', tz_differs=True)
@@ -69,7 +73,6 @@ class PostCouchOnlyTest(TestCase, PostTestMixin):
 
 
 class PostTest(TestCase, PostTestMixin):
-
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms()
         super(PostTest, self).tearDown()

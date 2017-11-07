@@ -1,16 +1,17 @@
+from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
-    FixtureDataItem, FIXTURE_BUCKET
+    FixtureDataItem
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
 from corehq.apps.fixtures.upload.location_cache import get_memoized_location_getter
 from corehq.apps.fixtures.upload.workbook import get_workbook
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
-from corehq.blobs import get_blob_db
 from dimagi.utils.couch.bulk import CouchTransaction
 from soil import DownloadBase
 
@@ -192,12 +193,8 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                                                    transaction=transaction)
 
     clear_fixture_quickcache(data_types)
-    clear_fixture_blob(domain)
+    clear_fixture_cache(domain)
     return return_val
-
-
-def clear_fixture_blob(domain):
-    get_blob_db().delete(domain, FIXTURE_BUCKET)
 
 
 def clear_fixture_quickcache(data_types):

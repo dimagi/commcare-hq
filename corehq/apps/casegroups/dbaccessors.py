@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.dbaccessors import (
     get_doc_ids_in_domain_by_class,

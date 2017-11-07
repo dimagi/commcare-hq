@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized

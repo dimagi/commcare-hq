@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.app_manager.models import Application

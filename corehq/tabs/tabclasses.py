@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from urllib import urlencode
 
 from django.urls import reverse
@@ -11,11 +12,10 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
-    DeviceLogSoftAssertReport
+    DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
@@ -34,10 +34,12 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
 )
 from corehq.form_processor.utils import use_new_exports
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
+from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
-from corehq.toggles import PUBLISH_CUSTOM_REPORTS, MOTECH
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -47,7 +49,7 @@ class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "reports_home"
 
-    url_prefix_formats = ('/a/{domain}/reports/',)
+    url_prefix_formats = ('/a/{domain}/reports/', '/a/{domain}/configurable_reports/')
 
     @property
     def _is_viewable(self):
@@ -108,7 +110,7 @@ class ProjectReportsTab(UITab):
         Return the url for the start of the report builder, or the paywall.
         """
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-        if toggle_enabled(self._request, toggles.REPORT_BUILDER_V2):
+        if not toggle_enabled(self._request, toggles.REPORT_BUILDER_V1):
             from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
             return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
         else:
@@ -1006,11 +1008,11 @@ class MessagingTab(UITab):
                         'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
-                                'title': _("New Message"),
+                                'title': _("New"),
                                 'urlname': CreateScheduleView.urlname,
                             },
                             {
-                                'title': _("Edit Message"),
+                                'title': _("Edit"),
                                 'urlname': EditScheduleView.urlname,
                             },
                         ],
@@ -1392,8 +1394,11 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
+        if self.couch_user.can_edit_motech:
+            items.append((_('Integration'), _get_integration_section(self.domain)))
+
         feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items:
+        if feature_flag_items and user_is_admin:
             items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser
@@ -1448,17 +1453,6 @@ class ProjectSettingsTab(UITab):
                     })
                 items.append((_('Subscription'), subscription))
 
-        if any(toggles.PRIME_RESTORE.enabled(item) for item in [self.couch_user.username, self.domain]):
-            from corehq.apps.ota.views import PrimeRestoreCacheView
-            project_tools = [
-                {
-                    'title': _(PrimeRestoreCacheView.page_title),
-                    'url': reverse(PrimeRestoreCacheView.urlname,
-                                   args=[self.domain])
-                },
-            ]
-            items.append((_('Project Tools'), project_tools))
-
         if self.couch_user.is_superuser:
             from corehq.apps.domain.views import (
                 EditInternalDomainInfoView,
@@ -1506,33 +1500,6 @@ def _get_administration_section(domain):
             }
         ])
 
-    def forward_name(repeater_type=None, **context):
-        if repeater_type == 'FormRepeater':
-            return _("Forward Forms")
-        elif repeater_type == 'ShortFormRepeater':
-            return _("Forward Form Stubs")
-        elif repeater_type == 'CaseRepeater':
-            return _("Forward Cases")
-
-    administration.extend([
-        {'title': _('Data Forwarding'),
-         'url': reverse('domain_forwarding', args=[domain]),
-         'subpages': [
-             {
-                 'title': forward_name,
-                 'urlname': 'add_repeater',
-             },
-             {
-                 'title': forward_name,
-                 'urlname': 'add_form_repeater',
-             },
-        ]},
-        {
-            'title': _('Data Forwarding Records'),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
-        }
-    ])
-
     administration.append({
         'title': _(FeaturePreviewsView.page_title),
         'url': reverse(FeaturePreviewsView.urlname, args=[domain])
@@ -1544,8 +1511,42 @@ def _get_administration_section(domain):
             'url': reverse(TransferDomainView.urlname, args=[domain])
         })
 
+    return administration
+
+
+def _get_integration_section(domain):
+
+    def forward_name(repeater_type=None, **context):
+        if repeater_type == 'FormRepeater':
+            return _("Forward Forms")
+        elif repeater_type == 'ShortFormRepeater':
+            return _("Forward Form Stubs")
+        elif repeater_type == 'CaseRepeater':
+            return _("Forward Cases")
+
+    integration = [
+        {
+            'title': _('Data Forwarding'),
+            'url': reverse('domain_forwarding', args=[domain]),
+            'subpages': [
+                {
+                    'title': forward_name,
+                    'urlname': 'add_repeater',
+                },
+                {
+                    'title': forward_name,
+                    'urlname': 'add_form_repeater',
+                },
+            ]
+        },
+        {
+            'title': _('Data Forwarding Records'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+        }
+    ]
+
     if toggles.DHIS2_INTEGRATION.enabled(domain):
-        administration.extend([{
+        integration.extend([{
             'title': _(Dhis2ConnectionView.page_title),
             'url': reverse(Dhis2ConnectionView.urlname, args=[domain])
         }, {
@@ -1556,7 +1557,13 @@ def _get_administration_section(domain):
             'url': reverse(Dhis2LogListView.urlname, args=[domain])
         }])
 
-    return administration
+    if toggles.OPENMRS_INTEGRATION.enabled(domain):
+        integration.append({
+            'title': _(OpenmrsImporterView.page_title),
+            'url': reverse(OpenmrsImporterView.urlname, args=[domain])
+        })
+
+    return integration
 
 
 def _get_feature_flag_items(domain):
@@ -1778,6 +1785,7 @@ class AdminTab(UITab):
             from corehq.apps.hqadmin.views import (
                 AuthenticateAs, ReprocessMessagingCaseUpdatesView
             )
+            from corehq.apps.notifications.views import ManageNotificationView
             admin_operations = [
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1793,6 +1801,8 @@ class AdminTab(UITab):
                  'url': reverse('superuser_management')},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
+                {'title': _('Manage Notifications'),
+                 'url': reverse(ManageNotificationView.urlname)},
             ]
         return [
             (_('Administrative Reports'), [
@@ -1830,6 +1840,7 @@ class AdminTab(UITab):
                     CommConnectProjectSpacesReport,
                     CommTrackProjectSpacesReport,
                     DeviceLogSoftAssertReport,
+                    UserAuditReport,
                 ]
             ]),
         ]

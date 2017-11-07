@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from datetime import datetime
 
@@ -316,7 +317,7 @@ class FormAccessorTestsSQL(TestCase):
     def test_save_form_deprecated(self):
         existing_form, new_form = _simulate_form_edit()
 
-        FormAccessorSQL.save_deprecated_form(existing_form)
+        FormAccessorSQL.update_form(existing_form, publish_changes=False)
         FormAccessorSQL.save_new_form(new_form)
 
         self._validate_deprecation(existing_form, new_form)

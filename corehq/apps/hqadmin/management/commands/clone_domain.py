@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from django.core.management.base import BaseCommand, CommandError
@@ -125,7 +126,7 @@ class Command(BaseCommand):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
         for toggle in all_toggles():
-            if toggle.enabled(self.existing_domain):
+            if toggle.enabled(self.existing_domain, NAMESPACE_DOMAIN):
                 self.stdout.write('Setting flag: {}'.format(toggle.slug))
                 if not self.no_commit:
                     toggle.set(self.new_domain, True, NAMESPACE_DOMAIN)

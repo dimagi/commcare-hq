@@ -101,11 +101,12 @@ hqDefine("app_manager/js/forms/form_designer", function() {
 
                 var notification_options = initial_page_data("notification_options");
                 if (notification_options) {
-                    var notifications = hqImport('app_manager/js/forms/app_notifications');
+                    var notifications = hqImport('app_manager/js/forms/app_notifications'),
+                        vellum = $("#formdesigner").vellum("get");
                     // initialize redis
                     WS4Redis({
                         uri: notification_options.WEBSOCKET_URI + notification_options.notify_facility + '?subscribe-broadcast',
-                        receive_message: notifications.NotifyFunction(notification_options.user_id, $('#notify-bar')),
+                        receive_message: notifications.alertUser(notification_options.user_id, vellum.alertUser, vellum),
                         heartbeat_msg: notification_options.WS4REDIS_HEARTBEAT,
                     });
                 }

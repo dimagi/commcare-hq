@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
@@ -63,7 +64,7 @@ from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound, AttachmentNotFound
+from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
 from corehq.form_processor.utils import should_use_sql_backend
@@ -756,7 +757,7 @@ class AddSavedReportConfigView(View):
 @datespan_default
 def email_report(request, domain, report_slug, report_type=ProjectReportDispatcher.prefix, once=False):
     from corehq.apps.hqwebapp.tasks import send_html_email_async
-    from forms import EmailReportForm
+    from .forms import EmailReportForm
     user_id = request.couch_user._id
 
     form = EmailReportForm(request.GET)
@@ -2011,7 +2012,7 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-def _is_location_safe_report_class(request, domain, export_hash, format):
+def _is_location_safe_report_class(view_fn, request, domain, export_hash, format):
     cache = get_redis_client()
 
     content = cache.get(export_hash)

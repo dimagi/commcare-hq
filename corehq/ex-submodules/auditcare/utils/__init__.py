@@ -1,6 +1,7 @@
 #source, from django-tracking
 
 
+from __future__ import absolute_import
 from django.conf import settings
 import re
 

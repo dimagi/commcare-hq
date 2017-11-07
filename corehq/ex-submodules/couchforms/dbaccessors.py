@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.util.test_utils import unit_testing_only
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -15,7 +16,7 @@ def get_form_ids_by_type(domain, type_, start=None, end=None):
     assert type_ in doc_types()
     startkey = [domain, type_]
     if end:
-        endkey = startkey + end.isoformat()
+        endkey = startkey + [end.isoformat()]
     else:
         endkey = startkey + [{}]
 

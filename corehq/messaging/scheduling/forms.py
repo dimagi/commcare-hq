@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
@@ -7,6 +8,7 @@ from django.forms.fields import (
     ChoiceField,
 )
 from django.forms.forms import Form
+from django.forms.widgets import Textarea
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -15,14 +17,14 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 
 
-class MessageRecipientField(CharField):
+class RecipientField(CharField):
     def to_python(self, value):
         if not value:
             return []
         return value.split(',')
 
 
-class MessageForm(Form):
+class ScheduleForm(Form):
     schedule_name = CharField(
         required=True,
         label=_('Schedule Name'),
@@ -35,13 +37,13 @@ class MessageForm(Form):
             ('immediately', _('Immediately')),
         )
     )
-    recipients = MessageRecipientField(
+    recipients = RecipientField(
         label=_("Recipient(s)"),
         help_text=_("Type a username, group name or location"),
     )
     content = ChoiceField(
         required=True,
-        label=_("Content"),  # seems like a weird label?
+        label=_("What to send"),
         choices=(
             ('sms', _('SMS')),
             # ('email', _('Email')),
@@ -66,7 +68,7 @@ class MessageForm(Form):
             for lang in self.project_languages:
                 kwargs['initial']['message_%s' % lang] = message.get(lang, '')
 
-        super(MessageForm, self).__init__(*args, **kwargs)
+        super(ScheduleForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
@@ -82,18 +84,20 @@ class MessageForm(Form):
             crispy.Field('send_frequency'),
             crispy.Field(
                 'recipients',
-                # type='hidden',
                 data_bind='value: message_recipients.value',
                 placeholder=_("Select some recipients")
             ),
             crispy.Field('content'),
             crispy.Field('translate', data_bind='checked: translate'),
-            # todo this doesn't hide the label
-            crispy.Field('non_translated_message', data_bind='visible: !translate()'),
-        ] + [
-            crispy.Field('message_%s' % lang, data_bind='visible: translate')
-            for lang in self.project_languages
+            crispy.Div(
+                crispy.Field('non_translated_message'),
+                data_bind='visible: !translate()',
+            ),
         ]
+        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
+        layout_fields.append(
+            crispy.Div(*translated_fields, data_bind='visible: translate()')
+        )
 
         if not readonly:
             layout_fields += [
@@ -113,12 +117,12 @@ class MessageForm(Form):
         return getattr(doc, 'langs', ['en'])
 
     def add_content_fields(self):
-        self.fields['non_translated_message'] = CharField(label=_("Message"), required=False)
+        self.fields['non_translated_message'] = CharField(label=_("Message"), required=False, widget=Textarea)
 
         for lang in self.project_languages:
             # TODO support RTL languages
             self.fields['message_%s' % lang] = CharField(
-                label="{} ({})".format(_("Message"), lang), required=False
+                label="{} ({})".format(_("Message"), lang), required=False, widget=Textarea
             )
 
     @property

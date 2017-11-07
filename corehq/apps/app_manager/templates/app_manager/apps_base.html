@@ -28,6 +28,7 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
         @use_jquery_ui decorator, but app manager doesn't, so instead include only the pieces
         actually used in app manager (no tooltip).
     -->
+    {% compress js %}
     <script src="{% static 'jquery-ui/ui/minified/core.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
@@ -37,6 +38,7 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     <script src="{% static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
     <script src="{% static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
+    {% endcompress %}
 
     {% include 'hqwebapp/includes/atwho.html' %}
     <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
@@ -44,8 +46,10 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
 
     {% include 'hqwebapp/includes/ui_element_js.html' %}
+    {% compress js %}
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block page_breadcrumbs %}{% endblock %}

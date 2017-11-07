@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from corehq.apps.locations.dbaccessors import get_web_users_by_location
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient

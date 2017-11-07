@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from datetime import datetime
 from functools import partial
@@ -88,6 +89,8 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+
+    # Sync optimization controls
     _expand_from = models.ForeignKey(
         'self',
         null=True,
@@ -103,6 +106,9 @@ class LocationType(models.Model):
         related_name='+',
         on_delete=models.SET_NULL,
     )  # include all levels of this type and their ancestors
+    # If specified, include only the linked types
+    include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
+
     last_modified = models.DateTimeField(auto_now=True)
     has_user = models.BooleanField(default=False)
 
@@ -378,16 +384,18 @@ class SQLLocation(MPTTModel):
         return ["domain", "name", "site_code", "external_id",
                 "metadata", "is_archived"]
 
-    @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
 
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
-        set_site_code_if_needed(self)
-        sync_supply_point(self)
-        super(SQLLocation, self).save(*args, **kwargs)
+
+        with transaction.atomic():
+            set_site_code_if_needed(self)
+            sync_supply_point(self)
+            super(SQLLocation, self).save(*args, **kwargs)
+
         publish_location_saved(self.domain, self.location_id)
 
     def delete(self, *args, **kwargs):
@@ -395,6 +403,9 @@ class SQLLocation(MPTTModel):
         from .document_store import publish_location_saved
         to_delete = self.get_descendants(include_self=True)
 
+        # This deletion should ideally happen in a transaction. It's not
+        # currently possible as supply point cases are stored either in a
+        # separate database or in couch. Happy Debugging!
         for loc in to_delete:
             loc._remove_users()
             sync_supply_point(loc, is_deletion=True)
@@ -617,6 +628,16 @@ class SQLLocation(MPTTModel):
     def sql_location(self):
         # For backwards compatability
         return self
+
+    def parents(self):
+        # get locations in path except the last one which is self
+        return SQLLocation.objects.get_locations(self.path[:-1])
+
+    def get_parent_of_type(self, parent_type):
+        parents = self.parents().filter(location_type__name=parent_type)
+        if len(parents) > 1:
+            raise ValueError("More than one parents for the same type")
+        return parents
 
 
 def filter_for_archived(locations, include_archive_ancestors):

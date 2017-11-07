@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_active_schedule_instance_ids,
@@ -16,7 +17,6 @@ from corehq.messaging.scheduling.tasks import (
     handle_case_timed_schedule_instance,
 )
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
-from corehq.toggles import DATA_MIGRATION
 from datetime import datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
@@ -25,7 +25,7 @@ from time import sleep
 
 
 def skip_domain(domain):
-    return DATA_MIGRATION.enabled(domain) or any_migrations_in_progress(domain)
+    return any_migrations_in_progress(domain)
 
 
 class Command(BaseCommand):

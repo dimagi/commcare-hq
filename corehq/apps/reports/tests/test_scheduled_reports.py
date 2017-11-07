@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain

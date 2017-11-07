@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, date
 import json
 import jsonobject
@@ -540,40 +541,40 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
     ]
 
     def get_payload(self, repeat_record, user):
-        user_json = self.serialize(repeat_record.domain, user)
+        from .utils import get_bets_user_json
+        user_json = get_bets_user_json(repeat_record.domain, user)
         return json.dumps(user_json, cls=DjangoJSONEncoder)
 
-    @staticmethod
-    def serialize(domain, user):
-        location = user.get_sql_location(domain)
-        district_location = _get_district_location(location)
-        org_id = (
-            location.metadata.get('private_sector_org_id')
-            or district_location.metadata.get('private_sector_org_id')
-        )
-        user_json = {
-            "username": user.raw_username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "default_phone_number": get_national_number(user.user_data.get("contact_phone_number")),
-            "id": user._id,
-            "phone_numbers": map(get_national_number, user.phone_numbers),
-            "email": user.email,
-            "dtoLocation": district_location.location_id,
-            "privateSectorOrgId": org_id,
-            "resource_uri": "",
-        }
-        user_json['user_data'] = {
-            field: user.user_data.get(field, "")
-            for field in BETSUserPayloadGenerator.user_data_fields
-        }
-        return user_json
+    def handle_success(self, response, user, repeat_record):
+        # re-fetch the user so we don't get a document update conflict
+        user = CommCareUser.get(user._id)
+        existing_ids = user.user_data.get('BETS_user_repeat_record_ids')
+        if existing_ids:
+            user.user_data['BETS_user_repeat_record_ids'] = "{} {}".format(
+                existing_ids,
+                repeat_record._id
+            )                   # space separated list to follow xform convention
+        else:
+            user.user_data['BETS_user_repeat_record_ids'] = repeat_record._id
+        user.save()
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
 
     def get_payload(self, repeat_record, location):
         return json.dumps(get_bets_location_json(location))
+
+    def handle_success(self, response, location, repeat_record):
+        location.refresh_from_db()
+        existing_ids = location.metadata.get('BETS_location_repeat_record_ids')
+        if existing_ids:
+            location.metadata['BETS_location_repeat_record_ids'] = "{} {}".format(
+                existing_ids,
+                repeat_record._id
+            )                   # space separated list to follow xform convention
+        else:
+            location.metadata['BETS_location_repeat_record_ids'] = repeat_record._id
+        location.save()
 
 
 class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):

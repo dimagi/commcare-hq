@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import mock
 from django.test import SimpleTestCase
 from collections import namedtuple

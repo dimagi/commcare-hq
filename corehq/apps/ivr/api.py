@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (INCOMING, OUTGOING,

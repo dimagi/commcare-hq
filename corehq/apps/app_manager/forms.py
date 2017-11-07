@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain

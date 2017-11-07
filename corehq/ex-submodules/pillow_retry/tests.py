@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sys
 import uuid
 from datetime import datetime
@@ -10,6 +11,7 @@ from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from pillowtop import get_all_pillow_configs
 from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.feed.mock import RandomChangeFeed
@@ -298,9 +300,14 @@ class PillowtopRetryAllPillowsTests(TestCase):
 
     def _test_error_logging_for_pillow(self, pillow_config):
         pillow = _pillow_instance_from_config_with_mock_process_change(pillow_config)
-        if not pillow.retry_errors:
-            return
+        if pillow.retry_errors:
+            exc_class = Exception
+            exc_class_string = 'exceptions.Exception'
+        else:
+            exc_class = DocumentMissingError
+            exc_class_string = 'pillowtop.dao.exceptions.DocumentMissingError'
 
+        pillow.process_change = MagicMock(side_effect=exc_class(pillow.pillow_id))
         doc = self._get_random_doc()
         pillow.process_with_error_handling(Change(id=doc['id'], sequence_id='3', document=doc))
 
@@ -308,7 +315,7 @@ class PillowtopRetryAllPillowsTests(TestCase):
         self.assertEqual(1, len(errors), pillow_config)
         error = errors[0]
         self.assertEqual(error.doc_id, doc['id'], pillow_config)
-        self.assertEqual('exceptions.Exception', error.error_type)
+        self.assertEqual(exc_class_string, error.error_type)
         self.assertIn(pillow.pillow_id, error.error_traceback)
 
     def _get_random_doc(self):
@@ -327,7 +334,6 @@ def _pillow_instance_from_config_with_mock_process_change(pillow_config):
     else:
         instance = pillow_config.get_instance()
 
-    instance.process_change = MagicMock(side_effect=Exception(instance.pillow_id))
     return instance
 
 

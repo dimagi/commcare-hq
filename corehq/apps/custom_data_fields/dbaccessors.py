@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 def get_by_domain_and_type(domain, field_type):
     from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 

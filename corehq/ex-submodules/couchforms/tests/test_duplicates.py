@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import os
 from django.conf import settings
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend, post_xform
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -18,12 +19,12 @@ class DuplicateFormTest(TestCase, TestFileMixin):
 
     def test_basic_duplicate(self):
         xml_data = self.get_xml('duplicate')
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
         self.assertEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_normal)
         self.assertEqual("test-domain", xform.domain)
 
-        xform = post_xform(xml_data, domain='test-domain')
+        xform = submit_form_locally(xml_data, 'test-domain').xform
         self.assertNotEqual(self.ID, xform.form_id)
         self.assertTrue(xform.is_duplicate)
         self.assertTrue(self.ID in xform.problem)
@@ -35,7 +36,7 @@ class DuplicateFormTest(TestCase, TestFileMixin):
         instance = self.get_xml('duplicate')
 
         # Post an xform with an alternate doc_type
-        xform1 = post_xform(instance, domain=domain)
+        xform1 = submit_form_locally(instance, domain=domain).xform
 
         # Change the doc_type of the form by archiving it
         xform1.archive()

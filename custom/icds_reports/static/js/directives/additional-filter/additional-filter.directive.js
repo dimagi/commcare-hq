@@ -39,12 +39,28 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
     };
 }
 
-function AdditionalFilterController($scope, $location, $uibModal) {
+function AdditionalFilterController($scope, $location, $uibModal, storageService) {
     var vm = this;
+
+    var page = $location.path().split('/')[1];
+    if (storageService.getKey('last_page') !== page) {
+        if (storageService.getKey('last_page') !== '') {
+            $location.search('gender', null);
+            $location.search('age', null);
+        }
+        storageService.setKey('last_page', page);
+    }
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
-    var filtersObjects = [{ label: 'Gender', value: vm.selectedGender }, { label: 'Age', value: vm.selectedAge }];
+    var filtersObjects = [];
+    if (vm.filters.indexOf('gender') === -1) {
+        filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
+    }
+    if (vm.filters.indexOf('age') === -1) {
+        filtersObjects.push({ label: 'Age', value: vm.selectedAge });
+    }
+
 
     vm.getPlaceholder = function() {
         var placeholder = '';
@@ -86,7 +102,7 @@ function AdditionalFilterController($scope, $location, $uibModal) {
     };
 }
 
-AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal' ];
+AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
 AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {

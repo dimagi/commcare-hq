@@ -1,13 +1,15 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
 from custom.icds_reports.utils import percent_diff, get_value, apply_exclude
 
 
-# @quickcache(['config'], timeout=24 * 60 * 60)
+@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False):
 
     def get_data_for_child_health_monthly(date, filters):
@@ -120,8 +122,8 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
-                        "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
-                        "undernutrition and has long lasting harmful consequences on the growth of a child")
+                        "of the WHO Child Growth Standards median. Stunting is a sign of chronic undernutrition "
+                        "and has long lasting harmful consequences on the growth of a child")
                     ),
                     'percent': percent_diff(
                         'stunting',
@@ -173,7 +175,7 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'help_text': _((
                         "Percentage of children breastfed within an hour of birth. Early initiation of "
                         "breastfeeding ensure the newborn recieves the 'first milk' rich in nutrients "
-                        "and encourages exclusive breastfeeding practic")
+                        "and encourages exclusive breastfeeding practice")
                     ),
                     'percent': percent_diff(
                         'bf_birth',
@@ -248,9 +250,9 @@ def get_maternal_child_data(domain, config, show_test=False):
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': _((
-                        "Percentage of pregant women who delivered in a public or private medical facility "
+                        "Percentage of pregnant women who delivered in a public or private medical facility "
                         "in the last month. Delivery in medical instituitions is associated with a "
-                        "decrease maternal mortality rate")
+                        "decrease in maternal mortality rate")
                     ),
                     'percent': percent_diff(
                         'institutional_delivery',

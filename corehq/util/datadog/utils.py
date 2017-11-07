@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 import logging
 from functools import wraps
@@ -82,3 +83,19 @@ def get_url_group(url):
 def update_datadog_metrics(metrics):
     for metric, value in metrics.items():
         statsd.gauge(metric, value)
+
+
+def bucket_value(value, buckets, unit=''):
+    """Get value bucket for the given value
+
+    Bucket values because datadog's histogram is too limited
+
+    Basically frequency is not high enough to have a meaningful
+    distribution with datadog's 10s aggregation window, especially
+    with tags. More details:
+    https://help.datadoghq.com/hc/en-us/articles/211545826
+    """
+    for bucket in buckets:
+        if value < bucket:
+            return "lt_{:03}{}".format(bucket, unit)
+    return "over_{:03}{}".format(buckets[-1], unit)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.shortcuts import create_domain
@@ -29,11 +30,17 @@ class BaseICDSTest(TestCase):
 
     @classmethod
     def create_case(cls, case_type, parent_case_id=None, parent_case_type=None, parent_identifier=None,
-            parent_relationship=None, update=None):
+            parent_relationship=None, update=None, case_name=None, owner_id=None):
 
         kwargs = {}
         if parent_case_id:
             kwargs['index'] = {parent_identifier: (parent_case_type, parent_case_id, parent_relationship)}
+
+        if case_name:
+            kwargs['case_name'] = case_name
+
+        if owner_id:
+            kwargs['owner_id'] = owner_id
 
         caseblock = CaseBlock(
             uuid.uuid4().hex,
@@ -45,3 +52,74 @@ class BaseICDSTest(TestCase):
         case = submit_case_blocks(ElementTree.tostring(caseblock.as_xml()), cls.domain)[1][0]
         cls.created_case_ids.append(case.case_id)
         return case
+
+    @classmethod
+    def create_basic_related_cases(cls, owner_id=None):
+        cls.mother_person_case = cls.create_case(
+            'person',
+            update={'language_code': 'en'},
+            case_name="Sam",
+            owner_id=owner_id,
+        )
+        cls.child_person_case = cls.create_case(
+            'person',
+            parent_case_id=cls.mother_person_case.case_id,
+            parent_identifier='mother',
+            parent_relationship='child',
+            case_name="Joe",
+            owner_id=owner_id,
+        )
+        cls.child_health_case = cls.create_case(
+            'child_health',
+            parent_case_id=cls.child_person_case.case_id,
+            parent_identifier='parent',
+            parent_relationship='extension',
+            owner_id=owner_id,
+        )
+        cls.child_tasks_case = cls.create_case(
+            'tasks',
+            parent_case_id=cls.child_health_case.case_id,
+            parent_identifier='parent',
+            parent_relationship='extension',
+            update={'tasks_type': 'child'},
+            owner_id=owner_id,
+        )
+        cls.ccs_record_case = cls.create_case(
+            'ccs_record',
+            parent_case_id=cls.mother_person_case.case_id,
+            parent_case_type=cls.mother_person_case.type,
+            parent_identifier='parent',
+            parent_relationship='child',
+            owner_id=owner_id,
+        )
+        cls.mother_tasks_case = cls.create_case(
+            'tasks',
+            parent_case_id=cls.ccs_record_case.case_id,
+            parent_case_type=cls.ccs_record_case.type,
+            parent_identifier='parent',
+            parent_relationship='extension',
+            update={'tasks_type': 'pregnancy'},
+            owner_id=owner_id,
+        )
+        cls.lone_child_person_case = cls.create_case(
+            'person',
+            owner_id=owner_id,
+        )
+        cls.lone_child_health_case = cls.create_case(
+            'child_health',
+            owner_id=owner_id,
+        )
+        cls.lone_child_tasks_case = cls.create_case(
+            'tasks',
+            update={'tasks_type': 'child'},
+            owner_id=owner_id,
+        )
+        cls.lone_ccs_record_case = cls.create_case(
+            'ccs_record',
+            owner_id=owner_id,
+        )
+        cls.lone_mother_tasks_case = cls.create_case(
+            'tasks',
+            update={'tasks_type': 'pregnancy'},
+            owner_id=owner_id,
+        )

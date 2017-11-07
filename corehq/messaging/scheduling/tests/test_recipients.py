@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from django.test import TestCase
 from corehq.apps.data_interfaces.tests.util import create_case

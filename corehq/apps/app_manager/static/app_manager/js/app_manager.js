@@ -146,7 +146,7 @@ hqDefine('app_manager/js/app_manager', function () {
             $.ajax({
                 url: currentAppVersionUrl,
                 success: function (data) {
-                    module.setPublishStatus((!data.latestRelease && data.currentVersion > 1) || (data.latestRelease !== null && data.latestRelease < data.currentVersion));
+                    module.setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
                 },
             });
         };
@@ -365,7 +365,16 @@ hqDefine('app_manager/js/app_manager', function () {
                                 $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
                             resetIndexes($fromSortable);
                         }
-                        $.post($form.attr('action'), $form.serialize(), function () {});
+                        $.ajax($form.attr('action'), {
+                            method: 'POST',
+                            data: $form.serialize(),
+                            success: function() {
+                                hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
+                            },
+                            error: function(xhr) {
+                                hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
+                            },
+                        });
                         module.setPublishStatus(true);
                     }
                 }

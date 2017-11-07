@@ -1,5 +1,8 @@
+from __future__ import absolute_import
 import re
 from xml.etree import cElementTree as ElementTree
+
+from corehq.blobs import get_blob_db
 
 BAD_SLUG_PATTERN = r"([/\\<>\s])"
 
@@ -53,3 +56,8 @@ def get_index_schema_node(fixture_id, attrs_to_index):
     node = ElementTree.Element('schema', {'id': fixture_id})
     node.append(indices_node)
     return node
+
+
+def clear_fixture_cache(domain):
+    from corehq.apps.fixtures.models import FIXTURE_BUCKET
+    get_blob_db().delete(domain, FIXTURE_BUCKET)

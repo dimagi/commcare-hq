@@ -163,7 +163,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     html.push('</div>');
                     d3.select(this.options.element).append('div')
                         .attr('class', 'datamaps-legend')
-                        .attr('style', 'width: 300px; left: 5%; top: 5%;')
+                        .attr('style', 'width: 300px; left: 1%; bottom: 20%;')
                         .html(html.join(''));
                 },
             });
@@ -172,25 +172,28 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     if (this.options.rightLegend !== null) {
                         var loc_name = $location.search()['location_name'] || "National";
                         var period = this.options.rightLegend['period'] || 'Monthly';
-                        var html = '<table style="width: 250px;">';
+                        var html = '<div class="map-kpi" style="width: 300px;">';
                         if (this.options.rightLegend['average'] !== void(0)) {
-                            html += '<tr>';
-                            html += '<td style="border-right: 1px solid black; padding-right: 10px; border-bottom: 1px solid black; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>';
+                            html += '<div class="row no-margin">';
                             if (this.options.rightLegend['average_format'] === 'number') {
-                                html += '<td style="padding-left: 10px; border-bottom: 1px solid black;">' + loc_name + ' average: ' + $filter('indiaNumbers')(this.options.rightLegend['average']) + '</td>';
+                                html += '<strong>' + loc_name + ' average:</strong> ' + $filter('indiaNumbers')(this.options.rightLegend['average']);
                             } else {
-                                html += '<td style="padding-left: 10px; border-bottom: 1px solid black;">' + loc_name + ' average: ' + d3.format('.2f')(this.options.rightLegend['average']) + '%</td>';
+                                html += '<strong>' + loc_name + ' average:</strong> ' + d3.format('.2f')(this.options.rightLegend['average']) + '%';
                             }
-                            html += '<tr/>';
+                            html +='</div>';
+                            html +='</br>';
+                            html += '<div class="row no-margin">';
+                            html += this.options.rightLegend['info'];
+                            html +='</div>';
+                        } else {
+                            html += '<div class="row no-margin">';
+                            html += this.options.rightLegend['info'];
+                            html +='</div>';
                         }
-                        html += '<tr>';
-                        html += '<td style="border-right: 1px solid black; padding-top: 5px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>';
-                        html += '<td style="padding-left: 10px; padding-top: 5px; padding-bottom: 5px;">' + this.options.rightLegend['info'] + '</td>';
-                        html += '<tr/>';
-                        html += '</table>';
+                        html += '</div>';
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
-                            .attr('style', 'position: absolute; width: 150px; bottom: 20%; left: 0; z-index: -1;')
+                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1;')
                             .html(html);
                     }
                 },

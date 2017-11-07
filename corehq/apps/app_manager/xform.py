@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
@@ -955,15 +956,16 @@ class XForm(WrappedNode):
             node = cnode.node
             path = cnode.path
             excluded_paths.add(path)
+
+            repeat = cnode.repeat
+            if repeat is not None:
+                repeat_contexts.add(repeat)
+
             if not cnode.is_leaf and not include_groups:
                 continue
 
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
-
-            repeat = cnode.repeat
-            if repeat is not None:
-                repeat_contexts.add(repeat)
 
             question = {
                 "label": self.get_label_text(node, langs),

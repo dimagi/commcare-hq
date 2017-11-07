@@ -20,11 +20,11 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         legendTitle: 'Percentage Children',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
     };
@@ -61,14 +61,22 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 
     vm.loadData = function () {
-        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
-            vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector View';
-        } else {
-            vm.mode = 'map';
-            vm.steps['map'].label = 'Map View';
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
         }
 
+        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
+            vm.mode = 'sector';
+            vm.steps['map'].label = loc_type + ' View';
+        } else {
+            vm.mode = 'map';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
+        }
 
         vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
@@ -76,10 +84,22 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
             }
         });
     };
@@ -158,26 +178,21 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
+                forceY: [0],
             },
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",.2f")(day['y']);
-                    };
-
-                    var total = findValue(vm.chartData[1].values, d.value);
-                    var value = findValue(vm.chartData[0].values, d.value);
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + total + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + value + "</strong></p>";
-                    tooltip_content += "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + day.all + "</strong></p>";
+                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + day.in_month + "</strong></p>";
+                    tooltip_content += "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
 
                     return tooltip_content;
                 });
@@ -197,8 +212,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         },
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from kafka.common import OffsetRequest
 from kafka.util import kafka_bytestring
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import Product
 from django.template.loader import render_to_string

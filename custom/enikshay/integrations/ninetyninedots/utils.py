@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from dateutil import parser
 from pytz import timezone

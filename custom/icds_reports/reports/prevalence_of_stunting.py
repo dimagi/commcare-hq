@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -6,7 +7,9 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -17,6 +20,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -89,16 +93,16 @@ def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=Fal
                     "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
                     "-2Z standard deviations of the WHO Child Growth Standards median."
                     "<br/><br/>"
-                    "Stunting in children is a sign of chronic undernutrition and has long lasting harmful "
+                    "Stunting is a sign of chronic undernutrition and has long lasting harmful "
                     "consequences on the growth of a child"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -113,6 +117,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
     ).annotate(
         moderate=Sum('stunting_moderate'),
         severe=Sum('stunting_severe'),
+        normal=Sum('stunting_normal'),
         valid=Sum('height_eligible'),
     ).order_by('month')
 
@@ -120,7 +125,9 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
         chart_data = apply_exclude(domain, chart_data)
 
     data = {
-        'red': OrderedDict()
+        'red': OrderedDict(),
+        'orange': OrderedDict(),
+        'peach': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
@@ -128,6 +135,8 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
         data['red'][miliseconds] = {'y': 0, 'all': 0}
+        data['orange'][miliseconds] = {'y': 0, 'all': 0}
+        data['peach'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -136,6 +145,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
         location = row['%s_name' % loc_level]
         severe = row['severe']
         moderate = row['moderate']
+        normal = row['normal']
 
         underweight = (moderate or 0) + (severe or 0)
 
@@ -143,7 +153,11 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['red'][date_in_miliseconds]['y'] += underweight
+        data['peach'][date_in_miliseconds]['y'] += normal
+        data['peach'][date_in_miliseconds]['all'] += valid
+        data['orange'][date_in_miliseconds]['y'] += moderate
+        data['orange'][date_in_miliseconds]['all'] += valid
+        data['red'][date_in_miliseconds]['y'] += severe
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
@@ -159,26 +173,50 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['red'].iteritems()
+                    } for key, value in data['peach'].iteritems()
                 ],
-                "key": "Moderate or severely stunted growth",
+                "key": "% normal",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": ChartColors.PINK
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['orange'].iteritems()
+                ],
+                "key": "% moderately stunted",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ChartColors.ORANGE
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['red'].iteritems()
+                ],
+                "key": "% severely stunted",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ChartColors.RED
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:-1],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_prevalence_of_stunning_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggChildHealthMonthly.objects.filter(
@@ -196,18 +234,8 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=
     if not show_test:
         data = apply_exclude(domain, data)
 
-    loc_data = {
-        'green': 0,
-        'orange': 0,
-        'red': 0
-    }
-    tmp_name = ''
-    rows_for_location = 0
-
     chart_data = {
-        'green': [],
-        'orange': [],
-        'red': []
+        'blue': [],
     }
 
     tooltips_data = defaultdict(lambda: {
@@ -218,20 +246,14 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=
         'total_measured': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
-        if tmp_name and name != tmp_name:
-            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
-            rows_for_location = 0
-            loc_data = {
-                'green': 0,
-                'orange': 0,
-                'red': 0
-            }
         severe = row['severe']
         moderate = row['moderate']
         normal = row['normal']
@@ -248,45 +270,33 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += value
 
-        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
+        value = ((moderate or 0) + (severe or 0)) / float(valid or 1)
+        chart_data['blue'].append([
+            name, value
+        ])
 
-        if value < 25.0:
-            loc_data['green'] += 1
-        elif 25.0 <= value < 38.0:
-            loc_data['orange'] += 1
-        elif value >= 38.0:
-            loc_data['red'] += 1
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
 
-        tmp_name = name
-        rows_for_location += 1
-
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
+        "info": _((
+            "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
+            "-2Z standard deviations of the WHO Child Growth Standards median."
+            "<br/><br/>"
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
+            "consequences on the growth of a child"
+        )),
         "chart_data": [
             {
-                "values": chart_data['green'],
-                "key": "0%-25%",
+                "values": chart_data['blue'],
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": BLUE
             },
-            {
-                "values": chart_data['orange'],
-                "key": "25%-38%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['red'],
-                "key": "38%-100%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
-            }
         ]
     }

@@ -1,12 +1,15 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value
 
 
+@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_awc_infrastructure_data(domain, config, show_test=False):
     def get_data_for(month, filters):
         queryset = AggAwcMonthly.objects.filter(
@@ -81,38 +84,15 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 }
             ],
             [
-                {
-                    'label': _('AWCs with Electricity'),
-                    'help_text': _('Percentage of AWCs with access to electricity'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
-                {
-                    'label': _('AWCs with Medicine Kit'),
-                    'help_text': _('Percentage of AWCs with a Medicine Kit'),
-                    'percent': percent_diff(
-                        'medicine_kits',
-                        this_month_data,
-                        prev_month_data,
-                        'awcs'
-                    ),
-                    'color': 'green' if percent_diff(
-                        'medicine_kits',
-                        this_month_data,
-                        prev_month_data,
-                        'awcs'
-                    ) > 0 else 'red',
-                    'value': get_value(this_month_data, 'medicine_kits'),
-                    'all': get_value(this_month_data, 'awcs'),
-                    'format': 'percent_and_div',
-                    'frequency': 'month',
-                    'redirect': 'medicine_kit'
-                }
-            ],
-            [
+                # {
+                #     'label': _('AWCs with Electricity'),
+                #     'help_text': _('Percentage of AWCs with access to electricity'),
+                #     'percent': 0,
+                #     'value': 0,
+                #     'all': 0,
+                #     'format': 'percent_and_div',
+                #     'frequency': 'month'
+                # },
                 {
                     'label': _('AWCs with Weighing Scale: Infants'),
                     'help_text': _('Percentage of AWCs with weighing scale for infants'),
@@ -154,6 +134,29 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'adult_weight_scale'
+                }
+            ],
+            [
+                {
+                    'label': _('AWCs with Medicine Kit'),
+                    'help_text': _('Percentage of AWCs with a Medicine Kit'),
+                    'percent': percent_diff(
+                        'medicine_kits',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'medicine_kits',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ) > 0 else 'red',
+                    'value': get_value(this_month_data, 'medicine_kits'),
+                    'all': get_value(this_month_data, 'awcs'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': 'medicine_kit'
                 }
             ],
             # [

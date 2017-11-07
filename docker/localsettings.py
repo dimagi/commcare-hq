@@ -1,5 +1,6 @@
 ####### Configuration for CommCareHQ Running in docker #######
 
+from __future__ import absolute_import
 import os
 
 ICDS_UCR_DATABASE_ALIAS = 'default'
@@ -151,7 +152,6 @@ COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 CELERY_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
-CSRF_SOFT_MODE = False
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))

@@ -420,7 +420,7 @@ class ConfigureChartReport(ReportBuilderView):
                     'is_static': self.existing_report.is_static,
                 })
             return self._handle_exception(error_response, e)
-        field_names = report_form.fields.keys()
+        field_names = report_form.fields
         return {
             'report': {
                 "title": self.page_name

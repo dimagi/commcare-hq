@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import uuid
 from urllib import urlencode
@@ -143,15 +144,17 @@ def get_blank_form_xml(form_name):
 
 
 def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
-    excluded_fields = set(Application._meta_fields).union(
-        ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
-    )
+    excluded_fields = set(Application._meta_fields).union([
+        'date_created', 'build_profiles', 'copy_history', 'copy_of',
+        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS'
+    ])
     master_json = master_build.to_json()
+    app_json = app.to_json()
     for key, value in master_json.iteritems():
         if key not in excluded_fields:
-            app[key] = value
-    app['version'] = master_json['version']
-    wrapped_app = wrap_app(app)
+            app_json[key] = value
+    app_json['version'] = master_json['version']
+    wrapped_app = wrap_app(app_json)
     for module in wrapped_app.modules:
         if isinstance(module, ReportModule):
             if report_map is not None:
@@ -163,7 +166,7 @@ def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
     if maintain_ids:
-        id_map = _get_form_id_map(app)
+        id_map = _get_form_id_map(app_json)
         wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
     wrapped_app.copy_attachments(master_build)
     enable_usercase_if_necessary(wrapped_app)

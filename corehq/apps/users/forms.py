@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
@@ -26,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
@@ -1247,3 +1248,59 @@ class CommCareUserFormSet(object):
     def update_user(self):
         self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
         return self.user_form.update_user()
+
+
+class CommCareUserFilterForm(forms.Form):
+    role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
+    search_string = forms.CharField(
+        label=ugettext_lazy('Search by username'),
+        max_length=30,
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
+
+        roles = UserRole.by_domain(self.domain)
+        self.fields['role_id'].choices =  [('', _('All Roles'))] + [
+            (role._id, role.name or _('(No Name)')) for role in roles]
+
+        self.helper = FormHelper()
+        self.helper.form_method = 'GET'
+        self.helper.form_id = 'user-filters'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse('download_commcare_users', args=[self.domain])
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_text_inline = True
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Filter and Download Users"),
+                crispy.Field('role_id'),
+                crispy.Field('search_string'),
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Download All Users"),
+                    type="submit",
+                    css_class="btn btn-success submit_button",
+                )
+            ),
+        )
+
+    def clean_role_id(self):
+        role_id = self.cleaned_data['role_id']
+        if not role_id:
+            return None
+        if not UserRole.get(role_id).domain == self.domain:
+            raise forms.ValidationError(_("Invalid Role"))
+        return role_id
+
+    def clean_search_string(self):
+        search_string = self.cleaned_data['search_string']
+        if "*" in search_string or "?" in search_string:
+            raise forms.ValidationError(_("* and ? are not allowed"))
+        return search_string

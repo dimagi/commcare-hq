@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import json
 
@@ -140,7 +141,7 @@ class FieldColumn(ReportColumn):
     type = TypeProperty('field')
     field = StringProperty(required=True)
     aggregation = StringProperty(
-        choices=SQLAGG_COLUMN_MAP.keys(),
+        choices=list(SQLAGG_COLUMN_MAP),
         required=True,
     )
     format = StringProperty(default='default', choices=[
@@ -148,6 +149,8 @@ class FieldColumn(ReportColumn):
         'percent_of_total',
     ])
     sortable = BooleanProperty(default=False)
+    width = StringProperty(default=None, required=False)
+    css_class = StringProperty(default=None, required=False)
 
     @classmethod
     def wrap(cls, obj):
@@ -181,7 +184,9 @@ class FieldColumn(ReportColumn):
                 data_slug=self.column_id,
                 format_fn=self.get_format_fn(),
                 help_text=self.description,
-                visible=self.visible
+                visible=self.visible,
+                width=self.width,
+                css_class=self.css_class,
             )
         ])
 

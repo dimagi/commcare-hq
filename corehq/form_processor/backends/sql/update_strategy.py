@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from collections import defaultdict
 
@@ -223,32 +224,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self.case.closed = False
         self.case.closed_on = None
         self.case.closed_by = ''
-        self._deduplicate_indices()
-
-    def _deduplicate_indices(self):
-        # http://manage.dimagi.com/default.asp?261458
-        # Can be removed once we have a unique index on case indices
-        indices_by_id = defaultdict(list)
-        for index in self.case.indices:
-            indices_by_id[index.identifier].append(index)
-
-        for identifier, indices in indices_by_id.items():
-            if len(indices) > 1:
-                index_set = set(indices)
-                if len(index_set) == 1:
-                    for index_to_delete in indices[1:]:
-                        # delete all except the first
-                        self.case.track_delete(index_to_delete)
-                    self.case._saved_indices.reset_cache(self.case)
-                else:
-                    soft_assert('{}@dimagi.com'.format('skelly'))(
-                        False,
-                        "Multiple case indices with same identifier",
-                        {
-                            'case_id': self.case.case_id,
-                            'indices': [unicode(index) for index in index_set]
-                        }
-                    )
 
     def rebuild_from_transactions(self, transactions, rebuild_transaction, unarchived_form_id=None):
         """

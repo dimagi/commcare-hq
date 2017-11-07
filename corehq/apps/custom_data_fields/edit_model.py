@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.contrib import messages
@@ -77,6 +78,7 @@ class CustomDataFieldForm(forms.Form):
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
     is_multiple_choice = forms.BooleanField(required=False)
+    index_in_fixture = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -98,6 +100,7 @@ class CustomDataModelMixin(object):
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
     show_purge_existing = False
+    show_index_in_fixture = False
     entity_string = None  # User, Group, Location, Product...
 
     @use_jquery_ui
@@ -141,7 +144,9 @@ class CustomDataModelMixin(object):
             is_required=field.get('is_required'),
             label=field.get('label'),
             choices=field.get('choices'),
-            is_multiple_choice=field.get('is_multiple_choice') if multiple_choice_enabled else False
+            is_multiple_choice=(field.get('is_multiple_choice')
+                                if multiple_choice_enabled else False),
+            index_in_fixture=field.get('index_in_fixture'),
         )
 
     @property
@@ -150,6 +155,7 @@ class CustomDataModelMixin(object):
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
             "show_purge_existing": self.show_purge_existing,
+            "show_index_in_fixture": self.show_index_in_fixture,
         }
 
     @property

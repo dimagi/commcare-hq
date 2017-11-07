@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import hashlib
 import json
@@ -7,7 +8,11 @@ import platform
 import uuid
 from datetime import datetime
 
-from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
+from django.utils.functional import cached_property
+
+from dimagi.ext.couchdbkit import (
+    Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
+)
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User, AnonymousUser
@@ -314,6 +319,10 @@ class NavigationEventAudit(AuditEvent):
     class Meta:
         app_label = 'auditcare'
 
+    @cached_property
+    def domain(self):
+        from corehq.apps.domain.utils import get_domain_from_url
+        return get_domain_from_url(self.request_path)
 
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs, extra={}):

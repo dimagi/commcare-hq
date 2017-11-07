@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 import uuid
 from django.test import SimpleTestCase, TestCase, override_settings

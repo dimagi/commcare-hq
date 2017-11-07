@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+
 from casexml.apps.case.models import CommCareCase
-from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, iter_all_rows
 from corehq.form_processor.change_publishers import change_meta_from_sql_case
 from corehq.form_processor.utils.general import should_use_sql_backend
 from pillowtop.feed.interface import Change
@@ -29,15 +31,8 @@ class SqlDomainCaseChangeProvider(ChangeProvider):
 
     def iter_all_changes(self, start_from=None):
         accessor = CaseReindexAccessor(self.domain, limit_db_aliases=self.limit_db_aliases)
-        for db_alias in accessor.sql_db_aliases:
-            cases = accessor.get_docs(db_alias, start_from)
-            while cases:
-                for case in cases:
-                    yield _sql_case_to_change(case)
-
-                start_from = case.server_modified_on
-                last_id = case.id
-                cases = accessor.get_docs(db_alias, start_from, last_doc_pk=last_id)
+        for case in iter_all_rows(accessor):
+            yield _sql_case_to_change(case)
 
 
 def get_domain_case_change_provider(domains, limit_db_aliases=None):

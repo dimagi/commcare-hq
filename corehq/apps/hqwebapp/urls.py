@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import include, url
 from corehq.apps.domain.views import PublicSMSRatesView
 from corehq.apps.settings.views import (
@@ -12,6 +13,7 @@ from corehq.apps.hqwebapp.views import (
     yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
     retrieve_download, toggles_js, couch_doc_counts, server_up)
+from corehq.apps.hqwebapp.session_details_endpoint.views import SessionDetailsView
 
 urlpatterns = [
     url(r'^$', redirect_to_default),
@@ -44,7 +46,10 @@ urlpatterns = [
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
     url(r'', include((tf_urls + tf_twilio_urls, 'two_factor'), namespace='two_factor')),
-    url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
+    url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname),
+    url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
+        name=SessionDetailsView.urlname),
+
 ]
 
 domain_specific = [

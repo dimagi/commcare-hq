@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 from django.test import SimpleTestCase
 from django.conf import settings

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
@@ -17,7 +18,6 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
-from casexml.apps.phone.utils import get_restore_response_class
 import logging
 
 
@@ -253,6 +253,11 @@ LOG_FORMAT_SIMPLIFIED = 'simplified'
 LOG_FORMAT_LIVEQUERY = 'livequery'
 
 
+class UCRSyncLog(Document):
+    report_uuid = StringProperty()
+    datetime = DateTimeProperty()
+
+
 class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     date = DateTimeProperty()
     domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
@@ -282,6 +287,8 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     error_hash = StringProperty()
     cache_payload_paths = DictProperty()
 
+    last_ucr_sync_times = SchemaListProperty(UCRSyncLog)
+
     strict = True  # for asserts
 
     @classmethod
@@ -290,10 +297,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
-
-    @property
-    def response_class(self):
-        return get_restore_response_class()
 
     def case_count(self):
         """

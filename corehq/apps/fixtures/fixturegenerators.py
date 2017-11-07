@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from xml.etree import cElementTree as ElementTree
 from cStringIO import StringIO
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FIXTURE_BUCKET
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
@@ -85,6 +87,9 @@ class ItemListsProvider(FixtureProvider):
                 pass
         global_items = self._get_global_items(global_types, domain)
         io = StringIO()
+        io.write(ITEMS_COMMENT_PREFIX)
+        io.write(bytes(len(global_items)))
+        io.write(b'-->')
         for element in global_items:
             io.write(ElementTree.tostring(element, encoding='utf-8'))
             # change user_id AFTER writing to string for the cache

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
@@ -203,4 +204,15 @@ class SOAPCaseRepeaterForm(CaseRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields + ['operation']
+
+
+class SOAPLocationRepeaterForm(GenericRepeaterForm):
+    operation = forms.CharField(
+        required=False,
+        label='SOAP operation',
+    )
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(SOAPLocationRepeaterForm, self).get_ordered_crispy_form_fields()
         return fields + ['operation']

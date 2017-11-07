@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from datetime import timedelta, datetime, date, time
 import re
@@ -1137,7 +1138,9 @@ class CaseReminderHandler(Document):
             location_ids = self.get_recipient_location_ids(locations)
             recipients = set()
             for location_id in location_ids:
-                recipients.update(get_all_users_by_location(self.domain, location_id))
+                recipients.update([
+                    u for u in get_all_users_by_location(self.domain, location_id) if u.is_active
+                ])
             recipients = list(recipients)
         elif isinstance(recipient, list) and len(recipient) > 0:
             recipients = recipient

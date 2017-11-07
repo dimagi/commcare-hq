@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.tests.utils import FormProcessorTestUtils

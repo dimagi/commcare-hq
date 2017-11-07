@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from cStringIO import StringIO
 from dimagi.utils.csv import UnicodeWriter
@@ -61,7 +62,7 @@ cache = get_redis_client()
 
 @periodic_task(
     bind=True,
-    run_every=crontab(hour=0, minute=0),  # every day at midnight
+    run_every=crontab(hour=2, minute=15),  # every day at 2:15am IST (8:45pm UTC, 4:45pm EST)
     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
 )
 def enikshay_task(self):
@@ -221,11 +222,19 @@ def send_status_email(domain, async_result):
     duration = datetime.timedelta()
     updates = 0
     noupdates = 0
-    for batch_info in async_result:
+    batch_info_template = "Batch {index}: Completed in {duration}. Errors: {errors}. Updates: {updates}\n"
+    batch_info_message = ""
+    for i, batch_info in enumerate(async_result):
         errors += batch_info.errors
         duration += batch_info.duration
         updates += batch_info.update_count
         noupdates += batch_info.noupdate_count
+        batch_info_message += batch_info_template.format(
+            index=i+1,
+            duration=batch_info.duration,
+            updates=batch_info.update_count,
+            errors=len(batch_info.errors),
+        )
 
     subject = "eNikshay Episode Task results for: {}".format(datetime.date.today())
     recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
@@ -237,12 +246,15 @@ def send_status_email(domain, async_result):
     writer.writerows(errors)
 
     message = (
-        "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
-        "Cases Updated {updates}, cases errored {errors} and {noupdates} "
-        "cases didn't need update. ".format(
+        "domain: {domain},\n Summary: \n "
+        "total duration: {duration} \n"
+        "total updates: {updates} \n total errors: {errors} \n total non-updates: {noupdates} \n"
+        "".format(
             domain=domain, duration=duration, updates=updates, errors=len(errors),
             noupdates=noupdates)
     )
+    message += batch_info_message
+
     attachment = {
         'title': "failed_episodes_{}.csv".format(datetime.date.today()),
         'mimetype': 'text/csv',
@@ -272,10 +284,10 @@ class EpisodeAdherenceUpdate(object):
         self.domain = domain
         self.episode = episode_case
         self.adherence_data_store = get_datastore(self.domain)
-        # set purge_date to 30 days back
+        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
         self.purge_date = datetime.datetime.now(
             pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
-        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
+
 
         self._cache_dose_taken_by_date = False
 
@@ -376,26 +388,19 @@ class EpisodeAdherenceUpdate(object):
         latest_adherence_date = self.get_latest_adherence_date()
         debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
 
-        if (adherence_schedule_date_start > self.purge_date) or not latest_adherence_date:
-            return self.check_and_return({
-                'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
-                'expected_doses_taken': 0,
-                'aggregated_score_count_taken': 0,
-                'adherence_total_doses_taken': 0,
-                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1),
-                'one_week_score_count_taken': 0,
-                'two_week_score_count_taken': 0,
-                'month_score_count_taken': 0,
-                'one_week_adherence_score': 0,
-                'two_week_adherence_score': 0,
-                'month_adherence_score': 0,
-            })
-
         adherence_cases = self.get_valid_adherence_cases()
         dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
-        update = self.get_aggregated_scores(
-            latest_adherence_date, adherence_schedule_date_start, dose_status_by_date)
+
+        update = {
+            'total_expected_doses_taken': self.get_total_expected_doses_taken(adherence_schedule_date_start),
+            'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
+        }
         update.update(self.get_adherence_scores(dose_status_by_date))
+        update.update(self.get_aggregated_scores(
+            latest_adherence_date,
+            adherence_schedule_date_start,
+            dose_status_by_date
+        ))
 
         return self.check_and_return(update)
 
@@ -453,19 +458,25 @@ class EpisodeAdherenceUpdate(object):
         return round(score / float(num_days) * 100, 2)
 
     def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_status_by_date):
+        """Evaluates adherence calculations for purged cases
+
+        These are used for updating phone properties and are based on a "purge"
+        date, prior to which adherence cases are closed. The "purged" cases are
+        not sent down to the phone.
+
+        Adherence cases are closed 30 days after the adherence_date property.
+        If today is Jan 31, then all cases on or before Jan 1 will have been "purged"
+
         """
-        Evaluates adherence calculations on the 'episode' case and returns dict of values
 
-        Returns:
-            If no update is necessary, empty dict is returned, if not, dict with following
-            keys is returned
-
-            {
-                'aggregated_score_date_calculated': value,
-                'expected_doses_taken': value,
-                'aggregated_score_count_taken': value
+        if (adherence_schedule_date_start > self.purge_date) or not latest_adherence_date:
+            return {
+                'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
+                'expected_doses_taken': 0,
+                'aggregated_score_count_taken': 0,
+                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1),
             }
-        """
+
         update = {}
 
         update["adherence_latest_date_recorded"] = latest_adherence_date
@@ -483,25 +494,38 @@ class EpisodeAdherenceUpdate(object):
             end_date=update["aggregated_score_date_calculated"]
         )
 
+        doses_per_week = self.get_doses_per_week()
+
+        # the expected number of doses taken between the time the adherence
+        # schedule started and the last valid date of the score
+        # (i.e. the earlier of (30 days ago, latest_adherence_date))
+        # this property should actually have been called "aggregated_score_count_expected"
+        num_days = (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days + 1
+        update['expected_doses_taken'] = int(doses_per_week * num_days / 7.0)
+
+        update['total_expected_doses_taken'] = self.get_total_expected_doses_taken(adherence_schedule_date_start)
+        return update
+
+    @memoized
+    def get_doses_per_week(self):
         # calculate 'expected_doses_taken' score
         dose_data = self.get_doses_data()
         adherence_schedule_id = self.episode.get_case_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
         doses_per_week = dose_data.get(adherence_schedule_id)
-        if doses_per_week:
-            update['expected_doses_taken'] = int(((
-                (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
-            ) * doses_per_week)
-        else:
-            update['expected_doses_taken'] = 0
-            soft_assert(notify_admins=True)(
-                True,
+        if not doses_per_week:
+            soft_assert('{}@{}'.format('frener', 'dimagi.com'))(
+                False,
                 "No fixture item found with schedule_id {}".format(adherence_schedule_id)
             )
-        total_expected_doses_taken = ((datetime.date.today() - adherence_schedule_date_start).days / 7.0)\
-                                     * doses_per_week
-        update['total_expected_doses_taken'] = total_expected_doses_taken
+            return 0
+        return doses_per_week
 
-        return update
+    def get_total_expected_doses_taken(self, adherence_schedule_date_start):
+        doses_per_week = self.get_doses_per_week()
+        today = self.date_today_in_india
+        total_expected_doses_taken = int(
+            round(((today - adherence_schedule_date_start).days / 7.0) * doses_per_week))
+        return total_expected_doses_taken
 
     def check_and_return(self, update_dict):
         """
@@ -666,13 +690,18 @@ class EpisodeTestUpdate(object):
         if self.diagnostic_tests:
             return {
                 u'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
-                                               for diagnostic_test in self.diagnostic_tests]),
-                u'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
-                                                      for diagnostic_test in self.diagnostic_tests])
+                                                for diagnostic_test in self.diagnostic_tests
+                                                if self._get_diagnostic_test_name(diagnostic_test) is not None]),
+                u'diagnostic_test_results': ", ".join(
+                    [diagnostic_test.get_case_property('result_grade')
+                     for diagnostic_test in self.diagnostic_tests
+                     if diagnostic_test.get_case_property('result_grade') is not None]
+                )
             }
         else:
             return {}
 
+    @memoized
     def _get_diagnostic_test_name(self, diagnostic_test):
         site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
         if site_specimen_name:

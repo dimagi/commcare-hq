@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from StringIO import StringIO
 from collections import OrderedDict
 import datetime
@@ -16,7 +17,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
-from custom.icds_reports.utils import ICDSMixin
+from custom.icds_reports.utils import ICDSMixin, get_status, current_age
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -524,6 +525,15 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     alias='four'
                 ),
                 slug='four'
+            ),
+            AggregateColumn(
+                'Percent of children born in month with low birth weight',
+                percent_num,
+                [
+                    SumColumn('low_birth_weight_in_month'),
+                    AliasColumn('born_in_month')
+                ],
+                slug='low_birth_weight'
             )
         ]
 
@@ -758,14 +768,14 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
             ),
             DatabaseColumn(
                 'Total Number of Members Enrolled for Services for services at AWC ',
-                SumColumn('cases_person', alias='cases_person')
+                SumColumn('cases_person_beneficiary', alias='cases_person_beneficiary')
             ),
             AggregateColumn(
                 'Percentage of Beneficiaries with Aadhar',
                 lambda x, y: (x or 0) * 100 / float(y or 1),
                 [
                     SumColumn('cases_person_has_aadhaar'),
-                    AliasColumn('cases_person')
+                    AliasColumn('cases_person_beneficiary')
                 ],
                 slug='aadhar'
             ),
@@ -873,15 +883,7 @@ class ChildrenExport(ExportableMixin, SqlData):
         if self.loc_level > 3:
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
-            columns.extend([
-                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('Gender', SimpleColumn('gender'), slug='gender'),
-                DatabaseColumn('Age', SimpleColumn('age_tranche'), slug='age_tranche'),
-                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
-                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
-                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
-                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
-            ])
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
         return columns
 
     @property
@@ -897,8 +899,17 @@ class ChildrenExport(ExportableMixin, SqlData):
                 ],
                 slug='percent_weight_efficiency'
             ),
+            AggregateColumn(
+                'Height Measurement Efficiency',
+                percent,
+                [
+                    SumColumn('height_measured_in_month'),
+                    SumColumn('height_eligible')
+                ],
+                slug='height_measurement'
+            ),
             DatabaseColumn(
-                'Total number of unweighed children',
+                'Total number of unweighed children (0-5 Years)',
                 SumColumn('nutrition_status_unweighed'),
                 slug='total_number_unweighed'
             ),
@@ -934,7 +945,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('wasting_severe'),
-                    SumColumn('height_eligible')
+                    AliasColumn('height_eligible')
                 ],
                 slug='percent_severe_wasting'
             ),
@@ -1003,7 +1014,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_breastfed_at_birth'
             ),
             AggregateColumn(
-                'Percentage of children with early initiation of breastfeeding',
+                'Percentage of children exclusively breastfeeding',
                 percent,
                 [
                     SumColumn('ebf_in_month'),
@@ -1021,7 +1032,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_initiated_on_cf'
             ),
             AggregateColumn(
-                'Percentage of children initiated appropriate complementary feeding (cumulative)',
+                'Percentage of children initiated appropriate complementary feeding',
                 percent,
                 [
                     SumColumn('cf_in_month'),
@@ -1077,15 +1088,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
         if self.loc_level > 3:
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
-            columns.extend([
-                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
-                DatabaseColumn('CCS Status', SimpleColumn('ccs_status'), slug='ccs_status'),
-                DatabaseColumn('Trimester', SimpleColumn('trimester'), slug='trimester'),
-                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
-                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
-                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
-                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
-            ])
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
         return columns
 
     @property
@@ -1115,7 +1118,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_tetanus_complete'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 1 by delivery',
+                'Percent women had at least 1 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc1_received_at_delivery'),
@@ -1124,7 +1127,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc1_received_by_delivery'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 2 by delivery',
+                'Percent women had at least 2 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc2_received_at_delivery'),
@@ -1133,7 +1136,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc2_received_by_delivery'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 3 by delivery',
+                'Percent women had at least 3 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc3_received_at_delivery'),
@@ -1142,7 +1145,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
                 slug='percent_anc3_received_by_delivery'
             ),
             AggregateColumn(
-                'Percentage of women who received ANC 4 by delivery',
+                'Percent women had at least 4 ANC visit by delivery',
                 percent,
                 [
                     SumColumn('anc4_received_at_delivery'),
@@ -1319,13 +1322,22 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
                 slug='num_people'
             ),
             DatabaseColumn(
-                'num_people_enrolled_for_services',
-                SumColumn('cases_person'),
-                slug='num_people_enrolled_for_services'
+                'beneficiary_persons',
+                SumColumn('cases_person_beneficiary'),
+                slug='beneficiary_persons'
             ),
             DatabaseColumn(
-                'num_people_with_aadhar',
+                'person_has_aadhaar',
                 SumColumn('cases_person_has_aadhaar'),
+                slug='person_has_aadhaar'
+            ),
+            AggregateColumn(
+                'num_people_with_aadhar',
+                percent,
+                [
+                    AliasColumn('cases_person_has_aadhaar'),
+                    AliasColumn('cases_person_beneficiary')
+                ],
                 slug='num_people_with_aadhar'
             ),
             DatabaseColumn(
@@ -1453,15 +1465,20 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_households'
             },
             {
-                'header': 'Number of people',
-                'slug': 'num_people'
+                'header': (
+                    'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                    'old, alive and seeking services) who have an aadhaar ID'
+                ),
+                'slug': 'person_has_aadhaar'
             },
             {
-                'header': 'Number of people enrolled for services',
-                'slug': 'num_people_enrolled_for_services'
+                'header': (
+                    'Total number of beneficiaries (under 6 years old and women '
+                    'between 11 and 49 years old, alive and seeking services)'),
+                'slug': 'beneficiary_persons'
             },
             {
-                'header': 'Number of people with aadhar',
+                'header': 'Percent Adhaar-seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
@@ -1549,6 +1566,12 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 slug='num_awc_open'
             ),
             DatabaseColumn(
+                'Number of launched AWCs (ever submitted at least one HH reg form)',
+                SumColumn('num_launched_awcs'),
+                format_fn=lambda x: (x or 0),
+                slug='num_launched_awcs'
+            ),
+            DatabaseColumn(
                 'Number of household registration forms',
                 SumColumn('usage_num_hh_reg'),
                 slug='num_hh_reg_forms'
@@ -1569,13 +1592,13 @@ class SystemUsageExport(ExportableMixin, SqlData):
                 slug='num_bp_forms'
             ),
             DatabaseColumn(
-                'Number of birth preparedness forms',
+                'Number of delivery forms',
                 SumColumn('usage_num_delivery'),
                 slug='num_delivery_forms'
             ),
             DatabaseColumn('Number of PNC forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
             DatabaseColumn(
-                'Number of early initiation of breastfeeding forms',
+                'Number of exclusive breastfeeding forms',
                 SumColumn('usage_num_ebf'),
                 slug='num_ebf_forms'
             ),
@@ -1660,19 +1683,19 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
                 'Percentage AWCs with weighing scale: infants',
                 percent,
                 [
-                    SumColumn('infra_adult_weighing_scale'),
+                    SumColumn('infra_infant_weighing_scale'),
                     AliasColumn('num_awcs')
                 ],
-                slug='percent_adult_scale'
+                slug='percent_baby_scale'
             ),
             AggregateColumn(
                 'Percentage AWCs with weighing scale: mother and child',
                 percent,
                 [
-                    SumColumn('infra_baby_weighing_scale'),
+                    SumColumn('infra_adult_weighing_scale'),
                     AliasColumn('num_awcs')
                 ],
-                slug='percent_baby_scale'
+                slug='percent_adult_scale'
             )
         ]
         return columns + agg_columns
@@ -1687,6 +1710,11 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
 
+    def __init__(self, config=None, loc_level=1, show_test=False):
+        self.config = config
+        self.loc_level = loc_level
+        self.show_test = show_test
+
     @property
     def group_by(self):
         group_by_columns = self.get_columns_by_loc_level
@@ -1697,15 +1725,20 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         return group_by
 
     @property
+    def filters(self):
+        filters = []
+        for key, value in self.config.iteritems():
+            if key == 'domain':
+                continue
+            filters.append(EQ(key, key))
+        return filters
+
+    @property
     def order_by(self):
         return [OrderBy('person_name')]
 
     @property
     def get_columns_by_loc_level(self):
-
-        def current_age(dob):
-            return int(round((self.config['month'] - dob).days / 365.25))
-
         columns = [
             DatabaseColumn(
                 'Name',
@@ -1720,7 +1753,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Current Age (In years)',
                 AliasColumn('dob'),
-                format_fn=current_age,
+                format_fn=lambda x: current_age(x, self.config['month']),
                 slug='current_age'
             ),
             DatabaseColumn(
@@ -1730,8 +1763,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             ICDSDatabaseColumn(
                 '1 Year Immunizations Complete',
-                SimpleColumn('fully_immunized_date'),
-                format_fn=lambda x: 'Yes' if x != '' else 'No'
+                SimpleColumn('fully_immunized'),
+                format_fn=lambda x: 'Yes' if x else 'No'
             ),
             DatabaseColumn(
                 'Month for data shown',
@@ -1741,30 +1774,47 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Weight recorded',
                 SimpleColumn('recorded_weight'),
+                format_fn=lambda x: "%.2f" % x,
                 slug='recorded_weight'
             ),
             DatabaseColumn(
                 'Height recorded',
                 SimpleColumn('recorded_height'),
+                format_fn=lambda x: "%.2f" % x,
                 slug='recorded_height'
             ),
             DatabaseColumn(
                 'Weight-for-Age Status',
                 SimpleColumn('current_month_nutrition_status'),
+                format_fn=lambda x: get_status(
+                    x,
+                    'underweight',
+                    'Normal weight for age'
+                ),
                 slug='current_month_nutrition_status'
             ),
             DatabaseColumn(
                 'Weight-for-Height Status',
-                SimpleColumn('current_month_stunting'),
-                slug="current_month_stunting"
-            ),
-            DatabaseColumn(
-                'Height-for-Age status',
                 SimpleColumn('current_month_wasting'),
+                format_fn=lambda x: get_status(
+                    x,
+                    'wasted',
+                    'Normal height for age'
+                ),
                 slug="current_month_wasting"
             ),
             DatabaseColumn(
-                'PSE Attendance',
+                'Height-for-Age status',
+                SimpleColumn('current_month_stunting'),
+                format_fn=lambda x: get_status(
+                    x,
+                    'stunted',
+                    'Normal weight for height'
+                ),
+                slug="current_month_stunting"
+            ),
+            DatabaseColumn(
+                'PSE Attendance (Days)',
                 SimpleColumn('pse_days_attended'),
                 slug="pse_days_attended"
             ),
@@ -1776,7 +1826,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         return self.get_columns_by_loc_level
 
 
-class ProgressReport(object):
+class FactSheetsReport(object):
 
     def __init__(self, config=None, loc_level='state', show_test=False):
         self.loc_level = loc_level
@@ -1793,6 +1843,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Children',
                         'slug': 'nutrition_status_of_children',
+                        'order': 1,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1803,7 +1854,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Total number of unweighed children',
+                                'header': 'Total number of unweighed children (0-5 Years)',
                                 'slug': 'nutrition_status_unweighed',
                                 'reverseColors': True,
                             },
@@ -1881,6 +1932,13 @@ class ProgressReport(object):
                                 'slug': 'stunting_normal',
                                 'average': [],
                                 'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Percent of children born in month with low birth weight',
+                                'slug': 'low_birth_weight',
+                                'average': [],
+                                'format': 'percent'
                             }
                         ]
                     }
@@ -1893,6 +1951,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Children',
                         'slug': 'nutrition_status_of_children',
+                        'order': 1,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -1907,13 +1966,15 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
+                        'order': 3,
                         'rows_config': [
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
                                 'header': 'Pregnant women who are anemic',
                                 'slug': 'severe_anemic',
                                 'average': [],
-                                'format': 'percent'
+                                'format': 'percent',
+                                'reverseColors': True
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -1924,34 +1985,62 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 1 by delivery',
+                                'header': 'Pregnant women who had at least 1 ANC visit by delivery',
                                 'slug': 'anc_1',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 2 by delivery',
+                                'header': 'Pregnant women who had at least 2 ANC visits by delivery',
                                 'slug': 'anc_2',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 3 by delivery',
+                                'header': 'Pregnant women who had at least 3 ANC visits by delivery',
                                 'slug': 'anc_3',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
-                                'header': 'Pregnant women who received ANC 4 by delivery',
+                                'header': 'Pregnant women who had at least 4 ANC visits by delivery',
                                 'slug': 'anc_4',
                                 'average': [],
                                 'format': 'percent'
                             }
                         ]
-                    }
+                    },
+                    {
+                        'section_title': 'AWC Infrastructure',
+                        'slug': 'awc_infrastructure',
+                        'order': 5,
+                        'rows_config': [
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'AWCs with Medicine Kit',
+                                'slug': 'medicine_kits',
+                                'average': [],
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'AWCs with weighing scale for infants',
+                                'slug': 'baby_weighing_scale',
+                                'average': [],
+                                'format': 'percent'
+                            },
+                            {
+                                'data_source': 'AggAWCMonthlyDataSource',
+                                'header': 'AWCs with weighing scale for mother and child',
+                                'slug': 'adult_weighing_scale',
+                                'average': [],
+                                'format': 'percent'
+                            }
+                        ]
+                    },
                 ]
             },
             {
@@ -1961,10 +2050,13 @@ class ProgressReport(object):
                     {
                         'section_title': 'Child Feeding Indicators',
                         'slug': 'child_feeding_indicators',
+                        'order': 2,
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children who were put to the breast within one hour of birth.',
+                                'header': (
+                                    'Percentage of children who were put to the breast within one hour of birth.'
+                                ),
                                 'slug': 'breastfed_at_birth',
                                 'average': [],
                                 'format': 'percent'
@@ -2021,6 +2113,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Nutrition Status of Pregnant Women',
                         'slug': 'nutrition_status_of_pregnant_women',
+                        'order': 3,
                         "rows_config": [
                             {
                                 'data_source': 'AggCCSRecordMonthlyDataSource',
@@ -2058,6 +2151,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'AWC Infrastructure',
                         'slug': 'awc_infrastructure',
+                        'order': 5,
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
@@ -2084,6 +2178,7 @@ class ProgressReport(object):
                     {
                         'section_title': 'Demographics',
                         'slug': 'demographics',
+                        'order': 4,
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
@@ -2102,13 +2197,13 @@ class ProgressReport(object):
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total number of members enrolled at AWC',
-                                'slug': 'cases_person',
+                                'slug': 'cases_person_beneficiary',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adhaar seeded beneficiaries',
+                                'header': 'Percent Adhaar-seeded beneficiaries',
                                 'slug': 'aadhar',
                                 'format': 'percent',
                                 'average': [],
@@ -2123,7 +2218,7 @@ class ProgressReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Total pregnant women enrolled for servics at AWC',
+                                'header': 'Total pregnant women enrolled for services at AWC',
                                 'slug': 'cases_ccs_pregnant',
                                 'average': [],
 
@@ -2257,11 +2352,12 @@ class ProgressReport(object):
                     sections_by_slug[slug] = {
                         'slug': slug,
                         'section_title': section['section_title'],
+                        'order': section['order'],
                         'rows_config': section['rows_config']
                     }
                 else:
                     sections_by_slug[slug]['rows_config'].extend(section['rows_config'])
-        return sections_by_slug.values()
+        return sorted(sections_by_slug.values(), key=lambda x: x['order'])
 
     def _get_needed_data_sources(self, config):
         needed_data_sources = set()

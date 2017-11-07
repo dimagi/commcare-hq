@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import migrations
 from django.db.backends.postgresql_psycopg2.schema import DatabaseSchemaEditor
 
@@ -50,6 +51,7 @@ class DatabaseSchemaEditorIfNotExists(DatabaseSchemaEditor):
     sql_create_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_index)
     sql_create_varchar_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_varchar_index)
     sql_create_text_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_text_index)
+    sql_create_unique = add_if_not_exists(DatabaseSchemaEditor.sql_create_unique)
 
 
 class AlterIndexIfNotExists(migrations.AlterIndexTogether):
@@ -69,6 +71,16 @@ class AlterFieldCreateIndexIfNotExists(migrations.AlterField):
         schema_editor.__class__ = DatabaseSchemaEditorIfNotExists
         try:
             super(AlterFieldCreateIndexIfNotExists, self).database_forwards(
+                app_label, schema_editor, from_state, to_state)
+        finally:
+            schema_editor.__class__ = DatabaseSchemaEditor
+
+
+class AlterUniqueTogetherIfNotExists(migrations.AlterUniqueTogether):
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        schema_editor.__class__ = DatabaseSchemaEditorIfNotExists
+        try:
+            super(AlterUniqueTogetherIfNotExists, self).database_forwards(
                 app_label, schema_editor, from_state, to_state)
         finally:
             schema_editor.__class__ = DatabaseSchemaEditor

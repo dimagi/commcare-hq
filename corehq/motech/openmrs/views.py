@@ -1,14 +1,26 @@
+from __future__ import absolute_import
 import json
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
+from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
+from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
+from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
-from corehq.motech.openmrs.forms import OpenmrsConfigForm
-from corehq.motech.openmrs.repeater_helpers import Requests, \
-    get_patient_identifier_types, get_person_attribute_types
+from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
+from corehq.motech.openmrs.repeater_helpers import (
+    Requests,
+    get_patient_identifier_types,
+    get_person_attribute_types,
+)
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from dimagi.utils.decorators.memoized import memoized
 
@@ -29,18 +41,21 @@ def openmrs_edit_config(request, domain, repeater_id):
         form = OpenmrsConfigForm(data=request.POST)
         if form.is_valid():
             data = form.cleaned_data
+            repeater.openmrs_config.openmrs_provider = data['openmrs_provider']
             repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
             repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
             repeater.save()
 
-    form = OpenmrsConfigForm(
-        data={
-            'form_configs': json.dumps([
-                form_config.to_json()
-                for form_config in repeater.openmrs_config.form_configs]),
-            'case_config':  json.dumps(repeater.openmrs_config.case_config.to_json()),
-        }
-    )
+    else:
+        form = OpenmrsConfigForm(
+            data={
+                'openmrs_provider': repeater.openmrs_config.openmrs_provider,
+                'form_configs': json.dumps([
+                    form_config.to_json()
+                    for form_config in repeater.openmrs_config.form_configs]),
+                'case_config': json.dumps(repeater.openmrs_config.case_config.to_json()),
+            }
+        )
     return render(request, 'openmrs/edit_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
@@ -112,3 +127,45 @@ def openmrs_test_fire(request, domain, repeater_id, record_id):
 
     attempt = repeater.fire_for_record(record)
     return JsonResponse(attempt.to_json())
+
+
+@login_and_domain_required
+@require_http_methods(['POST'])
+def openmrs_import_now(request, domain):
+    import_patients_to_domain.delay(request.domain, True)
+    return JsonResponse({'status': 'Accepted'}, status=202)
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
+class OpenmrsImporterView(BaseProjectSettingsView):
+    urlname = 'openmrs_importer_view'
+    page_title = ugettext_lazy("OpenMRS Importers")
+    template_name = 'openmrs/importers.html'
+
+    def post(self, request, *args, **kwargs):
+        form = self.openmrs_importer_form
+        if form.is_valid():
+            form.save(self.domain)
+            get_openmrs_importers_by_domain.clear(request.domain)
+            return HttpResponseRedirect(self.page_url)
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    @property
+    @memoized
+    def openmrs_importer_form(self):
+        importers = get_openmrs_importers_by_domain(self.request.domain)
+        if importers:
+            initial = dict(importers[0])  # TODO: Support multiple
+            initial['column_map'] = [{k: v for k, v in dict(m).items() if k != 'doc_type'}  # Just for the pretty
+                                     for m in initial['column_map']]
+        else:
+            initial = {}
+        if self.request.method == 'POST':
+            return OpenmrsImporterForm(self.request.POST, initial=initial)
+        return OpenmrsImporterForm(initial=initial)
+
+    @property
+    def page_context(self):
+        return {'openmrs_importer_form': self.openmrs_importer_form}

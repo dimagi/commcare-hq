@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import jsonfield
 import uuid
 from dimagi.utils.decorators.memoized import memoized
@@ -149,6 +150,9 @@ class Broadcast(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=1000)
     last_sent_timestamp = models.DateTimeField(null=True)
+
+    # A List of [recipient_type, recipient_id]
+    recipients = jsonfield.JSONField(default=list)
 
     class Meta:
         abstract = True

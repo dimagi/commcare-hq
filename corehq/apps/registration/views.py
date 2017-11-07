@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import logging
 from django.conf import settings
@@ -203,6 +204,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             'atypical_user': True if self.atypical_user else False
         }
         return {
+            'is_production': settings.SERVER_ENVIRONMENT == 'production',
             'reg_form': RegisterWebUserForm(
                 initial=prefills,
                 show_number=self.ab_show_number,

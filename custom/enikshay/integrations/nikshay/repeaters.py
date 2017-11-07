@@ -1,8 +1,14 @@
+from __future__ import absolute_import
+import re
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
+from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.post import parse_SOAP_response
-from corehq.motech.repeaters.models import CaseRepeater, SOAPRepeaterMixin
+from corehq.motech.repeaters.models import CaseRepeater, SOAPRepeaterMixin, LocationRepeater
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
@@ -14,17 +20,27 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
-)
+    person_has_any_nikshay_notifiable_episode,
+    get_person_case_from_occurrence)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
+    HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD,
     DSTB_EPISODE_TYPE,
+    HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
+    TREATMENT_INITIATED_IN_PHI,
+    ENROLLED_IN_PRIVATE,
 )
-from custom.enikshay.integrations.nikshay.repeater_generator import \
-    NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
-    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
+from custom.enikshay.integrations.nikshay.repeater_generator import (
+    NikshayRegisterPatientPayloadGenerator,
+    NikshayHIVTestPayloadGenerator,
+    NikshayTreatmentOutcomePayload,
+    NikshayFollowupPayloadGenerator,
+    NikshayRegisterPrivatePatientPayloadGenerator,
+    NikshayHealthEstablishmentPayloadGenerator,
+)
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -37,6 +53,10 @@ from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcom
 
 
 class BaseNikshayRepeater(CaseRepeater):
+    @property
+    def verify(self):
+        return False
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -69,9 +89,8 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
             return (
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
-                episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+                valid_nikshay_patient_registration(episode_case_properties) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
-                episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
                 is_valid_person_submission(person_case)
             )
         else:
@@ -98,20 +117,17 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
         # CPTDeliverDate changes OR
         # InitiatedDate/Art Initiated date changes
         allowed_case_types_and_users = self._allowed_case_type(person_case) and self._allowed_user(person_case)
+        person_case_properties = person_case.dynamic_case_properties()
         if allowed_case_types_and_users:
-            try:
-                episode_case = get_open_episode_case_from_person(person_case.domain, person_case.get_id)
-            except ENikshayCaseNotFound:
-                return False
-            episode_case_properties = episode_case.dynamic_case_properties()
-
             return (
-                episode_case_properties.get('nikshay_id') and
+                # Do not attempt notification for patients registered in private app
+                not (person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
                 (
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
                 ) and
-                is_valid_person_submission(person_case)
+                is_valid_person_submission(person_case) and
+                person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
@@ -137,7 +153,11 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
         episode_case_properties = episode_case.dynamic_case_properties()
         return (
-            episode_case_properties.get('nikshay_id', False) and
+            not (episode_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
+            (  # has a nikshay id already or is a valid submission probably waiting notification
+                episode_case_properties.get('nikshay_id') or
+                valid_nikshay_patient_registration(episode_case_properties)
+            ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
             is_valid_archived_submission(episode_case)
@@ -166,17 +186,13 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
         if allowed_case_types_and_users:
-            try:
-                occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-                episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
-            except ENikshayCaseNotFound:
-                return False
+            occurrence_case = get_occurrence_case_from_test(test_case.domain, test_case.case_id)
+            person_case = get_person_case_from_occurrence(test_case.domain, occurrence_case.case_id)
             test_case_properties = test_case.dynamic_case_properties()
-            episode_case_properties = episode_case.dynamic_case_properties()
             return (
+                not (test_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
                 test_case_properties.get('nikshay_registered', 'false') == 'false' and
                 test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
-                episode_case_properties.get('nikshay_id') and
                 (
                     test_case_properties.get('purpose_of_testing') == 'diagnostic' or
                     test_case_properties.get('follow_up_test_reason') in self.followup_for_tests or
@@ -184,7 +200,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                     test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
-                not is_valid_test_submission(test_case)
+                not is_valid_test_submission(test_case) and
+                person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
@@ -219,9 +236,8 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         return (
             episode_case_properties.get('private_nikshay_registered', 'false') == 'false' and
             not episode_case_properties.get('nikshay_id') and
-            episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+            valid_nikshay_patient_registration(episode_case_properties, private_registration=True) and
             case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
-            episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
         )
 
@@ -238,6 +254,7 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             result,
+            verify=self.verify
         )
         if isinstance(message, basestring) and message.isdigit():
             attempt = repeat_record.handle_success(result)
@@ -246,6 +263,78 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
             attempt = repeat_record.handle_failure(result)
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
+
+
+class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
+    payload_generator_classes = (NikshayHealthEstablishmentPayloadGenerator,)
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward Nikshay Health Establishments")
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return NIKSHAY_INTEGRATION.enabled(domain)
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.nikshay.views import RegisterNikshayHealthEstablishmentRepeaterView
+        return reverse(RegisterNikshayHealthEstablishmentRepeaterView.urlname, args=[domain])
+
+    def allowed_to_forward(self, location):
+        return (
+            not location.metadata.get('is_test', "yes") == "yes" and
+            location.location_type.name in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
+            not location.metadata.get('nikshay_code')
+        )
+
+    def handle_response(self, result, repeat_record):
+        if isinstance(result, Exception):
+            attempt = repeat_record.handle_exception(result)
+            self.generator.handle_exception(result, repeat_record)
+            return attempt
+        # A successful response looks like HE_ID: 125344
+        # Failures also return with status code 200 and some message like
+        # Character are not allowed........
+        # (........ is a part of the actual message)
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            result,
+            verify=self.verify
+        )
+        # message does not give the final node message here so need to find the real message
+        # look at SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE for example
+        message_node = message.find("NewDataSet/HE_DETAILS/Message")
+        if message_node:
+            message_text = message_node.text
+        if message_node and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text):
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        else:
+            attempt = repeat_record.handle_failure(result)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
+        return attempt
+
+
+def valid_nikshay_patient_registration(episode_case_properties, private_registration=False):
+    if private_registration:
+        registration_prop = PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION
+    else:
+        registration_prop = EPISODE_PENDING_REGISTRATION
+
+    # check for registration done and confirmed episode type
+    should_notify = (
+        episode_case_properties.get('episode_type') == DSTB_EPISODE_TYPE and
+        episode_case_properties.get(registration_prop, 'yes') == 'no'
+    )
+
+    if not private_registration:
+        # check for treatment initiated within the phi itself to have all required information on payload
+        return should_notify and episode_case_properties.get('treatment_initiated') == TREATMENT_INITIATED_IN_PHI
+    return should_notify
 
 
 def person_hiv_status_changed(case):
@@ -275,6 +364,13 @@ def related_dates_changed(case):
         )
     )
     return value_changed
+
+
+@receiver(post_save, sender=SQLLocation, dispatch_uid="create_nikshay_he_repeat_records")
+def create_location_repeat_records(sender, raw=False, **kwargs):
+    if raw:
+        return
+    create_repeat_records(NikshayHealthEstablishmentRepeater, kwargs['instance'])
 
 
 def create_nikshay_case_repeat_records(sender, case, **kwargs):

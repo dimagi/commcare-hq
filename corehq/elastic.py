@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import copy
 import logging
@@ -288,10 +289,6 @@ def scan(client, query=None, scroll='5m', **kwargs):
 
             start = int(time.time() * 1000)
             resp = client.scroll(scroll_id, scroll=scroll)
-            datadog_histogram('commcare.es_scroll', (time.time() * 1000) - start, tags=[
-                u'iteration:{}'.format(iteration),
-            ])
-
             for hit in resp['hits']['hits']:
                 yield hit
 

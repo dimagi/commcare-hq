@@ -1,12 +1,15 @@
 {% extends "app_manager/module_view.html" %}
-{% load xforms_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load xforms_extras %}
 
 {% block js %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
+        {% endcompress %}
     {% endif %}
 {% endblock %}
 

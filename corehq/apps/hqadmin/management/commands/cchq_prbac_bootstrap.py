@@ -199,6 +199,7 @@ class Command(BaseCommand):
         privileges.DATA_CLEANUP,
         privileges.TEMPLATED_INTENTS,
         privileges.RESTRICT_ACCESS_BY_LOCATION,
+        privileges.REPORT_BUILDER_5,
     ]
 
     advanced_plan_features = pro_plan_features + [
@@ -212,18 +213,6 @@ class Command(BaseCommand):
 
     enterprise_plan_features = advanced_plan_features + []
 
-    standard_plan_with_report_builder_features = standard_plan_features + [
-        privileges.REPORT_BUILDER_5,
-    ]
-
-    pro_plan_with_report_builder_features = pro_plan_features + [
-        privileges.REPORT_BUILDER_5,
-    ]
-
-    advanced_plan_with_report_builder_features = advanced_plan_features + [
-        privileges.REPORT_BUILDER_5,
-    ]
-
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
         CROSS_PROJECT_REPORTS,
@@ -236,9 +225,5 @@ class Command(BaseCommand):
         'pro_plan_v0': pro_plan_features,
         'advanced_plan_v0': advanced_plan_features,
         'enterprise_plan_v0': enterprise_plan_features,
-
-        'standard_plan_report_builder_v0': standard_plan_with_report_builder_features,
-        'pro_plan_report_builder_v0': pro_plan_with_report_builder_features,
-        'advanced_plan_report_builder_v0': advanced_plan_with_report_builder_features,
     }
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 
 def next_available_name(prefix, existing_names):

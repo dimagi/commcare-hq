@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from tempfile import NamedTemporaryFile
 from zipfile import BadZipfile
 import openpyxl

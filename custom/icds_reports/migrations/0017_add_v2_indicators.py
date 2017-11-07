@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from __future__ import absolute_import
 from django.db import migrations, models
 from corehq.sql_db.operations import RawSQLMigration
 
@@ -17,6 +18,5 @@ class Migration(migrations.Migration):
     operations = [
         migrator.get_migration('update_tables9.sql'),
         migrator.get_migration('setup_agg_awc_daily.sql'),
-        migrator.get_migration('create_datasource_views.sql'),
         migrator.get_migration('create_functions.sql'),
     ]

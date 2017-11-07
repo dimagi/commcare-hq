@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff
 
 PARTIAL_DIFFS = {
