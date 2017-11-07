@@ -67,7 +67,8 @@ class ScheduleForm(Form):
     stop_type = ChoiceField(
         required=False,
         choices=(
-            (STOP_AFTER_OCCURRENCES, _('After days:')),
+            # The text for STOP_AFTER_OCCURRENCES gets set dynamically
+            (STOP_AFTER_OCCURRENCES, ''),
             (STOP_NEVER, _('Never')),
         )
     )

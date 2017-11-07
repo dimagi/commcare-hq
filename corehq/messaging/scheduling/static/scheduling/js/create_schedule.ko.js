@@ -15,6 +15,15 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.displayed_email_trial_message = false;
         self.translate = ko.observable(initial_values.translate);
 
+        self.send_frequency.subscribe(function(newValue) {
+            var occurrences = $('option[value="after_occurrences"]');
+            if(newValue == 'daily') {
+                occurrences.text(gettext("After days:"));
+            } else if(newValue == 'weekly') {
+                occurrences.text(gettext("After weeks:"));
+            }
+        });
+
         self.showTimeInput = ko.computed(function() {
             return self.send_frequency() != 'immediately';
         });
