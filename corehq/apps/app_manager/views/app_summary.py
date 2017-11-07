@@ -52,6 +52,7 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
             'langs': self.app.langs,
             'app_id': self.app.id,
             'app_name': self.app.name,
+            'read_only': self.app.doc_type == 'LinkedApplication',
         }
 
     @property

@@ -29,6 +29,7 @@ hqDefine("app_manager/js/summary/summary", function() {
             appSettingsURL: url("release_manager"),
             appHomeURL: url("view_app"),
             appName: initial_page_data("app_name"),
+            readOnly: initial_page_data("read_only"),
         });
 
         summaryApp.config(['$routeProvider', function($routeProvider) {
