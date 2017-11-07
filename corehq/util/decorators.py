@@ -10,6 +10,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+from six.moves import zip
 
 
 class ContextDecorator(object):
@@ -85,7 +86,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     passes the result to `format_str.format()`.
     """
     varnames = fn.__code__.co_varnames
-    kwargs.update(dict(zip(varnames, args)))
+    kwargs.update(dict(list(zip(varnames, args))))
     return ("{}-" + format_str).format(fn.__name__, **kwargs)
 
 

@@ -88,6 +88,7 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
 import six
+from six.moves import zip
 
 
 @no_conflict_require_POST
@@ -307,14 +308,14 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if (should_edit("form_links_xpath_expressions") and
             should_edit("form_links_form_ids") and
             toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-        form_links = zip(
+        form_links = list(zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
             [
                 json.loads(datum_json) if datum_json else []
                 for datum_json in request.POST.getlist('datums_json')
             ],
-        )
+        ))
         form.form_links = [FormLink(
             xpath=link[0],
             form_id=link[1],

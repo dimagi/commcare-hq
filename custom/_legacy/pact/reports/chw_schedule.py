@@ -13,6 +13,7 @@ from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache, get_report_script_field
 import logging
+from six.moves import zip
 
 cached_schedules = {}
 
@@ -198,7 +199,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
                     total_visited += 1
                 else:
                     visited.append(None)
-        ret.append((visit_date, zip(dereferenced_patient_info, visited)))
+        ret.append((visit_date, list(zip(dereferenced_patient_info, visited))))
     return ret, patient_case_ids, total_scheduled, total_visited
 
 

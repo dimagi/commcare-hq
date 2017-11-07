@@ -15,6 +15,7 @@ from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.models import FormExportDataSchema, FormExportInstance
 from corehq.apps.export.export import get_export_file
+from six.moves import zip
 
 
 class TestFormExportSubcases(TestCase, TestXmlMixin):
@@ -152,7 +153,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
         def get_form_data(table):
             headers = export_data[table]['headers']
             return [
-                dict(zip(headers, row))
+                dict(list(zip(headers, row)))
                 for row in export_data[table]['rows']
             ]
 

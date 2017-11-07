@@ -19,6 +19,7 @@ from corehq.apps.reports.datatables import (
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 import six
+from six.moves import zip
 
 
 class SqlReportException(Exception):
@@ -329,7 +330,7 @@ class DataFormatter(object):
                 row_key = self._row_key(group_by, key_group)
                 row = data.get(row_key, None)
                 if not row:
-                    row = dict(zip(group_by, key_group))
+                    row = dict(list(zip(group_by, key_group)))
 
                 formatted_row = self._format.format_row(row)
                 if self.filter_row(row_key, formatted_row):

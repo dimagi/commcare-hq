@@ -20,6 +20,7 @@ from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
     update_form_translations,
     get_unicode_dicts)
+from six.moves import zip
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
@@ -357,7 +358,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
         actual_workbook = [
             {'name': title,
-             'rows': [dict(zip(headers, row)) for row in actual_rows[title]]}
+             'rows': [dict(list(zip(headers, row))) for row in actual_rows[title]]}
             for title, headers in actual_headers
         ]
 

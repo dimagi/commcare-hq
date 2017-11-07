@@ -11,6 +11,7 @@ import sqlalchemy
 from django.test.testcases import TestCase, override_settings
 
 from corehq.sql_db.connections import connection_manager
+from six.moves import zip
 
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -24,7 +25,7 @@ class AggregationScriptTest(TestCase):
             csv_data = list(csv.reader(f))
             headers = csv_data[0]
             for row_count, row in enumerate(csv_data):
-                csv_data[row_count] = dict(zip(headers, row))
+                csv_data[row_count] = dict(list(zip(headers, row)))
         return csv_data[1:]
 
     def _convert_decimal_to_string(self, value):
@@ -74,7 +75,7 @@ class AggregationScriptTest(TestCase):
                         row[idx] = value.encode('utf-8')
                     elif value is None:
                         row[idx] = ''
-                yield dict(zip(columns, row))
+                yield dict(list(zip(columns, row)))
 
     def _fasterAssertListEqual(self, list1, list2):
         if len(list1) != len(list2):

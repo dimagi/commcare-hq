@@ -25,6 +25,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from dimagi.utils.logging import notify_exception
 import six
+from six.moves import zip
 
 
 ColumnType = namedtuple('ColumnType', 'cls label')
@@ -938,7 +939,7 @@ class GroupExportConfiguration(Document):
         and an ExportSchema-like document that can be used to get at
         the data.
         """
-        return zip(self.all_configs, self.all_export_schemas)
+        return list(zip(self.all_configs, self.all_export_schemas))
 
 
 class SavedBasicExport(BlobMixin, Document):

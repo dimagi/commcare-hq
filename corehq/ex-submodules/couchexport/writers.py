@@ -14,6 +14,7 @@ from django.template.loader import render_to_string, get_template
 import xlwt
 
 from couchexport.models import Format
+from six.moves import zip
 
 
 def _encode_if_needed(val):
@@ -544,12 +545,12 @@ class CdiscOdmExportWriter(InMemoryExportWriter):
                 self.study_keys = row
             else:
                 # This will give us the study constants. The template needs "study_oid" and file metadata
-                self.context.update(dict(zip(self.study_keys, row)))
+                self.context.update(dict(list(zip(self.study_keys, row))))
         else:
             if not self.subject_keys:
                 self.subject_keys = row
             else:
-                self.context['subjects'].append(dict(zip(self.subject_keys, row)))
+                self.context['subjects'].append(dict(list(zip(self.subject_keys, row))))
 
     def _close(self):
         from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings

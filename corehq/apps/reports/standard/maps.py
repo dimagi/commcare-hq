@@ -13,6 +13,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListRepo
 from corehq.apps.hqwebapp.decorators import use_maps_async
 from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
+from six.moves import zip
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
@@ -142,7 +143,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         headers = ['::'.join(k) for k in _headers(report.headers)]
 
         for row in report.rows:
-            yield dict(zip(headers, row))
+            yield dict(list(zip(headers, row)))
 
     def _get_data_case(self, params, filters):
         MAX_RESULTS = 200 # TODO vary by domain (cc-plus gets a higher limit?)

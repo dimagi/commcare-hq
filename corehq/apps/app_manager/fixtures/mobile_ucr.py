@@ -30,6 +30,7 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
+from six.moves import zip
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -235,10 +236,10 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             total_row = data_source.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
-                    zip(
+                    list(zip(
                         map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
-                    )
+                    ))
                 ),
                 data_source.get_total_records(),
                 is_total_row=True,
@@ -413,10 +414,10 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             total_row = data_source.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
-                    zip(
+                    list(zip(
                         map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
-                    )
+                    ))
                 ),
                 data_source.get_total_records(),
                 is_total_row=True,

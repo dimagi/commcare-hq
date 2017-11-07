@@ -22,6 +22,7 @@ from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 import six
+from six.moves import zip
 
 
 def get_unicode_dicts(iterable):
@@ -830,7 +831,7 @@ def _update_case_list_translations(sheet, rows, app):
             ))
 
     for row, detail in \
-            zip(list_rows, short_details) + zip(detail_rows, long_details):
+            list(zip(list_rows, short_details)) + list(zip(detail_rows, long_details)):
 
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.
