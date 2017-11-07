@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from corehq.apps.reminders.forms import BroadcastForm
 from corehq.apps.reminders.models import (RECIPIENT_USER_GROUP, RECIPIENT_LOCATION)

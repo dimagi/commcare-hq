@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 from corehq.apps.groups.fields import GroupField
 from django import forms

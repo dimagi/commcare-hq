@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles
 from corehq.apps.es.groups import GroupES

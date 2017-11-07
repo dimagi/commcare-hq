@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.forms.fields import *
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField

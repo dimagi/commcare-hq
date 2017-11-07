@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 from elasticsearch import exceptions as elasticsearch_exceptions
 from requests import exceptions as requests_exceptions

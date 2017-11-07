@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 DEFAULT_CASE_PROPERTY_DATATYPES = {
     "name": "string",
     "modified_on": "datetime",

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple, defaultdict
 
 from django.test import SimpleTestCase, TestCase

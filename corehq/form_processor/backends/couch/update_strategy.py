@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 from functools import cmp_to_key
 import logging

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from smtplib import SMTPSenderRefused
 import uuid
 import requests

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import csv
 from django.core.management import BaseCommand, call_command
 from corehq.apps.receiverwrapper.util import get_app_version_info

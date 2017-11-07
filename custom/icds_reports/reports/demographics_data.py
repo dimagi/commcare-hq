@@ -1,13 +1,16 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
 from custom.icds_reports.utils import percent_increase, percent_diff, get_value, apply_exclude
 
 
+@quickcache(['domain', 'yesterday', 'config', 'show_test'], timeout=30 * 60)
 def get_demographics_data(domain, yesterday, config, show_test=False):
     yesterday_date = datetime(*yesterday)
     two_days_ago = (yesterday_date - relativedelta(days=1)).date()

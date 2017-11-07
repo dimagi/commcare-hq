@@ -79,7 +79,7 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                     "targets": [0],
                     "render": function(name, something, args) {
                         var id = args[2],
-                            url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_message', id);
+                            url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', id);
                         return "<a href='" + url + "'>" + name + "</a>";
                     },
                 },

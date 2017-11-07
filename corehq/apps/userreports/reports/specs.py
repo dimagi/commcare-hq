@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import json
 
@@ -140,7 +141,7 @@ class FieldColumn(ReportColumn):
     type = TypeProperty('field')
     field = StringProperty(required=True)
     aggregation = StringProperty(
-        choices=SQLAGG_COLUMN_MAP.keys(),
+        choices=list(SQLAGG_COLUMN_MAP),
         required=True,
     )
     format = StringProperty(default='default', choices=[

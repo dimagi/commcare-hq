@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from corehq.apps.domain_migration_flags.models import MigrationStatus

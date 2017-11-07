@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django.core.management import BaseCommand, CommandError
 from corehq.warehouse.const import ALL_TABLES

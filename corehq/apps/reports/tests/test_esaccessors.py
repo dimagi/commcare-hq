@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 import uuid
 from mock import patch

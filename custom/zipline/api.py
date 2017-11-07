@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.zipline.models import (EmergencyOrder, EmergencyOrderStatusUpdate,
     update_product_quantity_json_field)
 from datetime import datetime

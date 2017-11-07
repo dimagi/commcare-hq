@@ -92,6 +92,8 @@ var reportBuilder = function () {  // eslint-disable-line
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
 
+        self.dateRangeOptions = config['dateRangeOptions'];
+
         self.existingReportId = config['existingReport'];
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
@@ -212,15 +214,6 @@ var reportBuilder = function () {  // eslint-disable-line
             self.saveButton.fire('change');
         });
 
-        var _isMissingAggColumn = function() {
-            return (self.reportType() === constants.REPORT_TYPE_TABLE) && (
-                ! _.some(self.columnList.columns(), function (c) {
-                    return c.calculation() === constants.GROUP_BY;
-                })
-            );
-        };
-        self.missingAggColumn = ko.computed(_isMissingAggColumn, this);
-
         self.filterList = new PropertyList({
             hasFormatCol: self._sourceType === "case",
             hasCalculationCol: false,
@@ -263,8 +256,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 $('#preview').hide();
 
                 // Check if a preview should be requested from the server
-                // Note: We can't use self.missingAggColumn() because it gets updated after this function is called.
-                if (serializedColumns === "[]" || _isMissingAggColumn()) {
+                if (serializedColumns === "[]") {
                     return;  // Nothing to do.
                 }
                 $.ajax({
@@ -294,6 +286,8 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.renderReportPreview = function (data) {
             self.previewError(false);
+            self.noChartForConfigWarning(false);
+            self.tooManyChartCategoriesWarning(false);
             self._renderTablePreview(data['table']);
             self._renderChartPreview(data['chart_configs'], data['aaData']);
             self._renderMapPreview(data['map_config'], data["aaData"]);
@@ -343,9 +337,6 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.validate = function () {
             var isValid = true;
-            if (self.missingAggColumn()) {
-                isValid = false;
-            }
             if (!self.columnList.validate()) {
                 isValid = false;
                 $("#report-config-columns").collapse('show');
@@ -380,17 +371,6 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         var button = hqImport("hqwebapp/js/main").SaveButton;
-        if (config['existingReport']) {
-            button = hqImport("hqwebapp/js/main").makeSaveButton({
-                // The SAVE text is the only thing that distringuishes this from SaveButton
-                SAVE: django.gettext("Update Report"),
-                SAVING: django.gettext("Saving..."),
-                SAVED: django.gettext("Saved"),
-                RETRY: django.gettext("Try Again"),
-                ERROR_SAVING: django.gettext("There was an error saving"),
-            }, 'btn btn-success');
-        }
-
         self.saveButton = button.init({
             unsavedMessage: "You have unsaved settings.",
             save: function () {
@@ -436,7 +416,7 @@ var reportBuilder = function () {  // eslint-disable-line
         if (!self.existingReportId) {
             self.saveButton.fire('change');
         }
-        self.refreshPreview();
+        self.refreshPreview(self.columnList.serializedProperties());
         if (config['initialChartType']) {
             self.selectedChart(config['initialChartType']);
         }

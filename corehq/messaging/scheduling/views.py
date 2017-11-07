@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from functools import wraps
 
 from django.db import transaction
@@ -20,7 +21,7 @@ from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
-from corehq.messaging.scheduling.forms import MessageForm
+from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -29,9 +30,6 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
-from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
-    get_alert_schedule_instances_for_schedule,
-)
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -124,9 +122,9 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
-    urlname = 'create_message'
-    page_title = _('Create a Message')
-    template_name = 'scheduling/create_message.html'
+    urlname = 'create_schedule'
+    page_title = _('Schedule a Message')
+    template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
 
     @method_decorator(_requires_new_reminder_framework())
@@ -155,15 +153,15 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         }
 
     @cached_property
-    def message_form(self):
+    def schedule_form(self):
         if self.request.method == 'POST':
-            return MessageForm(self.request.POST, **self.form_kwargs)
-        return MessageForm(**self.form_kwargs)
+            return ScheduleForm(self.request.POST, **self.form_kwargs)
+        return ScheduleForm(**self.form_kwargs)
 
     @property
     def page_context(self):
         return {
-            'form': self.message_form,
+            'form': self.schedule_form,
         }
 
     @cached_property
@@ -175,9 +173,9 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
 
-        if self.message_form.is_valid():
+        if self.schedule_form.is_valid():
             # TODO editing should not create a new one
-            values = self.message_form.cleaned_data
+            values = self.schedule_form.cleaned_data
             if values['send_frequency'] == 'immediately':
                 if values['translate']:
                     messages = {}
@@ -188,13 +186,15 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                     content = SMSContent(message=messages)
                 else:
                     content = SMSContent(message={'*': values['non_translated_message']})
+
                 with transaction.atomic():
                     schedule = AlertSchedule.create_simple_alert(self.domain, content)
                     broadcast = ImmediateBroadcast(
                         domain=self.domain, name=values['schedule_name'], schedule=schedule
                     )
+                    recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
+                    broadcast.recipients = recipients
                     broadcast.save()
-                recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
                 refresh_alert_schedule_instances.delay(schedule, recipients)
 
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
@@ -202,8 +202,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 
 class EditScheduleView(CreateScheduleView):
-    urlname = 'edit_message'
-    page_title = _('Edit Message')
+    urlname = 'edit_schedule'
+    page_title = _('Edit Scheduled Message')
 
     @property
     def page_url(self):
@@ -223,34 +223,28 @@ class EditScheduleView(CreateScheduleView):
         return broadcast
 
     @cached_property
-    def message_form(self):
+    def schedule_form(self):
         if self.request.method == 'POST':
-            return MessageForm(self.request.POST, **self.form_kwargs)
+            return ScheduleForm(self.request.POST, **self.form_kwargs)
 
         broadcast = self.broadcast
         schedule = broadcast.schedule
-        schedule_instances = get_alert_schedule_instances_for_schedule(schedule)
-        recipients = [
-            (instance.recipient_type, instance.recipient_id)
-            for instance in schedule_instances
-        ]
-        ret = []
-        if recipients:
-            for doc_type, doc_id in recipients:
-                user = CommCareUser.wrap(CommCareUser.get_db().get(doc_id))
-                ret.append({"id": doc_id, "text": user.raw_username})
+        recipients = []
+        for doc_type, doc_id in broadcast.recipients:
+            user = CommCareUser.get_by_user_id(doc_id, domain=self.domain)
+            recipients.append({"id": doc_id, "text": user.raw_username})
         initial = {
             'schedule_name': broadcast.name,
             'send_frequency': 'immediately',
-            'recipients': ret,
+            'recipients': recipients,
             'content': 'sms',
             # only works for SMS
             'message': schedule.memoized_events[0].content.message,
         }
-        return MessageForm(initial=initial, **self.form_kwargs)
+        return ScheduleForm(initial=initial, **self.form_kwargs)
 
     def post(self, request, *args, **kwargs):
-        values = self.message_form.cleaned_data
+        values = self.schedule_form.cleaned_data
         if values['send_frequency'] == 'immediately':
             raise ImmediateMessageEditAttempt("Cannot edit an immediate message")
         super(EditScheduleView, self).post(request, *args, **kwargs)

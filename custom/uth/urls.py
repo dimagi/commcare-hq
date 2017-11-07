@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from custom.uth.views import vscan_upload, sonosite_upload, pending_exams

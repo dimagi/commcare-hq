@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.hqcase.dbaccessors import get_case_properties
 from corehq.apps.users.cases import get_owner_id
 from soil import DownloadBase

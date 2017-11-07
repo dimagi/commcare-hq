@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from django.template.loader import render_to_string
 from dimagi.utils.decorators.memoized import memoized

@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from django.test import TestCase
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details

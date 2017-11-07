@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.users.models import WebUser, CommCareUser, Permissions, UserRole
 from corehq.apps.users.dbaccessors.all_commcare_users import (

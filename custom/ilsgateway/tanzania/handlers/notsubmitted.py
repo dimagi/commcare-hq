@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler

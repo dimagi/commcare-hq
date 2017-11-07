@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
 from corehq.apps.users.models import LastSync, CouchUser, CommCareUser, WebUser
 from corehq.pillows.utils import update_latest_builds, filter_by_app

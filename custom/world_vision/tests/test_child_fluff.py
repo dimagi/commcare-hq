@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date
 from custom.world_vision.models import WorldVisionChildFluff
 from custom.world_vision.tests.utils import WVTest

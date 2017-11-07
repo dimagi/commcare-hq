@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from xml.etree import cElementTree as ElementTree
 

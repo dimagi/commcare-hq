@@ -22,6 +22,7 @@ When a build is starred, this is called "releasing" the build.  The parameter
 You might also run in to remote applications and applications copied to be
 published on the exchange, but those are quite infrequent.
 """
+from __future__ import absolute_import
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -717,7 +718,7 @@ class FormSource(object):
         app = form.get_app()
         filename = "%s.xml" % unique_id
         app.lazy_put_attachment(value, filename)
-        form.validation_cache = None
+        form.clear_validation_cache()
         try:
             form.xmlns = form.wrapped_xform().data_node.tag_xmlns
         except Exception:
@@ -961,6 +962,15 @@ class FormBase(DocumentSchema):
     def get_action_type(self):
         return ''
 
+    def get_validation_cache(self):
+        return self.validation_cache
+
+    def set_validation_cache(self, cache):
+        self.validation_cache = cache
+
+    def clear_validation_cache(self):
+        self.set_validation_cache(None)
+
     @property
     def uses_cases(self):
         return (
@@ -1009,7 +1019,7 @@ class FormBase(DocumentSchema):
         return XForm(self.source)
 
     def validate_form(self):
-        vc = self.validation_cache
+        vc = self.get_validation_cache()
         if vc is None:
             # todo: now that we don't use formtranslate, does this still apply?
             # formtranslate requires all attributes to be valid xpaths, but
@@ -1025,14 +1035,15 @@ class FormBase(DocumentSchema):
                     "validation_problems": e.validation_problems,
                     "version": e.version,
                 }
-                vc = self.validation_cache = json.dumps(validation_dict)
+                vc = json.dumps(validation_dict)
             else:
-                vc = self.validation_cache = ""
+                vc = ""
+            self.set_validation_cache(vc)
         if vc:
             try:
                 raise XFormValidationError(**json.loads(vc))
             except ValueError:
-                self.validation_cache = None
+                self.clear_validation_cache()
                 return self.validate_form()
         return self
 
@@ -3124,6 +3135,15 @@ class ShadowForm(AdvancedForm):
         from corehq.apps.app_manager.views.utils import get_blank_form_xml
         return get_blank_form_xml("")
 
+    def get_validation_cache(self):
+        if not self.shadow_parent_form:
+            return None
+        return self.shadow_parent_form.validation_cache
+
+    def set_validation_cache(self, cache):
+        if self.shadow_parent_form:
+            self.shadow_parent_form.validation_cache = cache
+
     @property
     def xmlns(self):
         if not self.shadow_parent_form:
@@ -3981,7 +4001,7 @@ class ReportAppConfig(DocumentSchema):
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
-    sync_delay = DecimalProperty(default=0.0)
+    sync_delay = DecimalProperty(default=0.0)  # in hours
 
     _report = None
 
@@ -4381,7 +4401,7 @@ class VersionedDoc(LazyBlobDoc):
 
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
-            increment_version = not self.copy_of
+            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -5319,7 +5339,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for form in app.get_forms():
             # reset the form's validation cache, since the form content is
             # likely to have changed in the revert!
-            form.validation_cache = None
+            form.clear_validation_cache()
             form.version = None
 
         app.build_broken = False

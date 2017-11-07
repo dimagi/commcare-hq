@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import logging
 from django.utils.translation import ugettext_noop as _

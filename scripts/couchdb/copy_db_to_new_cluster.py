@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import argparse
 import getpass
 import sys
 
 from requests.exceptions import HTTPError
 
-from utils import (
+from .utils import (
     do_couch_request,
     check_connection,
     confirm,

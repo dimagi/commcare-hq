@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.conf import settings
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand

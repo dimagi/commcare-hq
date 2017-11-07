@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import template
 from django.urls import reverse
 from datetime import datetime, timedelta

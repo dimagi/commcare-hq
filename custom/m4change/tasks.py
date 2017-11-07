@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from celery.schedules import crontab
 from celery.task import periodic_task

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import os
 
@@ -5,6 +6,7 @@ from datetime import datetime, timedelta
 
 import operator
 
+from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
@@ -17,6 +19,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
+from django.db.models import Case, When, Q, F, IntegerField
 
 
 OPERATORS = {
@@ -37,6 +40,7 @@ GREY = '#9D9D9D'
 
 DEFAULT_VALUE = "Data not Entered"
 
+DATA_NOT_ENTERED = "Data Not Entered"
 
 class MPRData(object):
     resource_file = 'resources/block_mpr.json'
@@ -297,3 +301,36 @@ def get_location_level(aggregation_level):
 @quickcache([])
 def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
+
+
+def get_status(value, second_part='', normal_value='', exportable=False):
+    status = ''
+    if not value or value in ['unweighed', 'unmeasured', 'unknown']:
+        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+    elif value in ['severely_underweight', 'severe']:
+        status = {'value': 'Severely ' + second_part, 'color': 'red'}
+    elif value in ['moderately_underweight', 'moderate']:
+        status = {'value': 'Moderately ' + second_part, 'color': 'black'}
+    elif value in ['normal']:
+        status = {'value': normal_value, 'color': 'black'}
+    else:
+        return ''
+    return status if not exportable else status['value']
+
+
+def current_age(dob, selected_date):
+    age = relativedelta(selected_date, dob)
+    age_format = ""
+    if age.years:
+        age_format += "%s year%s " % (age.years, '' if age.years == 1 else 's')
+    if age.months:
+        age_format += "%s month%s " % (age.months, '' if age.months == 1 else 's')
+    return age_format
+
+
+def exclude_records_by_age_for_column(exclude_config, column):
+    return Case(
+        When(~Q(**exclude_config), then=F(column)),
+        default=0,
+        output_field=IntegerField()
+    )

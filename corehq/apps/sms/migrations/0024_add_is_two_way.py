@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from __future__ import absolute_import
 from corehq.sql_db.operations import HqRunPython
 from django.db import migrations, models
 import datetime

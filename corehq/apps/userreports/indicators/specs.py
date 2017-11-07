@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError

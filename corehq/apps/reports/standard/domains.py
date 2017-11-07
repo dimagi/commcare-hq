@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.elastic import es_query
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop

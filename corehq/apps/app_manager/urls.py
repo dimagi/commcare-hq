@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import (
@@ -25,7 +26,7 @@ from corehq.apps.app_manager.views import (
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
-    update_linked_whitelist, overwrite_module_case_list, app_settings,
+    update_linked_whitelist, overwrite_module_case_list, app_settings, PatchLinkedAppWhitelist
 )
 from corehq.apps.app_manager.views.remote_linked_apps import get_latest_released_app_source
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -96,6 +97,7 @@ urlpatterns = [
     url(r'^drop_user_case/(?P<app_id>[\w-]+)/$', drop_user_case, name='drop_user_case'),
     url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
     url(r'^linked_whitelist/(?P<app_id>[\w-]+)/$', update_linked_whitelist, name='update_linked_whitelist'),
+    url(r'^patch_linked_whitelist/(?P<app_id>[\w-]+)/$', PatchLinkedAppWhitelist.as_view(), name=PatchLinkedAppWhitelist.urlname),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', delete_app, name='delete_app'),
     url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',

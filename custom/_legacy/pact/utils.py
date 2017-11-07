@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.api.es import ReportCaseES
 from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
 from StringIO import StringIO

@@ -1,13 +1,16 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import percent_increase, get_value
 
 
+@quickcache(['yesterday', 'config'], timeout=30 * 60)
 def get_system_usage_data(yesterday, config):
     yesterday_date = datetime(*yesterday)
     two_days_ago = (yesterday_date - relativedelta(days=1)).date()

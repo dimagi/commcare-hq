@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import re
 from corehq.apps.data_interfaces.models import CaseRuleUndoer
 from dateutil.parser import parse

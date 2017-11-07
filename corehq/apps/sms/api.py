@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import random
 import string
@@ -572,7 +573,7 @@ def process_incoming(msg):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
             if not handled and v and v.pending_verification:
-                import verify
+                from . import verify
                 handled = verify.process_verification(v, msg,
                     create_subevent_for_inbound=not has_domain_two_way_scope)
 

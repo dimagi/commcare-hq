@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.views import IncomingBackendView

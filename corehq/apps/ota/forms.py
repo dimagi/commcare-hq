@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 
 # todo proper B3 Handle

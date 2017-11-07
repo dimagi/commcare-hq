@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from corehq.apps.domain.auth import J2ME, ANDROID, determine_authtype_from_request, guess_phone_type_from_user_agent
 

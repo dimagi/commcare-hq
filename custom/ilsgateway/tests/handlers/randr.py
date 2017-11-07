@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusValues, SupplyPointStatusTypes
 from custom.ilsgateway.tanzania.reminders import SUBMITTED_REMINDER_DISTRICT, SUBMITTED_NOTIFICATION_MSD, \

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from corehq.apps.app_manager.const import (
     USERCASE_TYPE,
