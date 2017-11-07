@@ -124,7 +124,6 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
 def get_awc_reports_pse(config, month, domain, show_test=False):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
-    last_three_months = (selected_month - relativedelta(months=3))
     last_day_of_selected_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
 
     map_image_data = DailyAttendanceView.objects.filter(
@@ -145,7 +144,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
     )
 
     open_count_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(last_three_months, last_day_of_selected_month), **config
+        pse_date__range=(selected_month, last_day_of_selected_month), **config
     ).values('awc_name', 'pse_date').annotate(
         open_count=Sum('awc_open_count'),
     ).order_by('pse_date')
