@@ -4,6 +4,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.schedule_name = ko.observable(initial_values.schedule_name);
         self.send_frequency = ko.observable(initial_values.send_frequency);
+        self.weekdays = ko.observable(initial_values.weekdays);
         self.start_date = ko.observable(initial_values.start_date);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
@@ -20,6 +21,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.showStartDateInput = ko.computed(function() {
             return self.send_frequency() != 'immediately';
+        });
+
+        self.showWeekdaysInput = ko.computed(function() {
+            return self.send_frequency() == 'weekly';
         });
 
         self.showStopInput = ko.computed(function() {

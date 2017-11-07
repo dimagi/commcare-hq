@@ -6,10 +6,11 @@ from django.forms.fields import (
     BooleanField,
     CharField,
     ChoiceField,
+    MultipleChoiceField,
     IntegerField,
 )
 from django.forms.forms import Form
-from django.forms.widgets import Textarea
+from django.forms.widgets import Textarea, CheckboxSelectMultiple
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _, ugettext
 
@@ -27,6 +28,7 @@ class RecipientField(CharField):
 
 class ScheduleForm(Form):
     SEND_DAILY = 'daily'
+    SEND_WEEKLY = 'weekly'
     SEND_IMMEDIATELY = 'immediately'
 
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
@@ -43,7 +45,22 @@ class ScheduleForm(Form):
         choices=(
             (SEND_IMMEDIATELY, _('Immediately')),
             (SEND_DAILY, _('Daily')),
+            (SEND_WEEKLY, _('Weekly')),
         )
+    )
+    weekdays = MultipleChoiceField(
+        required=False,
+        label=_('On'),
+        choices=(
+            ('6', _('Sunday')),
+            ('0', _('Monday')),
+            ('1', _('Tuesday')),
+            ('2', _('Wednesday')),
+            ('3', _('Thursday')),
+            ('4', _('Friday')),
+            ('5', _('Saturday')),
+        ),
+        widget=CheckboxSelectMultiple()
     )
     send_time = CharField(required=False)
     start_date = CharField(required=False)
@@ -155,6 +172,13 @@ class ScheduleForm(Form):
             crispy.Field(
                 'send_frequency',
                 data_bind='value: send_frequency',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'weekdays',
+                    data_bind='value: weekdays',
+                ),
+                data_bind='visible: showWeekdaysInput',
             ),
             crispy.Div(
                 hqcrispy.B3MultiField(
