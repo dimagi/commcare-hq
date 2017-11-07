@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import csv
 import os
 from celery.schedules import crontab
@@ -33,7 +35,7 @@ from corehq.util.datadog.utils import (
 
 from dimagi.utils.logging import notify_exception
 
-from .utils import analytics_enabled_for_email
+from corehq.apps.analytics.utils import analytics_enabled_for_email
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
                                                '{}@{}'.format('aphilippot', 'dimagi.com'),
