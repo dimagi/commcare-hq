@@ -1,57 +1,43 @@
-from django.core.management import BaseCommand
+from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration
 
-from casexml.apps.case.mock import CaseFactory
-
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.log import with_progress_bar
-
-from custom.enikshay.private_sector_datamigration.factory import PERSON_CASE_TYPE
 from custom.enikshay.private_sector_datamigration.models import Beneficiary
 
+DATAMIGRATION_CASE_PROPERTY = 'datamigration_district'
 
-class Command(BaseCommand):
 
-    def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('case_ids', nargs='*')
-
-    def handle(self, domain, case_ids, **options):
-        self.domain = domain
-        case_accessor = CaseAccessors(domain)
-        if not case_ids:
-            case_ids = case_accessor.get_case_ids_in_domain(type=PERSON_CASE_TYPE)
-        for person_case in case_accessor.iter_cases(with_progress_bar(case_ids)):
-            case_properties = person_case.dynamic_case_properties()
-            if self.should_add_state_and_district(case_properties):
-                beneficiary = Beneficiary.objects.get(caseId=case_properties['migration_created_from_record'])
-                self.add_state_and_district(person_case, beneficiary, case_properties)
+class Command(BaseEnikshayCaseMigration):
+    case_type = 'person'
+    case_properties_to_update = [
+        'migration_created_case',
+        'migration_comment',
+        'legacy_districtId',
+        'current_address_district_choice',
+    ]
+    datamigration_case_property = DATAMIGRATION_CASE_PROPERTY
+    include_public_cases = False
+    include_private_cases = True
 
     @staticmethod
-    def should_add_state_and_district(case_properties):
-        return (
-            case_properties.get('enrolled_in_private') == 'true' and
-            case_properties.get('migration_created_case') == 'true' and
-            case_properties.get('migration_comment') in [
+    def get_case_property_updates(person, domain):
+        if (
+            person.get_case_property(DATAMIGRATION_CASE_PROPERTY) == 'yes'
+            or person.get_case_property('migration_comment') not in [
                 'july_7',
                 'july_7_unassigned',
                 'july_7-unassigned',
                 'incr_bene_jul19',
-            ] and
-            case_properties.get('legacy_districtId')
-        )
-
-    def add_state_and_district(self, person_case, beneficiary, case_properties):
-        update = {}
-        # if not case_properties.get('current_address_state_choice'):
-        #     update['current_address_state_choice'] = STATE_ID_TO_LOCATION[beneficiary.stateId]
-        if 'current_address_district_choice' not in case_properties and beneficiary.districtId in DISTRICT_ID_TO_LOCATION:
-            update['current_address_district_choice'] = DISTRICT_ID_TO_LOCATION[beneficiary.districtId]
-
-        if update:
-            CaseFactory(self.domain).update_case(
-                person_case.case_id,
-                update=update,
-            )
+            ]
+            or not person.get_case_property('legacy_districtId')
+            or person.get_case_property('current_address_district_choice')
+        ):
+            return {}
+        else:
+            beneficiary = Beneficiary.objects.get(caseId=person.get_case_property('migration_created_from_record'))
+            if DISTRICT_ID_TO_LOCATION.get(beneficiary.districtId):
+                return {
+                    'current_address_district_choice': DISTRICT_ID_TO_LOCATION[beneficiary.districtId]
+                }
+        return {}
 
 STATE_ID_TO_LOCATION = {
     '136': 'fa7472fe0c9751e5d14595c1a08698e2',
