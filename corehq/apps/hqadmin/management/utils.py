@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import re
 from collections import defaultdict
 from github3 import GitHub
@@ -100,7 +101,7 @@ def _get_prs_by_label(pr_infos):
         for label in pr['labels']:
             if label['name'] in LABELS_TO_EXPAND:
                 prs_by_label[label['name']].append(pr)
-    return prs_by_label
+    return dict(prs_by_label)
 
 
 if __name__ == '__main__':

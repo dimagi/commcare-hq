@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn

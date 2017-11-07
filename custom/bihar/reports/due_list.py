@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import copy
 import logging
 from corehq.util.dates import iso_string_to_date

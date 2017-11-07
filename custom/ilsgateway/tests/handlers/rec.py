@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from corehq.toggles import EMG_AND_REC_SMS_HANDLERS, NAMESPACE_DOMAIN

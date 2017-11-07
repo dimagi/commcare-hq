@@ -1,6 +1,7 @@
 """
 API endpoints for filter options
 """
+from __future__ import absolute_import
 import logging
 
 from django.views.generic import View

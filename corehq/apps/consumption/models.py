@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import Document, StringProperty, DecimalProperty
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from corehq.apps.commtrack.models import StockState, CommtrackConfig

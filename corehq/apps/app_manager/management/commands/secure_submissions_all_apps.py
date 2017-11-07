@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.util import all_apps_by_domain

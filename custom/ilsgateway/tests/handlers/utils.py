@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition

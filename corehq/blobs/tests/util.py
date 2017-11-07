@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 from shutil import rmtree
 from tempfile import mkdtemp

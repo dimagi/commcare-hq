@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from distutils.version import LooseVersion
 
 from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequest

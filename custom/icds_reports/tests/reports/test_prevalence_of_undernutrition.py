@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from collections import OrderedDict
 
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_map, \
     get_prevalence_of_undernutrition_data_chart, get_prevalence_of_undernutrition_sector_data
 from django.test import TestCase
@@ -89,7 +91,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#fee0d2",
+                        "color": ChartColors.PINK,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -117,7 +119,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "key": "% Normal"
                     },
                     {
-                        "color": "#fc9272",
+                        "color": ChartColors.ORANGE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -145,7 +147,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "key": "% Moderately Underweight (-2 SD)"
                     },
                     {
-                        "color": "#de2d26",
+                        "color": ChartColors.RED,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

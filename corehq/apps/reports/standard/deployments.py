@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dateutil import rrule
 from django.db.models.aggregates import Avg
 from corehq.apps.locations.models import SQLLocation

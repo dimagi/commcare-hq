@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunning_data_map, \
     get_prevalence_of_stunning_data_chart
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_sector_data
@@ -91,7 +93,7 @@ class TestPrevalenceOfStunting(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#fee0d2",
+                        "color": ChartColors.PINK,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -119,7 +121,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "key": "% normal"
                     },
                     {
-                        "color": "#fc9272",
+                        "color": ChartColors.ORANGE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -147,7 +149,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "key": "% moderately stunted"
                     },
                     {
-                        "color": "#de2d26",
+                        "color": ChartColors.RED,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

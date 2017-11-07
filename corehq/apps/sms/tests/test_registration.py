@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64
 import json
 from corehq.apps.accounting.models import (BillingAccount, DefaultProductPlan,

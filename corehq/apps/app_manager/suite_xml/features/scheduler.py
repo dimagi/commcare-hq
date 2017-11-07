@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (

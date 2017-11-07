@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 from pydoc import html
 from django.http import Http404

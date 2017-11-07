@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -8,7 +9,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -182,7 +183,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% normal",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
@@ -195,7 +196,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% moderately wasted (moderate acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": ORANGE
+                "color": ChartColors.ORANGE
             },
             {
                 "values": [
@@ -208,7 +209,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% severely wasted (severe acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": ChartColors.RED
             }
         ],
         "all_locations": top_locations,

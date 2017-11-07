@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test.testcases import SimpleTestCase
 from corehq.apps.indicators.models import CouchIndicatorDef
 from dimagi.utils.dates import DateSpan

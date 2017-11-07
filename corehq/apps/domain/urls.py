@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url, include
 from django.contrib.auth.views import (
     password_change,

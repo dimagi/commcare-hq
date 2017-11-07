@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from custom.icds_reports.reports.maternal_child import get_maternal_child_data

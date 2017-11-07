@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import collections
 from django import forms
 from django.forms.fields import MultiValueField, CharField

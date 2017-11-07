@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque

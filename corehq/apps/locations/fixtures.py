@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from itertools import groupby
 from collections import defaultdict
 from xml.etree.cElementTree import Element

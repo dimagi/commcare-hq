@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.handlers.keyword import KeywordHandler
 from custom.ewsghana.reminders import NO_SUPPLY_POINT_MESSAGE, REQ_SUBMITTED, \

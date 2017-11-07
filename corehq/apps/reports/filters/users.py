@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext_lazy

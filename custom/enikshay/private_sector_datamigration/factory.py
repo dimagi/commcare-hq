@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta

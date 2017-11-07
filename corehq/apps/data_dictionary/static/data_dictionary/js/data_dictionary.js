@@ -163,7 +163,7 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
             });
             var i = groupIndex + 1;
             var next = self.casePropertyList()[i];
-            while (!next.isGroup) {
+            while (next && !next.isGroup) {
                 next.toggle();
                 i++;
                 next = self.casePropertyList()[i];

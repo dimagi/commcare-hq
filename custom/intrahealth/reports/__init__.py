@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 import calendar
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import get_location

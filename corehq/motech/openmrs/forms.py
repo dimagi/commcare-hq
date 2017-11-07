@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from django import forms
 from django.core.exceptions import ValidationError

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.fixtures.upload import upload_fixture_file
 from soil import DownloadBase
 from celery.task import task

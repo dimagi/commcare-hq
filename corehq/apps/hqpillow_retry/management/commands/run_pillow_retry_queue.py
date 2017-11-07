@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from psycopg2._psycopg import InterfaceError
 import pytz

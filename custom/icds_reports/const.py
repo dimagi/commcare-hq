@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
@@ -17,6 +18,13 @@ class LocationTypes(object):
     BLOCK = 'block'
     SUPERVISOR = 'supervisor'
     AWC = 'awc'
+
+
+class ChartColors(object):
+    PINK = '#fcb18d'
+    ORANGE = '#fa683c'
+    RED = '#bf231d'
+    BLUE = '#005ebd'
 
 
 LOCATION_TYPES = [
