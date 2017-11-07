@@ -122,7 +122,7 @@ hqDefine('analytics/js/google', function () {
              * @param {function} eventCallback - (optional) Event callback fn
              */
             event: function (eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-                trackEvent.apply(null, _.union([eventCategory], Array.from(arguments)));
+                trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
             },
             /**
              * @param {(object|string)} element - The element (or a selector) whose clicks you want to track.
@@ -132,7 +132,7 @@ hqDefine('analytics/js/google', function () {
              * @param {object} eventParameters - (optional) Extra event parameters
              */
             click: function (element, eventAction, eventLabel, eventValue, eventParameters) {
-                trackClick.apply(null, _.union([arguments[0], eventCategory], Array.from(arguments).splice(1)));
+                trackClick(element, eventCategory, eventLabel, eventValue, eventParameters);
             },
         };
     };
