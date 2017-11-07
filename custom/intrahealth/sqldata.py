@@ -571,7 +571,11 @@ class TauxConsommationData(BaseSqlData):
                     total_row.append("%s%%" % (100 * int(cp[0] or 0) / (cp[1] or 1)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
+                    columns = [
+                        r.get('sort_key')
+                        for r in colrows
+                        if isinstance(r.get('sort_key'), six.integer_types)
+                    ]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:
