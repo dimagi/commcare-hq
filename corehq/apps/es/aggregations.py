@@ -73,7 +73,11 @@ class Aggregation(object):
         return self
 
     def assemble(self):
-        assembled = {self.type: self.body}
+        if self.type == "nested":
+            assembled = self.body
+        else:
+            assembled = {self.type: self.body}
+
         if self.aggregations:
             assembled['aggs'] = {}
             for agg in self.aggregations:
