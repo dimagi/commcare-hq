@@ -159,35 +159,6 @@ class CaseGraph(object):
             if not indices:
                 self.roots.append(case.case_id)
 
-    def get_paths_to_root(self, case_id):
-        """find all paths to the root node
-        """
-        def paths_to_root(case_id, path):
-            path = path + [case_id]
-            if case_id not in self.graph:
-                return [path]
-            if not self.graph[case_id]:  # we made it to the top
-                return [path]
-            paths = []
-            for node in self.graph[case_id]:
-                if node not in path:
-                    newpaths = paths_to_root(node, path)
-                    for newpath in newpaths:
-                        paths.append(newpath)
-            return paths
-
-        return paths_to_root(case_id, [])
-
-    def get_ancestors(self, case_id, include_self=False):
-        paths = self.get_paths_to_root(case_id)
-        ancestors = set()
-        for path in paths:
-            ancestors |= set(path)
-        if not include_self:
-            ancestors.remove(case_id)
-
-        return ancestors
-
     def topological_sort(self):
         """returns all cases in topological order
 
