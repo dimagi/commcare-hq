@@ -217,6 +217,11 @@ class MockDevice(object):
         self.last_sync = SyncResult(self, restore_config, payload, form)
         return self.last_sync
 
+    def restore(self, **config):
+        """Run an initial sync to the device"""
+        self.last_sync = None
+        return self.sync(**config)
+
 
 class SyncResult(object):
 

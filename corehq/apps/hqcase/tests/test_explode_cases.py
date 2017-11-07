@@ -8,12 +8,14 @@ from django.test import SimpleTestCase, TestCase
 from mock import patch
 from corehq.util.test_utils import flag_enabled
 
-from casexml.apps.case.mock import CaseBlock
+from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
+from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqcase.tasks import explode_cases_2 as explode_cases
+from corehq.apps.hqcase.tasks import CaseGraph
 from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
@@ -212,3 +214,84 @@ class ExplodeCasesDbTest(TestCase):
         for child in child_cases:
             self.assertEqual(1, len(child.indices))
             self.assertTrue(child.indices[0].referenced_id in parent_cases)
+
+
+class ExplodeExtensionsDBTest(BaseSyncTest):
+
+    def setUp(self):
+        super(ExplodeExtensionsDBTest, self).setUp()
+        self.accessor = CaseAccessors(self.project.name)
+        self._create_case_structure()
+
+    def _create_case_structure(self):
+        """
+                  +----+
+                  | E1 |
+                  +--^-+
+                     |e
+        +---+     +--+-+
+        |O  +--c->| C  |
+        +---+     +--^-+
+                     |e
+                  +--+-+
+                  | E2 |
+                  +----+
+        """
+        case_type = 'case'
+
+        E1 = CaseStructure(
+            case_id='extension_1',
+            attrs={'create': True, 'owner_id': '-'},
+        )
+
+        C = CaseStructure(
+            case_id='child',
+            attrs={'create': True, 'owner_id': '-'},
+            indices=[CaseIndex(
+                E1,
+                identifier='extension_1',
+                relationship='extension',
+                related_type=case_type,
+            )]
+        )
+
+        O = CaseStructure(
+            case_id='owned',
+            attrs={'create': True},
+            indices=[CaseIndex(
+                C,
+                identifier='child',
+                relationship='child',
+                related_type=case_type,
+            )]
+        )
+
+        E2 = CaseStructure(
+            case_id='extension_2',
+            attrs={'create': True, 'owner_id': '-'},
+            indices=[CaseIndex(
+                C,
+                identifier='extension',
+                relationship='extension',
+                related_type=case_type,
+            )]
+        )
+        self.device.post_changes([O, E2])
+
+    def test_case_graph(self):
+        cases = self.device.restore().cases
+        self.accessor.get_case_ids_in_domain
+        graph = CaseGraph(cases)
+        self.assertEqual(
+            ['extension_1', 'child', 'extension_2', 'owned'],
+            graph.topological_sort()
+        )
+
+    def test_child_extensions(self):
+        self._create_case_structure()
+        self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
+
+        explode_cases(self.project.name, self.user_id, 5)
+        case_ids = self.accessor.get_case_ids_in_domain()
+        cases_back = list(self.accessor.iter_cases(case_ids))
+        self.assertEqual(20, len(cases_back))
