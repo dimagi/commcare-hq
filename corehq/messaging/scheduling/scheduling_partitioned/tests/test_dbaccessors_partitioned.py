@@ -37,10 +37,11 @@ class BaseSchedulingPartitionedDBAccessorsTest(DefaultShardingTestConfigMixIn, T
         cls.domain = 'scheduling-partitioned-models-test'
 
     @classmethod
-    def make_alert_schedule_instance(cls, schedule_instance_id, schedule_id=None, active=True):
+    def make_alert_schedule_instance(cls, schedule_instance_id, schedule_id=None, active=True, domain=None):
+        domain = domain or cls.domain
         return AlertScheduleInstance(
             schedule_instance_id=schedule_instance_id,
-            domain=cls.domain,
+            domain=domain,
             recipient_type='CommCareUser',
             recipient_id='user-id',
             current_event_num=0,
