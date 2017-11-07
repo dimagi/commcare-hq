@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-31 19:03+0000\n"
+"POT-Creation-Date: 2017-11-07 20:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -332,11 +332,11 @@ msgstr "Continuar con el caso registrado"
 msgid "Show All"
 msgstr "Mostrar Todo"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:306
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:310
 msgid "You have unsaved changes in your report list module"
 msgstr "Tiene cambios sin guardar en la lista de caso de su módulo"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:312
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:316
 msgid "Reports must have all properties set!"
 msgstr "¡Los reportes deben tener establecidas todas las propiedades!"
 
@@ -386,7 +386,6 @@ msgstr "Tiene cambios sin guardar en su perfil de la aplicación"
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:236
-#: corehq/apps/userreports/static/userreports/js/report_config.js:390
 msgid "There was an error saving"
 msgstr "Ocurrió un error al guardar"
 
@@ -1870,14 +1869,12 @@ msgid "Model Iteration ID Query"
 msgstr "Consulta del ID del Modelo de Iteración"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#, fuzzy
-#| msgid "Delete request"
 msgid "Remote Request"
-msgstr "Eliminar solicitud"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "The URL to be requested on form load."
@@ -2332,12 +2329,8 @@ msgid "Error saving!"
 msgstr "¡Error al guardar!"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js:93
-#, fuzzy
-#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid "Could not sync user data. Please report an issue if this persists."
 msgstr ""
-"No es posible borrar los datos del usuario. Por favor reporte un problema si "
-"esto continúa."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js:97
 msgid "User Data successfully synced."
@@ -2519,19 +2512,16 @@ msgid "Error saving, please try again."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:233
-#: corehq/apps/userreports/static/userreports/js/report_config.js:387
 msgid "Saving..."
 msgstr "Guardando..."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:234
-#: corehq/apps/userreports/static/userreports/js/report_config.js:388
 #: corehq/apps/users/static/users/js/web_users.js:55
 msgid "Saved"
 msgstr "Guardado"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:235
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
-#: corehq/apps/userreports/static/userreports/js/report_config.js:389
 msgid "Try Again"
 msgstr "Intente otra vez"
 
@@ -2950,15 +2940,15 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:332
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:347
-#: corehq/apps/userreports/static/userreports/js/report_config.js:230
-#: corehq/apps/userreports/static/userreports/js/report_config.js:248
+#: corehq/apps/userreports/static/userreports/js/report_config.js:223
+#: corehq/apps/userreports/static/userreports/js/report_config.js:241
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:373
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:388
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr "Elija la propiedad que quisiera agregar como filtro para este reporte."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:333
-#: corehq/apps/userreports/static/userreports/js/report_config.js:231
+#: corehq/apps/userreports/static/userreports/js/report_config.js:224
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:374
 msgid ""
 "Web users viewing the report will see this display text instead of the "
@@ -2969,7 +2959,7 @@ msgstr ""
 "entender para sus usuarios. "
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:334
-#: corehq/apps/userreports/static/userreports/js/report_config.js:232
+#: corehq/apps/userreports/static/userreports/js/report_config.js:225
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:375
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -2981,7 +2971,7 @@ msgstr ""
 "Seleccione esto si la propiedad es un texto u opción múltiple."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:348
-#: corehq/apps/userreports/static/userreports/js/report_config.js:249
+#: corehq/apps/userreports/static/userreports/js/report_config.js:242
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:389
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -2994,7 +2984,7 @@ msgstr ""
 "único valor."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:349
-#: corehq/apps/userreports/static/userreports/js/report_config.js:250
+#: corehq/apps/userreports/static/userreports/js/report_config.js:243
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:390
 msgid "What value or date range must the property be equal to?"
 msgstr "¿Qué valor o rango de fecha debe la propiedad igualar?"
@@ -3015,10 +3005,6 @@ msgstr "Por favor verifique arriba si hay algún error en su configuración."
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:7
 msgid "Form"
 msgstr "Formulario"
-
-#: corehq/apps/userreports/static/userreports/js/report_config.js:386
-msgid "Update Report"
-msgstr "Actualizar Reporte"
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:45
 msgid "Password changed successfully"
@@ -3079,47 +3065,40 @@ msgstr "Lo sentimos, ocurrió un problema al comunicarnos con el servidor."
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:455
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:473
-#, fuzzy
-#| msgid ""
-#| "There was an issue communicating with the server. Please try back later."
 msgid "Issue communicating with server. Try again."
-msgstr ""
-"Ocurrió un problema al comunicarnos con el servidor. Por favor inténtelo más "
-"tarde."
+msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:483
 msgid "Username"
-msgstr ""
+msgstr "Nombre de Usuario"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:484
-#, fuzzy
-#| msgid "First Menu"
 msgid "First Name"
-msgstr "Primer Menú"
+msgstr "Nombre"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
 msgid "Last Name"
-msgstr ""
+msgstr "Apellido"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:486
 msgid "Status"
-msgstr ""
+msgstr "Estatus"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:491
 msgid "Show 10 Mobile Workers"
-msgstr ""
+msgstr "Mostrar 10 Usuarios Móviles"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:492
 msgid "Show 25 Mobile Workers"
-msgstr ""
+msgstr "Mostrar 25 Usuarios Móviles"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:493
 msgid "Show 50 Mobile Workers"
-msgstr ""
+msgstr "Mostrar 50 Usuarios Móviles"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:494
 msgid "Show 100 Mobile Workers"
-msgstr ""
+msgstr "Mostrar 100 Usuarios Móviles"
 
 #: corehq/apps/users/static/users/js/roles.js:115
 msgid "New Role"
@@ -3193,9 +3172,5 @@ msgstr "(filtrado del _MAX_total de mensajes)"
 msgid "Unable to save DataSet maps"
 msgstr "No es posible guardar los mapas DataSet"
 
-#~ msgid ""
-#~ "Could not sync user data. Please try again and report a bug if issue "
-#~ "persists."
-#~ msgstr ""
-#~ "No se pudo sincronizar los datos del usuario. Por favor intente de nuevo "
-#~ "y reporte un error si el problema continúa."
+#~ msgid "Update Report"
+#~ msgstr "Actualizar Reporte"
