@@ -1,6 +1,7 @@
 # from http://code.activestate.com/recipes/576974-show-all-url-patterns-in-django/
 # prints a tree of all the urls in the project
 from __future__ import print_function
+from __future__ import absolute_import
 from types import FunctionType
 
 

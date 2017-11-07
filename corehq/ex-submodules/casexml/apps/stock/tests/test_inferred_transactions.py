@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.stock.tests.base import StockTestBase

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID

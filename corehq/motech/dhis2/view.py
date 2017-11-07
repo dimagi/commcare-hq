@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse

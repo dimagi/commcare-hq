@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import inspect
 from django.http import HttpResponseBadRequest, HttpResponse
 from django.utils.decorators import method_decorator

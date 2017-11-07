@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from sqlagg.columns import MaxColumn
 from sqlagg.filters import EQ
 

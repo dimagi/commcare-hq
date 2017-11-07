@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.task import task
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 from corehq.apps.locations.bulk_management import new_locations_import

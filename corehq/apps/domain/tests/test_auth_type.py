@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import requests
 from django.test import SimpleTestCase, RequestFactory
 from ..auth import (

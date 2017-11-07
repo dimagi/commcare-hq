@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import YES_HELP
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript

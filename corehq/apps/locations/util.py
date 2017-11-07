@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location

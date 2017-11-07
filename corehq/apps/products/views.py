@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException

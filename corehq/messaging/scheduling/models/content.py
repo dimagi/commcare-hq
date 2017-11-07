@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import jsonfield
 from corehq.apps.sms.api import send_sms_with_backend_name, send_sms
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import dateutil
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.generic import ElasticProjectInspectionReport

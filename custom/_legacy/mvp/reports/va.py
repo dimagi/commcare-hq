@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from couchdbkit import ResourceNotFound
 import dateutil

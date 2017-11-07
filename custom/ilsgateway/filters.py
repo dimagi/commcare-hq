@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 from datetime import datetime
 from django.conf import settings

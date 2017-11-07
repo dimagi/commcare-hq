@@ -1,5 +1,6 @@
 
 #inspector methods
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import Document
 from datetime import datetime, timedelta
 from django.db.models.base import Model
