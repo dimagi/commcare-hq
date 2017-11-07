@@ -41,7 +41,7 @@ class IteratorJSONReader(object):
         # you can only call __iter__ once
         self._rows = iter(rows)
         try:
-            self.headers = list(self._rows.next())
+            self.headers = list(next(self._rows))
         except StopIteration:
             self.headers = []
         self.fieldnames = self.get_fieldnames()
@@ -151,7 +151,7 @@ class WorksheetJSONReader(IteratorJSONReader):
         self.title = title
         self.worksheet = worksheet
         try:
-            header_row = self.worksheet.iter_rows().next()
+            header_row = next(self.worksheet.iter_rows())
         except StopIteration:
             header_row = []
         for cell in header_row:

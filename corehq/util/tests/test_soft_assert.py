@@ -132,7 +132,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
         tests = iter([test1, test2])
 
         def backend(subject, message):
-            test_ = tests.next()
+            test_ = next(tests)
             test_(subject, message)
 
         self.soft_assert = SoftAssert(

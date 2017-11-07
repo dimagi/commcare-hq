@@ -44,7 +44,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'domain': 'kafka-test-domain',
         }
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
-        message = self.consumer.next()
+        message = next(self.consumer)
 
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(COUCH, change_meta.data_source_type)
@@ -56,7 +56,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         self.assertEqual(False, change_meta.is_deletion)
 
         with self.assertRaises(ConsumerTimeout):
-            self.consumer.next()
+            next(self.consumer)
 
     def test_process_change_with_unicode_domain(self):
         document = {
@@ -65,7 +65,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'domain': u'हिंदी',
         }
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
-        message = self.consumer.next()
+        message = next(self.consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(document['domain'], change_meta.domain)
 
@@ -76,7 +76,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'domain': None,
         }
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
-        message = self.consumer.next()
+        message = next(self.consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(document['domain'], change_meta.domain)
 
@@ -87,7 +87,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
             'domain': None,
         }
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
-        message = self.consumer.next()
+        message = next(self.consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertLessEqual(change_meta.publish_timestamp, datetime.utcnow())
 

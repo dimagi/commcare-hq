@@ -29,7 +29,7 @@ def rebuild_stream(response_iter):
     data = StringIO.StringIO()
     try:
         while True:
-            payload = response_iter.next()
+            payload = next(response_iter)
             if payload:
                 data.write(payload)
     except StopIteration:

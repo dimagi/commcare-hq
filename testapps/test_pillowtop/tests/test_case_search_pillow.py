@@ -49,7 +49,7 @@ class CaseSearchPillowTest(TestCase):
         case = self._make_case(case_properties={'foo': 'bar'})
         producer.send_change(topics.CASE, doc_to_change(case.to_json()).metadata)
         # confirm change made it to kafka
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
@@ -114,7 +114,7 @@ class CaseSearchPillowTest(TestCase):
         case = self._make_case(case_properties={'something': 'something_else'})
 
         # confirm change made it to kafka
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(case.case_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)

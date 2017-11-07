@@ -54,7 +54,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         self._initialize_product_names(len(product_list))
         for i, product in enumerate(product_list):
             product_id = product._id
-            product_name = self.product_names.next()
+            product_name = next(self.product_names)
             product_unit = self._random_string(20)
             product_code = self._random_string(20)
             product_description = self._random_string(20)

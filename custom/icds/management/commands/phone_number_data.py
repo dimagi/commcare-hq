@@ -20,7 +20,7 @@ class Command(BaseCommand):
         with open(infile, 'r') as old, open(outfile, 'w') as new:
             reader = csv.reader(old)
             writer = csv.writer(new)
-            headers = reader.next()
+            headers = next(reader)
             writer.writerow(headers)
             for row in reader:
                 owner = row[2]

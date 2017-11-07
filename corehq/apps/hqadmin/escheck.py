@@ -113,10 +113,10 @@ def get_last_change_for_doc_class(doc_class):
     """
     db = doc_class.get_db()
     doc_type = doc_class._doc_type
-    return (
+    return next(
         (change['id'], change['rev']) for change in get_recent_changes(db, 100)
         if change['doc_type'] == doc_type
-    ).next()
+    )
 
 
 def _get_latest_doc_from_index(es_index, sort_field):

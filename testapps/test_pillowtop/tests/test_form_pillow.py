@@ -49,7 +49,7 @@ class FormPillowTest(TestCase):
         form = self._make_form()
 
         # confirm change made it to kafka
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(form.form_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
@@ -66,7 +66,7 @@ class FormPillowTest(TestCase):
         form = self._make_form(build_id='not-here')
 
         # confirm change made it to kafka
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(form.form_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
@@ -85,7 +85,7 @@ class FormPillowTest(TestCase):
         form = self._make_form()
 
         # confirm change made it to kafka
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(form.form_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)
