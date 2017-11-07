@@ -1,11 +1,11 @@
 /* globals _, _kmq */
 
 // Deprecated analytics globals
-var ga_track_event,
-    trackLinkHelper,
-    gaTrackLink,
-    kmqPushSafe,
-    analytics;
+var ga_track_event, // eslint-disable-line no-unused-vars
+    trackLinkHelper, // eslint-disable-line no-unused-vars
+    gaTrackLink, // eslint-disable-line no-unused-vars
+    kmqPushSafe, // eslint-disable-line no-unused-vars
+    analytics; // eslint-disable-line no-unused-vars
 
 window.analytics = {};
 

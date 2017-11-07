@@ -1,5 +1,4 @@
 /* globals _, JSON */
-/* jshint devel: true */
 /**
  * To Use this library, enable the feature flag ANALYTICS_NEW.
  *
@@ -21,7 +20,7 @@ hqDefine('analytics/js/logging', function () {
     var _printPretty = function (message) {
         var _title, _value, _grp;
         if (_.isUndefined(message.value)) {
-            console.log("Message was undefined");
+            console.log("Message was undefined");  // eslint-disable-line no-console
         } else if (message.value.isGroup) {
             _grp = message.value;
             _grp.level = message.level;
@@ -65,7 +64,7 @@ hqDefine('analytics/js/logging', function () {
         msg.level = level;
         msg.value = value;
         msg.print = function () {
-            console.log(msg.value);
+            console.log(msg.value);  // eslint-disable-line no-console
         };
         return msg;
     };
@@ -79,10 +78,10 @@ hqDefine('analytics/js/logging', function () {
         grp.isRaw = false;
         grp.isGroup = true;
         grp.print = function () {
-            var _printGrp = (grp.isCollapsed) ? console.groupCollapsed : console.group;
+            var _printGrp = (grp.isCollapsed) ? console.groupCollapsed : console.group;  // eslint-disable-line no-console
             _printGrp("%c%s", _getStyle(grp.level), grp.title);
             (grp.isRaw) ? grp.message.print() : _printPretty(grp.message);
-            console.groupEnd();
+            console.groupEnd();  // eslint-disable-line no-console
         };
         return grp;
     };
