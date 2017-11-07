@@ -5,6 +5,7 @@ from collections import namedtuple
 
 import requests
 import time
+from six.moves import input
 
 NodeDetails = namedtuple('NodeDetails', 'ip port node_local_port username password')
 
@@ -34,7 +35,7 @@ def get_membership(node_details):
 
 
 def confirm(msg):
-    return raw_input(msg + "\n(y/n)") == 'y'
+    return input(msg + "\n(y/n)") == 'y'
 
 
 def get_arg_parser(command_description):

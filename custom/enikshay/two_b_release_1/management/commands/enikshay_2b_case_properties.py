@@ -23,6 +23,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE, CASE_TYPE_TEST, CASE_TYPE_TRAIL,
     CASE_TYPE_DRTB_HIV_REFERRAL, CASE_TYPE_SECONDARY_OWNER)
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
+from six.moves import input
 
 logger = logging.getLogger('two_b_datamigration')
 
@@ -61,7 +62,7 @@ class PersonCaseSet(object):
 
 
 def confirm(msg):
-    if raw_input(msg + "\n(y/n)") != 'y':
+    if input(msg + "\n(y/n)") != 'y':
         sys.exit()
 
 
