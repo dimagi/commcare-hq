@@ -220,8 +220,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
-    search_help_inline = mark_safe("Quick search a location by using /location1/location2 for case insensitive "
-                                   "search on parent and fuzzy search on descendants")
+    search_help_inline = mark_safe(ugettext_lazy(
+        'To quick search for a location, write your query as /parent/descendant. '
+        'For more info, see the '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Location" '
+        'target="_blank">Location Search</a> help page.'
+    ))
 
     @property
     @memoized
@@ -315,7 +319,9 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def filter_context(self):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
         url = reverse(self.options_url, args=[self.domain])
-        context.update({'endpoint': url, 'search_help_inline': self.search_help_inline})
+        context.update({'endpoint': url})
+        if self.request.project.uses_locations:
+            context.update({'search_help_inline': self.search_help_inline})
         return context
 
     @classmethod
