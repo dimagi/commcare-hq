@@ -4,16 +4,12 @@ function MainController($http) {
     var vm = this;
     vm.title = "Prevision vs Achievements";
 
-    vm.test1 = 10;
-    debugger;
-
     var get_url = url('champ_pva');
     $http({
         method: "GET",
         url: get_url,
         params: {},
     }).then(function(response) {
-        debugger;
         vm.chartData = response.data.chart
     });
 
