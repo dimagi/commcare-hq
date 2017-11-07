@@ -81,7 +81,7 @@ class Command(BaseCommand):
             for active_episode_confirmed_drtb_case in active_episode_confirmed_drtb_cases:
                 relevant_occurrence_cases += [get_occurrence_case_from_episode(
                     DOMAIN, active_episode_confirmed_drtb_case.get_id)]
-            retain_case = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0]
+            retain_case = get_recently_edited_case_by_user(relevant_occurrence_cases)
         elif active_episode_confirmed_tb_cases_count == 1:
             episode_case_id = active_episode_confirmed_tb_cases[0].get_id
             retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_id)
@@ -90,9 +90,9 @@ class Command(BaseCommand):
             for active_episode_confirmed_tb_case in active_episode_confirmed_tb_cases:
                 relevant_occurrence_cases += [get_occurrence_case_from_episode(
                     DOMAIN, active_episode_confirmed_tb_case.get_id)]
-            retain_case = sorted(relevant_occurrence_cases, key=lambda x: x.opened_on)[0]
+            retain_case = get_recently_edited_case_by_user(relevant_occurrence_cases)
         else:
-            retain_case = sorted(open_occurrence_cases, key=lambda x: x.opened_on)[0]
+            retain_case = get_recently_edited_case_by_user(open_occurrence_cases)
         self.close_cases(open_occurrence_cases, retain_case, person_case_id, "occurrence")
 
     def close_cases(self, all_cases, retain_case, associated_case_id, reconcilling_case_type):
@@ -118,7 +118,7 @@ class Command(BaseCommand):
             "closed_cases_details": (
                 {
                     a_case.case_id: {
-                        "date_opened": str(a_case.opened_on),
+                        "date_opened": str(last_user_edit_at(a_case)),
                         "episode_type": a_case.get_case_property("episode_type"),
                         "is_active": a_case.get_case_property("is_active")
                     }
@@ -206,13 +206,13 @@ class Command(BaseCommand):
         if confirmed_drtb_episode_cases_count == 1:
             retain_case = confirmed_drtb_episode_cases[0]
         elif confirmed_drtb_episode_cases_count > 1:
-            retain_case = sorted(confirmed_drtb_episode_cases, key=lambda x: x.opened_on)[0]
+            retain_case = get_recently_edited_case_by_user(confirmed_drtb_episode_cases)
         elif confirmed_tb_episode_cases_count == 1:
             retain_case = confirmed_tb_episode_cases[0]
         elif confirmed_tb_episode_cases_count > 1:
-            retain_case = sorted(confirmed_tb_episode_cases, key=lambda x: x.opened_on)[0]
+            retain_case = get_recently_edited_case_by_user(confirmed_tb_episode_cases)
         else:
-            retain_case = sorted(episode_cases, key=lambda x: x.opened_on)[0]
+            retain_case = get_recently_edited_case_by_user(episode_cases)
         self.close_cases(episode_cases, retain_case, occurrence_case_id, 'episode')
 
     def get_open_reconciled_episode_cases_for_occurrence(self, occurrence_case_id):
@@ -242,6 +242,28 @@ class Command(BaseCommand):
                                    occurrence_case_id)
 
         return all_open_episode_cases
+
+
+def last_user_edit_at(case):
+    for action in reversed(case.actions):
+        form = action.form
+        if form and form.user_id and form.user_id != 'system':
+            return form.metadata.timeEnd
+
+
+def get_recently_edited_case_by_user(all_cases):
+    recently_modified_case = None
+    recently_modified_time = None
+    for case in all_cases:
+        last_user_edit_on_phone = last_user_edit_at(case)
+        if last_user_edit_on_phone:
+            if recently_modified_time and recently_modified_time < last_user_edit_on_phone:
+                recently_modified_case = case
+            else:
+                recently_modified_time = last_user_edit_on_phone
+                recently_modified_case = case
+
+    return recently_modified_case
 
 
 def get_open_occurrence_cases_from_person(person_case_id):
