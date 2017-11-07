@@ -1,7 +1,6 @@
-import uuid
+from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from sqlalchemy.exc import ProgrammingError
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.sql_db.config import partition_config
 
 from corehq.sql_db.connections import connection_manager

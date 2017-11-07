@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.tests.utils import only_run_with_partitioned_database
@@ -22,9 +23,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 )
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
-from corehq.util.exceptions import AccessRestricted
 from datetime import datetime, date
-from django.conf import settings
 from django.test import TestCase
 
 
