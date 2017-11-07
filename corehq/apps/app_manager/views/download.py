@@ -39,6 +39,7 @@ def download_odk_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+        create_build_files_for_all_app_profiles.delay(request.app.domain, request.app.id)
     else:
         request._always_allow_browser_caching = True
     build_profile = request.GET.get('profile')
