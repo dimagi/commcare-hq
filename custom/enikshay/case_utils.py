@@ -157,7 +157,7 @@ def get_associated_episode_case_for_test(test_case, occurrence_case_id):
             raise ENikshayCaseNotFound("Could not find episode case %s associated with test %s" %
                                        (test_case_episode_id, test_case.get_id))
 
-    return get_open_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
+    return get_open_active_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
 
 
 def get_all_episode_cases_from_person(domain, person_case_id):
@@ -172,7 +172,7 @@ def get_all_episode_cases_from_person(domain, person_case_id):
     return episode_cases
 
 
-def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
+def get_open_active_episode_case_from_occurrence(domain, occurrence_case_id):
     """
     Gets the first open 'episode' case for the occurrence
 
@@ -182,11 +182,17 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     """
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
-    open_episode_cases = [case for case in episode_cases
-                          if not case.closed and case.type == CASE_TYPE_EPISODE and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
-    if open_episode_cases:
-        return open_episode_cases[0]
+    open_active_episode_cases = [case for case in episode_cases
+                                 if not case.closed and
+                                 case.type == CASE_TYPE_EPISODE and
+                                 case.get_case_property().get('episode_type') == "confirmed_tb" and
+                                 case.get_case_property('is_active') == 'true'
+                                 ]
+    if len(open_active_episode_cases) > 1:
+        raise EnikshayBadAppState("Multiple open active episode cases found for occurrence")
+
+    if open_active_episode_cases:
+        return open_active_episode_cases[0]
     else:
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
@@ -221,7 +227,7 @@ def get_open_episode_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence <--ext-- Episode
 
     """
-    return get_open_episode_case_from_occurrence(
+    return get_open_active_episode_case_from_occurrence(
         domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
     )
 
