@@ -94,7 +94,6 @@ class SyncLogFact(BaseFact, CustomSQLETLMixin):
 
     # these can be null per SyncLogStagingTable
     domain = models.CharField(max_length=255, null=True)
-    user_id = models.CharField(max_length=255, null=True)
 
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
     domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT)
