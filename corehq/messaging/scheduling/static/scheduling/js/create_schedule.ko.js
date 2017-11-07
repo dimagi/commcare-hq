@@ -5,6 +5,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.schedule_name = ko.observable(initial_values.schedule_name);
         self.send_frequency = ko.observable(initial_values.send_frequency);
         self.weekdays = ko.observableArray(initial_values.weekdays || []);
+        self.days_of_month = ko.observableArray(initial_values.days_of_month || []);
         self.start_date = ko.observable(initial_values.start_date);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
@@ -15,12 +16,34 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.displayed_email_trial_message = false;
         self.translate = ko.observable(initial_values.translate);
 
+        self.create_day_of_month_choice = function(value) {
+            if(value == '-1') {
+                return {code: value, name: gettext("last")};
+            } else if(value == '-2') {
+                return {code: value, name: gettext("last - 1")};
+            } else if(value == '-3') {
+                return {code: value, name: gettext("last - 2")};
+            } else {
+                return {code: value, name: value};
+            }
+        };
+
+        self.days_of_month_choices = [
+            {row: ['1', '2', '3', '4', '5', '6', '7'].map(self.create_day_of_month_choice)},
+            {row: ['8', '9', '10', '11', '12', '13', '14'].map(self.create_day_of_month_choice)},
+            {row: ['15', '16', '17', '18', '19', '20', '21'].map(self.create_day_of_month_choice)},
+            {row: ['22', '23', '24', '25', '26', '27', '28'].map(self.create_day_of_month_choice)},
+            {row: ['-3', '-2', '-1'].map(self.create_day_of_month_choice)},
+        ];
+
         self.send_frequency.subscribe(function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
             if(newValue == 'daily') {
                 occurrences.text(gettext("After days:"));
             } else if(newValue == 'weekly') {
                 occurrences.text(gettext("After weeks:"));
+            } else if(newValue == 'monthly') {
+                occurrences.text(gettext("After months:"));
             }
         });
 
@@ -34,6 +57,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.showWeekdaysInput = ko.computed(function() {
             return self.send_frequency() == 'weekly';
+        });
+
+        self.showDaysOfMonthInput = ko.computed(function() {
+            return self.send_frequency() == 'monthly';
         });
 
         self.showStopInput = ko.computed(function() {
@@ -66,6 +93,36 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
                                 (occurrences - 1) * 7 * milliseconds_in_a_day +
                                 offset_to_last_weekday_in_schedule * milliseconds_in_a_day
                             );
+                            return end_date.toJSON().substr(0, 10);
+                        }
+                    } else if(self.send_frequency() == 'monthly') {
+                        var last_day = null;
+                        self.days_of_month().map(function(value) {
+                            value = parseInt(value);
+                            if(last_day === null) {
+                                last_day = value;
+                            } else if(last_day > 0) {
+                                if(value < 0) {
+                                    last_day = value;
+                                } else if(value > last_day) {
+                                    last_day = value;
+                                }
+                            } else {
+                                if(value < 0 && value > last_day) {
+                                    last_day = value;
+                                }
+                            }
+                        });
+                        if(last_day !== null) {
+                            var end_date = new Date(start_date_milliseconds);
+                            end_date.setUTCMonth(end_date.getUTCMonth() + occurrences - 1);
+                            if(last_day < 0) {
+                                end_date.setUTCMonth(end_date.getUTCMonth() + 1);
+                                // Using a value of 0 sets it to the last day of the previous month
+                                end_date.setUTCDate(last_day + 1);
+                            } else {
+                                end_date.setUTCDate(last_day);
+                            }
                             return end_date.toJSON().substr(0, 10);
                         }
                     }

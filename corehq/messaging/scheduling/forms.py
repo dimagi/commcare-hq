@@ -29,6 +29,7 @@ class RecipientField(CharField):
 class ScheduleForm(Form):
     SEND_DAILY = 'daily'
     SEND_WEEKLY = 'weekly'
+    SEND_MONTHLY = 'monthly'
     SEND_IMMEDIATELY = 'immediately'
 
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
@@ -46,6 +47,7 @@ class ScheduleForm(Form):
             (SEND_IMMEDIATELY, _('Immediately')),
             (SEND_DAILY, _('Daily')),
             (SEND_WEEKLY, _('Weekly')),
+            (SEND_MONTHLY, _('Monthly')),
         )
     )
     weekdays = MultipleChoiceField(
@@ -62,6 +64,15 @@ class ScheduleForm(Form):
         ),
         widget=CheckboxSelectMultiple()
     )
+    days_of_month = MultipleChoiceField(
+        required=False,
+        label=_('On Days'),
+        choices=(
+            # The actual choices are rendered by a template
+            tuple((str(x), '') for x in range(-3, 0)) +
+            tuple((str(x), '') for x in range(1, 29))
+        )
+    )
     send_time = CharField(required=False)
     start_date = CharField(required=False)
     stop_type = ChoiceField(
@@ -75,6 +86,7 @@ class ScheduleForm(Form):
     occurrences = IntegerField(
         required=False,
         min_value=1,
+        label='',
     )
     recipients = RecipientField(
         label=_("Recipient(s)"),
@@ -124,7 +136,7 @@ class ScheduleForm(Form):
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-10 col-md-3 col-lg-3'
+        self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
         self.add_content_fields()
 
         if readonly:
@@ -180,6 +192,16 @@ class ScheduleForm(Form):
                     data_bind='checked: weekdays',
                 ),
                 data_bind='visible: showWeekdaysInput',
+            ),
+            crispy.Div(
+                hqcrispy.B3MultiField(
+                    ugettext("On Days"),
+                    crispy.Div(
+                        template='scheduling/partial/days_of_month_picker.html',
+                    ),
+                ),
+                hqcrispy.ErrorsOnlyField('days_of_month'),
+                data_bind='visible: showDaysOfMonthInput',
             ),
             crispy.Div(
                 hqcrispy.B3MultiField(
