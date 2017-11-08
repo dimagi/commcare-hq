@@ -27,8 +27,7 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
-        # todo: add migration for function that filters by xmlns
-        return iter(self.form_accessors.get_all_form_ids_in_domain())
+        return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
