@@ -291,7 +291,8 @@ def send_hubspot_form(form_id, request):
     pulls out relevant info from request object before sending to celery since
     requests cannot be pickled
     """
-    if request and request.couch_user.is_web_user():
+    user = getattr(request, 'couch_user', None)
+    if request and user and user.is_web_user():
         meta = get_meta(request)
         send_hubspot_form_task.delay(form_id, request.couch_user, request.COOKIES, meta)
 
