@@ -6,12 +6,14 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from corehq.apps.hqcase.utils import update_case
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.dbaccessors import (get_repeat_record_count,
                                                  iter_repeat_records_by_domain)
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.log import with_progress_bar
-from custom.enikshay.case_utils import get_person_case, get_adherence_cases_from_episode
+from custom.enikshay.case_utils import (get_adherence_cases_from_episode,
+                                        get_person_case_from_episode)
 
 
 class Command(BaseCommand):
@@ -38,14 +40,17 @@ class Command(BaseCommand):
         cases_to_update = set()
         print("Filtering successful cases")
         for repeat_record in with_progress_bar(records, length=count):
-            if repeat_record.attempts and any(
-                    (existing_message in attempt.message if attempt.message is not None else "")
-                    for attempt in repeat_record.attempts):
-                episode = accessor.get_case(repeat_record.payload_id)
+            if any((existing_message in attempt.message if attempt.message is not None else "")
+                   for attempt in repeat_record.attempts):
+                try:
+                    episode = accessor.get_case(repeat_record.payload_id)
+                except CaseNotFound:
+                    continue
                 if episode.get_case_property('dots_99_registered') != 'true':
                     cases_to_update.add(episode)
 
-        with open('set_99dots_to_registered.csv', 'w') as f:
+        timestamp = datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+        with open('{}_set_99dots_to_registered.csv'.format(timestamp), 'w') as f:
             writer = csv.writer(f)
             writer.writerow([
                 'beneficiary_id',
@@ -57,7 +62,7 @@ class Command(BaseCommand):
             print("Updating {} successful cases in 99DOTS".format(len(cases_to_update)))
             for case in with_progress_bar(cases_to_update):
                 writer.writerow([
-                    get_person_case(domain, case.case_id).case_id,
+                    get_person_case_from_episode(domain, case.case_id).case_id,
                     case.case_id,
                     self.update_registered_status(domain, case),
                     self.update_patients(domain, case),
@@ -66,8 +71,12 @@ class Command(BaseCommand):
                 ])
 
     def update_registered_status(self, domain, case):
-        if self.commit:
-            update_case(domain, case.case_id, {'dots_99_registered': 'true'})
+        try:
+            if self.commit:
+                update_case(domain, case.case_id, {'dots_99_registered': 'true'})
+            return "dots_99_registered updated in eNikshay"
+        except Exception as e:
+            return "failure updating case in enikshay: {}".format(e)
 
     def update_patients(self, domain, case):
         repeater_id = 'b4e19fd859f852871703e8e32a1764a9'
@@ -81,7 +90,7 @@ class Command(BaseCommand):
         adherence_cases = get_adherence_cases_from_episode(domain, case.case_id)
         if adherence_cases:
             return {
-                adherence_case.case_id: self.send_repeat_record(domain, case.case_id, repeater_id, repeater_type).state
+                adherence_case.case_id: self.send_repeat_record(domain, case.case_id, repeater_id, repeater_type)
                 for adherence_case in adherence_cases
             }
         else:
@@ -91,7 +100,7 @@ class Command(BaseCommand):
         repeater_id = '3d912c5d00c73e9de5eb6a11c52a7301'
         repeater_type = 'NinetyNineDotsTreatmentOutcomeRepeater'
         if case.get_case_property('treatment_outcome', '') != '':
-            return self.send_repeat_record(domain, case.case_id, repeater_id, repeater_type).state
+            return self.send_repeat_record(domain, case.case_id, repeater_id, repeater_type)
         else:
             return "No Treatment Outcome"
 
@@ -107,4 +116,4 @@ class Command(BaseCommand):
         if self.commit:
             repeat_record.fire()
 
-        return repeat_record
+        return repeat_record.state
