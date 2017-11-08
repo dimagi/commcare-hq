@@ -1,27 +1,72 @@
 {% extends "hqwebapp/base_section.html" %}
 {% block page_content %}
-    <div class="row-fluid">
-        <div class="span2" style="visibility: hidden">.</div>
-        <div class="span8" id="explode">
-            <div class="alert">
-                <p>Explode a user's forms by a certain factor <strong>for load test purposes</strong>.</p>
+    <div id="explode">
+        <h1>Explode Cases 💣</h1>
+        <h2><small>Use at your own risk 🙃</small></h2>
+        <div class="row">
+            <div class="col-sm-12">
+                <p>This feature multiplies all the cases in a user's restore by <code>factor</code>.</p>
             </div>
-            <div class="alert alert-error">
-                <p><strong>Warning!</strong> The Exploder will multiply all cases you have by the explode factor your write in, so, for example, if you're exploding a test user with 20 cases, and write the factor to be 200, it will actually give you 4,000 cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.</p>
+        </div>
+        <div class="row">
+            <div class="col-sm-8">
+                <div class="panel panel-danger">
+                    <div class="panel-heading">Warning!</div>
+                    <div class="panel-body">
+                        The case exploder will multiply all cases you have by the explode factor entered below. so, for example, if you're exploding a test user with 20 cases, and set the factor to be 200, it will actually give you <strong>4,000</strong> cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.
+                    </div>
+                </div>
+                <form class="form" action="" method="POST">
+                    {% csrf_token %}
+                    <label for="explode-user_id">User</label>
+                    <select id="explode-user_id" name="user_id" data-bind="value: user_id">
+                        <option>Select a CHW...</option>
+                        {% for user in users %}
+                            <option value="{{ user.user_id }}">{{ user.raw_username }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="explode-factor">Factor</label>
+                    <input id="explode-factor" data-bind="value: factor" name="factor" />
+                    <button type="submit" class="btn btn-danger" data-bind="attr: {disabled: !user_id() || !(parseInt(factor(), 10) >= 2)}">Explode Cases</button>
+                </form>
             </div>
-            <form class="form" action="" method="POST">
-                {% csrf_token %}
-                <label for="explode-user_id">User</label>
-                <select id="explode-user_id" name="user_id" data-bind="value: user_id">
-                    <option>Select a CHW...</option>
-                    {% for user in users %}
-                        <option value="{{ user.user_id }}">{{ user.raw_username }}</option>
-                    {% endfor %}
-                </select>
-                <label for="explode-factor">Factor</label>
-                <input id="explode-factor" data-bind="value: factor" name="factor" />
-                <button type="submit" class="btn btn-danger" data-bind="attr: {disabled: !user_id() || !(parseInt(factor(), 10) >= 2)}">Explode Cases</button>
-            </form>
         </div>
     </div>
+    <div id="delete-exploded">
+        <h1>Delete exploded cases</h1>
+        <h2><small>Delete all cases created by previous explosions</small></h2>
+        <div class="row">
+            <div class="col-sm-8">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Explosion ID</th>
+                            <th>Case Count</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for explosion_id, count in previous_explosions %}
+                            <tr>
+                                <td>{{ explosion_id }}</td>
+                                <td>{{ count }}</td>
+                                <td>
+                                    <form class="form" action="" method="POST">
+                                        {% csrf_token %}
+                                        <input id="explosion_id" name="explosion_id" type="hidden" value="{{ explosion_id }}" />
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+
 {% endblock %}

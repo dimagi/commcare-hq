@@ -7,8 +7,9 @@ from django.views.generic import TemplateView
 
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.tasks import explode_case_task
+from corehq.apps.hqcase.tasks import explode_case_task, delete_exploded_case_task
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.es.case_search import CaseSearchES, CasePropertyAggregation
 from soil import DownloadBase
 
 
@@ -25,12 +26,29 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         context = super(ExplodeCasesView, self).get_context_data(**kwargs)
         context.update({
             'domain': self.domain,
-            'users': CommCareUser.by_domain(self.domain)
+            'users': CommCareUser.by_domain(self.domain),
+            'previous_explosions': self._get_previous_explosions()
         })
         return context
 
+    def _get_previous_explosions(self):
+        results = CaseSearchES().domain(self.domain).aggregation(
+            CasePropertyAggregation('explosions', 'cc_explosion_id')
+        ).size(0).run()
+
+        return sorted(
+            results.aggregations.explosions.counts_by_bucket().items(),
+            key=lambda x: -x[1]  # sorted by number of cases
+        )
+
     def post(self, request, domain):
-        user_id = request.POST['user_id']
+        if 'explosion_id' in request.POST:
+            return self.delete_cases(request, domain)
+        else:
+            return self.explode_cases(request, domain)
+
+    def explode_cases(self, request, domain):
+        user_id = request.POST.get('user_id')
         factor = request.POST.get('factor', '2')
         try:
             factor = int(factor)
@@ -42,3 +60,10 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
             download.set_task(res)
 
             return redirect('hq_soil_download', self.domain, download.download_id)
+
+    def delete_cases(self, request, domain):
+        explosion_id = request.POST.get('explosion_id')
+        download = DownloadBase()
+        res = delete_exploded_case_task.delay(self.domain, explosion_id)
+        download.set_task(res)
+        return redirect('hq_soil_download', self.domain, download.download_id)

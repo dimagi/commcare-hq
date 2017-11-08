@@ -1,17 +1,21 @@
 from __future__ import absolute_import
-import uuid
-from copy import copy, deepcopy
-from collections import defaultdict
 
-from celery.task import task
-from soil import DownloadBase
+import uuid
+from collections import defaultdict
+from copy import copy, deepcopy
 from xml.etree import cElementTree as ElementTree
 
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.ota.utils import get_restore_user
-from casexml.apps.phone.tests.utils import MockDevice
+from celery.task import task
+
+from dimagi.utils.chunked import chunked
 from casexml.apps.case.mock.case_block import IndexAttrs
+from casexml.apps.phone.tests.utils import MockDevice
+from corehq.apps.es import CaseSearchES
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.ota.utils import get_restore_user
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from soil import DownloadBase
 
 
 @task
@@ -110,3 +114,26 @@ class CaseGraph(object):
                 if len(graph[m]) == 0:
                     S.append(m)
         return L
+
+
+@task
+def delete_exploded_case_task(domain, explosion_id):
+    delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
+
+
+def delete_exploded_cases(domain, explosion_id, task=None):
+    if task:
+        DownloadBase.set_progress(delete_exploded_case_task, 0, 0)
+    query = (CaseSearchES()
+             .domain(domain)
+             .case_property_query("cc_explosion_id", explosion_id))
+    case_ids = query.values_list('_id', flat=True)
+    if task:
+        DownloadBase.set_progress(delete_exploded_case_task, 0, len(case_ids))
+
+    completed = 0
+    for ids in chunked(case_ids, 100):
+        CaseAccessors(domain).soft_delete_cases(list(ids))
+        if task:
+            completed += len(ids)
+            DownloadBase.set_progress(delete_exploded_case_task, completed, len(case_ids))
