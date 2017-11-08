@@ -87,6 +87,7 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
+import six
 
 
 @no_conflict_require_POST
@@ -194,7 +195,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         form.actions.load_from_form = old_load_from_form
 
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
-        if isinstance(condition.answer, basestring):
+        if isinstance(condition.answer, six.string_types):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions):

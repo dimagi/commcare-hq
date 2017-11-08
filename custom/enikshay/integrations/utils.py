@@ -13,6 +13,7 @@ from custom.enikshay.const import (
     PERSON_CASE_2B_VERSION,
     REAL_DATASET_PROPERTY_VALUE,
 )
+import six
 
 
 def case_was_created(case):
@@ -96,7 +97,7 @@ def is_valid_archived_submission(episode_case):
 
 def case_properties_changed(case, case_properties):
     """NOTE: only works for SQL domains"""
-    if isinstance(case_properties, basestring):
+    if isinstance(case_properties, six.string_types):
         case_properties = [case_properties]
 
     last_case_action = case.get_form_transactions()[-1]

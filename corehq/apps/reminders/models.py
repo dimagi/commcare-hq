@@ -31,6 +31,7 @@ from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
 from django.db import models, transaction
 from string import Formatter
+import six
 
 
 class IllegalModelStateException(Exception):
@@ -160,7 +161,7 @@ def looks_like_timestamp(value):
 
 
 def property_references_parent(case_property):
-    return isinstance(case_property, basestring) and case_property.startswith("parent/")
+    return isinstance(case_property, six.string_types) and case_property.startswith("parent/")
 
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):
@@ -674,7 +675,7 @@ class CaseReminderHandler(Document):
 
             event.fire_time = fire_time
         elif fire_time_type == FIRE_TIME_CASE_PROPERTY:
-            if not isinstance(fire_time, basestring):
+            if not isinstance(fire_time, six.string_types):
                 raise UnexpectedConfigurationException("Expected fire_time to be a case property name")
 
             event.fire_time_aux = fire_time

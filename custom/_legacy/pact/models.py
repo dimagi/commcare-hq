@@ -18,6 +18,7 @@ from pact.enums import (
     REGIMEN_CHOICES,
 )
 from pact.regimen import regimen_string_from_doc
+import six
 
 
 def make_uuid():
@@ -455,7 +456,7 @@ class CObservation(OldDocument):
         ints = ['dose_number', 'total_doses', 'day_index', 'day_slot']
         for prop_name in ints:
             val = obj.get(prop_name)
-            if val and isinstance(val, basestring):
+            if val and isinstance(val, six.string_types):
                 obj[prop_name] = int(val)
         return super(CObservation, cls).wrap(obj)
 

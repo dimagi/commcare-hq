@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class WisePillDeviceEvent(Document):
@@ -21,7 +22,7 @@ class WisePillDeviceEvent(Document):
         Convert 'a=b,c=d' to {'a': 'b', 'c': 'd'}
         """
         result = {}
-        if isinstance(self.data, basestring):
+        if isinstance(self.data, six.string_types):
             items = self.data.strip().split(',')
             for item in items:
                 parts = item.partition('=')
@@ -38,7 +39,7 @@ class WisePillDeviceEvent(Document):
     @property
     def timestamp(self):
         raw = self.data_as_dict.get('T', None)
-        if isinstance(raw, basestring) and len(raw) == 12:
+        if isinstance(raw, six.string_types) and len(raw) == 12:
             return "20%s-%s-%s %s:%s:%s" % (
                 raw[4:6],
                 raw[2:4],

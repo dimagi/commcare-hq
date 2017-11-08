@@ -8,6 +8,7 @@ from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
+import six
 
 
 class Command(BaseCommand):
@@ -32,7 +33,7 @@ class Command(BaseCommand):
                     continue
 
                 def _fmt(seq_id):
-                    if isinstance(seq_id, basestring) and len(seq_id) > 20:
+                    if isinstance(seq_id, six.string_types) and len(seq_id) > 20:
                         return '{}...'.format(seq_id[:20])
                     else:
                         return seq_id

@@ -234,7 +234,7 @@ class SqlData(ReportDataSource):
     @property
     def wrapped_filters(self):
         def _wrap_if_necessary(string_or_filter):
-            if isinstance(string_or_filter, basestring):
+            if isinstance(string_or_filter, six.string_types):
                 filter = RawFilter(string_or_filter)
             else:
                 filter = string_or_filter
