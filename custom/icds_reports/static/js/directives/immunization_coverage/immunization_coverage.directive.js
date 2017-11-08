@@ -26,7 +26,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.loaded = false;
     vm.filters = ['age'];
     vm.rightLegend = {
-        info: 'Percentage of children at age 3 who have recieved complete immunization as per National Immunization Schedule of India.',
+        info: 'Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -89,14 +89,18 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
-                vm.chartOptions.chart.forceY = [
-                    0,
-                    Math.ceil(d3.max(vm.chartData, function(line) {
-                        return d3.max(line.values, function(d) {
-                            return d.y;
-                        });
-                    }) * 100) / 100 + 0.01,
-                ];
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
             }
         });
     };
@@ -198,7 +202,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of children 1 year+ who have recieved complete immunization as per National Immunization Schedule of India required by age 1.',
+            html: '<i class="fa fa-info-circle"></i> Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1. <br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',

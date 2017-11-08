@@ -23,6 +23,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                             menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                         }, gettext('Waiting for server progress'));
                     } else if (response.hasOwnProperty('exception')){
+                        FormplayerFrontend.trigger('clearProgress');
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,

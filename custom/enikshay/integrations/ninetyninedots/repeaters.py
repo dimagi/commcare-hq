@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.toggles import NINETYNINE_DOTS
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _

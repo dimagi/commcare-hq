@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.reports.standard import MonthYearMixin
 from custom.intrahealth.filters import RecapPassageLocationFilter, FRMonthFilter, FRYearFilter
 from custom.intrahealth.reports.tableu_de_board_report import MultiReport

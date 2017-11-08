@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.domain.decorators import login_or_basic
 from django.views.decorators.http import require_POST, require_GET

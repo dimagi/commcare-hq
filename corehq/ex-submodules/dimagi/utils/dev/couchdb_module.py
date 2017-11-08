@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -
+from __future__ import absolute_import
 from devserver.modules import DevServerModule
 from django.conf import settings
 import couchdbkit

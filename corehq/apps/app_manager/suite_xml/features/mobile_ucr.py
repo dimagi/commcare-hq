@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2

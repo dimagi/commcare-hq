@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django.core.management.base import BaseCommand
 

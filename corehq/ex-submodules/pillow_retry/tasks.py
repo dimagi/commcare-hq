@@ -1,15 +1,22 @@
-from celery.task import task
+from __future__ import absolute_import
+
 import sys
+
+from celery.schedules import crontab
+from celery.task import periodic_task
+from celery.task import task
+from celery.utils.log import get_task_logger
 from django.conf import settings
+from django.db.models import Count
 
 from corehq.apps.change_feed.data_sources import get_document_store
+from corehq.util.datadog.gauges import datadog_gauge
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_error
 from pillow_retry.models import PillowError
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_pillow_by_name
-from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
@@ -74,3 +81,15 @@ def process_pillow_retry(error_doc_id):
             error_doc.delete()
         finally:
             release_lock(lock, True)
+
+
+@periodic_task(
+    run_every=crontab(minute="*/15"),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def record_pillow_error_queue_size():
+    data = PillowError.objects.values('pillow').annotate(num_errors=Count('id'))
+    for row in data:
+        datadog_gauge('commcare.pillowtop.errors', row['num_errors'], tags=[
+            'pillow_name:%s' % row['pillow']
+        ])

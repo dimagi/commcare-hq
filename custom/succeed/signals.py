@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.signals import cases_received
 from custom.succeed.utils import SUCCEED_DOMAIN, update_patient_target_dates
 

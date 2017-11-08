@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import Counter
 
 from casexml.apps.case.models import CommCareCase

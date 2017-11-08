@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.forms.forms import Form
 from django.forms.fields import *
 from django.core.exceptions import ValidationError

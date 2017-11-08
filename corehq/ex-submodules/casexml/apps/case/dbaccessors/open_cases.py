@@ -1,5 +1,6 @@
 
 
+from __future__ import absolute_import
 def get_open_case_ids_in_domain(domain, type=None, owner_id=None):
     from casexml.apps.case.models import CommCareCase
     if owner_id is not None and type is None:

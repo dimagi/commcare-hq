@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from pycco.main import template, parse, highlight, re, destination
 import os
 from django.core.management.base import BaseCommand

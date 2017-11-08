@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.reminders.util import get_two_way_number_for_recipient

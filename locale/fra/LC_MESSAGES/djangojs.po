@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-31 19:03+0000\n"
+"POT-Creation-Date: 2017-11-07 20:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2017\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -331,13 +331,13 @@ msgstr ""
 msgid "Show All"
 msgstr "Afficher tous"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:306
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:310
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 "Vous avez des modifications non sauvegardées dans votre module de liste de "
 "rapports"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:312
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:316
 msgid "Reports must have all properties set!"
 msgstr "Les rapports doivent avoir toutes les propriétés définies!"
 
@@ -386,7 +386,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:236
-#: corehq/apps/userreports/static/userreports/js/report_config.js:390
 msgid "There was an error saving"
 msgstr "Une erreur est survenue au cours de l'enregistrement"
 
@@ -1759,14 +1758,12 @@ msgid "Model Iteration ID Query"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#, fuzzy
-#| msgid "Delete request"
 msgid "Remote Request"
-msgstr "Supprimer la requête"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "The URL to be requested on form load."
@@ -2392,19 +2389,16 @@ msgid "Error saving, please try again."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:233
-#: corehq/apps/userreports/static/userreports/js/report_config.js:387
 msgid "Saving..."
 msgstr "En train d'enregistrer"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:234
-#: corehq/apps/userreports/static/userreports/js/report_config.js:388
 #: corehq/apps/users/static/users/js/web_users.js:55
 msgid "Saved"
 msgstr "Enregistré"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:235
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
-#: corehq/apps/userreports/static/userreports/js/report_config.js:389
 msgid "Try Again"
 msgstr "Essayer de nouveau"
 
@@ -2788,15 +2782,15 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:332
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:347
-#: corehq/apps/userreports/static/userreports/js/report_config.js:230
-#: corehq/apps/userreports/static/userreports/js/report_config.js:248
+#: corehq/apps/userreports/static/userreports/js/report_config.js:223
+#: corehq/apps/userreports/static/userreports/js/report_config.js:241
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:373
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:388
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:333
-#: corehq/apps/userreports/static/userreports/js/report_config.js:231
+#: corehq/apps/userreports/static/userreports/js/report_config.js:224
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:374
 msgid ""
 "Web users viewing the report will see this display text instead of the "
@@ -2804,7 +2798,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:334
-#: corehq/apps/userreports/static/userreports/js/report_config.js:232
+#: corehq/apps/userreports/static/userreports/js/report_config.js:225
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:375
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -2813,7 +2807,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:348
-#: corehq/apps/userreports/static/userreports/js/report_config.js:249
+#: corehq/apps/userreports/static/userreports/js/report_config.js:242
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:389
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -2822,7 +2816,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:349
-#: corehq/apps/userreports/static/userreports/js/report_config.js:250
+#: corehq/apps/userreports/static/userreports/js/report_config.js:243
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:390
 msgid "What value or date range must the property be equal to?"
 msgstr ""
@@ -2841,10 +2835,6 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:7
 msgid "Form"
 msgstr "Formulaire"
-
-#: corehq/apps/userreports/static/userreports/js/report_config.js:386
-msgid "Update Report"
-msgstr "Mettre à jour le rapport"
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:45
 msgid "Password changed successfully"
@@ -2904,41 +2894,39 @@ msgstr ""
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:455
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:473
 msgid "Issue communicating with server. Try again."
-msgstr ""
+msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:483
 msgid "Username"
-msgstr ""
+msgstr "Nom d'utilisateur"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:484
-#, fuzzy
-#| msgid "First Menu"
 msgid "First Name"
-msgstr "Premier Menu"
+msgstr "Prénom"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
 msgid "Last Name"
-msgstr ""
+msgstr "Nom"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:486
 msgid "Status"
-msgstr ""
+msgstr "État"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:491
 msgid "Show 10 Mobile Workers"
-msgstr ""
+msgstr "Afficher 10 utilisateurs mobiles"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:492
 msgid "Show 25 Mobile Workers"
-msgstr ""
+msgstr "Afficher 25 utilisateurs mobiles"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:493
 msgid "Show 50 Mobile Workers"
-msgstr ""
+msgstr "Afficher 50 utilisateurs mobiles"
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:494
 msgid "Show 100 Mobile Workers"
-msgstr ""
+msgstr "Afficher 100 utilisateurs mobiles"
 
 #: corehq/apps/users/static/users/js/roles.js:115
 msgid "New Role"
@@ -3011,3 +2999,6 @@ msgstr ""
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:134
 msgid "Unable to save DataSet maps"
 msgstr ""
+
+#~ msgid "Update Report"
+#~ msgstr "Mettre à jour le rapport"

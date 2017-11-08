@@ -18,6 +18,7 @@ The export works as follows:
   * Add successful pages to final ZIP archive
   * Add raw data dumps for unsuccessful pages to final ZIP archive
 """
+from __future__ import absolute_import
 import gzip
 import json
 import logging

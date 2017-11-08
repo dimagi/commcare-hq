@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from sqlagg.base import CustomQueryColumn, BaseColumn
 from sqlagg.queries.alchemy_extensions import InsertFromSelect

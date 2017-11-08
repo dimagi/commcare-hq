@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from StringIO import StringIO
 import datetime
 import re
@@ -36,7 +37,7 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
-from export import get_writer
+from .export import get_writer
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 

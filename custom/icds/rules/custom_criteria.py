@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.icds.rules.immunization import (
     get_immunization_products,
     get_immunization_anchor_date,

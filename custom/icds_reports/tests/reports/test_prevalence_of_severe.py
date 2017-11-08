@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_map, \
     get_prevalence_of_severe_data_chart, get_prevalence_of_severe_sector_data
 from django.test import TestCase
@@ -28,7 +30,7 @@ class TestPrevalenceOfSevere(TestCase):
                             "status for a child who has severe wasting (weight-for-height) below -3 "
                             "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
                             "that has moderate wasting (weight-for-height) below -2Z.",
-                    "average": "1.05"
+                    "average": "1.06"
                 },
                 "fills": {
                     "0%-5%": "#fee0d2",
@@ -42,7 +44,7 @@ class TestPrevalenceOfSevere(TestCase):
                         "moderate": 4,
                         "normal": 5,
                         "total_measured": 7,
-                        "total": 454,
+                        "total": 449,
                         "fillKey": "0%-5%"
                     },
                     "st2": {
@@ -50,7 +52,7 @@ class TestPrevalenceOfSevere(TestCase):
                         "moderate": 4,
                         "normal": 16,
                         "total_measured": 25,
-                        "total": 497,
+                        "total": 490,
                         "fillKey": "0%-5%"
                     }
                 },
@@ -74,26 +76,26 @@ class TestPrevalenceOfSevere(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 0.8810572687224669
+                        "percent": 0.89086859688196
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 1.2072434607645874
+                        "percent": 1.2244897959183674
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 0.8810572687224669
+                        "percent": 0.89086859688196
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 1.2072434607645874
+                        "percent": 1.2244897959183674
                     }
                 ],
                 "chart_data": [
                     {
-                        "color": "#fee0d2",
+                        "color": ChartColors.PINK,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -108,20 +110,20 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.0061162079510703364,
+                                "y": 0.006224066390041493,
                                 "x": 1491004800000,
-                                "all": 981
+                                "all": 964
                             },
                             {
-                                "y": 0.022082018927444796,
+                                "y": 0.022364217252396165,
                                 "x": 1493596800000,
-                                "all": 951
+                                "all": 939
                             }
                         ],
                         "key": "% normal"
                     },
                     {
-                        "color": "#fc9272",
+                        "color": ChartColors.ORANGE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -136,20 +138,20 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.0010193679918450561,
+                                "y": 0.001037344398340249,
                                 "x": 1491004800000,
-                                "all": 981
+                                "all": 964
                             },
                             {
-                                "y": 0.008412197686645636,
+                                "y": 0.008519701810436636,
                                 "x": 1493596800000,
-                                "all": 951
+                                "all": 939
                             }
                         ],
                         "key": "% moderately wasted (moderate acute malnutrition)"
                     },
                     {
-                        "color": "#de2d26",
+                        "color": ChartColors.RED,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -164,14 +166,14 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.0020387359836901123,
+                                "y": 0.002074688796680498,
                                 "x": 1491004800000,
-                                "all": 981
+                                "all": 964
                             },
                             {
-                                "y": 0.002103049421661409,
+                                "y": 0.002129925452609159,
                                 "x": 1493596800000,
-                                "all": 951
+                                "all": 939
                             }
                         ],
                         "key": "% severely wasted (severe acute malnutrition)"
@@ -180,11 +182,11 @@ class TestPrevalenceOfSevere(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 0.8810572687224669
+                        "percent": 0.89086859688196
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 1.2072434607645874
+                        "percent": 1.2244897959183674
                     }
                 ]
             }
@@ -212,14 +214,14 @@ class TestPrevalenceOfSevere(TestCase):
                         "a consequence of insufficient food intake or a high incidence of infectious diseases.",
                 "tooltips_data": {
                     "s2": {
-                        "total": 153,
+                        "total": 150,
                         "severe": 0,
                         "moderate": 3,
                         "total_measured": 4,
                         "normal": 1
                     },
                     "s1": {
-                        "total": 71,
+                        "total": 70,
                         "severe": 0,
                         "moderate": 0,
                         "total_measured": 0,
@@ -238,7 +240,7 @@ class TestPrevalenceOfSevere(TestCase):
                             ],
                             [
                                 "s2",
-                                0.0196078431372549
+                                0.02
                             ]
                         ],
                         "key": ""

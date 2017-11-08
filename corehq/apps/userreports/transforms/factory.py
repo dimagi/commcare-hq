@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
@@ -25,7 +26,7 @@ class TransformFactory(object):
         except KeyError:
             raise BadSpecError(_('Invalid or missing transform type: {}. Valid options are: {}').format(
                 spec.get('type', None),
-                ', '.join(cls.spec_map.keys()),
+                ', '.join(cls.spec_map),
             ))
         except BadValueError as e:
             raise BadSpecError(_('Problem creating transform: {}. Message is: {}').format(

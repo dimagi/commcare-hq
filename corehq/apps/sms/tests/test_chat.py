@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, SQLLastReadMessage, OUTGOING, INCOMING

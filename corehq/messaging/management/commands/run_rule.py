@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.util import utcnow

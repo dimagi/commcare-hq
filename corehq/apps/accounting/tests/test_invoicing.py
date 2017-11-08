@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from decimal import Decimal
 import random
 import datetime
+from django.test import override_settings
 
 from dimagi.utils.dates import add_months_to_date
 
@@ -188,12 +189,13 @@ class TestContractedInvoices(BaseInvoiceTestCase):
             random.randint(2, self.subscription_length)
         )
 
+    @override_settings(ACCOUNTS_EMAIL='accounts@example.com')
     def test_contracted_invoice_email_recipient(self):
         """
         For contracted invoices, emails should be sent to finance@dimagi.com
         """
 
-        expected_recipient = ["accounts@dimagi.com"]
+        expected_recipient = ["accounts@example.com"]
 
         tasks.generate_invoices(self.invoice_date)
 

@@ -1,5 +1,6 @@
 # coding=utf-8
 
+from __future__ import absolute_import
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES

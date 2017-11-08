@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 from xml.etree import cElementTree as ElementTree
 from django.test import SimpleTestCase, TestCase

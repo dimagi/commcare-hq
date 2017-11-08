@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 import datetime
 from django.test import SimpleTestCase

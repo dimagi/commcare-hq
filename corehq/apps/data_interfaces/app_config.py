@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.apps import AppConfig
 
 from corehq.apps.data_interfaces.signals import case_changed_receiver

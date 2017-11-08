@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 import logging
 from copy import copy
 from datetime import datetime
@@ -979,6 +980,15 @@ class CaseExportInstance(ExportInstance):
                 self.filters.users,
             )
         return []
+
+    @property
+    def has_case_history_table(self):
+        case_history_table = [table for table in self.tables if table.label == 'Case History']
+        return any(
+            column.selected
+            for column in table.columns
+            for table in case_history_table
+        )
 
 
 class FormExportInstance(ExportInstance):

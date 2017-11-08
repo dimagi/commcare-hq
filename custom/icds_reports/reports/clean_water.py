@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -8,7 +9,8 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
-from custom.icds_reports.const import LocationTypes
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -19,6 +21,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_clean_water_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -84,6 +87,7 @@ def get_clean_water_data_map(domain, config, loc_level, show_test=False):
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -156,7 +160,7 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
                 "key": "% of AWCs with a source of clean drinking water",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             },
         ],
         "all_locations": top_locations,
@@ -166,6 +170,7 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
     }
 
 
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_clean_water_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -222,7 +227,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
     chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of AWCs with a source of clean drinking water"
         )),

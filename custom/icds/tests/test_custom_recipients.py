@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.messaging.scheduling.scheduling_partitioned.models import (

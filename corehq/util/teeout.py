@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sys
 import traceback
 from contextlib import contextmanager

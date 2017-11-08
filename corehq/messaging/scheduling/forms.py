@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.shortcuts import redirect

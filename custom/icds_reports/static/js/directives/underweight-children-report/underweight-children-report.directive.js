@@ -52,12 +52,14 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var underweight = row ? d3.format(".0%")((row.total - (row.severely_underweight + row.moderately_underweight + row.normal)) / (row.total || 1)) : "N/A";
         var severely_underweight = row ? d3.format(".0%")(row.severely_underweight / (row.total || 1)) : 'N/A';
         var moderately_underweight = row ? d3.format(".0%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
         var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>% Underweight: <strong>' + underweight + '</strong></div>' +
             '<div>% Severely Underweight: <strong>' + severely_underweight + '</strong></div>' +
             '<div>% Moderately Underweight: <strong>' + moderately_underweight +'</strong></div>' +
             '<div>% Normal: <strong>' + normal + '</strong></div>';
@@ -91,14 +93,18 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x;});
-                vm.chartOptions.chart.forceY = [
-                    0,
-                    Math.ceil(d3.max(vm.chartData, function(line) {
-                        return d3.max(line.values, function(d) {
-                            return d.y;
-                        });
-                    }) * 100) / 100 + 0.01,
-                ];
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
             }
         });
     };
@@ -185,15 +191,20 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var findValue = function (values, date) {
+                    var findValue = function(values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(".2%")(day['y']);
+                        return day;
                     };
 
+                    var normal = findValue(vm.chartData[0].values, d.value).y;
+                    var moderately = findValue(vm.chartData[1].values, d.value).y;
+                    var severely = findValue(vm.chartData[2].values, d.value).y;
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children normal: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children moderately underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children severely underweight: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children normal: <strong>" + d3.format(".2%")(normal) + "</strong></p>";
+                    tooltip_content += "<p>% children moderately underweight: <strong>" + d3.format(".2%")(moderately) + "</strong></p>";
+                    tooltip_content += "<p>% children severely underweight: <strong>" + d3.format(".2%")(severely) + "</strong></p>";
+                    tooltip_content += "<p>% underweight: <strong>" + d3.format(".2%")(1 - (normal + moderately + severely)) + "</strong></p>";
 
                     return tooltip_content;
                 });

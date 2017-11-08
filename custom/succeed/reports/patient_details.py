@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin

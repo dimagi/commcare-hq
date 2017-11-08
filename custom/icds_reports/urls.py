@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
     AwcOpenedView, PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
-    ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStunningView, \
+    ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView, \
     ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
     ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
@@ -25,9 +26,9 @@ urlpatterns = [
         PrevalenceOfSevereView.as_view(),
         name='prevalence_of_severe'),
     url(
-        r'^prevalence_of_stunning/(?P<step>[\w-]+)/',
-        PrevalenceOfStunningView.as_view(),
-        name='prevalence_of_stunning'),
+        r'^prevalence_of_stunting/(?P<step>[\w-]+)/',
+        PrevalenceOfStuntingView.as_view(),
+        name='prevalence_of_stunting'),
     url(
         r'^low_birth/(?P<step>[\w-]+)/',
         NewbornsWithLowBirthWeightView.as_view(),

@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.early_initiation_breastfeeding import get_early_initiation_breastfeeding_map, \
     get_early_initiation_breastfeeding_chart, get_early_initiation_breastfeeding_data
 from django.test import TestCase
@@ -84,7 +86,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -141,6 +143,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     'block_id': 'b1',
                     'aggregation_level': 4
                 },
+                location_id='b1',
                 loc_level='supervisor'
             ),
             {

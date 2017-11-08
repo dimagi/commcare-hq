@@ -2,6 +2,7 @@
 Note that the adapters must return the fields in the same order as they appear
 in the table DSL
 """
+from __future__ import absolute_import
 import json
 from collections import namedtuple
 

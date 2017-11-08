@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 from django.contrib.postgres.forms import SimpleArrayField
 from django.urls import reverse

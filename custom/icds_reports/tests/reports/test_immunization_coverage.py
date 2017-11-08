@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_map, \
     get_immunization_coverage_data_chart, get_immunization_coverage_sector_data
 from django.test import TestCase
@@ -20,8 +22,12 @@ class TestImmunizationCoverage(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of children 1 year+ who have received complete immunization"
-                            " as per National Immunization Schedule of India required by age 1.",
+                    "info": "Percentage of children 1 year+ who have received complete immunization as per "
+                            "National Immunization Schedule of India required by age 1."
+                            "<br/><br/>"
+                            "This includes the following immunizations:<br/>"
+                            "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                            "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
                     "average": 10.896898575020955
                 },
                 "fills": {
@@ -81,7 +87,7 @@ class TestImmunizationCoverage(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -141,8 +147,12 @@ class TestImmunizationCoverage(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children 1 year+ who have recieved complete "
-                        "immunization as per National Immunization Schedule of India required by age 1",
+                "info": "Percentage of children 1 year+ who have received complete immunization as per "
+                        "National Immunization Schedule of India required by age 1."
+                        "<br/><br/>"
+                        "This includes the following immunizations:<br/>"
+                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
                 "tooltips_data": {
                     "s2": {
                         "all": 193,

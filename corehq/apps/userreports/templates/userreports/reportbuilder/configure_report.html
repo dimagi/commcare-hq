@@ -46,7 +46,7 @@
       {% endif %}
       {% if has_report_builder_access %}
         {% if not at_report_limit or existing_report %}
-          <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+          <button id="btnSaveView" class="btn btn-info">{% trans 'View Report' %}</button>
         {% endif %}
       {% endif %}
       &nbsp;<span id="saveButtonHolder"></span>
@@ -290,11 +290,6 @@
                   If the issue persists, please report an issue.
                 {% endblocktrans %}
               </p>
-              <p data-bind="visible: missingAggColumn()" class="alert alert-warning">
-                  {% blocktrans %}
-                      Summary reports require at least one column with the "Group By" format.
-                  {% endblocktrans %}
-              </p>
               <table id="preview" class="table"></table>
             </div>
           </div>
@@ -332,6 +327,7 @@
             "initialLocation": {{ initial_location|JSON }},
             "initialChartType": {{ initial_chart_type|JSON }},
             "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
+            "dateRangeOptions": {{ date_range_options|JSON }},
             // In previewMode, report can't be saved.
             "previewMode":
               {# equivalent to: not has_report_builder_access or (at_report_limit and not existing_report) #}

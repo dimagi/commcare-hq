@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
@@ -137,7 +138,7 @@ def process_bulk_app_translation_upload(app, f):
         if len(missing_cols) > 0:
             msgs.append((
                 messages.warning,
-                'Sheet "%s" has less columns than expected. '
+                'Sheet "%s" has fewer columns than expected. '
                 'Sheet will be processed but the following'
                 ' translations will be unchanged: %s'
                 % (sheet.worksheet.title, " ,".join(missing_cols))
@@ -465,6 +466,7 @@ def _process_modules_and_forms_sheet(rows, app):
 
 
 def _update_translation_dict(prefix, language_dict, row, langs):
+    # update translations as requested
     for lang in langs:
         key = '%s%s' % (prefix, lang)
         if key not in row:
@@ -473,6 +475,11 @@ def _update_translation_dict(prefix, language_dict, row, langs):
         if translation:
             language_dict[lang] = translation
         else:
+            language_dict.pop(lang, None)
+
+    # delete anything in language_dict that isn't in langs (anymore)
+    for lang in language_dict.keys():
+        if lang not in langs:
             language_dict.pop(lang, None)
 
 

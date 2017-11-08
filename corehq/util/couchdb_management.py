@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.client import Database
 from corehq.util.couch import get_document_class_by_doc_type
 from dimagi.utils.decorators.memoized import memoized

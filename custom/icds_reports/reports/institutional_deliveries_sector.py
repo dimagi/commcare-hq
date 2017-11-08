@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
 
 from datetime import datetime
@@ -9,7 +10,8 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
-from custom.icds_reports.const import LocationTypes
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -21,6 +23,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_institutional_deliveries_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -75,7 +78,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
     chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of pregnant women who delivered in a public or private medical facility "
             "in the last month. "
@@ -94,6 +97,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
     }
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -161,6 +165,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -235,7 +240,7 @@ def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test
                 "key": "% Institutional deliveries",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,

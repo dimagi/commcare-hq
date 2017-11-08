@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from django.template import Template, Context
 from django.test import SimpleTestCase

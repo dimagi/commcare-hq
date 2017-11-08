@@ -3,6 +3,7 @@ the data models here are modeled after openpyxl data models
 but are greatly reduced to expose only the values needed
 
 """
+from __future__ import absolute_import
 from collections import namedtuple
 
 
