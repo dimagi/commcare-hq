@@ -28,7 +28,10 @@ def _get_shard_count_query(model):
     field_type = model._meta.get_field(model.partition_attr)
     if isinstance(field_type, UUIDField):
         # magic: https://gist.github.com/cdmckay/a82261e48a42a3bbd78a
-        shard_id_function = "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24') & {total_shard_count}".format(
+        shard_id_function = (
+            "hash_string(decode(replace({id_field}::text, '-', ''), 'hex'), 'siphash24')"
+            " & {total_shard_count}"
+        ).format(
             total_shard_count=partition_config.num_shards - 1,
             id_field=model.partition_attr,
         )
