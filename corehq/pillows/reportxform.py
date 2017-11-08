@@ -71,10 +71,13 @@ class ReportFormReindexerFactory(ReindexerFactory):
         """
         domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_form_change_provider(domains=domains)
+        args = ElasticPillowReindexer.__init__.__code__.co_varnames
+        # Drop options that are not kwargs of the reindexer (like "reset")
+        options = {k: v for k, v in self.options.items() if k in args}
         return ElasticPillowReindexer(
             pillow=get_report_xform_to_elasticsearch_pillow(),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
-            **self.options
+            **options
         )

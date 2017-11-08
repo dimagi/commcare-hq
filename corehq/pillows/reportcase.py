@@ -68,10 +68,13 @@ class ReportCaseReindexerFactory(ReindexerFactory):
         """
         domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
         change_provider = get_domain_case_change_provider(domains=domains)
+        args = ElasticPillowReindexer.__init__.__code__.co_varnames
+        # Drop options that are not kwargs of the reindexer (like "reset")
+        options = {k: v for k, v in self.options.items() if k in args}
         return ElasticPillowReindexer(
             pillow=get_report_case_to_elasticsearch_pillow(),
             change_provider=change_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_CASE_INDEX_INFO,
-            **self.options
+            **options
         )

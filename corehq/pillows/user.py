@@ -139,6 +139,9 @@ class UserReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
+        args = ElasticPillowReindexer.__init__.__code__.co_varnames
+        # Drop options that are not kwargs of the reindexer (like "reset")
+        options = {k: v for k, v in self.options.items() if k in args}
         return ElasticPillowReindexer(
             pillow=get_user_pillow(),
             change_provider=CouchViewChangeProvider(
@@ -150,5 +153,5 @@ class UserReindexerFactory(ReindexerFactory):
             ),
             elasticsearch=get_es_new(),
             index_info=USER_INDEX_INFO,
-            **self.options
+            **options
         )

@@ -111,12 +111,16 @@ class LedgerV1ReindexerFactory(ReindexerFactory):
 
     def build(self):
         from corehq.apps.commtrack.models import StockState
+
+        args = ElasticPillowReindexer.__init__.__code__.co_varnames
+        # Drop options that are not kwargs of the reindexer (like "reset")
+        options = {k: v for k, v in self.options.items() if k in args}
         return ElasticPillowReindexer(
             pillow=get_ledger_to_elasticsearch_pillow(),
             change_provider=DjangoModelChangeProvider(StockState, _ledger_v1_to_change),
             elasticsearch=get_es_new(),
             index_info=LEDGER_INDEX_INFO,
-            **self.options
+            **options
         )
 
 

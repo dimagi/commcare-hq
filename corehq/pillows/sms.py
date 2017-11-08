@@ -44,12 +44,16 @@ class SmsReindexerFactory(ReindexerFactory):
 
     def build(self):
         from corehq.apps.sms.models import SMS
+
+        args = ElasticPillowReindexer.__init__.__code__.co_varnames
+        # Drop options that are not kwargs of the reindexer (like "reset")
+        options = {k: v for k, v in self.options.items() if k in args}
         return ElasticPillowReindexer(
             pillow=get_sql_sms_pillow(),
             change_provider=DjangoModelChangeProvider(SMS, _sql_sms_to_change),
             elasticsearch=get_es_new(),
             index_info=SMS_INDEX_INFO,
-            **self.options
+            **options
         )
 
 
