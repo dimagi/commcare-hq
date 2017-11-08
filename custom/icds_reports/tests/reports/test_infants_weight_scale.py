@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_scale_data_map, \
     get_infants_weight_scale_data_chart, get_infants_weight_scale_sector_data
 from django.test import TestCase
@@ -80,7 +82,7 @@ class TestInfantsWeightScale(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 from corehq.apps.consumption.models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT
 from corehq.apps.consumption.const import DAYS_IN_MONTH

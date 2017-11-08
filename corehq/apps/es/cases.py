@@ -15,6 +15,7 @@ closed after May 1st.
          .OR(case_es.is_closed(False),
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
+from __future__ import absolute_import
 from .es_query import HQESQuery
 from . import aggregations, filters
 

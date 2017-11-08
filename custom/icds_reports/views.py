@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import requests
 
 from datetime import datetime, date
@@ -70,8 +71,8 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
     get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map
 from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_chart,\
     get_prevalence_of_severe_data_map, get_prevalence_of_severe_sector_data
-from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunning_data_chart, \
-    get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_sector_data
+from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunting_data_chart, \
+    get_prevalence_of_stunting_data_map, get_prevalence_of_stunting_sector_data
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
@@ -543,16 +544,29 @@ class AwcReportsView(View):
                 domain,
                 config,
                 tuple(month.timetuple())[:3],
-                tuple(prev_month.timetuple())[:3],
                 include_test
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:
+                start = request.GET.get('start', 0)
+                length = request.GET.get('length', 10)
+                draw = request.GET.get('draw', 0)
+
+                order_by_number_column = request.GET.get('order[0][column]')
+                order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
+                order_dir = request.GET.get('order[0][dir]', 'asc')
+                if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
+                    order_by_name_column = 'dob'
+                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+
                 data = get_awc_report_beneficiary(
-                    domain,
+                    start,
+                    length,
+                    draw,
+                    order,
                     config['awc_id'],
                     tuple(month.timetuple())[:3],
-                    tuple(two_before.timetuple())[:3]
+                    tuple(two_before.timetuple())[:3],
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
@@ -716,7 +730,7 @@ class PrevalenceOfSevereView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfStunningView(View):
+class PrevalenceOfStuntingView(View):
 
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
@@ -748,11 +762,11 @@ class PrevalenceOfStunningView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunning_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_prevalence_of_stunning_data_map(domain, config, loc_level, include_test)
+                data = get_prevalence_of_stunting_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_prevalence_of_stunning_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,
@@ -789,7 +803,7 @@ class NewbornsWithLowBirthWeightView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, include_test)
+                data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_newborn_with_low_birth_weight_map(domain, config, loc_level, include_test)
         elif step == "chart":
@@ -829,7 +843,7 @@ class EarlyInitiationBreastfeeding(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_early_initiation_breastfeeding_data(domain, config, loc_level, include_test)
+                data = get_early_initiation_breastfeeding_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_early_initiation_breastfeeding_map(domain, config, loc_level, include_test)
         elif step == "chart":

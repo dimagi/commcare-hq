@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.test.testcases import TestCase
 from corehq.messaging.smsbackends.sislog.util import convert_raw_string
 

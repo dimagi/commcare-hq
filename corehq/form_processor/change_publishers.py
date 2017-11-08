@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer

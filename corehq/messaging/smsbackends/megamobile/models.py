@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from urllib import urlencode, quote
 from urllib2 import urlopen
 from corehq.apps.sms.util import strip_plus

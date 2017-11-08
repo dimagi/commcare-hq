@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import hashlib
 import logging
 from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX

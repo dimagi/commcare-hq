@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id

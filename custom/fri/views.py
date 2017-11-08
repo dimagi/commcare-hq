@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.fri.forms import MessageBankForm
 from custom.fri.reports.reports import MessageBankReport
 from custom.fri.api import get_message_bank

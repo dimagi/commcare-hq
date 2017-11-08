@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -188,7 +189,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def process_rows(self, users, fmt_for_export=False):
         rows = []
         for user in users:
-            last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
+            last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             build_version = _("Unknown")
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
@@ -207,7 +208,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
                 last_build = reporting_metadata.get('last_build_for_user', {})
-            commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
+            if last_sub and last_sub.get('commcare_version'):
+                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -221,7 +223,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
-                app_name or "---", build_version, commcare_version
+                app_name or "---", build_version, commcare_version or '---'
             ])
         return rows
 

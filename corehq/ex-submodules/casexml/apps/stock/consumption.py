@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from decimal import Decimal
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category

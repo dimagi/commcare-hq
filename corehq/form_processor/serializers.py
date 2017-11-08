@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from jsonfield import JSONField
 from rest_framework import serializers
 

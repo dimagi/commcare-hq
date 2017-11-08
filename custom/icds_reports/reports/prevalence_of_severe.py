@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -7,7 +8,8 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
-from custom.icds_reports.const import LocationTypes
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -18,6 +20,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -36,6 +39,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+        if 'age_tranche' not in config:
+            queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     map_data = {}
@@ -104,6 +109,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -124,6 +130,8 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
+    if 'age_tranche' not in config:
+        chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
 
     data = {
         'red': OrderedDict(),
@@ -179,7 +187,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% normal",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
@@ -192,7 +200,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% moderately wasted (moderate acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": ORANGE
+                "color": ChartColors.ORANGE
             },
             {
                 "values": [
@@ -205,7 +213,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% severely wasted (severe acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": ChartColors.RED
             }
         ],
         "all_locations": top_locations,
@@ -215,6 +223,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
     }
 
 
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
@@ -233,6 +242,8 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
 
     if not show_test:
         data = apply_exclude(domain, data)
+    if 'age_tranche' not in config:
+        data = data.exclude(age_tranche__in=[0, 6, 72])
 
     chart_data = {
         'blue': [],
@@ -277,7 +288,7 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
     chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of children between 6 - 60 months enrolled for ICDS services with "
             "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."

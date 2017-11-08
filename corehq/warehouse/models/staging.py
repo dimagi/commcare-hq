@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import closing
 
 from django.conf import settings

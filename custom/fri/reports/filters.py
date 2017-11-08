@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter

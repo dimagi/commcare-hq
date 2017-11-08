@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import weakref
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from itertools import imap
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es import UserES

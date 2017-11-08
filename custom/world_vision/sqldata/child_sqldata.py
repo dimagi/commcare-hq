@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn
@@ -10,6 +11,7 @@ from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWit
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, DeliveryMothersIds
+import six
 
 
 class ChildRegistrationDetails(MotherRegistrationDetails):
@@ -150,7 +152,7 @@ class ChildrenDeaths(BaseSqlData):
             num_cols = len(rows[0])
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows[1:] if isinstance(cr[i], dict)]
-                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:

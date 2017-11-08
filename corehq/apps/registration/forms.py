@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from captcha.fields import CaptchaField
 from django import forms
 from django.conf import settings

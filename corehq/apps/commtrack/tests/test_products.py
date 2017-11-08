@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_products, bootstrap_domain, make_product
 from corehq.apps.products.models import Product, SQLProduct

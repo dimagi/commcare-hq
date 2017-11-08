@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, $filter, DTOptionsBuilder, storageService, userLocationId) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1705,11 +1705,79 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
     vm.step = $routeParams.step;
     vm.data = null;
     vm.filters = ['gender', 'age'];
-    vm.dtOptions = DTOptionsBuilder
-        .newOptions()
+
+    vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('scrollY', '300px')
         .withOption('scrollX', '100%')
         .withOption('scrollCollapse', true)
+        .withOption('ajax', {
+            url:  url('awc_reports', vm.step),
+            data: $location.search(),
+            type: 'GET',
+        })
+        .withDataProp('data')
+        .withOption('processing', true)
+        .withOption('serverSide', true)
+        .withOption('createdRow', compile)
+        .withPaginationType('full_numbers')
+        .withOption('oLanguage', {
+            "sProcessing": "Loading. Please wait...",
+        })
+        .withDOM('ltipr');
+
+    vm.dtColumns = [
+        DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName),
+        DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth),
+        DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge),
+        DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate),
+        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight for Age Status').renderWith(renderWeightForAgeStatus),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight for Height Status').renderWith(renderWeightForHeightStatus),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height for Age status').renderWith(renderHeightForAgeStatus),
+        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended),
+    ];
+
+    function compile(row) {
+        $compile(window.angular.element(row).contents())($scope);
+    }
+
+    function renderPersonName(data, type, full) {
+        return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)">' + full.person_name || 'Data not Entered' + '</span>';
+    }
+
+    function renderDateOfBirth(data, type, full) {
+        return full.dob || 'Data not Entered';
+    }
+
+    function renderAge(data, type, full) {
+        return full.age || 'Data not Entered';
+    }
+
+    function renderFullyImmunizedDate(data, type, full) {
+        return full.fully_immunized || 'Data not Entered';
+    }
+
+    function renderWeightForAgeStatus(data, type, full) {
+        return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'weight\')" popover-placement="right"  popover-trigger="\'mouseenter\'">'
+            + full.current_month_nutrition_status.value
+            + '</span>';
+    }
+
+    function renderHeightForAgeStatus(data, type, full) {
+        return '<span ng-class="row.stunting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_stunting.value
+            + '</span>';
+    }
+
+    function renderWeightForHeightStatus(data, type, full) {
+        return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_wasting.value
+            + '</span>';
+    }
+
+    function renderPseDaysAttended(data, type, full) {
+        return full.pse_days_attended || 'Data not Entered';
+    }
+
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
@@ -2270,7 +2338,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', '$filter', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {

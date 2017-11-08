@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import csv
 
 from django.core.management.base import BaseCommand
@@ -64,7 +65,7 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
         if not errors:
             return None
 
-        with file(self.log_filename, 'w') as f:
+        with open(self.log_filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Person ID', 'Episode ID', 'Domain', 'Error'])
             writer.writerows(errors)

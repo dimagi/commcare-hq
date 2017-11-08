@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 import uuid
 from datetime import datetime
@@ -514,7 +515,7 @@ def _get_case_iterator(domain, doc_types=None):
 
 
 def get_diff_db_filepath(domain):
-    return os.path.join(settings.SHARED_DRIVE_CONF.restore_dir,
+    return os.path.join(settings.SHARED_DRIVE_CONF.tzmigration_planning_dir,
                         '{}-tzmigration.db'.format(domain))
 
 

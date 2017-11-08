@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from itertools import ifilter
 from dimagi.utils.couch.database import is_bigcouch
 from django.http import HttpResponse

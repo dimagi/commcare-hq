@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
@@ -16,14 +17,14 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 
 
-class MessageRecipientField(CharField):
+class RecipientField(CharField):
     def to_python(self, value):
         if not value:
             return []
         return value.split(',')
 
 
-class MessageForm(Form):
+class ScheduleForm(Form):
     schedule_name = CharField(
         required=True,
         label=_('Schedule Name'),
@@ -36,7 +37,7 @@ class MessageForm(Form):
             ('immediately', _('Immediately')),
         )
     )
-    recipients = MessageRecipientField(
+    recipients = RecipientField(
         label=_("Recipient(s)"),
         help_text=_("Type a username, group name or location"),
     )
@@ -67,7 +68,7 @@ class MessageForm(Form):
             for lang in self.project_languages:
                 kwargs['initial']['message_%s' % lang] = message.get(lang, '')
 
-        super(MessageForm, self).__init__(*args, **kwargs)
+        super(ScheduleForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'

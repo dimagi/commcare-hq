@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 from django.utils.translation import get_language
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
@@ -43,7 +44,7 @@ class CustomTransform(JsonObject):
     or owner name from the ID.
     """
     type = TypeProperty('custom')
-    custom_type = StringProperty(required=True, choices=_CUSTOM_TRANSFORM_MAP.keys())
+    custom_type = StringProperty(required=True, choices=list(_CUSTOM_TRANSFORM_MAP))
 
     def get_transform_function(self):
         return _CUSTOM_TRANSFORM_MAP[self.custom_type]

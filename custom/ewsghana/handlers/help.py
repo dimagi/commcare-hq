@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.handlers import HELP_TEXT, DEACTIVATE_REMINDERS, REACTIVATE_REMINDERS
 from custom.ewsghana.handlers.keyword import KeywordHandler

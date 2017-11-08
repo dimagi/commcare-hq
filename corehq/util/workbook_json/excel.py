@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from tempfile import NamedTemporaryFile
 from zipfile import BadZipfile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
+import six
 
 
 class InvalidExcelFileException(Exception):
@@ -277,7 +279,7 @@ def enforce_string_type(value):
     if isinstance(value, basestring):
         return value
 
-    if isinstance(value, (int, long)):
+    if isinstance(value, six.integer_types):
         return str(value)
 
     # Don't try to guess for decimal types how they should be converted to string

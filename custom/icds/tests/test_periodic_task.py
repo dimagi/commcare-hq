@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import (
     LocationStructure,

@@ -34,6 +34,7 @@ want.
 As of this writing, there's not much else developed, but it's pretty easy to
 add support for other aggregation types and more results processing
 """
+from __future__ import absolute_import
 from copy import deepcopy
 import re
 from collections import namedtuple, defaultdict

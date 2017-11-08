@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 __author__ = 'dmyung'
 
 #taken from the django debug toolbar sql panel

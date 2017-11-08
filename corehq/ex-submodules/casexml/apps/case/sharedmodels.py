@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import mimetypes
 
 from corehq.form_processor.abstract_models import CaseAttachmentMixin

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.ext.django import syncdb
 from django.db.models import signals
 from corehq.preindex import get_preindex_plugin

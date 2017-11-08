@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data

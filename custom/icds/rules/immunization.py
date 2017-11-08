@@ -19,6 +19,7 @@ These utils can be used to calculate when immunizations are due for a given
 "tasks_type" == "pregnancy"), or a child (case property "tasks_type" == "child").
 """
 
+from __future__ import absolute_import
 import pytz
 import re
 from corehq.apps.products.models import SQLProduct

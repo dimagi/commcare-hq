@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.es import UserES
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couch import stale_ok

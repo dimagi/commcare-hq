@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.start_enterprise.models import (
     StartEnterpriseBackend,

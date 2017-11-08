@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy

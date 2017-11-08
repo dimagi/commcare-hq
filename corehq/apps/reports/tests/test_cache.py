@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from django.http import HttpRequest
 from django.test import TestCase

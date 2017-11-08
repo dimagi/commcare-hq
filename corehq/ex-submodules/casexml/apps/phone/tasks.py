@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date, timedelta
 from celery import current_task, current_app
 from celery.schedules import crontab

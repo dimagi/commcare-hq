@@ -496,6 +496,7 @@ EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
 CONTACT_EMAIL = 'info@dimagi.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@dimagi.com'
+DAILY_DEPLOY_EMAIL = "tech-announce-daily@dimagi.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -1984,8 +1985,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
