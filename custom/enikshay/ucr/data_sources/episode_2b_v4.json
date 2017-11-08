@@ -3308,14 +3308,44 @@
                 }
             },
             "earliest_cbnaat_test_case": {
-                "type": "coalesce",
-                "expression": {
-                    "type": "named",
-                    "name": "earliest_cbnaat_tb_detected_test_case"
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "episode_type"
+                    },
+                    "property_value": "confirmed_drtb"
                 },
-                "default_expression": {
-                    "type": "named",
-                    "name": "earliest_cbnaat_tb_not_detected_test_case"
+                "expression_if_true": {
+                    "type": "coalesce",
+                    "default_expression": {
+                        "type": "coalesce",
+                        "expression": {
+                            "type": "named",
+                            "name": "earliest_cbnaat_tb_detected_test_case"
+                        },
+                        "default_expression": {
+                            "type": "named",
+                            "name": "earliest_cbnaat_tb_not_detected_test_case"
+                        }
+                    },
+                    "expression": {
+                        "type": "named",
+                        "name": "earliest_cbnaat_tb_detected_rr_test_case"
+                    }
+                },
+                "expression_if_false": {
+                    "type": "coalesce",
+                    "expression": {
+                        "type": "named",
+                        "name": "earliest_cbnaat_tb_detected_test_case"
+                    },
+                    "default_expression": {
+                        "type": "named",
+                        "name": "earliest_cbnaat_tb_not_detected_test_case"
+                    }
                 }
             },
             "earliest_cbnaat_tb_not_detected_test_case": {
@@ -3375,6 +3405,112 @@
                                     },
                                     "type": "boolean_expression",
                                     "property_value": "tb_not_detected"
+                                }
+                            ]
+                        },
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "type": "array_index",
+                                    "index_expression": {
+                                        "constant": 0,
+                                        "type": "constant"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "earliest_cbnaat_tb_detected_rr_test_case": {
+                "aggregation_fn": "first_item",
+                "type": "reduce_items",
+                "items_expression": {
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    },
+                    "type": "sort_items",
+                    "items_expression": {
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "test"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "cbnaat"
+                                },
+                                {
+                                    "operator": "in",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "rft_general"
+                                    },
+                                    "property_value": ["diagnosis_dstb", "diagnosis_drtb"]
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result_recorded"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "yes"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": "tb_detected"
+                                },
+                                {
+                                    "operator": "in",
+                                    "expression": {
+                                        "constant": "r",
+                                        "type": "constant"
+                                    },
+                                    "type": "boolean_expression",
+                                    "comment": null,
+                                    "property_value": {
+                                        "string_expression": {
+                                            "datatype": null,
+                                            "type": "property_name",
+                                            "property_name": "drug_resistance_list"
+                                        },
+                                        "delimiter": " ",
+                                        "type": "split_string",
+                                        "index_expression": null
+                                    }
                                 }
                             ]
                         },
