@@ -96,6 +96,7 @@ class GenericReportView(object):
     description = None  # Human-readable description of the report
     report_template_path = None
     report_partial_path = None
+    js_scripts = None
 
     asynchronous = False
     hide_filters = False
@@ -478,6 +479,7 @@ class GenericReportView(object):
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
+                js_scripts=self.js_scripts,
                 js_options=self.js_options,
             ),
             current_config_id=current_config_id,
