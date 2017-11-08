@@ -67,11 +67,12 @@ def download_suite(request, domain, app_id):
     See Application.create_suite
 
     """
+    build_profile = request.GET.get('profile')
     if not request.app.copy_of:
         previous_version = request.app.get_latest_app(released_only=False)
         request.app.set_form_versions(previous_version)
     return HttpResponse(
-        request.app.create_suite()
+        request.app.create_suite(build_profile_id=build_profile)
     )
 
 
