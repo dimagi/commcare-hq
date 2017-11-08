@@ -1,15 +1,5 @@
-{% extends base_template %}
-{% block js-inline %} {{ block.super }}
-    <script>
-        $(function () {
-            $('#explode').koApplyBindings({
-                factor: ko.observable(''),
-                user_id: ko.observable(''),
-            });
-        }());
-    </script>
-{% endblock %}
-{% block content %}
+{% extends "hqwebapp/base_section.html" %}
+{% block page_content %}
     <div class="row-fluid">
         <div class="span2" style="visibility: hidden">.</div>
         <div class="span8" id="explode">
