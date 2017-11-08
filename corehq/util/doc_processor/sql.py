@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.doc_processor.interface import DocumentProvider
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 

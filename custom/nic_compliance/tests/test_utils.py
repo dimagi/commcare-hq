@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from django.test import TestCase, override_settings, Client
 from django.urls import reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client

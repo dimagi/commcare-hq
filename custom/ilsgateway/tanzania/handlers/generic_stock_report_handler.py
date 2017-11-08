@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from corehq.apps.commtrack.exceptions import NotAUserClassError
 from corehq.apps.commtrack.sms import process

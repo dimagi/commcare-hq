@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from corehq.util.datadog.utils import count_by_response_code

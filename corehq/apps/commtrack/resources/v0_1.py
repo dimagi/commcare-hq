@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from tastypie import fields
 
 from corehq.apps.api.resources.auth import DomainAdminAuthentication

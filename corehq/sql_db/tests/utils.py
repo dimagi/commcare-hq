@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 from django.conf import settings
 from sqlalchemy.exc import ProgrammingError
 from corehq.sql_db.config import partition_config

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import template
 import urllib
 
@@ -12,7 +13,7 @@ def urlencode(parser, token):
         path_var = tokens.pop()
         params_var = tokens.pop()
     except:
-        raise template.TemplateSyntaxError, "%r requires at least 2 parameters" % tag_name
+        raise template.TemplateSyntaxError("%r requires at least 2 parameters" % tag_name)
     params = {}
     delete = set()
     while(tokens):
@@ -23,15 +24,17 @@ def urlencode(parser, token):
                 assert(tokens.pop() == "as")
                 value = tokens.pop()
             except:
-                raise template.TemplateSyntaxError, "%r tag has incomplete 'with...as'" % tag_name
+                raise template.TemplateSyntaxError("%r tag has incomplete 'with...as'" % tag_name)
             params[key] = value
         elif cmd == "without":
             try:
                 delete.add(tokens.pop())
             except:
-                raise template.TemplateSyntaxError, "%r tag has incomplete 'without'" % tag_name
+                raise template.TemplateSyntaxError("%r tag has incomplete 'without'" % tag_name)
         else:
-            raise template.TemplateSyntaxError, "%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd)
+            raise template.TemplateSyntaxError(
+                "%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd)
+            )
 
     return URLEncodeNode(path_var, params_var, params, delete)
 

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (SMSLog, SMS, CallLog, LastReadMessage,
     ExpectedCallbackEventLog, ExpectedCallback)

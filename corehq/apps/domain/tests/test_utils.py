@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from corehq.apps.dashboard.views import dashboard_default, DomainDashboardView, NewUserDashboardView

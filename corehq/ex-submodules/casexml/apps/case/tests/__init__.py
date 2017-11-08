@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.mock import CaseBlock
 
 # need all imports used by the doc tests here

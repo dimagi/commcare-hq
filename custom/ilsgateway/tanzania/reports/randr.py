@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from functools import partial
 from dateutil import rrule
 from corehq.apps.locations.dbaccessors import get_one_user_at_location

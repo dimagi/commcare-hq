@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data

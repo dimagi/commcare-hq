@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.groups.models import Group
 from corehq.apps.performance_sms import parser
 from corehq.apps.performance_sms.exceptions import InvalidParameterException

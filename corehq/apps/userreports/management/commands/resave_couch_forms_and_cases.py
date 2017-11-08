@@ -23,6 +23,9 @@ class Command(BaseCommand):
     def handle(self, ids_file, **options):
         with open(ids_file) as f:
             doc_ids = [line.strip() for line in f]
+        total_doc_ids = len(doc_ids)
+        doc_ids = set(doc_ids)
+        print("{} total doc ids, {} unique".format(total_doc_ids, len(doc_ids)))
 
         db = XFormInstance.get_db()  # Both forms and cases are in here
         with IterDB(db) as iter_db:
@@ -34,14 +37,15 @@ class Command(BaseCommand):
         not_found = len(doc_ids) - len(iter_db.saved_ids) - len(iter_db.error_ids)
         print("{} docs not found".format(not_found))
 
-        filename = '_{}.csv'.format(ids_file, datetime.datetime.now())
+        filename = '{}_{}.csv'.format(ids_file.split('/')[-1],
+                                      datetime.datetime.now().isoformat())
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['doc_id', 'status'])
             for doc_id in doc_ids:
                 if doc_id in iter_db.saved_ids:
                     status = "saved"
-                elif iter_db.error_ids:
+                elif doc_id in iter_db.error_ids:
                     status = "errored"
                 else:
                     status = "not_found"

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchexport.export import export_raw
 from custom.icds.management.commands.get_icds_sms_export import BaseICDSSMSExportCommand
 from custom.icds.const import (

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -9,7 +10,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import apply_exclude
 
@@ -166,7 +167,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                 "key": "Number of AWCs launched",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
@@ -179,7 +180,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                 "key": "Total AWCs open yesterday",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,

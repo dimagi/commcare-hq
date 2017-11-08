@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import timedelta
 from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.decorators.memoized import memoized

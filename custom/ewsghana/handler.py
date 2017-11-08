@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.sms.models import MessagingEvent

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import lxml
 from lxml.doctestcompare import LXMLOutputChecker, LHTMLOutputChecker

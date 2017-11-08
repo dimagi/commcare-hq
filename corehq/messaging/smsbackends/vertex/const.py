@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 
 VERTEX_URL = "https://www.smsjust.com/sms/user/urlsms.php"

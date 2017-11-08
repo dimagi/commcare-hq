@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 from datadog import api as datadog_api
 import requests
@@ -136,7 +137,7 @@ class Command(BaseCommand):
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
             try:
                 recipient = settings.DAILY_DEPLOY_EMAIL
-                subject = '[{}] Deploy Successful'.format(options['environment'])
+                subject = 'Deploy Successful - {}'.format(options['environment'])
                 send_HTML_email(subject=subject,
                                 recipient=recipient,
                                 html_content=message_body)

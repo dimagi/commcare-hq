@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from operator import mul, div, sub
 
 from corehq.apps.locations.models import SQLLocation

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
@@ -18,6 +19,7 @@ from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
+import six
 
 
 def _get_logger():
@@ -380,7 +382,7 @@ class SyncLog(AbstractSyncLog):
     @classmethod
     def wrap(cls, data):
         # last_seq used to be int, but is now string for cloudant compatibility
-        if isinstance(data.get('last_seq'), (int, long)):
+        if isinstance(data.get('last_seq'), six.integer_types):
             data['last_seq'] = unicode(data['last_seq'])
         return super(SyncLog, cls).wrap(data)
 

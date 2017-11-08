@@ -1,4 +1,5 @@
 #Source: http://djangosnippets.org/snippets/1378/ which yielded: http://pastebin.com/raw.php?i=7KfALc0j
+from __future__ import absolute_import
 from django.urls import RegexURLPattern, Resolver404, get_resolver
 
 __all__ = ('resolve_to_name',)
@@ -29,7 +30,7 @@ def _resolver_resolve_to_name(self, path):
                 if name:
                     return name
                 tried.append(pattern.regex.pattern)
-        raise Resolver404, {'tried': tried, 'path': new_path}
+        raise Resolver404({'tried': tried, 'path': new_path})
 
 
 def resolve_to_name(path, urlconf=None):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import couchdbkit
 from corehq.apps.app_manager.const import APP_V2
 

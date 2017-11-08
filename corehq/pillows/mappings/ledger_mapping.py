@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.pillows.mappings.utils import mapping_from_json
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo

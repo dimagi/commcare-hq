@@ -9,6 +9,7 @@ from corehq.apps.es import case_search as case_search_es
     q = (case_search_es.CaseSearchES()
          .domain('testproject')
 """
+from __future__ import absolute_import
 from . import filters, queries
 
 from corehq.apps.es.cases import CaseES, owner

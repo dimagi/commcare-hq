@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from eulxml.xmlmap import (
     IntegerField, NodeField, NodeListField,
     SimpleBooleanField, StringField, XmlObject,

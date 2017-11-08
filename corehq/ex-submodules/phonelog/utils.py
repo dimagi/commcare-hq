@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import transaction
 from corehq.apps.users.util import format_username
 from corehq.apps.users.dbaccessors import get_user_id_by_username

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404

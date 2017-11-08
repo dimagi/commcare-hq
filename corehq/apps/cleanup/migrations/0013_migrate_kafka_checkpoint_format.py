@@ -2,6 +2,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.apps.cleanup.pillow_migrations import migrate_kafka_checkpoints, revert_migrate_checkpoints
