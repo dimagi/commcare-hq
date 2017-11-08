@@ -67,6 +67,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def iter_form_ids_by_xmlns(self, xmlns):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_with_attachments(form_id):
         raise NotImplementedError
 
@@ -144,6 +148,9 @@ class FormAccessors(object):
             start_datetime,
             end_datetime,
         )
+
+    def iter_form_ids_by_xmlns(self, xmlns):
+        return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
 
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)

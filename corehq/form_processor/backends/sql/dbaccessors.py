@@ -380,6 +380,14 @@ class FormAccessorSQL(AbstractFormAccessor):
         )
 
     @staticmethod
+    def iter_form_ids_by_xmlns(domain, xmlns):
+        from corehq.sql_db.util import run_query_across_partitioned_databases
+
+        for form_id in run_query_across_partitioned_databases(
+                XFormInstanceSQL, Q(domain=domain) & Q(xmlns=xmlns), values=['form_id']):
+            yield form_id
+
+    @staticmethod
     def get_with_attachments(form_id):
         """
         It's necessary to store these on the form rather than use a memoized property
