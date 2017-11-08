@@ -70,7 +70,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     args[i] = hqImport(dependency);
                 }
             }
-            if (typeof COMMCAREHQ_MODULES[path] === 'undefined') {
+            if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {
                 if (path.match(/\.js$/)) {
                     throw new Error("Error in '" + path + "': module names should not end in .js.");
                 }
