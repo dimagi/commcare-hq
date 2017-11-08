@@ -1759,23 +1759,23 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     function renderWeightForAgeStatus(data, type, full) {
         return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
-            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months + '\', \'weight\')" popover-placement="right"  popover-trigger="\'mouseenter\'">'
-            + full.current_month_nutrition_status.value
-            + '</span>';
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'weight\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_nutrition_status.value + '</span>';
     }
 
     function renderHeightForAgeStatus(data, type, full) {
         return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
-            + full.recorded_weight + '\',\'' + full.recorded_height +  + '\',\'' + full.age_in_months + '\', \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
-            + full.current_month_stunting.value
-            + '</span>';
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_stunting.value + '</span>';
     }
 
     function renderWeightForHeightStatus(data, type, full) {
         return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
-            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months +'\', \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
-            + full.current_month_wasting.value
-            + '</span>';
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_wasting.value + '</span>';
     }
 
     function renderPseDaysAttended(data, type, full) {

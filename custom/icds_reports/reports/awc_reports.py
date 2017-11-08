@@ -459,16 +459,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ),
                     'color': 'red' if percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
-                    'all': get_value(this_month_data, 'height'),
+                    'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -488,16 +488,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ),
                     'color': 'red' if percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
-                    'all': get_value(this_month_data, 'height'),
+                    'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
