@@ -10,11 +10,8 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
-from casexml.apps.phone.tests.utils import (
-    create_restore_user,
-    get_restore_config,
-    MockDevice,
-)
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import get_restore_config, MockDevice
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group

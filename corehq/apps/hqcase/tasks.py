@@ -9,7 +9,7 @@ from celery.task import task
 
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.mock.case_block import IndexAttrs
-from casexml.apps.phone.tests.utils import MockDevice
+from casexml.apps.phone.utils import MockDevice
 from corehq.apps.es import CaseSearchES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
