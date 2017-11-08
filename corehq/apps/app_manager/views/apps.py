@@ -29,7 +29,9 @@ from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedi
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, overwrite_app
 from corehq import toggles, privileges
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.elastic import ESError
+from corehq.util.couch import DocumentNotFound
 from dimagi.utils.logging import notify_exception
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -871,9 +873,15 @@ def pull_master_app(request, domain, app_id):
             messages.error(request, exception_message)
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
-        report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
         try:
-            overwrite_app(app, latest_master_build, report_map)
+            report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
+        except (BadSpecError, DocumentNotFound) as e:
+            messages.error(request, _('This linked application uses mobile UCRs '
+                                      'which are available in this domain: %(message)s') % {'message': e})
+            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+        try:
+            app = overwrite_app(app, latest_master_build, report_map)
         except AppEditingError:
             messages.error(request, _('This linked application uses dynamic mobile UCRs '
                                       'which are currently not supported. For this application '

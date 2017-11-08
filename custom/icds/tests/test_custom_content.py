@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types

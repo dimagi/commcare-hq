@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import models
 
 from dimagi.utils.decorators.memoized import memoized

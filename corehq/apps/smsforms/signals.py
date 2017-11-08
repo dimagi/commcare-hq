@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.smsforms.util import process_sms_form_complete
 from touchforms.formplayer.signals import sms_form_complete
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import corehq.apps.ivr.tests.util as util
 from django.test import Client
 import json

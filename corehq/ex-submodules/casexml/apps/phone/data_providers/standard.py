@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.phone import xml
 from casexml.apps.phone.fixtures import generator
 

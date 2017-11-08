@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64
 from copy import deepcopy
 from django.test import TestCase

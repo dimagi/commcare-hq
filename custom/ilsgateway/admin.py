@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.contrib import admin
 
 from custom.ilsgateway.models import ReportRun

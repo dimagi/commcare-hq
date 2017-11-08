@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from importlib import import_module
 from itertools import groupby

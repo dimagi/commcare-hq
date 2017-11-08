@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.bihar.reports.indicators.reports import DEFAULT_EMPTY
 
 

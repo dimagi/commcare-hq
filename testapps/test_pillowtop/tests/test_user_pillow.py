@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.test import TestCase
 from corehq.apps.change_feed import data_sources

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit import MultipleResultsFound
 from django_redis.exceptions import ConnectionInterrupted
 import simplejson

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from celery.task import task
 from corehq.apps.hqcase.utils import bulk_update_cases

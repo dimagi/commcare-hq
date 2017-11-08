@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from pillowtop.utils import get_pillow_config_from_setting
 

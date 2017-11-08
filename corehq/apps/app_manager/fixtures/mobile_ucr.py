@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import random
 
@@ -8,6 +10,7 @@ from django.conf import settings
 from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
+from casexml.apps.phone.models import UCRSyncLog
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_VERSION_1,
@@ -277,9 +280,66 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            fixtures.extend(self._v2_fixtures(restore_user, self._get_report_configs(apps).values()))
+            report_configs = self._get_report_configs(apps).values()
+            synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
+            fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
+            for report_uuid in purged_fixture_ids:
+                fixtures.extend(self._empty_v2_fixtures(report_uuid))
 
         return fixtures
+
+    def _relevant_report_configs(self, restore_state, report_configs):
+        """
+        Filter out any UCRs that are already synced. This can't exist in V1,
+        because in V1 we send all reports as one fixture.
+
+        Returns a list of full ReportConfigs to sync and a set of report ids to purge
+        """
+        last_sync_log = restore_state.last_sync_log
+
+        if not last_sync_log or restore_state.overwrite_cache:
+            return report_configs, []
+
+        current_sync_log = restore_state.current_sync_log
+        now = _utcnow()
+
+        last_ucr_syncs = {
+            log.report_uuid: log.datetime
+            for log in last_sync_log.last_ucr_sync_times
+        }
+        configs_to_sync = []
+
+        for config in report_configs:
+            if config.uuid not in last_ucr_syncs:
+                configs_to_sync.append(config)
+                current_sync_log.last_ucr_sync_times.append(
+                    UCRSyncLog(report_uuid=config.uuid, datetime=now)
+                )
+                continue
+
+            last_sync = last_ucr_syncs[config.uuid]
+            next_sync = last_sync + timedelta(hours=float(config.sync_delay))
+
+            if now > next_sync:
+                configs_to_sync.append(config)
+                current_sync_log.last_ucr_sync_times.append(
+                    UCRSyncLog(report_uuid=config.uuid, datetime=now)
+                )
+            else:
+                current_sync_log.last_ucr_sync_times.append(
+                    UCRSyncLog(report_uuid=config.uuid, datetime=last_sync)
+                )
+
+        config_uuids = {config.uuid for config in report_configs}
+        extra_configs_on_phone = set(last_ucr_syncs.keys()).difference(config_uuids)
+
+        return configs_to_sync, extra_configs_on_phone
+
+    def _empty_v2_fixtures(self, report_uuid):
+        return [
+            E.fixture(id=self._report_fixture_id(report_uuid)),
+            E.fixture(id=self._report_filter_id(report_uuid))
+        ]
 
     def _v2_fixtures(self, restore_user, report_configs):
         fixtures = []
@@ -303,8 +363,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         domain = restore_user.domain
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
-        report_fixture_id = 'commcare-reports:' + report_config.uuid
-        report_filter_id = 'commcare-reports-filters:' + report_config.uuid
 
         # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
@@ -337,7 +395,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
-        report_filter_elem = E.fixture(id=report_filter_id)
+        report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
 
         if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
@@ -345,7 +403,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.fixture(
-            id=report_fixture_id, user_id=restore_user.user_id,
+            id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
             report_id=report_config.report_id, last_sync=_utcnow().isoformat(),
             indexed='true'
         )
@@ -379,6 +437,14 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
                 is_total_row=True,
             ))
         return rows_elem
+
+    @staticmethod
+    def _report_fixture_id(report_uuid):
+        return 'commcare-reports:' + report_uuid
+
+    @staticmethod
+    def _report_filter_id(report_uuid):
+        return 'commcare-reports-filters:' + report_uuid
 
 
 def _utcnow():

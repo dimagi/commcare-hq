@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase

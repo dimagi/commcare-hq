@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from jsonobject import DefaultProperty
 
 from corehq.apps.locations.models import SQLLocation

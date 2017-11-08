@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpResponse
 from corehq.apps.sms.api import incoming as incoming_sms
 

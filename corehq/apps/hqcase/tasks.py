@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from celery.task import task
 from corehq.apps.app_manager.const import USERCASE_TYPE

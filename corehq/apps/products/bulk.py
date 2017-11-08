@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.products.models import Product, SQLProduct
 from django.utils.translation import ugettext as _
 from corehq.apps.programs.models import Program

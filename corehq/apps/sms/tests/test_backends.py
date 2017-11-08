@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin

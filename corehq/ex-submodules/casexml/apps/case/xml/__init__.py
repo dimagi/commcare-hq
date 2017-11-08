@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.phone.exceptions import BadVersionException
 
 V1 = "1.0"

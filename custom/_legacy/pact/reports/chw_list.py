@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import NoReverseMatch
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport

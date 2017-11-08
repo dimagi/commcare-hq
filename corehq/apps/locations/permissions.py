@@ -74,6 +74,7 @@ These each restrict access to a particular feature and don't affect the rest of
 HQ. These are deprecated, and we intend to transition projects off of those
 onto the whitelist once we've added enough features to meet their use-case.
 """
+from __future__ import absolute_import
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
 from corehq import privileges

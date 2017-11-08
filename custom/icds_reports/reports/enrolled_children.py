@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -6,7 +7,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age
 
@@ -121,7 +122,7 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
                 "key": "Children (0-6 years) who are enrolled",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'

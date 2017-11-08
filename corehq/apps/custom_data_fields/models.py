@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from dimagi.ext.jsonobject import JsonObject

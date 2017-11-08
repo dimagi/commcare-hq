@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from django.test.utils import override_settings
 
+from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.awcs_covered import get_awcs_covered_data_map, get_awcs_covered_data_chart, \
     get_awcs_covered_sector_data
 from django.test import TestCase
@@ -76,7 +78,7 @@ class TestAWCSCovered(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#fee0d2",
+                        "color": ChartColors.PINK,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

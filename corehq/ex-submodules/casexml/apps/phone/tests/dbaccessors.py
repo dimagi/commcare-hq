@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.phone.models import SyncLog
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs

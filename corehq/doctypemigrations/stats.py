@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.analytics import update_analytics_indexes, get_count_of_active_commcare_users_in_domain, \

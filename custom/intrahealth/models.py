@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from fluff.pillow import get_multi_fluff_pillow

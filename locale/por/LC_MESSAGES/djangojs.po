@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-31 19:03+0000\n"
+"POT-Creation-Date: 2017-11-07 20:31+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -320,11 +320,11 @@ msgstr ""
 msgid "Show All"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:306
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:310
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:312
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:316
 msgid "Reports must have all properties set!"
 msgstr ""
 
@@ -372,7 +372,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:236
-#: corehq/apps/userreports/static/userreports/js/report_config.js:390
 msgid "There was an error saving"
 msgstr ""
 
@@ -2367,19 +2366,16 @@ msgid "Error saving, please try again."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:233
-#: corehq/apps/userreports/static/userreports/js/report_config.js:387
 msgid "Saving..."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:234
-#: corehq/apps/userreports/static/userreports/js/report_config.js:388
 #: corehq/apps/users/static/users/js/web_users.js:55
 msgid "Saved"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:235
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
-#: corehq/apps/userreports/static/userreports/js/report_config.js:389
 msgid "Try Again"
 msgstr ""
 
@@ -2760,15 +2756,15 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:332
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:347
-#: corehq/apps/userreports/static/userreports/js/report_config.js:230
-#: corehq/apps/userreports/static/userreports/js/report_config.js:248
+#: corehq/apps/userreports/static/userreports/js/report_config.js:223
+#: corehq/apps/userreports/static/userreports/js/report_config.js:241
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:373
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:388
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:333
-#: corehq/apps/userreports/static/userreports/js/report_config.js:231
+#: corehq/apps/userreports/static/userreports/js/report_config.js:224
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:374
 msgid ""
 "Web users viewing the report will see this display text instead of the "
@@ -2776,7 +2772,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:334
-#: corehq/apps/userreports/static/userreports/js/report_config.js:232
+#: corehq/apps/userreports/static/userreports/js/report_config.js:225
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:375
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -2785,7 +2781,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:348
-#: corehq/apps/userreports/static/userreports/js/report_config.js:249
+#: corehq/apps/userreports/static/userreports/js/report_config.js:242
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:389
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -2794,7 +2790,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:349
-#: corehq/apps/userreports/static/userreports/js/report_config.js:250
+#: corehq/apps/userreports/static/userreports/js/report_config.js:243
 #: corehq/apps/userreports/static/userreports/js/v1/builder_view_models.js:390
 msgid "What value or date range must the property be equal to?"
 msgstr ""
@@ -2813,10 +2809,6 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:7
 msgid "Form"
 msgstr "Formulário"
-
-#: corehq/apps/userreports/static/userreports/js/report_config.js:386
-msgid "Update Report"
-msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:45
 msgid "Password changed successfully"

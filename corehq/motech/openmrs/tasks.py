@@ -3,6 +3,7 @@ Tasks are used to pull data from OpenMRS. They either use OpenMRS's
 Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
+from __future__ import absolute_import
 import uuid
 from collections import namedtuple
 from datetime import datetime

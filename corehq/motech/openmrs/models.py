@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_CHOICES, IMPORT_FREQUENCY_MONTHLY
 from dimagi.ext.couchdbkit import (
     Document,

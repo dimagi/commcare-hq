@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from models import AuditEvent
 
 def log_access(view_func):

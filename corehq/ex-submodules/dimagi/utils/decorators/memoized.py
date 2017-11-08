@@ -1,4 +1,5 @@
 # See http://wiki.python.org/moin/PythonDecoratorLibrary#Memoize
+from __future__ import absolute_import
 import functools
 from inspect import getargspec, getcallargs, isfunction
 

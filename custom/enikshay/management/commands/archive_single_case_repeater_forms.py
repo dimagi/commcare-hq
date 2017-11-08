@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.cleanup import rebuild_case_from_forms

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 
 

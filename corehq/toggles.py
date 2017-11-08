@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -455,6 +456,13 @@ MM_CASE_PROPERTIES = StaticToggle(
     TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+NEW_MULTIMEDIA_UPLOADER = StaticToggle(
+    'new_multimedia_uploader',
+    'Display new multimedia uploader',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
 )
 
 VISIT_SCHEDULER = StaticToggle(

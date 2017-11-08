@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+
 from datetime import datetime
 from lxml import etree
 from lxml.builder import E
 from django.test import SimpleTestCase
 from mock import Mock, patch
+from casexml.apps.phone.models import UCRSyncLog
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
     ReportFixturesProvider, ReportFixturesProviderV2
 )
@@ -69,3 +72,42 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
                 etree.tostring(report, pretty_print=True),
                 self.get_xml('expected_v2_report')
             )
+
+    def test_v2_report_fixtures_provider_caching(self):
+        report_id = 'deadbeef'
+        provider = ReportFixturesProviderV2()
+        report_app_config = ReportAppConfig(
+            uuid='c0ffee',
+            report_id=report_id,
+            filters={'computed_owner_name_40cc88a0_1': StaticChoiceListFilter()},
+            sync_delay=1.0,
+        )
+        restore_user = Mock(user_id='mock-user-id')
+        restore_state = Mock(
+            overwrite_cache=False,
+            restore_user=restore_user,
+            last_sync_log=Mock(last_ucr_sync_times=()),
+        )
+
+        with mock_report_configuration_get({report_id: MAKE_REPORT_CONFIG('test_domain', report_id)}), \
+                patch('corehq.apps.app_manager.fixtures.mobile_ucr.ReportFactory') as report_factory_patch, \
+                patch('corehq.apps.app_manager.fixtures.mobile_ucr._utcnow') as utcnow_patch:
+
+            report_factory_patch.from_spec.return_value = self.get_data_source_mock()
+            utcnow_patch.return_value = datetime(2017, 9, 11, 6, 35, 20)
+            configs = provider._relevant_report_configs(restore_state, [report_app_config])
+            self.assertEqual(configs, ([report_app_config], set()))
+
+            restore_state = Mock(
+                overwrite_cache=False,
+                restore_user=restore_user,
+                last_sync_log=Mock(last_ucr_sync_times=(
+                    UCRSyncLog(report_uuid=report_app_config.uuid, datetime=datetime.utcnow()),
+                )),
+            )
+
+            configs = provider._relevant_report_configs(restore_state, [report_app_config])
+            self.assertEqual(configs, ([], set()))
+
+            configs = provider._relevant_report_configs(restore_state, [])
+            self.assertEqual(configs, ([], {report_app_config.uuid}))
