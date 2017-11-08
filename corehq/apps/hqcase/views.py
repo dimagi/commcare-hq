@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.hqcase.tasks import explode_case_task, delete_exploded_case_task
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es.case_search import CaseSearchES, CasePropertyAggregation
 from soil import DownloadBase
@@ -18,6 +19,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
     template_name = "hqcase/explode_cases.html"
     page_title = "Explode Cases"
 
+    @use_select2
     @method_decorator(require_superuser_or_developer)
     def dispatch(self, *args, **kwargs):
         return super(ExplodeCasesView, self).dispatch(*args, **kwargs)
