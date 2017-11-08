@@ -19,8 +19,8 @@ from soil import DownloadBase
 
 
 @task
-def explode_case_task(user_id, domain, factor):
-    explode_cases(domain, user_id, factor, explode_case_task)
+def explode_case_task(domain, user_id, factor):
+    return explode_cases(domain, user_id, factor, explode_case_task)
 
 
 def explode_cases(domain, user_id, factor, task=None):
@@ -75,8 +75,13 @@ def explode_cases(domain, user_id, factor, task=None):
             progress += queue_case(ElementTree.tostring(new_case.as_xml()), queue, progress)
 
     if len(queue):
-        print queue
         submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
+        DownloadBase.set_progress(explode_case_task, total_cases, total_cases)
+
+    return {'messages': [
+        "Successfully created {} cases".format(total_cases),
+        "Your explosion_id for this explosion is {}".format(explosion_id)
+    ]}
 
 
 class CaseGraph(object):
@@ -118,7 +123,7 @@ class CaseGraph(object):
 
 @task
 def delete_exploded_case_task(domain, explosion_id):
-    delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
+    return delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
 
 
 def delete_exploded_cases(domain, explosion_id, task=None):
@@ -137,3 +142,4 @@ def delete_exploded_cases(domain, explosion_id, task=None):
         if task:
             completed += len(ids)
             DownloadBase.set_progress(delete_exploded_case_task, completed, len(case_ids))
+    return {'messages': ["Successfully deleted {} cases".format(len(case_ids))]}

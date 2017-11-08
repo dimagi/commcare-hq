@@ -58,7 +58,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
             messages.error(request, 'factor must be an int; was: %s' % factor)
         else:
             download = DownloadBase()
-            res = explode_case_task.delay(user_id, self.domain, factor)
+            res = explode_case_task.delay(self.domain, user_id, factor)
             download.set_task(res)
 
             return redirect('hq_soil_download', self.domain, download.download_id)
