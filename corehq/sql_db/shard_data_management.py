@@ -1,7 +1,69 @@
 from __future__ import absolute_import
+from collections import defaultdict
 from django.db import connections
 from django.db.models import UUIDField
 from corehq.sql_db.config import partition_config
+from corehq.sql_db.util import get_all_sharded_models
+
+
+class DatabaseShardInfo(object):
+
+    def __init__(self, db):
+        self.db = db
+        # dicts of shard ID to dicts of model: count
+        self._expected_data = {
+            shard_id: defaultdict(lambda: 0) for shard_id in partition_config.get_shards_on_db(db)
+        }
+        self._unexpected_data = defaultdict(lambda: defaultdict(lambda: 0))
+
+    def add_model_data(self, model, shard_data):
+        for shard_id, object_count in shard_data:
+            if shard_id in self._expected_data:
+                self._expected_data[shard_id][model] += object_count
+            else:
+                self._unexpected_data[shard_id][model] += object_count
+
+    def __str__(self):
+        return """"
+========================================
+              {db}
+
+============== Valid Data ==============
+{expected_data}
+
+============= Invalid Data =============
+{unexpected_data}
+        """.format(
+            db=self.db,
+            expected_data=self._get_formatted_expected_data(),
+            unexpected_data=self._get_formatted_unexpected_data(),
+        )
+
+    def _get_formatted_expected_data(self):
+        return self._get_formatted_data(self._expected_data)
+
+    def _get_formatted_unexpected_data(self):
+        return self._get_formatted_data(self._unexpected_data)
+
+    def _get_formatted_data(self, data):
+        formatted_rows = []
+        for shard_id in sorted(data.keys()):
+            formatted_rows.append('')
+            formatted_rows.append('--------------- shard {} ---------------'.format(shard_id))
+            formatted_rows.extend([
+                '{}, {}'.format(model.__name__, data[shard_id][model])
+                for model in sorted(data[shard_id].keys())
+            ])
+        return '\n'.join(formatted_rows)
+
+
+def get_database_shard_info(database):
+    sharded_models = list(get_all_sharded_models())
+    shard_info = DatabaseShardInfo(database)
+    for model in sharded_models:
+        data = get_count_of_models_by_shard(database, model)
+        shard_info.add_model_data(model, data)
+    return shard_info
 
 
 def get_count_of_unmatched_models_by_shard(database, model):
