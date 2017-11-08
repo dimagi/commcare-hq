@@ -85,6 +85,9 @@ class ReportDispatcher(View):
         else:
             project = None
 
+        if not project:
+            return ()
+
         def process(reports):
             if project and callable(reports):
                 reports = reports(project)
@@ -211,6 +214,8 @@ class ReportDispatcher(View):
         project = getattr(request, 'project', None)
         couch_user = getattr(request, 'couch_user', None)
         nav_context = []
+        if not domain:
+            return nav_context
 
         dispatcher = cls()  # uhoh
 
