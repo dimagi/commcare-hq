@@ -24,6 +24,20 @@ def get_count_of_unmatched_models_by_shard(database, model):
 
 
 def _get_shard_count_query(model):
+    # syntax of this query is a bit weird because of a couple django / postgres ARRAY oddities
+    # https://stackoverflow.com/a/22008870/8207
+    # https://stackoverflow.com/a/11730789/8207
+    return """
+       select * from ({counts_by_shard_query}
+
+        ) as countsByShard
+        where not shard_id = ANY(%s);
+    """.format(
+        counts_by_shard_query=_get_counts_by_shard_query(model),
+    )
+
+
+def _get_counts_by_shard_query(model):
     # have to cast to varchar because some tables have uuid types
     field_type = model._meta.get_field(model.partition_attr)
     if isinstance(field_type, UUIDField):
@@ -41,16 +55,10 @@ def _get_shard_count_query(model):
             total_shard_count=partition_config.num_shards - 1,
             id_field=model.partition_attr,
         )
-    # syntax of this query is a bit weird because of a couple django / postgres ARRAY oddities
-    # https://stackoverflow.com/a/22008870/8207
-    # https://stackoverflow.com/a/11730789/8207
     return """
-       select * from (
-           select {shard_id_function} as shard_id, count(*)
-           from {table_name}
-           group by shard_id
-        ) as countsByShard
-        where not shard_id = ANY(%s);
+        select {shard_id_function} as shard_id, count(*)
+        from {table_name}
+        group by shard_id
     """.format(
         shard_id_function=shard_id_function,
         table_name=model._meta.db_table,
