@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from django import settings
+from django.conf import settings
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from fluff.pillow import get_multi_fluff_pillow
