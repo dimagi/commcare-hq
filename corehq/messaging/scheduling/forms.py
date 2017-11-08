@@ -144,29 +144,19 @@ class ScheduleForm(Form):
                 field.disabled = True
 
         layout_fields = [
-            crispy.Field('schedule_name'),
+            crispy.Fieldset(
+                ugettext("Scheduling"),
+                *self.get_scheduling_layout_fields()
+            ),
+            crispy.Fieldset(
+                ugettext("Recipients"),
+                *self.get_recipients_layout_fields()
+            ),
+            crispy.Fieldset(
+                ugettext("Content"),
+                *self.get_content_layout_fields()
+            )
         ]
-
-        layout_fields.extend(self.get_scheduling_layout_fields())
-
-        layout_fields.extend([
-            crispy.Field(
-                'recipients',
-                data_bind='value: message_recipients.value',
-                placeholder=_("Select some recipients")
-            ),
-            crispy.Field('content'),
-            crispy.Field('translate', data_bind='checked: translate'),
-            crispy.Div(
-                crispy.Field('non_translated_message'),
-                data_bind='visible: !translate()',
-            ),
-        ])
-
-        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
-        layout_fields.append(
-            crispy.Div(*translated_fields, data_bind='visible: translate()')
-        )
 
         if not readonly:
             layout_fields += [
@@ -178,10 +168,12 @@ class ScheduleForm(Form):
                     ),
                 ),
             ]
+
         self.helper.layout = crispy.Layout(*layout_fields)
 
     def get_scheduling_layout_fields(self):
         return [
+            crispy.Field('schedule_name'),
             crispy.Field(
                 'send_frequency',
                 data_bind='value: send_frequency',
@@ -255,6 +247,32 @@ class ScheduleForm(Form):
                 data_bind="visible: computedEndDate() !== ''",
             ),
         ]
+
+    def get_recipients_layout_fields(self):
+        return [
+            crispy.Field(
+                'recipients',
+                data_bind='value: message_recipients.value',
+                placeholder=_("Select some recipients")
+            ),
+        ]
+
+    def get_content_layout_fields(self):
+        result = [
+            crispy.Field('content'),
+            crispy.Field('translate', data_bind='checked: translate'),
+            crispy.Div(
+                crispy.Field('non_translated_message'),
+                data_bind='visible: !translate()',
+            ),
+        ]
+
+        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
+        result.append(
+            crispy.Div(*translated_fields, data_bind='visible: translate()')
+        )
+
+        return result
 
     @cached_property
     def project_languages(self):
