@@ -16,14 +16,22 @@ def get_count_of_unmatched_models_by_shard(database, model):
     The list will be empty if no invalid data is found.
     """
     cursor = connections[database].cursor()
-    query = _get_shard_count_query(model)
+    query = _get_unmatched_shard_count_query(model)
     valid_shards = partition_config.get_shards_on_db(database)
     cursor.execute(query, [valid_shards])
     results = cursor.fetchall()
     return results
 
 
-def _get_shard_count_query(model):
+def get_count_of_models_by_shard(database, model):
+    cursor = connections[database].cursor()
+    query = _get_counts_by_shard_query(model)
+    cursor.execute(query)
+    results = cursor.fetchall()
+    return results
+
+
+def _get_unmatched_shard_count_query(model):
     # syntax of this query is a bit weird because of a couple django / postgres ARRAY oddities
     # https://stackoverflow.com/a/22008870/8207
     # https://stackoverflow.com/a/11730789/8207

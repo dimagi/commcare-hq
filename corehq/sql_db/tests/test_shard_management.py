@@ -14,7 +14,8 @@ from corehq.messaging.scheduling.scheduling_partitioned.tests.test_dbaccessors_p
     BaseSchedulingPartitionedDBAccessorsTest
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.models import PartitionedModel
-from corehq.sql_db.shard_data_management import get_count_of_unmatched_models_by_shard
+from corehq.sql_db.shard_data_management import get_count_of_unmatched_models_by_shard, \
+    get_count_of_models_by_shard
 from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
 
 
@@ -49,6 +50,9 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         self.assertEqual(AlertScheduleInstance.objects.using(self.db1).count(), 1)
         matches = get_count_of_unmatched_models_by_shard(self.db1, AlertScheduleInstance)
         self.assertEqual(0, len(matches))
+        all_data = get_count_of_models_by_shard(self.db1, AlertScheduleInstance)
+        self.assertEqual(1, len(all_data))
+        self.assertEqual((0, 1), all_data[0])
 
     def test_uuid_partitioning_incorrect(self):
         instance = BaseSchedulingPartitionedDBAccessorsTest.make_alert_schedule_instance(
@@ -66,6 +70,9 @@ class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
         self.assertEqual(XFormInstanceSQL.objects.using(self.db2).count(), 1)
         matches = get_count_of_unmatched_models_by_shard(self.db2, XFormInstanceSQL)
         self.assertEqual(0, len(matches))
+        all_data = get_count_of_models_by_shard(self.db2, XFormInstanceSQL)
+        self.assertEqual(1, len(all_data))
+        self.assertEqual((2, 1), all_data[0])
 
     def test_text_partitioning_incorrect(self):
         form = self._make_form_instance(str(self.p2_uuid))
