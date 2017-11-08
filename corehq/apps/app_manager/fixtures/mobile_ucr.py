@@ -142,7 +142,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports:
+        if not self.uses_reports(restore_state):
             return []
 
         restore_user = restore_state.restore_user
@@ -267,7 +267,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports:
+        if not self.uses_reports(restore_state):
             return []
 
         restore_user = restore_state.restore_user
