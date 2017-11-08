@@ -104,7 +104,7 @@ def _get_form_designer_view(request, domain, app, module, form):
         return back_to_main(request, domain, app_id=app.id,
                             form_unique_id=form.unique_id)
 
-    send_hubspot_form.delay(HUBSPOT_FORM_BUILDER_FORM_ID, request)
+    send_hubspot_form(HUBSPOT_FORM_BUILDER_FORM_ID, request)
 
     def _form_too_large(_app, _form):
         # form less than 0.1MB, anything larger starts to have
