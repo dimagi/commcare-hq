@@ -1,7 +1,10 @@
+import re
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
+from dateutil import parser
+from django.core.exceptions import ValidationError
 from django.forms.fields import (
     BooleanField,
     CharField,
@@ -17,6 +20,34 @@ from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
+
+
+def validate_time(value):
+    error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
+
+    if not isinstance(value, basestring) or not re.match('^\d?\d:\d\d$', value):
+        raise error
+
+    try:
+        value = parser.parse(value)
+    except ValueError:
+        raise error
+
+    return value.time()
+
+
+def validate_date(value):
+    error = ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
+
+    if not isinstance(value, basestring) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
+        raise error
+
+    try:
+        value = parser.parse(value)
+    except ValueError:
+        raise error
+
+    return value.date()
 
 
 class RecipientField(CharField):
@@ -74,7 +105,10 @@ class ScheduleForm(Form):
         )
     )
     send_time = CharField(required=False)
-    start_date = CharField(required=False)
+    start_date = CharField(
+        label='',
+        required=False
+    )
     stop_type = ChoiceField(
         required=False,
         choices=(
@@ -185,24 +219,20 @@ class ScheduleForm(Form):
                 ),
                 data_bind='visible: showWeekdaysInput',
             ),
-            crispy.Div(
-                hqcrispy.B3MultiField(
-                    ugettext("On Days"),
-                    crispy.Div(
-                        template='scheduling/partial/days_of_month_picker.html',
-                    ),
+            hqcrispy.B3MultiField(
+                ugettext("On Days"),
+                crispy.Field(
+                    'days_of_month',
+                    template='scheduling/partial/days_of_month_picker.html',
                 ),
-                hqcrispy.ErrorsOnlyField('days_of_month'),
                 data_bind='visible: showDaysOfMonthInput',
             ),
-            crispy.Div(
-                hqcrispy.B3MultiField(
-                    ugettext("At"),
-                    crispy.Div(
-                        template='scheduling/partial/time_picker.html',
-                    ),
+            hqcrispy.B3MultiField(
+                ugettext("At"),
+                crispy.Field(
+                    'send_time',
+                    template='scheduling/partial/time_picker.html',
                 ),
-                hqcrispy.ErrorsOnlyField('send_time'),
                 data_bind='visible: showTimeInput',
             ),
             hqcrispy.B3MultiField(
@@ -212,7 +242,6 @@ class ScheduleForm(Form):
                         'start_date',
                         data_bind='value: start_date',
                     ),
-                    hqcrispy.ErrorsOnlyField('start_date'),
                     css_class='col-sm-6',
                 ),
                 data_bind='visible: showStartDateInput',
@@ -224,7 +253,6 @@ class ScheduleForm(Form):
                         'stop_type',
                         data_bind='value: stop_type',
                     ),
-                    hqcrispy.ErrorsOnlyField('stop_type'),
                     css_class='col-sm-6',
                 ),
                 crispy.Div(
@@ -232,7 +260,6 @@ class ScheduleForm(Form):
                         'occurrences',
                         data_bind='value: occurrences',
                     ),
-                    hqcrispy.ErrorsOnlyField('occurrences'),
                     css_class='col-sm-6',
                     data_bind="visible: stop_type() != '%s'" % self.STOP_NEVER,
                 ),
@@ -304,3 +331,65 @@ class ScheduleForm(Form):
             assert user['domain'] == self.domain, "User must be in the same domain"
 
         return data
+
+    def clean_weekdays(self):
+        if self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY:
+            return None
+
+        weeekdays = self.cleaned_data.get('weekdays')
+        if not weeekdays:
+            raise ValidationError(_("Please select the applicable day(s) of the week."))
+
+        return [int(i) for i in weeekdays]
+
+    def clean_days_of_month(self):
+        if self.cleaned_data.get('send_frequency') != self.SEND_MONTHLY:
+            return None
+
+        days_of_month = self.cleaned_data.get('days_of_month')
+        if not days_of_month:
+            raise ValidationError(_("Please select the applicable day(s) of the month."))
+
+        return [int(i) for i in days_of_month]
+
+    def clean_send_time(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        return validate_time(self.cleaned_data.get('send_time'))
+
+    def clean_start_date(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        return validate_date(self.cleaned_data.get('start_date'))
+
+    def clean_stop_type(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        stop_type = self.cleaned_data.get('stop_type')
+        if not stop_type:
+            raise ValidationError(_("This field is required"))
+
+        return stop_type
+
+    def clean_occurrences(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('stop_type') != self.STOP_AFTER_OCCURRENCES
+        ):
+            return None
+
+        error = ValidationError(_("Please enter a whole number greater than 0"))
+
+        occurrences = self.cleaned_data.get('occurrences')
+        try:
+            occurrences = int(occurrences)
+        except (TypeError, ValueError):
+            raise error
+
+        if occurrences <= 0:
+            raise error
+
+        return occurrences
