@@ -63,6 +63,8 @@ There is also a separate collection of Dimagi dev oriented tools that you can in
 And for production environments you may want:
 
     $ pip install -r requirements/prod-requirements.txt
+    
+Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate this task with [this script](https://gist.github.com/dannyroberts/5391823) to update all code, including submodules, and [this script](https://gist.github.com/orangejenny/c817e83d296457758d18914b2792831a) to update code and do a few more tasks like run migrations and update libraries.
 
 #### Setup localsettings
 
