@@ -1,7 +1,0 @@
-FROM elasticsearch:1.7.4
-
-# Install HEAD plugin
-# https://mobz.github.io/elasticsearch-head/
-RUN plugin -i mobz/elasticsearch-head
-
-COPY files/elasticsearch.yml /usr/share/elasticsearch/config/elasticsearch.yml
