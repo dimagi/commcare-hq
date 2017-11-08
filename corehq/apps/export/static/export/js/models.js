@@ -67,6 +67,17 @@ hqDefine('export/js/models', function () {
             return this.hasHtmlFormat() && !this.hasExcelDashboardAccess;
         }, self);
 
+        self.hasCaseHistoryTable = ko.pureComputed(function() {
+            return _.any(self.tables(), function(table) {
+                if (table.label() !== 'Case History') {
+                    return false;
+                }
+                return _.any(table.columns(), function (column) {
+                    return column.selected();
+                });
+            });
+        });
+
         self.export_format.subscribe(function (newFormat){
             // Selecting Excel Dashboard format automatically checks the daily saved export box
             if (newFormat === constants.EXPORT_FORMATS.HTML) {

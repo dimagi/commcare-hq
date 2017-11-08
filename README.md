@@ -63,6 +63,8 @@ There is also a separate collection of Dimagi dev oriented tools that you can in
 And for production environments you may want:
 
     $ pip install -r requirements/prod-requirements.txt
+    
+Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate this task with [this script](https://gist.github.com/dannyroberts/5391823) to update all code, including submodules, and [this script](https://gist.github.com/orangejenny/c817e83d296457758d18914b2792831a) to update code and do a few more tasks like run migrations and update libraries.
 
 #### Setup localsettings
 
@@ -638,6 +640,8 @@ that you have a 32bit version of Python installed.
 + If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
+  
++ If you encounter an error stemming from any Python modules when running `./manage.py sync_couch_views` for the first time, the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
 
 + On Windows, to get python-magic to work you will need to install the following dependencies.
   Once they are installed make sure the install folder is on the path.
