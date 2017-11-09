@@ -71,18 +71,14 @@ hqDefine('analytics/js/initial', function () {
             _abTests = _gather(_abSelector, {});
         }
         if (_.isUndefined(_abTestsByApi[apiName])) {
-            var tests = _.map(_abTests, function (val, key) {
+            _abTestsByApi[apiName] = _.compact(_.map(_abTests, function (val, key) {
                 if (key.startsWith(apiName)) {
                     return {
                         slug: _.last(key.split('.')),
                         context: val,
                     };
                 }
-            });
-            tests = _.filter(tests, function (t) {
-                return !_.isUndefined(t);
-            });
-            _abTestsByApi[apiName] = tests;
+            }));
         }
         return _abTests;
     };

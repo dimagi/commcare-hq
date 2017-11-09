@@ -105,10 +105,7 @@ hqDefine('analytics/js/logging', function () {
          * @private
          */
         _log.getPrefix = function (messagePrefix) {
-            var prefix = _.flatten([level.prefix, logger.prefix, _log.category, messagePrefix]);
-            prefix = _.filter(prefix, function (p) {
-                return !_.isUndefined(p);
-            });
+            var prefix = _.compact(_.flatten([level.prefix, logger.prefix, _log.category, messagePrefix]));
             return prefix.join(' | ') + '    ';
         };
         return {
@@ -164,14 +161,11 @@ hqDefine('analytics/js/logging', function () {
          * @param {Arguments} args
          */
         logger.fmt.labelArgs = function (labels, args) {
-            var final = _.map(labels, function (label, ind) {
+            return _.compact(_.map(labels, function (label, ind) {
                 if (args[ind]) {
                     return logger.fmt.groupMsg(label, args[ind]);
                 }
-            });
-            return _.filter(final, function (fin) {
-                return !_.isUndefined(fin);
-            });
+            }));
         };
         return logger;
     };

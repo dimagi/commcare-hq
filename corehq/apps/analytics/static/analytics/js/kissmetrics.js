@@ -38,9 +38,7 @@ hqDefine('analytics/js/kissmetrics', function () {
      */
     var _kmqPushCommand = function (commandName, properties, callbackFn, eventName) {
         var command, data;
-        command = _.filter([commandName, eventName, properties, callbackFn], function (a) {
-            return !_.isUndefined(a);
-        });
+        command = _.compact([commandName, eventName, properties, callbackFn]);
         _kmq.pushNew(command);
         data = {
             event: 'km_' + commandName,
