@@ -203,6 +203,13 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         form_data = self.schedule_form.cleaned_data
         return [('CommCareUser', r_id) for r_id in form_data['recipients']]
 
+    def distill_total_iterations(self):
+        form_data = self.schedule_form.cleaned_data
+        if form_data['stop_type'] == ScheduleForm.STOP_NEVER:
+            return TimedSchedule.REPEAT_INDEFINITELY
+
+        return form_data['occurrences']
+
     def process_immediate_schedule(self, content, recipients):
         form_data = self.schedule_form.cleaned_data
         with transaction.atomic():
@@ -219,10 +226,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     def process_daily_schedule(self, content, recipients):
         form_data = self.schedule_form.cleaned_data
         with transaction.atomic():
-            if form_data['stop_type'] == ScheduleForm.STOP_NEVER:
-                total_iterations = TimedSchedule.REPEAT_INDEFINITELY
-            else:
-                total_iterations = form_data['occurrences']
+            total_iterations = self.distill_total_iterations()
 
             if self.is_editing:
                 broadcast = self.broadcast
@@ -236,6 +240,43 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                 schedule = TimedSchedule.create_simple_daily_schedule(
                     self.domain,
                     form_data['send_time'],
+                    content,
+                    total_iterations=total_iterations
+                )
+                broadcast = ScheduledBroadcast(
+                    domain=self.domain,
+                    schedule=schedule,
+                )
+
+            broadcast.name = form_data['schedule_name']
+            broadcast.start_date = form_data['start_date']
+            broadcast.recipients = recipients
+            broadcast.save()
+        refresh_timed_schedule_instances.delay(schedule, recipients, start_date=form_data['start_date'])
+
+    def process_monthly_schedule(self, content, recipients):
+        form_data = self.schedule_form.cleaned_data
+        with transaction.atomic():
+            total_iterations = self.distill_total_iterations()
+
+            positive_days = [day for day in form_data['days_of_month'] if day > 0]
+            negative_days = [day for day in form_data['days_of_month'] if day < 0]
+            sorted_days_of_month = sorted(positive_days) + sorted(negative_days)
+
+            if self.is_editing:
+                broadcast = self.broadcast
+                schedule = broadcast.schedule
+                schedule.set_simple_monthly_schedule(
+                    form_data['send_time'],
+                    sorted_days_of_month,
+                    content,
+                    total_iterations=total_iterations
+                )
+            else:
+                schedule = TimedSchedule.create_simple_monthly_schedule(
+                    self.domain,
+                    form_data['send_time'],
+                    sorted_days_of_month,
                     content,
                     total_iterations=total_iterations
                 )
@@ -264,6 +305,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.process_immediate_schedule(content, recipients)
             elif form_data['send_frequency'] == ScheduleForm.SEND_DAILY:
                 self.process_daily_schedule(content, recipients)
+            elif form_data['send_frequency'] == ScheduleForm.SEND_MONTHLY:
+                self.process_monthly_schedule(content, recipients)
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
@@ -333,8 +376,23 @@ class EditScheduleView(CreateScheduleView):
                 else:
                     result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
                     result['occurrences'] = schedule.total_iterations
-        else:
-            raise UnsupportedScheduleError("Could not determine schedule type")
+            elif (
+                schedule.schedule_length == TimedSchedule.MONTHLY and
+                len(set([e.time for e in schedule.memoized_events])) == 1 and
+                schedule.start_offset == 0 and
+                schedule.start_day_of_week == TimedSchedule.ANY_DAY
+            ):
+                result['send_frequency'] = ScheduleForm.SEND_MONTHLY
+                result['days_of_month'] = [str(e.day) for e in schedule.memoized_events]
+                result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
+                result['start_date'] = broadcast.start_date.strftime('%Y-%m-%d')
+                if schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+                    result['stop_type'] = ScheduleForm.STOP_NEVER
+                else:
+                    result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
+                    result['occurrences'] = schedule.total_iterations
+            else:
+                raise UnsupportedScheduleError("Could not determine schedule type")
 
         return result
 
