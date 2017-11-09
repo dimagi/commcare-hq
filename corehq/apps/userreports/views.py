@@ -1070,18 +1070,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
-            'can_rebuild': self.can_rebuild,
             'used_by_reports': self.get_reports(),
         }
-
-    @property
-    def can_rebuild(self):
-        # Don't allow rebuilds if there have been more than 1 million forms or cases
-        domain = DomainES().in_domains(self.domain).run().hits[0]
-        doc_type = self.config.referenced_doc_type
-        if doc_type == 'XFormInstance':
-            return domain.get('cp_n_forms', 0) < 1000000
-        return True
 
     @property
     def page_url(self):
