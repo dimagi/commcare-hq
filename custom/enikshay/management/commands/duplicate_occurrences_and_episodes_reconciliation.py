@@ -297,13 +297,14 @@ def get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=False):
     for case in all_cases:
         last_user_edit_on_phone = last_user_edit_at(case)
         if last_user_edit_on_phone:
-            if recently_modified_time and recently_modified_time < last_user_edit_on_phone:
+            if recently_modified_time is None:
+                recently_modified_time = last_user_edit_on_phone
+                recently_modified_case = case
+            elif recently_modified_time and recently_modified_time < last_user_edit_on_phone:
+                recently_modified_time = last_user_edit_on_phone
                 recently_modified_case = case
             elif recently_modified_time and recently_modified_time == last_user_edit_on_phone:
                 print("This looks like a super edge case that needs to be looked at. Not blocking as of now.")
-            else:
-                recently_modified_time = last_user_edit_on_phone
-                recently_modified_case = case
 
     return recently_modified_case
 
