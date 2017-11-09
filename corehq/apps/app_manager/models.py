@@ -5287,8 +5287,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
-    mobile_ucr_sync_interval = IntegerProperty()
-
     add_ons = DictProperty()
 
     def has_modules(self):
