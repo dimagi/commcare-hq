@@ -34,28 +34,12 @@ from corehq.apps.app_manager.dbaccessors import (
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
 
-def _should_sync(restore_state, is_v2):
+def _should_sync(restore_state):
     last_sync_log = restore_state.last_sync_log
     if not last_sync_log or restore_state.overwrite_cache:
         return True
 
-    sync_interval = None
-    if not is_v2:
-        # in v2 sync delay is handled per report in the app
-        sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
-        if sync_interval is None and restore_state.params.app:
-            app = restore_state.params.app
-            if restore_state.params.app.copy_of:
-                # get sync interval from latest app version so that we don't have to deploy a new version
-                # to make changes to the sync interval
-                try:
-                    app = get_brief_app(restore_state.domain, restore_state.params.app.copy_of)
-                except NoResultFound:
-                    pass
-            sync_interval = app.mobile_ucr_sync_interval
-        if sync_interval is None:
-            sync_interval = restore_state.project.default_mobile_ucr_sync_interval
-
+    sync_interval = restore_state.project.default_mobile_ucr_sync_interval
     sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
     return (
         not last_sync_log or
@@ -65,9 +49,9 @@ def _should_sync(restore_state, is_v2):
 
 
 class BaseReportFixturesProvider(FixtureProvider):
-    def uses_reports(self, restore_state, is_v2=False):
+    def uses_reports(self, restore_state):
         restore_user = restore_state.restore_user
-        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state, is_v2):
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return False
 
         if toggles.PREVENT_MOBILE_UCR_SYNC.enabled(restore_user.domain):
@@ -270,7 +254,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports(restore_state, is_v2=True):
+        if not self.uses_reports(restore_state):
             return []
 
         restore_user = restore_state.restore_user
