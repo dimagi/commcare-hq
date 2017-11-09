@@ -103,8 +103,8 @@ DISTRICT_ID_TO_LOCATION = {
     '1036': 'fa7472fe0c9751e5d14595c1a0859e8e',
     '1037': 'fa7472fe0c9751e5d14595c1a08598bf',
     '1038': 'fa7472fe0c9751e5d14595c1a08596e7',
-    '1193': '',  # N/A
-    '1194': '',  # N/A
+    # '1193': '',  # N/A
+    # '1194': '',  # N/A
     '1344': 'fa7472fe0c9751e5d14595c1a08b9355',
     '1347': 'fa7472fe0c9751e5d14595c1a08b8a7c',
     '1350': 'fa7472fe0c9751e5d14595c1a08b846c',
@@ -143,30 +143,30 @@ DISTRICT_ID_TO_LOCATION = {
     '156': 'fa7472fe0c9751e5d14595c1a08f6416',
     '157': 'fa7472fe0c9751e5d14595c1a08bf499',
     '189': 'fa7472fe0c9751e5d14595c1a09001de',
-    '2316': 'fa7472fe0c9751e5d14595c1a088d17e',  # same
-    '2317': 'fa7472fe0c9751e5d14595c1a088d17e',  # same
-    '2318': 'Adilabad', # there are two
+    # '2316': 'fa7472fe0c9751e5d14595c1a088d17e',  # same
+    # '2317': 'fa7472fe0c9751e5d14595c1a088d17e',  # same
+    # '2318': 'Adilabad', # there are two
     '2319': 'fa7472fe0c9751e5d14595c1a0889d84',
     '2320': 'fa7472fe0c9751e5d14595c1a0888ef8',
     '2321': 'fa7472fe0c9751e5d14595c1a088897d',
     '2322': 'fa7472fe0c9751e5d14595c1a088869e',
     '2323': 'fa7472fe0c9751e5d14595c1a0888633',
-    '2324': 'Hyderabad',  # two
-    '2325': 'Karimnagar',  # two
-    '2326': 'Khammam',  # two
+    # '2324': 'Hyderabad',  # two
+    # '2325': 'Karimnagar',  # two
+    # '2326': 'Khammam',  # two
     '2327': 'fa7472fe0c9751e5d14595c1a0885e6a',
     '2328': 'fa7472fe0c9751e5d14595c1a0885a81',
-    '2329': 'Mahbubnagar',  # two
-    '2330': 'Medak',  # two
-    '2331': 'Nalgonda', # two
+    # '2329': 'Mahbubnagar',  # two
+    # '2330': 'Medak',  # two
+    # '2331': 'Nalgonda', # two
     '2332': 'fa7472fe0c9751e5d14595c1a08835b8',
-    '2333': 'Nizamabad', # two
+    # '2333': 'Nizamabad', # two
     '2334': 'fa7472fe0c9751e5d14595c1a0882a37',
-    '2335': 'Rangareddi', # two
+    # '2335': 'Rangareddi', # two
     '2336': 'fa7472fe0c9751e5d14595c1a0881851',
     '2337': 'fa7472fe0c9751e5d14595c1a088177d',
     '2338': 'fa7472fe0c9751e5d14595c1a088088a',
-    '2339': 'Warangal', # two
+    # '2339': 'Warangal', # two
     '2340': 'fa7472fe0c9751e5d14595c1a088053a',
     '2341': 'fa7472fe0c9751e5d14595c1a087e8bc',
     '2342': 'fa7472fe0c9751e5d14595c1a087e31d',
@@ -206,33 +206,33 @@ DISTRICT_ID_TO_LOCATION = {
     '2376': 'fa7472fe0c9751e5d14595c1a086ae0a',
     '2377': 'fa7472fe0c9751e5d14595c1a0857ab5',
     '2378': 'fa7472fe0c9751e5d14595c1a0853deb',
-    '2379': 'Bilaspur', # two
+    # '2379': 'Bilaspur', # two
     '2380': 'fa7472fe0c9751e5d14595c1a0849a23',
     '2381': 'fa7472fe0c9751e5d14595c1a08520bc',
     '2382': 'fa7472fe0c9751e5d14595c1a08511a2',
-    '2383': 'Janjgir Champa', # ?
+    # '2383': 'Janjgir Champa', # ?
     '2384': 'fa7472fe0c9751e5d14595c1a084f715',
     '2385': 'fa7472fe0c9751e5d14595c1a0847e27',
-    '2386': 'Kawardha',
+    # '2386': 'Kawardha',
     '2387': 'fa7472fe0c9751e5d14595c1a084e21b',
     '2388': 'fa7472fe0c9751e5d14595c1a084db7f',
     '2389': 'fa7472fe0c9751e5d14595c1a084ccc6',
-    '2390': 'Raigarh', # two
+    # '2390': 'Raigarh', # two
     '2391': 'fa7472fe0c9751e5d14595c1a084b70f',
     '2392': 'fa7472fe0c9751e5d14595c1a084ab66',
-    '2393': 'Surguja',
+    # '2393': 'Surguja',
     '2394': 'fa7472fe0c9751e5d14595c1a084744f',
     '2395': 'fa7472fe0c9751e5d14595c1a08450af',
     '2396': 'fa7472fe0c9751e5d14595c1a0845c3e',
-    '2397': 'Central',
-    '2398': 'East',
-    '2399': 'New Delhi',
-    '2400': 'North',
-    '2401': 'North East',
-    '2402': 'North West',
-    '2403': 'South',
-    '2404': 'South West',
-    '2405': 'West',
+    # '2397': 'Central',
+    # '2398': 'East',
+    # '2399': 'New Delhi',
+    # '2400': 'North',
+    # '2401': 'North East',
+    # '2402': 'North West',
+    # '2403': 'South',
+    # '2404': 'South West',
+    # '2405': 'West',
     '2406': 'fa7472fe0c9751e5d14595c1a08342b7',
     '2407': 'fa7472fe0c9751e5d14595c1a0833ff2',
     '2408': 'fa7472fe0c9751e5d14595c1a08324ef',
@@ -254,9 +254,9 @@ DISTRICT_ID_TO_LOCATION = {
     '2424': 'fa7472fe0c9751e5d14595c1a0828b1e',
     '2425': 'fa7472fe0c9751e5d14595c1a0828411',
     '2426': 'fa7472fe0c9751e5d14595c1a0828140',
-    '2427': 'Bilaspur',
+    # '2427': 'Bilaspur',  # two
     '2428': 'fa7472fe0c9751e5d14595c1a08250cf',
-    '2429': 'Hamirpur',
+    # '2429': 'Hamirpur',  # two
     '2430': 'fa7472fe0c9751e5d14595c1a0823a9f',
     '2431': 'fa7472fe0c9751e5d14595c1a08237cf',
     '2432': 'fa7472fe0c9751e5d14595c1a0822a67',
@@ -276,8 +276,8 @@ DISTRICT_ID_TO_LOCATION = {
     '2446': 'fa7472fe0c9751e5d14595c1a081bdfb',
     '2447': 'fa7472fe0c9751e5d14595c1a081b8f2',
     '2448': 'fa7472fe0c9751e5d14595c1a081a7bd',
-    '2449': 'Punch',
-    '2450': 'Rajauri',
+    # '2449': 'Punch',
+    '2450': 'fa7472fe0c9751e5d14595c1a0819afa',
     '2451': 'fa7472fe0c9751e5d14595c1a081970d',
     '2452': 'fa7472fe0c9751e5d14595c1a0818de6',
     '2453': 'fa7472fe0c9751e5d14595c1a0817d61',
@@ -289,10 +289,10 @@ DISTRICT_ID_TO_LOCATION = {
     '2459': 'fa7472fe0c9751e5d14595c1a0814944',
     '2460': 'fa7472fe0c9751e5d14595c1a0813d9e',
     '2461': 'fa7472fe0c9751e5d14595c1a0813274',
-    '2462': 'Hazaribag',
+    '2462': 'fa7472fe0c9751e5d14595c1a0812400',
     '2463': 'fa7472fe0c9751e5d14595c1a08108fe',
     '2464': 'fa7472fe0c9751e5d14595c1a0810567',
-    '2465': 'Pakaur',
+    '2465': 'fa7472fe0c9751e5d14595c1a080f63c',
     '2466': 'fa7472fe0c9751e5d14595c1a080ec10',
     '2467': 'fa7472fe0c9751e5d14595c1a080e9ea',
     '2468': 'fa7472fe0c9751e5d14595c1a080db24',
@@ -300,11 +300,11 @@ DISTRICT_ID_TO_LOCATION = {
     '2470': 'fa7472fe0c9751e5d14595c1a080d142',
     '2471': 'fa7472fe0c9751e5d14595c1a0807b8a',
     '2472': 'fa7472fe0c9751e5d14595c1a0809830',
-    '2473': 'Bangalore',
+    # '2473': 'Bangalore',  # three
     '2474': 'fa7472fe0c9751e5d14595c1a0808b4a',
     '2475': 'fa7472fe0c9751e5d14595c1a080790c',
     '2476': 'fa7472fe0c9751e5d14595c1a0806d9c',
-    '2477': 'Bijapur',
+    # '2477': 'Bijapur',  # two
     '2478': 'fa7472fe0c9751e5d14595c1a080512e',
     '2479': 'fa7472fe0c9751e5d14595c1a08046fd',
     '2480': 'fa7472fe0c9751e5d14595c1a08045b1',
@@ -352,7 +352,7 @@ DISTRICT_ID_TO_LOCATION = {
     '2522': 'fa7472fe0c9751e5d14595c1a07e8932',
     '2523': 'fa7472fe0c9751e5d14595c1a07e7b67',
     '2524': 'fa7472fe0c9751e5d14595c1a07e7230',
-    '2525': 'East Nimar',
+    # '2525': 'East Nimar',
     '2526': 'fa7472fe0c9751e5d14595c1a07e6db2',
     '2527': 'fa7472fe0c9751e5d14595c1a07e6a63',
     '2528': 'fa7472fe0c9751e5d14595c1a07e5f37',
@@ -364,7 +364,7 @@ DISTRICT_ID_TO_LOCATION = {
     '2534': 'fa7472fe0c9751e5d14595c1a07e3357',
     '2535': 'fa7472fe0c9751e5d14595c1a07e299d',
     '2536': 'fa7472fe0c9751e5d14595c1a07e19f8',
-    '2537': 'Narsimhapur',
+    '2537': 'fa7472fe0c9751e5d14595c1a07e17e0',
     '2538': 'fa7472fe0c9751e5d14595c1a07e11c1',
     '2539': 'fa7472fe0c9751e5d14595c1a07e0eed',
     '2540': 'fa7472fe0c9751e5d14595c1a07e0a48',
@@ -384,7 +384,7 @@ DISTRICT_ID_TO_LOCATION = {
     '2554': 'fa7472fe0c9751e5d14595c1a07d89ed',
     '2555': 'fa7472fe0c9751e5d14595c1a07d88e1',
     '2556': 'fa7472fe0c9751e5d14595c1a07d836d',
-    '2557': 'West Nimar',
+    # '2557': 'West Nimar',
     '2558': 'fa7472fe0c9751e5d14595c1a07d71c9',
     '2559': 'fa7472fe0c9751e5d14595c1a07d6857',
     '2560': 'fa7472fe0c9751e5d14595c1a07d6105',
@@ -447,10 +447,10 @@ DISTRICT_ID_TO_LOCATION = {
     '2617': 'fa7472fe0c9751e5d14595c1a07b7fc3',
     '2618': 'fa7472fe0c9751e5d14595c1a07b74b6',
     '2619': 'fa7472fe0c9751e5d14595c1a07b6db8',
-    '2620': 'Karaikal',
-    '2621': 'Mahe',
-    '2622': 'Pondicherry',
-    '2623': 'Yanam',
+    # '2620': 'Karaikal',
+    # '2621': 'Mahe', # investigate
+    # '2622': 'Pondicherry',
+    # '2623': 'Yanam',
     '2624': 'fa7472fe0c9751e5d14595c1a07b3c74',
     '2625': 'fa7472fe0c9751e5d14595c1a07b2eaf',
     '2626': 'fa7472fe0c9751e5d14595c1a07b2185',
@@ -486,7 +486,7 @@ DISTRICT_ID_TO_LOCATION = {
     '2656': 'fa7472fe0c9751e5d14595c1a079f2d2',
     '2657': 'fa7472fe0c9751e5d14595c1a079e580',
     '2658': 'fa7472fe0c9751e5d14595c1a079cbae',
-    '2659': 'Jalor',
+    '2659': 'fa7472fe0c9751e5d14595c1a079c613',
     '2660': 'fa7472fe0c9751e5d14595c1a079c220',
     '2661': 'fa7472fe0c9751e5d14595c1a079bd78',
     '2662': 'fa7472fe0c9751e5d14595c1a079bb4c',
@@ -500,11 +500,11 @@ DISTRICT_ID_TO_LOCATION = {
     '2670': 'fa7472fe0c9751e5d14595c1a07973d7',
     '2671': 'fa7472fe0c9751e5d14595c1a07973a7',
     '2672': 'fa7472fe0c9751e5d14595c1a07966e6',
-    '2673': 'East',
-    '2674': 'North',
-    '2675': 'South',
-    '2676': 'West',
-    '2677': 'Ariyalur',
+    # '2673': 'East',
+    # '2674': 'North',
+    # '2675': 'South',
+    # '2676': 'West',
+    # '2677': 'Ariyalur',
     '2678': 'fa7472fe0c9751e5d14595c1a0790c8a',
     '2679': 'fa7472fe0c9751e5d14595c1a0790c15',
     '2680': 'fa7472fe0c9751e5d14595c1a07903b8',
@@ -527,7 +527,7 @@ DISTRICT_ID_TO_LOCATION = {
     '2697': 'fa7472fe0c9751e5d14595c1a0783955',
     '2698': 'fa7472fe0c9751e5d14595c1a0782e0e',
     '2699': 'fa7472fe0c9751e5d14595c1a0782bcf',
-    '2700': 'Thoothukkudi',
+    '2700': 'fa7472fe0c9751e5d14595c1a0782836',
     '2701': 'fa7472fe0c9751e5d14595c1a0782609',
     '2702': 'fa7472fe0c9751e5d14595c1a078224b',
     '2703': 'fa7472fe0c9751e5d14595c1a0781758',
@@ -554,7 +554,7 @@ DISTRICT_ID_TO_LOCATION = {
     '2724': 'fa7472fe0c9751e5d14595c1a076a5dc',
     '2725': 'fa7472fe0c9751e5d14595c1a07695f9',
     '2726': 'fa7472fe0c9751e5d14595c1a0768640',
-    '2727': 'Bulandshahr',
+    '2727': 'fa7472fe0c9751e5d14595c1a0768062',
     '2728': 'fa7472fe0c9751e5d14595c1a0768004',
     '2729': 'fa7472fe0c9751e5d14595c1a076708d',
     '2730': 'fa7472fe0c9751e5d14595c1a0766eb0',
@@ -564,12 +564,12 @@ DISTRICT_ID_TO_LOCATION = {
     '2734': 'fa7472fe0c9751e5d14595c1a076511b',
     '2735': 'fa7472fe0c9751e5d14595c1a07647a0',
     '2736': 'fa7472fe0c9751e5d14595c1a0763f15',
-    '2737': 'Gautam Buddha Nagar',
+    '2737': 'fa7472fe0c9751e5d14595c1a0763236',
     '2738': 'fa7472fe0c9751e5d14595c1a07622c6',
     '2739': 'fa7472fe0c9751e5d14595c1a07618a6',
     '2740': 'fa7472fe0c9751e5d14595c1a07608cd',
     '2741': 'fa7472fe0c9751e5d14595c1a075fa29',
-    '2742': 'Hamirpur',
+    # '2742': 'Hamirpur',  # two
     '2743': 'fa7472fe0c9751e5d14595c1a075e3ea',
     '2744': 'fa7472fe0c9751e5d14595c1a075d60f',
     '2745': 'fa7472fe0c9751e5d14595c1a075c8e3',
@@ -594,14 +594,14 @@ DISTRICT_ID_TO_LOCATION = {
     '2764': 'fa7472fe0c9751e5d14595c1a07523e7',
     '2765': 'fa7472fe0c9751e5d14595c1a0751a25',
     '2766': 'fa7472fe0c9751e5d14595c1a075198c',
-    '2767': 'Pratapgarh',
+    # '2767': 'Pratapgarh',  # two
     '2768': 'fa7472fe0c9751e5d14595c1a075016c',
     '2769': 'fa7472fe0c9751e5d14595c1a074f24e',
     '2770': 'fa7472fe0c9751e5d14595c1a074efc3',
     '2771': 'fa7472fe0c9751e5d14595c1a074d9d6',
     '2772': 'fa7472fe0c9751e5d14595c1a074cf4f',
     '2773': 'fa7472fe0c9751e5d14595c1a074cd72',
-    '2774': 'Shrawasti',
+    '2774': 'fa7472fe0c9751e5d14595c1a074beb8',
     '2775': 'fa7472fe0c9751e5d14595c1a074b433',
     '2776': 'fa7472fe0c9751e5d14595c1a074ae56',
     '2777': 'fa7472fe0c9751e5d14595c1a074a7c1',
@@ -619,7 +619,7 @@ DISTRICT_ID_TO_LOCATION = {
     '2789': 'fa7472fe0c9751e5d14595c1a0744788',
     '2790': 'fa7472fe0c9751e5d14595c1a0743ec7',
     '2791': 'fa7472fe0c9751e5d14595c1a0743093',
-    '2792': 'Udham Singh Nagar',
+    '2792': 'fa7472fe0c9751e5d14595c1a074215e',
     '2793': 'fa7472fe0c9751e5d14595c1a07411ef',
     '2794': 'fa7472fe0c9751e5d14595c1a073c168',
     '2795': 'fa7472fe0c9751e5d14595c1a073e998',
@@ -632,12 +632,12 @@ DISTRICT_ID_TO_LOCATION = {
     '2802': 'fa7472fe0c9751e5d14595c1a0b30854',
     '2803': 'fa7472fe0c9751e5d14595c1a0b2fccf',
     '2804': 'fa7472fe0c9751e5d14595c1a0b2fbb9',
-    '2805': 'Medinipur',
+    # '2805': 'Medinipur',  # two
     '2806': 'fa7472fe0c9751e5d14595c1a0b2cf8c',
     '2807': 'fa7472fe0c9751e5d14595c1a0b2c6e6',
-    '2808': 'North Twenty Four Parganas',
+    # '2808': 'North Twenty Four Parganas',
     '2809': 'fa7472fe0c9751e5d14595c1a0b2c23a',
-    '2810': 'South Twenty Four Parganas',
+    # '2810': 'South Twenty Four Parganas',
     '2811': 'fa7472fe0c9751e5d14595c1a0b29115',
     '598': 'fa7472fe0c9751e5d14595c1a0913ffe',
     '599': 'fa7472fe0c9751e5d14595c1a0913dfd',
@@ -674,8 +674,8 @@ DISTRICT_ID_TO_LOCATION = {
     '630': 'fa7472fe0c9751e5d14595c1a08fa6f9',
     '631': 'fa7472fe0c9751e5d14595c1a08f9d9b',
     '632': 'fa7472fe0c9751e5d14595c1a08f8f29',
-    '633': 'Not Available',
-    '634': 'Not sure',
+    # '633': 'Not Available',
+    # '634': 'Not sure',
     '635': 'fa7472fe0c9751e5d14595c1a08f87e3',
     '636': 'fa7472fe0c9751e5d14595c1a08f86ca',
     '637': 'fa7472fe0c9751e5d14595c1a08f7a12',
@@ -693,5 +693,5 @@ DISTRICT_ID_TO_LOCATION = {
     '649': 'fa7472fe0c9751e5d14595c1a08ee1a2',
     '650': 'fa7472fe0c9751e5d14595c1a08ebf76',
     '651': 'fa7472fe0c9751e5d14595c1a08ebf27',
-    '652': 'fa7472fe0c9751e5d14595c1a08ebb4a'
+    '652': 'fa7472fe0c9751e5d14595c1a08ebb4a',
 }
