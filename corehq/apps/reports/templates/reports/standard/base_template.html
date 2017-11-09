@@ -66,6 +66,18 @@
     </ol>
 {% endblock %}
 
+{% block modals %}{{ block.super }}
+  {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
+      <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+           style="margin-left: 12px"
+           data-target="#create-new-report-left-nav"
+           data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
+           role="alert">
+          {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
+        </div>
+  {% endif %}
+{% endblock %}
+
 {% block page_content %}
     {% initial_page_data 'js_options' report.js_options %}
     {% if request.datespan %}
