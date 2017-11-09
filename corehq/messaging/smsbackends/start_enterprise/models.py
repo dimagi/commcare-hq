@@ -99,7 +99,7 @@ class StartEnterpriseBackend(SQLSMSBackend):
         self.handle_response(msg_obj, response.status_code, response.text)
 
     def record_message_ids(self, msg_obj, response_text):
-        for message_id in response_text.split(','):
+        for message_id in set(response_text.split(',')):
             StartEnterpriseDeliveryReceipt.objects.create(
                 sms_id=msg_obj.couch_id,
                 message_id=message_id
