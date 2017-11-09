@@ -179,7 +179,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         dt for dt in rrule(WEEKLY, dtstart=selected_month, until=last_day_of_selected_month, byweekday=MO)
     ]
     for date in open_count_dates:
-        first_day_of_week =date - timedelta(days=date.isoweekday() - 1)
+        first_day_of_week = date - timedelta(days=date.isoweekday() - 1)
         milliseconds = int(first_day_of_week.strftime("%s")) * 1000
         open_count_chart[milliseconds] = 0
 
