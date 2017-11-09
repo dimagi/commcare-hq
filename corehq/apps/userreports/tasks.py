@@ -60,10 +60,9 @@ def _get_config_by_id(indicator_config_id):
         return DataSourceConfiguration.get(indicator_config_id)
 
 
-def _build_indicators(config, document_store, relevant_ids, resume_helper):
+def _build_indicators(config, document_store, relevant_ids):
     adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
 
-    last_id = None
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
             AsyncIndicator.update_record(
@@ -72,11 +71,6 @@ def _build_indicators(config, document_store, relevant_ids, resume_helper):
         else:
             # save is a noop if the filter doesn't match
             adapter.best_effort_save(doc)
-            last_id = doc.get('_id')
-            resume_helper.remove_id(last_id)
-
-    if last_id:
-        resume_helper.add_id(last_id)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
@@ -155,11 +149,11 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False,
                 break
             relevant_ids.append(relevant_id)
             if len(relevant_ids) >= ID_CHUNK_SIZE:
-                _build_indicators(config, document_store, relevant_ids, resume_helper)
+                _build_indicators(config, document_store, relevant_ids)
                 relevant_ids = []
 
         if relevant_ids:
-            _build_indicators(config, document_store, relevant_ids, resume_helper)
+            _build_indicators(config, document_store, relevant_ids)
 
         resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
 
