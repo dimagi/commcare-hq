@@ -1,6 +1,12 @@
 from __future__ import absolute_import
-from django.test import SimpleTestCase
-from corehq.apps.domain.auth import J2ME, ANDROID, determine_authtype_from_request, guess_phone_type_from_user_agent
+import requests
+from django.test import SimpleTestCase, RequestFactory
+from ..auth import (
+    J2ME,
+    ANDROID,
+    determine_authtype_from_request,
+    guess_phone_type_from_user_agent,
+)
 
 
 class TestPhoneType(SimpleTestCase):
@@ -154,11 +160,11 @@ class TestDetermineAuthType(SimpleTestCase):
 
         return FakeRequest(user_agent, auth_header)
 
-    def test_basic_is_default(self):
-        self.assertEqual('basic', determine_authtype_from_request(self._mock_request()))
+    def test_digest_is_default(self):
+        self.assertEqual('digest', determine_authtype_from_request(self._mock_request()))
 
     def test_override_default(self):
-        self.assertEqual('digest', determine_authtype_from_request(self._mock_request(), default='digest'))
+        self.assertEqual('digest', determine_authtype_from_request(self._mock_request()))
 
     def test_digest_header_overrides_default(self):
         self.assertEqual('digest',
@@ -166,8 +172,7 @@ class TestDetermineAuthType(SimpleTestCase):
 
     def test_basic_header_overrides_default(self):
         self.assertEqual('basic',
-                         determine_authtype_from_request(self._mock_request(auth_header='Basic whatever'),
-                                                         default='digest'))
+                         determine_authtype_from_request(self._mock_request(auth_header='Basic whatever')))
 
     def test_user_agent_beats_header(self):
         # todo: we may want to change the behavior of this test and have the header win.
@@ -175,3 +180,51 @@ class TestDetermineAuthType(SimpleTestCase):
         self.assertEqual('basic',
                          determine_authtype_from_request(self._mock_request(user_agent='Android',
                                                                             auth_header='Digest whatever')))
+
+
+class TestDetermineAuthTypeFromRequest(SimpleTestCase):
+    """
+    Similar approach to the above test case, but here we use python requests to
+    set the headers
+    """
+
+    def get_django_request(self, auth=None, headers=None):
+        def to_django_header(header_key):
+            # python simple_server.WSGIRequestHandler does basically this:
+            return u'HTTP_' + header_key.upper().replace('-', '_')
+
+        req = (requests.Request(
+            'GET',
+            'https://example.com',
+            auth=auth,
+            headers=headers,
+        ).prepare())
+
+        return RequestFactory().generic(
+            method=req.method,
+            path=req.path_url,
+            data=req.body,
+            **{to_django_header(k): v for k, v in req.headers.items()}
+        )
+
+    def test_basic_auth(self):
+        request = self.get_django_request(auth=requests.auth.HTTPBasicAuth('foo', 'bar'))
+        self.assertEqual('basic', determine_authtype_from_request(request))
+
+    def test_digest_auth(self):
+        request = self.get_django_request(auth=requests.auth.HTTPDigestAuth('foo', 'bar'))
+        self.assertEqual('digest', determine_authtype_from_request(request))
+
+    def test_token_auth(self):
+        # http://www.django-rest-framework.org/api-guide/authentication/#tokenauthentication
+        request = self.get_django_request(headers={
+            'Authorization': 'Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b'
+        })
+        self.assertEqual('token', determine_authtype_from_request(request))
+
+    def test_api_auth(self):
+        # http://django-tastypie.readthedocs.io/en/latest/authentication.html#apikeyauthentication
+        request = self.get_django_request(headers={
+            'Authorization': 'ApiKey username:api_key'
+        })
+        self.assertEqual('api_key', determine_authtype_from_request(request))
