@@ -77,6 +77,11 @@ hqDefine('analytics/js/logging', function () {
         return msg;
     };
 
+    /**
+     * Used to format console log messages better by combining them into
+     * groups so that it's easier to skim data vs info text on the console output
+     * and improve readability.
+     */
     var Group = function (title, message) {
         var grp = {};
         grp.title = title;
