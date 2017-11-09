@@ -94,7 +94,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, doc_id_provider=None):
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
@@ -107,7 +107,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, doc_id_p
             config.save()
 
         adapter.build_table()
-        _iteratively_build_table(config, in_place=True, doc_id_provider=doc_id_provider)
+        _iteratively_build_table(config, in_place=True)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -122,8 +122,7 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config, resume_helper)
 
 
-def _iteratively_build_table(config, resume_helper=None, in_place=False,
-                             doc_id_provider=None, limit=-1):
+def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
     case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
@@ -141,10 +140,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False,
             config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
         )
 
-        if not doc_id_provider:
-            doc_id_provider = document_store.iter_document_ids()
-
-        for i, relevant_id in enumerate(doc_id_provider):
+        for i, relevant_id in enumerate(document_store.iter_document_ids()):
             if i >= limit > -1:
                 break
             relevant_ids.append(relevant_id)
