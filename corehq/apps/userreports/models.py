@@ -774,7 +774,7 @@ class AsyncIndicator(models.Model):
         ordering = ["date_created"]
 
     @classmethod
-    def update_indicators(cls, change, config_ids):
+    def update_from_kafka_change(cls, change, config_ids):
         doc_id = change.id
         doc_type = change.document['doc_type']
         domain = change.document['domain']
