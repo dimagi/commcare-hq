@@ -121,8 +121,8 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @param {string} name - The name of the event to record.
      * @param {object} properties - optional Properties related to the event being recorded.
      */
-    var trackClick = function (selector, name, properties) {
-        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click');
+    var internalClick = function (selector, name, properties) {
+        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
         _kmqPushCommand('trackClick', properties, undefined, name);
     };
 
@@ -143,7 +143,7 @@ hqDefine('analytics/js/kissmetrics', function () {
         identifyTraits: identifyTraits,
         track: {
             event: trackEvent,
-            click: trackClick,
+            internalClick: internalClick,
             outboundLink: trackOutboundLink,
         },
     };
