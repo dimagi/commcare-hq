@@ -123,14 +123,6 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config, resume_helper)
 
 
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def recalculate_indicators(indicator_config_id, initiated_by=None):
-    config = _get_config_by_id(indicator_config_id)
-    adapter = get_indicator_adapter(config)
-    doc_id_provider = adapter.get_distinct_values('doc_id', 10000)[0]
-    rebuild_indicators_in_place(indicator_config_id, initiated_by, doc_id_provider)
-
-
 def _iteratively_build_table(config, resume_helper=None, in_place=False,
                              doc_id_provider=None, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
