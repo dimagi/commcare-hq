@@ -364,8 +364,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
             expression = config_filter['expression']
             if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
-                multiple = config_filter['operator'] == 'in'
-                return config_filter['property_value'] if multiple else config_filter['property_value']
+                prop_value = config_filter['property_value']
+                if not isinstance(prop_value, list):
+                    prop_value = [prop_value]
+                return prop_value
             return [None]
 
         if self.referenced_doc_type == 'CommCareCase':
