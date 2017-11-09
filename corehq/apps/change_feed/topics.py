@@ -94,12 +94,12 @@ def _get_topic_offsets(topics, latest):
     for topic in topics:
         partitions = list(partition_meta.get(topic, {}))
         for partition in partitions:
-            offsets[(topic, partition)] = None
-            offset_requests.append(OffsetRequest(topic, partition, time_value, num_offsets))
+            offsets[(kafka_bytestring(topic), partition)] = None
+            offset_requests.append(OffsetRequest(kafka_bytestring(topic), partition, time_value, num_offsets))
 
     responses = client.send_offset_request(offset_requests)
     for r in responses:
-        offsets[(r.topic, r.partition)] = r.offsets[0]
+        offsets[(kafka_bytestring(r.topic), r.partition)] = r.offsets[0]
 
     return offsets
 
