@@ -801,8 +801,6 @@ LESS_B3_PATHS = {
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
 
-LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
-
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
 INVOICE_PREFIX = ''
