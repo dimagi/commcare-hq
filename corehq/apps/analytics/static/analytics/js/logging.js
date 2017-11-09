@@ -10,11 +10,19 @@
  */
 hqDefine('analytics/js/logging', function () {
     'use strict';
+
+    var _makeLevel = function (name, style) {
+        return {
+            name: name,
+            style: style,
+        };
+    };
+
     var _LEVELS = {
-        warning: ['WARNING', 'color: #994f00;'],
-        verbose: ['VERBOSE', 'color: #685c53;'],
-        debug: ['DEBUG', 'color: #004ebc;'],
-        deprecated: ['DEPRECATED', 'color: #e53e30;'],
+        warning: _makeLevel('WARNING', 'color: #994f00;'),
+        verbose: _makeLevel('VERBOSE', 'color: #685c53;'),
+        debug: _makeLevel('DEBUG', 'color: #004ebc;'),
+        deprecated: _makeLevel('DEPRECATED', 'color: #e53e30;'),
     };
 
     var _printPretty = function (message) {
@@ -56,7 +64,7 @@ hqDefine('analytics/js/logging', function () {
 
     var _getStyle = function (level) {
         var levelOptions = _LEVELS[level];
-        return (levelOptions) ? levelOptions[1] : "";
+        return (levelOptions) ? levelOptions.style : "";
     };
 
     var Message = function (value, level) {
@@ -144,7 +152,7 @@ hqDefine('analytics/js/logging', function () {
             return new Level(slug, name, logger);
         };
         _.each(_LEVELS, function (options, key) {
-            logger[key] = logger.createLevel(key, options[0]);
+            logger[key] = logger.createLevel(key, options.name);
         });
         logger.fmt = {};
         logger.fmt.groupMsg = function (title, message) {
