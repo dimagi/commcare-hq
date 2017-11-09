@@ -146,7 +146,7 @@ def get_blank_form_xml(form_name):
 def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
-        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS'
+        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id'
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
