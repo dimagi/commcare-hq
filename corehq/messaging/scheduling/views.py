@@ -87,10 +87,12 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         data = []
         for broadcast in broadcasts:
             data.append([
-                broadcast.id,
+                '< delete placeholder >',
                 broadcast.name,
                 self._format_time(broadcast.last_sent_timestamp),
                 broadcast.schedule.active,
+                '< action placeholder >',
+                broadcast.id,
             ])
         return self.datatables_ajax_response(data, total_records)
 
@@ -271,6 +273,9 @@ class EditScheduleView(CreateScheduleView):
     urlname = 'edit_schedule'
     page_title = _('Edit Scheduled Message')
 
+    IMMEDIATE_BROADCAST = 'immediate'
+    SCHEDULED_BROADCAST = 'scheduled'
+
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.broadcast_id])
@@ -279,6 +284,16 @@ class EditScheduleView(CreateScheduleView):
     def is_editing(self):
         return True
 
+    @cached_property
+    def broadcast_class(self):
+        broadcast_type = self.kwargs.get('broadcast_type')
+        if broadcast_type == self.IMMEDIATE_BROADCAST:
+            return ImmediateBroadcast
+        elif broadcast_type == self.SCHEDULED_BROADCAST:
+            return ScheduledBroadcast
+        else:
+            raise Http404()
+
     @property
     def broadcast_id(self):
         return self.kwargs.get('broadcast_id')
@@ -286,8 +301,8 @@ class EditScheduleView(CreateScheduleView):
     @cached_property
     def broadcast(self):
         try:
-            broadcast = ImmediateBroadcast.objects.prefetch_related('schedule').get(pk=self.broadcast_id)
-        except:
+            broadcast = self.broadcast_class.objects.prefetch_related('schedule').get(pk=self.broadcast_id)
+        except self.broadcast_class.DoesNotExist:
             raise Http404()
 
         if broadcast.domain != self.domain:
