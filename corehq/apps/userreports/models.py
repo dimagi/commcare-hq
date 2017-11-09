@@ -774,10 +774,7 @@ class AsyncIndicator(models.Model):
         ordering = ["date_created"]
 
     @classmethod
-    def update_from_kafka_change(cls, change, config_ids):
-        doc_id = change.id
-        doc_type = change.document['doc_type']
-        domain = change.document['domain']
+    def update_record(cls, doc_id, doc_type, domain, config_ids):
         config_ids = sorted(config_ids)
 
         indicator, created = cls.objects.get_or_create(
@@ -796,8 +793,6 @@ class AsyncIndicator(models.Model):
             try:
                 indicator = cls.objects.get(doc_id=doc_id)
             except cls.DoesNotExist:
-                doc_type = change.document['doc_type']
-                domain = change.document['domain']
                 indicator = AsyncIndicator.objects.create(
                     doc_id=doc_id,
                     doc_type=doc_type,
@@ -814,6 +809,12 @@ class AsyncIndicator(models.Model):
                     indicator.save()
 
         return indicator
+
+    @classmethod
+    def update_from_kafka_change(cls, change, config_ids):
+        return cls.update_record(
+            change.id, change.document['doc_type'], change.document['domain'], config_ids
+        )
 
     def update_failure(self, to_remove):
         self.refresh_from_db(fields=['indicator_config_ids'])
