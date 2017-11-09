@@ -90,7 +90,7 @@ class Command(BaseCommand):
         adherence_cases = get_adherence_cases_from_episode(domain, case.case_id)
         if adherence_cases:
             return {
-                adherence_case.case_id: self.send_repeat_record(domain, case.case_id, repeater_id, repeater_type)
+                adherence_case.case_id: self.send_repeat_record(domain, adherence_case.case_id, repeater_id, repeater_type)
                 for adherence_case in adherence_cases
             }
         else:
