@@ -54,7 +54,7 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @param srcUrl
      * @private
      */
-    var _kms = function (srcUrl) {
+    var _addKissmetricsScript = function (srcUrl) {
         logger.verbose.data(srcUrl, "Injected Script");
         _utils.insertAsyncScript(srcUrl);
     };
@@ -64,8 +64,8 @@ hqDefine('analytics/js/kissmetrics', function () {
 
     // Initialize Kissmetrics
     if (_init.apiId) {
-        _kms('//i.kissmetrics.com/i.js');
-        _kms('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
+        _addKissmetricsScript('//i.kissmetrics.com/i.js');
+        _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
     }
 
     // Initialize Kissmetrics AB Tests
