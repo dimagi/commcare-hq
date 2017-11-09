@@ -99,7 +99,7 @@ class Command(BaseCommand):
     def send_treatment_outcome(self, domain, case):
         repeater_id = '3d912c5d00c73e9de5eb6a11c52a7301'
         repeater_type = 'NinetyNineDotsTreatmentOutcomeRepeater'
-        if case.get_case_property('treatment_outcome', '') != '':
+        if case.dynamic_case_properties().get('treatment_outcome', '') != '':
             return self.send_repeat_record(domain, case.case_id, repeater_id, repeater_type)
         else:
             return "No Treatment Outcome"
