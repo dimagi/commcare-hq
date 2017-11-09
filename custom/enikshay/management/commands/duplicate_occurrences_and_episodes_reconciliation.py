@@ -2,7 +2,7 @@ import csv
 
 from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
-
+from django.utils.dateparse import parse_date
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
@@ -73,26 +73,31 @@ class Command(BaseCommand):
         active_episode_confirmed_drtb_cases_count = len(active_episode_confirmed_drtb_cases)
         active_episode_confirmed_tb_cases_count = len(active_episode_confirmed_tb_cases)
 
+        # Only one active case found with confirmed drtb
+        # Simply retain the corresponding occurrence case
         if active_episode_confirmed_drtb_cases_count == 1:
             episode_case_id = active_episode_confirmed_drtb_cases[0].get_id
             retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_id)
+        # Multiple active case found with confirmed drtb
+        # find the most relevant episode case and retain the occurrence associated with it
         elif active_episode_confirmed_drtb_cases_count > 1:
-            relevant_occurrence_cases = []
-            for active_episode_confirmed_drtb_case in active_episode_confirmed_drtb_cases:
-                relevant_occurrence_cases += [get_occurrence_case_from_episode(
-                    DOMAIN, active_episode_confirmed_drtb_case.get_id)]
-            retain_case = get_recently_edited_case_by_user(relevant_occurrence_cases)
+            episode_case_to_retained = get_relevant_episode_case_to_retain(active_episode_confirmed_drtb_cases)
+            retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_to_retained.case_id)
+        # Only one active case found with confirmed tb
+        # Simply retain the corresponding occurrence case
         elif active_episode_confirmed_tb_cases_count == 1:
             episode_case_id = active_episode_confirmed_tb_cases[0].get_id
             retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_id)
+        # Multiple active case found with confirmed tb
+        # find the most relevant episode case and retain the occurrence associated with it
         elif active_episode_confirmed_tb_cases_count > 1:
-            relevant_occurrence_cases = []
-            for active_episode_confirmed_tb_case in active_episode_confirmed_tb_cases:
-                relevant_occurrence_cases += [get_occurrence_case_from_episode(
-                    DOMAIN, active_episode_confirmed_tb_case.get_id)]
-            retain_case = get_recently_edited_case_by_user(relevant_occurrence_cases)
+            episode_case_to_retained = get_relevant_episode_case_to_retain(active_episode_confirmed_tb_cases)
+            retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_to_retained.case_id)
+        # No active case found with confirmed drtb or confirmed tb
+        # find the most relevant episode case and retain the occurrence associated with it
         else:
-            retain_case = get_recently_edited_case_by_user(open_occurrence_cases)
+            episode_case_to_retained = get_relevant_episode_case_to_retain(all_episode_cases)
+            retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_to_retained.case_id)
         self.close_cases(open_occurrence_cases, retain_case, person_case_id, "occurrence")
 
     def close_cases(self, all_cases, retain_case, associated_case_id, reconcilling_case_type):
@@ -206,13 +211,13 @@ class Command(BaseCommand):
         if confirmed_drtb_episode_cases_count == 1:
             retain_case = confirmed_drtb_episode_cases[0]
         elif confirmed_drtb_episode_cases_count > 1:
-            retain_case = get_recently_edited_case_by_user(confirmed_drtb_episode_cases)
+            retain_case = get_relevant_episode_case_to_retain(confirmed_drtb_episode_cases)
         elif confirmed_tb_episode_cases_count == 1:
             retain_case = confirmed_tb_episode_cases[0]
         elif confirmed_tb_episode_cases_count > 1:
-            retain_case = get_recently_edited_case_by_user(confirmed_tb_episode_cases)
+            retain_case = get_relevant_episode_case_to_retain(confirmed_tb_episode_cases)
         else:
-            retain_case = get_recently_edited_case_by_user(episode_cases)
+            retain_case = get_relevant_episode_case_to_retain(episode_cases)
         self.close_cases(episode_cases, retain_case, occurrence_case_id, 'episode')
 
     def get_open_reconciled_episode_cases_for_occurrence(self, occurrence_case_id):
@@ -251,7 +256,42 @@ def last_user_edit_at(case):
             return form.metadata.timeEnd
 
 
-def get_recently_edited_case_by_user(all_cases):
+def get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=False):
+    if not by_last_user_edit:
+        episodes_with_treatment_completed_on_earliest_date = []
+        treatment_completed_earliest_date = None
+        for episode_case in all_cases:
+            episode_treatment_completed_on = episode_case.get_case_property('treatment_card_completed_date')
+            if not treatment_completed_earliest_date and episode_treatment_completed_on:
+                # found first case with treatment_card_completed_date
+                # so just consider this as the first ever completed case
+                treatment_completed_earliest_date = parse_date(episode_treatment_completed_on)
+                episodes_with_treatment_completed_on_earliest_date = [episode_case]
+            elif treatment_completed_earliest_date and episode_treatment_completed_on:
+                episode_treatment_completed_on = parse_date(episode_treatment_completed_on)
+                # found a case with date earlier than we considered before.
+                # So just clean up all episode cases considered earlier
+                if episode_treatment_completed_on < treatment_completed_earliest_date:
+                    treatment_completed_earliest_date = episode_treatment_completed_on
+                    episodes_with_treatment_completed_on_earliest_date = [episode_case]
+                # found a case with same treatment_card_completed_date we considered earliest
+                # So just add to episode cases considered earlier
+                elif episode_treatment_completed_on == treatment_completed_earliest_date:
+                    episodes_with_treatment_completed_on_earliest_date.append(episode_case)
+
+        # we found one case that have treatment card filled the earliest
+        if len(episodes_with_treatment_completed_on_earliest_date) == 1:
+            return episodes_with_treatment_completed_on_earliest_date[0]
+        # we found multiple cases that have treatment card filled on the earliest same day
+        # so just get the one recently user edited from these ones
+        elif len(episodes_with_treatment_completed_on_earliest_date) > 1:
+            return get_relevant_episode_case_to_retain(episodes_with_treatment_completed_on_earliest_date,
+                                                       by_last_user_edit=True)
+        # no case found with treatment_card_completed_date set
+        # so just get the recently user edit case
+        else:
+            return get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=True)
+
     recently_modified_case = None
     recently_modified_time = None
     for case in all_cases:
@@ -259,6 +299,8 @@ def get_recently_edited_case_by_user(all_cases):
         if last_user_edit_on_phone:
             if recently_modified_time and recently_modified_time < last_user_edit_on_phone:
                 recently_modified_case = case
+            elif recently_modified_time and recently_modified_time == last_user_edit_on_phone:
+                print("This looks like a super edge case that needs to be looked at. Not blocking as of now.")
             else:
                 recently_modified_time = last_user_edit_on_phone
                 recently_modified_case = case
