@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from sqlagg.columns import CountUniqueColumn, SumColumn
-from sqlagg.filters import EQ, NOT
+from sqlagg.columns import CountUniqueColumn, SumColumn, SimpleColumn
+from sqlagg.filters import EQ, NOT, BETWEEN
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.util import get_table_name
@@ -29,8 +29,11 @@ class UICFromEPMDataSource(SqlData):
             filters.append(EQ('age', 'age'))
         if 'district' in self.config and self.config['district']:
             filters.append(EQ('district', 'district'))
-        if 'visit_date' in self.config and self.config['visit_date']:
-            filters.append(EQ('visit_date', 'visit_date'))
+        if (
+            'visit_date_start' in self.config and self.config['visit_date_start'] and
+            'visit_date_end' in self.config and self.config['visit_date_end']
+        ):
+            filters.append(BETWEEN('visit_date', 'visit_date_start', 'visit_date_end'))
         if 'type_visit' in self.config and self.config['type_visit']:
             filters.append(EQ('type_visit', 'type_visit'))
         if 'activity_type' in self.config and self.config['activity_type']:
@@ -69,10 +72,16 @@ class UICFromCCDataSource(SqlData):
     @property
     def filters(self):
         filters = [EQ('xmlns', 'xmlns')]
-        if 'posttest_date' in self.config and self.config['posttest_date']:
-            filters.append(EQ('posttest_date', 'posttest_date'))
-        if 'hiv_test_date' in self.config and self.config['hiv_test_date']:
-            filters.append(EQ('hiv_test_date', 'hiv_test_date'))
+        if (
+            'posttest_date_start' in self.config and self.config['posttest_date_start'] and
+            'posttest_date_end' in self.config and self.config['posttest_date_end']
+        ):
+            filters.append(BETWEEN('postest_date', 'posttest_date_start', 'posttest_date_end'))
+        if (
+            'hiv_test_date_start' in self.config and self.config['hiv_test_date_start'] and
+            'hiv_test_date_end' in self.config and self.config['hiv_test_date_end']
+        ):
+            filters.append(BETWEEN('hiv_test_date', 'hiv_test_date_start', 'hiv_test_date_end'))
         if 'age_range' in self.config and self.config['age_range']:
             filters.append(EQ('age_range', 'age_range'))
         if 'district' in self.config and self.config['district']:
@@ -153,10 +162,16 @@ class HivStatusDataSource(SqlData):
     @property
     def filters(self):
         filters = [EQ('xmlns', 'xmlns'), EQ('hiv_status', 'hiv_status')]
-        if 'posttest_date' in self.config and self.config['posttest_date']:
-            filters.append(EQ('posttest_date', 'posttest_date'))
-        if 'hiv_test_date' in self.config and self.config['hiv_test_date']:
-            filters.append(EQ('hiv_test_date', 'hiv_test_date'))
+        if (
+            'posttest_date_start' in self.config and self.config['posttest_date_start'] and
+            'posttest_date_end' in self.config and self.config['posttest_date_end']
+        ):
+            filters.append(BETWEEN('postest_date', 'posttest_date_start', 'posttest_date_end'))
+        if (
+            'hiv_test_date_start' in self.config and self.config['hiv_test_date_start'] and
+            'hiv_test_date_end' in self.config and self.config['hiv_test_date_end']
+        ):
+            filters.append(BETWEEN('hiv_test_date', 'hiv_test_date_start', 'hiv_test_date_end'))
         if 'age_range' in self.config and self.config['age_range']:
             filters.append(EQ('age_range', 'age_range'))
         if 'district' in self.config and self.config['district']:
@@ -201,8 +216,11 @@ class FormCompletionDataSource(SqlData):
             filters.append(EQ('age_range', 'age_range'))
         if 'district' in self.config and self.config['district']:
             filters.append(EQ('district', 'district'))
-        if 'date_handshake' in self.config and self.config['date_handshake']:
-            filters.append(EQ('date_handshake', 'date_handshake'))
+        if (
+            'date_handshake_start' in self.config and self.config['date_handshake_start'] and
+            'date_handshake_end' in self.config and self.config['date_handshake_end']
+        ):
+            filters.append(BETWEEN('date_handshake', 'date_handshake_start', 'date_handshake_end'))
         if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
             filters.append(EQ('mobile_user_group', 'mobile_user_group'))
         return filters
@@ -244,8 +262,11 @@ class FirstArtDataSource(SqlData):
             filters.append(EQ('age_range', 'age_range'))
         if 'district' in self.config and self.config['district']:
             filters.append(EQ('district', 'district'))
-        if 'first_art_date' in self.config and self.config['first_art_date']:
-            filters.append(EQ('first_art_date', 'first_art_date'))
+        if (
+            'first_art_date_start' in self.config and self.config['first_art_date_start'] and
+            'first_art_date_end' in self.config and self.config['first_art_date_end']
+        ):
+            filters.append(BETWEEN('first_art_date', 'first_art_date_start', 'first_art_date_end'))
         if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
             filters.append(EQ('mobile_user_group', 'mobile_user_group'))
         return filters
@@ -287,8 +308,11 @@ class LastVLTestDataSource(SqlData):
             filters.append(EQ('age_range', 'age_range'))
         if 'district' in self.config and self.config['district']:
             filters.append(EQ('district', 'district'))
-        if 'date_last_vi_test' in self.config and self.config['date_last_vi_test']:
-            filters.append(EQ('date_last_vi_test', 'date_last_vi_test'))
+        if (
+            'date_last_vi_test_start' in self.config and self.config['date_last_vi_test_start'] and
+            'date_last_vi_test_end' in self.config and self.config['date_last_vi_test_end']
+        ):
+            filters.append(BETWEEN('date_last_vi_test', 'date_last_vi_test_start', 'date_last_vi_test_end'))
         if 'undetect_vl' in self.config and self.config['undetect_vl']:
             filters.append(EQ('undetect_vl', 'undetect_vl'))
         if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
@@ -304,3 +328,45 @@ class LastVLTestDataSource(SqlData):
         return [
             DatabaseColumn('last_vl_test', CountUniqueColumn('uic'))
         ]
+
+
+class ChampFilter(SqlData):
+
+    def __init__(self, domain, xmlns, table, column):
+        config = {
+            'domain': domain,
+            'xmlns': xmlns
+        }
+        self.table = table
+        self.column_name = column
+        super(ChampFilter, self).__init__(config)
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], self.table)
+
+    @property
+    def group_by(self):
+        return [self.column_name]
+
+    @property
+    def filters(self):
+        return [EQ('xmlns', 'xmlns')]
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(self.column_name, SimpleColumn(self.column_name))
+        ]
+
+    @property
+    def data(self):
+        data = sorted(filter(bool, self._get_data().keys()))
+        options = [{'id': '', 'value': 'All'}] + [
+            {'id': x, 'value': x} for x in data
+        ]
+        return options

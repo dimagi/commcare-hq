@@ -152,6 +152,7 @@
             "type": "property_path",
             "property_path": [
               "form",
+              "load",
               "client_type"
             ]
           },
@@ -186,7 +187,7 @@
             "type": "property_path",
             "property_path": [
               "form",
-              "save",
+              "load",
               "hiv_status"
             ]
           },
@@ -226,7 +227,7 @@
         "type": "expression",
         "expression": {
           "type": "property_path",
-          "property_path": ["form", "load", "undetect_vl"]
+          "property_path": ["form", "viral_load_group", "undetect_vl"]
         },
         "column_id": "undetect_vl",
         "datatype": "string",
@@ -236,7 +237,7 @@
         "type": "expression",
         "expression": {
           "type": "property_path",
-          "property_path": ["form", "load", "date_last_vl_test"]
+          "property_path": ["form", "viral_load_group", "date_last_vl_test"]
         },
         "column_id": "date_last_vl_test",
         "datatype": "string",
@@ -256,11 +257,21 @@
         "type": "expression",
         "expression": {
           "type": "property_path",
-          "property_path": ["form", "uic"]
+          "property_path": ["form", "load", "uic"]
         },
         "column_id": "uic",
         "datatype": "string",
         "display_name": "uic"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "userID"]
+        },
+        "column_id": "user_id",
+        "datatype": "string",
+        "display_name": "user_id"
       }
     ]
   }

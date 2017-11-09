@@ -229,6 +229,16 @@
         "column_id": "target_tx_undetect",
         "datatype": "integer",
         "display_name": "target_tx_undetect"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "userID"]
+        },
+        "column_id": "user_id",
+        "datatype": "string",
+        "display_name": "user_id"
       }
     ]
   }
