@@ -65,10 +65,15 @@ def _build_indicators(config, document_store, relevant_ids, resume_helper):
 
     last_id = None
     for doc in document_store.iter_documents(relevant_ids):
-        # save is a noop if the filter doesn't match
-        adapter.best_effort_save(doc)
-        last_id = doc.get('_id')
-        resume_helper.remove_id(last_id)
+        if config.asynchronous:
+            AsyncIndicator.update_record(
+                doc.get('_id'), config.referenced_doc_type, config.domain, config._id
+            )
+        else:
+            # save is a noop if the filter doesn't match
+            adapter.best_effort_save(doc)
+            last_id = doc.get('_id')
+            resume_helper.remove_id(last_id)
 
     if last_id:
         resume_helper.add_id(last_id)
