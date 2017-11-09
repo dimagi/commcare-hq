@@ -1,4 +1,4 @@
-/* globals HQReport, kmqPushSafe, s */
+/* globals HQReport, kmqPushSafe */
 hqDefine("userreports/js/configurable_report", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -14,7 +14,7 @@ hqDefine("userreports/js/configurable_report", function() {
                 builder_type = initial_page_data("builder_report_type"),
                 report_type = initial_page_data("type");
             $applyFiltersButton.click(function () {
-                var label = s.capitalize(builder_type) + '-' + s.capitalize(report_type);
+                var label = hqImport('hqwebapp/js/main').capitalize(builder_type) + '-' + hqImport('hqwebapp/js/main').capitalize(report_type);
                 window.analytics.usage("Report Builder v2", "View Report Builder Report", label);
             });
             window.analytics.usage("Report Builder v2", "Loaded Report Builder Report");

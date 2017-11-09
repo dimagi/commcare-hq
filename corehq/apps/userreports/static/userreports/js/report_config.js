@@ -1,4 +1,4 @@
-/* global _, s, $, django, window, kmqPushSafe */
+/* global _, $, django, window, kmqPushSafe */
 var reportBuilder = function () {  // eslint-disable-line
     var self = this;
 
@@ -139,7 +139,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 self.previewChart(false);
             } else {
                 if (self.previewChart()) {
-                    window.analytics.usage(GA_CATEGORY, 'Change Chart Type', s.capitalize(newValue));
+                    window.analytics.usage(GA_CATEGORY, 'Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
                 }
                 self.previewChart(true);
                 self.refreshPreview();
@@ -200,7 +200,7 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         var _ga_track_config_change = function (analyticsAction, optReportType) {
-            var analyticsLabel = s.capitalize(self._sourceType) + "-" + s.capitalize(optReportType || self.reportType());
+            var analyticsLabel = hqImport('hqwebapp/js/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/main').capitalize(optReportType || self.reportType());
             window.analytics.usage(GA_CATEGORY, analyticsAction, analyticsLabel);
         };
 
