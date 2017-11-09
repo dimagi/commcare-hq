@@ -3,15 +3,49 @@
 function MainController($scope, reportsDataService, filtersService) {
     var vm = this;
     vm.title = "Prevision vs Achievements";
-    vm.kp_prev_visit_date = {startDate: null, endDate: null};
-    vm.htc_tst_post_date = {startDate: null, endDate: null};
-    vm.htc_pos_post_date = {startDate: null, endDate: null};
-    vm.htc_tst_hiv_test_date = {startDate: null, endDate: null};
-    vm.htc_pos_hiv_test_date = {startDate: null, endDate: null};
-    vm.care_new_date_handshake = {startDate: null, endDate: null};
-    vm.tx_new_first_art_date = {startDate: null, endDate: null};
-    vm.tx_undetect_first_art_date = {startDate: null, endDate: null};
-    vm.filters = {};
+    var currentYear = new Date().getFullYear()
+
+    var defaultStartDate = moment(new Date(currentYear, 0, 1)).format('YYYY-MM-DD');
+    var defaultEndDate = moment().format('YYYY-MM-DD');
+    var defaultDate = {startDate: defaultStartDate, endDate: defaultEndDate};
+    vm.kp_prev_visit_date = defaultDate;
+    vm.htc_tst_post_date = defaultDate;
+    vm.htc_pos_post_date = defaultDate;
+    vm.htc_tst_hiv_test_date = defaultDate;
+    vm.htc_pos_hiv_test_date = defaultDate;
+    vm.care_new_date_handshake = defaultDate;
+    vm.tx_new_first_art_date = defaultDate;
+    vm.tx_undetect_first_art_date = defaultDate;
+
+    vm.pickerOptions = {
+        opens: "left",
+        drops: "up",
+        showDropdowns: true,
+      locale: {
+        format: "YYYY-MM-DD",
+      }
+    };
+
+    vm.filters = {
+        target_fiscal_year: new Date().getFullYear(),
+        kp_prev_visit_date_start: vm.kp_prev_visit_date.startDate,
+        kp_prev_visit_date_end: vm.kp_prev_visit_date.endDate,
+        htc_tst_post_date_start: vm.htc_tst_post_date.startDate,
+        htc_tst_post_date_end: vm.htc_tst_post_date.endDate,
+        htc_pos_post_date_start: vm.htc_pos_post_date.startDate,
+        htc_pos_post_date_end: vm.htc_pos_post_date.endDate,
+        htc_tst_hiv_test_date_start: vm.htc_tst_hiv_test_date.startDate,
+        htc_tst_hiv_test_date_end: vm.htc_tst_hiv_test_date.endDate,
+        htc_pos_hiv_test_date_start: vm.htc_pos_hiv_test_date.startDate,
+        htc_pos_hiv_test_date_end: vm.htc_pos_hiv_test_date.endDate,
+        care_new_date_handshake_start: vm.care_new_date_handshake.startDate,
+        care_new_date_handshake_end: vm.care_new_date_handshake.endDate,
+        tx_new_first_art_date_start: vm.tx_new_first_art_date.startDate,
+        tx_new_first_art_date_end: vm.tx_new_first_art_date.endDate,
+        tx_undetect_first_art_date_start: vm.tx_undetect_first_art_date.startDate,
+        tx_undetect_first_art_date_end: vm.tx_undetect_first_art_date.endDate,
+    };
+
     vm.districts = [];
     vm.visitsTypes = [];
     vm.activityTypes = [];
@@ -70,7 +104,7 @@ function MainController($scope, reportsDataService, filtersService) {
         })
     }
 
-    for (var year=2014; year <= (new Date().getFullYear() + 4); year++ ) {
+    for (var year=2014; year <= (currentYear + 4); year++ ) {
         vm.fiscalYears.push({
             value: year,
             id: year,
@@ -83,10 +117,11 @@ function MainController($scope, reportsDataService, filtersService) {
         if (newValue === oldValue) {
             return;
         }
+        debugger;
         vm.filters = {
-        kp_prev_visit_date_start: vm.kp_prev_visit_date.startDate,
-        kp_prev_visit_date_end: vm.kp_prev_visit_date.endDate,
-    };
+            kp_prev_visit_date_start: vm.kp_prev_visit_date.startDate.format('YYYY-MM-DD'),
+            kp_prev_visit_date_end: vm.kp_prev_visit_date.endDate.format('YYYY-MM-DD'),
+        };
     }, true);
 
     $scope.$watch(function () {
@@ -96,8 +131,8 @@ function MainController($scope, reportsDataService, filtersService) {
             return;
         }
         vm.filters = {
-            htc_tst_post_date_start: vm.htc_tst_post_date.startDate,
-            htc_tst_post_date_end: vm.htc_tst_post_date.endDate,
+            htc_tst_post_date_start: vm.htc_tst_post_date.startDate.format('YYYY-MM-DD'),
+            htc_tst_post_date_end: vm.htc_tst_post_date.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -108,8 +143,8 @@ function MainController($scope, reportsDataService, filtersService) {
             return;
         }
         vm.filters = {
-            htc_pos_post_date_start: vm.htc_pos_post_date.startDate,
-            htc_pos_post_date_end: vm.htc_pos_post_date.endDate,
+            htc_pos_post_date_start: vm.htc_pos_post_date.startDate.format('YYYY-MM-DD'),
+            htc_pos_post_date_end: vm.htc_pos_post_date.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -120,8 +155,8 @@ function MainController($scope, reportsDataService, filtersService) {
             return;
         }
         vm.filters = {
-            htc_tst_hiv_test_date_start: vm.htc_tst_hiv_test_date.startDate,
-            htc_tst_hiv_test_date_end: vm.htc_tst_hiv_test_date.endDate,
+            htc_tst_hiv_test_date_start: vm.htc_tst_hiv_test_date.startDate.format('YYYY-MM-DD'),
+            htc_tst_hiv_test_date_end: vm.htc_tst_hiv_test_date.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -132,8 +167,8 @@ function MainController($scope, reportsDataService, filtersService) {
             return;
         }
         vm.filters = {
-            htc_pos_hiv_test_date_start: vm.htc_pos_hiv_test_date.startDate,
-            htc_pos_hiv_test_date_end: vm.htc_pos_hiv_test_date.endDate,
+            htc_pos_hiv_test_date_start: vm.htc_pos_hiv_test_date.startDate.format('YYYY-MM-DD'),
+            htc_pos_hiv_test_date_end: vm.htc_pos_hiv_test_date.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -144,8 +179,8 @@ function MainController($scope, reportsDataService, filtersService) {
             return;
         }
         vm.filters = {
-            care_new_date_handshake_start: vm.care_new_date_handshake.startDate,
-            care_new_date_handshake_end: vm.care_new_date_handshake.endDate,
+            care_new_date_handshake_start: vm.care_new_date_handshake.startDate.format('YYYY-MM-DD'),
+            care_new_date_handshake_end: vm.care_new_date_handshake.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -156,8 +191,8 @@ function MainController($scope, reportsDataService, filtersService) {
             return;
         }
         vm.filters = {
-            tx_new_first_art_date_start: vm.tx_new_first_art_date.startDate,
-            tx_new_first_art_date_end: vm.tx_new_first_art_date.endDate,
+            tx_new_first_art_date_start: vm.tx_new_first_art_date.startDate.format('YYYY-MM-DD'),
+            tx_new_first_art_date_end: vm.tx_new_first_art_date.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -168,8 +203,8 @@ function MainController($scope, reportsDataService, filtersService) {
             return;
         }
         vm.filters = {
-            tx_undetect_first_art_date_start: vm.tx_undetect_first_art_date.startDate,
-            tx_undetect_first_art_date_end: vm.tx_undetect_first_art_date.endDate,
+            tx_undetect_first_art_date_start: vm.tx_undetect_first_art_date.startDate.format('YYYY-MM-DD'),
+            tx_undetect_first_art_date_end: vm.tx_undetect_first_art_date.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
