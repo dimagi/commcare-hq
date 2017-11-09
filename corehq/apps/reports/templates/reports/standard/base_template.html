@@ -20,6 +20,9 @@
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     {% endcompress %}
+    {% for script in report.js_scripts %}
+        <script src="{{ script|static }}"></script>
+    {% endfor %}
 {% endblock %}
 
 {% block stylesheets %}
