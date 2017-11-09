@@ -925,8 +925,8 @@ class ChildrenExport(ExportableMixin, SqlData):
     title = 'Children'
     table_name = 'agg_child_health_monthly'
 
-    def __init__(self, config=None):
-        super(ChildrenExport, self).__init__(config)
+    def __init__(self, config=None, loc_level=1, show_test=False):
+        super(ChildrenExport, self).__init__(config, loc_level, show_test)
         self.config.update({
             'age_0': '0',
             'age_6': '6',
