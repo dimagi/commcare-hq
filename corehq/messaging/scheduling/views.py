@@ -183,70 +183,87 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         ):
             raise ImmediateMessageEditAttempt("Cannot edit an immediate message")
 
+    def distill_content(self):
+        form_data = self.schedule_form.cleaned_data
+        if form_data['translate']:
+            messages = {}
+            for lang in self.project_languages:
+                key = 'message_%s' % lang
+                if key in form_data:
+                    messages[lang] = form_data[key]
+            content = SMSContent(message=messages)
+        else:
+            content = SMSContent(message={'*': form_data['non_translated_message']})
+
+        return content
+
+    def distill_recipients(self):
+        form_data = self.schedule_form.cleaned_data
+        return [('CommCareUser', r_id) for r_id in form_data['recipients']]
+
+    def process_immediate_schedule(self, content, recipients):
+        form_data = self.schedule_form.cleaned_data
+        with transaction.atomic():
+            schedule = AlertSchedule.create_simple_alert(self.domain, content)
+            broadcast = ImmediateBroadcast(
+                domain=self.domain,
+                name=form_data['schedule_name'],
+                schedule=schedule,
+                recipients=recipients,
+            )
+            broadcast.save()
+        refresh_alert_schedule_instances.delay(schedule, recipients)
+
+    def process_daily_schedule(self, content, recipients):
+        form_data = self.schedule_form.cleaned_data
+        with transaction.atomic():
+            if form_data['stop_type'] == ScheduleForm.STOP_NEVER:
+                total_iterations = TimedSchedule.REPEAT_INDEFINITELY
+            else:
+                total_iterations = form_data['occurrences']
+
+            if self.is_editing:
+                broadcast = self.broadcast
+                schedule = broadcast.schedule
+                schedule.set_simple_daily_schedule(
+                    form_data['send_time'],
+                    content,
+                    total_iterations=total_iterations
+                )
+            else:
+                schedule = TimedSchedule.create_simple_daily_schedule(
+                    self.domain,
+                    form_data['send_time'],
+                    content,
+                    total_iterations=total_iterations
+                )
+                broadcast = ScheduledBroadcast(
+                    domain=self.domain,
+                    schedule=schedule,
+                )
+
+            broadcast.name = form_data['schedule_name']
+            broadcast.start_date = form_data['start_date']
+            broadcast.recipients = recipients
+            broadcast.save()
+        refresh_timed_schedule_instances.delay(schedule, recipients, start_date=form_data['start_date'])
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
 
         if self.schedule_form.is_valid():
-            values = self.schedule_form.cleaned_data
-            self.enforce_edit_restriction(values['send_frequency'])
+            form_data = self.schedule_form.cleaned_data
+            self.enforce_edit_restriction(form_data['send_frequency'])
+            content = self.distill_content()
+            recipients = self.distill_recipients()
 
-            if values['translate']:
-                messages = {}
-                for lang in self.project_languages:
-                    key = 'message_%s' % lang
-                    if key in values:
-                        messages[lang] = values[key]
-                content = SMSContent(message=messages)
-            else:
-                content = SMSContent(message={'*': values['non_translated_message']})
-
-            recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
-
-            if values['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
-                with transaction.atomic():
-                    schedule = AlertSchedule.create_simple_alert(self.domain, content)
-                    broadcast = ImmediateBroadcast(
-                        domain=self.domain,
-                        name=values['schedule_name'],
-                        schedule=schedule,
-                        recipients=recipients,
-                    )
-                    broadcast.save()
-                refresh_alert_schedule_instances.delay(schedule, recipients)
-            elif values['send_frequency'] == ScheduleForm.SEND_DAILY:
-                with transaction.atomic():
-                    if values['stop_type'] == ScheduleForm.STOP_NEVER:
-                        total_iterations = TimedSchedule.REPEAT_INDEFINITELY
-                    else:
-                        total_iterations = values['occurrences']
-
-                    if self.is_editing:
-                        broadcast = self.broadcast
-                        schedule = broadcast.schedule
-                        schedule.set_simple_daily_schedule(
-                            values['send_time'],
-                            content,
-                            total_iterations=total_iterations
-                        )
-                    else:
-                        schedule = TimedSchedule.create_simple_daily_schedule(
-                            self.domain,
-                            values['send_time'],
-                            content,
-                            total_iterations=total_iterations
-                        )
-                        broadcast = ScheduledBroadcast(
-                            domain=self.domain,
-                            schedule=schedule,
-                        )
-
-                    broadcast.name = values['schedule_name']
-                    broadcast.start_date = values['start_date']
-                    broadcast.recipients = recipients
-                    broadcast.save()
-                refresh_timed_schedule_instances.delay(schedule, recipients, start_date=values['start_date'])
+            if form_data['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
+                self.process_immediate_schedule(content, recipients)
+            elif form_data['send_frequency'] == ScheduleForm.SEND_DAILY:
+                self.process_daily_schedule(content, recipients)
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
+
         return self.get(request, *args, **kwargs)
 
 
