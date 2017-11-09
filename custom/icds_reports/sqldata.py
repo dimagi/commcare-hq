@@ -139,7 +139,7 @@ class ExportableMixin(object):
             filters.append(NOT(IN('state_id', infilter_params)))
 
         for key, value in self.config.iteritems():
-            if key == 'domain' or key in infilter_params:
+            if key == 'domain' or key in infilter_params or 'age' in key:
                 continue
             filters.append(EQ(key, key))
         return filters
