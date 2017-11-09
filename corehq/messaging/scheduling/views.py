@@ -29,7 +29,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     SMSContent,
 )
-from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt
+from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
@@ -278,18 +278,21 @@ class EditScheduleView(CreateScheduleView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.broadcast_id])
+        return reverse(self.urlname, args=[self.domain, self.broadcast_type, self.broadcast_id])
 
     @property
     def is_editing(self):
         return True
 
+    @property
+    def broadcast_type(self):
+        return self.kwargs.get('broadcast_type')
+
     @cached_property
     def broadcast_class(self):
-        broadcast_type = self.kwargs.get('broadcast_type')
-        if broadcast_type == self.IMMEDIATE_BROADCAST:
+        if self.broadcast_type == self.IMMEDIATE_BROADCAST:
             return ImmediateBroadcast
-        elif broadcast_type == self.SCHEDULED_BROADCAST:
+        elif self.broadcast_type == self.SCHEDULED_BROADCAST:
             return ScheduledBroadcast
         else:
             raise Http404()
@@ -310,6 +313,31 @@ class EditScheduleView(CreateScheduleView):
 
         return broadcast
 
+    def get_scheduling_fields_initial(self, broadcast):
+        result = {}
+        if isinstance(broadcast, ImmediateBroadcast):
+            result['send_frequency'] = ScheduleForm.SEND_IMMEDIATELY
+        elif isinstance(broadcast, ScheduledBroadcast):
+            schedule = broadcast.schedule
+            if (
+                schedule.schedule_length == 1 and
+                len(schedule.memoized_events) == 1 and
+                schedule.start_offset == 0 and
+                schedule.start_day_of_week == TimedSchedule.ANY_DAY
+            ):
+                result['send_frequency'] = ScheduleForm.SEND_DAILY
+                result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
+                result['start_date'] = broadcast.start_date.strftime('%Y-%m-%d')
+                if schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+                    result['stop_type'] = ScheduleForm.STOP_NEVER
+                else:
+                    result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
+                    result['occurrences'] = schedule.total_iterations
+        else:
+            raise UnsupportedScheduleError("Could not determine schedule type")
+
+        return result
+
     @cached_property
     def schedule_form(self):
         if self.request.method == 'POST':
@@ -323,10 +351,10 @@ class EditScheduleView(CreateScheduleView):
             recipients.append({"id": doc_id, "text": user.raw_username})
         initial = {
             'schedule_name': broadcast.name,
-            'send_frequency': ScheduleForm.SEND_IMMEDIATELY,
             'recipients': recipients,
             'content': 'sms',
             # only works for SMS
             'message': schedule.memoized_events[0].content.message,
         }
+        initial.update(self.get_scheduling_fields_initial(broadcast))
         return ScheduleForm(initial=initial, **self.form_kwargs)

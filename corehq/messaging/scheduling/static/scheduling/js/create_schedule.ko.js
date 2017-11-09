@@ -6,6 +6,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.send_frequency = ko.observable(initial_values.send_frequency);
         self.weekdays = ko.observableArray(initial_values.weekdays || []);
         self.days_of_month = ko.observableArray(initial_values.days_of_month || []);
+        self.send_time = ko.observable(initial_values.send_time);
         self.start_date = ko.observable(initial_values.start_date);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
@@ -36,7 +37,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             {row: ['-3', '-2', '-1'].map(self.create_day_of_month_choice)},
         ];
 
-        self.send_frequency.subscribe(function(newValue) {
+        self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
             if(newValue == 'daily') {
                 occurrences.text(gettext("After days:"));
@@ -45,7 +46,9 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             } else if(newValue == 'monthly') {
                 occurrences.text(gettext("After months:"));
             }
-        });
+        };
+
+        self.send_frequency.subscribe(self.setOccurrencesOptionText);
 
         self.showTimeInput = ko.computed(function() {
             return self.send_frequency() != 'immediately';
@@ -146,6 +149,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.init = function () {
             self.initDatePicker($("#id_start_date"));
             self.initTimePicker($("#id_send_time"));
+            self.setOccurrencesOptionText(self.send_frequency());
         };
     };
 
