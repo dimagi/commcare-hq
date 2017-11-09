@@ -1,9 +1,9 @@
 /* global moment */
 
-function MainController($scope, reportsDataService, filtersService) {
+function PrevisionVsAchievementsGraphController($scope, reportsDataService, filtersService) {
     var vm = this;
     vm.title = "Prevision vs Achievements";
-    var currentYear = new Date().getFullYear()
+    var currentYear = new Date().getFullYear();
 
     var defaultStartDate = moment(new Date(currentYear, 0, 1)).format('YYYY-MM-DD');
     var defaultEndDate = moment().format('YYYY-MM-DD');
@@ -15,7 +15,7 @@ function MainController($scope, reportsDataService, filtersService) {
     vm.htc_pos_hiv_test_date = defaultDate;
     vm.care_new_date_handshake = defaultDate;
     vm.tx_new_first_art_date = defaultDate;
-    vm.tx_undetect_first_art_date = defaultDate;
+    vm.tx_undetect_date_last_vl_test = defaultDate;
 
     vm.pickerOptions = {
         opens: "left",
@@ -42,8 +42,8 @@ function MainController($scope, reportsDataService, filtersService) {
         care_new_date_handshake_end: vm.care_new_date_handshake.endDate,
         tx_new_first_art_date_start: vm.tx_new_first_art_date.startDate,
         tx_new_first_art_date_end: vm.tx_new_first_art_date.endDate,
-        tx_undetect_first_art_date_start: vm.tx_undetect_first_art_date.startDate,
-        tx_undetect_first_art_date_end: vm.tx_undetect_first_art_date.endDate,
+        tx_undetect_date_last_vl_test_start: vm.tx_undetect_date_last_vl_test.startDate,
+        tx_undetect_fdate_last_vl_test_end: vm.tx_undetect_date_last_vl_test.endDate,
     };
 
     vm.districts = [];
@@ -197,14 +197,14 @@ function MainController($scope, reportsDataService, filtersService) {
     }, true);
 
     $scope.$watch(function () {
-        return vm.tx_new_first_art_date;
+        return vm.tx_undetect_date_last_vl_test;
     }, function (newValue, oldValue) {
         if (newValue === oldValue) {
             return;
         }
         vm.filters = {
-            tx_undetect_first_art_date_start: vm.tx_undetect_first_art_date.startDate.format('YYYY-MM-DD'),
-            tx_undetect_first_art_date_end: vm.tx_undetect_first_art_date.endDate.format('YYYY-MM-DD'),
+            tx_undetect_date_last_vl_test_start: vm.tx_undetect_date_last_vl_test.startDate.format('YYYY-MM-DD'),
+            tx_undetect_date_last_vl_test_end: vm.tx_undetect_date_last_vl_test.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -251,8 +251,4 @@ function MainController($scope, reportsDataService, filtersService) {
     };
 }
 
-MainController.$inject = ['$scope', 'reportsDataService', 'filtersService'];
-
-window.angular.module('champApp', ['ui.select', 'nvd3', 'daterangepicker'])
-    .controller('MainController', MainController);
-
+PrevisionVsAchievementsGraphController.$inject = ['$scope', 'reportsDataService', 'filtersService'];

@@ -5,7 +5,15 @@ window.angular.module('champApp').factory('reportsDataService', ['$http', functi
         getPrevisionVsAchievementsData: function(filters) {
             var get_url = url('champ_pva');
             return  $http({
-                method: "GET",
+                method: "POST",
+                url: get_url,
+                params: filters,
+            });
+        },
+        getPrevisionVsAchievementsTableData: function(filters) {
+            var get_url = url('champ_pva_table');
+            return  $http({
+                method: "POST",
                 url: get_url,
                 params: filters,
             });

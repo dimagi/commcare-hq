@@ -10,7 +10,8 @@ from custom.champ.utils import PREVENTION_XMLNS, ENHANCED_PEER_MOBILIZATION, CHA
 
 class UICFromEPMDataSource(SqlData):
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, extend_group_by=None):
+        self.extend_group_by = extend_group_by
         config['xmlns'] = PREVENTION_XMLNS
         super(UICFromEPMDataSource, self).__init__(config)
 
@@ -46,6 +47,8 @@ class UICFromEPMDataSource(SqlData):
 
     @property
     def group_by(self):
+        if self.extend_group_by:
+            return ['xmlns'].append(self.extend_group_by)
         return ['xmlns']
 
     @property
@@ -57,7 +60,8 @@ class UICFromEPMDataSource(SqlData):
 
 class UICFromCCDataSource(SqlData):
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, extend_group_by=None):
+        self.extend_group_by = extend_group_by
         config['xmlns'] = POST_TEST_XMLNS
         super(UICFromCCDataSource, self).__init__(config)
 
@@ -94,6 +98,8 @@ class UICFromCCDataSource(SqlData):
 
     @property
     def group_by(self):
+        if self.extend_group_by:
+            return ['xmlns'].append(self.extend_group_by)
         return ['xmlns']
 
     @property
@@ -146,7 +152,8 @@ class TargetsDataSource(SqlData):
 
 class HivStatusDataSource(SqlData):
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, extend_group_by=None):
+        self.extend_group_by = extend_group_by
         config['xmlns'] = POST_TEST_XMLNS
         config['hiv_status'] = 'positive'
         super(HivStatusDataSource, self).__init__(config)
@@ -182,6 +189,8 @@ class HivStatusDataSource(SqlData):
 
     @property
     def group_by(self):
+        if self.extend_group_by:
+            return ['xmlns'].append(self.extend_group_by)
         return ['xmlns']
 
     @property
@@ -193,7 +202,8 @@ class HivStatusDataSource(SqlData):
 
 class FormCompletionDataSource(SqlData):
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, extend_group_by=None):
+        self.extend_group_by = extend_group_by
         config['xmlns'] = ACCOMPAGNEMENT_XMLNS
         super(FormCompletionDataSource, self).__init__(config)
 
@@ -208,6 +218,8 @@ class FormCompletionDataSource(SqlData):
     @property
     def filters(self):
         filters = [EQ('xmlns', 'xmlns')]
+        if 'handshake_status' in self.config and self.config['handshake_status']:
+            filters.append(EQ('handshake_status', 'handshake_status'))
         if 'hiv_status' in self.config and self.config['hiv_status']:
             filters.append(EQ('hiv_status', 'hiv_status'))
         if 'client_type' in self.config and self.config['client_type']:
@@ -227,6 +239,8 @@ class FormCompletionDataSource(SqlData):
 
     @property
     def group_by(self):
+        if self.extend_group_by:
+            return ['xmlns'].append(self.extend_group_by)
         return ['xmlns']
 
     @property

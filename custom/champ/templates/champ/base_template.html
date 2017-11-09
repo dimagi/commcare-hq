@@ -1,0 +1,58 @@
+{% extends "reports/async/tabular.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap-daterangepicker/daterangepicker.css' %}"/>
+    <style>
+        .bubble {
+            border: 1px solid;
+            border-radius: 10px;
+            padding: 5px;
+            background: #f3f2f2;
+            margin: 0 auto;
+        }
+        .ui-select-match > .btn-default {
+            background-color: #ffffff;
+        }
+    </style>
+    <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular-daterangepicker/js/angular-daterangepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
+    {% block champjs %}
+    {% endblock %}
+    <script type="text/javascript" src="{% static 'champ/js/angular-services/reports_data.service.js' %}"></script>
+    <script type="text/javascript" src="{% static 'champ/js/angular-services/filters.service.js' %}"></script>
+{% endblock %}
+
+{% block reportcontent %}
+    {% registerurl 'champ_pva' domain %}
+    {% registerurl 'champ_pva_table' domain %}
+    {% registerurl 'district_filter' domain %}
+    {% registerurl 'target_cbo_filter' domain %}
+    {% registerurl 'target_userpl_filter' domain %}
+
+    {% block champcontent %} {% endblock %}
+
+    <div class="commcarehq-urls" class="hide">
+        {% block registered_urls %}
+            {# do not override this block, use registerurl template tag to populate #}
+        {% endblock %}
+    </div>
+{% endblock %}
+
+{% block js-inline %}
+    <script>
+        angular.bootstrap(document.getElementById('champApp'), ['champApp']);
+        $(document).ready(function () {
+            $('#reportFiltersAccordion').css('display', 'none');
+        });
+    </script>
+{% endblock %}

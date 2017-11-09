@@ -184,12 +184,33 @@
             "property_value": "http://openrosa.org/formdesigner/027DEB76-422B-434C-9F53-ECBBE21F890F"
           },
           "expression_if_true": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "load",
-              "hiv_status"
-            ]
+            "type": "conditional",
+            "test": {
+              "operator": "eq",
+              "expression": {
+                "type": "property_name",
+                "property_name": "xmlns",
+                "datatype": "string"
+              },
+              "type": "boolean_expression",
+              "property_value": "http://openrosa.org/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1"
+            },
+            "expression_if_true": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "save",
+                "hiv_status"
+              ]
+            },
+            "expression_if_false": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "load",
+                "hiv_status"
+              ]
+            }
           },
           "expression_if_false": {
             "type": "root_doc",
@@ -212,6 +233,16 @@
         "column_id": "date_handshake",
         "datatype": "string",
         "display_name": "date_handshake"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "handshake_status"]
+        },
+        "column_id": "handshake_status",
+        "datatype": "string",
+        "display_name": "handshake_status"
       },
       {
         "type": "expression",
@@ -272,6 +303,32 @@
         "column_id": "user_id",
         "datatype": "string",
         "display_name": "user_id"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "property_path",
+            "property_path": ["form", "posttest_date"]
+          }
+        },
+        "column_id": "htc_month",
+        "datatype": "string",
+        "display_name": "htc_month"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "property_path",
+            "property_path": ["form", "meta", "timeEnd"]
+          }
+        },
+        "column_id": "care_new_month",
+        "datatype": "string",
+        "display_name": "care_new_month"
       }
     ]
   }

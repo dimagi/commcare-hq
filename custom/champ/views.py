@@ -17,11 +17,11 @@ class PrevisionVsAchievementsView(View):
     def get_target_data(self, domain, request):
         config = {
             'domain': domain,
-            'district': request.GET.get('target_district', None),
-            'cbo': request.GET.get('target_cbo', None),
-            'clienttype': request.GET.get('target_clienttype', None),
-            'userpl': request.GET.get('target_userpl', None),
-            'fiscal_year': request.GET.get('target_fiscal_year', None),
+            'district': request.POST.get('target_district', None),
+            'cbo': request.POST.get('target_cbo', None),
+            'clienttype': request.POST.get('target_clienttype', None),
+            'userpl': request.POST.get('target_userpl', None),
+            'fiscal_year': request.POST.get('target_fiscal_year', None),
         }
         target_data = TargetsDataSource(config=config).data
         return target_data
@@ -29,14 +29,14 @@ class PrevisionVsAchievementsView(View):
     def get_kp_prev_achievement(self, domain, request):
         config = {
             'domain': domain,
-            'age': request.GET.get('kp_prev_age', None),
-            'district': request.GET.get('kp_prev_district', None),
-            'visit_date_start': request.GET.get('kp_prev_visit_date_start', None),
-            'visit_date_end': request.GET.get('kp_prev_visit_date_end', None),
-            'activity_type': request.GET.get('kp_prev_activity_type', None),
-            'type_visit': request.GET.get('kp_prev_visit_type', None),
-            'client_type': request.GET.get('kp_prev_client_type', None),
-            'mobile_user_group': request.GET.get('kp_prev_mobile_user_group', None),
+            'age': request.POST.get('kp_prev_age', None),
+            'district': request.POST.get('kp_prev_district', None),
+            'visit_date_start': request.POST.get('kp_prev_visit_date_start', None),
+            'visit_date_end': request.POST.get('kp_prev_visit_date_end', None),
+            'activity_type': request.POST.get('kp_prev_activity_type', None),
+            'type_visit': request.POST.get('kp_prev_visit_type', None),
+            'client_type': request.POST.get('kp_prev_client_type', None),
+            'mobile_user_group': request.POST.get('kp_prev_mobile_user_group', None),
         }
         achievement = UICFromEPMDataSource(config=config).data
         return achievement.get(PREVENTION_XMLNS, {}).get('uic', 0)
@@ -44,13 +44,13 @@ class PrevisionVsAchievementsView(View):
     def get_htc_tst_achievement(self, domain, request):
         config = {
             'domain': domain,
-            'posttest_date_start': request.GET.get('htc_tst_posttest_date_start', None),
-            'posttest_date_end': request.GET.get('htc_tst_posttest_date_end', None),
-            'hiv_test_date_start': request.GET.get('htc_tst_hiv_test_date_start', None),
-            'hiv_test_date_end': request.GET.get('htc_tst_hiv_test_date_end', None),
-            'age_range': request.GET.get('htc_tst_age_range', None),
-            'district': request.GET.get('htc_tst_district', None),
-            'mobile_user_group': request.GET.get('htc_tst_mobile_user_group', None),
+            'posttest_date_start': request.POST.get('htc_tst_posttest_date_start', None),
+            'posttest_date_end': request.POST.get('htc_tst_posttest_date_end', None),
+            'hiv_test_date_start': request.POST.get('htc_tst_hiv_test_date_start', None),
+            'hiv_test_date_end': request.POST.get('htc_tst_hiv_test_date_end', None),
+            'age_range': request.POST.get('htc_tst_age_range', None),
+            'district': request.POST.get('htc_tst_district', None),
+            'mobile_user_group': request.POST.get('htc_tst_mobile_user_group', None),
         }
         achievement = UICFromCCDataSource(config=config).data
         return achievement.get(POST_TEST_XMLNS, {}).get('uic', 0)
@@ -58,14 +58,14 @@ class PrevisionVsAchievementsView(View):
     def get_htc_pos_achievement(self, domain, request):
         config = {
             'domain': domain,
-            'posttest_date_start': request.GET.get('htc_pos_posttest_date_start', None),
-            'posttest_date_end': request.GET.get('htc_pos_posttest_date_end', None),
-            'hiv_test_date_start': request.GET.get('htc_pos_hiv_test_date_start', None),
-            'hiv_test_date_end': request.GET.get('htc_pos_hiv_test_date_end', None),
-            'age_range': request.GET.get('htc_pos_age_range', None),
-            'district': request.GET.get('htc_pos_district', None),
-            'client_type': request.GET.get('htc_pos_client_type', None),
-            'mobile_user_group': request.GET.get('htc_pos_mobile_user_group', None),
+            'posttest_date_start': request.POST.get('htc_pos_posttest_date_start', None),
+            'posttest_date_end': request.POST.get('htc_pos_posttest_date_end', None),
+            'hiv_test_date_start': request.POST.get('htc_pos_hiv_test_date_start', None),
+            'hiv_test_date_end': request.POST.get('htc_pos_hiv_test_date_end', None),
+            'age_range': request.POST.get('htc_pos_age_range', None),
+            'district': request.POST.get('htc_pos_district', None),
+            'client_type': request.POST.get('htc_pos_client_type', None),
+            'mobile_user_group': request.POST.get('htc_pos_mobile_user_group', None),
         }
         achievement = HivStatusDataSource(config=config).data
         return achievement.get(POST_TEST_XMLNS, {}).get('uic', 0)
@@ -73,13 +73,13 @@ class PrevisionVsAchievementsView(View):
     def get_care_new_achivement(self, domain, request):
         config = {
             'domain': domain,
-            'hiv_status': request.GET.get('care_new_hiv_status', None),
-            'client_type': request.GET.get('care_new_client_type', None),
-            'age_range': request.GET.get('care_new_age_range', None),
-            'district': request.GET.get('care_new_district', None),
-            'date_handshake_start': request.GET.get('care_new_date_handshake_start', None),
-            'date_handshake_end': request.GET.get('care_new_date_handshake_end', None),
-            'mobile_user_group': request.GET.get('care_new_mobile_user_group', None),
+            'hiv_status': request.POST.get('care_new_hiv_status', None),
+            'client_type': request.POST.get('care_new_client_type', None),
+            'age_range': request.POST.get('care_new_age_range', None),
+            'district': request.POST.get('care_new_district', None),
+            'date_handshake_start': request.POST.get('care_new_date_handshake_start', None),
+            'date_handshake_end': request.POST.get('care_new_date_handshake_end', None),
+            'mobile_user_group': request.POST.get('care_new_mobile_user_group', None),
         }
         achievement = FormCompletionDataSource(config=config).data
         return achievement.get(ACCOMPAGNEMENT_XMLNS, {}).get('uic', 0)
@@ -87,13 +87,13 @@ class PrevisionVsAchievementsView(View):
     def get_tx_new_achivement(self, domain, request):
         config = {
             'domain': domain,
-            'hiv_status': request.GET.get('tx_new_hiv_status', None),
-            'client_type': request.GET.get('tx_new_client_type', None),
-            'age_range': request.GET.get('tx_new_age_range', None),
-            'district': request.GET.get('tx_new_district', None),
-            'first_art_date_start': request.GET.get('tx_new_first_art_date_start', None),
-            'first_art_date_end': request.GET.get('tx_new_first_art_date_end', None),
-            'mobile_user_group': request.GET.get('tx_new_mobile_user_group', None),
+            'hiv_status': request.POST.get('tx_new_hiv_status', None),
+            'client_type': request.POST.get('tx_new_client_type', None),
+            'age_range': request.POST.get('tx_new_age_range', None),
+            'district': request.POST.get('tx_new_district', None),
+            'first_art_date_start': request.POST.get('tx_new_first_art_date_start', None),
+            'first_art_date_end': request.POST.get('tx_new_first_art_date_end', None),
+            'mobile_user_group': request.POST.get('tx_new_mobile_user_group', None),
         }
         achievement = FirstArtDataSource(config=config).data
         return achievement.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0)
@@ -101,14 +101,14 @@ class PrevisionVsAchievementsView(View):
     def get_tx_undetect_achivement(self, domain, request):
         config = {
             'domain': domain,
-            'hiv_status': request.GET.get('tx_undetect_hiv_status', None),
-            'client_type': request.GET.get('tx_undetect_client_type', None),
-            'age_range': request.GET.get('tx_undetect_age_range', None),
-            'district': request.GET.get('tx_undetect_district', None),
-            'date_last_vi_test_start': request.GET.get('tx_undetect_date_last_vi_test_start', None),
-            'date_last_vi_test_end': request.GET.get('tx_undetect_date_last_vi_test_end', None),
-            'undetect_vl': request.GET.get('tx_undetect_undetect_vl', None),
-            'mobile_user_group': request.GET.get('tx_undetect_mobile_user_group', None),
+            'hiv_status': request.POST.get('tx_undetect_hiv_status', None),
+            'client_type': request.POST.get('tx_undetect_client_type', None),
+            'age_range': request.POST.get('tx_undetect_age_range', None),
+            'district': request.POST.get('tx_undetect_district', None),
+            'date_last_vi_test_start': request.POST.get('tx_undetect_date_last_vi_test_start', None),
+            'date_last_vi_test_end': request.POST.get('tx_undetect_date_last_vi_test_end', None),
+            'undetect_vl': request.POST.get('tx_undetect_undetect_vl', None),
+            'mobile_user_group': request.POST.get('tx_undetect_mobile_user_group', None),
         }
         achievement = LastVLTestDataSource(config=config).data
         return achievement.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0)
@@ -144,7 +144,87 @@ class PrevisionVsAchievementsView(View):
             ]
         }
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        domain = self.kwargs['domain']
+        return JsonResponse(data=self.generate_data(domain, request))
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class PrevisionVsAchievementsTableView(View):
+
+    def generate_data(self, domain, request):
+        config = {
+            'domain': domain,
+            'district': request.POST.get('district', None),
+            'visit_type': request.POST.get('visit_type', None),
+            'activity_type': request.POST.get('activity_type', None),
+            'client_type': request.POST.get('client_type', None),
+            'organization': request.POST.get('organization', None),
+            'visit_date_start': request.POST.get('visit_date_start', None),
+            'visit_date_end': request.POST.get('visit_date_end', None),
+            'post_date_start': request.POST.get('post_date_start', None),
+            'post_date_end': request.POST.get('post_date_end', None),
+            'first_art_date_start': request.POST.get('first_art_date_start', None),
+            'first_art_date_end': request.POST.get('first_art_date_end', None),
+            'date_handshake_start': request.POST.get('date_handshake_start', None),
+            'date_handshake_end': request.POST.get('date_handshake_end', None),
+            'date_last_vi_test_start': request.POST.get('date_last_vi_test_start', None),
+            'date_last_vi_test_end': request.POST.get('date_last_vi_test_end', None),
+        }
+        targets = TargetsDataSource(config=config).data
+        kp_prev = UICFromEPMDataSource(config=config).data
+        htc_tst = UICFromCCDataSource(config=config).data
+        htc_pos = HivStatusDataSource(config=config).data
+        care_new = FormCompletionDataSource(config=config).data
+        tx_new = FirstArtDataSource(config=config).data
+        tz_undetect = LastVLTestDataSource(config=config).data
+
+        return {
+            'target_kp_prev': targets.get('target_kp_prev', 0),
+            'target_htc_tst': targets.get('target_htc_tst', 0),
+            'target_htc_pos': targets.get('target_htc_pos', 0),
+            'target_care_new': targets.get('target_care_new', 0),
+            'target_tx_new': targets.get('target_tx_new', 0),
+            'target_tx_undetect': targets.get('target_tx_undetect', 0),
+            'kp_prev': kp_prev.get(PREVENTION_XMLNS, {}).get('uic', 0),
+            'htc_tst': htc_tst.get(POST_TEST_XMLNS, {}).get('uic', 0),
+            'htc_pos': htc_pos.get(POST_TEST_XMLNS, {}).get('uic', 0),
+            'care_new': care_new.get(ACCOMPAGNEMENT_XMLNS, {}).get('uic', 0),
+            'tx_new': tx_new.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0),
+            'tx_undetect': tz_undetect.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0),
+        }
+
+    def post(self, request, *args, **kwargs):
+        domain = self.kwargs['domain']
+        return JsonResponse(data=self.generate_data(domain, request))
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ServiceUptakeView(View):
+
+    def generate_data(self, domain, request):
+        config = {
+            'domain': domain,
+            'district': request.POST.get('district', None),
+            'visit_type': request.POST.get('visit_type', None),
+            'activity_type': request.POST.get('activity_type', None),
+            'client_type': request.POST.get('client_type', None),
+            'organization': request.POST.get('organization', None),
+            'visit_date_start': request.POST.get('visit_date_start', None),
+            'visit_date_end': request.POST.get('visit_date_end', None),
+            'post_date_start': request.POST.get('post_date_start', None),
+            'post_date_end': request.POST.get('post_date_end', None),
+            'first_art_date_start': request.POST.get('first_art_date_start', None),
+            'first_art_date_end': request.POST.get('first_art_date_end', None),
+        }
+
+        kp_prev = UICFromEPMDataSource(config=config, extend_group_by='kp_prev_date').data
+        htc_tst = UICFromCCDataSource(config=config, extend_group_by='htc_month').data
+        htc_pos = HivStatusDataSource(config=config, extend_group_by='htc_month').data
+        care_new = FormCompletionDataSource(config=config, extend_group_by='care_new_month').data
+
+
+    def post(self, request, *args, **kwargs):
         domain = self.kwargs['domain']
         return JsonResponse(data=self.generate_data(domain, request))
 

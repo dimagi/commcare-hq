@@ -1,42 +1,23 @@
-{% extends "reports/async/tabular.html" %}
+{% extends "champ/base_template.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap-daterangepicker/daterangepicker.css' %}"/>
-    <style>
-        .bubble {
-            border: 1px solid;
-            border-radius: 10px;
-            padding: 5px;
-            background: #f3f2f2;
-            margin: 0 auto;
-        }
-        .ui-select-match > .btn-default {
-            background-color: #ffffff;
-        }
-    </style>
-    <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-    <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
-    <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
-    <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
-    <script type="text/javascript" src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-    <script type="text/javascript" src="{% static 'angular-daterangepicker/js/angular-daterangepicker.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
-    <script type="text/javascript" src="{% static 'champ/js/champ_app.js' %}"></script>
-    <script type="text/javascript" src="{% static 'champ/js/angular-services/reports_data.service.js' %}"></script>
-    <script type="text/javascript" src="{% static 'champ/js/angular-services/filters.service.js' %}"></script>
+{% block champjs %}
+    <script type="text/javascript" src="{% static 'champ/js/controlers/prevision_vs_achievements_graph.controller.js' %}"></script>
+    <script>
+        window.angular.module('champApp', ['ui.select', 'nvd3', 'daterangepicker'])
+            .controller('MainController', PrevisionVsAchievementsGraphController)
+            .config(['$httpProvider', function($httpProvider) {
+                $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+                $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+                $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
+    }]);
+    </script>
 {% endblock %}
 
-{% block reportcontent %}
+{% block champcontent %}
     <div id="champApp" ng-controller="MainController as mainCtrl">
-        {% registerurl 'champ_pva' domain %}
-        {% registerurl 'district_filter' domain %}
-        {% registerurl 'target_cbo_filter' domain %}
-        {% registerurl 'target_userpl_filter' domain %}
         <h2 ng-bind="mainCtrl.title"></h2>
         <div class="row" style="margin-bottom: 40px;">
             <div class="row">
@@ -393,7 +374,7 @@
                     <div class="form-group">
                         <label class="control-label col-sm-3">Last VL Test Date</label>
                         <div class="col-sm-8">
-                            <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.tx_undetect_first_art_date" />
+                            <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.tx_undetect_date_last_vl_test" />
                         </div>
                     </div>
                 </div>
@@ -404,18 +385,5 @@
             <button class="btn btn-success" style="float: right; margin-right: 50px;" ng-click="mainCtrl.getData()">Submit</button>
         </div>
     </div>
-    <div class="commcarehq-urls" class="hide">
-        {% block registered_urls %}
-            {# do not override this block, use registerurl template tag to populate #}
-        {% endblock %}
-    </div>
 {% endblock %}
 
-{% block js-inline %}
-    <script>
-        angular.bootstrap(document.getElementById('champApp'), ['champApp']);
-        $(document).ready(function () {
-            $('#reportFiltersAccordion').css('display', 'none');
-        });
-    </script>
-{% endblock %}

@@ -1,7 +1,10 @@
-from custom.champ.reports.reports import DashboardReport
+from custom.champ.reports.reports import PrevisionVsAchievementsGraphReport, ServicesUptakeReport, \
+    PrevisionVsAchievementsTableReport
 
 CUSTOM_REPORTS = (
     ('CUSTOM REPORTS', (
-        DashboardReport,
+        PrevisionVsAchievementsGraphReport,
+        PrevisionVsAchievementsTableReport,
+        ServicesUptakeReport,
     )),
 )

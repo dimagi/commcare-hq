@@ -6,8 +6,24 @@ from corehq.util import reverse
 
 
 @location_safe
-class DashboardReport(CustomProjectReport):
-    slug = 'champ_dashboard_report'
-    name = 'Prevision vs Achievements'
-    title = 'Prevision vs Achievements'
-    report_template_path = 'champ/dashboard.html'
+class PrevisionVsAchievementsGraphReport(CustomProjectReport):
+    slug = 'prevision_vs_achievements_graph_report'
+    name = 'Prevision vs Achievements Graph'
+    title = 'Prevision vs Achievements Graph'
+    report_template_path = 'champ/prevision_vs_achievements_graph.html'
+
+
+@location_safe
+class PrevisionVsAchievementsTableReport(CustomProjectReport):
+    slug = 'prevision_vs_achievements_table_report'
+    name = 'Prevision vs Achievements Table'
+    title = 'Prevision vs Achievements Table'
+    report_template_path = 'champ/prevision_vs_achievements_table.html'
+
+
+@location_safe
+class ServicesUptakeReport(CustomProjectReport):
+    slug = 'service_uptake_report'
+    name = 'Services Uptake'
+    title = 'Services Uptake'
+    report_template_path = 'champ/service_uptake.html'

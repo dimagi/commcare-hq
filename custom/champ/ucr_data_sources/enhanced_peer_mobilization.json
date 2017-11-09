@@ -239,6 +239,19 @@
         "column_id": "user_id",
         "datatype": "string",
         "display_name": "user_id"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "month_start_date",
+          "date_expression": {
+            "type": "property_path",
+            "property_path": ["form", "visit_date"]
+          }
+        },
+        "column_id": "kp_prev_month",
+        "datatype": "string",
+        "display_name": "kp_prev_month"
       }
     ]
   }
