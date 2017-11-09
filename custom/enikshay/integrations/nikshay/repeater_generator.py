@@ -54,6 +54,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     basis_of_diagnosis,
     health_establishment_type,
     health_establishment_sector,
+    marital_status,
 )
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
@@ -93,8 +94,10 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "RegBy": username,
             "password": password,
             "Source": ENIKSHAY_ID,
+            "source": ENIKSHAY_ID,
             "IP_From": server_ip,
             "IP_FROM": server_ip,
+            "ip_address": server_ip,
         }
 
     @staticmethod
@@ -556,6 +559,22 @@ def _get_person_age(person_case_properties):
     return person_age
 
 
+def _get_location_nikshay_code(location_id):
+    if location_id:
+        district_location = SQLLocation.active_objects.get_or_None(location_id)
+        if district_location:
+            district_location.metadata.get('nikshay_code')
+    return ""
+
+
+def _get_location_name(location_id):
+    if location_id:
+        district_location = SQLLocation.active_objects.get_or_None(location_id)
+        if district_location:
+            return district_location.name
+    return ""
+
+
 def _get_person_case_properties(episode_case, person_case, person_case_properties):
     """
     :return: Example {'dcode': u'JLR', 'paddress': u'123, near asdf, Jalore, Rajasthan ', 'cmob': u'1234567890',
@@ -564,25 +583,36 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
     """
     person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
     person_properties = {
-        "pname": person_case.name,
-        "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
+        "patient_name": person_case.name,
+        "gender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         # 2B is currently setting age_entered but we are in the short term moving it to use age instead
-        "page": _get_person_age(person_case_properties),
-        "paddress": person_case_properties.get('current_address', ''),
+        "age": _get_person_age(person_case_properties),
+        "p_houseno": person_case_properties.get('current_address_first_line', ''),
+        "p_taluka": person_case_properties.get('current_address_block_taluka_mandal', ''),
+        "p_landmark": person_case_properties.get('current_address_landmark', ''),
+        "p_pincode": person_case_properties.get('current_address_postal_code', ''),
         # send 0 since that is accepted by Nikshay for this mandatory field
-        "pmob": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
-        "cname": person_case_properties.get('secondary_contact_name_address', ''),
-        "caddress": person_case_properties.get('secondary_contact_name_address', ''),
-        "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
-        "pcategory": person_category
+        "contact_no": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
+        "contact_person_name ": person_case_properties.get('secondary_contact_name_address', ''),
+        "contact_person_address ": person_case_properties.get('secondary_contact_name_address', ''),
+        "contact_person_mobile_no ": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
+        "pcategory": person_category,
+
+        "hiv_status": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
+        "p_town": person_case_properties.get('current_address_village_town_city', ''),
+        "p_district": _get_location_name(person_case_properties.get('current_address_district_choice')),
+        "p_state": _get_location_name(person_case_properties.get('current_address_state_choice')),
+        "socioeconomic_status": person_case_properties.get('socioeconomic_status', 'NA'),
+        "area": person_case_properties.get('area', 'NA'),
+        "marital_status": marital_status.get(person_case_properties.get('marital_status'), marital_status.get('unmarried'))
     }
     person_locations = get_person_locations(person_case, episode_case)
     person_properties.update(
         {
-            'scode': person_locations.sto,
-            'dcode': person_locations.dto,
-            'tcode': person_locations.tu,
-            'dotphi': person_locations.phi,
+            'reg_sto_code': person_locations.sto,
+            'reg_dto_code': person_locations.dto,
+            'reg_tbu_code': person_locations.tu,
+            'reg_phi_code': person_locations.phi,
         }
     )
 
@@ -620,9 +650,9 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
     episode_year = episode_date.year
 
     episode_properties.update({
-        "poccupation": occupation.get(
+        "occupation": occupation.get(
             patient_occupation,
-            occupation['other']
+            'Not known'
         ),
         "pregdate": str(episode_date),
         "ptbyr": str(episode_year),

@@ -156,3 +156,10 @@ health_establishment_sector = {
     'public': 'P',
     'private': 'V',
 }
+
+marital_status = {
+    'unmarried': 'S',
+    'married': 'M',
+    'widowed': 'W',
+    'separated': 'Se'
+}
