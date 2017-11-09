@@ -118,7 +118,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         return _soft_undelete(XFormInstance.get_db(), form_ids)
 
     @staticmethod
-    def iter_form_ids_by_xmlns(domain, xmlns):
+    def iter_form_ids_by_xmlns(domain, xmlns=None):
         return get_form_ids_by_xmlns(domain, xmlns)
 
 

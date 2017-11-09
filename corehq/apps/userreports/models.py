@@ -351,18 +351,22 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return {"settings": es_index_settings}
 
     def get_case_type_or_xmlns_filter(self):
+        """Returns a list of case types or xmlns from the filter of this data source.
+
+        If this can't figure out the case types or xmlns's that filter, then returns [None]
+        """
         def _get_property_value(config_filter, prop_name):
             if config_filter.get('type') != 'boolean_expression':
-                return None
+                return [None]
 
             if config_filter['operator'] not in ('eq', 'in'):
-                return None
+                return [None]
 
             expression = config_filter['expression']
             if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
                 multiple = config_filter['operator'] == 'in'
                 return config_filter['property_value'] if multiple else config_filter['property_value']
-            return None
+            return [None]
 
         if self.referenced_doc_type == 'CommCareCase':
             prop_value = _get_property_value(self.configured_filter, 'type')
@@ -373,7 +377,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             if prop_value:
                 return prop_value
 
-        return None
+        return [None]
 
 
 class ReportMeta(DocumentSchema):
