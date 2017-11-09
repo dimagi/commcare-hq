@@ -10,8 +10,8 @@ from custom.champ.utils import PREVENTION_XMLNS, ENHANCED_PEER_MOBILIZATION, CHA
 
 class UICFromEPMDataSource(SqlData):
 
-    def __init__(self, config=None, extend_group_by=None):
-        self.extend_group_by = extend_group_by
+    def __init__(self, config=None, replace_group_by=None):
+        self.replace_group_by = replace_group_by
         config['xmlns'] = PREVENTION_XMLNS
         super(UICFromEPMDataSource, self).__init__(config)
 
@@ -47,8 +47,8 @@ class UICFromEPMDataSource(SqlData):
 
     @property
     def group_by(self):
-        if self.extend_group_by:
-            return ['xmlns'].append(self.extend_group_by)
+        if self.replace_group_by:
+            return [self.replace_group_by]
         return ['xmlns']
 
     @property
@@ -60,8 +60,8 @@ class UICFromEPMDataSource(SqlData):
 
 class UICFromCCDataSource(SqlData):
 
-    def __init__(self, config=None, extend_group_by=None):
-        self.extend_group_by = extend_group_by
+    def __init__(self, config=None, replace_group_by=None):
+        self.replace_group_by = replace_group_by
         config['xmlns'] = POST_TEST_XMLNS
         super(UICFromCCDataSource, self).__init__(config)
 
@@ -80,7 +80,7 @@ class UICFromCCDataSource(SqlData):
             'posttest_date_start' in self.config and self.config['posttest_date_start'] and
             'posttest_date_end' in self.config and self.config['posttest_date_end']
         ):
-            filters.append(BETWEEN('postest_date', 'posttest_date_start', 'posttest_date_end'))
+            filters.append(BETWEEN('posttest_date', 'posttest_date_start', 'posttest_date_end'))
         if (
             'hiv_test_date_start' in self.config and self.config['hiv_test_date_start'] and
             'hiv_test_date_end' in self.config and self.config['hiv_test_date_end']
@@ -98,8 +98,8 @@ class UICFromCCDataSource(SqlData):
 
     @property
     def group_by(self):
-        if self.extend_group_by:
-            return ['xmlns'].append(self.extend_group_by)
+        if self.replace_group_by:
+            return [self.replace_group_by]
         return ['xmlns']
 
     @property
@@ -152,8 +152,8 @@ class TargetsDataSource(SqlData):
 
 class HivStatusDataSource(SqlData):
 
-    def __init__(self, config=None, extend_group_by=None):
-        self.extend_group_by = extend_group_by
+    def __init__(self, config=None, replace_group_by=None):
+        self.replace_group_by = replace_group_by
         config['xmlns'] = POST_TEST_XMLNS
         config['hiv_status'] = 'positive'
         super(HivStatusDataSource, self).__init__(config)
@@ -173,7 +173,7 @@ class HivStatusDataSource(SqlData):
             'posttest_date_start' in self.config and self.config['posttest_date_start'] and
             'posttest_date_end' in self.config and self.config['posttest_date_end']
         ):
-            filters.append(BETWEEN('postest_date', 'posttest_date_start', 'posttest_date_end'))
+            filters.append(BETWEEN('posttest_date', 'posttest_date_start', 'posttest_date_end'))
         if (
             'hiv_test_date_start' in self.config and self.config['hiv_test_date_start'] and
             'hiv_test_date_end' in self.config and self.config['hiv_test_date_end']
@@ -189,8 +189,8 @@ class HivStatusDataSource(SqlData):
 
     @property
     def group_by(self):
-        if self.extend_group_by:
-            return ['xmlns'].append(self.extend_group_by)
+        if self.replace_group_by:
+            return [self.replace_group_by]
         return ['xmlns']
 
     @property
@@ -202,8 +202,8 @@ class HivStatusDataSource(SqlData):
 
 class FormCompletionDataSource(SqlData):
 
-    def __init__(self, config=None, extend_group_by=None):
-        self.extend_group_by = extend_group_by
+    def __init__(self, config=None, replace_group_by=None):
+        self.replace_group_by = replace_group_by
         config['xmlns'] = ACCOMPAGNEMENT_XMLNS
         super(FormCompletionDataSource, self).__init__(config)
 
@@ -239,8 +239,8 @@ class FormCompletionDataSource(SqlData):
 
     @property
     def group_by(self):
-        if self.extend_group_by:
-            return ['xmlns'].append(self.extend_group_by)
+        if self.replace_group_by:
+            return [self.replace_group_by]
         return ['xmlns']
 
     @property
@@ -313,7 +313,7 @@ class LastVLTestDataSource(SqlData):
 
     @property
     def filters(self):
-        filters = [EQ('xmlns', 'xmlns'), NOT(EQ('date_last_vi_test', 'empty_date_last_vl_test'))]
+        filters = [EQ('xmlns', 'xmlns'), NOT(EQ('date_last_vl_test', 'empty_date_last_vl_test'))]
         if 'hiv_status' in self.config and self.config['hiv_status']:
             filters.append(EQ('hiv_status', 'hiv_status'))
         if 'client_type' in self.config and self.config['client_type']:
@@ -323,10 +323,10 @@ class LastVLTestDataSource(SqlData):
         if 'district' in self.config and self.config['district']:
             filters.append(EQ('district', 'district'))
         if (
-            'date_last_vi_test_start' in self.config and self.config['date_last_vi_test_start'] and
-            'date_last_vi_test_end' in self.config and self.config['date_last_vi_test_end']
+            'date_last_vl_test_start' in self.config and self.config['date_last_vl_test_start'] and
+            'date_last_vl_test_end' in self.config and self.config['date_last_vl_test_end']
         ):
-            filters.append(BETWEEN('date_last_vi_test', 'date_last_vi_test_start', 'date_last_vi_test_end'))
+            filters.append(BETWEEN('date_last_vl_test', 'date_last_vl_test_start', 'date_last_vl_test_end'))
         if 'undetect_vl' in self.config and self.config['undetect_vl']:
             filters.append(EQ('undetect_vl', 'undetect_vl'))
         if 'mobile_user_group' in self.config and self.config['mobile_user_group']:

@@ -15,7 +15,7 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
     vm.post_date = defaultDate;
     vm.first_art_date = defaultDate;
     vm.date_handshake = defaultDate;
-    vm.date_last_vi_test = defaultDate;
+    vm.date_last_vl_test = defaultDate;
 
     vm.filters = {
         visit_date_start: vm.visit_date.startDate,
@@ -26,8 +26,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         first_art_date_end: vm.first_art_date.endDate,
         date_handshake_start: vm.date_handshake.startDate,
         date_handshake_end: vm.date_handshake.endDate,
-        date_last_vi_test_start: vm.date_last_vi_test.startDate,
-        date_last_vi_test_end: vm.date_last_vi_test.endDate,
+        date_last_vl_test_start: vm.date_last_vl_test.startDate,
+        date_last_vl_test_end: vm.date_last_vl_test.endDate,
     };
 
     $scope.$watch(function () {
@@ -73,8 +73,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
             return;
         }
         vm.filters = {
-            date_last_vi_test_start: vm.date_last_vi_test.startDate.format('YYYY-MM-DD'),
-            date_last_vi_test_end: vm.date_last_vi_test.endDate.format('YYYY-MM-DD'),
+            date_last_vl_test_start: vm.date_last_vl_test.startDate.format('YYYY-MM-DD'),
+            date_last_vl_test_end: vm.date_last_vl_test.endDate.format('YYYY-MM-DD'),
         };
     }, true);
 
@@ -104,12 +104,6 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
             vm.data = response.data;
             filtersService.districtFilter().then(function (response) {
                 vm.districts = response.data.options;
-            });
-            filtersService.targetCBOFilter().then(function (response) {
-                vm.cbos = response.data.options;
-            });
-            filtersService.targetUserplFilter().then(function (response) {
-                vm.userpls = response.data.options;
             });
         });
     };

@@ -250,8 +250,26 @@
           }
         },
         "column_id": "kp_prev_month",
-        "datatype": "string",
+        "datatype": "date",
         "display_name": "kp_prev_month"
+      },
+      {
+        "type": "expression",
+        "expression": {
+            "type": "related_doc",
+            "related_doc_type": "CommCareUser",
+            "doc_id_expression": {
+                "type": "property_path",
+                "property_path": ["form", "meta", "userID"]
+            },
+            "value_expression": {
+                "type": "property_name",
+                "property_name": "location_id"
+            }
+        },
+        "column_id": "organization",
+        "datatype": "string",
+        "display_name": "organization"
       }
     ]
   }

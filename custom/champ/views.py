@@ -1,5 +1,10 @@
 from __future__ import absolute_import
 
+from collections import OrderedDict
+from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
+from dateutil.rrule import rrule, MONTHLY
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View
@@ -9,7 +14,6 @@ from custom.champ.sqldata import TargetsDataSource, UICFromEPMDataSource, UICFro
     FormCompletionDataSource, FirstArtDataSource, LastVLTestDataSource, ChampFilter
 from custom.champ.utils import PREVENTION_XMLNS, POST_TEST_XMLNS, ACCOMPAGNEMENT_XMLNS, SUIVI_MEDICAL_XMLNS, \
     ENHANCED_PEER_MOBILIZATION, CHAMP_CAMEROON, TARGET_XMLNS
-
 
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevisionVsAchievementsView(View):
@@ -105,8 +109,8 @@ class PrevisionVsAchievementsView(View):
             'client_type': request.POST.get('tx_undetect_client_type', None),
             'age_range': request.POST.get('tx_undetect_age_range', None),
             'district': request.POST.get('tx_undetect_district', None),
-            'date_last_vi_test_start': request.POST.get('tx_undetect_date_last_vi_test_start', None),
-            'date_last_vi_test_end': request.POST.get('tx_undetect_date_last_vi_test_end', None),
+            'date_last_vl_test_start': request.POST.get('tx_undetect_date_last_vl_test_start', None),
+            'date_last_vl_test_end': request.POST.get('tx_undetect_date_last_vl_test_end', None),
             'undetect_vl': request.POST.get('tx_undetect_undetect_vl', None),
             'mobile_user_group': request.POST.get('tx_undetect_mobile_user_group', None),
         }
@@ -168,8 +172,8 @@ class PrevisionVsAchievementsTableView(View):
             'first_art_date_end': request.POST.get('first_art_date_end', None),
             'date_handshake_start': request.POST.get('date_handshake_start', None),
             'date_handshake_end': request.POST.get('date_handshake_end', None),
-            'date_last_vi_test_start': request.POST.get('date_last_vi_test_start', None),
-            'date_last_vi_test_end': request.POST.get('date_last_vi_test_end', None),
+            'date_last_vl_test_start': request.POST.get('date_last_vl_test_start', None),
+            'date_last_vl_test_end': request.POST.get('date_last_vl_test_end', None),
         }
         targets = TargetsDataSource(config=config).data
         kp_prev = UICFromEPMDataSource(config=config).data
@@ -203,6 +207,14 @@ class PrevisionVsAchievementsTableView(View):
 class ServiceUptakeView(View):
 
     def generate_data(self, domain, request):
+        month_start = request.POST.get('month_start', 1)
+        year_start = request.POST.get('year_start', datetime.now().year)
+        month_end = request.POST.get('month_start', datetime.now().month)
+        year_end = request.POST.get('year_start', datetime.now().year)
+
+        start_date = datetime(year_start, month_start, 1)
+        end_date = datetime(year_end, month_end + 1, 1) - relativedelta(days=1)
+
         config = {
             'domain': domain,
             'district': request.POST.get('district', None),
@@ -210,19 +222,82 @@ class ServiceUptakeView(View):
             'activity_type': request.POST.get('activity_type', None),
             'client_type': request.POST.get('client_type', None),
             'organization': request.POST.get('organization', None),
-            'visit_date_start': request.POST.get('visit_date_start', None),
-            'visit_date_end': request.POST.get('visit_date_end', None),
-            'post_date_start': request.POST.get('post_date_start', None),
-            'post_date_end': request.POST.get('post_date_end', None),
-            'first_art_date_start': request.POST.get('first_art_date_start', None),
-            'first_art_date_end': request.POST.get('first_art_date_end', None),
+            'visit_date_start': start_date,
+            'visit_date_end': end_date,
+            'posttest_date_start': start_date,
+            'posttest_date_end': end_date,
+            'date_handshake_start': start_date,
+            'date_handshake_end': end_date,
         }
 
-        kp_prev = UICFromEPMDataSource(config=config, extend_group_by='kp_prev_date').data
-        htc_tst = UICFromCCDataSource(config=config, extend_group_by='htc_month').data
-        htc_pos = HivStatusDataSource(config=config, extend_group_by='htc_month').data
-        care_new = FormCompletionDataSource(config=config, extend_group_by='care_new_month').data
+        kp_prev = UICFromEPMDataSource(config=config, replace_group_by='kp_prev_month').data
+        htc_tst = UICFromCCDataSource(config=config, replace_group_by='htc_month').data
+        htc_pos = HivStatusDataSource(config=config, replace_group_by='htc_month').data
+        care_new = FormCompletionDataSource(config=config, replace_group_by='care_new_month').data
 
+        htc_uptake_chart_data = OrderedDict()
+        htc_yield_chart_data = OrderedDict()
+        link_chart_data = OrderedDict()
+
+        rrule_dates = [rrule_date for rrule_date in rrule(MONTHLY, dtstart=start_date, until=end_date)]
+        for rrule_dt in rrule_dates:
+            date_in_milliseconds = int(rrule_dt.date().strftime("%s")) * 1000
+            htc_uptake_chart_data.update({date_in_milliseconds: 0})
+            htc_yield_chart_data.update({date_in_milliseconds: 0})
+            link_chart_data.update({date_in_milliseconds: 0})
+
+        for row in htc_tst.values():
+            date = row['htc_month']
+            date_in_milliseconds = int(date.strftime("%s")) * 1000
+            nom = (row['uic'] or 0)
+            denom = (kp_prev[date]['uic'] or 1) if date in kp_prev else 1
+            htc_uptake_chart_data[date_in_milliseconds] = nom / float(denom)
+
+        for row in htc_pos.values():
+            date = row['htc_month']
+            date_in_milliseconds = int(date.strftime("%s")) * 1000
+            nom = (row['uic'] or 0)
+            denom = (htc_tst[date]['uic'] or 1) if date in htc_tst else 1
+            htc_yield_chart_data[date_in_milliseconds] = nom / float(denom)
+
+        for row in care_new.values():
+            date = row['care_new_month']
+            date_in_milliseconds = int(date.strftime("%s")) * 1000
+            nom = (row['uic'] or 0)
+            denom = (htc_pos[date]['uic'] or 1) if date in htc_pos else 1
+            link_chart_data[date_in_milliseconds] = nom / float(denom)
+
+        return {
+            'chart': [
+                {
+                    "values": [
+                        {'x': key, 'y': value} for key, value in htc_uptake_chart_data.items()
+                    ],
+                    "key": "HTC_uptake",
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": "blue"
+                },
+                {
+                    "values": [
+                        {'x': key, 'y': value} for key, value in htc_yield_chart_data.items()
+                    ],
+                    "key": "HTC_yield",
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": "orange"
+                },
+                {
+                    "values": [
+                        {'x': key, 'y': value} for key, value in link_chart_data.items()
+                    ],
+                    "key": "Link to care",
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": "gray"
+                }
+            ]
+        }
 
     def post(self, request, *args, **kwargs):
         domain = self.kwargs['domain']

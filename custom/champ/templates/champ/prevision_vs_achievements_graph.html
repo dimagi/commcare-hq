@@ -72,7 +72,10 @@
                 </div>
             </div>
         </div>
-        <nvd3 id="chart_test" options="mainCtrl.chartOptions" data="mainCtrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
+        <div class="row" style="margin-top: 20px;">
+            <button class="btn btn-success" style="float: right; margin-right: 50px;" ng-click="mainCtrl.getData()">Submit</button>
+        </div>
+        <nvd3 options="mainCtrl.chartOptions" data="mainCtrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
         <div class="row" id="filters">
             <div class="col-md-2">
                 <div class="row bubble">
@@ -380,9 +383,6 @@
                 </div>
                 </div>
             </div>
-        </div>
-        <div class="row" style="margin-top: 20px;">
-            <button class="btn btn-success" style="float: right; margin-right: 50px;" ng-click="mainCtrl.getData()">Submit</button>
         </div>
     </div>
 {% endblock %}

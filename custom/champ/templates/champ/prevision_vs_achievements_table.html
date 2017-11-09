@@ -95,12 +95,15 @@
                         <div class="col-md-2">
                             <label>Last VL Test Date:</label>
                             <div>
-                                <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.date_last_vi_test" />
+                                <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.date_last_vl_test" />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <button class="btn btn-success" style="float: right; margin-right: 50px;" ng-click="mainCtrl.getData()">Submit</button>
         </div>
         <div class="row">
             <table class="table">

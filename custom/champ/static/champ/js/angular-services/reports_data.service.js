@@ -18,5 +18,13 @@ window.angular.module('champApp').factory('reportsDataService', ['$http', functi
                 params: filters,
             });
         },
+        getServiceUptakeData: function(filters) {
+            var get_url = url('service_uptake');
+            return  $http({
+                method: "POST",
+                url: get_url,
+                params: filters,
+            });
+        },
     };
 }]);
