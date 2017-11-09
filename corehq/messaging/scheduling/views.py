@@ -24,12 +24,13 @@ from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
+    TimedSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
     SMSContent,
 )
 from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt
-from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
+from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -140,6 +141,10 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         return get_timezone_for_user(None, self.domain)
 
     @property
+    def is_editing(self):
+        return False
+
+    @property
     def parent_pages(self):
         return [
             {
@@ -171,13 +176,20 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         doc = StandaloneTranslationDoc.get_obj(self.domain, 'sms')
         return getattr(doc, 'langs', ['en'])
 
+    def enforce_edit_restriction(self, send_frequency):
+        if (
+            self.is_editing and
+            (send_frequency == ScheduleForm.SEND_IMMEDIATELY or isinstance(self.broadcast, ImmediateBroadcast))
+        ):
+            raise ImmediateMessageEditAttempt("Cannot edit an immediate message")
+
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
 
         if self.schedule_form.is_valid():
-            # TODO editing should not create a new one
             values = self.schedule_form.cleaned_data
+            self.enforce_edit_restriction(values['send_frequency'])
 
             if values['translate']:
                 messages = {}
@@ -195,12 +207,45 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                 with transaction.atomic():
                     schedule = AlertSchedule.create_simple_alert(self.domain, content)
                     broadcast = ImmediateBroadcast(
-                        domain=self.domain, name=values['schedule_name'], schedule=schedule
+                        domain=self.domain,
+                        name=values['schedule_name'],
+                        schedule=schedule,
+                        recipients=recipients,
                     )
-                    broadcast.recipients = recipients
                     broadcast.save()
                 refresh_alert_schedule_instances.delay(schedule, recipients)
+            elif values['send_frequency'] == ScheduleForm.SEND_DAILY:
+                with transaction.atomic():
+                    if values['stop_type'] == ScheduleForm.STOP_NEVER:
+                        total_iterations = TimedSchedule.REPEAT_INDEFINITELY
+                    else:
+                        total_iterations = values['occurrences']
 
+                    if self.is_editing:
+                        broadcast = self.broadcast
+                        schedule = broadcast.schedule
+                        schedule.set_simple_daily_schedule(
+                            values['send_time'],
+                            content,
+                            total_iterations=total_iterations
+                        )
+                    else:
+                        schedule = TimedSchedule.create_simple_daily_schedule(
+                            self.domain,
+                            values['send_time'],
+                            content,
+                            total_iterations=total_iterations
+                        )
+                        broadcast = ScheduledBroadcast(
+                            domain=self.domain,
+                            schedule=schedule,
+                        )
+
+                    broadcast.name = values['schedule_name']
+                    broadcast.start_date = values['start_date']
+                    broadcast.recipients = recipients
+                    broadcast.save()
+                refresh_timed_schedule_instances.delay(schedule, recipients, start_date=values['start_date'])
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
@@ -214,6 +259,10 @@ class EditScheduleView(CreateScheduleView):
         return reverse(self.urlname, args=[self.domain, self.broadcast_id])
 
     @property
+    def is_editing(self):
+        return True
+
+    @property
     def broadcast_id(self):
         return self.kwargs.get('broadcast_id')
 
@@ -222,6 +271,9 @@ class EditScheduleView(CreateScheduleView):
         try:
             broadcast = ImmediateBroadcast.objects.prefetch_related('schedule').get(pk=self.broadcast_id)
         except:
+            raise Http404()
+
+        if broadcast.domain != self.domain:
             raise Http404()
 
         return broadcast
@@ -246,9 +298,3 @@ class EditScheduleView(CreateScheduleView):
             'message': schedule.memoized_events[0].content.message,
         }
         return ScheduleForm(initial=initial, **self.form_kwargs)
-
-    def post(self, request, *args, **kwargs):
-        values = self.schedule_form.cleaned_data
-        if values['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
-            raise ImmediateMessageEditAttempt("Cannot edit an immediate message")
-        super(EditScheduleView, self).post(request, *args, **kwargs)
