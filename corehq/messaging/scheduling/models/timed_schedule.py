@@ -188,6 +188,7 @@ class TimedSchedule(Schedule):
             self.start_day_of_week = start_day_of_week
             self.schedule_length = 1
             self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_DAILY
             self.save()
 
             for event in self.timedevent_set.all():
@@ -217,6 +218,7 @@ class TimedSchedule(Schedule):
         with transaction.atomic():
             self.schedule_length = self.MONTHLY
             self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_MONTHLY
             self.save()
 
             for event in self.timedevent_set.all():

@@ -23,6 +23,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models import (
+    Schedule,
     AlertSchedule,
     TimedSchedule,
     ImmediateBroadcast,
@@ -359,15 +360,15 @@ class EditScheduleView(CreateScheduleView):
     def get_scheduling_fields_initial(self, broadcast):
         result = {}
         if isinstance(broadcast, ImmediateBroadcast):
-            result['send_frequency'] = ScheduleForm.SEND_IMMEDIATELY
+            if broadcast.schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
+                result['send_frequency'] = ScheduleForm.SEND_IMMEDIATELY
+            else:
+                raise UnsupportedScheduleError(
+                    "Unexpected Schedule ui_type '%s' for Schedule '%s'" % (schedule.ui_type, schedule.schedule_id)
+                )
         elif isinstance(broadcast, ScheduledBroadcast):
             schedule = broadcast.schedule
-            if (
-                schedule.schedule_length == 1 and
-                len(schedule.memoized_events) == 1 and
-                schedule.start_offset == 0 and
-                schedule.start_day_of_week == TimedSchedule.ANY_DAY
-            ):
+            if schedule.ui_type == Schedule.UI_TYPE_DAILY:
                 result['send_frequency'] = ScheduleForm.SEND_DAILY
                 result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
                 result['start_date'] = broadcast.start_date.strftime('%Y-%m-%d')
@@ -376,12 +377,7 @@ class EditScheduleView(CreateScheduleView):
                 else:
                     result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
                     result['occurrences'] = schedule.total_iterations
-            elif (
-                schedule.schedule_length == TimedSchedule.MONTHLY and
-                len(set([e.time for e in schedule.memoized_events])) == 1 and
-                schedule.start_offset == 0 and
-                schedule.start_day_of_week == TimedSchedule.ANY_DAY
-            ):
+            elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
                 result['send_frequency'] = ScheduleForm.SEND_MONTHLY
                 result['days_of_month'] = [str(e.day) for e in schedule.memoized_events]
                 result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
@@ -392,7 +388,9 @@ class EditScheduleView(CreateScheduleView):
                     result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
                     result['occurrences'] = schedule.total_iterations
             else:
-                raise UnsupportedScheduleError("Could not determine schedule type")
+                raise UnsupportedScheduleError(
+                    "Unexpected Schedule ui_type '%s' for Schedule '%s'" % (schedule.ui_type, schedule.schedule_id)
+                )
 
         return result
 
