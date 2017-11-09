@@ -66,7 +66,7 @@ def _build_indicators(config, document_store, relevant_ids):
     for doc in document_store.iter_documents(relevant_ids):
         if config.asynchronous:
             AsyncIndicator.update_record(
-                doc.get('_id'), config.referenced_doc_type, config.domain, config._id
+                doc.get('_id'), config.referenced_doc_type, config.domain, [config._id]
             )
         else:
             # save is a noop if the filter doesn't match

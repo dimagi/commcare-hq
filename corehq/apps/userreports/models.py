@@ -781,6 +781,8 @@ class AsyncIndicator(models.Model):
 
     @classmethod
     def update_record(cls, doc_id, doc_type, domain, config_ids):
+        if not isinstance(config_ids, list):
+            config_ids = list(config_ids)
         config_ids = sorted(config_ids)
 
         indicator, created = cls.objects.get_or_create(
