@@ -26,19 +26,19 @@ hqDefine('analytics/js/logging', function () {
     };
 
     var _printPretty = function (message) {
-        var _title, _value, _grp;
+        var _title, _value, _group;
         if (_.isUndefined(message.value)) {
             console.log("Message was undefined");  // eslint-disable-line no-console
         } else if (message.value.isGroup) {
-            _grp = message.value;
-            _grp.level = message.level;
-            _grp.print();
+            _group = message.value;
+            _group.level = message.level;
+            _group.print();
         } else if (_.isArguments(message.value)) {
             _title = "Arguments (" + message.value.length + ")    " + _.map(Array.from(message.value), JSON.stringify).join('    ');
             _value = Array.from(message.value);
-            _grp = new Group(_title, new Message(_value, message.level));
-            _grp.isCollapsed = true;
-            _grp.print();
+            _group = new Group(_title, new Message(_value, message.level));
+            _group.isCollapsed = true;
+            _group.print();
         } else if (_.isArray(message.value)) {
             _.each(message.value, function (msg) {
                 _printPretty(new Message(msg, message.level));
@@ -47,16 +47,16 @@ hqDefine('analytics/js/logging', function () {
             // DOM element
             _title = "#" + message.value.get(0).id + " ." + message.value.get(0).className.split(' ').join('.');
             _value = message.value.get(0).outerHTML;
-            _grp = new Group(_title, new Message(_value, message.level));
-            _grp.isCollapsed = true;
-            _grp.print();
+            _group = new Group(_title, new Message(_value, message.level));
+            _group.isCollapsed = true;
+            _group.print();
         } else if (!_.isString(message.value) && !_.isUndefined(message.value)) {
             _title = JSON.stringify(message.value);
             _value = message.value;
-            _grp = new Group(_title, new Message(_value, message.level));
-            _grp.isCollapsed = true;
-            _grp.isRaw = true;
-            _grp.print();
+            _group = new Group(_title, new Message(_value, message.level));
+            _group.isCollapsed = true;
+            _group.isRaw = true;
+            _group.print();
         } else {
             message.print();
         }
