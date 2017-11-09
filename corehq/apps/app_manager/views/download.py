@@ -39,7 +39,7 @@ def download_odk_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
-        create_build_files_for_all_app_profiles.delay(request.app.domain, request.app.id)
+        request.app.create_profile(is_odk=True),
     else:
         request._always_allow_browser_caching = True
     build_profile = request.GET.get('profile')
@@ -54,6 +54,7 @@ def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+        request.app.create_profile(is_odk=True, with_media=True)
     else:
         request._always_allow_browser_caching = True
     build_profile = request.GET.get('profile')
@@ -73,6 +74,7 @@ def download_suite(request, domain, app_id):
     if not request.app.copy_of:
         previous_version = request.app.get_latest_app(released_only=False)
         request.app.set_form_versions(previous_version)
+        request.app.create_suite()
     return HttpResponse(
         request.app.create_suite(build_profile_id=build_profile)
     )
