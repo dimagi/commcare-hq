@@ -178,23 +178,25 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.schedule_form.is_valid():
             # TODO editing should not create a new one
             values = self.schedule_form.cleaned_data
-            if values['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
-                if values['translate']:
-                    messages = {}
-                    for lang in self.project_languages:
-                        key = 'message_%s' % lang
-                        if key in values:
-                            messages[lang] = values[key]
-                    content = SMSContent(message=messages)
-                else:
-                    content = SMSContent(message={'*': values['non_translated_message']})
 
+            if values['translate']:
+                messages = {}
+                for lang in self.project_languages:
+                    key = 'message_%s' % lang
+                    if key in values:
+                        messages[lang] = values[key]
+                content = SMSContent(message=messages)
+            else:
+                content = SMSContent(message={'*': values['non_translated_message']})
+
+            recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
+
+            if values['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
                 with transaction.atomic():
                     schedule = AlertSchedule.create_simple_alert(self.domain, content)
                     broadcast = ImmediateBroadcast(
                         domain=self.domain, name=values['schedule_name'], schedule=schedule
                     )
-                    recipients = [('CommCareUser', r_id) for r_id in values['recipients']]
                     broadcast.recipients = recipients
                     broadcast.save()
                 refresh_alert_schedule_instances.delay(schedule, recipients)
