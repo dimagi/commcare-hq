@@ -383,7 +383,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def iter_form_ids_by_xmlns(domain, xmlns=None):
         from corehq.sql_db.util import run_query_across_partitioned_databases
 
-        q_expr = Q(domain=domain)
+        q_expr = Q(domain=domain) & Q(state=XFormInstanceSQL.NORMAL)
         if xmlns:
             q_expr &= Q(xmlns=xmlns)
 
