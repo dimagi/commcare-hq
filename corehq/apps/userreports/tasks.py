@@ -120,12 +120,7 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         resume_helper = DataSourceResumeHelper(config)
 
-        relevant_ids = resume_helper.get_ids_to_resume_from()
-        if len(relevant_ids) > 0:
-            _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
-                              resume_helper)
-            last_id = relevant_ids[-1]
-            _iteratively_build_table(config, last_id, resume_helper)
+        _iteratively_build_table(config, resume_helper)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
@@ -136,35 +131,43 @@ def recalculate_indicators(indicator_config_id, initiated_by=None):
     rebuild_indicators_in_place(indicator_config_id, initiated_by, doc_id_provider)
 
 
-def _iteratively_build_table(config, last_id=None, resume_helper=None,
-                             in_place=False, doc_id_provider=None, limit=-1):
+def _iteratively_build_table(config, resume_helper=None, in_place=False,
+                             doc_id_provider=None, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
-    case_type_or_xmlns = config.get_case_type_or_xmlns_filter()
+    case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
+    completed_ct_xmlns = resume_helper.get_completed_case_type_or_xmlns()
+    if completed_ct_xmlns:
+        case_type_or_xmlns_list = [
+            case_type_or_xmlns
+            for case_type_or_xmlns in case_type_or_xmlns_list
+            if case_type_or_xmlns not in completed_ct_xmlns
+        ]
 
-    relevant_ids = []
-    document_store = get_document_store(
-        config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
-    )
+    for case_type_or_xmlns in case_type_or_xmlns_list:
+        relevant_ids = []
+        document_store = get_document_store(
+            config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
+        )
 
-    if not doc_id_provider:
-        doc_id_provider = document_store.iter_document_ids(last_id)
+        if not doc_id_provider:
+            doc_id_provider = document_store.iter_document_ids()
 
-    for i, relevant_id in enumerate(doc_id_provider):
-        if last_id is None and i >= limit > -1:
-            break
-        relevant_ids.append(relevant_id)
-        if len(relevant_ids) >= ID_CHUNK_SIZE:
-            resume_helper.set_ids_to_resume_from(relevant_ids)
+        for i, relevant_id in enumerate(doc_id_provider):
+            if i >= limit > -1:
+                break
+            relevant_ids.append(relevant_id)
+            if len(relevant_ids) >= ID_CHUNK_SIZE:
+                _build_indicators(config, document_store, relevant_ids, resume_helper)
+                relevant_ids = []
+
+        if relevant_ids:
             _build_indicators(config, document_store, relevant_ids, resume_helper)
-            relevant_ids = []
 
-    if relevant_ids:
-        resume_helper.set_ids_to_resume_from(relevant_ids)
-        _build_indicators(config, document_store, relevant_ids, resume_helper)
+        resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
 
     if not id_is_static(indicator_config_id):
-        resume_helper.clear_ids()
+        resume_helper.clear_resume_info()
         if in_place:
             config.meta.build.finished_in_place = True
         else:

@@ -352,12 +352,16 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def get_case_type_or_xmlns_filter(self):
         def _get_property_value(config_filter, prop_name):
-            if (config_filter.get('type') != 'boolean_expression'
-                    or config_filter['operator'] != 'eq'):
+            if config_filter.get('type') != 'boolean_expression':
                 return None
+
+            if config_filter['operator'] not in ('eq', 'in'):
+                return None
+
             expression = config_filter['expression']
             if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
-                return config_filter['property_value']
+                multiple = config_filter['operator'] == 'in'
+                return config_filter['property_value'] if multiple else config_filter['property_value']
             return None
 
         if self.referenced_doc_type == 'CommCareCase':
