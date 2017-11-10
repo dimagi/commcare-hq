@@ -7,8 +7,8 @@ from six.moves import input
 
 
 def confirm(msg):
-    input = input("{} Type ['y', 'yes'] to continue.\n".format(msg))
-    if input not in ['y', 'yes']:
+    user_input = input("{} Type ['y', 'yes'] to continue.\n".format(msg))
+    if user_input not in ['y', 'yes']:
         print('abort')
         exit()
 

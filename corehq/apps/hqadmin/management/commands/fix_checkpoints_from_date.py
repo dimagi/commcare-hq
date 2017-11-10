@@ -24,8 +24,8 @@ def valid_date(s):
 
 
 def confirm(msg):
-    input = input("{} Type ['y', 'yes'] to continue.\n".format(msg))
-    if input in ['y', 'yes']:
+    user_input = input("{} Type ['y', 'yes'] to continue.\n".format(msg))
+    if user_input in ['y', 'yes']:
         return True
 
 
