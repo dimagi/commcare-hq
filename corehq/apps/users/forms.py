@@ -287,9 +287,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         ]
         if not settings.ENTERPRISE_MODE:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
-
-        if self.set_email_opt_out:
-            basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
+            if self.set_email_opt_out:
+                basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
 
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
