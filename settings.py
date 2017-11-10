@@ -674,9 +674,6 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 # again.
 PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
 
-# Number of minutes a celery task will alot for itself (via lock timeout)
-PILLOW_RETRY_PROCESSING_LOCK_TIMEOUT = 5
-
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
 
