@@ -103,7 +103,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         vm.ages.push({
             value: age,
             id: age,
-        })
+        });
     }
 
     for (var year=2014; year <= (currentYear + 4); year++ ) {
