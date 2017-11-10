@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.views import LocationFieldsView

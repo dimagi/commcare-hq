@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import sys
 
-from utils import (
+from .utils import (
     do_couch_request,
     get_arg_parser,
     node_details_from_args,

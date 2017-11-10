@@ -1,5 +1,6 @@
 ####### Configuration for CommCareHQ Running in docker #######
 
+from __future__ import absolute_import
 import os
 
 ICDS_UCR_DATABASE_ALIAS = 'default'
@@ -102,8 +103,8 @@ COUCH_DATABASES = {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
-        'COUCH_USERNAME': '',
-        'COUCH_PASSWORD': '',
+        'COUCH_USERNAME': 'commcarehq',
+        'COUCH_PASSWORD': 'commcarehq',
         'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }
@@ -235,7 +236,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     ADMINS = (('Admin', 'admin@example.com'),)
 
     CELERY_SEND_TASK_ERROR_EMAILS = True
-
     LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 
@@ -251,3 +251,7 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     SHARED_TEMP_DIR_NAME = 'temp'
 
 BIGCOUCH = True
+
+LOCAL_APPS = (
+    'kombu.transport.django',  # required for celery
+)

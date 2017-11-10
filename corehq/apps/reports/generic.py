@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from StringIO import StringIO
 import datetime
 import re
@@ -36,7 +37,7 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
-from export import get_writer
+from .export import get_writer
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -95,6 +96,7 @@ class GenericReportView(object):
     description = None  # Human-readable description of the report
     report_template_path = None
     report_partial_path = None
+    js_scripts = None
 
     asynchronous = False
     hide_filters = False
@@ -477,6 +479,7 @@ class GenericReportView(object):
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
+                js_scripts=self.js_scripts,
                 js_options=self.js_options,
             ),
             current_config_id=current_config_id,

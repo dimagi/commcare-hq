@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from gevent import monkey; monkey.patch_all()
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type
 from itertools import islice

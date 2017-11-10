@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics

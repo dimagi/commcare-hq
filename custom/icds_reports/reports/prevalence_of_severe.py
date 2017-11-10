@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -8,7 +9,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -38,6 +39,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+        if 'age_tranche' not in config:
+            queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     map_data = {}
@@ -127,6 +130,8 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
+    if 'age_tranche' not in config:
+        chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
 
     data = {
         'red': OrderedDict(),
@@ -182,7 +187,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% normal",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
@@ -195,7 +200,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% moderately wasted (moderate acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": ORANGE
+                "color": ChartColors.ORANGE
             },
             {
                 "values": [
@@ -208,7 +213,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% severely wasted (severe acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": ChartColors.RED
             }
         ],
         "all_locations": top_locations,
@@ -237,6 +242,8 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
 
     if not show_test:
         data = apply_exclude(domain, data)
+    if 'age_tranche' not in config:
+        data = data.exclude(age_tranche__in=[0, 6, 72])
 
     chart_data = {
         'blue': [],

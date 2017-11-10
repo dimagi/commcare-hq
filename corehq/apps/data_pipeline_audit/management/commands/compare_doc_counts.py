@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.apps.data_pipeline_audit.tools import get_doc_counts_for_domain

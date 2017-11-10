@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 
 from django.utils.translation import ugettext

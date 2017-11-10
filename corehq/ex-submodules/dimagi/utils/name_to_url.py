@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 
 def name_to_url(name, default=""):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from calendar import monthrange
 from datetime import datetime
 from corehq.apps.reports.models import ReportNotification

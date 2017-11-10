@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from django.test import TestCase, Client
 from corehq.apps.app_manager.models import Application

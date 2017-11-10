@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.fixtures import simple_fixture_generator

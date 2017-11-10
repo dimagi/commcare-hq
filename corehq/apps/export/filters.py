@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.es import filters as esfilters
 from corehq.apps.es.cases import (
     owner,

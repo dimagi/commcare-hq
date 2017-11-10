@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import NoResultFound
 from django.test import TestCase
 from corehq.apps.app_manager.dbaccessors import (
@@ -103,7 +104,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assert_docs_equal(normal_app, brief_normal_app)
 
     def test_get_brief_app(self):
-        self.apps[0].mobile_ucr_sync_interval = 7
         self.apps[0].save()
         brief_app = get_brief_app(self.domain, self.apps[0]._id)
         self.assertIsNotNone(brief_app)
@@ -112,7 +112,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         exepcted_app = self._make_app_brief(self.apps[0])
         exepcted_app.anonymous_cloudcare_hash = None
         self.assert_docs_equal(brief_app, exepcted_app)
-        self.assertEqual(brief_app.mobile_ucr_sync_interval, 7)
 
     def test_get_brief_app_not_found(self):
         with self.assertRaises(NoResultFound):

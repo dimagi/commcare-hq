@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import datetime
 from decimal import Decimal

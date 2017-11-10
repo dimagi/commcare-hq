@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -1271,13 +1272,6 @@ SHOW_DEV_TOGGLE_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-DASHBOARD_GRAPHS = StaticToggle(
-    'dashboard_graphs',
-    'Show submission graph on dashboard',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
@@ -1348,6 +1342,34 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_NEW = StaticToggle(
+    'analytics_new',
+    "Use refactored analytics across all of HQ (for QA purposes).",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_DEBUG = StaticToggle(
+    'analytics_debug',
+    "Turn on DEBUG level output for debugging analytics.",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_VERBOSE = StaticToggle(
+    'analytics_verbose',
+    "Turn on VERBOSE level output for debugging analytics.",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_WARNING = StaticToggle(
+    'analytics_warning',
+    "Turn on WARNING level output for debugging analytics.",
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )

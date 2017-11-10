@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from corehq.form_processor.tests.utils import only_run_with_non_partitioned_database
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (

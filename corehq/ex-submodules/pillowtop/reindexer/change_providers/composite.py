@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import itertools
 
 from pillowtop.reindexer.change_providers.interface import ChangeProvider

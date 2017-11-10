@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from django.contrib.auth import get_user_model
 from django.test import TestCase

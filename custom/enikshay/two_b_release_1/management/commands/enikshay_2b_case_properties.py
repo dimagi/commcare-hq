@@ -2,6 +2,7 @@
 eNikshay 2B - Release 1 Migration
 https://docs.google.com/spreadsheets/d/1GFpMht-C-0cMCQu8rfqQG9lgW9omfYi3y2nUXHR8Pio/edit#gid=0
 """
+from __future__ import absolute_import
 import datetime
 import logging
 import phonenumbers

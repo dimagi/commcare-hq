@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.sql_db.util import handle_connection_failure
 from datetime import datetime
 from time import sleep

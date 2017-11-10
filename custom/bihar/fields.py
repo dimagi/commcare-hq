@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.select import GroupFilter
 

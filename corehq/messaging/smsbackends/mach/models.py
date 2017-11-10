@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import urllib
 from django.conf import settings
 import urllib2

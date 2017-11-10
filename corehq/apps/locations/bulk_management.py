@@ -5,6 +5,7 @@ This includes support for changing location types, changing locations' parents,
 deleting things, and so on.  See the spec doc for specifics:
 https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 """
+from __future__ import absolute_import
 import copy
 from collections import Counter, defaultdict
 

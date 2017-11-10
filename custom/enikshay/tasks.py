@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from cStringIO import StringIO
 from dimagi.utils.csv import UnicodeWriter

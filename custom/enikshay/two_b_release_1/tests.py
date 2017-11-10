@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase, override_settings
 
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION

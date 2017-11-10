@@ -140,10 +140,15 @@
                                     <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.description }}</td>
                                     <td>
                                         {% verbatim %}
+                                        <div ng-if="!readOnly">
                                             <a ng-href="{{ getModuleUrl(form.form_id, lang) }}">
                                                 {{ getModuleName(form.form_id, lang) }}</a> ->
                                             <a ng-href="{{ getFormUrl(form.form_id, lang) }}">
                                                 {{ getFormName(form.form_id, lang) }}</a>
+                                        </div>
+                                        <div ng-if="readOnly">
+                                            <span>{{ getModuleName(form.form_id, lang) }} -> {{ getFormName(form.form_id, lang) }}</span>
+                                        </div>
                                         {% endverbatim %}
                                         <i class="fa fa-exclamation-triangle text-danger" ng-repeat="error in form.errors"
                                            popover="{{ error }}" popover-trigger="mouseenter"

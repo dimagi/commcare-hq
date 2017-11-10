@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 COUCH_FORMATS = ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.%fZ']

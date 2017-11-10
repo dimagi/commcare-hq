@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import Counter
 
 from django.http.response import JsonResponse
@@ -104,9 +105,12 @@ class DuplicateIdsReport(TemplateView):
                 case['username'] = user_dict['username']
                 device_id = case['form_device_id']
                 if device_id == 'Formplayer':
-                    auth_username = auth_usernames.get(case['auth_user_id'])
-                    device_id = "WebAppsLogin*{}*as*{}".format(
-                        auth_username, user_dict['username']).replace('.', '_')
+                    if case['form_user_id'] == case['auth_user_id']:
+                        device_id = "WebAppsLogin"
+                    else:
+                        auth_username = auth_usernames.get(case['auth_user_id'])
+                        device_id = "WebAppsLogin*{}*as*{}".format(
+                            auth_username, user_dict['username']).replace('.', '_')
                 try:
                     device_number = user_dict['device_ids'].index(device_id) + 1
                 except ValueError:

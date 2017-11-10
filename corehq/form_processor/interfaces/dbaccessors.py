@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
@@ -63,6 +64,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def iter_forms_by_last_modified(start_datetime, end_datetime):
+        raise NotImplementedError
+
+    @abstractmethod
+    def iter_form_ids_by_xmlns(self, xmlns=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -143,6 +148,9 @@ class FormAccessors(object):
             start_datetime,
             end_datetime,
         )
+
+    def iter_form_ids_by_xmlns(self, xmlns=None):
+        return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
 
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)

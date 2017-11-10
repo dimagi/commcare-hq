@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from collections import namedtuple, defaultdict
 from django.utils.dateparse import parse_datetime
@@ -230,12 +231,8 @@ def get_open_referral_case_from_person(domain, person_case_id):
     )
     if not open_referral_cases:
         return None
-    if len(open_referral_cases) == 1:
-        return open_referral_cases[0]
     else:
-        raise ENikshayException(
-            "Expected none or one open referral case for person with id: {}".format(person_case_id)
-        )
+        return sorted(open_referral_cases, key=(lambda case: case.opened_on))[0]
 
 
 def get_latest_trail_case_from_person(domain, person_case_id):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe

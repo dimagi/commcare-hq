@@ -4,6 +4,7 @@ and some autogeneration. These additions are turned on by a feature flag, but
 domain and HQ admins are excepted, in case we ever need to violate the
 assumptions laid out here.
 """
+from __future__ import absolute_import
 import math
 import re
 import uuid

@@ -1741,7 +1741,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderPersonName(data, type, full) {
-        return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)">' + full.person_name || 'Data not Entered' + '</span>';
+        return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(\''
+            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
     }
 
     function renderDateOfBirth(data, type, full) {
@@ -1757,21 +1758,24 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderWeightForAgeStatus(data, type, full) {
-        return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'weight\')" popover-placement="right"  popover-trigger="\'mouseenter\'">'
-            + full.current_month_nutrition_status.value
-            + '</span>';
+        return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'weight\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_nutrition_status.value + '</span>';
     }
 
     function renderHeightForAgeStatus(data, type, full) {
-        return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
-            + full.current_month_stunting.value
-            + '</span>';
+        return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_stunting.value + '</span>';
     }
 
     function renderWeightForHeightStatus(data, type, full) {
-        return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
-            + full.current_month_wasting.value
-            + '</span>';
+        return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_wasting.value + '</span>';
     }
 
     function renderPseDaysAttended(data, type, full) {
@@ -1844,17 +1848,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.getDataForStep(vm.step);
     });
 
-    vm.getPopoverContent = function (data, type) {
+    vm.getPopoverContent = function (recorded_weight, recorded_height, age_in_months, type) {
         var html = '';
 
         var recordedWeight = 'Data not Entered';
         var recordedHeight = 'Data not Entered';
         var age = 'Data not Entered';
 
-        if (data) {
-            recordedWeight = d3.format(".2f")(data.recorded_weight) + ' kg';
-            recordedHeight = d3.format(".2f")(data.recorded_height) + ' cm';
-            age = data.age_in_months + ' months';
+        if (recorded_weight) {
+            recordedWeight = d3.format(".2f")(recorded_weight) + ' kg';
+        }
+        if (recorded_height) {
+            recordedHeight = d3.format(".2f")(recorded_height) + ' cm';
+        }
+        if (age_in_months) {
+            age = age_in_months + ' months';
         }
 
         if (type === 'weight' || type === 'both') {

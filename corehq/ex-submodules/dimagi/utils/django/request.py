@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpRequest
 
 def _is_http_request(obj):

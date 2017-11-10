@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reminders import tasks as reminders_tasks
 from corehq.apps.reminders.models import CaseReminderHandler

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
@@ -340,13 +341,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ),
         widget=forms.HiddenInput())
 
-    mobile_ucr_sync_interval = forms.IntegerField(
-        label=ugettext_lazy("Mobile report sync delay"),
-        required=False,
-        help_text=ugettext_lazy("Time to wait between sending updated mobile report data to users (hours)."),
-        widget=forms.HiddenInput()
-    )
-
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
@@ -357,9 +351,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ))
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
-
-        if toggles.MOBILE_UCR.enabled(self.domain):
-            self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
 
     @property
     def direct_properties(self):

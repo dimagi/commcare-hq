@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from corehq.apps.receiverwrapper.util import submit_form_locally

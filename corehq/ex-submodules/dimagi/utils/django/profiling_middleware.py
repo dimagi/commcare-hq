@@ -2,6 +2,7 @@
 # Original author: udfalkso
 # Modified by: Shwagroo Team
 
+from __future__ import absolute_import
 import sys
 import os
 import re
