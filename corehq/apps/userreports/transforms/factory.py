@@ -8,7 +8,7 @@ from corehq.apps.userreports.transforms.specs import (
     DateFormatTransform,
     NumberFormatTransform,
     TranslationTransform,
-)
+    MultipleValueStringTranslationTransform)
 
 
 class TransformFactory(object):
@@ -17,6 +17,7 @@ class TransformFactory(object):
         'date_format': DateFormatTransform,
         'number_format': NumberFormatTransform,
         'translation': TranslationTransform,
+        'multiple_value_string_translation': MultipleValueStringTranslationTransform
     }
 
     @classmethod
