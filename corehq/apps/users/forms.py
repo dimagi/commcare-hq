@@ -284,8 +284,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
-            twbscrispy.PrependedText('analytics_enabled', ''),
         ]
+        if not settings.ENTERPRISE_MODE:
+            basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
 
         if self.set_email_opt_out:
             basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
