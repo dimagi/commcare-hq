@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import datetime
 import csv
 import pytz
-
+import six
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
 from django.core.mail import EmailMessage
@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 })
 
             if email_to:
-                email_to = list(email_to) if not isinstance(email_to, basestring) else [email_to]
+                email_to = list(email_to) if not isinstance(email_to, six.string_types) else [email_to]
                 csvfile = open(result_file_name)
                 email = EmailMessage(
                     subject="Nikshay Registration Notification Time Report",
