@@ -12,7 +12,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.filtersData = $location.search();
 
     var genderIndex = genders.findIndex(function (x) {
-        return x.id === vm.filtersData.gender
+        return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
         vm.genderLabel = genders[genderIndex].name;
