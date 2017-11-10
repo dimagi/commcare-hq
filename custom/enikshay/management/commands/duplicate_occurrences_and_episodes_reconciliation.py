@@ -1,6 +1,9 @@
 import csv
 
 from datetime import datetime
+
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.dateparse import parse_date
 from corehq.apps.hqcase.utils import bulk_update_cases
@@ -30,7 +33,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.dry_run = options.get('dry_run')
-        self.result_file = self.setup_result_file()
+        self.recipient = options.get('recipient', 'mkangia@dimagi.com')
+        self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
+        self.result_file_name = self.setup_result_file()
         self.case_accessor = CaseAccessors(DOMAIN)
         # iterate all person cases
         for person_case_id in self._get_open_person_case_ids_to_process():
@@ -44,6 +49,21 @@ class Command(BaseCommand):
                 elif open_occurrence_cases:
                     # if needed reconcile episode cases under the open occurrence case
                     self.get_open_reconciled_episode_cases_for_occurrence(open_occurrence_cases[0].get_id)
+
+        self.email_report()
+
+    def email_report(self):
+        csvfile = open(self.result_file_name)
+        email = EmailMessage(
+            subject="Occurrence and Episode Reconciliation Report",
+            body="Please find attached report for a %s run finished at %s." %
+                 ('dry' if self.dry_run else 'real', datetime.now()),
+            to=self.recipient,
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.attach(filename=self.result_file_name, content=csvfile.read())
+        csvfile.close()
+        email.send()
 
     def reconcile_cases(self, open_occurrence_cases, person_case_id):
         """
@@ -185,7 +205,7 @@ class Command(BaseCommand):
         return file_name
 
     def writerow(self, row):
-        with open(self.result_file, 'a') as csvfile:
+        with open(self.result_file_name, 'a') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
             writer.writerow(row)
 
