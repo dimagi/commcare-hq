@@ -225,63 +225,63 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
     def _create_case_structure(self):
         """
                   +----+
-                  | E1 |
+                  | H  |
                   +--^-+
                      |e
         +---+     +--+-+
-        |O  +--c->| C  |
+        |C  +--c->| PH |
         +---+     +--^-+
-                     |e
+       (owned)       |e
                   +--+-+
-                  | E2 |
+                  | E  |
                   +----+
         """
         case_type = 'case'
 
-        E1 = CaseStructure(
-            case_id='extension_1',
+        H = CaseStructure(
+            case_id='host',
             attrs={'create': True, 'owner_id': '-'},
-        )
+        )  # No outgoing indices, so this is the root
+
+        PH = CaseStructure(
+            case_id='parent_host',
+            attrs={'create': True, 'owner_id': '-'},
+            indices=[CaseIndex(
+                H,
+                identifier='host',
+                relationship='extension',
+                related_type=case_type,
+            )]
+        )  # This case is in the middle
 
         C = CaseStructure(
             case_id='child',
-            attrs={'create': True, 'owner_id': '-'},
-            indices=[CaseIndex(
-                E1,
-                identifier='extension_1',
-                relationship='extension',
-                related_type=case_type,
-            )]
-        )
-
-        O = CaseStructure(
-            case_id='owned',
             attrs={'create': True},
             indices=[CaseIndex(
-                C,
-                identifier='child',
+                PH,
+                identifier='parent',
                 relationship='child',
                 related_type=case_type,
             )]
-        )
+        )  # C and E are interchangable in their position in the hierarchy
+           # since they point at the same case
 
-        E2 = CaseStructure(
-            case_id='extension_2',
+        E = CaseStructure(
+            case_id='extension',
             attrs={'create': True, 'owner_id': '-'},
             indices=[CaseIndex(
-                C,
-                identifier='extension',
+                PH,
+                identifier='host',
                 relationship='extension',
                 related_type=case_type,
             )]
         )
-        self.device.post_changes([O, E2])
+        self.device.post_changes([C, E])
 
     def test_case_graph(self):
         cases = self.device.restore().cases
-        self.accessor.get_case_ids_in_domain
         self.assertEqual(
-            ['extension_1', 'child', 'owned', 'extension_2'],
+            ['host', 'parent_host', 'extension', 'child'],
             topological_sort_cases(cases)
         )
 
