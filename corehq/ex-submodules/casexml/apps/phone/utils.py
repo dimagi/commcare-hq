@@ -121,7 +121,8 @@ class MockDevice(object):
         """
         factory = self.case_factory
         if case_kwargs:
-            assert cases is None, "pass one: cases or kwargs"
+            if cases is not None:
+                raise ValueError("pass one: cases or kwargs")
             if "case_id" not in case_kwargs:
                 if not case_kwargs.get('create'):
                     raise ValueError("case_id is required for update")
