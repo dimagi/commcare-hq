@@ -31,6 +31,11 @@
                         Number of cases in this restore: <strong>{{num_cases}}</strong>
                     </div>
                     <div>
+                        {% for case_type, count in case_type_counts.items %}
+                            &emsp;{{case_type}}: {{count}}
+                        {% endfor %}
+                    </div>
+                    <div>
                         Number of locations in this restore: <strong>{{num_locations}}</strong>
                     </div>
 
