@@ -17,6 +17,7 @@ from corehq.apps.export.multiprocess import (
     MultiprocessExporter, RetryResult,
     UNPROCESSED_PAGES_DIR, _add_compressed_page_to_zip)
 from corehq.util.files import safe_filename
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -53,7 +54,7 @@ class Command(BaseCommand):
         export_instance = get_properly_wrapped_export_instance(export_id)
 
         if not export_archive_path or not os.path.exists(export_archive_path):
-            confirm = raw_input(
+            confirm = input(
                 u"""
                 No export archive provided. Do you want to download the latest one? [y/N]
                 """
