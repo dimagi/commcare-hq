@@ -26,7 +26,7 @@ from corehq.apps.users.models import CommCareUser
 def validate_time(value):
     error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
 
-    if not isinstance(value, basestring) or not re.match('^\d?\d:\d\d$', value):
+    if not isinstance(value, (unicode, str)) or not re.match('^\d?\d:\d\d$', value):
         raise error
 
     try:
@@ -40,7 +40,7 @@ def validate_time(value):
 def validate_date(value):
     error = ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
 
-    if not isinstance(value, basestring) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
+    if not isinstance(value, (unicode, str)) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
         raise error
 
     try:
@@ -152,7 +152,9 @@ class ScheduleForm(Form):
             else:
                 return two_tuple[0] != self.SEND_IMMEDIATELY
 
-        self.fields['send_frequency'].choices = filter(filter_function, self.fields['send_frequency'].choices)
+        self.fields['send_frequency'].choices = [
+            c for c in self.fields['send_frequency'].choices if filter_function(c)
+        ]
 
     def __init__(self, *args, **kwargs):
         self.domain = kwargs.pop('domain')

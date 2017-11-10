@@ -401,7 +401,8 @@ class EditScheduleView(CreateScheduleView):
                 result['send_frequency'] = ScheduleForm.SEND_IMMEDIATELY
             else:
                 raise UnsupportedScheduleError(
-                    "Unexpected Schedule ui_type '%s' for Schedule '%s'" % (schedule.ui_type, schedule.schedule_id)
+                    "Unexpected Schedule ui_type '%s' for Schedule '%s'" %
+                    (broadcast.schedule.ui_type, broadcast.schedule.schedule_id)
                 )
         elif isinstance(broadcast, ScheduledBroadcast):
             schedule = broadcast.schedule

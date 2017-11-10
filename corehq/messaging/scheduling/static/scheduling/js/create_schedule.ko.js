@@ -18,11 +18,11 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.translate = ko.observable(initial_values.translate);
 
         self.create_day_of_month_choice = function(value) {
-            if(value == '-1') {
+            if(value === '-1') {
                 return {code: value, name: gettext("last")};
-            } else if(value == '-2') {
+            } else if(value === '-2') {
                 return {code: value, name: gettext("last - 1")};
-            } else if(value == '-3') {
+            } else if(value === '-3') {
                 return {code: value, name: gettext("last - 2")};
             } else {
                 return {code: value, name: value};
@@ -39,11 +39,11 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
-            if(newValue == 'daily') {
+            if(newValue === 'daily') {
                 occurrences.text(gettext("After days:"));
-            } else if(newValue == 'weekly') {
+            } else if(newValue === 'weekly') {
                 occurrences.text(gettext("After weeks:"));
-            } else if(newValue == 'monthly') {
+            } else if(newValue === 'monthly') {
                 occurrences.text(gettext("After months:"));
             }
         };
@@ -51,42 +51,42 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.send_frequency.subscribe(self.setOccurrencesOptionText);
 
         self.showTimeInput = ko.computed(function() {
-            return self.send_frequency() != 'immediately';
+            return self.send_frequency() !== 'immediately';
         });
 
         self.showStartDateInput = ko.computed(function() {
-            return self.send_frequency() != 'immediately';
+            return self.send_frequency() !== 'immediately';
         });
 
         self.showWeekdaysInput = ko.computed(function() {
-            return self.send_frequency() == 'weekly';
+            return self.send_frequency() === 'weekly';
         });
 
         self.showDaysOfMonthInput = ko.computed(function() {
-            return self.send_frequency() == 'monthly';
+            return self.send_frequency() === 'monthly';
         });
 
         self.showStopInput = ko.computed(function() {
-            return self.send_frequency() != 'immediately';
+            return self.send_frequency() !== 'immediately';
         });
 
         self.computedEndDate = ko.computed(function() {
-            if(self.stop_type() != 'never') {
+            if(self.stop_type() !== 'never') {
                 var start_date_milliseconds = Date.parse(self.start_date());
                 var occurrences = parseInt(self.occurrences());
 
                 if(!isNaN(start_date_milliseconds) && !isNaN(occurrences)) {
                     var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
-                    if(self.send_frequency() == 'daily') {
+                    if(self.send_frequency() === 'daily') {
                         var end_date = new Date(start_date_milliseconds + ((occurrences - 1) * milliseconds_in_a_day));
                         return end_date.toJSON().substr(0, 10);
-                    } else if(self.send_frequency() == 'weekly') {
+                    } else if(self.send_frequency() === 'weekly') {
                         var js_start_day_of_week = new Date(start_date_milliseconds).getUTCDay();
                         var python_start_day_of_week = (js_start_day_of_week + 6) % 7;
                         var offset_to_last_weekday_in_schedule = null;
                         for(var i = 0; i < 7; i++) {
                             var current_weekday = (python_start_day_of_week + i) % 7;
-                            if(self.weekdays().indexOf(current_weekday.toString()) != -1) {
+                            if(self.weekdays().indexOf(current_weekday.toString()) !== -1) {
                                 offset_to_last_weekday_in_schedule = i;
                             }
                         }
@@ -98,7 +98,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
                             );
                             return end_date.toJSON().substr(0, 10);
                         }
-                    } else if(self.send_frequency() == 'monthly') {
+                    } else if(self.send_frequency() === 'monthly') {
                         var last_day = null;
                         self.days_of_month().map(function(value) {
                             value = parseInt(value);
