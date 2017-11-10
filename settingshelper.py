@@ -188,8 +188,8 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
     def _get_db_url(self, config):
         return get_dynamic_db_settings(
             config['COUCH_SERVER_ROOT'],
-            config['COUCH_USERNAME'],
-            config['COUCH_PASSWORD'],
+            config.get('COUCH_USERNAME'),
+            config.get('COUCH_PASSWORD'),
             get_db_name(config['COUCH_DATABASE_NAME'], self.unit_testing),
             use_https=config['COUCH_HTTPS'],
         )["COUCH_DATABASE"]
