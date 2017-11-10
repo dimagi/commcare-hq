@@ -1272,13 +1272,6 @@ SHOW_DEV_TOGGLE_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-DASHBOARD_GRAPHS = StaticToggle(
-    'dashboard_graphs',
-    'Show submission graph on dashboard',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
