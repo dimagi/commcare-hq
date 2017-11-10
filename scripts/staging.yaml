@@ -49,7 +49,7 @@ branches:
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
   - br/kill-old-cloucare  # Danny 7/21
-#  - jls/fixtures-require-js-2017-qa # Jenny 9/18
+  - jls/fixtures-require-js-2017-qa # Jenny 9/18
   - mk-search-under-location # Manish 4-Oct
   - jls/update-app-profile # Jenny 11/7
   - es/auth-testing  # Ethan 11/1
@@ -68,7 +68,7 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches: []
-#      - jls/r-js # Jenny 10/2
+    branches:
+      - jls/r-js # Jenny 10/2
   submodules/commcare-translations:
     branches: []
