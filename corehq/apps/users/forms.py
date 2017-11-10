@@ -285,10 +285,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
         ]
-        if not settings.ENTERPRISE_MODE:
+        if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
-            if self.set_email_opt_out:
-                basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
+        if self.set_email_opt_out:
+            basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
 
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
@@ -310,8 +310,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         )
 
     @property
+    def set_analytics_enabled(self):
+        return not settings.ENTERPRISE_MODE
+
+    @property
     def set_email_opt_out(self):
-        return self.user.is_web_user()
+        return self.user.is_web_user() and not settings.ENTERPRISE_MODE
 
     @property
     def collapse_other_options(self):
@@ -320,12 +324,14 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def direct_properties(self):
         result = self.fields.keys()
+        if not self.set_analytics_enabled:
+            result.remove('analytics_enabled')
         if not self.set_email_opt_out:
             result.remove('email_opt_out')
         return result
 
     def update_user(self, save=True, **kwargs):
-        if save:
+        if save and self.set_analytics_enabled:
             analytics_enabled = self.cleaned_data['analytics_enabled']
             if self.user.analytics_enabled != analytics_enabled:
                 set_analytics_opt_out(self.user, analytics_enabled)
