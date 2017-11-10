@@ -11,6 +11,7 @@ from dimagi.utils.chunked import chunked
 from casexml.apps.case.mock.case_block import IndexAttrs
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.es import CaseSearchES
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
@@ -37,7 +38,7 @@ def explode_cases(domain, user_id, factor, task=None):
     cases = {}
     new_case_ids = {}
     for case_id, case in sync_result.cases.iteritems():
-        if case.case_type != "commcare-user":
+        if case.case_type != USERCASE_TYPE:
             cases[case_id] = case
             new_case_ids[case_id] = [str(uuid.uuid4()) for _ in range(factor - 1)]
 
