@@ -1,4 +1,5 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
 {% block js-inline %} {{  block.super }}
     <script>
      $(function(){
@@ -25,7 +26,11 @@
                     <div class="panel-heading">Warning!</div>
                     <div class="panel-body">
                         <p>The case exploder will multiply all cases in the user's restore  by the explode factor entered below. So, for example, if you're exploding a test user with 20 cases, and set the factor to be 200, it will actually give you <strong>4,000</strong> cases, NOT 200. Be careful! For this reason, it's best to create a new test user with only one case to explode.</p>
-                        <p>At the end of the process, you will be given a unique <strong>Explosion ID</strong>. Note this down so you can delete the cases later.</p>
+                        {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
+                            <p>At the end of the process, you will be given a unique <strong>Explosion ID</strong>. Note this down so you can delete the cases later.</p>
+                        {% else %}
+                            <p>You will be able to easily delete these cases if you enable the Case Search feature flag for your domain.</p>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="panel panel-default">
@@ -61,41 +66,41 @@
             </div>
         </div>
     </div>
-    <div id="delete-exploded">
-        <h1>Delete exploded cases</h1>
-        <h2><small>Delete all cases created by previous explosions</small></h2>
-        <div class="row">
-            <div class="col-sm-8">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Explosion ID</th>
-                            <th>Case Count</th>
-                            <th>Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for explosion_id, count in previous_explosions %}
+    {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
+        <div id="delete-exploded">
+            <h1>Delete exploded cases</h1>
+            <h2><small>Delete all cases created by previous explosions</small></h2>
+            <div class="row">
+                <div class="col-sm-8">
+                    <table class="table table-striped">
+                        <thead>
                             <tr>
-                                <td>{{ explosion_id }}</td>
-                                <td>{{ count }}</td>
-                                <td>
-                                    <form class="form" action="" method="POST">
-                                        {% csrf_token %}
-                                        <input id="explosion_id" name="explosion_id" type="hidden" value="{{ explosion_id }}" />
-                                        <button type="submit" class="btn btn-danger">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
+                                <th>Explosion ID</th>
+                                <th>Case Count</th>
+                                <th>Delete</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
+                        </thead>
+                        <tbody>
+                            {% for explosion_id, count in previous_explosions %}
+                                <tr>
+                                    <td>{{ explosion_id }}</td>
+                                    <td>{{ count }}</td>
+                                    <td>
+                                        <form class="form" action="" method="POST">
+                                            {% csrf_token %}
+                                            <input id="explosion_id" name="explosion_id" type="hidden" value="{{ explosion_id }}" />
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
 
-                </table>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-
-
+    {% endif %}
 {% endblock %}
