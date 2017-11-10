@@ -255,6 +255,41 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             broadcast.save()
         refresh_timed_schedule_instances.delay(schedule, recipients, start_date=form_data['start_date'])
 
+    def process_weekly_schedule(self, content, recipients):
+        form_data = self.schedule_form.cleaned_data
+        with transaction.atomic():
+            total_iterations = self.distill_total_iterations()
+
+            if self.is_editing:
+                broadcast = self.broadcast
+                schedule = broadcast.schedule
+                schedule.set_simple_weekly_schedule(
+                    form_data['send_time'],
+                    content,
+                    form_data['weekdays'],
+                    form_data['start_date'].weekday(),
+                    total_iterations=total_iterations,
+                )
+            else:
+                schedule = TimedSchedule.create_simple_weekly_schedule(
+                    self.domain,
+                    form_data['send_time'],
+                    content,
+                    form_data['weekdays'],
+                    form_data['start_date'].weekday(),
+                    total_iterations=total_iterations,
+                )
+                broadcast = ScheduledBroadcast(
+                    domain=self.domain,
+                    schedule=schedule,
+                )
+
+            broadcast.name = form_data['schedule_name']
+            broadcast.start_date = form_data['start_date']
+            broadcast.recipients = recipients
+            broadcast.save()
+        refresh_timed_schedule_instances.delay(schedule, recipients, start_date=form_data['start_date'])
+
     def process_monthly_schedule(self, content, recipients):
         form_data = self.schedule_form.cleaned_data
         with transaction.atomic():
@@ -306,6 +341,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.process_immediate_schedule(content, recipients)
             elif form_data['send_frequency'] == ScheduleForm.SEND_DAILY:
                 self.process_daily_schedule(content, recipients)
+            elif form_data['send_frequency'] == ScheduleForm.SEND_WEEKLY:
+                self.process_weekly_schedule(content, recipients)
             elif form_data['send_frequency'] == ScheduleForm.SEND_MONTHLY:
                 self.process_monthly_schedule(content, recipients)
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
@@ -370,27 +407,25 @@ class EditScheduleView(CreateScheduleView):
             schedule = broadcast.schedule
             if schedule.ui_type == Schedule.UI_TYPE_DAILY:
                 result['send_frequency'] = ScheduleForm.SEND_DAILY
-                result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
-                result['start_date'] = broadcast.start_date.strftime('%Y-%m-%d')
-                if schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
-                    result['stop_type'] = ScheduleForm.STOP_NEVER
-                else:
-                    result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
-                    result['occurrences'] = schedule.total_iterations
+            if schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+                weekdays = [(schedule.start_day_of_week + e.day) % 7 for e in schedule.memoized_events]
+                result['send_frequency'] = ScheduleForm.SEND_WEEKLY
+                result['weekdays'] = [str(day) for day in weekdays]
             elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
                 result['send_frequency'] = ScheduleForm.SEND_MONTHLY
                 result['days_of_month'] = [str(e.day) for e in schedule.memoized_events]
-                result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
-                result['start_date'] = broadcast.start_date.strftime('%Y-%m-%d')
-                if schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
-                    result['stop_type'] = ScheduleForm.STOP_NEVER
-                else:
-                    result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
-                    result['occurrences'] = schedule.total_iterations
             else:
                 raise UnsupportedScheduleError(
                     "Unexpected Schedule ui_type '%s' for Schedule '%s'" % (schedule.ui_type, schedule.schedule_id)
                 )
+
+            result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
+            result['start_date'] = broadcast.start_date.strftime('%Y-%m-%d')
+            if schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+                result['stop_type'] = ScheduleForm.STOP_NEVER
+            else:
+                result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
+                result['occurrences'] = schedule.total_iterations
 
         return result
 
