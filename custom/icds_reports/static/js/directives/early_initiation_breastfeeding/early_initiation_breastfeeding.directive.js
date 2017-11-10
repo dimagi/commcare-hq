@@ -12,9 +12,9 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.filtersData = $location.search();
 
     var genderIndex = genders.findIndex(function (x) {
-        return x.id == vm.filtersData.gender
+        return x.id === vm.filtersData.gender
     });
-    if (genderIndex != -1) {
+    if (genderIndex !== -1) {
         vm.genderLabel = genders[genderIndex].name;
     }
 
@@ -223,8 +223,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     };
 }
 
-EarlyInitiationBreastfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService',
-                                                    'genders'];
+EarlyInitiationBreastfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
 
 window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', function() {
     return {

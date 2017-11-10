@@ -12,16 +12,16 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.filtersData = $location.search();
 
     var ageIndex = ages.findIndex(function (x) {
-        return x.id == vm.filtersData.age
+        return x.id === vm.filtersData.age
     });
-    if (ageIndex != -1) {
+    if (ageIndex !== -1) {
         vm.ageLabel = ages[ageIndex].name;
     }
 
     var genderIndex = genders.findIndex(function (x) {
-        return x.id == vm.filtersData.gender
+        return x.id === vm.filtersData.gender
     });
-    if (genderIndex != -1) {
+    if (genderIndex !== -1) {
         vm.genderLabel = genders[genderIndex].name;
     }
 
@@ -255,8 +255,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService',
-                                                'genders', 'ages'];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {

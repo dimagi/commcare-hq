@@ -13,16 +13,16 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.filtersData = $location.search();
 
     var ageIndex = ages.findIndex(function (x) {
-        return x.id == vm.filtersData.age
+        return x.id === vm.filtersData.age
     });
-    if (ageIndex != -1) {
+    if (ageIndex !== -1) {
         vm.ageLabel = ages[ageIndex].name;
     }
 
     var genderIndex = genders.findIndex(function (x) {
-        return x.id == vm.filtersData.gender
+        return x.id === vm.filtersData.gender
     });
-    if (genderIndex != -1) {
+    if (genderIndex !== -1) {
         vm.genderLabel = genders[genderIndex].name;
     }
 
@@ -227,8 +227,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
 }
 
-EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService',
-                                        'genders', 'ages'];
+EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive('enrolledChildren', function() {
     return {

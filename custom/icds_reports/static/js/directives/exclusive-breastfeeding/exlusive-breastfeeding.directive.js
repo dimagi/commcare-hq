@@ -12,9 +12,9 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.filtersData = $location.search();
 
     var genderIndex = genders.findIndex(function (x) {
-        return x.id == vm.filtersData.gender
+        return x.id === vm.filtersData.gender
     });
-    if (genderIndex != -1) {
+    if (genderIndex !== -1) {
         vm.genderLabel = genders[genderIndex].name;
     }
 
@@ -230,8 +230,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     };
 }
 
-ExclusiveBreasfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService',
-                                            'genders'];
+ExclusiveBreasfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
 
 window.angular.module('icdsApp').directive('exclusiveBreastfeeding', function() {
     return {

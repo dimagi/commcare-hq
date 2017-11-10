@@ -12,9 +12,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.filtersData = $location.search();
 
     var genderIndex = genders.findIndex(function (x) {
-        return x.id == vm.filtersData.gender
+        return x.id === vm.filtersData.gender
     });
-    if (genderIndex != -1) {
+    if (genderIndex !== -1) {
         vm.genderLabel = genders[genderIndex].name;
     }
 
@@ -230,8 +230,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService',
-                                        'genders'];
+ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
 
 window.angular.module('icdsApp').directive('childrenInitiated', function() {
     return {

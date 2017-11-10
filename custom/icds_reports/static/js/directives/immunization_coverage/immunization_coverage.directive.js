@@ -12,9 +12,9 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.filtersData = $location.search();
 
     var genderIndex = genders.findIndex(function (x) {
-        return x.id == vm.filtersData.gender
+        return x.id === vm.filtersData.gender
     });
-    if (genderIndex != -1) {
+    if (genderIndex !== -1) {
         vm.genderLabel = genders[genderIndex].name;
     }
 
@@ -229,8 +229,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     };
 }
 
-ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService',
-                                            'genders'];
+ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
 
 window.angular.module('icdsApp').directive('immunizationCoverage', function() {
     return {
