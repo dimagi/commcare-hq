@@ -114,7 +114,7 @@ def topological_sort_cases(cases):
     while len(roots) > 0:
         root_id = roots.pop()
         sorted_ids.append(root_id)
-        for case_id in inverse_graph[root_id]:
+        for case_id in sorted(inverse_graph[root_id]):
             graph[case_id].remove(root_id)
             if len(graph[case_id]) == 0:
                 roots.append(case_id)

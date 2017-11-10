@@ -281,7 +281,7 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
         cases = self.device.restore().cases
         self.accessor.get_case_ids_in_domain
         self.assertEqual(
-            ['extension_1', 'child', 'extension_2', 'owned'],
+            ['extension_1', 'child', 'owned', 'extension_2'],
             topological_sort_cases(cases)
         )
 
