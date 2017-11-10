@@ -9,6 +9,7 @@ from celery.task import task
 
 from dimagi.utils.chunked import chunked
 from casexml.apps.case.mock.case_block import IndexAttrs
+from casexml.apps.phone.const import LIVEQUERY
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.es import CaseSearchES
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -32,8 +33,8 @@ def explode_cases(domain, user_id, factor, task=None):
 
     couch_user = CommCareUser.get_by_user_id(user_id, domain)
     restore_user = get_restore_user(domain, couch_user, None)
-    device = MockDevice(restore_user.project, restore_user, {"overwrite_cache": True})
-    sync_result = device.sync()
+    device = MockDevice(restore_user.project, restore_user, {"overwrite_cache": True, "case_sync": LIVEQUERY})
+    sync_result = device.restore()
 
     cases = {}
     new_case_ids = {}
