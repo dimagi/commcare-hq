@@ -173,6 +173,13 @@ nvd3 > svg {
     color: #0a6aa1;
 }
 
+.breadcrump-element-with-pointer {
+    font-weight: bold;
+    font-size: 18px;
+    color: #0a6aa1;
+    cursor: pointer;
+}
+
 .less-padding {
     padding: 6px 2px;
 }
