@@ -52,7 +52,7 @@ class UICFromEPMDataSource(ChampSqlData):
         if 'client_type' in self.config and self.config['client_type']:
             filters.append(EQ('client_type', 'client_type'))
         if 'user_id' in self.config and self.config['user_id']:
-            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
+            filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         return filters
 
     @property
@@ -103,7 +103,7 @@ class UICFromCCDataSource(ChampSqlData):
         if 'client_type' in self.config and self.config['client_type']:
             filters.append(EQ('client_type', 'client_type'))
         if 'user_id' in self.config and self.config['user_id']:
-            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
+            filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         return filters
 
     @property
@@ -196,7 +196,7 @@ class HivStatusDataSource(ChampSqlData):
         if 'client_type' in self.config and self.config['client_type']:
             filters.append(EQ('client_type', 'client_type'))
         if 'user_id' in self.config and self.config['user_id']:
-            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
+            filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         return filters
 
     @property
@@ -246,7 +246,7 @@ class FormCompletionDataSource(ChampSqlData):
         ):
             filters.append(BETWEEN('date_handshake', 'date_handshake_start', 'date_handshake_end'))
         if 'user_id' in self.config and self.config['user_id']:
-            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
+            filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         return filters
 
     @property
@@ -294,7 +294,7 @@ class FirstArtDataSource(ChampSqlData):
         ):
             filters.append(BETWEEN('first_art_date', 'first_art_date_start', 'first_art_date_end'))
         if 'user_id' in self.config and self.config['user_id']:
-            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
+            filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         return filters
 
     @property
@@ -342,7 +342,7 @@ class LastVLTestDataSource(ChampSqlData):
         if 'undetect_vl' in self.config and self.config['undetect_vl']:
             filters.append(EQ('undetect_vl', 'undetect_vl'))
         if 'user_id' in self.config and self.config['user_id']:
-            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
+            filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         return filters
 
     @property

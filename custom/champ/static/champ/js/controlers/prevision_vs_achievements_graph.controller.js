@@ -104,14 +104,14 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
             value: age,
             id: age,
         })
-    };
+    }
 
     for (var year=2014; year <= (currentYear + 4); year++ ) {
         vm.fiscalYears.push({
             value: year,
             id: year,
         });
-    };
+    }
 
     $scope.$watch(function () {
         return vm.kp_prev_visit_date;
@@ -235,7 +235,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 "axisLabel": "",
                 "axisLabelDistance": 40,
             },
-        }
+        },
     };
 }
 
