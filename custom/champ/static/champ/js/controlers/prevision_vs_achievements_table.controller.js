@@ -65,8 +65,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters.visit_date_start = vm.visit_date.startDate.format('YYYY-MM-DD')
-        vm.filters.visit_date_end = vm.visit_date.endDate.format('YYYY-MM-DD')
+        vm.filters.visit_date_start = vm.visit_date.startDate.format('YYYY-MM-DD');
+        vm.filters.visit_date_end = vm.visit_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -105,8 +105,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters.visit_date_start = vm.visit_date.startDate.format('YYYY-MM-DD')
-        vm.filters.visit_date_end = vm.visit_date.endDate.format('YYYY-MM-DD')
+        vm.filters.visit_date_start = vm.visit_date.startDate.format('YYYY-MM-DD');
+        vm.filters.visit_date_end = vm.visit_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     vm.pickerOptions = {
@@ -115,7 +115,7 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         showDropdowns: true,
         locale: {
             format: "YYYY-MM-DD",
-        }
+        },
     };
 
     vm.getData = function() {
@@ -124,7 +124,7 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
             filtersService.districtFilter().then(function (response) {
                 vm.districts = response.data.options;
             });
-            filtersService.organizatioFilter().then(function (response) {
+            filtersService.organizationFilter().then(function (response) {
                 vm.organizations = response.data.options;
             });
         });

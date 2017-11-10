@@ -21,9 +21,9 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         opens: "left",
         drops: "up",
         showDropdowns: true,
-      locale: {
-        format: "YYYY-MM-DD",
-      }
+        locale: {
+            format: "YYYY-MM-DD",
+        },
     };
 
     vm.filters = {
@@ -104,14 +104,14 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
             value: age,
             id: age,
         })
-    }
+    };
 
     for (var year=2014; year <= (currentYear + 4); year++ ) {
         vm.fiscalYears.push({
             value: year,
             id: year,
         });
-    }
+    };
 
     $scope.$watch(function () {
         return vm.kp_prev_visit_date;
@@ -206,7 +206,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 vm.userpls = response.data.options;
             });
             filtersService.groupsFilter().then(function (response) {
-                vm.groups = response.data.options
+                vm.groups = response.data.options;
             });
         });
     };
@@ -220,7 +220,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 "top": 20,
                 "right": 20,
                 "bottom": 60,
-                "left": 50
+                "left": 50,
             },
             "clipEdge": true,
             "staggerLabels": false,
@@ -229,12 +229,12 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
             "showControls": false,
             "xAxis": {
                 "axisLabel": "",
-                "showMaxMin": false
+                "showMaxMin": false,
             },
             "yAxis": {
                 "axisLabel": "",
-                "axisLabelDistance": 40
-            }
+                "axisLabelDistance": 40,
+            },
         }
     };
 }

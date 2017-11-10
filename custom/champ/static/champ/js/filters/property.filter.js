@@ -6,7 +6,6 @@ window.angular.module('champApp').filter('propsFilter', function() {
             var keys = Object.keys(props);
 
             items.forEach(function(item) {
-                debugger;
                 var itemMatches = false;
 
                 for (var i = 0; i < keys.length; i++) {

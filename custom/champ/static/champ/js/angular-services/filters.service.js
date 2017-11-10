@@ -30,15 +30,8 @@ window.angular.module('champApp').factory('filtersService', ['$http', function($
                 url: get_url,
             });
         },
-        organizatioFilter: function() {
+        organizationFilter: function() {
             var get_url = url('organization_filter');
-            return  $http({
-                method: "GET",
-                url: get_url,
-            });
-        },
-        clienttypeFilter: function() {
-            var get_url = url('clienttype_filter');
             return  $http({
                 method: "GET",
                 url: get_url,

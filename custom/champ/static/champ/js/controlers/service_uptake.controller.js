@@ -1,4 +1,4 @@
-/* global moment */
+/* global moment, d3 */
 
 function ServiceUptakeController(reportsDataService, filtersService) {
     var vm = this;
@@ -38,7 +38,7 @@ function ServiceUptakeController(reportsDataService, filtersService) {
         {id: 'MSM', value: 'MSM'},
     ];
 
-    vm.organizations = []
+    vm.organizations = [];
 
 
     for (var year=2014; year <= new Date().getFullYear(); year++ ) {
@@ -55,7 +55,7 @@ function ServiceUptakeController(reportsDataService, filtersService) {
             filtersService.districtFilter().then(function (response) {
                 vm.districts = response.data.options;
             });
-            filtersService.organizatioFilter().then(function (response) {
+            filtersService.organizationFilter().then(function (response) {
                 vm.organizations = response.data.options;
             });
         });
@@ -84,7 +84,7 @@ function ServiceUptakeController(reportsDataService, filtersService) {
                     return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
-                    return vm.tickValues
+                    return vm.tickValues;
                 },
                 showMaxMin: true,
             },
@@ -94,7 +94,7 @@ function ServiceUptakeController(reportsDataService, filtersService) {
                     return d3.format(".2%")(d);
                 },
             },
-        }
+        },
     };
 }
 

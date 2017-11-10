@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 
 import json
 from collections import OrderedDict
@@ -13,10 +13,11 @@ from django.views.generic.base import View
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
-from custom.champ.sqldata import TargetsDataSource, UICFromEPMDataSource, UICFromCCDataSource, HivStatusDataSource, \
-    FormCompletionDataSource, FirstArtDataSource, LastVLTestDataSource, ChampFilter
-from custom.champ.utils import PREVENTION_XMLNS, POST_TEST_XMLNS, ACCOMPAGNEMENT_XMLNS, SUIVI_MEDICAL_XMLNS, \
-    ENHANCED_PEER_MOBILIZATION, CHAMP_CAMEROON, TARGET_XMLNS
+from custom.champ.sqldata import TargetsDataSource, UICFromEPMDataSource, UICFromCCDataSource, \
+    HivStatusDataSource, FormCompletionDataSource, FirstArtDataSource, LastVLTestDataSource, \
+    ChampFilter
+from custom.champ.utils import PREVENTION_XMLNS, POST_TEST_XMLNS, ACCOMPAGNEMENT_XMLNS, \
+    SUIVI_MEDICAL_XMLNS, ENHANCED_PEER_MOBILIZATION, CHAMP_CAMEROON, TARGET_XMLNS
 
 
 def get_user_ids_for_group(group_id):
@@ -179,11 +180,11 @@ class PrevisionVsAchievementsView(View):
 
 @method_decorator([login_and_domain_required], name='dispatch')
 class PrevisionVsAchievementsTableView(View):
-    
+
     @property
     def post_data(self):
         return json.loads(self.request.body)
-    
+
     def generate_data(self, domain):
         config = {
             'domain': domain,
@@ -242,7 +243,6 @@ class PrevisionVsAchievementsTableView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ServiceUptakeView(View):
 
-
     @property
     def post_data(self):
         return json.loads(self.request.body)
@@ -300,21 +300,21 @@ class ServiceUptakeView(View):
             date_in_milliseconds = int(date.strftime("%s")) * 1000
             nom = (row['uic'] or 0)
             denom = (kp_prev[date]['uic'] or 1) if date in kp_prev else 1
-            htc_uptake_chart_data[date_in_milliseconds] = nom / float(denom)
+            htc_uptake_chart_data[date_in_milliseconds] = nom / denom
 
         for row in htc_pos.values():
             date = row['htc_month']
             date_in_milliseconds = int(date.strftime("%s")) * 1000
             nom = (row['uic'] or 0)
             denom = (htc_tst[date]['uic'] or 1) if date in htc_tst else 1
-            htc_yield_chart_data[date_in_milliseconds] = nom / float(denom)
+            htc_yield_chart_data[date_in_milliseconds] = nom / denom
 
         for row in care_new.values():
             date = row['care_new_month']
             date_in_milliseconds = int(date.strftime("%s")) * 1000
             nom = (row['uic'] or 0)
             denom = (htc_pos[date]['uic'] or 1) if date in htc_pos else 1
-            link_chart_data[date_in_milliseconds] = nom / float(denom)
+            link_chart_data[date_in_milliseconds] = nom / denom
 
         return {
             'chart': [
