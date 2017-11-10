@@ -1128,7 +1128,7 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
-    'Disable column limit in UCR',
+    'Enikshay: Disable column limit in UCR',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
