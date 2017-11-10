@@ -5579,7 +5579,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @memoized
     def enable_update_prompts(self):
         return (
-            (self.supports_update_prompts or settings.SERVER_ENVIRONMENT == 'icds') and
+            # custom for ICDS until ICDS users are > 2.38
+            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain) and
             toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
