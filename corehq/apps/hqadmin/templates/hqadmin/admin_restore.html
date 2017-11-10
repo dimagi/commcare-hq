@@ -34,7 +34,7 @@
                         Number of locations in this restore: <strong>{{num_locations}}</strong>
                     </div>
 
-                    {% if show_xml %}
+                    {% if not hide_xml %}
                     <div>
                         <ul class="nav nav-tabs" role="tablist">
                             <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
@@ -67,7 +67,7 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
-                    {% if show_xml %}
+                    {% if not hide_xml %}
                             </div>
                         </div>
                     </div>
