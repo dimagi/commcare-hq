@@ -14,8 +14,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseAttachment
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.hqcase.tasks import explode_cases_2 as explode_cases
-from corehq.apps.hqcase.tasks import CaseGraph
+from corehq.apps.hqcase.tasks import explode_cases, topological_sort_cases
 from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
@@ -281,10 +280,9 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
     def test_case_graph(self):
         cases = self.device.restore().cases
         self.accessor.get_case_ids_in_domain
-        graph = CaseGraph(cases)
         self.assertEqual(
             ['extension_1', 'child', 'extension_2', 'owned'],
-            graph.topological_sort()
+            topological_sort_cases(cases)
         )
 
     def test_child_extensions(self):

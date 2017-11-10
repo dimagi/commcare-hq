@@ -1,9 +1,9 @@
 from __future__ import absolute_import
+from six import iteritems
 
 import uuid
 from collections import defaultdict
-from copy import copy, deepcopy
-from xml.etree import cElementTree as ElementTree
+from copy import copy
 
 from celery.task import task
 
@@ -58,8 +58,7 @@ def explode_cases(domain, user_id, factor, task=None):
             del queue[:]
         return progress
 
-    graph = CaseGraph(cases)
-    for old_case_id in graph.topological_sort():
+    for old_case_id in topological_sort_cases(cases):
         for explosion in range(factor - 1):
             new_case = copy(cases[old_case_id])
 
@@ -84,41 +83,46 @@ def explode_cases(domain, user_id, factor, task=None):
     ]}
 
 
-class CaseGraph(object):
-    def __init__(self, cases):
-        self.graph = {}         # case indices
-        self.inverse_graph = defaultdict(list)  # reverse indices
-        self.roots = []
+def topological_sort_cases(cases):
+    """returns all cases in topological order
 
-        for case_id, case in cases.iteritems():
-            indices = [idx.case_id for idx in case.index.itervalues()]
-            self.graph[case.case_id] = indices
-            for index in indices:
-                self.inverse_graph[index].append(case.case_id)
+    Using Kahn's algorithm from here:
+    https://en.wikipedia.org/wiki/Topological_sorting
+    L = sorted_ids
+    roots = S
+    root_id = n
+    case_id = m
 
-            if not indices:
-                self.roots.append(case.case_id)
+    """
+    graph = {}
+    inverse_graph = defaultdict(list)
+    roots = []
 
-    def topological_sort(self):
-        """returns all cases in topological order
+    # compile graph
+    for case_id, case in iteritems(cases):
+        indices = [idx.case_id for idx in case.index.itervalues()]
+        graph[case.case_id] = indices
+        for index in indices:
+            inverse_graph[index].append(case.case_id)
 
-        Using Kahn's algorithm from here:
-        https://en.wikipedia.org/wiki/Topological_sorting
+        if not indices:
+            roots.append(case.case_id)
 
-        Assumes there are no cycles in the graph
-        """
-        inverse_graph = self.inverse_graph
-        graph = deepcopy(self.graph)
-        L = []
-        S = copy(self.roots)
-        while len(S) > 0:
-            n = S.pop()
-            L.append(n)
-            for m in inverse_graph[n]:
-                graph[m].remove(n)
-                if len(graph[m]) == 0:
-                    S.append(m)
-        return L
+    # sort graph
+    sorted_ids = []
+    while len(roots) > 0:
+        root_id = roots.pop()
+        sorted_ids.append(root_id)
+        for case_id in inverse_graph[root_id]:
+            graph[case_id].remove(root_id)
+            if len(graph[case_id]) == 0:
+                roots.append(case_id)
+
+    for case_id, indices in iteritems(graph):
+        if indices:
+            raise ValueError("graph has cycles")
+
+    return sorted_ids
 
 
 @task
