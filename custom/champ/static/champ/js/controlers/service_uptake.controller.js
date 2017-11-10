@@ -1,6 +1,6 @@
 /* global moment */
 
-function ServiceUptakeController($scope, reportsDataService, filtersService) {
+function ServiceUptakeController(reportsDataService, filtersService) {
     var vm = this;
     vm.title = "Prevision VS Achievements Table";
     vm.filters = {
@@ -20,6 +20,26 @@ function ServiceUptakeController($scope, reportsDataService, filtersService) {
         });
     });
 
+    vm.activityTypes = [
+        {id: '', value: 'All'},
+        {id: 'epm', value: 'EPM'},
+        {id: 'mat_distribution', value: 'Material Distribution'},
+    ];
+
+    vm.visitsTypes = [
+        {id: '', value: 'All'},
+        {id: 'first_visit', value: 'First Visit'},
+        {id: 'follow_up_visit', value: 'Follow Up Visit'},
+    ];
+
+    vm.clientTypes = [
+        {id: '', value: 'All'},
+        {id: 'FSW', value: 'FSW'},
+        {id: 'MSM', value: 'MSM'},
+    ];
+
+    vm.organizations = []
+
 
     for (var year=2014; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
@@ -31,8 +51,12 @@ function ServiceUptakeController($scope, reportsDataService, filtersService) {
     vm.getData = function() {
         reportsDataService.getServiceUptakeData(vm.filters).then(function (response) {
             vm.chartData = response.data.chart;
+            vm.tickValues = response.data.tickValues;
             filtersService.districtFilter().then(function (response) {
                 vm.districts = response.data.options;
+            });
+            filtersService.organizatioFilter().then(function (response) {
+                vm.organizations = response.data.options;
             });
         });
     };
@@ -53,13 +77,17 @@ function ServiceUptakeController($scope, reportsDataService, filtersService) {
             useInteractiveGuideline: true,
             clipVoronoi: false,
             tooltips: true,
+            duration: 100,
             xAxis: {
                 axisLabel: '',
                 tickFormat: function(d) {
                     return d3.time.format('%b %Y')(new Date(d));
                 },
+                tickValues: function() {
+                    return vm.tickValues
+                },
+                showMaxMin: true,
             },
-
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
@@ -70,4 +98,4 @@ function ServiceUptakeController($scope, reportsDataService, filtersService) {
     };
 }
 
-ServiceUptakeController.$inject = ['$scope', 'reportsDataService', 'filtersService'];
+ServiceUptakeController.$inject = ['reportsDataService', 'filtersService'];

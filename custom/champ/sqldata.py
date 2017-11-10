@@ -1,14 +1,24 @@
 from __future__ import absolute_import
 from sqlagg.columns import CountUniqueColumn, SumColumn, SimpleColumn
-from sqlagg.filters import EQ, NOT, BETWEEN
+from sqlagg.filters import EQ, NOT, BETWEEN, IN
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from custom.champ.utils import PREVENTION_XMLNS, ENHANCED_PEER_MOBILIZATION, CHAMP_CAMEROON, POST_TEST_XMLNS, \
     ACCOMPAGNEMENT_XMLNS, SUIVI_MEDICAL_XMLNS
+from custom.utils.utils import clean_IN_filter_value
 
 
-class UICFromEPMDataSource(SqlData):
+class ChampSqlData(SqlData):
+
+    def __init__(self, config=None):
+        super(ChampSqlData, self).__init__(config)
+        if 'user_id' in self.config and self.config['user_id']:
+            clean_IN_filter_value(self.config, 'user_id')
+
+
+class UICFromEPMDataSource(ChampSqlData):
 
     def __init__(self, config=None, replace_group_by=None):
         self.replace_group_by = replace_group_by
@@ -41,8 +51,8 @@ class UICFromEPMDataSource(SqlData):
             filters.append(EQ('activity_type', 'activity_type'))
         if 'client_type' in self.config and self.config['client_type']:
             filters.append(EQ('client_type', 'client_type'))
-        if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
-            filters.append(EQ('mobile_user_group', 'mobile_user_group'))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
         return filters
 
     @property
@@ -58,7 +68,7 @@ class UICFromEPMDataSource(SqlData):
         ]
 
 
-class UICFromCCDataSource(SqlData):
+class UICFromCCDataSource(ChampSqlData):
 
     def __init__(self, config=None, replace_group_by=None):
         self.replace_group_by = replace_group_by
@@ -92,8 +102,8 @@ class UICFromCCDataSource(SqlData):
             filters.append(EQ('district', 'district'))
         if 'client_type' in self.config and self.config['client_type']:
             filters.append(EQ('client_type', 'client_type'))
-        if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
-            filters.append(EQ('mobile_user_group', 'mobile_user_group'))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
         return filters
 
     @property
@@ -109,7 +119,7 @@ class UICFromCCDataSource(SqlData):
         ]
 
 
-class TargetsDataSource(SqlData):
+class TargetsDataSource(ChampSqlData):
 
     @property
     def engine_id(self):
@@ -150,7 +160,7 @@ class TargetsDataSource(SqlData):
         ]
 
 
-class HivStatusDataSource(SqlData):
+class HivStatusDataSource(ChampSqlData):
 
     def __init__(self, config=None, replace_group_by=None):
         self.replace_group_by = replace_group_by
@@ -183,8 +193,10 @@ class HivStatusDataSource(SqlData):
             filters.append(EQ('age_range', 'age_range'))
         if 'district' in self.config and self.config['district']:
             filters.append(EQ('district', 'district'))
-        if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
-            filters.append(EQ('mobile_user_group', 'mobile_user_group'))
+        if 'client_type' in self.config and self.config['client_type']:
+            filters.append(EQ('client_type', 'client_type'))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
         return filters
 
     @property
@@ -200,7 +212,7 @@ class HivStatusDataSource(SqlData):
         ]
 
 
-class FormCompletionDataSource(SqlData):
+class FormCompletionDataSource(ChampSqlData):
 
     def __init__(self, config=None, replace_group_by=None):
         self.replace_group_by = replace_group_by
@@ -233,8 +245,8 @@ class FormCompletionDataSource(SqlData):
             'date_handshake_end' in self.config and self.config['date_handshake_end']
         ):
             filters.append(BETWEEN('date_handshake', 'date_handshake_start', 'date_handshake_end'))
-        if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
-            filters.append(EQ('mobile_user_group', 'mobile_user_group'))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
         return filters
 
     @property
@@ -250,7 +262,7 @@ class FormCompletionDataSource(SqlData):
         ]
 
 
-class FirstArtDataSource(SqlData):
+class FirstArtDataSource(ChampSqlData):
 
     def __init__(self, config=None):
         config['xmlns'] = SUIVI_MEDICAL_XMLNS
@@ -281,8 +293,8 @@ class FirstArtDataSource(SqlData):
             'first_art_date_end' in self.config and self.config['first_art_date_end']
         ):
             filters.append(BETWEEN('first_art_date', 'first_art_date_start', 'first_art_date_end'))
-        if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
-            filters.append(EQ('mobile_user_group', 'mobile_user_group'))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
         return filters
 
     @property
@@ -296,7 +308,7 @@ class FirstArtDataSource(SqlData):
         ]
 
 
-class LastVLTestDataSource(SqlData):
+class LastVLTestDataSource(ChampSqlData):
 
     def __init__(self, config=None):
         config['xmlns'] = SUIVI_MEDICAL_XMLNS
@@ -329,8 +341,8 @@ class LastVLTestDataSource(SqlData):
             filters.append(BETWEEN('date_last_vl_test', 'date_last_vl_test_start', 'date_last_vl_test_end'))
         if 'undetect_vl' in self.config and self.config['undetect_vl']:
             filters.append(EQ('undetect_vl', 'undetect_vl'))
-        if 'mobile_user_group' in self.config and self.config['mobile_user_group']:
-            filters.append(EQ('mobile_user_group', 'mobile_user_group'))
+        if 'user_id' in self.config and self.config['user_id']:
+            filters.append(IN('user_id', get_INFilter_bindparams('excluded_states', self.config['user_id'])))
         return filters
 
     @property

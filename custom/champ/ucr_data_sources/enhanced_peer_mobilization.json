@@ -153,8 +153,17 @@
       {
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "locations", "clienttype"]
+          "type": "split_string",
+          "string_expression": {
+            "type": "property_path",
+            "property_path": ["form", "locations", "clienttype"]
+          },
+          "index_expression": {
+              "type": "constant",
+              "constant": 0
+          },
+          "delimiter": "_"
+
         },
         "column_id": "clienttype",
         "datatype": "string",

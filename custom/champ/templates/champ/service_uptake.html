@@ -6,8 +6,8 @@
 {% block champjs %}
     <script type="text/javascript" src="{% static 'champ/js/controlers/service_uptake.controller.js' %}"></script>
     <script>
-        window.angular.module('champApp', ['ui.select', 'nvd3', 'daterangepicker'])
-            .controller('MainController', ServiceUptakeController)
+        window.angular.module('champApp', ['ngSanitize', 'ui.select', 'nvd3', 'daterangepicker'])
+            .controller('ServiceUptakeController', ServiceUptakeController)
             .config(['$httpProvider', function($httpProvider) {
                 $httpProvider.defaults.xsrfCookieName = 'csrftoken';
                 $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block champcontent %}
-    <div id="champApp" ng-controller="MainController as mainCtrl">
+    <div id="champApp" ng-controller="ServiceUptakeController as mainCtrl">
         <h2 ng-bind="mainCtrl.title"></h2>
         <div class="row" style="margin-bottom: 40px;">
             <div class="row">
@@ -35,7 +35,7 @@
                             </ui-select>
                         </div>
                         <div class="col-md-2">
-                            <label >Visit Type:</label>
+                            <label>Visit Type:</label>
                             <ui-select ng-model="mainCtrl.filters.visit_type" theme="bootstrap">
                                 <ui-select-match placeholder="Visit Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="visit.id as visit in mainCtrl.visitsTypes">
@@ -44,7 +44,7 @@
                             </ui-select>
                         </div>
                         <div class="col-md-2">
-                            <label >Activity Type:</label>
+                            <label>Activity Type:</label>
                             <ui-select ng-model="mainCtrl.filters.activity_type" theme="bootstrap">
                                 <ui-select-match placeholder="Activity Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="activity.id as activity in mainCtrl.activityTypes">
@@ -53,7 +53,7 @@
                             </ui-select>
                         </div>
                         <div class="col-md-2">
-                            <label >Client Type:</label>
+                            <label>Client Type:</label>
                             <ui-select ng-model="mainCtrl.filters.client_type" theme="bootstrap">
                                 <ui-select-match placeholder="Client Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
@@ -62,7 +62,13 @@
                             </ui-select>
                         </div>
                         <div class="col-md-2">
-                            <label >Organization:</label>
+                            <label>Organization:</label>
+                            <ui-select ng-model="mainCtrl.filters.organization" theme="bootstrap">
+                                <ui-select-match placeholder="Organization"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                                <ui-select-choices repeat="organization.id as organization in mainCtrl.organizations | propsFilter: {value: $select.search}">
+                                    <div ng-bind-html="organization.value | highlight: $select.search"></div>
+                                </ui-select-choices>
+                            </ui-select>
                         </div>
                     </div>
                     <hr>
@@ -73,7 +79,7 @@
                             <ui-select ng-model="mainCtrl.filters.month_start" theme="bootstrap">
                                 <ui-select-match placeholder="Month"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="month.id as month in mainCtrl.months">
-                                    <div ng-bind="district.value | highlight: $select.search"></div>
+                                    <div ng-bind="month.value | highlight: $select.search"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -82,7 +88,7 @@
                             <ui-select ng-model="mainCtrl.filters.year_start" theme="bootstrap">
                                 <ui-select-match placeholder="Year"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="year.id as year in mainCtrl.years">
-                                    <div ng-bind="visit.value | highlight: $select.search"></div>
+                                    <div ng-bind="year.value | highlight: $select.search"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -91,7 +97,7 @@
                             <ui-select ng-model="mainCtrl.filters.month_end" theme="bootstrap">
                                 <ui-select-match placeholder="Month"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="month.id as month in mainCtrl.months">
-                                    <div ng-bind="district.value | highlight: $select.search"></div>
+                                    <div ng-bind="month.value | highlight: $select.search"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -100,7 +106,7 @@
                             <ui-select ng-model="mainCtrl.filters.year_end" theme="bootstrap">
                                 <ui-select-match placeholder="Year"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="year.id as year in mainCtrl.years">
-                                    <div ng-bind="visit.value | highlight: $select.search"></div>
+                                    <div ng-bind="year.value | highlight: $select.search"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>

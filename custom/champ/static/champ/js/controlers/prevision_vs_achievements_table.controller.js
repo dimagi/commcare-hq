@@ -16,6 +16,34 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
     vm.first_art_date = defaultDate;
     vm.date_handshake = defaultDate;
     vm.date_last_vl_test = defaultDate;
+    vm.organizations = [];
+
+    vm.fiscalYears = [];
+
+    for (var year=2014; year <= (currentYear + 4); year++ ) {
+        vm.fiscalYears.push({
+            value: year,
+            id: year,
+        });
+    }
+
+    vm.activityTypes = [
+        {id: '', value: 'All'},
+        {id: 'epm', value: 'EPM'},
+        {id: 'mat_distribution', value: 'Material Distribution'},
+    ];
+
+    vm.visitsTypes = [
+        {id: '', value: 'All'},
+        {id: 'first_visit', value: 'First Visit'},
+        {id: 'follow_up_visit', value: 'Follow Up Visit'},
+    ];
+
+    vm.clientTypes = [
+        {id: '', value: 'All'},
+        {id: 'FSW', value: 'FSW'},
+        {id: 'MSM', value: 'MSM'},
+    ];
 
     vm.filters = {
         visit_date_start: vm.visit_date.startDate,
@@ -28,6 +56,7 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         date_handshake_end: vm.date_handshake.endDate,
         date_last_vl_test_start: vm.date_last_vl_test.startDate,
         date_last_vl_test_end: vm.date_last_vl_test.endDate,
+        fiscal_year: currentYear,
     };
 
     $scope.$watch(function () {
@@ -36,10 +65,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            visit_date_start: vm.visit_date.startDate.format('YYYY-MM-DD'),
-            visit_date_end: vm.visit_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.visit_date_start = vm.visit_date.startDate.format('YYYY-MM-DD')
+        vm.filters.visit_date_end = vm.visit_date.endDate.format('YYYY-MM-DD')
     }, true);
 
     $scope.$watch(function () {
@@ -48,10 +75,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            post_date_start: vm.post_date.startDate.format('YYYY-MM-DD'),
-            post_date_end: vm.post_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.post_date_start = vm.post_date.startDate.format('YYYY-MM-DD');
+        vm.filters.post_date_end = vm.post_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -60,10 +85,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            first_art_date_start: vm.first_art_date.startDate.format('YYYY-MM-DD'),
-            first_art_date_end: vm.first_art_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.first_art_date_start = vm.first_art_date.startDate.format('YYYY-MM-DD');
+        vm.filters.first_art_date_end = vm.first_art_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -72,10 +95,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            date_last_vl_test_start: vm.date_last_vl_test.startDate.format('YYYY-MM-DD'),
-            date_last_vl_test_end: vm.date_last_vl_test.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.date_last_vl_test_start = vm.date_last_vl_test.startDate.format('YYYY-MM-DD');
+        vm.filters.date_last_vl_test_end = vm.date_last_vl_test.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -84,10 +105,8 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            visit_date_start: vm.visit_date.startDate.format('YYYY-MM-DD'),
-            visit_date_end: vm.visit_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.visit_date_start = vm.visit_date.startDate.format('YYYY-MM-DD')
+        vm.filters.visit_date_end = vm.visit_date.endDate.format('YYYY-MM-DD')
     }, true);
 
     vm.pickerOptions = {
@@ -104,6 +123,9 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
             vm.data = response.data;
             filtersService.districtFilter().then(function (response) {
                 vm.districts = response.data.options;
+            });
+            filtersService.organizatioFilter().then(function (response) {
+                vm.organizations = response.data.options;
             });
         });
     };

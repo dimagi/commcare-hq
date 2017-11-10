@@ -7,7 +7,7 @@ window.angular.module('champApp').factory('reportsDataService', ['$http', functi
             return  $http({
                 method: "POST",
                 url: get_url,
-                params: filters,
+                data: filters,
             });
         },
         getPrevisionVsAchievementsTableData: function(filters) {
@@ -15,7 +15,7 @@ window.angular.module('champApp').factory('reportsDataService', ['$http', functi
             return  $http({
                 method: "POST",
                 url: get_url,
-                params: filters,
+                data: filters,
             });
         },
         getServiceUptakeData: function(filters) {
@@ -23,7 +23,7 @@ window.angular.module('champApp').factory('reportsDataService', ['$http', functi
             return  $http({
                 method: "POST",
                 url: get_url,
-                params: filters,
+                data: filters,
             });
         },
     };

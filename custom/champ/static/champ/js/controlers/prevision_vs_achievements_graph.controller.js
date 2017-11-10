@@ -53,6 +53,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
     vm.cbos = [];
     vm.fiscalYears = [];
     vm.userpls = [];
+    vm.groups = [];
 
     vm.hivStatuses = [
         {id: '', value: 'All'},
@@ -78,6 +79,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         {id: '', value: 'All'},
         {id: 'FSW', value: 'FSW'},
         {id: 'MSM', value: 'MSM'},
+        {id: 'client_fsw', value: 'Client FSW'},
     ];
 
     vm.undetectvl = [
@@ -117,11 +119,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        debugger;
-        vm.filters = {
-            kp_prev_visit_date_start: vm.kp_prev_visit_date.startDate.format('YYYY-MM-DD'),
-            kp_prev_visit_date_end: vm.kp_prev_visit_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.kp_prev_visit_date_start = vm.kp_prev_visit_date.startDate.format('YYYY-MM-DD');
+        vm.filters.kp_prev_visit_date_end = vm.kp_prev_visit_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -130,10 +129,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            htc_tst_post_date_start: vm.htc_tst_post_date.startDate.format('YYYY-MM-DD'),
-            htc_tst_post_date_end: vm.htc_tst_post_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.htc_tst_post_date_start = vm.htc_tst_post_date.startDate.format('YYYY-MM-DD');
+        vm.filters.htc_tst_post_date_end = vm.htc_tst_post_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -142,10 +139,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            htc_pos_post_date_start: vm.htc_pos_post_date.startDate.format('YYYY-MM-DD'),
-            htc_pos_post_date_end: vm.htc_pos_post_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.htc_pos_post_date_start = vm.htc_pos_post_date.startDate.format('YYYY-MM-DD');
+        vm.filters.htc_pos_post_date_end = vm.htc_pos_post_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -154,10 +149,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            htc_tst_hiv_test_date_start: vm.htc_tst_hiv_test_date.startDate.format('YYYY-MM-DD'),
-            htc_tst_hiv_test_date_end: vm.htc_tst_hiv_test_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.htc_tst_hiv_test_date_start = vm.htc_tst_hiv_test_date.startDate.format('YYYY-MM-DD');
+        vm.filters.htc_tst_hiv_test_date_end = vm.htc_tst_hiv_test_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -166,10 +159,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            htc_pos_hiv_test_date_start: vm.htc_pos_hiv_test_date.startDate.format('YYYY-MM-DD'),
-            htc_pos_hiv_test_date_end: vm.htc_pos_hiv_test_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.htc_pos_hiv_test_date_start = vm.htc_pos_hiv_test_date.startDate.format('YYYY-MM-DD');
+        vm.filters.htc_pos_hiv_test_date_end = vm.htc_pos_hiv_test_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -178,10 +169,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            care_new_date_handshake_start: vm.care_new_date_handshake.startDate.format('YYYY-MM-DD'),
-            care_new_date_handshake_end: vm.care_new_date_handshake.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.care_new_date_handshake_start = vm.care_new_date_handshake.startDate.format('YYYY-MM-DD');
+        vm.filters.care_new_date_handshake_end = vm.care_new_date_handshake.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -190,10 +179,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            tx_new_first_art_date_start: vm.tx_new_first_art_date.startDate.format('YYYY-MM-DD'),
-            tx_new_first_art_date_end: vm.tx_new_first_art_date.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.tx_new_first_art_date_start = vm.tx_new_first_art_date.startDate.format('YYYY-MM-DD');
+        vm.filters.tx_new_first_art_date_end = vm.tx_new_first_art_date.endDate.format('YYYY-MM-DD');
     }, true);
 
     $scope.$watch(function () {
@@ -202,10 +189,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         if (newValue === oldValue) {
             return;
         }
-        vm.filters = {
-            tx_undetect_date_last_vl_test_start: vm.tx_undetect_date_last_vl_test.startDate.format('YYYY-MM-DD'),
-            tx_undetect_date_last_vl_test_end: vm.tx_undetect_date_last_vl_test.endDate.format('YYYY-MM-DD'),
-        };
+        vm.filters.tx_undetect_date_last_vl_test_start = vm.tx_undetect_date_last_vl_test.startDate.format('YYYY-MM-DD');
+        vm.filters.tx_undetect_date_last_vl_test_end = vm.tx_undetect_date_last_vl_test.endDate.format('YYYY-MM-DD');
     }, true);
 
     vm.getData = function() {
@@ -219,6 +204,9 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
             });
             filtersService.targetUserplFilter().then(function (response) {
                 vm.userpls = response.data.options;
+            });
+            filtersService.groupsFilter().then(function (response) {
+                vm.groups = response.data.options
             });
         });
     };

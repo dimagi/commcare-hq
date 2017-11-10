@@ -6,8 +6,8 @@
 {% block champjs %}
     <script type="text/javascript" src="{% static 'champ/js/controlers/prevision_vs_achievements_table.controller.js' %}"></script>
     <script>
-        window.angular.module('champApp', ['ui.select', 'nvd3', 'daterangepicker'])
-            .controller('MainController', PrevisionVsAchievementsTableController)
+        window.angular.module('champApp', ['ngSanitize', 'ui.select', 'nvd3', 'daterangepicker'])
+            .controller('PrevisionVsAchievementsTableController', PrevisionVsAchievementsTableController)
             .config(['$httpProvider', function($httpProvider) {
                 $httpProvider.defaults.xsrfCookieName = 'csrftoken';
                 $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
@@ -17,14 +17,13 @@
 {% endblock %}
 
 {% block champcontent %}
-    <div id="champApp" ng-controller="MainController as mainCtrl">
+    <div id="champApp" ng-controller="PrevisionVsAchievementsTableController as mainCtrl">
         <h2 ng-bind="mainCtrl.title"></h2>
         <div class="row" style="margin-bottom: 40px;">
             <div class="row">
                 <div class="row bubble" style="width: 80%">
                     <h4 style="text-align: center">Filters</h4>
                     <div class="row">
-                        <div class="col-md-1"></div>
                         <div class="col-md-2">
                             <label>District:</label>
                             <ui-select ng-model="mainCtrl.filters.district" theme="bootstrap">
@@ -62,7 +61,22 @@
                             </ui-select>
                         </div>
                         <div class="col-md-2">
-                            <label >Organization:</label>
+                            <label>Organization:</label>
+                            <ui-select ng-model="mainCtrl.filters.organization" theme="bootstrap">
+                                <ui-select-match placeholder="Organization"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                                <ui-select-choices repeat="organization.id as organization in mainCtrl.organizations">
+                                    <div ng-bind="organization.value | highlight: $select.search"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Fiscal year:</label>
+                            <ui-select ng-model="mainCtrl.filters.fiscal_year" theme="bootstrap">
+                                <ui-select-match placeholder="Fiscal year"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                                <ui-select-choices repeat="year.id as year in mainCtrl.fiscalYears">
+                                    <div ng-bind="year.value | highlight: $select.search"></div>
+                                </ui-select-choices>
+                            </ui-select>
                         </div>
                     </div>
                     <hr>
@@ -119,7 +133,7 @@
                     <td><span ng-bind="mainCtrl.data.kp_prev"></span></td>
                 </tr>
                 <tr>
-                    <td>KP_prev_target</td>
+                    <td>KP_PREV_target</td>
                     <td><span ng-bind="mainCtrl.data.target_kp_prev"></span></td>
                 </tr>
                 <tr>

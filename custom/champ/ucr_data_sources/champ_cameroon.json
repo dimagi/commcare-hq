@@ -323,7 +323,7 @@
           "type": "month_start_date",
           "date_expression": {
             "type": "property_path",
-            "property_path": ["form", "meta", "timeEnd"]
+            "property_path": ["form", "date_handshake"]
           }
         },
         "column_id": "care_new_month",
