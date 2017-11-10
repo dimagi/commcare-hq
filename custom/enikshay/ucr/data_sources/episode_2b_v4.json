@@ -1049,8 +1049,8 @@
                         "name": "earliest_cbnaat_test_case"
                     },
                     "value_expression": {
-                        "type": "property_name",
-                        "property_name": "result_summary_display"
+                        "type": "named",
+                        "name": "smear_result"
                     }
                 },
                 "transform": {},
@@ -2929,8 +2929,34 @@
                 }
             },
             "smear_result": {
-                "type": "property_name",
-                "property_name": "result_summary_display"
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    },
+                    "property_value": "tb_detected"
+                },
+                "expression_if_true": {
+                    "separator": ", ",
+                    "expressions": [
+                        {
+                            "type": "property_name",
+                            "property_name": "result"
+                        },
+                        {
+                            "type": "property_name",
+                            "property_name": "result_grade"
+                        }
+                    ],
+                    "type": "concatenate_strings"
+                },
+                "expression_if_false": {
+                    "type": "property_name",
+                    "property_name": "result"
+                }
             },
             "r_drug_case": {
                 "aggregation_fn": "last_item",
