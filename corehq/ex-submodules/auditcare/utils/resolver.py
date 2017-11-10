@@ -30,7 +30,7 @@ def _resolver_resolve_to_name(self, path):
                 if name:
                     return name
                 tried.append(pattern.regex.pattern)
-        raise Resolver404, {'tried': tried, 'path': new_path}
+        raise Resolver404({'tried': tried, 'path': new_path})
 
 
 def resolve_to_name(path, urlconf=None):

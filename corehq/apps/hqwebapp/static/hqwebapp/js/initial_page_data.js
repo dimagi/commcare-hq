@@ -8,7 +8,7 @@
  */
 hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($, _) {
     var data_selector = ".initial-page-data",
-        data = {},
+        _initData = {},
         url_selector = ".commcarehq-urls",
         urls = {};
 
@@ -35,10 +35,10 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
      * Fetch a named value.
      */
     var get = function(name) {
-        if (data[name] === undefined) {
-            data = gather(data_selector, data);
+        if (_initData[name] === undefined) {
+            _initData = gather(data_selector, _initData);
         }
-        return data[name];
+        return _initData[name];
     };
 
     // http://stackoverflow.com/a/21903119/240553
@@ -86,7 +86,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     };
 
     $(function() {
-        data = gather(data_selector, data);
+        _initData = gather(data_selector, _initData);
         urls = gather(url_selector, urls);
     });
 

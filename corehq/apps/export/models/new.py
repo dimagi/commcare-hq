@@ -981,6 +981,15 @@ class CaseExportInstance(ExportInstance):
             )
         return []
 
+    @property
+    def has_case_history_table(self):
+        case_history_table = [table for table in self.tables if table.label == 'Case History']
+        return any(
+            column.selected
+            for column in table.columns
+            for table in case_history_table
+        )
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()

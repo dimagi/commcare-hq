@@ -107,6 +107,11 @@
 
         var exportType = $scope.exportList[0].export_type;
         self.exportType = hqImport('export/js/utils').capitalize(exportType);
+        if (exportType === 'case') {
+            self.has_case_history_table = _.any($scope.exportList, function(export_) {
+                return export_.has_case_history_table;
+            });
+        }
 
         self.sendAnalytics = function () {
             _.each($scope.formData.user_types, function (user_type) {
@@ -114,6 +119,13 @@
             });
             var action = ($scope.exportList.length > 1) ? "Bulk" : "Regular";
             analytics.usage("Download Export", self.exportType, action);
+            if (self.has_case_history_table) {
+                _.each($scope.exportList, function (export_) {
+                    if (export_.has_case_history_table) {
+                        analytics.usage("Download Case History Export", export_.domain, export_.export_id);
+                    }
+                });
+            }
         };
 
         $scope.isFormInvalid = function () {

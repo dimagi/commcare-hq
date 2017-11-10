@@ -868,48 +868,14 @@
                 "is_primary_key": false,
                 "column_id": "follow_up_treatment_initiation_date_month",
                 "expression": {
-                    "type": "conditional",
-                    "test": {
-                        "type": "boolean_expression",
-                        "operator": "in",
-                        "expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "rft_general"
-                        },
-                        "property_value": ["follow_up_drtb", "follow_up_dstb"]
-
+                    "type": "coalesce",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "rft_drtb_follow_up_treatment_month"
                     },
-                    "expression_if_true": {
-                        "type": "evaluator",
-                        "statement": "str(int(round(a / 30.4)))",
-                        "context_variables": {
-                            "a": {
-                                "datatype": "integer",
-                                "type": "diff_days",
-                                "to_date_expression": {
-                                    "type": "property_name",
-                                    "property_name": "date_reported"
-                                },
-                                "from_date_expression": {
-                                    "value_expression": {
-                                        "datatype": null,
-                                        "type": "property_name",
-                                        "property_name": "treatment_initiation_date"
-                                    },
-                                    "type": "nested",
-                                    "related_doc_type": "CommCareCase",
-                                    "argument_expression": {
-                                        "type": "named",
-                                        "name": "episode_case"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "expression_if_false": {
-                        "type": "constant",
-                        "constant": ""
+                    "default_expression": {
+                        "type": "property_name",
+                        "property_name": "rft_dstb_follow_up_treatment_month"
                     }
                 }
             },

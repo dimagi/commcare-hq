@@ -10,7 +10,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 
 from custom.enikshay.const import (
     DOSE_MISSED,
@@ -210,6 +210,7 @@ class TestAdherenceUpdater(TestCase):
     def _rebuild_indicators(self):
         # rebuild so that adherence UCR data gets updated
         rebuild_indicators(self.data_store.datasource._id)
+        queue_async_indicators()
         self.data_store.adapter.refresh_table()
 
     def test_invalid_cases(self):

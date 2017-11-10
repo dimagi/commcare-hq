@@ -17,6 +17,7 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
+import six
 
 PRODUCT_NAMES = {
     u'diu': [u"diu"],
@@ -570,7 +571,11 @@ class TauxConsommationData(BaseSqlData):
                     total_row.append("%s%%" % (100 * int(cp[0] or 0) / (cp[1] or 1)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                    columns = [
+                        r.get('sort_key')
+                        for r in colrows
+                        if isinstance(r.get('sort_key'), six.integer_types)
+                    ]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:

@@ -71,7 +71,6 @@
     "logo_refs": {},
     "media_language_map": {},
     "minimum_use_threshold": "15",
-    "mobile_ucr_sync_interval": null,
     "modules": [
         {
             "auto_select_case": false,

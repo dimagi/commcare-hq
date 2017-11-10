@@ -85,3 +85,18 @@ def get_form_ids_for_user(domain, user_id):
         include_docs=False,
     )
     return [result['id'] for result in results]
+
+
+def get_form_ids_by_xmlns(domain, xmlns=None):
+    if xmlns:
+        key = ['submission xmlns', domain, xmlns]
+    else:
+        key = ['submission xmlns', domain]
+    results = XFormInstance.get_db().view(
+        'all_forms/view',
+        startkey=key,
+        endkey=key + [{}],
+        reduce=False,
+        include_docs=False,
+    )
+    return [result['id'] for result in results]

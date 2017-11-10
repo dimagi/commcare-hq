@@ -185,3 +185,67 @@ class TestCustomQueryValues(TestCase):
                 config.ignore_patterns.filter(domain='domain', case_type='case_type')
             )
         )
+
+    def test_regex_replace(self):
+        """
+        https://sentry.io/dimagi/commcarehq/issues/314043351/
+        https://manage.dimagi.com/default.asp?262513
+        https://manage.dimagi.com/default.asp?265167#1419523
+        """
+        initial_custom_query = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "__thing_1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        expected = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "boop-beep+boop"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        search_criteria = {
+            "{}__thing_1".format(SEARCH_QUERY_CUSTOM_VALUE): "boop-beep+\\boop",
+            "name": "Jon Snow",
+        }
+        self.maxDiff = None
+        self.assertDictEqual(
+            expected,
+            replace_custom_query_variables(
+                initial_custom_query,
+                search_criteria,
+                None
+            )
+        )

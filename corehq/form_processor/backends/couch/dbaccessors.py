@@ -35,7 +35,10 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-    get_forms_by_id, get_form_ids_by_type)
+    get_forms_by_id,
+    get_form_ids_by_type,
+    get_form_ids_by_xmlns,
+)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -113,6 +116,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
         return _soft_undelete(XFormInstance.get_db(), form_ids)
+
+    @staticmethod
+    def iter_form_ids_by_xmlns(domain, xmlns=None):
+        return get_form_ids_by_xmlns(domain, xmlns)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):

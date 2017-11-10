@@ -655,15 +655,13 @@ def html_attr(value):
     return escape(value)
 
 
-@register.tag
-def initial_page_data(parser, token):
+def _create_page_data(parser, token, node_slug):
     split_contents = token.split_contents()
     tag = split_contents[0]
     name = parse_literal(split_contents[1], parser, tag)
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
-
         def render(self, context):
             resolved = value.resolve(context)
             return (u"<div data-name=\"{}\" data-value=\"{}\"></div>"
@@ -671,7 +669,22 @@ def initial_page_data(parser, token):
 
     nodelist = NodeList([FakeNode()])
 
-    return AddToBlockNode(nodelist, 'initial_page_data')
+    return AddToBlockNode(nodelist, node_slug)
+
+
+@register.tag
+def initial_page_data(parser, token):
+    return _create_page_data(parser, token, 'initial_page_data')
+
+
+@register.tag
+def initial_analytics_data(parser, token):
+    return _create_page_data(parser, token, 'initial_analytics_data')
+
+
+@register.tag
+def analytics_ab_test(parser, token):
+    return _create_page_data(parser, token, 'analytics_ab_test')
 
 
 @register.tag
