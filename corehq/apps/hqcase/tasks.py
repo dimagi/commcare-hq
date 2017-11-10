@@ -14,7 +14,7 @@ from corehq.apps.es import CaseSearchES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from soil import DownloadBase
 
 
@@ -72,7 +72,7 @@ def explode_cases(domain, user_id, factor, task=None):
                     i.case_type, new_case_ids[i.case_id][explosion], i.relationship
                 ) for key, i in cases[old_case_id].index.iteritems()
             }
-            progress += queue_case(ElementTree.tostring(new_case.as_xml()), queue, progress)
+            progress += queue_case(new_case.as_string(), queue, progress)
 
     if len(queue):
         submit_case_blocks(queue, domain, user_id=user_id, device_id="explode_cases")
@@ -136,10 +136,23 @@ def delete_exploded_cases(domain, explosion_id, task=None):
     if task:
         DownloadBase.set_progress(delete_exploded_case_task, 0, len(case_ids))
 
+    case_accessor = CaseAccessors(domain)
+    form_accessor = FormAccessors(domain)
+    deleted_form_ids = set()
+    for id in case_ids:
+        new_form_ids = set(case_accessor.get_case_xform_ids(id)) - deleted_form_ids
+        form_accessor.soft_delete_forms(list(new_form_ids))
+        deleted_form_ids |= new_form_ids
+
     completed = 0
     for ids in chunked(case_ids, 100):
-        CaseAccessors(domain).soft_delete_cases(list(ids))
+        case_accessor.soft_delete_cases(list(ids))
         if task:
             completed += len(ids)
             DownloadBase.set_progress(delete_exploded_case_task, completed, len(case_ids))
-    return {'messages': ["Successfully deleted {} cases".format(len(case_ids))]}
+    return {
+        'messages': [
+            "Successfully deleted {} cases".format(len(case_ids)),
+            "Successfully deleted {} forms".format(len(deleted_form_ids)),
+        ]
+    }
