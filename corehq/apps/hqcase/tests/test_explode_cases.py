@@ -263,8 +263,9 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
                 relationship='child',
                 related_type=case_type,
             )]
-        )  # C and E are interchangable in their position in the hierarchy
-           # since they point at the same case
+        )
+        # C and E are interchangable in their position in the hierarchy since
+        # they point at the same case
 
         E = CaseStructure(
             case_id='extension',

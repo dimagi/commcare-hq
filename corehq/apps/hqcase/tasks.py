@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from six import iteritems
+import six
 
 import uuid
 from collections import defaultdict
@@ -101,26 +101,25 @@ def topological_sort_cases(cases):
     roots = []
 
     # compile graph
-    for case_id, case in iteritems(cases):
-        indices = [idx.case_id for idx in case.index.itervalues()]
-        graph[case.case_id] = indices
-        for index in indices:
-            inverse_graph[index].append(case.case_id)
-
+    for case_id, case in six.iteritems(cases):
+        graph[case.case_id] = indices = []
+        for index in six.itervalues(case.index):
+            indices.append(index.case_id)
+            inverse_graph[index.case_id].append(case.case_id)
         if not indices:
             roots.append(case.case_id)
 
     # sort graph
     sorted_ids = []
-    while len(roots) > 0:
+    while roots:
         root_id = roots.pop()
         sorted_ids.append(root_id)
         for case_id in sorted(inverse_graph[root_id]):
             graph[case_id].remove(root_id)
-            if len(graph[case_id]) == 0:
+            if not graph[case_id]:
                 roots.append(case_id)
 
-    for case_id, indices in iteritems(graph):
+    for indices in six.itervalues(graph):
         if indices:
             raise ValueError("graph has cycles")
 
