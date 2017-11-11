@@ -4,7 +4,7 @@ import json
 import socket
 import uuid
 from StringIO import StringIO
-from collections import defaultdict, namedtuple, OrderedDict, Counter
+from collections import defaultdict, namedtuple, OrderedDict
 from datetime import timedelta, date, datetime
 
 import dateutil
@@ -511,9 +511,7 @@ class AdminRestoreView(TemplateView):
             string_payload = ''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-            cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
-            num_cases = len(cases)
-            case_type_counts = Counter(case.getchildren()[0].getchildren()[0].text for case in cases)
+            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
             num_locations = len(
                 xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
                                     .format(RESPONSE_XMLNS)))
@@ -540,7 +538,6 @@ class AdminRestoreView(TemplateView):
             'status_code': response.status_code,
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
-            'case_type_counts': case_type_counts,
             'num_locations': num_locations,
             'hide_xml': hide_xml,
         })
