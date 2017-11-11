@@ -532,6 +532,7 @@ class AdminRestoreView(TemplateView):
             restore_id_element = None
             num_cases = 0
             num_locations = 0
+            case_type_counts = {}
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
