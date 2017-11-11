@@ -531,6 +531,7 @@ class AdminRestoreView(TemplateView):
             num_cases = 0
             num_locations = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
@@ -538,6 +539,7 @@ class AdminRestoreView(TemplateView):
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
             'num_locations': num_locations,
+            'hide_xml': hide_xml,
         })
         return context
 
