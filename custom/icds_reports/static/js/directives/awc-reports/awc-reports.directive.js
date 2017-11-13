@@ -2055,10 +2055,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    if (d.series[3].value != null) {
-                        var html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
                     } else {
-                        var html = "<p>Height: <strong>Data Not Recorded</strong></p>";
+                        html = "<p>Height: <strong>Data Not Recorded</strong></p>";
                     }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
@@ -2105,10 +2106,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    if (d.series[3].value != null) {
-                        var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
                     } else {
-                        var html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
@@ -2157,10 +2159,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    if (d.series[3].value != null) {
-                        var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
                     } else {
-                        var html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
                     return html;
