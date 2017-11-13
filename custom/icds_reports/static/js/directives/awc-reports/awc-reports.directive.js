@@ -1707,7 +1707,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.filters = ['gender', 'age'];
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
-        .withOption('scrollY', '300px')
         .withOption('scrollX', '100%')
         .withOption('scrollCollapse', true)
         .withOption('ajax', {
