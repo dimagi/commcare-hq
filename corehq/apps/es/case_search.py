@@ -149,7 +149,7 @@ class CasePropertyAggregationResult(BucketResult):
 
 
 class CasePropertyAggregation(TermsAggregation):
-    type = "nested"
+    type = "case_property"
     result_class = CasePropertyAggregationResult
 
     def __init__(self, name, field, size=None):
