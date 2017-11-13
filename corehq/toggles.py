@@ -1176,6 +1176,21 @@ ENIKSHAY = StaticToggle(
     relevant_environments={'enikshay'},
 )
 
+ICDS = StaticToggle(
+    'icds',
+    "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'softlayer'},
+    always_enabled={
+        "icds-dashboard-qa",
+        "icds-sql",
+        "icds-test",
+        "icds-cas",
+        "icds-cas-sandbox"
+    },
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Project level data dictionary of cases',

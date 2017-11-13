@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.motech.repeaters.models import Repeater, RepeatRecordAttempt
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -105,7 +106,7 @@ class Command(BaseCommand):
 
         total_records = len(records)
         print "Found {} matching records.  {} them?".format(total_records, action)
-        if not raw_input("(y/n)") == 'y':
+        if not input("(y/n)") == 'y':
             print "Aborting"
             return
 

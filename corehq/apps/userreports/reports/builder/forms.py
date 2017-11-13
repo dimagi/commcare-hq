@@ -668,6 +668,7 @@ class DataSourceForm(forms.Form):
                 StrictButton(
                     _('Next'),
                     type="submit",
+                    css_id='js-next-data-source',
                     css_class="btn-primary",
                 )
             ),

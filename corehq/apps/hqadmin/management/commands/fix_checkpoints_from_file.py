@@ -4,6 +4,7 @@ import json
 
 from django.core.management import BaseCommand, CommandError
 from pillowtop import get_pillow_by_name
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -34,7 +35,7 @@ class Command(BaseCommand):
                 pillow_name, old_seq, checkpoint_to_set,
             )
             if not options['noinput'] and \
-                    raw_input("{} Type ['y', 'yes'] to continue.\n".format(msg)) not in ['y', 'yes']:
+                    input("{} Type ['y', 'yes'] to continue.\n".format(msg)) not in ['y', 'yes']:
                 print('skipped')
                 continue
             pillow.checkpoint.update_to(checkpoint_to_set)

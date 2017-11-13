@@ -7,6 +7,7 @@ import elasticsearch
 from corehq.apps.userreports.util import get_ucr_es_indices
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -63,7 +64,7 @@ class Command(BaseCommand):
 
 def _delete_indices(es, to_delete):
     # always ask for confirmation when doing irreversible things
-    if raw_input(
+    if input(
             '\n'.join([
                 'Really delete ALL the unrecognized elastic indices?',
                 'Here are the indices that will be deleted:',
@@ -83,7 +84,7 @@ def _delete_indices(es, to_delete):
 
 
 def _close_indices(es, to_close, noinput):
-    if noinput or raw_input(
+    if noinput or input(
             '\n'.join([
                 'Really close ALL the unrecognized elastic indices?',
                 'Here are the indices that will be closed:',
