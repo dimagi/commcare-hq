@@ -221,7 +221,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     is_cacheable = False
     options_url = 'emwf_options'
     search_help_inline = mark_safe(ugettext_lazy(
-        'To quick search for a location, write your query as /parent/descendant. '
+        'To quick search for a location, write your query as "parent"/descendant. '
         'For more info, see the '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Location" '
         'target="_blank">Location Search</a> help page.'

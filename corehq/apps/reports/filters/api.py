@@ -64,17 +64,19 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     def custom_locations_search(self):
         """
         When the query is specifically searching for just locations and not any other entity like user, group.
-        For ex: enter "/Bihar/patn" would match child locations under locations named Bihar, having name like
+        For ex: enter "Bihar"/patn would match child locations under locations named Bihar, having name like
         patn.
         """
-        return self.q.startswith('/')
+        return self.q.startswith('"')
 
     @staticmethod
     def _get_location_specific_custom_filters(query):
         query_sections = query.split("/")
-        parent_name = query_sections[1]
+        # first section would be u'"parent' or u'"parent_name"', so split with " to get
+        # ['', 'parent'] or ['', 'parent_name', '']
+        parent_name = query_sections[0].split('"')[1]
         try:
-            search_query = query_sections[2]
+            search_query = query_sections[1]
         except IndexError:
             search_query = None
         return parent_name, search_query
