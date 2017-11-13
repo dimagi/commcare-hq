@@ -398,27 +398,22 @@ class DataSourceBuilder(object):
             Each object has a "property" and "aggregation" key
         :param filters: A list of filter configuration objects
         """
-        indicators = []
+
+        def get_key(i):
+            return i['column_id'], i['type']
+
+        indicators = {}
         for column in columns:
             column_option = self.report_column_options[column['property']]
-            indicators.extend(column_option.get_indicators(column['aggregation'], is_multiselect_chart_report))
+            for indicator in column_option.get_indicators(column['aggregation'], is_multiselect_chart_report):
+                indicators.setdefault(get_key(indicator), indicator)
 
         for filter in filters:
             property = self.data_source_properties[filter['property']]
             indicator = property.to_report_filter_indicator(filter)
-            indicators.append(indicator)
+            indicators.setdefault(get_key(indicator), indicator)
 
-        # remove duplicates
-        # There can be duplicates because filters and columns could be based on the same property
-        indicators_without_dups = []
-        seen_indicator_ids = set()
-        for i in indicators:
-            if (i['column_id'], i['type']) not in seen_indicator_ids:
-                indicators_without_dups.append(i)
-                seen_indicator_ids.add((i['column_id'], i['type']))
-        indicators = indicators_without_dups
-
-        return indicators
+        return list(indicators.values())
 
     def all_possible_indicators(self):
         indicators = {}
