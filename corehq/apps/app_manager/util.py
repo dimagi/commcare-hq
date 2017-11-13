@@ -230,7 +230,6 @@ def get_settings_values(app):
     # the admin_password hash shouldn't be sent to the client
     hq_settings.pop('admin_password', None)
     # convert int to string
-    hq_settings['mobile_ucr_sync_interval'] = str(hq_settings.get('mobile_ucr_sync_interval', 'none'))
     hq_settings['mobile_ucr_restore_version'] = str(hq_settings.get('mobile_ucr_restore_version', '1.0'))
 
     domain = Domain.get_by_name(app.domain)

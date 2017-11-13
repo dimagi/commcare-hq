@@ -30,6 +30,7 @@ from soil.progress import set_task_progress
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
@@ -100,6 +101,10 @@ from corehq.apps.export.utils import (
 )
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
+
+
+class PossibleHeterogenousDataException(AttributeError):
+    pass
 
 
 class PathNode(DocumentSchema):
@@ -454,10 +459,19 @@ class TableConfiguration(DocumentSchema):
         :param row_number: number indicating this documents index in the sequence of all documents in the export
         :return: List of ExportRows
         """
-        sub_documents = self._get_sub_documents(document, row_number)
+        document_id = document.get('_id')
+
+        try:
+            sub_documents = self._get_sub_documents(document, row_number)
+        except PossibleHeterogenousDataException as e:
+            doc = e.args[0]
+            path_name = e.args[1]
+            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+            _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
+                document_id, doc, path_name))
+            raise
 
         domain = document.get('domain')
-        document_id = document.get('_id')
 
         assert domain is not None, 'Form or Case must be associated with domain'
         assert document_id is not None, 'Form or Case must have an id'
@@ -531,7 +545,10 @@ class TableConfiguration(DocumentSchema):
             doc = row_doc.doc
             row_index = row_doc.row
 
-            next_doc = doc.get(path[0].name, {})
+            try:
+                next_doc = doc.get(path[0].name, {})
+            except AttributeError:
+                raise PossibleHeterogenousDataException(doc, path[0].name)
             if path[0].is_repeat:
                 if type(next_doc) != list:
                     # This happens when a repeat group has a single repeat iteration

@@ -1,6 +1,0 @@
-Aggregated list of all PillowTop errors which have failed in the last hour after max retry attempts.
-
-{% for row in rows %}
-{{ row }}{% endfor %}
-
-View them online: {{ url }}

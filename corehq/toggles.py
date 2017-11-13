@@ -380,7 +380,7 @@ CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'Allow configuration of case list tiles',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
@@ -394,7 +394,7 @@ CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the caselist',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 ADD_USERS_FROM_LOCATION = StaticToggle(
@@ -455,7 +455,7 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
     TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
@@ -477,7 +477,7 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    [NAMESPACE_DOMAIN],
     description=(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
@@ -508,7 +508,7 @@ REPORT_BUILDER = StaticToggle(
 REPORT_BUILDER_V1 = StaticToggle(
     "report_builder_v1",
     "Report builder V1",
-    TAG_PRODUCT,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
         'Enables the old report builder. Note that the project must already have access to report builder.'
@@ -618,7 +618,7 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
 MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'mobile_privileges_flag',
     'Offer "Enable Privileges on Mobile" flag.',
-    TAG_SOLUTIONS,
+    TAG_INTERNAL,
     [NAMESPACE_USER]
 )
 
@@ -963,8 +963,8 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
-    'Allow mobile workers to self register',
-    TAG_SOLUTIONS,
+    'UW: Allow mobile workers to self register',
+    TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1007,7 +1007,7 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
 SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'sms_performance_feedback',
     'Enable SMS-based performance feedback',
-    TAG_SOLUTIONS,
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
 )
@@ -1128,7 +1128,7 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
-    'Disable column limit in UCR',
+    'Enikshay: Disable column limit in UCR',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1176,6 +1176,21 @@ ENIKSHAY = StaticToggle(
     relevant_environments={'enikshay'},
 )
 
+ICDS = StaticToggle(
+    'icds',
+    "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'softlayer'},
+    always_enabled={
+        "icds-dashboard-qa",
+        "icds-sql",
+        "icds-test",
+        "icds-cas",
+        "icds-cas-sandbox"
+    },
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Project level data dictionary of cases',
@@ -1212,8 +1227,8 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
 
 ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
     'anonymous_web_apps_usage',
-    'Allow anonymous users to access Web Apps applications',
-    TAG_SOLUTIONS,
+    'Infomap: Allow anonymous users to access Web Apps applications',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     always_disabled={'icds-cas'},
     description='Users are automatically logged into Web Apps as a designated mobile worker.'
@@ -1270,13 +1285,6 @@ SHOW_DEV_TOGGLE_INFO = StaticToggle(
     'Highlight / Mark Feature Flags in the UI',
     TAG_INTERNAL,
     [NAMESPACE_USER]
-)
-
-DASHBOARD_GRAPHS = StaticToggle(
-    'dashboard_graphs',
-    'Show submission graph on dashboard',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
@@ -1349,6 +1357,34 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_NEW = StaticToggle(
+    'analytics_new',
+    "Use refactored analytics across all of HQ (for QA purposes).",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_DEBUG = StaticToggle(
+    'analytics_debug',
+    "Turn on DEBUG level output for debugging analytics.",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_VERBOSE = StaticToggle(
+    'analytics_verbose',
+    "Turn on VERBOSE level output for debugging analytics.",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+ANALYTICS_WARNING = StaticToggle(
+    'analytics_warning',
+    "Turn on WARNING level output for debugging analytics.",
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )

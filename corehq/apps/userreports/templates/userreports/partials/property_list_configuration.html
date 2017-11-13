@@ -92,7 +92,9 @@ TODO:
     <tbody data-bind="sortable: {
         data: columns,
         afterAdd: function (elem) { $(elem).hide().fadeIn() },
-        beforeRemove: function (elem) { $(elem).fadeOut() }
+        beforeRemove: function (elem) { $(elem).fadeOut() },
+        afterMove: reorderColumn,
+        afterRender: afterRender
     }"
     {# there must be no whitespace between <tbody> and <tr> #}
     {# the .hide().fadeIn() will fail badly on FireFox #}
@@ -199,7 +201,7 @@ TODO:
         <td>
           <button
               class="btn btn-danger btn-sm"
-              data-bind="click: function(){$parent.columns.remove($data)}"
+              data-bind="click: function(){$parent.removeColumn($data)}"
           >
             <i class="fa fa-remove"></i>
           </button>

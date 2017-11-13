@@ -104,3 +104,21 @@ class TranslationTransform(Transform):
             return localize(display, language)
 
         return transform_function
+
+
+class MultipleValueStringTranslationTransform(TranslationTransform):
+    type = TypeProperty('multiple_value_string_translation')
+    delimiter = StringProperty(required=True)
+
+    def get_transform_function(self):
+        delimiter = self.delimiter
+        parent_transform_function = super(MultipleValueStringTranslationTransform, self).get_transform_function()
+
+        def transform_function(values):
+            values_list = values.split(delimiter)
+            translated_values_list = []
+            for value in values_list:
+                translated_values_list.append(parent_transform_function(value))
+            return delimiter.join(translated_values_list)
+
+        return transform_function

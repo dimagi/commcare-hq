@@ -113,7 +113,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
                         }
                     } else if(self.send_frequency() === 'monthly') {
                         var last_day = null;
-                        self.days_of_month().map(function(value) {
+                        self.days_of_month().forEach(function(value, index) {
                             value = parseInt(value);
                             if(last_day === null) {
                                 last_day = value;

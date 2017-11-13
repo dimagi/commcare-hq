@@ -2055,10 +2055,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    } else {
+                        html = "<p>Height: <strong>Data Not Recorded</strong></p>";
+                    }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
+                });
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2098,10 +2106,19 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    } else {
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                    }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
+                });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2124,6 +2141,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             duration: 100,
             useInteractiveGuideline: true,
             xDomain: [45,120],
+            forceY: [0],
             xAxis: {
                 axisLabel: 'Height (Cm)',
                 showMaxMin: true,
@@ -2141,9 +2159,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    } else {
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                    }
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
                     return html;
+                });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },

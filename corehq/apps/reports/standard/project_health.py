@@ -290,6 +290,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
+    js_scripts = ['reports/js/project_health_dashboard.js']
 
     @property
     @memoized

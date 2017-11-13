@@ -5,6 +5,7 @@ from corehq.blobs import Error as BlobError
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.quickcache import quickcache
 from pillowtop.dao.django import DjangoDocumentStore
@@ -21,14 +22,17 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
     def get_document(self, doc_id):
         try:
-            return self.form_accessors.get_form(doc_id).to_json(include_attachments=True)
+            form = self.form_accessors.get_form(doc_id)
+            if isinstance(form, XFormInstanceSQL):
+                return form.to_json(include_attachments=True)
+            else:
+                return form.to_json()
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
-        # todo: add migration for function that filters by xmlns
-        return iter(self.form_accessors.get_all_form_ids_in_domain())
+        return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):

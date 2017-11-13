@@ -158,5 +158,8 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             $('#edit-form-name-modal').find('.disable-on-submit').enableButton();
         });
         $('#edit-form-name-modal').koApplyBindings(editDetails);
+        $("#edit-form-name-modal button[type='submit']").click(function() {
+            window.analytics.workflow("Renamed form from form builder");
+        });
     });
 });

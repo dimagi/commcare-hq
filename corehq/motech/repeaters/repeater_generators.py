@@ -308,7 +308,7 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         from corehq.apps.api.resources.v0_4 import XFormInstanceResource
         from corehq.apps.api.util import form_to_es_form
         res = XFormInstanceResource()
-        bundle = res.build_bundle(obj=form_to_es_form(form))
+        bundle = res.build_bundle(obj=form_to_es_form(form, include_attachments=True))
         return res.serialize(None, res.full_dehydrate(bundle), 'application/json')
 
     @property

@@ -496,7 +496,7 @@ EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
 CONTACT_EMAIL = 'info@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
-DAILY_DEPLOY_EMAIL = "tech-announce-daily@example.com"
+DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -674,9 +674,6 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 # again.
 PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
 
-# Number of minutes a celery task will alot for itself (via lock timeout)
-PILLOW_RETRY_PROCESSING_LOCK_TIMEOUT = 5
-
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
 
@@ -800,8 +797,6 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
-
-LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0

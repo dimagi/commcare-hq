@@ -661,6 +661,8 @@ class EpisodeVoucherUpdate(object):
 
         try:
             first_prescription = get_prescription_from_voucher(self.domain, first_voucher_generated.case_id)
+            if first_prescription.closed:
+                return {}
         except ENikshayCaseNotFound:
             return {}
 

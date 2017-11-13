@@ -135,14 +135,12 @@ class Command(BaseCommand):
                 environment=options['environment'], user=options['user'],
                 compare_url=compare_url)
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
-            try:
+            if settings.DAILY_DEPLOY_EMAIL:
                 recipient = settings.DAILY_DEPLOY_EMAIL
                 subject = 'Deploy Successful - {}'.format(options['environment'])
                 send_HTML_email(subject=subject,
                                 recipient=recipient,
                                 html_content=message_body)
-            except AttributeError:
-                pass
 
         if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
             create_update_sentry_release()
