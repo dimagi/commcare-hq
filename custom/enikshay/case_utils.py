@@ -209,8 +209,8 @@ def get_open_drtb_hiv_case_from_occurrence(domain, occurrence_case_id):
     open_drtb_hivsecondary_owner_case = [
         case for case in case_accessor.get_reverse_indexed_cases([occurrence_case_id])
         if not case.closed and
-           case.type == CASE_TYPE_SECONDARY_OWNER and
-           case.get_case_property('secondary_owner_type') == 'drtb-hiv'
+        case.type == CASE_TYPE_SECONDARY_OWNER and
+        case.get_case_property('secondary_owner_type') == 'drtb-hiv'
     ]
     if open_drtb_hivsecondary_owner_case:
         return open_drtb_hivsecondary_owner_case[0]
