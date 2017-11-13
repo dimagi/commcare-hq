@@ -5580,7 +5580,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def enable_update_prompts(self):
         return (
             # custom for ICDS until ICDS users are > 2.38
-            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain) and
+            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
             toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
