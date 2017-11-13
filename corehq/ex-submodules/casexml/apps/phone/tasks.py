@@ -5,7 +5,10 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.signals import after_task_publish
 from django.conf import settings
+from django.core.mail import mail_admins
+
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclog_ids_before_date
 from casexml.apps.phone.utils import delete_sync_logs
 
 
@@ -77,3 +80,20 @@ def prune_synclogs():
     num_deleted = delete_sync_logs(prune_date)
     while num_deleted != 0:
         num_deleted = delete_sync_logs(prune_date)
+
+
+@periodic_task(
+    run_every=crontab(hour="3", minute=0, day_of_week='sun'),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+)
+def check_old_synclog_db():
+    ids = get_synclog_ids_before_date(settings.SYNCLOGS_OLD_DB, date.today(), 1)
+    if not ids:
+        mail_admins(
+            "Old synclog database has no more valid docs",
+            "All docs in old synclog DB have been deleted. The synclog DBs can now be rotated.\n"
+            "Old DB: {}\n"
+            "Current DB: {}\n\n"
+            "See https://confluence.dimagi.com/display/commcarehq/SyncLog+CouchDB+rotations for more details"
+            "".format(settings.SYNCLOGS_OLD_DB, settings.SYNCLOGS_DB)
+        )

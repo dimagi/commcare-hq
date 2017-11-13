@@ -24,7 +24,7 @@ from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
-from dimagi.utils.couch.database import safe_delete
+from dimagi.utils.couch.database import safe_delete, get_db
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,8 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sync_logs(cls):
         logger.debug("Deleting all synclogs")
-        cls._delete_all_from_view(SyncLog.get_db(), 'phone/sync_logs_by_user')
+        for db_name in settings.SYNCLOGS_DBS:
+            cls._delete_all_from_view(get_db(db_name), 'phone/sync_logs_by_user')
 
     @staticmethod
     @unit_testing_only

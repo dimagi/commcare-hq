@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from django.conf import settings
+
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
 from corehq.apps.users.models import LastSync, CouchUser, CommCareUser, WebUser
 from corehq.pillows.utils import update_latest_builds, filter_by_app
@@ -22,9 +24,9 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
     """
     This gets a pillow which iterates through all synclogs
     """
-    couch_db = SyncLog.get_db()
+    couch_db = SyncLog.get_db()  # only listen to changes from the current synclog DB
     change_feed = CouchChangeFeed(couch_db, include_docs=True)
-    checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
+    checkpoint = PillowCheckpoint(settings.SYNCLOGS_DB, change_feed.sequence_format)
     form_processor = UserSyncHistoryProcessor()
     return ConstructedPillow(
         name=pillow_id,
@@ -111,12 +113,12 @@ class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
         # of the given user, for the synclog pillow to process.
         # this means we wont have to iterate through all synclogs
         # when reindexing.
-        synclogs = get_synclogs_for_user(doc['_id'], limit=10)
+        synclogs = get_synclogs_for_user(doc['_id'], limit=10, wrap=False)
         changes = [Change(
-            id=res['doc']['_id'],
+            id=log['_id'],
             sequence_id=None,
-            document=res['doc']
-        ) for res in synclogs]
+            document=log
+        ) for log in synclogs]
         return changes
 
 

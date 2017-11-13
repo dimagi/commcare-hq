@@ -4,6 +4,8 @@ from copy import copy
 from datetime import datetime
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from django.conf import settings
+
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
@@ -12,6 +14,8 @@ from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
+
+from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
@@ -285,6 +289,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     last_ucr_sync_times = SchemaListProperty(UCRSyncLog)
 
     strict = True  # for asserts
+
+    @classmethod
+    def get(cls, doc_id):
+        doc = get_sync_log_doc(doc_id)
+        return cls.wrap(doc)
 
     @classmethod
     def wrap(cls, data):
@@ -1190,12 +1199,22 @@ def _domain_has_legacy_toggle_set():
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
+def get_sync_log_doc(doc_id):
+    try:
+        return SyncLog.get_db().get(doc_id)
+    except ResourceNotFound:
+        if len(settings.SYNCLOGS_DBS) > 1:
+            doc = get_db(settings.SYNCLOGS_DBS[1]).get(doc_id, attachments=True)
+            del doc['_rev']  # remove the rev so we can save this to the new DB
+            return doc
+
+
 def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+    return properly_wrap_sync_log(get_sync_log_doc(doc_id))
 
 
 def properly_wrap_sync_log(doc):

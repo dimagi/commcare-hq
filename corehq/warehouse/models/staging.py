@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 from contextlib import closing
 
+from django.conf import settings
 from django.db import models, transaction, connections
 from django.contrib.postgres.fields import ArrayField
 
-from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.database import iter_docs, get_db
 
 from corehq.sql_db.routers import db_for_read_write
 from corehq.apps.app_manager.models import Application
@@ -373,8 +374,11 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
 
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
-        synclog_ids = get_synclog_ids_by_date(start_datetime, end_datetime)
-        return iter_docs(SyncLog.get_db(), synclog_ids)
+        for db_name in settings.SYNCLOGS_DBS:
+            db = get_db(db_name)
+            synclog_ids = get_synclog_ids_by_date(db, start_datetime, end_datetime)
+            for doc in iter_docs(db, synclog_ids):
+                yield doc
 
 
 class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
