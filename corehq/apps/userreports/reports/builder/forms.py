@@ -408,9 +408,9 @@ class DataSourceBuilder(object):
             for indicator in column_option.get_indicators(column['aggregation'], is_multiselect_chart_report):
                 indicators.setdefault(get_key(indicator), indicator)
 
-        for filter in filters:
-            property = self.data_source_properties[filter['property']]
-            indicator = property.to_report_filter_indicator(filter)
+        for filter_ in filters:
+            property_ = self.data_source_properties[filter_['property']]
+            indicator = property_.to_report_filter_indicator(filter_)
             indicators.setdefault(get_key(indicator), indicator)
 
         return list(indicators.values())
