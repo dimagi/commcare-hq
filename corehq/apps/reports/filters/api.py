@@ -74,11 +74,14 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         query_sections = query.split("/")
         # first section would be u'"parent' or u'"parent_name"', so split with " to get
         # ['', 'parent'] or ['', 'parent_name', '']
-        parent_name = query_sections[0].split('"')[1]
+        parent_name_section_splits = query_sections[0].split('"')
+        parent_name = parent_name_section_splits[1]
         try:
             search_query = query_sections[1]
         except IndexError:
-            search_query = None
+            # when user has entered u'"parent_name"' without trailing "/"
+            # consider it same as u'"parent_name"/'
+            search_query = "" if len(parent_name_section_splits) == 3 else None
         return parent_name, search_query
 
     def get_locations_query(self, query):
