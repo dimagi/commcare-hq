@@ -216,7 +216,8 @@ def get_open_drtb_hiv_case_from_occurrence(domain, occurrence_case_id):
         return open_drtb_hivsecondary_owner_case[0]
     else:
         raise ENikshayCaseNotFound(
-            "Occurrence with id: {} exists but has no open drtb-hiv secondary owner case".format(occurrence_case_id)
+            "Occurrence with id: {} exists but has no open drtb-hiv secondary owner case".format(
+                occurrence_case_id)
         )
 
 
