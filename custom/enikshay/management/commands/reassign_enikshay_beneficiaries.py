@@ -96,7 +96,7 @@ class Command(BaseCommand):
     def save_case_blocks(self, case_blocks):
         for chunk in chunked(case_blocks, 100):
             submit_case_blocks(
-                [case_block.as_string for case_block in chunk],
+                [case_block.as_string() for case_block in chunk],
                 self.domain,
                 device_id="reassign_enikshay_beneficiaries",
             )
