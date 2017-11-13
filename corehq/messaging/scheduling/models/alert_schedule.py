@@ -47,6 +47,7 @@ class AlertSchedule(Schedule):
     def create_simple_alert(cls, domain, content):
         with transaction.atomic():
             schedule = cls(domain=domain)
+            schedule.ui_type = Schedule.UI_TYPE_IMMEDIATE
             schedule.save()
 
             if content.pk is None:
