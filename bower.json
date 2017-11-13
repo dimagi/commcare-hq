@@ -32,7 +32,7 @@
     "jquery-2.2.4": "jquery#2.2.4",
     "jquery-color": "2.1.2",
     "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
-    "jquery-form": "3.45.0",
+    "jquery-form": "4.2.2",
     "jquery-migrate": "1.2.1",
     "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
     "jquery-timeago": "1.2.0",
