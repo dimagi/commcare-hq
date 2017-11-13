@@ -604,7 +604,9 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
         "p_state": _get_location_name(person_case_properties.get('current_address_state_choice')),
         "socioeconomic_status": person_case_properties.get('socioeconomic_status', 'NA'),
         "area": person_case_properties.get('area', 'NA'),
-        "marital_status": marital_status.get(person_case_properties.get('marital_status'), marital_status.get('unmarried'))
+        "marital_status": marital_status.get(
+            person_case_properties.get('marital_status'),
+            marital_status.get('unmarried'))
     }
     person_locations = get_person_locations(person_case, episode_case)
     person_properties.update(
