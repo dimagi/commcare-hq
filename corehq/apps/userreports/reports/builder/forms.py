@@ -74,6 +74,9 @@ STATIC_CASE_PROPS = [
     "user_id",
 ]
 
+# PostgreSQL limit = 1600. Sane limit = 500?
+MAX_COLUMNS = 500
+
 
 class FilterField(JsonField):
     """
@@ -432,7 +435,7 @@ class DataSourceBuilder(object):
                 return_list.append(indicator)
                 return_list_set.add(as_hashable)
 
-        return return_list
+        return return_list[:MAX_COLUMNS]
 
     @property
     @memoized
