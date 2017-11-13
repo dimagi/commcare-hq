@@ -438,11 +438,15 @@ class EditScheduleView(CreateScheduleView):
         broadcast = self.broadcast
         schedule = broadcast.schedule
         recipients = []
+        recipient_types = set()
         for doc_type, doc_id in broadcast.recipients:
-            user = CommCareUser.get_by_user_id(doc_id, domain=self.domain)
-            recipients.append({"id": doc_id, "text": user.raw_username})
+            if doc_type == 'CommCareUser':
+                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_USER)
+                user = CommCareUser.get_by_user_id(doc_id, domain=self.domain)
+                recipients.append({"id": doc_id, "text": user.raw_username})
         initial = {
             'schedule_name': broadcast.name,
+            'recipient_types': list(recipient_types),
             'recipients': recipients,
             'content': 'sms',
             # only works for SMS

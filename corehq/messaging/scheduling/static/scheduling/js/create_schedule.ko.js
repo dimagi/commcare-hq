@@ -10,6 +10,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.start_date = ko.observable(initial_values.start_date);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
+        self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
         self.message_recipients = new MessagingSelect2Handler(initial_values.recipients);
         self.message_recipients.init();
 
@@ -36,6 +37,18 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             {row: ['22', '23', '24', '25', '26', '27', '28'].map(self.create_day_of_month_choice)},
             {row: ['-3', '-2', '-1'].map(self.create_day_of_month_choice)},
         ];
+
+        self.recipientTypeSelected = function(value) {
+            return self.recipient_types().indexOf(value) !== -1;
+        };
+
+        self.toggleRecipientType = function(value) {
+            if(self.recipientTypeSelected(value)) {
+                self.recipient_types.remove(value);
+            } else {
+                self.recipient_types.push(value);
+            }
+        };
 
         self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');

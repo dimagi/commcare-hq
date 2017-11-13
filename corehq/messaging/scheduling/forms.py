@@ -67,6 +67,11 @@ class ScheduleForm(Form):
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
 
+    RECIPIENT_TYPE_USER = 'USER'
+    RECIPIENT_TYPE_USER_GROUP = 'USER_GROUP'
+    RECIPIENT_TYPE_LOCATION = 'LOCATION'
+    RECIPIENT_TYPE_CASE_GROUP = 'CASE_GROUP'
+
     schedule_name = CharField(
         required=True,
         label=_('Schedule Name'),
@@ -122,6 +127,16 @@ class ScheduleForm(Form):
         required=False,
         min_value=1,
         label='',
+    )
+    recipient_types = MultipleChoiceField(
+        required=True,
+        label=_('Recipient(s)'),
+        choices=(
+            (RECIPIENT_TYPE_USER, _("Users")),
+            (RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
+            (RECIPIENT_TYPE_LOCATION, _("User Organizations")),
+            (RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
+        )
     )
     recipients = RecipientField(
         label=_("Recipient(s)"),
@@ -280,6 +295,13 @@ class ScheduleForm(Form):
 
     def get_recipients_layout_fields(self):
         return [
+            hqcrispy.B3MultiField(
+                ugettext("Recipient(s)"),
+                crispy.Field(
+                    'recipient_types',
+                    template='scheduling/partial/recipient_types_picker.html',
+                ),
+            ),
             crispy.Field(
                 'recipients',
                 data_bind='value: message_recipients.value',
