@@ -22,7 +22,11 @@ class TestAWCSCovered(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Total AWCs that have launched ICDS CAS <br />Number of AWCs launched: 19"
+                    "info": (
+                        'Total AWCs that have launched ICDS CAS <br />'
+                        'Number of AWCs launched: 19 <br />'
+                        'Number of States launched: 2'
+                    )
                 },
                 "fills": {
                     "Launched": "#fee0d2",
@@ -31,11 +35,19 @@ class TestAWCSCovered(TestCase):
                 },
                 "data": {
                     "st1": {
+                        "districts": 1,
+                        "blocks": 2,
                         "awcs": 8,
+                        "states": 1,
+                        "supervisors": 4,
                         "fillKey": "Launched"
                     },
                     "st2": {
+                        "districts": 2,
+                        "blocks": 2,
                         "awcs": 11,
+                        "states": 1,
+                        "supervisors": 4,
                         "fillKey": "Launched"
                     }
                 },
@@ -134,18 +146,24 @@ class TestAWCSCovered(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Number of AWCs launched",
+                "info": (
+                    "Total AWCs that have launched ICDS CAS <br />"
+                    "Number of AWCs launched: 3 <br />"
+                    "Number of Supervisors launched: 2"
+                ),
                 "tooltips_data": {
                     "s2": {
-                        "districts": 0,
-                        "supervisors": 0,
-                        "blocks": 0,
+                        "districts": 1, 
+                        "states": 1, 
+                        "supervisors": 1, 
+                        "blocks": 1, 
                         "awcs": 1
-                    },
+                    }, 
                     "s1": {
-                        "districts": 0,
-                        "supervisors": 0,
-                        "blocks": 0,
+                        "districts": 1, 
+                        "states": 1, 
+                        "supervisors": 1, 
+                        "blocks": 1, 
                         "awcs": 2
                     }
                 },
