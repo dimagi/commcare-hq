@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/hq-bug-report", function() {
+hqDefine('hqwebapp/js/hq-bug-report', ["jquery"], function($) {
     $(function () {
         var $hqwebappBugReportModal = $('#modalReportIssue'),
             $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
