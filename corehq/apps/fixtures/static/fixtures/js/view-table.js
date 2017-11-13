@@ -1,16 +1,29 @@
-/* global hqImport */
-$(function () {
-    var data = hqImport('hqwebapp/js/initial_page_data').get;
-    if (data('renderReportTables')) {
-        var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables(data('dataTablesOptions')),
-            standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
+define([
+    "jquery",
+    "hqwebapp/js/django",
+    "hqwebapp/js/initial_page_data",
+    "reports/js/standard_hq_report",
+    "reports/js/config.dataTables.bootstrap",
+    "reports/js/filters",
+    "datatables.fixedColumns",
+], function(
+    $,
+    django,
+    initialPageData,
+    standardHQReportModule,
+    datatablesConfig,
+    filters
+) {
+    if (initialPageData.get('renderReportTables')) {
+        var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
+            standardHQReport = standardHQReportModule.getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
         reportTables.render();
     }
 
-    hqImport("reports/js/filters").init();
+    filters.init();
 
     $(function() {
         $('.header-popover').popover({
