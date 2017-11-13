@@ -16,6 +16,12 @@
             placeholder="{{ select.placeholder }}"
             name="{{ slug }}" />
     {% endif %}
+    {% if search_help_inline %}
+        <span class="help-block">
+            <i class="fa fa-info-circle"></i>
+            {{ search_help_inline }}
+        </span>
+    {% endif %}
 {% endblock %}
 {% block filter_js %}
 <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
