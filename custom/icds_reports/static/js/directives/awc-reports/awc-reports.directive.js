@@ -2065,7 +2065,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     return html;
                 });
                 window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
-                    if (key.__data__.y !== null ) key.classList.add('chart-dot')
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2114,6 +2114,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
                 });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
+                });
                 return chart;
             },
         },
@@ -2160,6 +2164,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     }
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
                     return html;
+                });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
