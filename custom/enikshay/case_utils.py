@@ -200,23 +200,23 @@ def get_open_active_dstb_episode_case_from_occurrence(domain, occurrence_case_id
         )
 
 
-def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
+def get_open_drtb_hiv_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open 'drtb-hiv-referral' case for the episode
-
-    Assumes the following case structure:
-    episode <--ext-- drtb-hiv-referral
+    - Get the occurrence case from the episode case
+    - Get an open secondary_owner case (extension of occurrence) where secondary_owner_type = drtb-hiv"
     """
     case_accessor = CaseAccessors(domain)
-    open_drtb_cases = [
-        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
-        if not case.closed and case.type == CASE_TYPE_DRTB_HIV_REFERRAL
+    open_drtb_hivsecondary_owner_case = [
+        case for case in case_accessor.get_reverse_indexed_cases([occurrence_case_id])
+        if not case.closed and
+           case.type == CASE_TYPE_SECONDARY_OWNER and
+           case.get_case_property('secondary_owner_type') == 'drtb-hiv'
     ]
-    if open_drtb_cases:
-        return open_drtb_cases[0]
+    if open_drtb_hivsecondary_owner_case:
+        return open_drtb_hivsecondary_owner_case[0]
     else:
         raise ENikshayCaseNotFound(
-            "Occurrence with id: {} exists but has no open episode cases".format(episode_case_id)
+            "Occurrence with id: {} exists but has no open drtb-hiv secondary owner case".format(episode_case_id)
         )
 
 
