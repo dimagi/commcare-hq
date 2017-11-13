@@ -76,8 +76,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'household'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'registered_household'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Percent Adhaar-seeded Beneficiaries'),
@@ -97,8 +96,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
-                    'frequency': frequency,
-                    'redirect': 'adhaar'
+                    'frequency': frequency
                 }
             ],
             [
