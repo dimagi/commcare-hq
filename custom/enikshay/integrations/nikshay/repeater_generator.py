@@ -170,6 +170,59 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
             update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
 
 
+class NikshayRegisterPatientPayloadGeneratorV2(NikshayRegisterPatientPayloadGenerator):
+    def get_payload(self, repeat_record, episode_case):
+        """
+        https://docs.google.com/spreadsheets/d/1LK6xQHldOT8tf3ctcypAyUlIuTN-C25zhyIC1jHJeS0/edit
+        """
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+        occurence_case = None
+        use_2b_app_structure = self.use_2b_app_structure(person_case)
+        if use_2b_app_structure:
+            occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
+        properties_dict = self._base_properties(repeat_record)
+        properties_dict.update({
+            "dotcenter": "NA",
+            "Local_ID": person_case.get_id,
+        })
+
+        try:
+            properties_dict.update(_get_person_case_properties_v2(
+                episode_case, person_case, person_case_properties))
+        except NikshayLocationNotFound as e:
+            _save_error_message(person_case.domain, person_case.case_id, e)
+        properties_dict.update(_get_episode_case_properties(
+            episode_case_properties, occurence_case, person_case, use_2b_app_structure, v2=True))
+        return json.dumps({'patient_data': properties_dict})
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # A success would be getting a nikshay_id for the patient
+        # without it this would actually be a failure
+        try:
+            nikshay_id = _get_nikshay_id_from_response_v2(response)
+            update_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "nikshay_registered": "true",
+                    "nikshay_id": nikshay_id,
+                    "nikshay_error": "",
+                },
+                external_id=nikshay_id,
+            )
+        except NikshayResponseException as e:
+            _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, response.json())
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": exception})
+
+
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
     deprecated_format_names = ('case_json',)
 
@@ -549,6 +602,26 @@ def _get_nikshay_id_from_response(response):
         raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
 
 
+def _get_nikshay_id_from_response_v2(response):
+    """
+    Sample response body
+        {u'error_message': None,
+         u'nikshay_id': u'MH-BAN-01-01-17-0003    ',
+         u'success': True
+        }
+    """
+    try:
+        response_json = response.json()
+    except ValueError:
+        raise NikshayResponseException("Invalid JSON received")
+    nikshay_id = response_json.get('nikshay_id', '').strip()
+
+    if nikshay_id:
+        return nikshay_id
+    else:
+        raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
+
+
 def _get_person_age(person_case_properties):
     # Nikshay excepts only integer value so pick floor value or 1 in case age less than 1
     # 2.3 => 2, 0.5 => 1
@@ -581,6 +654,34 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
     'pname': u'home visit', 'scode': u'RJ', 'tcode': 'AB', dotphi': u'Test S1-C1-D1-T1 PHI 1',
     'pmob': u'1234567890', 'cname': u'123', 'caddress': u'123', 'pgender': 'T', 'page': u'79', 'pcategory': 1}
     """
+    person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
+    person_properties = {
+        "pname": person_case.name,
+        "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
+        # 2B is currently setting age_entered but we are in the short term moving it to use age instead
+        "page": _get_person_age(person_case_properties),
+        "paddress": person_case_properties.get('current_address', ''),
+        # send 0 since that is accepted by Nikshay for this mandatory field
+        "pmob": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
+        "cname": person_case_properties.get('secondary_contact_name_address', ''),
+        "caddress": person_case_properties.get('secondary_contact_name_address', ''),
+        "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
+        "pcategory": person_category
+    }
+    person_locations = get_person_locations(person_case, episode_case)
+    person_properties.update(
+        {
+            'scode': person_locations.sto,
+            'dcode': person_locations.dto,
+            'tcode': person_locations.tu,
+            'dotphi': person_locations.phi,
+        }
+    )
+
+    return person_properties
+
+
+def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
     person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
     person_properties = {
         "patient_name": person_case.name,
@@ -621,7 +722,7 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
     return person_properties
 
 
-def _get_episode_case_properties(episode_case_properties, occurence_case, person_case, use_new_2b_structure):
+def _get_episode_case_properties(episode_case_properties, occurence_case, person_case, use_new_2b_structure, v2=False):
     """
     :return: Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
     'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
@@ -650,12 +751,21 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
         episode_date = datetime.date.today()
 
     episode_year = episode_date.year
-
+    if v2:
+        episode_properties.update({
+            "occupation": occupation.get(
+                patient_occupation,
+                'Not known'
+            )
+        })
+    else:
+        episode_properties.update({
+            "poccupation": occupation.get(
+                patient_occupation,
+                occupation['other']
+            )
+        })
     episode_properties.update({
-        "occupation": occupation.get(
-            patient_occupation,
-            'Not known'
-        ),
         "pregdate": str(episode_date),
         "ptbyr": str(episode_year),
         "disease_classification": disease_classification.get(

@@ -32,6 +32,7 @@ from custom.enikshay.const import (
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
     TREATMENT_INITIATED_IN_PHI,
     ENROLLED_IN_PRIVATE,
+    EPISODE_TYPE_CASE_PROPERTY,
 )
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
@@ -40,6 +41,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayFollowupPayloadGenerator,
     NikshayRegisterPrivatePatientPayloadGenerator,
     NikshayHealthEstablishmentPayloadGenerator,
+    NikshayRegisterPatientPayloadGeneratorV2,
 )
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
@@ -91,6 +93,40 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
                 not episode_case_properties.get('nikshay_id', False) and
                 valid_nikshay_patient_registration(episode_case_properties) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
+                is_valid_person_submission(person_case)
+            )
+        else:
+            return False
+
+
+class NikshayRegisterPatientRepeaterV2(BaseNikshayRepeater):
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward eNikshay Patients to Nikshay (episode case type) V2")
+
+    payload_generator_classes = (NikshayRegisterPatientPayloadGeneratorV2,)
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.nikshay.views import RegisterNikshayPatientRepeaterViewV2
+        return reverse(RegisterNikshayPatientRepeaterViewV2.urlname, args=[domain])
+
+    def allowed_to_forward(self, episode_case):
+        # When case property episode_type is changed to confirmed_tb
+        allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
+        if allowed_case_types_and_users:
+            episode_case_properties = episode_case.dynamic_case_properties()
+            try:
+                person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+            except ENikshayCaseNotFound:
+                return False
+            return (
+                not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
+                not episode_case_properties.get('nikshay_id', False) and
+                case_properties_changed(episode_case, [EPISODE_TYPE_CASE_PROPERTY]) and
+                episode_case.get_case_property(EPISODE_TYPE_CASE_PROPERTY) == DSTB_EPISODE_TYPE and
                 is_valid_person_submission(person_case)
             )
         else:

@@ -6,6 +6,7 @@ import warnings
 
 from django.utils.translation import ugettext_lazy as _
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests_oauthlib import OAuth1
 from requests.exceptions import Timeout, ConnectionError
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -70,6 +71,7 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
 DELETED = "-Deleted"
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
+OAUTH1 = "oauth1"
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
@@ -83,7 +85,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH), required=False)
+    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
@@ -241,6 +243,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             return HTTPBasicAuth(self.username, self.password)
         elif self.auth_type == DIGEST_AUTH:
             return HTTPDigestAuth(self.username, self.password)
+        elif self.auth_type == OAUTH1:
+            return OAuth1(self.username, self.password)
         return None
 
     @property

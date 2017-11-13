@@ -15,7 +15,7 @@ from corehq.apps.users.util import raw_username
 
 from dimagi.utils.decorators.memoized import memoized
 
-from .models import BASIC_AUTH, DIGEST_AUTH
+from .models import BASIC_AUTH, DIGEST_AUTH, OAUTH1
 
 
 class GenericRepeaterForm(forms.Form):
@@ -31,6 +31,7 @@ class GenericRepeaterForm(forms.Form):
             (None, "None"),
             (BASIC_AUTH, "Basic"),
             (DIGEST_AUTH, "Digest"),
+            (OAUTH1, "OAuth1")
         ],
         required=False,
         label=_("Authentication protocol"),

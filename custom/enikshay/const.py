@@ -45,6 +45,7 @@ TREATMENT_SUPPORTER_PHONE = 'treatment_supporter_mobile_number'
 TREATMENT_OUTCOME = 'treatment_outcome'
 TREATMENT_OUTCOME_DATE = 'treatment_outcome_date'
 EPISODE_PENDING_REGISTRATION = "episode_pending_registration"
+EPISODE_TYPE_CASE_PROPERTY = "episode_type"
 PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION = "private_sector_episode_pending_registration"
 WEIGHT_BAND = 'weight_band'
 LAST_VOUCHER_CREATED_BY_ID = "bets_last_voucher_created_by_id"
