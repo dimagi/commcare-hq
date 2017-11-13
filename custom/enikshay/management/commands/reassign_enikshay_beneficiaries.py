@@ -77,7 +77,7 @@ class Command(BaseCommand):
             if not data['old facility is pcp or pac']:
                 data['new facility_assigned_to'] = registered_by
                 data['modified'] = True
-            if not data['old owner is pcp or pac']:
+            if not data['old owner is pcp or pac'] and data['old owner_id'] != '_archive_':
                 data['new owner_id'] = registered_by
                 data['modified'] = True
 
