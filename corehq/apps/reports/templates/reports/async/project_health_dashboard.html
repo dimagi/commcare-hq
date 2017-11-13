@@ -4,12 +4,8 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "reports/js/project_health_dashboard.js" %}"></script>
-{% endblock %}
-
 {% block reportcontent %}
-{% initial_page_data 'six_months_reports' six_months_reports %}
+<div id="six-months-reports" class="hide" data-value='{{ six_months_reports|JSON }}'></div>
 <div class="row">
     <div class="col-md-12">
         {% include "reports/project_health/partials/last_month_stats.html" %}

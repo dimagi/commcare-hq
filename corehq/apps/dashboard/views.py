@@ -11,7 +11,7 @@ from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
     IconContext,
-    ReportsPaginatedContext, Tile, DataPaginatedContext, DatadogContext)
+    ReportsPaginatedContext, Tile, DataPaginatedContext)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
@@ -21,7 +21,6 @@ from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.apps.hqwebapp.decorators import use_angular_js
-from corehq.toggles import DASHBOARD_GRAPHS
 from django_prbac.utils import has_privilege
 
 
@@ -210,14 +209,6 @@ def _get_default_tile_configurations():
             visibility_check=can_edit_apps,
             urlname='default_new_app',
             help_text=_('Build, update, and deploy applications'),
-        ),
-        TileConfiguration(
-            title=_('Form Submissions'),
-            slug='graph',
-            icon='fcc fcc-reports',
-            context_processor_class=DatadogContext,
-            visibility_check=DASHBOARD_GRAPHS.enabled_for_request,
-            help_text=_("Form submissions for this domain over the last 7 days"),
         ),
         TileConfiguration(
             title=_('Reports'),

@@ -51,6 +51,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         analytics.workflow('Visited the Release Manager');
         if (initial_page_data('confirm')) {
             analytics.usage('User actions', 'User created login', window.location.pathname);
+            analytics.usage('User actions', 'Forms', 'Name Your First Project');
         }
 
         var ab_test = initial_page_data('ab_test');

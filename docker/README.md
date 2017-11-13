@@ -7,11 +7,14 @@ Initial setup
    * Install [Docker](https://docs.docker.com/engine/installation/)
    * Install [Docker Compose](https://docs.docker.com/compose/install/) (Note you can also install in a virtualenv with `$ pip install docker-compose`)
 * OS X
-   * Install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_mac/). Go through the full tutorial, which will create a default machine.
-   * To create a new VM manually, run `docker-machine create default --driver=virtualbox` (not necessary if you followed the Docker Toolbox tutorial).
-   * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
+   * Preferred: install [Docker for Mac](https://docs.docker.com/docker-for-mac/install/).
+   * Alternate for older Macs that do not support Docker for Mac:
+     * Install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_mac/). Go through the full tutorial, which will create a default machine.
+     * To create a new VM manually, run `docker-machine create default --driver=virtualbox` (not necessary if you followed the Docker Toolbox tutorial).
+     * If not using the Quick Start terminal, run `eval $(docker-machine env default)` to set up Docker's environment variables.
+
 * If you have any HQ services currently running (couch, postgres, redis, etc.), you should stop them now. 
-* Bootstrap the setup:
+* Bootstrap the setup. Skip this step and go to [Configure your localsettings](#configure-your-localsettings) below if you came here from the [CommCare HQ README](https://github.com/dimagi/commcare-hq/blob/master/README.md#setup-localsettings).
 
     ```
       $ ./scripts/docker runserver --bootstrap
@@ -37,15 +40,16 @@ Initial setup
 
 ### Configure your localsettings
 
-There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine.
+There are two different localsettings configurations, depending on whether HQ is running inside a docker container or on your local machine. If you are planning on doing local development, it is recommended to run HQ on your local machine, and use docker only for supporting services
+
+  * Running docker services only (do this if you came here from the CommCare HQ README)
+    * If you are using _Docker Toolbox_ (not _Docker for Mac_): change all service host settings (DATABASES HOST, COUCH_SERVER_ROOT, etc.) in your localsettings.py file to point to the IP address of your virtualbox docker VM.
+    * Run `./scripts/docker up -d` to start docker services in the background. Sometimes this gets stuck waiting for Riak to start. If that happens break (CTRL+C) and try again.
+    * Once the services are all up (`./scripts/docker ps` to check) you can return to the CommCare HQ README and [Setup your Django environment](https://github.com/dimagi/commcare-hq/blob/master/README.md#set-up-your-django-environment).
 
   * Running HQ inside a docker container
 
     Do nothing; `docker/localsettings.py` will be used inside the container.
-
-  * Running docker services only
-    * Copy the appropriate postgres/couch/elasticsearch/redis configurations from `docker/localsettings.py` to `localsettings.py`
-    * Replace the `HOST` values in the configurations (e.g. `postgres`) with `localhost`
 
 
 General usage

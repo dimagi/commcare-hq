@@ -63,6 +63,8 @@ There is also a separate collection of Dimagi dev oriented tools that you can in
 And for production environments you may want:
 
     $ pip install -r requirements/prod-requirements.txt
+    
+Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
 #### Setup localsettings
 
@@ -141,138 +143,46 @@ This is required for the server side xpath validation. See [package.json](packag
 npm install dimagi/js-xpath#v0.0.2-rc1
 ```
 
-### Using LESS: 3 Options
+### Using LESS: 2 Options
 
 #### Option 1: Let Client Side Javascript (less.js) handle it for you
 
-Pros:
-- Don't need to install anything / manage different less versions.
+This is the setup most developers use. If you don't know which option to use, use this one. It's the simplest to set up and the least painful way to develop: just make sure your `localsettings.py` file has the following set:
 
-Cons:
-- Slowest option, as caching isn't great and for pages with a lot of imports,
-things get REAL slow. Plus if you want to use any javascript compilers like
-`coffeescript` in the future, this option won't take care of compiling that.
-- Is the furthest away from the production environment possible.
-
-##### How to enable?
-
-Make sure your `localsettings.py` file has the following set:
 ```
 LESS_DEBUG = True
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 ```
 
-#### Option 2: Let Django do it as changes are made, cache results in Redis
+The disadvantage is that this is a different setup than production, where LESS files are compressed. It also slows down page load times, compared to compressing offline.
 
-Pros:
-- Faster than client-side compilation
-- Closer to production setup (so you find compressor errors as they happen)
-- Can use other features of django compressor (for javascript!)
 
-Cons:
-- Have to install less versions
+#### Option 2: Compress OFFLINE, just like production
 
-##### How to enable?
+This mirrors production's setup, but it's really only useful if you're trying to debug issues that mirror production that's related to staticfiles and compressor. For all practical uses, please use Option 1 to save yourself the headache.
 
 Make sure your `localsettings.py` file has the following set:
-```
-LESS_DEBUG = False
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = False
-
-COMPRESS_MINT_DELAY = 30
-COMPRESS_MTIME_DELAY = 3  # set to higher or lower depending on how often you're editing static files
-COMPRESS_REBUILD_TIMEOUT = 6000
-```
-
-###### Install LESS
-
-*Note:* The reason why we have TWO versions, rather than one is that the newest
-LESS that Twitter Bootstrap 3.0 runs off of is not backwards compatible with
-LESS 1.3.1, which Twitter Bootstrap 2.3.2 needs. Since we're running BOTH
-simultaneously, we need to have two versions installed.
-
-For LESS 1.3.1 (the native less compiler):
-
-1. Install [npm](https://www.npmjs.com/)
-2. Install less@1.3.1 by running `npm install -g less@1.3.1`
-3. Make sure `lessc --version` outputs something like 1.3.1 or 1.3.0 as the current version
-
-On production we're using LESS 1.7.3 as the alternate LESS, and this version
-for sure works with Bootstrap 3.
-
-Take note of this variable already in `settings.py`
-```
-LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
-```
-
-You can change that to wherever you clone the git repo for 1.7.3, or leave it
-as is and follow this accordingly:
-
-1. in `/opt`: `git clone https://github.com/less/less.js.git lessc`
-2. In the `lessc` repo `git reset --hard 546bedd3440ff7e626f629bef40c6cc54e658d7e` to go straight to the 1.7.3
-   release. Experiment with newer releases at will.
-3. Verify that `/opt/lessc/bin/lessc --version` is around 1.7.3
-
-###### Install UglifyJS
-
-If you have npm installed, that should be as simple as
-
-```
-npm install -g uglify-js@2.6.1
-```
-
-###### Compressor and Caching
-
-If you're doing a lot of front end work (CSS AND/OR Javascript in Bootstrap 3)
-and don't want to guess whether or not the cache picked up your changes, set the
-following in `localsettings.py`:
-```
-COMPRESS_MINT_DELAY = 0
-COMPRESS_MTIME_DELAY = 0
-COMPRESS_REBUILD_TIMEOUT = 0
-```
-
-If you deleted your STATIC files directory, and you're getting 404s on all the
-Compressed files, force compression by running:
-
-    $ manage.py compress --force
-
-
-#### Option 3: Compress OFFLINE, just like production
-
-Pros:
-- Closest mirror to production's setup.
-- Easy to flip between Option 2 and Option 3
-
-Cons:
-- Sucks a lot if you're doing a lot of front end changes.
-
-##### How to enable?
-
-Do everything from Option 2 for LESS compilers setup.
-
-Have the following set in `localsettings.py`:
 ```
 LESS_DEBUG = False
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
 
-Notice that `COMPRESS_MINT_DELAY`, `COMPRESS_MTIME_DELAY`, and
-`COMPRESS_REBUILD_TIMEOUT` are not set.
+Install LESS and UglifyJS:
 
-For all STATICFILES changes, run:
+1. Install [npm](https://www.npmjs.com/)
+2. Install less by running `npm install -g less`
+3. Install UglifyJS by running `npm install -g uglify-js@2.6.1`
+
+
+For all STATICFILES changes (primarily LESS and JavaScript), run:
 
     $ manage.py collectstatic
     $ manage.py compilejsi18n
     $ manage.py fix_less_imports_collectstatic
     $ manage.py compress
 
-Option 3 is really only useful if you're trying to debug issues that mirror
-production that's related to staticfiles and compressor. For all practical uses
-please use Option 2 or Option 1 to save yourself the headache.
 
 #### CloudCare
 
@@ -638,6 +548,8 @@ that you have a 32bit version of Python installed.
 + If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
+  
++ If you encounter an error stemming from any Python modules when running `./manage.py sync_couch_views` for the first time, the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
 
 + On Windows, to get python-magic to work you will need to install the following dependencies.
   Once they are installed make sure the install folder is on the path.

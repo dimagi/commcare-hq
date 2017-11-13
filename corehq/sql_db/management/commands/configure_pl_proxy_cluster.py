@@ -8,6 +8,7 @@ from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import partition_config, parse_existing_shard, get_shards_to_update
+from six.moves import input
 
 SHARD_OPTION_RX = re.compile('^p[\d+]')
 
@@ -163,5 +164,5 @@ def get_user_mapping_sql():
 
 
 def _confirm(msg):
-    confirm_update = raw_input(msg + ' [yes / no] ')
+    confirm_update = input(msg + ' [yes / no] ')
     return confirm_update == 'yes'

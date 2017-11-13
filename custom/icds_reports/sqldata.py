@@ -139,7 +139,7 @@ class ExportableMixin(object):
             filters.append(NOT(IN('state_id', infilter_params)))
 
         for key, value in self.config.iteritems():
-            if key == 'domain' or key in infilter_params:
+            if key == 'domain' or key in infilter_params or 'age' in key:
                 continue
             filters.append(EQ(key, key))
         return filters
@@ -925,8 +925,8 @@ class ChildrenExport(ExportableMixin, SqlData):
     title = 'Children'
     table_name = 'agg_child_health_monthly'
 
-    def __init__(self, config=None):
-        super(ChildrenExport, self).__init__(config)
+    def __init__(self, config=None, loc_level=1, show_test=False):
+        super(ChildrenExport, self).__init__(config, loc_level, show_test)
         self.config.update({
             'age_0': '0',
             'age_6': '6',

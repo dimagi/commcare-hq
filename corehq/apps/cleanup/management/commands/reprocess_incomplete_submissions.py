@@ -12,6 +12,7 @@ from corehq.util.log import with_progress_bar
 from corehq.util.markup import SimpleTableWriter
 from corehq.util.markup import TableRowFormatter
 from couchforms.models import UnfinishedSubmissionStub
+from six.moves import input
 
 MODES = [
     'stats',
@@ -31,7 +32,7 @@ logger = logging.getLogger('reprocess')
 
 
 def confirm():
-    confirm = raw_input(
+    confirm = input(
         u"""
         Continue processing next batch? [y/N]
         """

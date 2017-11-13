@@ -3,7 +3,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
-from dateutil.rrule import MONTHLY, rrule, DAILY
+from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
 
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
@@ -174,6 +174,15 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         }
 
     open_count_chart = {}
+
+    open_count_dates = [
+        dt for dt in rrule(WEEKLY, dtstart=selected_month, until=last_day_of_selected_month, byweekday=MO)
+    ]
+    for date in open_count_dates:
+        first_day_of_week = date - timedelta(days=date.isoweekday() - 1)
+        milliseconds = int(first_day_of_week.strftime("%s")) * 1000
+        open_count_chart[milliseconds] = 0
+
     for chart_row in open_count_data:
         first_day_of_week = chart_row['pse_date'] - timedelta(days=chart_row['pse_date'].isoweekday() - 1)
         pse_week = int(first_day_of_week.strftime("%s")) * 1000
@@ -459,16 +468,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ),
                     'color': 'red' if percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
-                    'all': get_value(this_month_data, 'height'),
+                    'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -488,16 +497,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ),
                     'color': 'red' if percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height'
+                        'height_eli'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
-                    'all': get_value(this_month_data, 'height'),
+                    'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -1130,12 +1139,12 @@ def get_beneficiary_details(case_id, month):
     i = min_height
 
     while i <= max_height:
-        wfl.append({'x': i, 'y': 0})
+        wfl.append({'x': i, 'y': None})
         i += 0.5
 
     beneficiary = {
-        'weight': [{'x': x, 'y': 0} for x in range(0, 61)],
-        'height': [{'x': x, 'y': 0} for x in range(0, 61)],
+        'weight': [{'x': x, 'y': None} for x in range(0, 61)],
+        'height': [{'x': x, 'y': None} for x in range(0, 61)],
         'wfl': wfl
     }
     for row in data:

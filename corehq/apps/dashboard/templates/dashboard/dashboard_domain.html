@@ -45,3 +45,16 @@
     </p>
 </div>
 {% endblock dashboard-content %}
+
+{% block modals %}{{ block.super }}
+  {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
+      <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+           style="position: absolute; width: 200px;"
+           data-target="#ProjectReportsTab"
+           data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
+           role="alert">
+          {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
+        </div>
+  {% endif %}
+{% endblock %}
+

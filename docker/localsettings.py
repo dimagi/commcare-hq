@@ -236,7 +236,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     ADMINS = (('Admin', 'admin@example.com'),)
 
     CELERY_SEND_TASK_ERROR_EMAILS = True
-
     LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 
@@ -252,3 +251,7 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     SHARED_TEMP_DIR_NAME = 'temp'
 
 BIGCOUCH = True
+
+LOCAL_APPS = (
+    'kombu.transport.django',  # required for celery
+)

@@ -29,6 +29,7 @@ class Command(BaseEnikshayCaseMigration):
             test.get_case_property(DATAMIGRATION_CASE_PROPERTY) != 'yes'
             and test.get_case_property(MIGRATION_TYPE) == 'pmdt_excel'
             and test.get_case_property(RFT_GENERAL) == 'follow_up_drtb'
+            and test.get_case_property(TESTING_FACILITY_NAME)
         ):
             try:
                 name, id = match_facility(domain, test.get_case_property(TESTING_FACILITY_NAME))
