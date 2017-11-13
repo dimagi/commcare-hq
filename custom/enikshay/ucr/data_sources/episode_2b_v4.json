@@ -961,8 +961,8 @@
                         "name": "earliest_microscopy_test_case"
                     },
                     "value_expression": {
-                        "type": "property_name",
-                        "property_name": "result_summary_display"
+                        "type": "named",
+                        "name": "smear_result"
                     }
                 },
                 "transform": {},
@@ -1049,9 +1049,9 @@
                         "name": "earliest_cbnaat_test_case"
                     },
                     "value_expression": {
-                        "type": "named",
-                        "name": "smear_result"
-                    }
+                        "type": "property_name",
+                        "property_name": "result_summary_display"
+                      }
                 },
                 "transform": {},
                 "is_primary_key": false,

@@ -939,7 +939,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'result microscopy'
+                'tb_detected, result_grade'
             )
 
     def test_microscopy_tb_not_detected_expressions(self):
@@ -1036,7 +1036,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'result microscopy'
+                'tb_not_detected'
             )
 
     def test_cbnaat_expressions(self):
@@ -1152,7 +1152,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'tb_detected, result_grade'
+                'result cbnaat'
             )
 
     def test_cbnaat_rr_expressions(self):
@@ -1269,7 +1269,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'tb_detected, result_grade'
+                'result cbnaat'
             )
 
     def test_cbnaat_tb_not_detected_expressions(self):
@@ -1366,7 +1366,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'tb_not_detected'
+                'result cbnaat'
             )
 
     def test_disease_classification_pulmonary(self):
