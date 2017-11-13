@@ -939,7 +939,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'result microscopy'
+                'tb_detected, result_grade'
             )
 
     def test_microscopy_tb_not_detected_expressions(self):
@@ -1036,7 +1036,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'result microscopy'
+                'tb_not_detected'
             )
 
     def test_cbnaat_expressions(self):
@@ -1152,7 +1152,105 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'tb_detected, result_grade'
+                'TB Detected, R: Indeterminate'
+            )
+
+    def test_cbnaat_rr_not_confirmed_drtb_expressions(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': 'test',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ]
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        subcases = [
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-10',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '1'
+            },
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-13',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '2',
+                'drug_resistance_list': 'r cfx'
+            }
+        ]
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self._get_expression(
+            'cbnaat_test_result_summary_display',
+            'string'
+        )
+
+        with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
+            self.assertEqual(
+                date_reported_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2017-08-13'
+            )
+            self.assertEqual(
+                testing_facility_name_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'Test Facility'
+            )
+            self.assertEqual(
+                lab_serial_number_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2'
+            )
+            self.assertEqual(
+                result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'TB Detected, R: Res'
             )
 
     def test_cbnaat_rr_expressions(self):
@@ -1269,7 +1367,124 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'tb_detected, result_grade'
+                'TB Detected, R: Res'
+            )
+
+    def test_cbnaat_rr_sensitive_expressions(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': 'test',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ]
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        subcases = [
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-10',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_not_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '1'
+            },
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-12',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '2',
+                'drug_sensitive_list': 'r cfx'
+            },
+            {
+                'domain': 'enikshay-test',
+                'type': 'test',
+                'is_direct_test_entry': 'no',
+                'rft_dstb_followup': 'end_of_ip',
+                'rft_general': 'diagnosis_dstb',
+                'test_requested_date': '2017-09-28',
+                'date_tested': '2017-08-10',
+                'date_reported': '2017-08-13',
+                'test_type_value': 'cbnaat',
+                'test_type_label': 'CBNAAT',
+                'testing_facility_name': 'Test Facility',
+                'result': 'tb_detected',
+                'result_grade': 'result_grade',
+                'result_recorded': 'yes',
+                'result_summary_display': 'result cbnaat',
+                'lab_serial_number': '3'
+            }
+        ]
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self._get_expression(
+            'cbnaat_test_result_summary_display',
+            'string'
+        )
+
+        with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
+            self.assertEqual(
+                date_reported_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2017-08-12'
+            )
+            self.assertEqual(
+                testing_facility_name_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'Test Facility'
+            )
+            self.assertEqual(
+                lab_serial_number_expression(episode_case, EvaluationContext(episode_case, 0)),
+                '2'
+            )
+            self.assertEqual(
+                result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'TB Detected, R: Sens'
             )
 
     def test_cbnaat_tb_not_detected_expressions(self):
@@ -1366,7 +1581,7 @@ class TestEpisode2B(SimpleTestCase):
             )
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
-                'tb_not_detected'
+                'TB Not Detected'
             )
 
     def test_disease_classification_pulmonary(self):

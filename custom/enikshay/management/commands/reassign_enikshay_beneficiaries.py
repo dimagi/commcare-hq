@@ -77,7 +77,7 @@ class Command(BaseCommand):
             if not data['old facility is pcp or pac']:
                 data['new facility_assigned_to'] = registered_by
                 data['modified'] = True
-            if not data['old owner is pcp or pac']:
+            if not data['old owner is pcp or pac'] and data['old owner_id'] != '_archive_':
                 data['new owner_id'] = registered_by
                 data['modified'] = True
 
@@ -96,7 +96,7 @@ class Command(BaseCommand):
     def save_case_blocks(self, case_blocks):
         for chunk in chunked(case_blocks, 100):
             submit_case_blocks(
-                [case_block.as_string for case_block in chunk],
+                [case_block.as_string() for case_block in chunk],
                 self.domain,
                 device_id="reassign_enikshay_beneficiaries",
             )
