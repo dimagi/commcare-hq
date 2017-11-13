@@ -421,21 +421,13 @@ class DataSourceBuilder(object):
         return indicators
 
     def all_possible_indicators(self):
-        indicators = []
+        indicators = {}
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
-                indicators.extend(column_option.get_indicators(agg))
+                for indicator in column_option.get_indicators(agg):
+                    indicators.setdefault(str(indicator), indicator)
 
-        # Remove duplicates
-        return_list = []
-        return_list_set = set()
-        for indicator in indicators:
-            as_hashable = str(indicator)
-            if as_hashable not in return_list_set:
-                return_list.append(indicator)
-                return_list_set.add(as_hashable)
-
-        return return_list[:MAX_COLUMNS]
+        return list(indicators.values())[:MAX_COLUMNS]
 
     @property
     @memoized
