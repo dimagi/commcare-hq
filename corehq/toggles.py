@@ -508,7 +508,7 @@ REPORT_BUILDER = StaticToggle(
 REPORT_BUILDER_V1 = StaticToggle(
     "report_builder_v1",
     "Report builder V1",
-    TAG_PRODUCT,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
     description=(
         'Enables the old report builder. Note that the project must already have access to report builder.'
