@@ -18,7 +18,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
-    get_open_active_episode_case_from_occurrence,
+    get_open_active_dstb_episode_case_from_occurrence,
     person_has_any_nikshay_notifiable_episode,
     get_person_case_from_occurrence)
 from custom.enikshay.exceptions import ENikshayCaseNotFound

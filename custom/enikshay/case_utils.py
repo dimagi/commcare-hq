@@ -157,7 +157,7 @@ def get_associated_episode_case_for_test(test_case, occurrence_case_id):
             raise ENikshayCaseNotFound("Could not find episode case %s associated with test %s" %
                                        (test_case_episode_id, test_case.get_id))
 
-    return get_open_active_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
+    return get_open_active_dstb_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
 
 
 def get_all_episode_cases_from_person(domain, person_case_id):
@@ -172,9 +172,10 @@ def get_all_episode_cases_from_person(domain, person_case_id):
     return episode_cases
 
 
-def get_open_active_episode_case_from_occurrence(domain, occurrence_case_id):
+def get_open_active_dstb_episode_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open 'episode' case for the occurrence
+    In eNikshay public sector app
+    Gets the first open DSTB 'episode' case for the occurrence
 
     Assumes the following case structure:
     Occurrence <--ext-- Episode
