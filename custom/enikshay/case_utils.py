@@ -228,27 +228,38 @@ def get_open_episode_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence <--ext-- Episode
 
     """
-    return get_open_active_episode_case_from_occurrence(
+    return get_open_active_dstb_episode_case_from_occurrence(
         domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
     )
 
 
-def get_open_referral_case_from_person(domain, person_case_id):
+def get_referral_cases_from_person(domain, person_case_id, closed_cases=False):
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    open_referral_cases = [
-        case for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
-    ]
-    occurrence_cases = [
-        case.case_id for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
-    ]
-    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
-    open_referral_cases.extend(
-        case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
-    )
+    if closed_cases:
+        referral_cases = [case for case in reverse_indexed_cases
+                          if case.closed and case.type == CASE_TYPE_REFERRAL]
+        occurrence_cases = [case.case_id for case in reverse_indexed_cases if case.type == CASE_TYPE_OCCURRENCE]
+        reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+        referral_cases.extend(
+            case for case in reversed_indexed_occurrence
+            if case.closed and case.type == CASE_TYPE_REFERRAL
+        )
+    else:
+        referral_cases = [case for case in reverse_indexed_cases
+                          if not case.closed and case.type == CASE_TYPE_REFERRAL]
+        occurrence_cases = [case.case_id for case in reverse_indexed_cases
+                            if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
+        reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+        referral_cases.extend(
+            case for case in reversed_indexed_occurrence
+            if not case.closed and case.type == CASE_TYPE_REFERRAL
+        )
+    return referral_cases
+
+
+def get_open_referral_case_from_person(domain, person_case_id):
+    open_referral_cases = get_referral_cases_from_person(domain, person_case_id)
     if not open_referral_cases:
         return None
     if len(open_referral_cases) == 1:
@@ -257,6 +268,16 @@ def get_open_referral_case_from_person(domain, person_case_id):
         raise ENikshayException(
             "Expected none or one open referral case for person with id: {}".format(person_case_id)
         )
+
+
+def get_latest_closed_referral_case_from_person(domain, person_case_id, with_status=None):
+    closed_referral_cases = get_referral_cases_from_person(domain, person_case_id, closed_cases=True)
+    if with_status:
+        closed_referral_cases = filter(
+            lambda x: x.get_case_property('referral_status') == with_status,
+            closed_referral_cases
+        )
+    return sorted(closed_referral_cases, key=lambda x: x.closed_on)[0]
 
 
 def get_latest_trail_case_from_person(domain, person_case_id):
