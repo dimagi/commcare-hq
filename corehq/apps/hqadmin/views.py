@@ -511,7 +511,9 @@ class AdminRestoreView(TemplateView):
             string_payload = ''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+            cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
+            num_cases = len(cases)
+            case_type_counts = {'1': 2}
             num_locations = len(
                 xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
                                     .format(RESPONSE_XMLNS)))
@@ -529,8 +531,10 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            case_type_counts = {}
             num_locations = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
@@ -538,6 +542,8 @@ class AdminRestoreView(TemplateView):
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
             'num_locations': num_locations,
+            'hide_xml': hide_xml,
+            'case_type_counts': case_type_counts,
         })
         return context
 

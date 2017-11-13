@@ -31,8 +31,18 @@
                         Number of cases in this restore: <strong>{{num_cases}}</strong>
                     </div>
                     <div>
+                        {{case_type_counts}}
+                    </div>
+                    <div>
+                        {% for case_type, count in case_type_counts.items %}
+                            {{case_type}}: {{count}}
+                        {% endfor %}
+                    </div>
+                    <div>
                         Number of locations in this restore: <strong>{{num_locations}}</strong>
                     </div>
+
+                    {% if not hide_xml %}
                     <div>
                         <ul class="nav nav-tabs" role="tablist">
                             <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
@@ -44,6 +54,7 @@
                                 <pre id="payload">{{ payload }}</pre>
                             </div>
                             <div role="tabpanel" class="tab-pane" id="timing-tab">
+                    {% endif %}
                                 <table id="timingTable" class="table">
                                     <thead>
                                         <tr>
@@ -64,9 +75,11 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                    {% if not hide_xml %}
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
     </body>
 </html>
