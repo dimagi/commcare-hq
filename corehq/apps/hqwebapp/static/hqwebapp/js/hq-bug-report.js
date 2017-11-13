@@ -69,11 +69,11 @@ hqDefine("hqwebapp/js/hq-bug-report", function() {
             return regex.test(email);
         }
 
-        function hqwebappBugReportBeforeSerialize($form) {
+        function hqwebappBugReportBeforeSerialize() {
             $form.find("#bug-report-url").val(location.href);
         }
 
-        function hqwebappBugReportBeforeSubmit(arr, $form) {
+        function hqwebappBugReportBeforeSubmit(arr) {
             isBugReportSubmitting = true;
         }
 
