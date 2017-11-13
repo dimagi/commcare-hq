@@ -722,7 +722,8 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
     return person_properties
 
 
-def _get_episode_case_properties(episode_case_properties, occurence_case, person_case, use_new_2b_structure, v2=False):
+def _get_episode_case_properties(episode_case_properties, occurence_case, person_case, use_new_2b_structure,
+                                 v2=False):
     """
     :return: Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
     'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
