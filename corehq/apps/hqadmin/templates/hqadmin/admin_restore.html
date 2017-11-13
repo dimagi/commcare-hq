@@ -34,7 +34,6 @@
                         Number of locations in this restore: <strong>{{num_locations}}</strong>
                     </div>
 
-                    {% if not hide_xml %}
                     <div>
                         <ul class="nav nav-tabs" role="tablist">
                             <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
@@ -43,10 +42,13 @@
 
                         <div class="tab-content">
                             <div role="tabpanel" class="tab-pane active" id="payload-tab">
-                                <pre id="payload">{{ payload }}</pre>
+                                {% if not hide_xml %}
+                                    <pre id="payload">{{ payload }}</pre>
+                                {% else %}
+                                    XML is hidden
+                                {% endif %}
                             </div>
                             <div role="tabpanel" class="tab-pane" id="timing-tab">
-                    {% endif %}
                                 <table id="timingTable" class="table">
                                     <thead>
                                         <tr>
@@ -67,11 +69,9 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
-                    {% if not hide_xml %}
                             </div>
                         </div>
                     </div>
-                    {% endif %}
                 </div>
     </body>
 </html>
