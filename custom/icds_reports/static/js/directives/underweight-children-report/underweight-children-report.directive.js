@@ -59,7 +59,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>% Underweight: <strong>' + underweight + '</strong></div>' +
+            '<div>% Unweighed: <strong>' + underweight + '</strong></div>' +
             '<div>% Severely Underweight: <strong>' + severely_underweight + '</strong></div>' +
             '<div>% Moderately Underweight: <strong>' + moderately_underweight +'</strong></div>' +
             '<div>% Normal: <strong>' + normal + '</strong></div>';
@@ -204,7 +204,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     tooltip_content += "<p>% children normal: <strong>" + d3.format(".2%")(normal) + "</strong></p>";
                     tooltip_content += "<p>% children moderately underweight: <strong>" + d3.format(".2%")(moderately) + "</strong></p>";
                     tooltip_content += "<p>% children severely underweight: <strong>" + d3.format(".2%")(severely) + "</strong></p>";
-                    tooltip_content += "<p>% underweight: <strong>" + d3.format(".2%")(1 - (normal + moderately + severely)) + "</strong></p>";
+                    tooltip_content += "<p>% unweighed: <strong>" + d3.format(".2%")(1 - (normal + moderately + severely)) + "</strong></p>";
 
                     return tooltip_content;
                 });

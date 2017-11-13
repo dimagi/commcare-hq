@@ -1139,12 +1139,12 @@ def get_beneficiary_details(case_id, month):
     i = min_height
 
     while i <= max_height:
-        wfl.append({'x': i, 'y': 0})
+        wfl.append({'x': i, 'y': None})
         i += 0.5
 
     beneficiary = {
-        'weight': [{'x': x, 'y': 0} for x in range(0, 61)],
-        'height': [{'x': x, 'y': 0} for x in range(0, 61)],
+        'weight': [{'x': x, 'y': None} for x in range(0, 61)],
+        'height': [{'x': x, 'y': None} for x in range(0, 61)],
         'wfl': wfl
     }
     for row in data:

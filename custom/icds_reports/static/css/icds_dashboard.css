@@ -684,3 +684,8 @@ table.no-footer {
 .tick line {
     stroke-opacity: .1 !important;
 }
+
+.chart-dot {
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+}
