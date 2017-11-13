@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime
+from django.conf import settings
 
 from corehq.toggles import was_user_created_after
 
@@ -33,6 +34,9 @@ class StaticUINotify(object):
         self.ends_on = ends_on
 
     def enabled(self, request):
+        if settings.ENTERPRISE_MODE:
+            return False
+
         if hasattr(request, 'user'):
             from corehq.apps.notifications.models import DismissedUINotify
 

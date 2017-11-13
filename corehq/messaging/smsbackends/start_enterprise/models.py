@@ -4,6 +4,7 @@ import re
 import requests
 from dimagi.utils.logging import notify_exception
 from django.db import models
+from django.db import IntegrityError
 from corehq.messaging.smsbackends.http.models import SQLSMSBackend
 from corehq.messaging.smsbackends.start_enterprise.const import (
     SINGLE_SMS_URL,
@@ -99,11 +100,16 @@ class StartEnterpriseBackend(SQLSMSBackend):
         self.handle_response(msg_obj, response.status_code, response.text)
 
     def record_message_ids(self, msg_obj, response_text):
-        for message_id in set(response_text.split(',')):
-            StartEnterpriseDeliveryReceipt.objects.create(
-                sms_id=msg_obj.couch_id,
-                message_id=message_id
-            )
+        for message_id in response_text.split(','):
+            try:
+                StartEnterpriseDeliveryReceipt.objects.create(
+                    sms_id=msg_obj.couch_id,
+                    message_id=message_id
+                )
+            except IntegrityError:
+                # The API is sometimes returning duplicate message IDs for different messages.
+                # There's not much we can do when this happens, but we shouldn't fail hard.
+                pass
 
     def handle_response(self, msg_obj, response_status_code, response_text):
         if response_status_code == 200 and re.match(SUCCESS_RESPONSE_REGEX, response_text):

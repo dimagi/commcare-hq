@@ -94,12 +94,15 @@ class ProjectReportsTab(UITab):
     def _get_report_builder_items(self):
         user_reports = []
         if self.couch_user.can_edit_data():
+            has_access = has_report_builder_access(self._request)
             user_reports = [(
                 _("Create Reports"),
                 [{
-                    "title": _('Create new report'),
+                    "title": _('Create New Report'),
                     "url": self._get_create_report_url(),
-                    "icon": "icon-plus fa fa-plus",
+                    "icon": "icon-plus fa fa-plus {}".format(
+                        "has-access" if has_access else "preview"
+                    ),
                     "id": "create-new-report-left-nav",
                 }]
             )]

@@ -1128,7 +1128,7 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
-    'Disable column limit in UCR',
+    'Enikshay: Disable column limit in UCR',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1174,6 +1174,21 @@ ENIKSHAY = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     always_enabled={'enikshay'},
     relevant_environments={'enikshay'},
+)
+
+ICDS = StaticToggle(
+    'icds',
+    "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'softlayer'},
+    always_enabled={
+        "icds-dashboard-qa",
+        "icds-sql",
+        "icds-test",
+        "icds-cas",
+        "icds-cas-sandbox"
+    },
 )
 
 DATA_DICTIONARY = StaticToggle(

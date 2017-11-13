@@ -16,10 +16,10 @@ class StartEnterpriseDeliveryReceiptView(IncomingBackendView):
         return StartEnterpriseBackend
 
     def get(self, request, api_key, *args, **kwargs):
-        message_id = request.GET.get('msgId')
+        message_id = request.GET.get('msgid')
 
         if not message_id:
-            return HttpResponseBadRequest("Missing 'msgId'")
+            return HttpResponseBadRequest("Missing 'msgid'")
 
         message_id = message_id.strip()
 

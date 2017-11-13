@@ -5579,7 +5579,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @memoized
     def enable_update_prompts(self):
         return (
-            (self.supports_update_prompts or settings.SERVER_ENVIRONMENT == 'icds') and
+            # custom for ICDS until ICDS users are > 2.38
+            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
             toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
@@ -6267,9 +6268,7 @@ class LinkedApplication(Application):
     remote_url_base = StringProperty()
     remote_auth = SchemaProperty(RemoteLinkedAppAuth)
 
-    @property
-    def _meta_fields(self):
-        return super(LinkedApplication, self)._meta_fields + ['remote_auth']
+    _meta_fields = Application._meta_fields + ['remote_auth']
 
     @property
     def remote_app_details(self):

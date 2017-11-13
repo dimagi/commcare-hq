@@ -287,6 +287,10 @@ hqDefine('hqwebapp/js/main', [
         });
     });
 
+    var capitalize = function(string) {
+        return string.charAt(0).toUpperCase() + string.substring(1).toLowerCase();
+    };
+
     return {
         beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
@@ -304,5 +308,6 @@ hqDefine('hqwebapp/js/main', [
         makeHqHelp: makeHqHelp,
         transformHelpTemplate: transformHelpTemplate,
         updateDOM: updateDOM,
+        capitalize: capitalize,
     };
 });

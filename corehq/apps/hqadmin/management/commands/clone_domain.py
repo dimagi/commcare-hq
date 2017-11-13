@@ -10,6 +10,7 @@ from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, g
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
+from six.moves import input
 
 types = [
     "feature_flags",
@@ -104,7 +105,7 @@ class Command(BaseCommand):
         from corehq.apps.domain.models import Domain
         new_domain_obj = Domain.get_by_name(self.new_domain)
         if new_domain_obj:
-            if raw_input(
+            if input(
                 '{} domain already exists. Do you still want to continue? [y/n]'.format(self.new_domain)
             ).lower() == 'y':
                 return
