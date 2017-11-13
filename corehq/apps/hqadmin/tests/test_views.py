@@ -32,4 +32,5 @@ class AdminRestoreViewTests(SimpleTestCase):
                 'timing_data': [],
                 'num_cases': 0,
                 'num_locations': 0,
+                'hide_xml': False,
             })
