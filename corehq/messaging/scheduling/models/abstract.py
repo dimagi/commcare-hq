@@ -17,6 +17,7 @@ class Schedule(models.Model):
     UI_TYPE_DAILY = 'D'
     UI_TYPE_WEEKLY = 'W'
     UI_TYPE_MONTHLY = 'M'
+    UI_TYPE_UNKNOWN = 'X'
 
     schedule_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126, db_index=True)
@@ -40,7 +41,7 @@ class Schedule(models.Model):
 
     # One of the UI_TYPE_* constants describing the type of UI that should be used
     # to edit this schedule.
-    ui_type = models.CharField(max_length=1, default='X')
+    ui_type = models.CharField(max_length=1, default=UI_TYPE_UNKNOWN)
 
     class Meta:
         abstract = True
