@@ -212,7 +212,7 @@
         {% block head %}
         {% endblock %}
 
-        {% if not USE_NEW_ANALYTICS and not request|toggle_enabled:"ANALYTICS_NEW" and not requirejs_main %}
+        {% if not USE_NEW_ANALYTICS and not request|toggle_enabled:"ANALYTICS_NEW" %}
           {% include 'hqwebapp/includes/analytics_all.html' %}
           {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
             {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
@@ -453,7 +453,7 @@
                         ko.mapping = mapping;
                     },
                 });
-                requirejs(['hqwebapp/js/common'], function (common) {
+                requirejs(['hqwebapp/js/common', 'hqwebapp/js/hq-bug-report'], function (common) {
                     requirejs(['{{ requirejs_main }}']);
                 });
             </script>
