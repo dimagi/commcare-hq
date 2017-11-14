@@ -53,25 +53,25 @@ def registration_default(request):
 class NewUserNumberAbTestMixin__Enabled(object):
     @property
     @memoized
-    def _ab(self):
+    def _ab_show_number(self):
         return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
 
     @property
     def ab_show_number(self):
-        return self._ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM
+        return self._ab_show_number.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM
 
     @property
-    def ab_context(self):
-        return self._ab.context
+    def ab_show_number_context(self):
+        return self._ab_show_number.context
 
-    def ab_update_response(self, response):
-        self._ab.update_response(response)
+    def ab_show_number_update_response(self, response):
+        self._ab_show_number.update_response(response)
 
 
 class NewUserNumberAbTestMixin__NoAbEnabled(object):
     @property
     @memoized
-    def _ab(self):
+    def _ab_show_number(self):
         return None
 
     @property
@@ -79,10 +79,10 @@ class NewUserNumberAbTestMixin__NoAbEnabled(object):
         return True
 
     @property
-    def ab_context(self):
+    def ab_show_number_context(self):
         return None
 
-    def ab_update_response(self, response):
+    def ab_show_number_update_response(self, response):
         pass
 
 
@@ -92,10 +92,10 @@ class NewUserNumberAbTestMixin__Disabled(object):
         return False
 
     @property
-    def ab_context(self):
+    def ab_show_number_context(self):
         return None
 
-    def ab_update_response(self, response):
+    def ab_show_number_update_response(self, response):
         pass
 
 
@@ -125,7 +125,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(
             data['data'],
-            show_number=self.ab_show_number
+            show_number=self.ab_show_number,
         )
         if reg_form.is_valid():
             self._create_new_account(reg_form)
@@ -180,7 +180,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        self.ab_update_response(response)
+        self.ab_show_number_update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -213,7 +213,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'show_number': self.ab_show_number,
-            'ab_test': self.ab_context,
+            'ab_show_number': self.ab_show_number_context,
         }
 
     @property
