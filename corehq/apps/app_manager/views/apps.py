@@ -75,7 +75,7 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     load_app_template,
-    ReportModule)
+    ReportModule, LinkedApplication)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps, no_conflict
@@ -351,24 +351,31 @@ def copy_app(request, domain):
             if data['toggles']:
                 for slug in data['toggles'].split(","):
                     set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
-            extra_properties = {'name': data['name']}
             linked = data.get('linked')
             if linked:
-                extra_properties['master'] = app_id
-                extra_properties['master_domain'] = master_domain
-                extra_properties['doc_type'] = 'LinkedApplication'
                 if link_domain not in app.linked_whitelist:
                     app.linked_whitelist.append(link_domain)
                     app.save()
-            app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
-            if linked:
-                for module in app_copy.modules:
-                    if isinstance(module, ReportModule):
-                        messages.error(request, _('This linked application uses mobile UCRs which '
-                                                  'are currently not supported. For this application to '
-                                                  'function correctly, you will need to remove those modules.'))
-                        break
-            return back_to_main(request, app_copy.domain, app_id=app_copy._id)
+
+                linked_app = LinkedApplication(
+                    name=data['name'],
+                    domain=link_domain,
+                    master=app_id,
+                    master_domain=master_domain,
+                )
+                linked_app.save()
+                return pull_master_app(request, link_domain, linked_app.get_id)
+            else:
+                extra_properties = {'name': data['name']}
+                app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
+                if linked:
+                    for module in app_copy.modules:
+                        if isinstance(module, ReportModule):
+                            messages.error(request, _('This linked application uses mobile UCRs which '
+                                                      'are currently not supported. For this application to '
+                                                      'function correctly, you will need to remove those modules.'))
+                            break
+                return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         # having login_and_domain_required validates that the user
         # has access to the domain we're copying the app to
@@ -837,7 +844,6 @@ def drop_user_case(request, domain, app_id):
     return back_to_main(request, domain, app_id=app_id)
 
 
-@require_GET
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
     app = get_current_app(domain, app_id)
