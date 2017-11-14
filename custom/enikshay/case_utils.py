@@ -588,7 +588,7 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def iter_all_active_person_episode_cases(domain, case_ids):
+def iter_all_active_public_sector_person_from_episode_cases(domain, case_ids):
     """From a list of case_ids, return all the active episodes and associate person case
     """
     case_accessor = CaseAccessors(domain)
