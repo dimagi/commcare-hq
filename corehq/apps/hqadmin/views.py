@@ -513,7 +513,12 @@ class AdminRestoreView(TemplateView):
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
             num_cases = len(cases)
-            case_type_counts = dict(Counter(case.getchildren()[0].getchildren()[0].text for case in cases))
+            case_type_counts = dict(Counter(
+                case.find(
+                    '{http://commcarehq.org/case/transaction/v2}create/'
+                    '{http://commcarehq.org/case/transaction/v2}case_type'
+                ).text for case in cases
+            ))
             locations = xml_payload.findall(
                 "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
             )
