@@ -177,7 +177,6 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
         top_agg = innermost_agg
         # go through aggregations in reverse order so that they are nested properly
-        # todo: Refactor NestedTermAggregationsHelper to support this use case
         for agg_column in self.aggregation_columns[:-1][::-1]:
             top_agg = TermsAggregation(agg_column, agg_column, size=max_size).aggregation(top_agg)
 
