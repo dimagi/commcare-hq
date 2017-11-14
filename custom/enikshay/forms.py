@@ -10,7 +10,6 @@ class ReconciliationTaskForm(forms.Form):
                        'investigations_reconciliation',
                        'multiple_open_referrals_reconciliation'
                        ]
-    task_choices = None
     email = forms.EmailField(label='Your email')
     dry_run = forms.BooleanField(label='Dry run', required=False)
     task = forms.ChoiceField(label='Task', choices=(
