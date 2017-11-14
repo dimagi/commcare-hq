@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from django.db import connections
-from django.db.models import UUIDField
+from django.db.models import UUIDField, CharField, ForeignKey
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.util import get_all_sharded_models
 
@@ -119,12 +119,14 @@ def _get_counts_by_shard_query(model):
             total_shard_count=partition_config.num_shards - 1,
             id_field=model.partition_attr,
         )
-    else:
+    elif _is_a_string_field(field_type):
         # todo: are there any other types we need to worry about?
         shard_id_function = "hash_string({id_field}, 'siphash24') & {total_shard_count}".format(
             total_shard_count=partition_config.num_shards - 1,
             id_field=model.partition_attr,
         )
+    else:
+        raise Exception('Tried to shard based on an unexpected field type: {}'.format(type(field_type)))
     return """
         select {shard_id_function} as shard_id, count(*)
         from {table_name}
@@ -132,4 +134,11 @@ def _get_counts_by_shard_query(model):
     """.format(
         shard_id_function=shard_id_function,
         table_name=model._meta.db_table,
+    )
+
+
+def _is_a_string_field(field_type):
+    return (
+        isinstance(field_type, CharField)
+        or (isinstance(field_type, ForeignKey) and isinstance(field_type.target_field, CharField))
     )
