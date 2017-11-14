@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
@@ -211,6 +212,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
+    search_help_inline = mark_safe(ugettext_lazy(
+        'To quick search for a location, write your query as "parent"/descendant. '
+        'For more info, see the '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
+        'target="_blank">Location Search</a> help page.'
+    ))
 
     @property
     @memoized
@@ -312,6 +319,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         context = super(ExpandedMobileWorkerFilter, self).filter_context
         url = reverse(self.options_url, args=[self.domain])
         context.update({'endpoint': url})
+        if self.request.project.uses_locations:
+            context.update({'search_help_inline': self.search_help_inline})
         return context
 
     @classmethod

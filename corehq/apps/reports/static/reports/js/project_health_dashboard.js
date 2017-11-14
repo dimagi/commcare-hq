@@ -143,11 +143,13 @@ hqDefine("reports/js/project_health_dashboard", function() {
         });
     }
 
-    $(function() {
-        var six_months_reports = hqImport("hqwebapp/js/initial_page_data").get("six_months_reports");
-        setupCharts(six_months_reports);
-        setupPopovers();
-        setupLineChart(six_months_reports);
-        setupDataTables();
+    $(document).ajaxSuccess(function(event, xhr, settings) {
+        if (settings.url.match(/reports\/async\/project_health/)) {
+            var sixMonthsReports = $("#six-months-reports").data("value");
+            setupCharts(sixMonthsReports);
+            setupPopovers();
+            setupLineChart(sixMonthsReports);
+            setupDataTables();
+        }
     });
 });

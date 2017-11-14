@@ -121,8 +121,8 @@ class ConcatenateStrings(JsonObject):
     def __call__(self, item, context=None):
         return self.separator.join(
             [
-                unicode(expression(item, context)) for expression in self._expression_fns
-                if expression(item, context) is not None
+                six.text_type(expression(item, context)) for expression in self._expression_fns
+                if expression(item, context)
             ]
         )
 

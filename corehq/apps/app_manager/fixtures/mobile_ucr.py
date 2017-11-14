@@ -39,20 +39,7 @@ def _should_sync(restore_state):
     if not last_sync_log or restore_state.overwrite_cache:
         return True
 
-    sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
-    if sync_interval is None and restore_state.params.app:
-        app = restore_state.params.app
-        if restore_state.params.app.copy_of:
-            # get sync interval from latest app version so that we don't have to deploy a new version
-            # to make changes to the sync interval
-            try:
-                app = get_brief_app(restore_state.domain, restore_state.params.app.copy_of)
-            except NoResultFound:
-                pass
-        sync_interval = app.mobile_ucr_sync_interval
-    if sync_interval is None:
-        sync_interval = restore_state.project.default_mobile_ucr_sync_interval
-
+    sync_interval = restore_state.project.default_mobile_ucr_sync_interval
     sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
     return (
         not last_sync_log or
@@ -142,7 +129,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports:
+        if not self.uses_reports(restore_state):
             return []
 
         restore_user = restore_state.restore_user
@@ -190,7 +177,6 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             report_config.report_id, domain
         )
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
@@ -267,7 +253,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports:
+        if not self.uses_reports(restore_state):
             return []
 
         restore_user = restore_state.restore_user
@@ -364,7 +350,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))

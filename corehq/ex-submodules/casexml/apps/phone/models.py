@@ -19,6 +19,7 @@ from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
 import logging
+import six
 
 
 def _get_logger():
@@ -115,9 +116,6 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
-    def get_mobile_ucr_sync_interval(self):
-        return None
-
     @memoized
     def get_locations_to_sync(self):
         from corehq.apps.locations.fixtures import get_location_fixture_queryset
@@ -208,9 +206,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureType
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
-
-    def get_mobile_ucr_sync_interval(self):
-        return self._couch_user.mobile_ucr_sync_interval
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
@@ -381,7 +376,7 @@ class SyncLog(AbstractSyncLog):
     @classmethod
     def wrap(cls, data):
         # last_seq used to be int, but is now string for cloudant compatibility
-        if isinstance(data.get('last_seq'), (int, long)):
+        if isinstance(data.get('last_seq'), six.integer_types):
             data['last_seq'] = unicode(data['last_seq'])
         return super(SyncLog, cls).wrap(data)
 

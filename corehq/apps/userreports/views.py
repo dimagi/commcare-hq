@@ -98,7 +98,6 @@ from corehq.apps.userreports.tasks import (
     delete_data_source_task,
     resume_building_indicators,
     rebuild_indicators_in_place,
-    recalculate_indicators,
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -1071,18 +1070,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
-            'can_rebuild': self.can_rebuild,
             'used_by_reports': self.get_reports(),
         }
-
-    @property
-    def can_rebuild(self):
-        # Don't allow rebuilds if there have been more than 1 million forms or cases
-        domain = DomainES().in_domains(self.domain).run().hits[0]
-        doc_type = self.config.referenced_doc_type
-        if doc_type == 'XFormInstance':
-            return domain.get('cp_n_forms', 0) < 1000000
-        return True
 
     @property
     def page_url(self):
@@ -1283,27 +1272,6 @@ def build_data_source_in_place(request, domain, config_id):
     )
 
     rebuild_indicators_in_place.delay(config_id, request.user.username)
-    return HttpResponseRedirect(reverse(
-        EditDataSourceView.urlname, args=[domain, config._id]
-    ))
-
-
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
-def recalculate_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    if config.is_deactivated:
-        config.is_deactivated = False
-        config.save()
-
-    messages.success(
-        request,
-        _('Table "{}" is now being recalculated. New data should start showing up soon').format(
-            config.display_name
-        )
-    )
-
-    recalculate_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

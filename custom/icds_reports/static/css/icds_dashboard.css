@@ -173,6 +173,13 @@ nvd3 > svg {
     color: #0a6aa1;
 }
 
+.breadcrump-element-with-pointer {
+    font-weight: bold;
+    font-size: 18px;
+    color: #0a6aa1;
+    cursor: pointer;
+}
+
 .less-padding {
     padding: 6px 2px;
 }
@@ -669,18 +676,27 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-		position: relative;
-		top: 20%;
-		left: 50%;
-		width: 100%;
-		height: 40px;
-		margin-left: -50%;
-		margin-top: -25px;
-		padding-top: 20px;
-		text-align: center;
-		font-size: 1.2em;
+    position: relative;
+    top: 20%;
+    left: 50%;
+    width: 100%;
+    height: 40px;
+    margin-left: -50%;
+    margin-top: -25px;
+    padding-top: 20px;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+#beneficiariesTable {
+    width: 100%;
 }
 
 .tick line {
     stroke-opacity: .1 !important;
+}
+
+.chart-dot {
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
 }

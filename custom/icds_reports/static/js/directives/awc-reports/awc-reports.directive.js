@@ -1707,7 +1707,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.filters = ['gender', 'age'];
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
-        .withOption('scrollY', '300px')
         .withOption('scrollX', '100%')
         .withOption('scrollCollapse', true)
         .withOption('ajax', {
@@ -1730,9 +1729,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth),
         DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge),
         DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate),
-        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight for Age Status').renderWith(renderWeightForAgeStatus),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight for Height Status').renderWith(renderWeightForHeightStatus),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height for Age status').renderWith(renderHeightForAgeStatus),
+        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status').renderWith(renderWeightForAgeStatus),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status').renderWith(renderWeightForHeightStatus),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status').renderWith(renderHeightForAgeStatus),
         DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended),
     ];
 
@@ -1741,7 +1740,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderPersonName(data, type, full) {
-        return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)">' + full.person_name || 'Data not Entered' + '</span>';
+        return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(\''
+            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
     }
 
     function renderDateOfBirth(data, type, full) {
@@ -1757,21 +1757,24 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderWeightForAgeStatus(data, type, full) {
-        return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'weight\')" popover-placement="right"  popover-trigger="\'mouseenter\'">'
-            + full.current_month_nutrition_status.value
-            + '</span>';
+        return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'weight\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_nutrition_status.value + '</span>';
     }
 
     function renderHeightForAgeStatus(data, type, full) {
-        return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
-            + full.current_month_stunting.value
-            + '</span>';
+        return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_stunting.value + '</span>';
     }
 
     function renderWeightForHeightStatus(data, type, full) {
-        return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row, \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
-            + full.current_month_wasting.value
-            + '</span>';
+        return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_wasting.value + '</span>';
     }
 
     function renderPseDaysAttended(data, type, full) {
@@ -1844,17 +1847,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.getDataForStep(vm.step);
     });
 
-    vm.getPopoverContent = function (data, type) {
+    vm.getPopoverContent = function (recorded_weight, recorded_height, age_in_months, type) {
         var html = '';
 
         var recordedWeight = 'Data not Entered';
         var recordedHeight = 'Data not Entered';
         var age = 'Data not Entered';
 
-        if (data) {
-            recordedWeight = d3.format(".2f")(data.recorded_weight) + ' kg';
-            recordedHeight = d3.format(".2f")(data.recorded_height) + ' cm';
-            age = data.age_in_months + ' months';
+        if (recorded_weight) {
+            recordedWeight = d3.format(".2f")(recorded_weight) + ' kg';
+        }
+        if (recorded_height) {
+            recordedHeight = d3.format(".2f")(recorded_height) + ' cm';
+        }
+        if (age_in_months) {
+            age = age_in_months + ' months';
         }
 
         if (type === 'weight' || type === 'both') {
@@ -2047,10 +2054,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    } else {
+                        html = "<p>Height: <strong>Data Not Recorded</strong></p>";
+                    }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
+                });
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2090,10 +2105,19 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    } else {
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                    }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
+                });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2116,6 +2140,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             duration: 100,
             useInteractiveGuideline: true,
             xDomain: [45,120],
+            forceY: [0],
             xAxis: {
                 axisLabel: 'Height (Cm)',
                 showMaxMin: true,
@@ -2133,9 +2158,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    } else {
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                    }
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
                     return html;
+                });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },

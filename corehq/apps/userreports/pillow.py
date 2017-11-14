@@ -255,7 +255,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                     table.delete(doc)
 
             if async_tables:
-                AsyncIndicator.update_indicators(change, async_tables)
+                AsyncIndicator.update_from_kafka_change(change, async_tables)
 
         self.domain_timing_context.update(**{
             domain: timer.duration

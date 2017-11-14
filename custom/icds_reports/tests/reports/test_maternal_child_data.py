@@ -22,7 +22,7 @@ class TestMaternalChildData(TestCase):
                         {
                             "redirect": "underweight_children",
                             "color": "red",
-                            "all": 989,
+                            "all": 939,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of children between 0-5 years enrolled for ICDS services"
@@ -30,14 +30,14 @@ class TestMaternalChildData(TestCase):
                                          " of the WHO Child Growth Standards median. "
                                          "Children who are moderately or severely underweight"
                                          " have a higher risk of mortality.",
-                            "percent": 3.336703741152685,
+                            "percent": 2.6624068157614627,
                             "value": 196,
                             "label": "Underweight (Weight-for-Age)"
                         },
                         {
                             "redirect": "wasting",
                             "color": "red",
-                            "all": 951,
+                            "all": 939,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of children (6-60 months) with weight-for-height below"
@@ -45,23 +45,23 @@ class TestMaternalChildData(TestCase):
                                          "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of"
                                          " acute undernutrition usually as a consequence of insufficient "
                                          "food intake or a high incidence of infectious diseases.",
-                            "percent": 243.84858044164045,
+                            "percent": 242.20802271920482,
                             "value": 10,
                             "label": "Wasting (Weight-for-Height)"
                         }
                     ],
                     [
                         {
-                            "redirect": "stunning",
+                            "redirect": "stunting",
                             "color": "red",
-                            "all": 951,
+                            "all": 939,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of children (6-60 months) with height-for-age below -2Z"
                                          " standard deviations of the WHO Child Growth Standards median. "
                                          "Stunting is a sign of chronic undernutrition and has "
                                          "long lasting harmful consequences on the growth of a child",
-                            "percent": 123.50157728706625,
+                            "percent": 122.43521476748312,
                             "value": 26,
                             "label": "Stunting (Height-for-Age)"
                         },

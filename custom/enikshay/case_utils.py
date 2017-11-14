@@ -58,21 +58,6 @@ def get_all_parents_of_case(domain, case_id):
     ]
 
 
-def get_parent_of_case(domain, case_id, parent_case_type):
-    parent_cases = get_all_parents_of_case(domain, case_id)
-    case_type_open_parent_cases = [
-        parent_case for parent_case in parent_cases
-        if not parent_case.closed and parent_case.type == parent_case_type
-    ]
-
-    if not case_type_open_parent_cases:
-        raise ENikshayCaseNotFound(
-            "Couldn't find any open {} cases for id: {}".format(parent_case_type, case_id)
-        )
-
-    return case_type_open_parent_cases[0]
-
-
 def get_first_parent_of_case(domain, case_id, parent_case_type):
     parent_cases = get_all_parents_of_case(domain, case_id)
     case_type_parent_cases = [
@@ -285,7 +270,7 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     Assumes the following case structure:
     Episode <--ext-- Adherence
     """
-    return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
+    return get_first_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
 @hqnottest
@@ -590,7 +575,7 @@ def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
 
 
 def get_prescription_from_voucher(domain, voucher_id):
-    return get_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
+    return get_first_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
 
 
 def get_all_episode_ids(domain):

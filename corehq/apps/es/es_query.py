@@ -120,6 +120,7 @@ from . import aggregations
 from . import filters
 from . import queries
 from .utils import values_list, flatten_field_dict
+import six
 
 
 class ESQuery(object):
@@ -207,7 +208,7 @@ class ESQuery(object):
         raise AttributeError("There is no builtin filter named %s" % attr)
 
     def __getitem__(self, sliced_or_int):
-        if isinstance(sliced_or_int, (int, long)):
+        if isinstance(sliced_or_int, six.integer_types):
             start = sliced_or_int
             size = 1
         else:

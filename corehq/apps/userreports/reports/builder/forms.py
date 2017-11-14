@@ -668,6 +668,7 @@ class DataSourceForm(forms.Form):
                 StrictButton(
                     _('Next'),
                     type="submit",
+                    css_id='js-next-data-source',
                     css_class="btn-primary",
                 )
             ),
@@ -1342,19 +1343,18 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
             calculation=COUNT_PER_CHOICE
         ))
-        for prop in self.data_source_properties.values():
-            questions_found = 0
-            if prop.get_type() == PROPERTY_TYPE_QUESTION:
-                questions_found += 1
-                cols.append(ColumnViewModel(
-                    display_text=prop.get_text(),
-                    exists_in_current_version=True,
-                    property=prop.get_id(),
-                    data_source_field=prop.get_id(),
-                    calculation=COUNT_PER_CHOICE,
-                ))
-                if questions_found == 4:
-                    break
+        questions = [p for p in self.data_source_properties.values()
+                     if p.get_type() == PROPERTY_TYPE_QUESTION]
+        if len(questions) > 9:
+            questions = questions[:9]
+        for q in questions:
+            cols.append(ColumnViewModel(
+                display_text=q.get_text(),
+                exists_in_current_version=True,
+                property=q.get_id(),
+                data_source_field=q.get_id(),
+                calculation=COUNT_PER_CHOICE,
+            ))
         return cols
 
 

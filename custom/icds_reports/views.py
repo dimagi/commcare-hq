@@ -71,8 +71,8 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
     get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map
 from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_chart,\
     get_prevalence_of_severe_data_map, get_prevalence_of_severe_sector_data
-from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunning_data_chart, \
-    get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_sector_data
+from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunting_data_chart, \
+    get_prevalence_of_stunting_data_map, get_prevalence_of_stunting_sector_data
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_chart,\
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
@@ -730,7 +730,7 @@ class PrevalenceOfSevereView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfStunningView(View):
+class PrevalenceOfStuntingView(View):
 
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
@@ -762,11 +762,11 @@ class PrevalenceOfStunningView(View):
         data = []
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunning_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_prevalence_of_stunning_data_map(domain, config, loc_level, include_test)
+                data = get_prevalence_of_stunting_data_map(domain, config, loc_level, include_test)
         elif step == "chart":
-            data = get_prevalence_of_stunning_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,

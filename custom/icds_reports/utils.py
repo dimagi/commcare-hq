@@ -19,6 +19,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
+from django.db.models import Case, When, Q, F, IntegerField
 
 
 OPERATORS = {
@@ -302,16 +303,19 @@ def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
 
 
-def get_status(value, second_part='', normal_value=''):
+def get_status(value, second_part='', normal_value='', exportable=False):
+    status = ''
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-        return {'value': DATA_NOT_ENTERED, 'color': 'black'}
+        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
-        return {'value': 'Severely ' + second_part, 'color': 'red'}
+        status = {'value': 'Severely ' + second_part, 'color': 'red'}
     elif value in ['moderately_underweight', 'moderate']:
-        return {'value': 'Moderately ' + second_part, 'color': 'black'}
+        status = {'value': 'Moderately ' + second_part, 'color': 'black'}
     elif value in ['normal']:
-        return {'value': normal_value, 'color': 'black'}
-    return value
+        status = {'value': normal_value, 'color': 'black'}
+    else:
+        return ''
+    return status if not exportable else status['value']
 
 
 def current_age(dob, selected_date):
@@ -322,3 +326,11 @@ def current_age(dob, selected_date):
     if age.months:
         age_format += "%s month%s " % (age.months, '' if age.months == 1 else 's')
     return age_format
+
+
+def exclude_records_by_age_for_column(exclude_config, column):
+    return Case(
+        When(~Q(**exclude_config), then=F(column)),
+        default=0,
+        output_field=IntegerField()
+    )

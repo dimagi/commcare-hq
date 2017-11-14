@@ -23,15 +23,19 @@ GREY = '#9D9D9D'
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
+    level = config['aggregation_level']
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
-        level = filters['aggregation_level']
         queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
             '%s_name' % loc_level
         ).annotate(
+            states=Sum('num_launched_states') if level <= 1 else Max('num_launched_states'),
+            districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
+            blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
+            supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
         )
 
@@ -43,18 +47,49 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
         awcs = row['awcs']
+        supervisors = row['supervisors']
+        blocks = row['blocks']
+        districts = row['districts']
+        states = row['states']
         row_values = {
             'awcs': awcs,
+            'supervisors': supervisors,
+            'blocks': blocks,
+            'districts': districts,
+            'states': states,
             'fillKey': 'Launched' if awcs > 0 else 'Not launched',
         }
         map_data.update({name: row_values})
 
+    if level == 1:
+        prop = 'states'
+    elif level == 2:
+        prop = 'districts'
+    elif level == 3:
+        prop = 'blocks'
+    elif level == 4:
+        prop = 'supervisors'
+    else:
+        prop = 'awcs'
+
     total_awcs = sum(map(lambda x: (x['awcs'] or 0), map_data.values()))
+    total = sum(map(lambda x: (x[prop] or 0), map_data.values()))
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
     fills.update({'Not launched': GREY})
     fills.update({'defaultFill': GREY})
+
+    info = _(
+        "Total AWCs that have launched ICDS CAS <br />" +
+        "Number of AWCs launched: %d" % total_awcs
+    )
+    if level != 5:
+        info = _(
+            "Total AWCs that have launched ICDS CAS <br />" +
+            "Number of AWCs launched: %d <br />" % total_awcs +
+            "Number of %s launched: %d" % (prop.title(), total)
+        )
 
     return [
         {
@@ -62,10 +97,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "info": _((
-                    "Total AWCs that have launched ICDS CAS <br />" +
-                    "Number of AWCs launched: %d" % total_awcs
-                ))
+                "info": info
             },
             "data": map_data,
         }
@@ -84,6 +116,10 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     ).values(
         *group_by
     ).annotate(
+        states=Sum('num_launched_states') if level <= 1 else Max('num_launched_states'),
+        districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
+        blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
+        supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
         awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
     ).order_by('%s_name' % loc_level)
 
@@ -97,6 +133,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     tooltips_data = defaultdict(lambda: {
         'districts': 0,
         'blocks': 0,
+        'states': 0,
         'supervisors': 0,
         'awcs': 0
     })
@@ -107,10 +144,18 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     for row in data:
         name = row['%s_name' % loc_level]
         awcs = row['awcs']
+        supervisors = row['supervisors']
+        blocks = row['blocks']
+        districts = row['districts']
+        states = row['states']
         result_set.add(name)
 
         row_values = {
-            'awcs': awcs
+            'awcs': awcs,
+            'supervisors': supervisors,
+            'blocks': blocks,
+            'districts': districts,
+            'states': states,
         }
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += (value or 0)
@@ -124,12 +169,35 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
+    if level == 1:
+        prop = 'states'
+    elif level == 2:
+        prop = 'districts'
+    elif level == 3:
+        prop = 'blocks'
+    elif level == 4:
+        prop = 'supervisors'
+    else:
+        prop = 'awcs'
+
+    total_awcs = sum(map(lambda x: (x['awcs'] or 0), tooltips_data.values()))
+    total = sum(map(lambda x: (x[prop] or 0), tooltips_data.values()))
+
+    info = _(
+        "Total AWCs that have launched ICDS CAS <br />" +
+        "Number of AWCs launched: %d" % total_awcs
+    )
+    if level != 5:
+        info = _(
+            "Total AWCs that have launched ICDS CAS <br />" +
+            "Number of AWCs launched: %d <br />" % total_awcs +
+            "Number of %s launched: %d" % (prop.title(), total)
+        )
+
     return {
         "tooltips_data": dict(tooltips_data),
         "format": "number",
-        "info": _((
-            "Number of AWCs launched"
-        )),
+        "info": info,
         "chart_data": [
             {
                 "values": chart_data['blue'],
@@ -150,12 +218,13 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
     config['month__range'] = (three_before, month)
     del config['month']
 
+    level = config['aggregation_level']
     chart_data = AggAwcMonthly.objects.filter(
         **config
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        awcs=Sum('num_launched_awcs'),
+        awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
     ).order_by('month')
 
     if not show_test:
@@ -177,7 +246,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
         awcs = (row['awcs'] or 0)
         location = row['%s_name' % loc_level]
 
-        if date.month == (month - relativedelta(months=1)).month:
+        if date.month == month.month:
             if location in best_worst:
                 best_worst[location].append(awcs)
             else:

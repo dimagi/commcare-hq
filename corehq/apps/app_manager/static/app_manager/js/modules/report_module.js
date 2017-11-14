@@ -263,6 +263,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
         self.supportSyncDelay = options.supportSyncDelay;
+        self.globalSyncDelay = options.globalSyncDelay;
         self.staticFilterData = options.staticFilterData;
         self.languages = options.languages;
         self.lang = options.lang;

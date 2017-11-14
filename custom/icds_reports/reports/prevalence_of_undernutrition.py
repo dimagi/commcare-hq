@@ -39,6 +39,8 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+        if 'age_tranche' not in config:
+            queryset = queryset.exclude(age_tranche=72)
         return queryset
 
     map_data = {}
@@ -125,6 +127,9 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
+
+    if 'age_tranche' not in config:
+        chart_data = chart_data.exclude(age_tranche=72)
 
     data = {
         'peach': OrderedDict(),
@@ -234,6 +239,9 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
 
     if not show_test:
         data = apply_exclude(domain, data)
+
+    if 'age_tranche' not in config:
+        data = data.exclude(age_tranche=72)
 
     chart_data = {
         'blue': []

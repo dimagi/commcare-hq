@@ -1,0 +1,12 @@
+{% load hq_shared_tags %}
+{% initial_analytics_data 'google.apiId' ANALYTICS_IDS.GOOGLE_ANALYTICS_API_ID %}
+{% if request.couch_user %}
+  {% initial_analytics_data 'google.userId' request.couch_user.userID %}
+  {% initial_analytics_data 'google.userIsDimagi' request.couch_user.is_dimagi %}
+  {% initial_analytics_data 'google.userIsCommCare' request.couch_user.is_commcare_user %}
+  {% initial_analytics_data 'google.userHasBuiltApp' request.couch_user.has_built_app %}
+  {% initial_analytics_data 'google.userDaysSinceCreated' request.couch_user.days_since_created %}
+{% endif %}
+{% if domain %}
+  {% initial_analytics_data 'google.domain' domain|escapejs %}
+{% endif %}

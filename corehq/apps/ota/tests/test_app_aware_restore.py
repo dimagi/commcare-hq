@@ -135,10 +135,10 @@ class AppAwareSyncTests(TestCase):
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
             fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app3)
-        self.assertEqual(len(fixtures), 1)
+        self.assertEqual(len(fixtures), 0)
 
     def test_user_restore(self):
-        from casexml.apps.phone.tests.utils import MockDevice
+        from casexml.apps.phone.utils import MockDevice
         from casexml.apps.case.xml import V3
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 

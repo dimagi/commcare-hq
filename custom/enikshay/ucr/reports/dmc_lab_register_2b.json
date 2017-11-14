@@ -7,7 +7,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "test_2b_v3",
+    "data_source_table": "test_2b_v4",
     "report_id": "dmc_lab_register_2b",
     "config": {
         "description": "",
@@ -74,15 +74,6 @@
                 "field": "is_microscopy",
                 "type": "pre",
                 "slug": "is_microscopy"
-            },
-            {
-                "pre_value": "pmdt_excel",
-                "datatype": "string",
-                "pre_operator": "distinct from",
-                "display": null,
-                "field": "migration_type",
-                "type": "pre",
-                "slug": "migration_type"
             }
         ],
         "columns": [
@@ -221,12 +212,12 @@
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
+                        "tribal_population": "Tribal population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "health_care_worker": "Health care worker",
-                        "tribal_population": "Tribal population",
                         "slum_dweller": "Slum dweller",
+                        "health_care_worker": "Health care worker",
                         "prison_inmate": "Prison inmate"
                     }
                 },
@@ -521,7 +512,7 @@
                 "field": "treatment_initiation_details",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Treatment Initiation details/Referral for treatment"
+                "display": "Treatment initiation details (TB No. & TU details) / Referral for Treatment"
             }
         ]
     }

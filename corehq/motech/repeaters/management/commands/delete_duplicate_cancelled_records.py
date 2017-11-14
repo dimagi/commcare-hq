@@ -10,6 +10,7 @@ from corehq.util.couch import IterDB
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE, RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import RepeatRecord, Repeater
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -66,7 +67,7 @@ class Command(BaseCommand):
                        redundant=redundant_payloads,
                        unique=unique_payloads))
         print "Delete {} duplicate records?".format(total_records - unique_payloads)
-        if not raw_input("(y/n)") == 'y':
+        if not input("(y/n)") == 'y':
             print "Aborting"
             return
 

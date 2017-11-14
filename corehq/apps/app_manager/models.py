@@ -23,6 +23,7 @@ You might also run in to remote applications and applications copied to be
 published on the exchange, but those are quite infrequent.
 """
 from __future__ import absolute_import
+
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -50,6 +51,7 @@ from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
+
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -69,7 +71,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
@@ -85,7 +87,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
 )
 from corehq.apps.builds import get_default_build_spec
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -115,7 +116,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     is_usercase_in_use,
     actions_use_usercase,
-    update_unique_ids,
+    update_form_unique_ids,
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
@@ -123,11 +124,11 @@ from corehq.apps.app_manager.util import (
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
     LatestAppInfo,
-)
+    update_report_module_ids)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import (
+from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
     IncompatibleFormTypeException,
@@ -4058,11 +4059,11 @@ class ReportModule(ModuleBase):
         return module
 
     def get_details(self):
-        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_details()
 
     def get_custom_entries(self):
-        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, supports_module_filter=False):
@@ -4401,7 +4402,7 @@ class VersionedDoc(LazyBlobDoc):
 
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
-            increment_version = not self.copy_of
+            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -4500,8 +4501,8 @@ class VersionedDoc(LazyBlobDoc):
                 attachments[name] = self.lazy_fetch_attachment(name)
         return attachments
 
-    def save_attachments(self, attachments):
-        with self.atomic_blobs():
+    def save_attachments(self, attachments, save=None):
+        with self.atomic_blobs(save=save):
             for name, attachment in attachments.items():
                 if re.match(ATTACHMENT_REGEX, name):
                     self.put_attachment(attachment, name)
@@ -5157,9 +5158,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         LatestAppInfo(self.master_id, self.domain).clear_caches()
 
-        user = getattr(view_utils.get_request(), 'couch_user', None)
+        request = view_utils.get_request()
+        user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
+        send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 
@@ -5284,8 +5287,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
-    mobile_ucr_sync_interval = IntegerProperty()
-
     add_ons = DictProperty()
 
     def has_modules(self):
@@ -5578,7 +5579,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @memoized
     def enable_update_prompts(self):
         return (
-            (self.supports_update_prompts or settings.SERVER_ENVIRONMENT == 'icds') and
+            # custom for ICDS until ICDS users are > 2.38
+            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
             toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
@@ -5827,7 +5829,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
 
     def scrub_source(self, source):
-        return update_unique_ids(source)
+        source = update_form_unique_ids(source)
+        return update_report_module_ids(source)
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
@@ -6266,9 +6269,7 @@ class LinkedApplication(Application):
     remote_url_base = StringProperty()
     remote_auth = SchemaProperty(RemoteLinkedAppAuth)
 
-    @property
-    def _meta_fields(self):
-        return super(LinkedApplication, self)._meta_fields + ['remote_auth']
+    _meta_fields = Application._meta_fields + ['remote_auth']
 
     @property
     def remote_app_details(self):

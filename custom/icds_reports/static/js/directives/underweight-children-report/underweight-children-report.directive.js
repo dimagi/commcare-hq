@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, genders, ages) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -10,6 +10,21 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+
+    var ageIndex = ages.findIndex(function (x) {
+        return x.id === vm.filtersData.age;
+    });
+    if (ageIndex !== -1) {
+        vm.ageLabel = ages[ageIndex].name;
+    }
+
+    var genderIndex = genders.findIndex(function (x) {
+        return x.id === vm.filtersData.gender;
+    });
+    if (genderIndex !== -1) {
+        vm.genderLabel = genders[genderIndex].name;
+    }
+
     vm.label = "Prevalence of Underweight (Weight-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
@@ -59,7 +74,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>% Underweight: <strong>' + underweight + '</strong></div>' +
+            '<div>% Unweighed: <strong>' + underweight + '</strong></div>' +
             '<div>% Severely Underweight: <strong>' + severely_underweight + '</strong></div>' +
             '<div>% Moderately Underweight: <strong>' + moderately_underweight +'</strong></div>' +
             '<div>% Normal: <strong>' + normal + '</strong></div>';
@@ -151,6 +166,18 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         }
     };
 
+    vm.resetAdditionalFilter = function() {
+        vm.filtersData.gender = '';
+        vm.filtersData.age = '';
+        $location.search('gender', null);
+        $location.search('age', null);
+    };
+
+    vm.resetOnlyAgeAdditionalFilter = function() {
+        vm.filtersData.age = '';
+        $location.search('age', null);
+    };
+
     vm.chartOptions = {
         chart: {
             type: 'lineChart',
@@ -204,7 +231,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     tooltip_content += "<p>% children normal: <strong>" + d3.format(".2%")(normal) + "</strong></p>";
                     tooltip_content += "<p>% children moderately underweight: <strong>" + d3.format(".2%")(moderately) + "</strong></p>";
                     tooltip_content += "<p>% children severely underweight: <strong>" + d3.format(".2%")(severely) + "</strong></p>";
-                    tooltip_content += "<p>% underweight: <strong>" + d3.format(".2%")(1 - (normal + moderately + severely)) + "</strong></p>";
+                    tooltip_content += "<p>% unweighed: <strong>" + d3.format(".2%")(1 - (normal + moderately + severely)) + "</strong></p>";
 
                     return tooltip_content;
                 });
@@ -228,7 +255,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {

@@ -18,6 +18,7 @@ from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
@@ -249,6 +250,7 @@ def _get_report_module_context(app, module):
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
             'supportSyncDelay': app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_1,
+            'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
         },
         'static_data_options': {
             'filterChoices': filter_choices,

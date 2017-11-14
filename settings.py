@@ -465,8 +465,6 @@ CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
 # These are non-standard setting names that are used in localsettings
 # The standard variables are then set to these variables after localsettings
 # Todo: Change to use standard settings variables
-# Todo: Will require changing salt pillar and localsettings template
-# Todo: or more likely in ansible once that's a thing
 EMAIL_LOGIN = "user@domain.com"
 EMAIL_PASSWORD = "changeme"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
@@ -479,24 +477,24 @@ BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
 # the physical server emailing - differentiate if needed
-SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
-DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
-SUPPORT_EMAIL = "support@dimagi.com"
-PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
-CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
-ACCOUNTS_EMAIL = 'accounts@dimagi.com'
-DATA_EMAIL = 'datatree@dimagi.com'
-SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
-INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
-BILLING_EMAIL = 'billing-comm@dimagi.com'
-INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
-MASTER_LIST_EMAIL = 'master-list@dimagi.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'sales' + '@' + 'dimagi.com'
-EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
-CONTACT_EMAIL = 'info@dimagi.com'
+SERVER_EMAIL = 'commcarehq-noreply@example.com'
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
+SUPPORT_EMAIL = "support@example.com"
+PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
+CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@example.com'
+ACCOUNTS_EMAIL = 'accounts@example.com'
+DATA_EMAIL = 'datatree@example.com'
+SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
+INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
+BILLING_EMAIL = 'billing-comm@example.com'
+INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+MASTER_LIST_EMAIL = 'master-list@example.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
+EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+CONTACT_EMAIL = 'info@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
-SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@dimagi.com'
-DAILY_DEPLOY_EMAIL = "tech-announce-daily@dimagi.com"
+SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
+DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -674,9 +672,6 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 # again.
 PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
 
-# Number of minutes a celery task will alot for itself (via lock timeout)
-PILLOW_RETRY_PROCESSING_LOCK_TIMEOUT = 5
-
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
 
@@ -800,8 +795,6 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
-
-LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
@@ -1968,6 +1961,7 @@ STATIC_DATA_SOURCES = [
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
