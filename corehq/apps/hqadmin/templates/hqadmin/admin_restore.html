@@ -47,6 +47,16 @@
                             </div>
                         {% endfor %}
                     </div>
+                    <div>
+                        Number of reports in this restore: <strong>{{num_reports}}</strong>
+                    </div>
+                    <div>
+                        {% for report_id, row_count in report_row_counts.items %}
+                            <div>
+                                &emsp;{{report_id}}: {{row_count}}
+                            </div>
+                        {% endfor %}
+                    </div>
 
                     <div>
                         <ul class="nav nav-tabs" role="tablist">
