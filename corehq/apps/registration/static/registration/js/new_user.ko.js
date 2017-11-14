@@ -37,6 +37,12 @@ hqDefine('registration/js/new_user.ko', function () {
 
     _private.submitSuccessAnalytics = function (data) {
         _kissmetrics.track.event("Account Creation was Successful");
+        if (_private.isAbPersona) {
+            _kissmetrics.track.event("Persona Field Filled Out", {
+                personaChoice: data.persona,
+                personaOther: data.persona_other,
+            });
+        }
         if (_private.isAbPhoneNumber) {
             _kissmetrics.track.event("Phone Number Field Filled Out");
         }
@@ -176,6 +182,19 @@ hqDefine('registration/js/new_user.ko', function () {
             }
         });
 
+        // For New User Persona Field A/B Test
+        self.personaChoice = ko.observable();
+        self.personaOther = ko.observable();
+        self.isPersonaChoiceOther = ko.computed(function () {
+            return self.personaChoice() === 'Other';
+        });
+        self.isPersonaChoiceChosen = ko.computed(function () {
+            return (!_.isEmpty(self.personaChoice()) && _private.isAbPersona) || !_private.isAbPersona;
+        });
+        self.isPersonaChoiceNeeded = ko.computed(function () {
+            return self.eulaConfirmed() && !self.isPersonaChoiceChosen();
+        });
+
         // ---------------------------------------------------------------------
         // Form Functionality
         // ---------------------------------------------------------------------
@@ -195,6 +214,8 @@ hqDefine('registration/js/new_user.ko', function () {
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
+                persona: self.personaChoice(),
+                persona_other: self.personaOther(),
             };
         };
 
@@ -221,6 +242,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.isStepTwoValid = ko.computed(function () {
             return self.projectName() !== undefined
                 && self.projectName.isValid()
+                && self.isPersonaChoiceChosen()
                 && self.eulaConfirmed();
         });
 
