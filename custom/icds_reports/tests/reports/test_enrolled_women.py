@@ -60,21 +60,21 @@ class TestEnrolledWomen(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st2",
-                        "value": 54
+                        "value": 85
                     },
                     {
                         "loc_name": "st1",
-                        "value": 50
+                        "value": 70
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st2",
-                        "value": 54
+                        "value": 85
                     },
                     {
                         "loc_name": "st1",
-                        "value": 50
+                        "value": 70
                     }
                 ],
                 "chart_data": [
@@ -110,11 +110,11 @@ class TestEnrolledWomen(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st2",
-                        "value": 54
+                        "value": 85
                     },
                     {
                         "loc_name": "st1",
-                        "value": 50
+                        "value": 70
                     }
                 ]
             }
