@@ -149,3 +149,14 @@ $.fn.koApplyBindings = function (context) {
     ko.applyBindings(context, this.get(0));
     this.removeClass('ko-template');
 };
+
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        // Don't pass csrftoken cross domain
+        // Ignore HTTP methods that do not require CSRF protection
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
+            $csrf_token = $("#csrfTokenContainer").val();
+            xhr.setRequestHeader("X-CSRFToken", $csrf_token);
+        }
+    },
+});
