@@ -208,7 +208,6 @@ class DateSpan(object):
         This is used for couch queries to get the adjusted date as a string
         that can be easily used in a couch view.
         """
-        # todo: should we get rid of this?
         return self.startdate_display
 
     @property
