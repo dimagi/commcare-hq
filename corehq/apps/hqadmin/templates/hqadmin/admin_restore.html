@@ -34,13 +34,13 @@
                         <div>
                             Number of cases by case type
                         </div>
-                    <div>
-                        <ul>
-                            {% for case_type, count in case_type_counts.items %}
-                                <li>{{case_type}}: {{count}}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                        <div>
+                            <ul>
+                                {% for case_type, count in case_type_counts.items %}
+                                    <li>{{case_type}}: {{count}}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     {% endif %}
                     <div>
                         Number of locations in this restore: <strong>{{num_locations}}</strong>
@@ -49,13 +49,13 @@
                         <div>
                             Number of locations by location type
                         </div>
-                    <div>
-                        <ul>
-                            {% for location_type, count in location_type_counts.items %}
-                                <li>{{location_type}}: {{count}}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                        <div>
+                            <ul>
+                                {% for location_type, count in location_type_counts.items %}
+                                    <li>{{location_type}}: {{count}}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     {% endif %}
                     <div>
                         Number of reports in this restore: <strong>{{num_reports}}</strong>
@@ -64,13 +64,13 @@
                         <div>
                             Number of rows by report
                         </div>
-                    <div>
-                        <ul>
-                            {% for report_id, row_count in report_row_counts.items %}
-                                <li>{{report_id}}: {{row_count}}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                        <div>
+                            <ul>
+                                {% for report_id, row_count in report_row_counts.items %}
+                                    <li>{{report_id}}: {{row_count}}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     {% endif %}
 
                     <div>
