@@ -1,113 +1,17 @@
 from __future__ import absolute_import
-import datetime
 import uuid
-from contextlib import contextmanager
 
-from couchdbkit import ResourceNotFound
-from django.test import SimpleTestCase, TestCase
-from mock import patch
-from corehq.util.test_utils import flag_enabled
+from django.test import TestCase
 
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseAttachment
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqcase.tasks import explode_cases, topological_sort_cases
-from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-
-
-TESTS = (
-    (
-        CommCareCase(
-            _id='case-abc123',
-            domain='foo',
-            type='my_case',
-            closed=False,
-            user_id='user-abc123',
-            modified_on=datetime.datetime(2011, 12, 20, 0, 11, 2),
-            owner_id='group-abc123',
-            name='Jessica',
-            version='2.0',
-            indices=[],
-            case_attachments={
-                'fruity_file': CommCareCaseAttachment(
-                    attachment_from=u'local',
-                    attachment_name=None,
-                    attachment_properties={'width': 240, 'height': 164},
-                    attachment_size=22731,
-                    attachment_src=u'./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg',
-                    doc_type=u'CommCareCaseAttachment',
-                    identifier=u'fruity_file',
-                    server_md5=None,
-                    server_mime=u'image/jpeg',
-                )
-            },
-
-            age='25',
-        ),
-        {u'fruity_file': u'./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'},
-        """
-        <case case_id="new-case-abc123" date_modified="2011-12-20T00:11:02.000000Z"
-                user_id="user-abc123"
-                xmlns="http://commcarehq.org/case/transaction/v2">
-            <create>
-                <case_type>my_case</case_type>
-                <case_name>Jessica</case_name>
-                <owner_id>group-abc123</owner_id>
-            </create>
-            <update>
-                <age>25</age>
-            </update>
-            <attachment>
-                <fruity_file from="local" src="./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg"/>
-            </attachment>
-        </case>
-        """
-    ),
-)
-
-
-@contextmanager
-def mock_fetch_case_attachment(case_id, attachments):
-
-    class MockCachedObject(object):
-
-        def __init__(self, attachment_file):
-            self.attachment_file = attachment_file
-
-        def get(self, **kwargs):
-            return None, open(self.attachment_file)
-
-    def get_cached_case_attachment(domain, _case_id, attachment_id):
-        if case_id == _case_id and attachment_id in attachments:
-            return MockCachedObject(attachments[attachment_id])
-        else:
-            raise ResourceNotFound()
-
-    with patch('corehq.apps.hqcase.utils.get_cached_case_attachment', get_cached_case_attachment):
-        yield
-
-
-class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
-    maxDiff = 1000000
-
-    @flag_enabled('MM_CASE_PROPERTIES')
-    def test_make_creating_casexml(self):
-        for input, files, output in TESTS:
-            with mock_fetch_case_attachment(input.case_id, files):
-                case_block, attachments = make_creating_casexml(
-                    'mock-domain', input, 'new-case-abc123')
-                self.assertXmlEqual(case_block, output)
-                self.assertDictEqual(
-                    {key: value.read() for key, value in attachments.items()},
-                    {value: open(value).read() for key, value in files.items()}
-                )
 
 
 class ExplodeCasesDbTest(TestCase):
