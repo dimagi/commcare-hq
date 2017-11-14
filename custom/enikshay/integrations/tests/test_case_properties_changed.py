@@ -32,7 +32,7 @@ class TestCasePropertiesChanged(TestCase):
             update={'property_2': 'updated'},
         )
         blocks = [caseblock1.as_string(), caseblock2.as_string()]
-        submit_case_blocks(blocks, self.domain)[1][0]
+        submit_case_blocks(blocks, self.domain)
 
     def test_case_properties_changed(self):
         case = CaseAccessors(self.domain).get_case(self.case_id)
