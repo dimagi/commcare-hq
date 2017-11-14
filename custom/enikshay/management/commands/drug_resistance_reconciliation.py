@@ -50,7 +50,7 @@ class Command(BaseCommand):
     def email_report(self):
         csvfile = open(self.result_file_name)
         email = EmailMessage(
-            subject="Occurrence and Episode Reconciliation Report",
+            subject="Drug Resistance Reconciliation Report",
             body="Please find attached report for a %s run finished at %s." %
                  ('dry' if self.dry_run else 'real', datetime.now()),
             to=self.recipient,

@@ -42,7 +42,7 @@ class Command(BaseCommand):
     def email_report(self):
         csvfile = open(self.result_file_name)
         email = EmailMessage(
-            subject="Occurrence and Episode Reconciliation Report",
+            subject="Multiple Open Referrals Reconciliation Report",
             body="Please find attached report for a %s run finished at %s." %
                  ('dry' if self.dry_run else 'real', datetime.now()),
             to=self.recipient,
@@ -62,7 +62,7 @@ class Command(BaseCommand):
         ]
 
     def setup_result_file(self):
-        file_name = "drug_resistance_reconciliation_report_{timestamp}.csv".format(
+        file_name = "multiple_open_referrals_reconciliation_report_{timestamp}.csv".format(
             timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
         )
         with open(file_name, 'w') as csvfile:

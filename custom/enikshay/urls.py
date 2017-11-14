@@ -1,6 +1,10 @@
 from django.conf.urls import include, url
 
-from custom.enikshay.views import EpisodeTaskDebugView, EpisodeTaskStatusView
+from custom.enikshay.views import (
+    EpisodeTaskDebugView,
+    EpisodeTaskStatusView,
+    ReconciliationTaskView,
+)
 from custom.enikshay.reports.views import LocationsView, duplicate_ids_report
 
 urlpatterns = [
@@ -16,4 +20,5 @@ urlpatterns = [
         {'case_type': 'voucher'}, name='enikshay_duplicate_voucher_ids'),
     url(r'^duplicate_ids/person/$', duplicate_ids_report,
         {'case_type': 'person'}, name='enikshay_duplicate_person_ids'),
+    url(r'^reconciliation_tasks/$', ReconciliationTaskView.as_view())
 ]
