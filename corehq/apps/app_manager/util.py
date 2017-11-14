@@ -399,7 +399,7 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_unique_ids(app_source, id_map=None):
+def update_form_unique_ids(app_source, id_map=None):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)
@@ -421,10 +421,6 @@ def update_unique_ids(app_source, id_map=None):
     if id_map is None:
         id_map = {}
     for m, module in enumerate(app_source['modules']):
-        if module['module_type'] == 'report':
-            for config in module['report_configs']:
-                config['uuid'] = uuid.uuid4().hex
-
         for f, form in enumerate(module['forms']):
             old_id = form['unique_id']
             new_id = change_form_unique_id(app_source['modules'][m]['forms'][f], id_map)
@@ -435,6 +431,15 @@ def update_unique_ids(app_source, id_map=None):
             if reference.value in id_changes:
                 jsonpath_update(reference, id_changes[reference.value])
 
+    return app_source
+
+
+def update_report_module_ids(app_source):
+    app_source = deepcopy(app_source)
+    for module in app_source['modules']:
+        if module['module_type'] == 'report':
+            for config in module['report_configs']:
+                config['uuid'] = uuid.uuid4().hex
     return app_source
 
 
