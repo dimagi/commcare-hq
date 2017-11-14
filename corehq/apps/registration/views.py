@@ -102,7 +102,19 @@ class NewUserNumberAbTestMixin__Disabled(object):
 NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
 
 
-class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
+class NewUserProfileFieldAbTestMixin(object):
+    @property
+    @memoized
+    def ab_persona_field(self):
+        return ab_tests.ABTest(ab_tests.NEW_USER_PERSONA_FIELD, self.request)
+
+    @property
+    def ab_show_persona(self):
+        return self.ab_persona_field.version == ab_tests.NEW_USER_PERSONA_OPTION_SHOW
+
+
+class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
+                              NewUserProfileFieldAbTestMixin, View):
     urlname = 'process_registration'
 
     def get(self, request, *args, **kwargs):
@@ -126,6 +138,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         reg_form = RegisterWebUserForm(
             data['data'],
             show_number=self.ab_show_number,
+            show_persona=self.ab_show_persona,
         )
         if reg_form.is_valid():
             self._create_new_account(reg_form)
@@ -164,7 +177,8 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         }
 
 
-class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
+class UserRegistrationView(NewUserNumberAbTestMixin,
+                           NewUserProfileFieldAbTestMixin, BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
@@ -181,6 +195,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         self.ab_show_number_update_response(response)
+        self.ab_persona_field.update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -208,12 +223,14 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             'reg_form': RegisterWebUserForm(
                 initial=prefills,
                 show_number=self.ab_show_number,
+                show_persona=self.ab_show_persona,
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'show_number': self.ab_show_number,
             'ab_show_number': self.ab_show_number_context,
+            'ab_persona_field': self.ab_persona_field.context,
         }
 
     @property
