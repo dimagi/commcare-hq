@@ -223,7 +223,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     search_help_inline = mark_safe(ugettext_lazy(
         'To quick search for a location, write your query as "parent"/descendant. '
         'For more info, see the '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Location" '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
         'target="_blank">Location Search</a> help page.'
     ))
 
