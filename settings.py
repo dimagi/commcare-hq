@@ -465,8 +465,6 @@ CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
 # These are non-standard setting names that are used in localsettings
 # The standard variables are then set to these variables after localsettings
 # Todo: Change to use standard settings variables
-# Todo: Will require changing salt pillar and localsettings template
-# Todo: or more likely in ansible once that's a thing
 EMAIL_LOGIN = "user@domain.com"
 EMAIL_PASSWORD = "changeme"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
