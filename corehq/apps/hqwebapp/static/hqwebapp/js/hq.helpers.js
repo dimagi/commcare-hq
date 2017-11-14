@@ -155,7 +155,7 @@ $.ajaxSetup({
         // Don't pass csrftoken cross domain
         // Ignore HTTP methods that do not require CSRF protection
         if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
-            $csrf_token = $("#csrfTokenContainer").val();
+            var $csrf_token = $("#csrfTokenContainer").val();
             xhr.setRequestHeader("X-CSRFToken", $csrf_token);
         }
     },
