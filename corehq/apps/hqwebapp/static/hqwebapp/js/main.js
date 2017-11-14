@@ -285,7 +285,7 @@ hqDefine("hqwebapp/js/main", function() {
             $modal.on("show show.bs.modal", function() {
                 $(this).find(".fetched-data").load($(this).data("url"));
             });
-            if ($modal.data("show")) {
+            if ($modal.data("showOnPageLoad")) {
                 $modal.modal('show');
             }
         });
