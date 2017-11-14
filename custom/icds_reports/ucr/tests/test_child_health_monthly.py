@@ -1371,7 +1371,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         )
         self._create_case(
             case_id=case_id_2,
-            dob=date(2015, 05, 12),
+            dob=date(2015, 0o5, 12),
             date_opened=datetime(2015, 5, 14),
             date_modified=datetime(2016, 3, 12),
         )
