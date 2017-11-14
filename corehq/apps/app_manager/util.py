@@ -399,7 +399,7 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
     return session_data
 
 
-def update_unique_ids(app_source, id_map=None):
+def update_form_unique_ids(app_source, id_map=None):
     from corehq.apps.app_manager.models import form_id_references, jsonpath_update
 
     app_source = deepcopy(app_source)

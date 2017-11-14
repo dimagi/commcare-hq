@@ -116,7 +116,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     is_usercase_in_use,
     actions_use_usercase,
-    update_unique_ids,
+    update_form_unique_ids,
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
@@ -5829,7 +5829,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
 
     def scrub_source(self, source):
-        source = update_unique_ids(source)
+        source = update_form_unique_ids(source)
         return update_report_module_ids(source)
 
     def copy_form(self, module_id, form_id, to_module_id):

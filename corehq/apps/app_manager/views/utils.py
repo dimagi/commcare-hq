@@ -17,7 +17,7 @@ from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
 
-from corehq.apps.app_manager.util import update_unique_ids
+from corehq.apps.app_manager.util import update_form_unique_ids
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -190,7 +190,7 @@ def _update_form_ids(app, master_app, id_map):
     app_source.pop('external_blobs')
     app_source['_attachments'] = _attachments
 
-    updated_source = update_unique_ids(app_source, id_map)
+    updated_source = update_form_unique_ids(app_source, id_map)
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = Application.wrap(updated_source)
