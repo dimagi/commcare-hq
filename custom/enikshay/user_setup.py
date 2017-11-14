@@ -298,6 +298,7 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             'pcp_professional_org_membership': 'pcp',
             'pac_qualification': 'pac',
             'pcp_qualification': 'pcp',
+            'facility_type': 'pcp',
             'plc_lab_collection_center_name': 'plc',
             'plc_lab_or_collection_center': 'plc',
             'plc_accredidation': 'plc',
