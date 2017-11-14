@@ -170,7 +170,14 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         linked_app = _mock_pull_remote_master(
             self.master_app_with_report_modules, self.linked_app, {'id': 'mapped_id'}
         )
-        self.assertEqual(self.master_app_with_report_modules.get_attachments(), linked_app.get_attachments())
+        master_id_map = _get_form_id_map(self.master_app_with_report_modules)
+        linked_id_map = _get_form_id_map(linked_app)
+        for xmlns, master_form_id in master_id_map.items():
+            linked_form_id = linked_id_map[xmlns]
+            self.assertEqual(
+                self.master_app_with_report_modules.get_form(master_form_id).source,
+                linked_app.get_form(linked_form_id).source
+            )
 
     def test_get_missing_media_list(self):
         image_path = 'jr://file/commcare/case_list_image.jpg'
