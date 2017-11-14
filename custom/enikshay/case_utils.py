@@ -112,7 +112,7 @@ def get_all_occurrence_cases_from_person(domain, person_case_id):
                         if case.type == CASE_TYPE_OCCURRENCE]
     open_occurrence_cases = [case for case in occurrence_cases if not case.closed]
     if len(open_occurrence_cases) > 1:
-        raise EnikshayBadAppState("Multiple open occurrences found for a person")
+        raise EnikshayBadAppState("Multiple open occurrences found for person case : %s " % person_case_id)
     return occurrence_cases
 
 
@@ -186,11 +186,11 @@ def get_open_active_dstb_episode_case_from_occurrence(domain, occurrence_case_id
     open_active_episode_cases = [case for case in episode_cases
                                  if not case.closed and
                                  case.type == CASE_TYPE_EPISODE and
-                                 case.get_case_property().get('episode_type') == "confirmed_tb" and
+                                 case.get_case_property('episode_type') == "confirmed_tb" and
                                  case.get_case_property('is_active') == 'true'
                                  ]
     if len(open_active_episode_cases) > 1:
-        raise EnikshayBadAppState("Multiple open active episode cases found for occurrence")
+        raise EnikshayBadAppState("Multiple open active episode cases found for occurrence : %s" % occurrence_case_id)
 
     if open_active_episode_cases:
         return open_active_episode_cases[0]
