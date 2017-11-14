@@ -181,6 +181,25 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
         return False
 
 
+class BulkKafkaCheckpointEventHandler(KafkaCheckpointEventHandler):
+    def __init__(self, checkpoint, checkpoint_frequency, change_feed, processor,
+                 checkpoint_callback=None):
+        super(BulkKafkaCheckpointEventHandler, self).__init__(
+            checkpoint, checkpoint_frequency, change_feed, checkpoint_callback)
+        assert isinstance(change_feed, KafkaChangeFeed)
+        self.change_feed = change_feed
+        self.processor = processor
+
+    def fire_change_processed(self, change, context):
+        if self.should_update_checkpoint(context):
+            self.processor.save_docs()
+            updated_to = self.change_feed.get_current_checkpoint_offsets()
+            self.update_checkpoint(updated_to)
+            return True
+
+        return False
+
+
 def change_from_kafka_message(message):
     change_meta = change_meta_from_kafka_message(message.value)
     try:

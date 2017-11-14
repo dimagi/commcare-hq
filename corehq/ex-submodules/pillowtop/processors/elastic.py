@@ -1,11 +1,13 @@
 from __future__ import absolute_import
+from datetime import datetime
 import math
 import time
 
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
+from pillowtop.utils import (
+    ensure_matched_revisions, ensure_document_exists, prepare_bulk_payloads)
+
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
@@ -61,6 +63,91 @@ class ElasticProcessor(PillowProcessor):
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
             self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
+
+
+class BulkElasticProcessor(ElasticProcessor):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+        super(BulkElasticProcessor, self).__init__(elasticsearch, index_info, doc_prep_fn, doc_filter_fn)
+        self.docs_to_save = []
+        self.doc_ids_to_delete = []
+
+    def process_change(self, pillow_instance, change):
+        if change.deleted and change.id:
+            self.docs_to_delete.append(change.id)
+            return
+
+        doc = change.get_document()
+
+        ensure_document_exists(change)
+        ensure_matched_revisions(change)
+
+        if doc is None or (self.doc_filter_fn and self.doc_filter_fn(doc)):
+            return
+
+        # prepare doc for es
+        doc_ready_to_save = self.doc_transform_fn(doc)
+        self.docs_to_save.append(doc_ready_to_save)
+
+    def save_docs(self):
+        # pretty similar to build_bulk_payload, but that uses changes and doesn't ensure revisions
+        payload = []
+        for doc_id in self.doc_ids_to_delete:
+            payload.append({
+                "delete": {
+                    "_index": self.index_info.index,
+                    "_type": self.index_info.type,
+                    "_id": doc_id
+                }
+            })
+
+        for doc in self.docs_to_save:
+            try:
+                payload.append({
+                    "index": {
+                        "_index": self.index_info.index,
+                        "_type": self.index_info.type,
+                        "_id": doc['_id']
+                    }
+                })
+                payload.append(doc)
+            except Exception as e:
+                # handle error
+                pass
+
+        payloads = prepare_bulk_payloads(payload, 10 ** 7)
+
+        for payload in payloads:
+            # aggregate results and return docs with errors to be put in pillow error
+            results = self._send_payload_with_retries(payload)
+
+        return True
+
+    def _send_payload_with_retries(self, payload):
+        pillow_logging.info("Sending payload to ES")
+
+        retries = 0
+        bulk_start = datetime.utcnow()
+        success = False
+        while retries < 3:
+            if retries:
+                retry_time = (datetime.utcnow() - bulk_start).seconds + retries * 15
+                pillow_logging.warning("\tRetrying in %s seconds" % retry_time)
+                time.sleep(retry_time)
+                pillow_logging.warning("\tRetrying now ...")
+                # reset timestamp when looping again
+                bulk_start = datetime.utcnow()
+
+            try:
+                self.es.bulk(payload)
+                # figure out docs with errors and send them back
+                # https://www.elastic.co/guide/en/elasticsearch/guide/1.x/bulk.html
+                success = True
+                break
+            except Exception:
+                retries += 1
+                pillow_logging.exception("\tException sending payload to ES")
+
+        return success
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
