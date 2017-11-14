@@ -274,10 +274,10 @@ def get_open_referral_case_from_person(domain, person_case_id):
 def get_latest_closed_referral_case_from_person(domain, person_case_id, with_status=None):
     closed_referral_cases = get_referral_cases_from_person(domain, person_case_id, closed_cases=True)
     if with_status:
-        closed_referral_cases = filter(
-            lambda x: x.get_case_property('referral_status') == with_status,
-            closed_referral_cases
-        )
+        closed_referral_cases = [
+            referral_case for referral_case in closed_referral_cases
+            if referral_case.get_case_property('referral_status') == with_status
+        ]
     return sorted(closed_referral_cases, key=lambda x: x.closed_on)[0]
 
 
