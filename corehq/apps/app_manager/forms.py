@@ -26,7 +26,8 @@ class CopyApplicationForm(forms.Form):
     linked = forms.BooleanField(
         required=False,
         label=_('Copy as Linked Application'),
-        help_text=_("This will create an application that can be updated from changes to this application.")
+        help_text=_("This will create an application that can be updated from changes to this application."
+                    " This requires your app to have at least one released version.")
     )
 
     # Toggles to enable when copying the app

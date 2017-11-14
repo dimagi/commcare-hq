@@ -65,7 +65,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
     api_key_auth)
-from corehq.apps.app_manager.dbaccessors import get_app, get_current_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -353,6 +353,13 @@ def copy_app(request, domain):
                     set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             linked = data.get('linked')
             if linked:
+                master_version = get_latest_released_app_version(app.domain, app_id)
+                if not master_version:
+                    messages.error(request, _("Creating linked app failed."
+                                              " Unable to get latest released version of your app."
+                                              " Make sure you have at least one released build."))
+                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
                 if link_domain not in app.linked_whitelist:
                     app.linked_whitelist.append(link_domain)
                     app.save()
