@@ -34,14 +34,14 @@
                         <div>
                             Number of cases by case type
                         </div>
-                    {% endif %}
                     <div>
-                        {% for case_type, count in case_type_counts.items %}
-                            <div>
-                                &emsp;{{case_type}}: {{count}}
-                            </div>
-                        {% endfor %}
+                        <ul>
+                            {% for case_type, count in case_type_counts.items %}
+                                <li>{{case_type}}: {{count}}</li>
+                            {% endfor %}
+                        </ul>
                     </div>
+                    {% endif %}
                     <div>
                         Number of locations in this restore: <strong>{{num_locations}}</strong>
                     </div>
@@ -49,14 +49,14 @@
                         <div>
                             Number of locations by location type
                         </div>
-                    {% endif %}
                     <div>
-                        {% for location_type, count in location_type_counts.items %}
-                            <div>
-                                &emsp;{{location_type}}: {{count}}
-                            </div>
-                        {% endfor %}
+                        <ul>
+                            {% for location_type, count in location_type_counts.items %}
+                                <li>{{location_type}}: {{count}}</li>
+                            {% endfor %}
+                        </ul>
                     </div>
+                    {% endif %}
                     <div>
                         Number of reports in this restore: <strong>{{num_reports}}</strong>
                     </div>
@@ -64,14 +64,14 @@
                         <div>
                             Number of rows by report
                         </div>
-                    {% endif %}
                     <div>
-                        {% for report_id, row_count in report_row_counts.items %}
-                            <div>
-                                &emsp;{{report_id}}: {{row_count}}
-                            </div>
-                        {% endfor %}
+                        <ul>
+                            {% for report_id, row_count in report_row_counts.items %}
+                                <li>{{report_id}}: {{row_count}}</li>
+                            {% endfor %}
+                        </ul>
                     </div>
+                    {% endif %}
 
                     <div>
                         <ul class="nav nav-tabs" role="tablist">
