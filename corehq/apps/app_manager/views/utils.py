@@ -150,6 +150,8 @@ def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
+    id_map = _get_form_id_map(app_json)  # do this before we change the source
+
     for key, value in master_json.iteritems():
         if key not in excluded_fields:
             app_json[key] = value
@@ -166,7 +168,6 @@ def overwrite_app(app, master_build, report_map=None, maintain_ids=False):
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
     if maintain_ids:
-        id_map = _get_form_id_map(app_json)
         wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
     wrapped_app.copy_attachments(master_build)
     enable_usercase_if_necessary(wrapped_app)
