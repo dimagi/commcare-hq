@@ -58,6 +58,7 @@ class Command(BaseCommand):
             "occurrence_case_id",
             "retain_case_id",
             "closed_case_ids",
+            "closed_extension_case_ids",
             "notes"
         ]
 
