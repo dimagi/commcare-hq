@@ -2,6 +2,7 @@ hqDefine('hqwebapp/js/main', [
     "jquery",
     "underscore",
     "hqwebapp/js/alert_user",
+    "hqwebapp/js/hq_extensions.jquery",
 ], function(
     $,
     _,
