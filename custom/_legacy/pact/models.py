@@ -54,9 +54,9 @@ class DOTSubmission(XFormInstance):
     @property
     def drilldown_url(self):
         from pact.reports.dot import PactDOTReport
-        if self.form['case'].has_key('case_id'):
+        if 'case_id' in self.form['case']:
             case_id = self.form['case'].get('case_id', None)
-        elif self.form['case'].has_key('@case_id'):
+        elif '@case_id' in self.form['case']:
             case_id = self.form['case'].get('@case_id', None)
         else:
             case_id = None
@@ -209,7 +209,7 @@ class PactPatientCase(CommCareCase):
     def get_schedules(self, raw_json=False, reversed=False):
         obj = self.to_json()
         computed = obj['computed_']
-        if computed.has_key(PACT_SCHEDULES_NAMESPACE):
+        if PACT_SCHEDULES_NAMESPACE in computed:
             ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
             if not raw_json:
                 ret = [CDotWeeklySchedule.wrap(dict(x)) for x in ret]
@@ -285,7 +285,7 @@ class PactPatientCase(CommCareCase):
         computed = self['computed_']
         ret = {}
 
-        if computed.has_key(PACT_SCHEDULES_NAMESPACE):
+        if PACT_SCHEDULES_NAMESPACE in computed:
             schedule_arr = self.get_schedules()
 
             past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)

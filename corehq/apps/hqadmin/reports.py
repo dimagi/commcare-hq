@@ -809,7 +809,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return _('No info')
 
         for dom in domains:
-            if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:  # for some reason when using the statistical facet, ES adds an empty dict to hits
                 first_form_default_message = _("No Forms")
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")

@@ -467,7 +467,7 @@ def generate_sortables_from_facets(results, params=None):
     sortable = []
     res_facets = results.get("facets", [])
     for facet in res_facets:
-        if res_facets[facet].has_key("terms"):
+        if "terms" in res_facets[facet]:
             sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
 
     return sortable

@@ -275,7 +275,7 @@ def fit_to_schema(doc, schema):
         answ = {}
         for key in schema:
             #if schema[key] == unknown_type: continue
-            if doc.has_key(key):
+            if key in doc:
                 answ[key] = fit_to_schema(doc.get(key), schema[key])
             else:
                 answ[key] = render_never_was(schema[key])

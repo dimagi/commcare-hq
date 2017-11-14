@@ -4680,7 +4680,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
-        if data.has_key("built_with") and isinstance(data['built_with'], basestring):
+        if "built_with" in data and isinstance(data['built_with'], basestring):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:

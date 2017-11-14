@@ -879,7 +879,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def wrap(cls, data, should_save=False):
-        if data.has_key("organizations"):
+        if "organizations" in data:
             del data["organizations"]
             should_save = True
 

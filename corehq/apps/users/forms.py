@@ -367,7 +367,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
 class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('role_choices'):
+        if 'role_choices' in kwargs:
             role_choices = kwargs.pop('role_choices')
         else:
             role_choices = ()

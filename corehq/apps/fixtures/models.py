@@ -295,7 +295,7 @@ class FixtureDataItem(Document):
                 )
         for field in self.data_type.fields:
             escaped_field_name = clean_fixture_field_name(field.field_name)
-            if not self.fields.has_key(field.field_name):
+            if field.field_name not in self.fields:
                 xField = ElementTree.SubElement(xData, escaped_field_name)
                 xField.text = ""
             else:
