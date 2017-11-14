@@ -12,7 +12,3 @@ class NonContinuousShardsError(PartitionValidationError):
 
 class NotZeroStartError(PartitionValidationError):
     pass
-
-
-class NoSuchShardDatabaseError(Exception):
-    pass

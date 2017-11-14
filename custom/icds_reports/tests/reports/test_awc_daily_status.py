@@ -61,8 +61,6 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "location_type": "State",
-                "bottom_five": [],
-                "top_five": [],
                 "chart_data": [
                     {
                         "color": ChartColors.PINK,
@@ -391,7 +389,36 @@ class TestAWCDailyStatus(TestCase):
                         "key": "Total AWCs open yesterday"
                     }
                 ],
-                "all_locations": []
+                "top_five": [
+                    {
+                        'loc_name': 'st1',
+                        'value': 0
+                    },
+                    {
+                        'loc_name': 'st2',
+                        'value': 0
+                    }
+                ],
+                "all_locations": [
+                    {
+                        "loc_name": "st1",
+                        "value": 0
+                    },
+                    {
+                        "loc_name": "st2",
+                        "value": 0
+                    }
+                ],
+                "bottom_five": [
+                    {
+                        'loc_name': 'st1',
+                        'value': 0
+                    },
+                    {
+                        'loc_name': 'st2',
+                        'value': 0
+                    }
+                ]
             }
         )
 
