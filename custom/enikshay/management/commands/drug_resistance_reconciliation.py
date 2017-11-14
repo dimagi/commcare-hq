@@ -30,7 +30,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # self.dry_run = options.get('dry_run')
         self.dry_run = True
-        self.recipient = options.get('recipient', 'mkangia@dimagi.com')
+        self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
         self.drug_id_values = []
