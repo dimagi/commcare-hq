@@ -44,6 +44,10 @@ from corehq import toggles
 from dimagi.utils.decorators.memoized import memoized
 
 
+DetailColumnInfo = namedtuple('DetailColumnInfo',
+                              'column sort_element order')
+
+
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
@@ -184,6 +188,9 @@ class DetailContributor(SectionContributor):
                 #   column_info.column: an instance of app_manager.models.DetailColumn
                 #   column_info.sort_element: an instance of app_manager.models.SortElement
                 #   column_info.order: an integer
+                if "search" in id and column_info.sort_element and column_info.sort_element.type == 'index':
+                    # search details can't have index elements, so remove the sort element
+                    column_info = DetailColumnInfo(column_info.column, None, None)
                 fields = get_column_generator(
                     self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
@@ -438,8 +445,6 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
-    DetailColumnInfo = namedtuple('DetailColumnInfo',
-                                  'column sort_element order')
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
