@@ -350,6 +350,20 @@ class ScheduleForm(Form):
             values[field_name] = self[field_name].value()
         return values
 
+    @property
+    def current_select2_user_recipients(self):
+        value = self['user_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for user_id in value.strip().split(','):
+            user_id = user_id.strip()
+            user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
+            result.append({"id": user_id, "text": user.raw_username})
+
+        return result
+
     def clean_user_recipients(self):
         if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
             return []

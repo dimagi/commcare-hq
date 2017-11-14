@@ -1,5 +1,5 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
-    var CreateMessageViewModel = function (initial_values) {
+    var CreateMessageViewModel = function (initial_values, select2_user_recipients) {
         var self = this;
 
         self.schedule_name = ko.observable(initial_values.schedule_name);
@@ -11,7 +11,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
-        self.user_recipients = new RecipientsSelect2Handler(initial_values.user_recipients, 'user_recipients');
+        self.user_recipients = new RecipientsSelect2Handler(select2_user_recipients, initial_values.user_recipients, 'user_recipients');
         self.user_recipients.init();
 
         self.is_trial_project = initial_values.is_trial_project;
@@ -167,7 +167,13 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     };
 
     var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler,
-        RecipientsSelect2Handler = function (initial, field) {
+        RecipientsSelect2Handler = function (initial_object_list, initial_comma_separated_list, field) {
+            /*
+             * initial_object_list is a list of {id: ..., text: ...} objects representing the initial value
+             *
+             * intial_comma_separated_list is a string representation of initial_object_list consisting of just
+             * the ids separated by a comma
+             */
             BaseSelect2Handler.call(this, {
                 fieldName: field,
                 multiple: true,
@@ -179,15 +185,20 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             };
         
             self.getInitialData = function () {
-                return initial;
+                return initial_object_list;
             };
+
+            self.value(initial_comma_separated_list);
         };
     
     RecipientsSelect2Handler.prototype = Object.create(RecipientsSelect2Handler.prototype);
     RecipientsSelect2Handler.prototype.constructor = RecipientsSelect2Handler;
 
     $(function () {
-        var cmvm = new CreateMessageViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
+        var cmvm = new CreateMessageViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("current_values"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
+        );
         $('#create-schedule-form').koApplyBindings(cmvm);
         cmvm.init();
     });
