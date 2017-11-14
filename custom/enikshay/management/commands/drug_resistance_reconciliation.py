@@ -2,6 +2,9 @@ import csv
 
 from datetime import datetime
 from collections import defaultdict
+
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.hqcase.utils import bulk_update_cases
@@ -22,10 +25,14 @@ DOMAIN = "enikshay"
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--dry_run', action='store_true')
+        parser.add_argument('--recipient', type=str)
 
     def handle(self, *args, **options):
-        self.dry_run = options.get('dry_run')
-        self.result_file = self.setup_result_file()
+        # self.dry_run = options.get('dry_run')
+        self.dry_run = True
+        self.recipient = options.get('recipient', 'mkangia@dimagi.com')
+        self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
+        self.result_file_name = self.setup_result_file()
         self.drug_id_values = []
         self.sensitivity_values = []
         self.case_accessor = CaseAccessors(DOMAIN)
@@ -37,6 +44,21 @@ class Command(BaseCommand):
 
         print("All drug id values found %s" % self.drug_id_values)
         print("All sensitivity values found %s" % self.sensitivity_values)
+
+        self.email_report()
+
+    def email_report(self):
+        csvfile = open(self.result_file_name)
+        email = EmailMessage(
+            subject="Occurrence and Episode Reconciliation Report",
+            body="Please find attached report for a %s run finished at %s." %
+                 ('dry' if self.dry_run else 'real', datetime.now()),
+            to=self.recipient,
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.attach(filename=self.result_file_name, content=csvfile.read())
+        csvfile.close()
+        email.send()
 
     @staticmethod
     def get_result_file_headers():
@@ -60,7 +82,7 @@ class Command(BaseCommand):
         return file_name
 
     def writerow(self, row):
-        with open(self.result_file, 'a') as csvfile:
+        with open(self.result_file_name, 'a') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
             writer.writerow(row)
 

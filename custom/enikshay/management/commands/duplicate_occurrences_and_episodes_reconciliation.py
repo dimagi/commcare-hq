@@ -30,6 +30,7 @@ class Command(BaseCommand):
     """
     def add_arguments(self, parser):
         parser.add_argument('--dry_run', action='store_true')
+        parser.add_argument('--recipient', type=str)
 
     def handle(self, *args, **options):
         self.dry_run = options.get('dry_run')

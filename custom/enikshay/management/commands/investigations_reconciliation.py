@@ -1,7 +1,9 @@
 import csv
 from datetime import datetime
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
+from django.conf import settings
+from django.core.mail import EmailMessage
 from collections import defaultdict
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -39,13 +41,17 @@ PROPERTIES_TO_BE_COALESCED = [
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--dry_run', action='store_true')
+        parser.add_argument('--recipient', type=str)
 
     def handle(self, *args, **options):
-        self.dry_run = options.get('dry_run')
-        self.result_file = self.setup_result_file()
+        # self.dry_run = options.get('dry_run')
+        self.dry_run = True
+        self.recipient = options.get('recipient', 'mkangia@dimagi.com')
+        self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
+        self.result_file_name = self.setup_result_file()
         self.case_accessor = CaseAccessors(DOMAIN)
         self.investigation_interval_values = []
-        with open(self.result_file, 'a') as csvfile:
+        with open(self.result_file_name, 'a') as csvfile:
             self.writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
             # iterate all person cases
             for person_case_id in self._get_open_person_case_ids_to_process():
@@ -61,6 +67,21 @@ class Command(BaseCommand):
                         if investigations_to_be_reconciled:
                             for interval_type, investigation_cases in investigations_to_be_reconciled.items():
                                 self.reconcile_investigation_cases(episode_case_id, investigation_cases, csvfile)
+
+        self.email_report()
+
+    def email_report(self):
+        csvfile = open(self.result_file_name)
+        email = EmailMessage(
+            subject="Occurrence and Episode Reconciliation Report",
+            body="Please find attached report for a %s run finished at %s." %
+                 ('dry' if self.dry_run else 'real', datetime.now()),
+            to=self.recipient,
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.attach(filename=self.result_file_name, content=csvfile.read())
+        csvfile.close()
+        email.send()
 
     @staticmethod
     def get_result_file_headers():
@@ -136,29 +157,29 @@ class Command(BaseCommand):
         coalesced_investigation_case['update_or_close'] = 'update'
         self.writerow(coalesced_investigation_case)
 
-    # def close_or_update_investigation_cases(self, all_cases, retain_case_id, episode_case_id,
-    #                                         investigation_interval, updates):
-    #     all_case_ids = [investigation_case.case_id for investigation_case in all_cases]
-    #     # ToDo: refetch investigation_cases in case the len of set is different from list
-    #     # remove duplicates in case ids to remove so that we don't retain and close
-    #     # the same case by mistake
-    #     all_case_ids = set(all_case_ids)
-    #     case_ids_to_close = all_case_ids.copy()
-    #     case_ids_to_close.remove(retain_case_id)
-    #     for investigation_case in all_cases:
-    #         self.writerow({
-    #             "episode_case_id": episode_case_id,
-    #             "investigation_interval": investigation_interval,
-    #             "investigation_case_id": investigation_case.case_id,
-    #             "modified_on": investigation_case.get_case_property(DATE_MODIFIED_FIELD),
-    #             "updates": updates,
-    #             "update/close": ('update' if investigation_case.case_id == retain_case_id
-    #                              else 'closed')
-    #         })
-    #     if not self.dry_run:
-    #         updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
-    #                    for case_id in case_ids_to_close]
-    #         bulk_update_cases(DOMAIN, updates, self.__module__)
+    def close_or_update_investigation_cases(self, all_cases, retain_case_id, episode_case_id,
+                                            investigation_interval, updates):
+        all_case_ids = [investigation_case.case_id for investigation_case in all_cases]
+        # ToDo: refetch investigation_cases in case the len of set is different from list
+        # remove duplicates in case ids to remove so that we don't retain and close
+        # the same case by mistake
+        all_case_ids = set(all_case_ids)
+        case_ids_to_close = all_case_ids.copy()
+        case_ids_to_close.remove(retain_case_id)
+        for investigation_case in all_cases:
+            self.writerow({
+                "episode_case_id": episode_case_id,
+                "investigation_interval": investigation_interval,
+                "investigation_case_id": investigation_case.case_id,
+                "modified_on": investigation_case.get_case_property(DATE_MODIFIED_FIELD),
+                "updates": updates,
+                "update/close": ('update' if investigation_case.case_id == retain_case_id
+                                 else 'closed')
+            })
+        if not self.dry_run:
+            updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
+                       for case_id in case_ids_to_close]
+            bulk_update_cases(DOMAIN, updates, self.__module__)
 
     def get_coalesced_value_for_case_property(self, case_property, all_values):
         #ToDo: write logic for this
