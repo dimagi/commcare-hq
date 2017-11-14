@@ -202,7 +202,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     def distill_recipients(self):
         form_data = self.schedule_form.cleaned_data
-        return [('CommCareUser', r_id) for r_id in form_data['recipients']]
+        return [('CommCareUser', user_id) for user_id in form_data['user_recipients']]
 
     def distill_total_iterations(self):
         form_data = self.schedule_form.cleaned_data
@@ -408,7 +408,7 @@ class EditScheduleView(CreateScheduleView):
             schedule = broadcast.schedule
             if schedule.ui_type == Schedule.UI_TYPE_DAILY:
                 result['send_frequency'] = ScheduleForm.SEND_DAILY
-            if schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+            elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
                 weekdays = [(schedule.start_day_of_week + e.day) % 7 for e in schedule.memoized_events]
                 result['send_frequency'] = ScheduleForm.SEND_WEEKLY
                 result['weekdays'] = [str(day) for day in weekdays]
@@ -437,17 +437,19 @@ class EditScheduleView(CreateScheduleView):
 
         broadcast = self.broadcast
         schedule = broadcast.schedule
-        recipients = []
+
         recipient_types = set()
+        user_recipients = []
         for doc_type, doc_id in broadcast.recipients:
             if doc_type == 'CommCareUser':
                 recipient_types.add(ScheduleForm.RECIPIENT_TYPE_USER)
                 user = CommCareUser.get_by_user_id(doc_id, domain=self.domain)
-                recipients.append({"id": doc_id, "text": user.raw_username})
+                user_recipients.append({"id": doc_id, "text": user.raw_username})
+
         initial = {
             'schedule_name': broadcast.name,
             'recipient_types': list(recipient_types),
-            'recipients': recipients,
+            'user_recipients': user_recipients,
             'content': 'sms',
             # only works for SMS
             'message': schedule.memoized_events[0].content.message,

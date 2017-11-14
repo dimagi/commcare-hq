@@ -7,13 +7,13 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 
 
 class MessagingRecipientHandler(BaseAsyncHandler):
-    slug = 'messaging_recipients'
+    slug = 'scheduling_recipients'
     allowed_actions = [
-        'recipients'
+        'user_recipients'
     ]
 
     @property
-    def recipients_response(self):
+    def user_recipients_response(self):
         domain = self.request.domain
         query = self.data.get('searchString')
         users = get_search_users_in_domain_es_query(domain, query, 10, 0)

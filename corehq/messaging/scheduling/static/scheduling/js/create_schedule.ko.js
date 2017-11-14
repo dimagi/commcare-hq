@@ -11,8 +11,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
-        self.message_recipients = new MessagingSelect2Handler(initial_values.recipients);
-        self.message_recipients.init();
+        self.user_recipients = new RecipientsSelect2Handler(initial_values.user_recipients, 'user_recipients');
+        self.user_recipients.init();
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
@@ -167,24 +167,24 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     };
 
     var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler,
-        MessagingSelect2Handler = function (recipients) {
+        RecipientsSelect2Handler = function (initial, field) {
             BaseSelect2Handler.call(this, {
-                fieldName: "recipients",
+                fieldName: field,
                 multiple: true,
             });
             var self = this;
         
             self.getHandlerSlug = function () {
-                return 'messaging_recipients';
+                return 'scheduling_recipients';
             };
         
             self.getInitialData = function () {
-                return recipients;
+                return initial;
             };
         };
     
-    MessagingSelect2Handler.prototype = Object.create(MessagingSelect2Handler.prototype);
-    MessagingSelect2Handler.prototype.constructor = MessagingSelect2Handler;
+    RecipientsSelect2Handler.prototype = Object.create(RecipientsSelect2Handler.prototype);
+    RecipientsSelect2Handler.prototype.constructor = RecipientsSelect2Handler;
 
     $(function () {
         var cmvm = new CreateMessageViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));

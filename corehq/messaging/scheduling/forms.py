@@ -138,9 +138,9 @@ class ScheduleForm(Form):
             (RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
         )
     )
-    recipients = RecipientField(
-        label=_("Recipient(s)"),
-        help_text=_("Type a username, group name or location"),
+    user_recipients = RecipientField(
+        required=False,
+        label=_("User Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
@@ -302,10 +302,13 @@ class ScheduleForm(Form):
                     template='scheduling/partial/recipient_types_picker.html',
                 ),
             ),
-            crispy.Field(
-                'recipients',
-                data_bind='value: message_recipients.value',
-                placeholder=_("Select some recipients")
+            crispy.Div(
+                crispy.Field(
+                    'user_recipients',
+                    data_bind='value: user_recipients.value',
+                    placeholder=_("Select mobile worker recipients")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER,
             ),
         ]
 
@@ -347,13 +350,17 @@ class ScheduleForm(Form):
             values[field_name] = self[field_name].value()
         return values
 
-    def clean_recipients(self):
-        data = self.cleaned_data['recipients']
-        # TODO Will need to add more than user ids
-        # TODO batch id verification
+    def clean_user_recipients(self):
+        if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_recipients']
         for user_id in data:
-            user = CommCareUser.get_db().get(user_id)
-            assert user['domain'] == self.domain, "User must be in the same domain"
+            user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
+            if not user:
+                raise ValidationError(
+                    _("One or more users were unexpectedly not found. Please select user recipients again.")
+                )
 
         return data
 
