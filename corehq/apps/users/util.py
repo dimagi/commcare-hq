@@ -11,7 +11,11 @@ from corehq.util.quickcache import quickcache
 from django.core.cache import cache
 from django_prbac.utils import has_privilege
 
-from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, ARCHIVED_CASE_OWNER_ID
+from casexml.apps.case.const import (
+    UNOWNED_EXTENSION_OWNER_ID,
+    ARCHIVED_CASE_OWNER_ID,
+    INVALID_CASE_OWNER_ID,
+)
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -24,6 +28,7 @@ WEIRD_USER_IDS = [
     UNOWNED_EXTENSION_OWNER_ID,
     SYSTEM_USER_ID,
     ARCHIVED_CASE_OWNER_ID,
+    INVALID_CASE_OWNER_ID,
 ]
 
 
