@@ -64,6 +64,7 @@ class Command(BaseCommand):
     def get_result_file_headers():
         return [
             "occurrence_case_id",
+            "person_case_id",
             "drug_id",
             "retain_case_id",
             "retain_reason",
@@ -97,6 +98,7 @@ class Command(BaseCommand):
             return False
         if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             return False
+        self.person_case_id = person_case.case_id
         return True
 
     def reconcile_case(self, occurrence_case_id):
@@ -211,6 +213,7 @@ class Command(BaseCommand):
 
         self.writerow({
             "occurrence_case_id": occurrence_case_id,
+            "person_case_id": self.person_case_id,
             "drug_id": drug_id,
             "retain_case_id": retain_case_id,
             "retain_reason": retain_reason,
