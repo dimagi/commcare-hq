@@ -402,7 +402,7 @@ class DataSourceBuilder(object):
         def get_key(i):
             return i['column_id'], i['type']
 
-        indicators = {}
+        indicators = OrderedDict()
         for column in columns:
             column_option = self.report_column_options[column['property']]
             for indicator in column_option.get_indicators(column['aggregation'], is_multiselect_chart_report):
@@ -416,7 +416,7 @@ class DataSourceBuilder(object):
         return list(indicators.values())
 
     def all_possible_indicators(self):
-        indicators = {}
+        indicators = OrderedDict()
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
                 for indicator in column_option.get_indicators(agg):
