@@ -1159,12 +1159,13 @@ def get_beneficiary_details(case_id, month):
         if row.age_in_months <= 60:
             beneficiary['weight'][row.age_in_months] = {
                 'x': int(row.age_in_months),
-                'y': float(row.recorded_weight or 0)
+                'y': float(row.recorded_weight or None)
             }
             beneficiary['height'][row.age_in_months] = {
                 'x': int(row.age_in_months),
-                'y': float(row.recorded_height or 0)
+                'y': float(row.recorded_height or None)
             }
         if row.recorded_height and min_height <= row.recorded_height <= max_height:
-            beneficiary['wfl'][int((row.recorded_height - min_height) * 2)]['y'] = float(row.recorded_weight or 0)
+            index = int((row.recorded_height - min_height) * 2)
+            beneficiary['wfl'][index]['y'] = float(row.recorded_weight or None)
     return beneficiary

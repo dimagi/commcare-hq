@@ -1,9 +1,9 @@
-/* globals hqImport, hqLayout */
+/* globals hqImport */
 hqDefine("app_manager/js/summary/summary", function() {
     $(function() {
         'use strict';
 
-        hqLayout.utils.setIsAppbuilderResizing(true);
+        hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
 
         var summaryApp = window.angular.module('summaryApp', ['ngRoute', 'summaryModule']),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,

@@ -47,9 +47,9 @@ hqDefine('hqwebapp/js/hq-bug-report', ["jquery", "jquery-form/dist/jquery.form.m
                 return false;
             }
             var $submitButton = $(this).find("button[type='submit']");
-            if(!isBugReportSubmitting && $submitButton.text() == $submitButton.data("success-text")) {
+            if(!isBugReportSubmitting && $submitButton.text() === $submitButton.data("success-text")) {
                 $hqwebappBugReportModal.modal("hide");
-            }else if(!isBugReportSubmitting) {
+            } else if(!isBugReportSubmitting) {
                 $submitButton.button('loading');
                 $hqwebappBugReportCancel.button('loading');
                 $(this).ajaxSubmit({
@@ -69,15 +69,15 @@ hqDefine('hqwebapp/js/hq-bug-report', ["jquery", "jquery-form/dist/jquery.form.m
             return regex.test(email);
         }
 
-        function hqwebappBugReportBeforeSerialize($form, options) {
+        function hqwebappBugReportBeforeSerialize($form) {
             $form.find("#bug-report-url").val(location.href);
         }
 
-        function hqwebappBugReportBeforeSubmit(arr, $form, options) {
+        function hqwebappBugReportBeforeSubmit(arr) {
             isBugReportSubmitting = true;
         }
 
-        function hqwebappBugReportSucccess(data) {
+        function hqwebappBugReportSucccess() {
             isBugReportSubmitting = false;
             $hqwebappBugReportForm.find("button[type='submit']").button('success').removeClass('btn-primary btn-danger').addClass('btn-success');
             $hqwebappBugReportModal.one('hidden.bs.modal', function () {
@@ -85,7 +85,7 @@ hqDefine('hqwebapp/js/hq-bug-report', ["jquery", "jquery-form/dist/jquery.form.m
             });
         }
 
-        function hqwebappBugReportError(data) {
+        function hqwebappBugReportError() {
             isBugReportSubmitting = false;
             $hqwebappBugReportForm.find("button[type='submit']").button('error').removeClass('btn-primary btn-success').addClass('btn-danger');
         }
@@ -98,6 +98,5 @@ hqDefine('hqwebapp/js/hq-bug-report', ["jquery", "jquery-form/dist/jquery.form.m
                 $element.find(".label-danger").addClass('hide');
             });
         }
-
     });
 });

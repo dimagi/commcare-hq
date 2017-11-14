@@ -1707,7 +1707,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.filters = ['gender', 'age'];
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
-        .withOption('scrollY', '300px')
         .withOption('scrollX', '100%')
         .withOption('scrollCollapse', true)
         .withOption('ajax', {
@@ -1730,9 +1729,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth),
         DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge),
         DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate),
-        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight for Age Status').renderWith(renderWeightForAgeStatus),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight for Height Status').renderWith(renderWeightForHeightStatus),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height for Age status').renderWith(renderHeightForAgeStatus),
+        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status').renderWith(renderWeightForAgeStatus),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status').renderWith(renderWeightForHeightStatus),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status').renderWith(renderHeightForAgeStatus),
         DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended),
     ];
 

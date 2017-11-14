@@ -615,13 +615,6 @@
         {# Report Issue #}
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
 
-        {# Remote modals (EULA and CDA) #}
-        {% if not requirejs_main %}
-        {% compress js %}
-            <script src="{% static 'hqwebapp/js/remote-modals.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
         {# EULA #}
         {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
             {% include 'hqwebapp/includes/modal_eula.html' with needs_agreement=True %}

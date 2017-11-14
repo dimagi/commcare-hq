@@ -266,6 +266,21 @@
     angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
     angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
     angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
+    angular.module('icdsApp').constant('genders', [
+        {id: '', name: 'All'},
+        {id: 'M', name: 'Male'},
+        {id: 'F', name: 'Female'},
+    ]);
+    angular.module('icdsApp').constant('ages', [
+        {id: '', name: 'All'},
+        {id: '6', name: '0-6 months'},
+        {id: '12', name: '6-12 months'},
+        {id: '24', name: '12-24 months'},
+        {id: '36', name: '24-36 months'},
+        {id: '48', name: '36-48 months'},
+        {id: '60', name: '48-60 months'},
+        {id: '72', name: '60-72 months'},
+    ]);
     angular.module('icdsApp').value('cgBusyDefaults', {
       message:'Loading data',
       backdrop: true,

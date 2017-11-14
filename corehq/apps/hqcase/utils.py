@@ -151,26 +151,6 @@ def get_case_by_identifier(domain, identifier):
     return None
 
 
-def make_creating_casexml(domain, case, new_case_id, new_parent_ids=None):
-    new_parent_ids = new_parent_ids or {}
-    old_case_id = case.case_id
-    case.case_id = new_case_id
-    local_move_back = {}
-    for index in case.indices:
-        new = new_parent_ids[index.referenced_id]
-        old = index.referenced_id
-        local_move_back[new] = old
-        index.referenced_id = new
-    try:
-        case_block = get_case_xml(case, (const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE), version='2.0')
-        case_block, attachments = _process_case_block(domain, case_block, case.case_attachments, old_case_id)
-    finally:
-        case.case_id = old_case_id
-        for index in case.indices:
-            index.referenced_id = local_move_back[index.referenced_id]
-    return case_block, attachments
-
-
 def _process_case_block(domain, case_block, attachments, old_case_id):
     def get_namespace(element):
         m = re.match('\{.*\}', element.tag)

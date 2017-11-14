@@ -54,7 +54,6 @@ class UseIfRequested(object):
 class CallableApiField(ApiField):
     """
     A minor fix to Tastypie's ApiField to actually support callable attributes in general.
-    TODO: PR this to upstream.
     """
 
     def dehydrate(self, bundle):
