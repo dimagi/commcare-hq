@@ -14,6 +14,7 @@ from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import get_restore_config, MockDevice
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.groups.models import Group
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -90,6 +91,7 @@ class BaseSyncTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
+        delete_all_domains()
         super(BaseSyncTest, cls).tearDownClass()
 
     def get_device(self, **kw):

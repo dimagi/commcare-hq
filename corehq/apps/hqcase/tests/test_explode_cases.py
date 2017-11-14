@@ -126,6 +126,11 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
         self.accessor = CaseAccessors(self.project.name)
         self._create_case_structure()
 
+    def tearDown(self):
+        delete_all_cases()
+        delete_all_xforms()
+        super(ExplodeExtensionsDBTest, self).tearDown()
+
     def _create_case_structure(self):
         """
                   +----+
@@ -191,7 +196,6 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
         )
 
     def test_child_extensions(self):
-        self._create_case_structure()
         self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
 
         explode_cases(self.project.name, self.user_id, 5)
