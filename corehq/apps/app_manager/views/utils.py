@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import json
 import uuid
+from functools import partial
 from urllib import urlencode
 from django.contrib import messages
 from django.urls import reverse
@@ -193,8 +194,8 @@ def _update_form_ids(app, master_app, id_map):
 
     attachments = app_source.pop('_attachments')
     new_wrapped_app = Application.wrap(updated_source)
-    new_wrapped_app = new_wrapped_app.save_attachments(attachments)
-    return new_wrapped_app
+    save = partial(new_wrapped_app.save, increment_version=False)
+    return new_wrapped_app.save_attachments(attachments, save)
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):

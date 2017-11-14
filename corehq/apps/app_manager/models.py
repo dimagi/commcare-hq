@@ -4501,8 +4501,8 @@ class VersionedDoc(LazyBlobDoc):
                 attachments[name] = self.lazy_fetch_attachment(name)
         return attachments
 
-    def save_attachments(self, attachments):
-        with self.atomic_blobs():
+    def save_attachments(self, attachments, save=None):
+        with self.atomic_blobs(save=save):
             for name, attachment in attachments.items():
                 if re.match(ATTACHMENT_REGEX, name):
                     self.put_attachment(attachment, name)
