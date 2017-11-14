@@ -1,1 +1,1 @@
-define("hqwebapp/js/comm", function() {});
+define("hqwebapp/js/common", function() {});
