@@ -3,7 +3,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService,  genders, ages) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -11,6 +11,21 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+
+    var ageIndex = ages.findIndex(function (x) {
+        return x.id === vm.filtersData.age;
+    });
+    if (ageIndex !== -1) {
+        vm.ageLabel = ages[ageIndex].name;
+    }
+
+    var genderIndex = genders.findIndex(function (x) {
+        return x.id === vm.filtersData.gender;
+    });
+    if (genderIndex !== -1) {
+        vm.genderLabel = genders[genderIndex].name;
+    }
+
     vm.label = "Prevalence of Stunting (Height-for-Age)";
     vm.step = $routeParams.step;
     vm.steps = {
@@ -224,12 +239,24 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         }
     };
 
+    vm.resetAdditionalFilter = function() {
+        vm.filtersData.gender = '';
+        vm.filtersData.age = '';
+        $location.search('gender', null);
+        $location.search('age', null);
+    };
+
+    vm.resetOnlyAgeAdditionalFilter = function() {
+        vm.filtersData.age = '';
+        $location.search('age', null);
+    };
+
     vm.showAllLocations = function () {
         return vm.all_locations.length < 10;
     };
 }
 
-PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive('prevalenceOfStunting', function() {
     return {

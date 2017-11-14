@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ImmunizationCoverageController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, genders) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -10,6 +10,14 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+
+    var genderIndex = genders.findIndex(function (x) {
+        return x.id === vm.filtersData.gender;
+    });
+    if (genderIndex !== -1) {
+        vm.genderLabel = genders[genderIndex].name;
+    }
+
     vm.label = "Immunization coverage (at age 1 year)";
     vm.step = $routeParams.step;
     vm.steps = {
@@ -147,6 +155,11 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         }
     };
 
+    vm.resetAdditionalFilter = function() {
+        vm.filtersData.gender = '';
+        $location.search('gender', null);
+    };
+
     vm.chartOptions = {
         chart: {
             type: 'lineChart',
@@ -216,7 +229,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     };
 }
 
-ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
 
 window.angular.module('icdsApp').directive('immunizationCoverage', function() {
     return {

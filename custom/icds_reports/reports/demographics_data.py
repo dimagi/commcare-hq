@@ -114,7 +114,6 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': frequency,
-                    'redirect': 'enrolled_children'
                 },
                 {
                     'label': _('Children (0-6 years) enrolled for ICDS services'),
@@ -130,7 +129,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'child_health'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'enrolled_children'
                 }
             ], [
                 {
@@ -144,8 +144,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'ccs_pregnant_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'enrolled_women'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Pregnant Women enrolled for ICDS services'),
@@ -158,7 +157,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'enrolled_women'
                 }
             ],
             [
@@ -174,8 +174,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'css_lactating_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'lactating_enrolled_women'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Lactating Women enrolled for ICDS services'),
@@ -188,7 +187,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'css_lactating'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'lactating_enrolled_women'
                 }
             ], [
                 {
@@ -206,8 +206,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'person_adolescent_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'adolescent_girls'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
@@ -227,7 +226,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'person_adolescent'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'adolescent_girls'
                 }
             ]
         ]
