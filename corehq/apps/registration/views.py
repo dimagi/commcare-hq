@@ -17,6 +17,7 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq import toggles
 from corehq.apps.analytics import ab_tests
+from corehq.apps.analytics.decorators import use_new_analytics
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
@@ -170,6 +171,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
 
     @use_jquery_ui
     @use_ko_validation
+    @use_new_analytics
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
