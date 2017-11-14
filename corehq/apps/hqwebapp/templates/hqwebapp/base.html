@@ -453,7 +453,11 @@
                         ko.mapping = mapping;
                     },
                 });
-                requirejs(['hqwebapp/js/common', 'hqwebapp/js/hq-bug-report'], function (common) {
+                requirejs([
+                    'hqwebapp/js/common',
+                    'hqwebapp/js/layout',
+                    'hqwebapp/js/hq-bug-report'
+                ], function () {
                     requirejs(['{{ requirejs_main }}']);
                 });
             </script>
