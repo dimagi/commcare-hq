@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/layout", function() {
+hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
     var self = {};
 
     self.selector = {

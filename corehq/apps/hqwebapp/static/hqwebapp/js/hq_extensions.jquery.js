@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/hq_extensions.jquery", function() {
+hqDefine("hqwebapp/js/hq_extensions.jquery", ["jquery"], function($) {
     'use strict';
     $.extend({
         postGo: function (url, params) {
@@ -37,4 +37,6 @@ hqDefine("hqwebapp/js/hq_extensions.jquery", function() {
             return params;
         }
     });
+
+    return 1;   // Flag the module as loaded by hqModules.js
 });
