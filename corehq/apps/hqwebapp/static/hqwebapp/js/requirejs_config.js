@@ -3,7 +3,6 @@ requirejs.config({
     baseUrl: '/static/',
     paths: {
         "jquery": "jquery/dist/jquery.min",
-        "jquery.form": "jquery-form/jquery.form",
         "underscore": "underscore/underscore",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "knockout": "knockout/dist/knockout.debug",

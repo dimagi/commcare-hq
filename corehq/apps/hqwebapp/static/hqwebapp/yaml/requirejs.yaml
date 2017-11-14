@@ -16,6 +16,7 @@ modules:
       - underscore
       - bootstrap
       - hqwebapp/js/django
+      - jquery.cookie/jquery.cookie
 
   - name: hqwebapp/js/bundle
     exclude:
@@ -25,6 +26,8 @@ modules:
       - hqwebapp/js/initial_page_data
       - hqwebapp/js/main
       - hqwebapp/js/hq.helpers
+      - hqwebapp/js/layout
+      - hqwebapp/js/hq-bug-report
 
   - name: hqwebapp/js/jquery-ui
     exclude:
