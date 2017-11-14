@@ -59,7 +59,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
         linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
 
-    def test_overwrite_app_maintain_ids_true(self):
+    def test_overwrite_app_maintain_ids(self):
         module = self.plain_master_app.add_module(Module.new_module('M1', None))
         module.new_form('f1', None, self.get_xml('very_simple_form'))
 
@@ -68,7 +68,7 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
         id_map_before = _get_form_id_map(self.linked_app)
 
-        overwrite_app(self.linked_app, self.plain_master_app, {}, maintain_ids=True)
+        overwrite_app(self.linked_app, self.plain_master_app, {})
         self.assertEqual(
             id_map_before,
             _get_form_id_map(LinkedApplication.get(self.linked_app._id))
