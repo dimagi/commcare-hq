@@ -28,14 +28,18 @@ hqDefine('registration/js/new_user.ko', function () {
         throw "please call setResetEmailFeedbackFn. " +
               "Expects boolean isValidating. " + isValidating;
     };
-    _private.submitAttemptFn = function () {
-        // useful for off-module analytics
-    };
-    _private.submitSuccessFn = function () {
-        // useful for off-module analytics
+    _private.submitAttemptAnalytics = function (data) {
+        _kissmetrics.track.event("Clicked Create Account");
     };
     _private.getPhoneNumberFn = function () {
         // number to return phone number
+    };
+
+    _private.submitSuccessAnalytics = function (data) {
+        _kissmetrics.track.event("Account Creation was Successful");
+        if (_private.isAbPhoneNumber) {
+            _kissmetrics.track.event("Phone Number Field Filled Out");
+        }
     };
 
     module.setResetEmailFeedbackFn = function (callback) {
@@ -47,10 +51,6 @@ hqDefine('registration/js/new_user.ko', function () {
 
     module.setSubmitAttemptFn = function (callback) {
         _private.submitAttemptFn = callback;
-    };
-
-    module.setSubmitSuccessFn = function (callback) {
-        _private.submitSuccessFn = callback;
     };
 
     module.setGetPhoneNumberFn = function (callback) {
@@ -194,7 +194,7 @@ hqDefine('registration/js/new_user.ko', function () {
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
-                atypical_user: defaults.atypical_user
+                atypical_user: defaults.atypical_user,
             };
         };
 
@@ -296,11 +296,12 @@ hqDefine('registration/js/new_user.ko', function () {
             self.submitErrors([]);
             self.isSubmitting(true);
 
-            _private.submitAttemptFn();
+            var submitData = _getDataForSubmission();
+            _private.submitAttemptAnalytics(submitData);
             
             _private.rmi(
                 "register_new_user",
-                {data : _getDataForSubmission()},
+                {data : submitData},
                 {
                     success: function (response) {
                         if (response.errors !== undefined
@@ -315,7 +316,7 @@ hqDefine('registration/js/new_user.ko', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
-                            _private.submitSuccessFn();
+                            _private.submitSuccessAnalytics(submitData);
                         }
                     },
                     error: function () {
