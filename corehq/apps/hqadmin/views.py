@@ -4,7 +4,7 @@ import json
 import socket
 import uuid
 from StringIO import StringIO
-from collections import defaultdict, namedtuple, OrderedDict
+from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
 import dateutil
@@ -511,10 +511,14 @@ class AdminRestoreView(TemplateView):
             string_payload = ''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
-            num_locations = len(
-                xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
-                                    .format(RESPONSE_XMLNS)))
+            cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
+            num_cases = len(cases)
+            case_type_counts = dict(Counter(case.getchildren()[0].getchildren()[0].text for case in cases))
+            locations = xml_payload.findall(
+                "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
+            )
+            num_locations = len(locations)
+            location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -529,7 +533,9 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            case_type_counts = {}
             num_locations = 0
+            location_type_counts = {}
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
@@ -540,6 +546,8 @@ class AdminRestoreView(TemplateView):
             'num_cases': num_cases,
             'num_locations': num_locations,
             'hide_xml': hide_xml,
+            'case_type_counts': case_type_counts,
+            'location_type_counts': location_type_counts,
         })
         return context
 
