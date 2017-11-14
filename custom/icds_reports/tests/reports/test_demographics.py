@@ -21,7 +21,6 @@ class TestDemographics(TestCase):
                 "records": [
                     [
                         {
-                            "redirect": "registered_household",
                             "color": "red",
                             "all": None,
                             "frequency": "month",
@@ -29,10 +28,10 @@ class TestDemographics(TestCase):
                             "help_text": "Total number of households registered",
                             "percent": 0.0,
                             "value": 6964,
-                            "label": "Registered Households"
+                            "label": "Registered Households",
+                            'redirect': 'registered_household'
                         },
                         {
-                            "redirect": "adhaar",
                             "color": "green",
                             "all": 500,
                             "frequency": "month",
@@ -41,12 +40,12 @@ class TestDemographics(TestCase):
                                          " Adhaar identification has been captured",
                             "percent": 4.800000000000011,
                             "value": 131,
-                            "label": "Percent Adhaar-seeded Beneficiaries"
+                            "label": "Percent Adhaar-seeded Beneficiaries",
+                            'redirect': 'adhaar'
                         }
                     ],
                     [
                         {
-                            "redirect": "enrolled_children",
                             "color": "green",
                             "all": None,
                             "frequency": "month",
@@ -57,6 +56,7 @@ class TestDemographics(TestCase):
                             "label": "Children (0-6 years)"
                         },
                         {
+                            "redirect": "enrolled_children",
                             "color": "green",
                             "all": None,
                             "frequency": "month",
@@ -70,7 +70,6 @@ class TestDemographics(TestCase):
                     ],
                     [
                         {
-                            "redirect": "enrolled_women",
                             "color": "green",
                             "all": None,
                             "frequency": "month",
@@ -81,6 +80,7 @@ class TestDemographics(TestCase):
                             "label": "Pregnant Women"
                         },
                         {
+                            "redirect": "enrolled_women",
                             "color": "green",
                             "all": None,
                             "frequency": "month",
@@ -94,7 +94,6 @@ class TestDemographics(TestCase):
                     ],
                     [
                         {
-                            "redirect": "lactating_enrolled_women",
                             "color": "green",
                             "all": None,
                             "frequency": "month",
@@ -105,6 +104,7 @@ class TestDemographics(TestCase):
                             "label": "Lactating Women"
                         },
                         {
+                            "redirect": "lactating_enrolled_women",
                             "color": "green",
                             "all": None,
                             "frequency": "month",
@@ -118,7 +118,6 @@ class TestDemographics(TestCase):
                     ],
                     [
                         {
-                            "redirect": "adolescent_girls",
                             "color": "red",
                             "all": None,
                             "frequency": "month",
@@ -129,6 +128,7 @@ class TestDemographics(TestCase):
                             "label": "Adolescent Girls (11-18 years)"
                         },
                         {
+                            "redirect": "adolescent_girls",
                             "color": "red",
                             "all": None,
                             "frequency": "month",
