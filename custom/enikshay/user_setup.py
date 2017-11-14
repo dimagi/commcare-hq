@@ -17,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
+from corehq.apps.locations.models import LocationType
 from corehq.apps.users.forms import clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
@@ -297,6 +298,7 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             'pcp_professional_org_membership': 'pcp',
             'pac_qualification': 'pac',
             'pcp_qualification': 'pcp',
+            'facility_type': 'pcp',
             'plc_lab_collection_center_name': 'plc',
             'plc_lab_or_collection_center': 'plc',
             'plc_accredidation': 'plc',
@@ -306,10 +308,14 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             'pcc_pharmacy_affiliation': 'pcc',
             'pcc_tb_drugs_in_stock': 'pcc',
         }
+        codes_to_names = dict(LocationType.objects
+                              .filter(domain=self.domain)
+                              .values_list('code', 'name'))
 
         for i, field in enumerate(fs.fields):
             if field in fields_to_loc_types:
-                fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
+                loc_type = codes_to_names[fields_to_loc_types[field]]
+                fs[i] = _make_field_visible_to(field, loc_type)
         return form
 
     def _make_field(self, field):
