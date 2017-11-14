@@ -124,7 +124,7 @@ from corehq.apps.app_manager.util import (
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
     LatestAppInfo,
-)
+    update_report_module_ids)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -5829,7 +5829,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
 
     def scrub_source(self, source):
-        return update_unique_ids(source)
+        source = update_unique_ids(source)
+        return update_report_module_ids(source)
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
