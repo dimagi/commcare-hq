@@ -172,7 +172,7 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
         valid = (row['valid'] or 0)
         location = row['%s_name' % loc_level]
 
-        if date.month == (month - relativedelta(months=1)).month:
+        if date.month == month.month:
             if location in best_worst:
                 best_worst[location].append(valid)
             else:
