@@ -70,6 +70,7 @@ class CopyApplicationForm(forms.Form):
         if self.cleaned_data.get('linked'):
             if not LINKED_APPS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
+        return self.cleaned_data
 
 
 class PromptUpdateSettingsForm(forms.Form):
