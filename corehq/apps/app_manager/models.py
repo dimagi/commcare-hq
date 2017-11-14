@@ -22,6 +22,8 @@ When a build is starred, this is called "releasing" the build.  The parameter
 You might also run in to remote applications and applications copied to be
 published on the exchange, but those are quite infrequent.
 """
+from __future__ import absolute_import
+
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -49,7 +51,9 @@ from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
+
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
+from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -67,7 +71,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.apps.analytics.tasks import track_workflow
+from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
@@ -83,7 +87,6 @@ from corehq.apps.app_manager.xpath import (
     LocationXpath,
 )
 from corehq.apps.builds import get_default_build_spec
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -107,7 +110,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
-)
+    get_latest_released_app, get_latest_released_app_version)
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
@@ -125,7 +128,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
-from .exceptions import (
+from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     FormNotFoundException,
     IncompatibleFormTypeException,
@@ -143,7 +146,7 @@ from .exceptions import (
     UserCaseXPathValidationError,
     XFormValidationFailed,
     PracticeUserException,
-)
+    ActionNotPermitted)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -716,7 +719,7 @@ class FormSource(object):
         app = form.get_app()
         filename = "%s.xml" % unique_id
         app.lazy_put_attachment(value, filename)
-        form.validation_cache = None
+        form.clear_validation_cache()
         try:
             form.xmlns = form.wrapped_xform().data_node.tag_xmlns
         except Exception:
@@ -960,6 +963,15 @@ class FormBase(DocumentSchema):
     def get_action_type(self):
         return ''
 
+    def get_validation_cache(self):
+        return self.validation_cache
+
+    def set_validation_cache(self, cache):
+        self.validation_cache = cache
+
+    def clear_validation_cache(self):
+        self.set_validation_cache(None)
+
     @property
     def uses_cases(self):
         return (
@@ -1008,7 +1020,7 @@ class FormBase(DocumentSchema):
         return XForm(self.source)
 
     def validate_form(self):
-        vc = self.validation_cache
+        vc = self.get_validation_cache()
         if vc is None:
             # todo: now that we don't use formtranslate, does this still apply?
             # formtranslate requires all attributes to be valid xpaths, but
@@ -1024,14 +1036,15 @@ class FormBase(DocumentSchema):
                     "validation_problems": e.validation_problems,
                     "version": e.version,
                 }
-                vc = self.validation_cache = json.dumps(validation_dict)
+                vc = json.dumps(validation_dict)
             else:
-                vc = self.validation_cache = ""
+                vc = ""
+            self.set_validation_cache(vc)
         if vc:
             try:
                 raise XFormValidationError(**json.loads(vc))
             except ValueError:
-                self.validation_cache = None
+                self.clear_validation_cache()
                 return self.validate_form()
         return self
 
@@ -2695,7 +2708,9 @@ class Module(ModuleBase, ModuleDetailsMixin):
             if with_source:
                 new_form.source = form.source
         else:
-            raise IncompatibleFormTypeException()
+            raise IncompatibleFormTypeException(_('''
+                Cannot move an advanced form with actions into a basic menu.
+            '''))
 
         if index is not None:
             self.forms.insert(index, new_form)
@@ -2895,7 +2910,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     None)
 
     def disable_schedule(self):
-        self.schedule.enabled = False
+        if self.schedule:
+            self.schedule.enabled = False
         phase = self.get_phase()
         if phase:
             phase.remove_form(self)
@@ -3119,6 +3135,15 @@ class ShadowForm(AdvancedForm):
             return self.shadow_parent_form.source
         from corehq.apps.app_manager.views.utils import get_blank_form_xml
         return get_blank_form_xml("")
+
+    def get_validation_cache(self):
+        if not self.shadow_parent_form:
+            return None
+        return self.shadow_parent_form.validation_cache
+
+    def set_validation_cache(self, cache):
+        if self.shadow_parent_form:
+            self.shadow_parent_form.validation_cache = cache
 
     @property
     def xmlns(self):
@@ -3977,6 +4002,7 @@ class ReportAppConfig(DocumentSchema):
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
+    sync_delay = DecimalProperty(default=0.0)  # in hours
 
     _report = None
 
@@ -4033,11 +4059,11 @@ class ReportModule(ModuleBase):
         return module
 
     def get_details(self):
-        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_details()
 
     def get_custom_entries(self):
-        from .suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import ReportModuleSuiteHelper
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, supports_module_filter=False):
@@ -4376,7 +4402,7 @@ class VersionedDoc(LazyBlobDoc):
 
     def save(self, response_json=None, increment_version=None, **params):
         if increment_version is None:
-            increment_version = not self.copy_of
+            increment_version = not self.copy_of and self.doc_type != 'LinkedApplication'
         if increment_version:
             self.version = self.version + 1 if self.version else 1
         super(VersionedDoc, self).save(**params)
@@ -4637,6 +4663,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # domains that are allowed to have linked apps with this master
     linked_whitelist = StringListProperty()
+
+    mobile_ucr_restore_version = StringProperty(
+        default=MOBILE_UCR_VERSION_1, choices=MOBILE_UCR_VERSIONS, required=False
+    )
 
     @classmethod
     def wrap(cls, data):
@@ -5128,9 +5158,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         LatestAppInfo(self.master_id, self.domain).clear_caches()
 
-        user = getattr(view_utils.get_request(), 'couch_user', None)
+        request = view_utils.get_request()
+        user = getattr(request, 'couch_user', None)
         if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
+        send_hubspot_form(HUBSPOT_SAVED_APP_FORM_ID, request)
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 
@@ -5255,8 +5287,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
-    mobile_ucr_sync_interval = IntegerProperty()
-
     add_ons = DictProperty()
 
     def has_modules(self):
@@ -5310,7 +5340,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         for form in app.get_forms():
             # reset the form's validation cache, since the form content is
             # likely to have changed in the revert!
-            form.validation_cache = None
+            form.clear_validation_cache()
             form.version = None
 
         app.build_broken = False
@@ -5549,7 +5579,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @memoized
     def enable_update_prompts(self):
         return (
-            (self.supports_update_prompts or settings.SERVER_ENVIRONMENT == 'icds') and
+            # custom for ICDS until ICDS users are > 2.38
+            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
             toggles.PHONE_HEARTBEAT.enabled(self.domain)
         )
 
@@ -6219,12 +6250,54 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
+RemoteAppDetails = namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')
+
+
+class RemoteLinkedAppAuth(DocumentSchema):
+    username = StringProperty()
+    api_key = StringProperty()
+
+
 class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
     # This is the id of the master application
     master = StringProperty()
+    master_domain = StringProperty()
+    remote_url_base = StringProperty()
+    remote_auth = SchemaProperty(RemoteLinkedAppAuth)
+
+    _meta_fields = Application._meta_fields + ['remote_auth']
+
+    @property
+    def remote_app_details(self):
+        return RemoteAppDetails(
+            self.remote_url_base,
+            self.master_domain,
+            self.remote_auth.username,
+            self.remote_auth.api_key,
+            self.master
+        )
+
+    def get_master_version(self):
+        if self.master_is_remote:
+            return get_remote_version(self.remote_app_details)
+        else:
+            return get_latest_released_app_version(self.master_domain, self.master)
+
+    @property
+    def master_is_remote(self):
+        return bool(self.remote_url_base)
+
+    def get_latest_master_release(self):
+        if self.master_is_remote:
+            return get_remote_master_release(self.remote_app_details, self.domain)
+        else:
+            master_app = get_app(None, self.master)
+            if self.domain not in master_app.linked_whitelist:
+                raise ActionNotPermitted
+            return get_latest_released_app(master_app.domain, self.master)
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):

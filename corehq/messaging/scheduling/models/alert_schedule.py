@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
 from datetime import timedelta, time
@@ -46,6 +47,7 @@ class AlertSchedule(Schedule):
     def create_simple_alert(cls, domain, content):
         with transaction.atomic():
             schedule = cls(domain=domain)
+            schedule.ui_type = Schedule.UI_TYPE_IMMEDIATE
             schedule.save()
 
             if content.pk is None:

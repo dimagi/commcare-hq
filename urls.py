@@ -121,6 +121,7 @@ urlpatterns = [
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
     url(r'^megamobile/', include('corehq.messaging.smsbackends.megamobile.urls')),
+    url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
     url(r'^kookoo/', include('corehq.messaging.ivrbackends.kookoo.urls')),
     url(r'^yo/', include('corehq.messaging.smsbackends.yo.urls')),
@@ -170,6 +171,14 @@ if settings.DEBUG:
         ]
     except ImportError:
         pass
+
+    if 'package_monitor' in settings.INSTALLED_APPS:
+        try:
+            urlpatterns += [
+                url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
+            ]
+        except ImportError:
+            pass
 
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),

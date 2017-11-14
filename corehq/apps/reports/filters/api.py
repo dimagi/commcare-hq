@@ -1,6 +1,7 @@
 """
 API endpoints for filter options
 """
+from __future__ import absolute_import
 import logging
 
 from django.views.generic import View
@@ -276,6 +277,22 @@ class CaseListFilterOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView)
                   .size(size)
                   .sort("name.exact"))
         return map(self.utils.sharing_group_tuple, groups.run().hits)
+
+
+@location_safe
+class ReassignCaseOptions(CaseListFilterOptions):
+
+    @property
+    def data_sources(self):
+        """
+        Includes case-sharing groups but not reporting groups
+        """
+        sources = []
+        if self.request.can_access_all_locations:
+            sources.append((self.get_sharing_groups_size, self.get_sharing_groups))
+        sources.append((self.get_locations_size, self.get_locations))
+        sources.append((self.get_users_size, self.get_users))
+        return sources
 
 
 def paginate_options(data_sources, query, start, size):

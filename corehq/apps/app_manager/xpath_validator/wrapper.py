@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from corehq.apps.app_manager.xpath_validator.config import get_xpath_validator_path
 from corehq.apps.app_manager.xpath_validator.exceptions import XpathValidationError

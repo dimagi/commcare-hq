@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 import mimetypes
 import os
@@ -531,6 +532,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
 
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
+    EDIT = 'edit'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)

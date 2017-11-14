@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
@@ -18,7 +19,8 @@ def url_is_location_safe(url):
         match = resolve(url)
     except Resolver404:
         return False
-    return is_location_safe(match.func, match.args, match.kwargs)
+    # pass empty request, since we should exclude any url that requires request context
+    return is_location_safe(match.func, None, match.args, match.kwargs)
 
 
 class UITab(object):

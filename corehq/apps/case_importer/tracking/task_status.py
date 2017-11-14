@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext import jsonobject
 from soil.progress import get_task_status, STATES
 from soil.util import get_task

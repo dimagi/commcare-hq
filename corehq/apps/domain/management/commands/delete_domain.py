@@ -1,8 +1,10 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.models import Domain
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -26,7 +28,7 @@ class Command(BaseCommand):
             print(u'domain with name "{}" not found'.format(domain_name))
             return
         if not options['noinput']:
-            confirm = raw_input(
+            confirm = input(
                 u"""
                 Are you sure you want to delete the domain "{}" and all of it's data?
                 This operation is not reversible and all forms and cases will be PERMANENTLY deleted.

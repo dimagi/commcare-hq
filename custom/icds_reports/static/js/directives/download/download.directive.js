@@ -152,22 +152,11 @@ function DownloadController($location, locationHierarchy, locationsService, user
         }).join(', ');
     };
 
-    vm.getInfoMessage = function() {
-        if (vm.selectedLevel <= 1) {
-            return null;
-        } else {
-            return "Please choose " + vm.levels[vm.selectedLevel - 2].name + " to download data by " + vm.levels[vm.selectedLevel - 1].name;
-        }
-    };
-
     vm.showErrorMessage = function () {
         return vm.selectedIndicator === 6 && selectedLocationIndex() !== 4;
     };
 
     vm.getLocationsForLevel = function(level) {
-        if (vm.selectedLevel === 1) {
-            return [NATIONAL_OPTION];
-        }
         if (level === 0) {
             return locationsCache.root;
         } else {
@@ -218,11 +207,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
             }
         });
         vm.groupByLevels = levels;
-        if (selectedLocationIndex() === -1) {
-            vm.selectedLevel = 1;
-        } else if (selectedLocationIndex() > vm.selectedLevel) {
-            vm.selectedLevel = selectedLocationIndex() + 1;
-        }
+        vm.selectedLevel = selectedLocationIndex() + 1;
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];

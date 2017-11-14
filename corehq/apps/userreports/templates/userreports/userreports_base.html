@@ -61,6 +61,9 @@
                 {% if data_source.is_static %}
                     <span class="label label-default">static</span>
                 {% endif %}
+                {% if data_source.is_deactivated %}
+                    <span class="label label-default">deactivated</span>
+                {% endif %}
             </a>
         </li>
         {% endfor %}

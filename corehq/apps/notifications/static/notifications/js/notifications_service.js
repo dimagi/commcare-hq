@@ -111,6 +111,20 @@ hqDefine('notifications/js/notifications_service', function () {
         $(notificationsKoSelector).koApplyBindings(module.serviceModel);
     };
 
+    module.relativelyPositionUINotify = function (uiNotifySelector) {
+        var uiNotifyAlerts = $(uiNotifySelector);
+        _.each(uiNotifyAlerts, function (elem) {
+            var $notify = $(elem),
+                $target = $($notify.data('target'));
+
+            $notify.remove();
+            $target
+                .css('position', 'relative')
+                .append($notify);
+
+        });
+    };
+
     module.initUINotify = function (uiNotifySelector) {
         var uiNotifyAlerts = $(uiNotifySelector);
         if (uiNotifyAlerts.length > 0) {
@@ -128,7 +142,13 @@ hqDefine('notifications/js/notifications_service', function () {
         var csrfToken = $("#csrfTokenContainer").val();
         notifications.setRMI(hqImport('hqwebapp/js/initial_page_data').reverse('notifications_service'), csrfToken);
         notifications.initService('#js-settingsmenu-notifications');
+        notifications.relativelyPositionUINotify('.alert-ui-notify-relative');
         notifications.initUINotify('.alert-ui-notify');
+
+        $(document).on('click', '.notification-link', function() {
+            ga_track_event('Notification', 'Opened Message', this.href);
+        });
+        window.analytics.trackUsageLink($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     });
 
     return module;

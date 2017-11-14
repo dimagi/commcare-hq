@@ -4,6 +4,7 @@ and some autogeneration. These additions are turned on by a feature flag, but
 domain and HQ admins are excepted, in case we ever need to violate the
 assumptions laid out here.
 """
+from __future__ import absolute_import
 import math
 import re
 import uuid
@@ -155,7 +156,7 @@ def save_user_callback(sender, couch_user, **kwargs):
         changed = set_issuer_id(commcare_user.domain, commcare_user) or changed
         changed = add_drtb_hiv_to_dto(commcare_user.domain, commcare_user) or changed
         if changed:
-            commcare_user.save()
+            commcare_user.save(fire_signals=False)
 
 
 def set_default_role(domain, commcare_user):
@@ -226,11 +227,14 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
     return ''.join(output)
 
 
-def get_last_used_device_number(user):
-    if not user.devices:
-        return None
-    _, index = max((device.last_used, i) for i, device in enumerate(user.devices))
-    return index + 1
+def set_enikshay_device_id(user, device_id):
+    # device_id was JUST set, so it must be in there
+    device_number = [device.device_id for device in user.devices].index(device_id) + 1
+    if user.user_data.get('id_device_number') != device_number:
+        user.user_data['id_device_number'] = device_number
+        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+        return True
+    return False
 
 
 def set_issuer_id(domain, user):
@@ -241,12 +245,6 @@ def set_issuer_id(domain, user):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
         user.user_data['id_issuer_number'] = issuer_id.pk
         user.user_data['id_issuer_body'] = compress_nikshay_id(issuer_id.pk, 3)
-        changed = True
-
-    device_number = get_last_used_device_number(user)
-    if device_number and user.user_data.get('id_device_number', None) != device_number:
-        user.user_data['id_device_number'] = device_number
-        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
         changed = True
 
     return changed

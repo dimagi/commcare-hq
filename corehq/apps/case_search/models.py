@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import re
 import json
@@ -161,8 +162,10 @@ def replace_custom_query_variables(query_addition, criteria, ignore_patterns):
             for removal_regex in remove_char_regexs:
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)
-        query_addition = re.sub(key, value, query_addition)
+        to_add = re.escape(value)
+        query_addition = re.sub(key, to_add, query_addition)
 
+    query_addition = query_addition.replace('\\', '')
     return json.loads(query_addition)
 
 

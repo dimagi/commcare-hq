@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from corehq import toggles
 from corehq.apps.commtrack.models import CommtrackConfig

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import cgi
 from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
@@ -233,7 +234,7 @@ class MessageReport(FRIReport, DatespanMixin):
         }
         message_bank_messages = get_message_bank(self.domain, for_comparing=True)
 
-        FormProcessorInterface(self.domain).casedb_cache(
+        case_cache = FormProcessorInterface(self.domain).casedb_cache(
             domain=self.domain, strip_history=False, deleted_ok=True
         )
         user_cache = UserCache()

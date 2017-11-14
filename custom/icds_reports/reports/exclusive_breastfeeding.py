@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from collections import defaultdict, OrderedDict
@@ -8,7 +9,9 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -19,6 +22,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -81,14 +85,14 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
                     "<br/><br/>"
                     "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
                     "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -154,21 +158,19 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                 "key": "% children exclusively breastfed",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggChildHealthMonthly.objects.filter(
@@ -183,18 +185,8 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test
     if not show_test:
         data = apply_exclude(domain, data)
 
-    loc_data = {
-        'green': 0,
-        'orange': 0,
-        'red': 0
-    }
-    tmp_name = ''
-    rows_for_location = 0
-
     chart_data = {
-        'green': [],
-        'orange': [],
-        'red': []
+        'blue': [],
     }
 
     tooltips_data = defaultdict(lambda: {
@@ -202,9 +194,13 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test
         'all': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         in_month = row['in_month']
 
@@ -216,57 +212,34 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test
         for prop, value in row_values.iteritems():
             tooltips_data[name][prop] += value
 
-        if tmp_name and name != tmp_name:
-            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
-            rows_for_location = 0
-            loc_data = {
-                'green': 0,
-                'orange': 0,
-                'red': 0
-            }
         in_month = row['in_month']
 
-        value = (in_month or 0) * 100 / float(valid or 1)
+        value = (in_month or 0) / float(valid or 1)
+        chart_data['blue'].append([
+            name, value
+        ])
 
-        if value < 20.0:
-            loc_data['red'] += 1
-        elif 20.0 <= value < 60.0:
-            loc_data['orange'] += 1
-        elif value >= 60.0:
-            loc_data['green'] += 1
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
 
-        tmp_name = name
-        rows_for_location += 1
-
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
+        "info": _((
+            "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+            "<br/><br/>"
+            "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
+            "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
+        )),
         "chart_data": [
             {
-                "values": chart_data['green'],
-                "key": "0%-20%",
+                "values": chart_data['blue'],
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": BLUE
             },
-            {
-                "values": chart_data['orange'],
-                "key": "20%-60%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['red'],
-                "key": "60%-100%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": PINK
-            }
         ]
     }

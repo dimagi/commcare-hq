@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import pytz
 from django.views.decorators.http import require_POST

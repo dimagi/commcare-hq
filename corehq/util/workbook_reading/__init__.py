@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.workbook_reading.exceptions import (
     SpreadsheetFileError,
     SpreadsheetFileExtError,

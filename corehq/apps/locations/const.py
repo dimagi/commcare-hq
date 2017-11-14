@@ -21,6 +21,4 @@ LOCATION_TYPE_SHEET_HEADERS = {
     'do_delete': 'Delete(Y/N)',
     'shares_cases': 'Shares Cases Y/N',
     'view_descendants': 'View Child Cases (Y/N)',
-    'expand_from': 'Expand From',
-    'expand_to': 'Expand To',
 }

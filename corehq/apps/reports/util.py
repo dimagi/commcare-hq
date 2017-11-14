@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
@@ -15,6 +16,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
+from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 
@@ -495,3 +497,17 @@ def is_query_too_big(domain, mobile_user_and_group_slugs):
         mobile_user_and_group_slugs,
     )
     return user_es_query.count() > USER_QUERY_LIMIT
+
+
+def send_report_download_email(title, user, link):
+    subject = "%s: Requested export excel data"
+    body = "The export you requested for the '%s' report is ready.<br>" \
+           "You can download the data at the following link: %s<br><br>" \
+           "Please remember that this link will only be active for 24 hours."
+
+    send_HTML_email(
+        _(subject) % title,
+        user.get_email(),
+        _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
+        email_from=settings.DEFAULT_FROM_EMAIL
+    )

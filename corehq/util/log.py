@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -241,6 +242,15 @@ class SlowRequestFilter(Filter):
             return record.duration > self.duration_cutoff
         except (TypeError, AttributeError):
             return False
+
+
+class SuppressStaticLogs(Filter):
+    def filter(self, record):
+        try:
+            request, status_code, _ = record.args
+            return '/static/' not in request or int(status_code) != 200
+        except ValueError:
+            return True
 
 
 def display_seconds(seconds):

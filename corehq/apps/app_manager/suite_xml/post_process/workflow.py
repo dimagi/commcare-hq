@@ -293,7 +293,7 @@ class EndOfFormNavigationWorkflow(object):
                 target_frame_children = self.helper.get_frame_children(target_form)
                 if link.datums:
                     frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_manual_values(
-                        target_frame_children, link.datums
+                        target_frame_children, link.datums, form
                     )
                 else:
                     frame_children = WorkflowHelper.get_datums_matched_to_source(
@@ -315,6 +315,8 @@ class EndOfFormNavigationWorkflow(object):
             if form.post_form_workflow_fallback:
                 # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
                 link_xpaths = [link.xpath for link in form.form_links]
+                # remove any empty string
+                link_xpaths = filter(lambda x: x.strip(), link_xpaths)
                 if link_xpaths:
                     negate_of_all_link_paths = (
                         ' and '.join(
@@ -334,7 +336,7 @@ class EndOfFormNavigationWorkflow(object):
         return stack_frames
 
     @staticmethod
-    def get_datums_matched_to_manual_values(target_frame_elements, manual_values):
+    def get_datums_matched_to_manual_values(target_frame_elements, manual_values, form):
         """
         Attempt to match the target session variables with ones that the user
         has entered manually
@@ -348,8 +350,8 @@ class EndOfFormNavigationWorkflow(object):
                 if manual_value:
                     yield StackDatum(id=child.id, value=manual_value)
                 else:
-                    raise SuiteValidationError("Unable to link forms, missing form variable: {}".format(
-                        child.id
+                    raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
+                        form.default_name(), child.id
                     ))
 
 

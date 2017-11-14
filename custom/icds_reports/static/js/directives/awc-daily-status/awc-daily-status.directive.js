@@ -20,8 +20,8 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         legendTitle: 'Percentage AWCs',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['month', 'age', 'gender'];
@@ -61,14 +61,22 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
 
     vm.loadData = function () {
-        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
-            vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector View';
-        } else {
-            vm.mode = 'map';
-            vm.steps['map'].label = 'Map View';
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
         }
 
+        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
+            vm.mode = 'sector';
+            vm.steps['map'].label = loc_type + ' View';
+        } else {
+            vm.mode = 'map';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
+        }
 
         vm.myPromise = icdsCasReachService.getAwcDailyStatusData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
@@ -76,10 +84,22 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [0, (max + range/10).toFixed(2)];
             }
         });
     };
@@ -158,7 +178,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(",")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -168,16 +188,16 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return d3.format(",.2f")(day['y']);
+                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num.x)) === date;});
+                        return day.y;
                     };
 
-                    var total = findValue(vm.chartData[1].values, d.value);
-                    var value = findValue(vm.chartData[0].values, d.value);
+                    var total = findValue(vm.chartData[0].values, d.value);
+                    var value = findValue(vm.chartData[1].values, d.value);
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of AWCs that were open yesterday: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of AWCs that were open yesterday: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
                     tooltip_content += "<p>% of AWCs open yesterday: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;
@@ -196,8 +216,8 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         },
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

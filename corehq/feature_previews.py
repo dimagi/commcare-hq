@@ -3,6 +3,7 @@ Feature Previews are built on top of toggle, so if you migrate a toggle to
 a feature preview, you shouldn't need to migrate the data, as long as the
 slug is kept intact.
 """
+from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 

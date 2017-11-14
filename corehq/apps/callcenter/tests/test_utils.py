@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from datetime import datetime, timedelta
 from casexml.apps.case.mock import CaseFactory, CaseStructure

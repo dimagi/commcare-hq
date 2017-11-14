@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from custom.enikshay.const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -15,7 +17,7 @@ class Command(BaseCommand):
             print " ", field.slug
 
     def confirm(self):
-        return raw_input("Continue?\n(y/n)") == 'y'
+        return input("Continue?\n(y/n)") == 'y'
 
     def handle(self, domain, **options):
         self.user_data = CustomDataFieldsDefinition.get_or_create(

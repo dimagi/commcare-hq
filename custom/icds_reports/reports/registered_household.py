@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -6,7 +7,9 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -18,6 +21,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_registered_household_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -59,19 +63,16 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
-                "info": _("Total number of households registered"),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                "info": _("Total number of households registered")
             },
             "data": map_data,
         }
     ]
 
 
-def get_registered_household_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_registered_household_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
 
@@ -94,9 +95,13 @@ def get_registered_household_sector_data(domain, config, loc_level, show_test=Fa
         'household': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         name = row['%s_name' % loc_level]
         household = row['household']
+        result_set.add(name)
 
         row_values = {
             'household': household
@@ -107,12 +112,20 @@ def get_registered_household_sector_data(domain, config, loc_level, show_test=Fa
     for name, value_dict in tooltips_data.iteritems():
         chart_data['blue'].append([name, value_dict['household'] or 0])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
+        "format": "number",
+        "info": _("Total number of households registered"),
         "chart_data": [
             {
                 "values": chart_data['blue'],
-                "key": "Registered household",
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": BLUE
@@ -121,6 +134,7 @@ def get_registered_household_sector_data(domain, config, loc_level, show_test=Fa
     }
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_registered_household_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -155,18 +169,19 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
         household = (row['household'] or 0)
         location = row['%s_name' % loc_level]
 
-        if location in best_worst:
-            best_worst[location].append(household)
-        else:
-            best_worst[location] = [household]
+        if date.month == (month - relativedelta(months=1)).month:
+            if location in best_worst:
+                best_worst[location].append(household)
+            else:
+                best_worst[location] = [household]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['blue'][date_in_miliseconds]['y'] += household
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
-        key=lambda x: x['percent'],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['value'],
         reverse=True
     )
 
@@ -183,11 +198,11 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "Registered Households",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }

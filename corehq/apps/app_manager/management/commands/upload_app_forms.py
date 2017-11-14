@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand, CommandError
 
 import os
@@ -51,8 +52,6 @@ class Command(BaseCommand):
             user = CouchUser.get_by_username(options['user'])
             if not user:
                 raise CommandError("Couldn't find user with username {}".format(options['user']))
-
-        # todo: would be nice if this worked off remote servers too
 
         app = Application.get(app_id)
         for module_dir in os.listdir(path):

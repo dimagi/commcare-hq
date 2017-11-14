@@ -23,6 +23,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                             menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                         }, gettext('Waiting for server progress'));
                     } else if (response.hasOwnProperty('exception')){
+                        FormplayerFrontend.trigger('clearProgress');
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
@@ -53,7 +54,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     defer.reject();
                 },
             };
-
             options.data = JSON.stringify({
                 "username": user.username,
                 "restoreAs": user.restoreAs,
@@ -71,6 +71,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "isPersistent": params.isPersistent,
                 "useLiveQuery": user.useLiveQuery,
                 "sortIndex": params.sortIndex,
+                "preview": params.preview,
             });
             options.url = formplayerUrl + '/' + route;
 

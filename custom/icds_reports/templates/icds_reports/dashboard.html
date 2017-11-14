@@ -15,13 +15,16 @@
               href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
+
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/css/angular-datatables.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
         <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.js' %}"></script>
+        <script src="{% static 'jquery-form/jquery.form.js' %}"></script>
         <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
         <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
@@ -39,6 +42,8 @@
         <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
         <script type="text/javascript" src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
         <script type="text/javascript" src="{% static 'angular-leaflet-directive/dist/angular-leaflet-directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'topojson/topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
@@ -74,7 +79,7 @@
         <script type="text/javascript" src="{% static 'js/directives/awc-opened-yesterday/awc-opened-yesterday.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/prevalence-of-severe-report/prevalence-of-severe-report.directive.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/directives/prevalence-of-stunning-report/prevalence-of-stunning-report.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/prevalence-of-stunting-report/prevalence-of-stunting-report.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/newborn_with_low_weight/newborn_with_low_weight.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/early_initiation_breastfeeding/early_initiation_breastfeeding.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
@@ -127,13 +132,25 @@
                                             </span>
                                         </li>
                                         <li class="dropdown">
-                                            <span id="settingsmenu-projectSettings"
+                                            <span ng-if="!isWebUser" id="settingsmenu-projectSettings"
                                                   ng-click="reportAnIssue()"
                                                   class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                   data-toggle="dropdown">
                                                 <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
                                                    popover-placement="left"
                                                    popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
+                                            </span>
+                                            <span ng-if="isWebUser" id="settingsmenu-projectSettings"
+                                                  class="dropdown-toggle dropdown-toggle-with-icon pointer"
+                                                  data-toggle="dropdown">
+                                                  <a data-target="#modalReportIssue" data-toggle="modal">
+                                                   <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
+                                                      popover-placement="left"
+                                                      popover-trigger="'mouseenter'"
+                                                      style="margin-top: 11px;"></i>
+
+                                                  </a>
+
                                             </span>
                                         </li>
                                         <li class="dropdown">
@@ -194,12 +211,12 @@
                     {% registerurl 'awc_reports' domain '---' %}
                     {% registerurl 'underweight_children' domain '---' %}
                     {% registerurl 'prevalence_of_severe' domain '---' %}
-                    {% registerurl 'prevalence_of_stunning' domain '---' %}
+                    {% registerurl 'prevalence_of_stunting' domain '---' %}
                     {% registerurl 'low_birth' domain '---' %}
                     {% registerurl 'early_initiation' domain '---' %}
                     {% registerurl 'icds_locations' domain %}
                     {% registerurl 'icds_locations_ancestors' domain %}
-                    {% registerurl 'progress_report' domain %}
+                    {% registerurl 'fact_sheets' domain %}
                     {% registerurl 'exclusive-breastfeeding' domain '---' %}
                     {% registerurl 'children_initiated' domain '---' %}
                     {% registerurl 'institutional_deliveries' domain '---' %}
@@ -233,6 +250,8 @@
            <button ng-click="$dismiss()" class="btn btn-primary">Close</button>
         </div>
     </script>
+    {% include 'hqwebapp/includes/modal_report_issue.html' %}
+    <script type="text/javascript" src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
 </div>
 
 <div class="commcarehq-urls" class="hide">
@@ -246,6 +265,22 @@
     angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
     angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
     angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
+    angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
+    angular.module('icdsApp').constant('genders', [
+        {id: '', name: 'All'},
+        {id: 'M', name: 'Male'},
+        {id: 'F', name: 'Female'},
+    ]);
+    angular.module('icdsApp').constant('ages', [
+        {id: '', name: 'All'},
+        {id: '6', name: '0-6 months'},
+        {id: '12', name: '6-12 months'},
+        {id: '24', name: '12-24 months'},
+        {id: '36', name: '24-36 months'},
+        {id: '48', name: '36-48 months'},
+        {id: '60', name: '48-60 months'},
+        {id: '72', name: '60-72 months'},
+    ]);
     angular.module('icdsApp').value('cgBusyDefaults', {
       message:'Loading data',
       backdrop: true,

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db.models.aggregates import Avg, Max
 from custom.ilsgateway.tanzania import ILSData
 

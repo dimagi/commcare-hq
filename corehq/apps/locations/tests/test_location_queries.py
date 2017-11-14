@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from ..models import SQLLocation
 from .util import LocationHierarchyTestCase
 from corehq.apps.users.models import WebUser

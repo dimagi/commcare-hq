@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.ivr.api import log_error, GatewayConnectionError
 from corehq.apps.ivr.models import SQLIVRBackend
 from corehq.apps.sms.models import MessagingEvent

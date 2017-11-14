@@ -1,7 +1,9 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.models import Domain
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -10,7 +12,7 @@ class Command(BaseCommand):
         parser.add_argument('report_type')
 
     def handle(self, report_type, **options):
-        if raw_input(
+        if input(
                 'Really delete all reports of type {}? (y/n)\n'.format(report_type)).lower() == 'y':
             for domain in Domain.get_all():
                 save_domain = False

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 from datetime import datetime
 from couchdbkit import ResourceNotFound
@@ -7,6 +8,7 @@ from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.utils import get_pillow_by_name
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -47,7 +49,7 @@ class Command(BaseCommand):
                 checkpoint_doc['seq'] = config.seq
                 checkpoints.append(checkpoint_doc)
 
-        if raw_input('Commit the above resets to the database? (y/n) \n').lower() == 'y':
+        if input('Commit the above resets to the database? (y/n) \n').lower() == 'y':
             db.bulk_save(checkpoints)
         else:
             print('pillow checkpoints not saved.')

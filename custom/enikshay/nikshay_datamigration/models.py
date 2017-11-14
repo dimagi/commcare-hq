@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date, datetime
 
 from django.db import models
@@ -138,7 +139,7 @@ class PatientDetail(models.Model):
         }.get(self.dcexpulmunory.strip(), 'other')
 
     @property
-    def patient_type_choice(self):
+    def deprecated_patient_type_choice(self):
         category_to_status = {
             '1': 'new',
             '2': 'recurrent',
@@ -152,6 +153,18 @@ class PatientDetail(models.Model):
             '5': category_to_status[self.pcategory],
             '6': category_to_status[self.pcategory],
             '7': category_to_status[self.pcategory],
+        }[self.Ptype]
+
+    @property
+    def patient_type_choice(self):
+        return {
+            '1': 'new',
+            '2': 'recurrent',
+            '3': 'treatment_after_failure',
+            '4': 'treatment_after_lfu',
+            '5': 'new',
+            '6': 'other_previously_treated',
+            '7': 'transfer_in',
         }[self.Ptype]
 
     @property

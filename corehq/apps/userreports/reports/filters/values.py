@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from collections import namedtuple
 
@@ -140,7 +141,7 @@ class QuarterFilterValue(FilterValue):
 class IsDistinctFromFilter(BasicFilter):
 
     def build_expression(self, table):
-        return get_column(table, self.column_name).is_distinct_from(self.parameter)
+        return get_column(table, self.column_name).is_distinct_from(bindparam(self.parameter))
 
 
 class NumericFilterValue(FilterValue):

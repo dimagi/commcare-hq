@@ -259,13 +259,22 @@ hqDefine("accounting/js/accounting.software_plan_version_handler", function() {
             if (result.isNew) {
                 return '<span class="label label-success">New</span> ' + result.text;
             }
-            return result.name + ' <span class="label">' + result.rate_type + '</span>';
+            if (_.has(result, 'rate_type')) {
+                return result.name + ' <span class="label">' + result.rate_type + '</span>';
+            } else {
+                return result.name;
+            }
+
         };
     
         self.formatSelection = function (result) {
             self.isNew(!!result.isNew);
             self.isExisting(!!result.isExisting);
-            return result.text || (result.name + ' [' + result.rate_type + ']');
+            if (_.has(result, 'rate_type')) {
+                return result.text || (result.name + ' [' + result.rate_type + ']');
+            } else {
+                return result.text || result.name;
+            }
         };
     
         self.getInitialData = function (element) {
@@ -343,14 +352,13 @@ hqDefine("accounting/js/accounting.software_plan_version_handler", function() {
         var self = this;
     
         self.name = ko.observable(data.name);
-        self.product_type = ko.observable(data.product_type);
         self.product_rate_id = ko.observable(data.product_rate_id);
         self.rate_id = ko.observable(data.rate_id);
         self.monthly_fee = ko.observable(data.monthly_fee);
     
         self.asJSON = function () {
             var result = {};
-            _.each(['name', 'product_type', 'product_rate_id', 'rate_id', 'monthly_fee'], function (field) {
+            _.each(['name', 'product_rate_id', 'rate_id', 'monthly_fee'], function (field) {
                 result[field] = self[field]();
             });
             return result;

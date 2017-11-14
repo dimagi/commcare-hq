@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 import re
 from corehq import toggles
@@ -143,6 +144,18 @@ def enikshay_fixture_instances(domain, instance_name):
 @register_factory('commcare')
 def commcare_fixture_instances(domain, instance_name):
     if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('commcare-reports')
+def commcare_reports_fixture_instances(domain, instance_name):
+    if instance_name.startswith('commcare-reports:') and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('commcare-reports-filters')
+def commcare_reports_filters_instances(domain, instance_name):
+    if instance_name.startswith('commcare-reports-filters:') and toggles.MOBILE_UCR.enabled(domain):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -277,7 +278,7 @@ class ConfigurableDataSourceFromAppForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Create Data Source from Application"),
-                *report_source_fields.keys()
+                *list(report_source_fields)
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

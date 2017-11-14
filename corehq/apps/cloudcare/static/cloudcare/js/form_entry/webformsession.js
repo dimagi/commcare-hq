@@ -454,10 +454,17 @@ WebFormSession.prototype.submitForm = function(form) {
                 form.submitting();
                 self.onsubmit(resp);
             } else {
-                $.each(resp.errors, function(ix, error) {
+                $.each(resp.errors, function (ix, error) {
                     self.serverError(getForIx(form, ix), error);
                 });
-                alert('There are errors in this form; they must be corrected before the form can be submitted.');
+                if (resp.notification) {
+                    alert("Form submission failed with error: \n\n"
+                        + resp.notification.message + ". \n\n " +
+                        "This must be corrected before the form can be submitted.");
+                } else {
+                    alert("There are errors in this form's answers. " +
+                        "These must be corrected before the form can be submitted.");
+                }
             }
         },
         true);

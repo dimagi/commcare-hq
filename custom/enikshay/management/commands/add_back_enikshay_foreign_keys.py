@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django.db import connections
 from django.core.management.base import BaseCommand

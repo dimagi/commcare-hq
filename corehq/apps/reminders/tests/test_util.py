@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.reminders.util import get_two_way_number_for_recipient

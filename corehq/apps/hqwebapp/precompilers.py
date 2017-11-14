@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 
 from compressor.filters import CompilerFilter
@@ -16,7 +17,7 @@ class LessFilter(CompilerFilter):
             options = list(self.options)
 
             # interim use b3 lessc path until final switchover
-            lessc_path = settings.LESS_FOR_BOOTSTRAP_3_BINARY or 'lessc'
+            lessc_path = 'lessc'
 
             options.append(('lessc', lessc_path))
             self.options = tuple(options)

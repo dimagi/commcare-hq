@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 import simplejson
 from elasticsearch.exceptions import NotFoundError
@@ -6,6 +7,7 @@ from elasticsearch.exceptions import NotFoundError
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
 from pillowtop.es_utils import assume_alias
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -41,7 +43,7 @@ class Command(BaseCommand):
         es = get_es_new()
         es_indices = list(get_all_expected_es_indices())
         if code_red:
-            if raw_input('\n'.join([
+            if input('\n'.join([
                 'CODE RED!!!',
                 'Really delete ALL the elastic indices and pillow checkpoints?',
                 'The following indices will be affected:',

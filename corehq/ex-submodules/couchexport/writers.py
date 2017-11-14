@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from base64 import b64decode
 from codecs import BOM_UTF8
 import os
@@ -259,10 +260,15 @@ class OnDiskExportWriter(ExportWriter):
 
     def _write_row(self, sheet_index, row):
 
-        def _encode_if_needed(val):
-            return val.encode("utf8") if isinstance(val, unicode) else val
-        row = map(_encode_if_needed, row)
+        def _transform(val):
+            if isinstance(val, unicode):
+                return val.encode("utf8")
+            elif val is None:
+                return ''
+            else:
+                return val
 
+        row = map(_transform, row)
         self.tables[sheet_index].write_row(row)
 
     def _close(self):

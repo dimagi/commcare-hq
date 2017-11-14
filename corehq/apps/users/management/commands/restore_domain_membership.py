@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 
 from couchdbkit import ResourceNotFound
@@ -9,6 +10,7 @@ from corehq.apps.change_feed.topics import COMMCARE_USER, get_multi_topic_offset
     get_multi_topic_first_available_offsets
 from corehq.apps.users.models import DomainMembership, CommCareUser
 from corehq.util.decorators import change_log_level
+from six.moves import input
 
 defaults = DomainMembership().to_json()
 del defaults['domain']
@@ -234,4 +236,4 @@ class FindFirstMatch(object):
 
 
 def confirm(msg):
-    return raw_input(msg + "\n(y/n)") == 'y'
+    return input(msg + "\n(y/n)") == 'y'

@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import re
 from django.test import SimpleTestCase
 from mock import Mock
-import tasks
+from . import tasks
 
 
 def iter_cases_to_modify():

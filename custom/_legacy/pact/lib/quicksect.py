@@ -11,6 +11,7 @@ source:
 http://bitbucket.org/james_taylor/bx-python/src/14b6a6c95da6/lib/bx/intervals/operations/quicksect.py
 """
 from __future__ import print_function
+from __future__ import absolute_import
 import time
 import random
 

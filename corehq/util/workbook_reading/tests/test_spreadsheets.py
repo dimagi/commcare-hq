@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, date, time
 from itertools import izip_longest
 from django.test import SimpleTestCase

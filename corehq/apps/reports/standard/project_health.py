@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -289,6 +290,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
+    js_scripts = ['reports/js/project_health_dashboard.js']
 
     @property
     @memoized

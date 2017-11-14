@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import re
 from django.contrib import messages
@@ -217,7 +218,7 @@ class EditPillowError(BasePageView):
                     PillowError.objects.filter(id__in=error_ids).delete()
                 elif action == ACTION_RESET:
                     PillowError.objects.filter(id__in=error_ids).\
-                        update(current_attempt=0, date_next_attempt=datetime.utcnow(), queued=False)
+                        update(current_attempt=0, date_next_attempt=datetime.utcnow())
                 elif action == ACTION_SEND:
                     self.bug_report(request.couch_user, error_ids[0])
 

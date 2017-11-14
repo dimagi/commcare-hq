@@ -126,9 +126,6 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
-# Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
-CSRF_SOFT_MODE = True
-
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -136,18 +133,19 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.users.middleware.Enforce2FAMiddleware',
     'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
+    'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
     'casexml.apps.phone.middleware.SyncTokenMiddleware',
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
@@ -418,7 +416,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
-
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
@@ -468,8 +465,6 @@ CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
 # These are non-standard setting names that are used in localsettings
 # The standard variables are then set to these variables after localsettings
 # Todo: Change to use standard settings variables
-# Todo: Will require changing salt pillar and localsettings template
-# Todo: or more likely in ansible once that's a thing
 EMAIL_LOGIN = "user@domain.com"
 EMAIL_PASSWORD = "changeme"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
@@ -482,23 +477,24 @@ BUG_REPORT_RECIPIENTS = ()
 EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
 # the physical server emailing - differentiate if needed
-SERVER_EMAIL = 'commcarehq-noreply@dimagi.com'
-DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
-SUPPORT_EMAIL = "support@dimagi.com"
-PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
-CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
-ACCOUNTS_EMAIL = 'accounts@dimagi.com'
-DATA_EMAIL = 'datatree@dimagi.com'
-SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
-INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
-BILLING_EMAIL = 'billing-comm@dimagi.com'
-INVOICING_CONTACT_EMAIL = 'billing-support@dimagi.com'
-MASTER_LIST_EMAIL = 'master-list@dimagi.com'
-REPORT_BUILDER_ADD_ON_EMAIL = 'sales' + '@' + 'dimagi.com'
-EULA_CHANGE_EMAIL = 'eula-notifications@dimagi.com'
-CONTACT_EMAIL = 'info@dimagi.com'
+SERVER_EMAIL = 'commcarehq-noreply@example.com'
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
+SUPPORT_EMAIL = "support@example.com"
+PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
+CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@example.com'
+ACCOUNTS_EMAIL = 'accounts@example.com'
+DATA_EMAIL = 'datatree@example.com'
+SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
+INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
+BILLING_EMAIL = 'billing-comm@example.com'
+INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+MASTER_LIST_EMAIL = 'master-list@example.com'
+REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
+EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+CONTACT_EMAIL = 'info@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
-SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@dimagi.com'
+SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
+DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
@@ -524,6 +520,7 @@ FIXTURE_GENERATORS = {
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
         "corehq.apps.app_manager.fixtures.report_fixture_generator",
+        "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
         "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
@@ -675,9 +672,6 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 # again.
 PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
 
-# Number of minutes a celery task will alot for itself (via lock timeout)
-PILLOW_RETRY_PROCESSING_LOCK_TIMEOUT = 5
-
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
 
@@ -801,8 +795,6 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
-
-LESS_FOR_BOOTSTRAP_3_BINARY = '/opt/lessc/bin/lessc'
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
@@ -981,6 +973,16 @@ try:
 except NameError:
     COUCH_DATABASES = _determine_couch_databases(None)
 
+# Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
+# hosting environments use pgBouncer with transaction pooling. For more information, see:
+# https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
+for database in DATABASES.values():
+    if (
+        database['ENGINE'] == 'django.db.backends.postgresql_psycopg2' and
+        database.get('DISABLE_SERVER_SIDE_CURSORS') is None
+    ):
+        database['DISABLE_SERVER_SIDE_CURSORS'] = True
+
 
 _location = lambda x: os.path.join(FILEPATH, x)
 
@@ -1050,6 +1052,9 @@ LOGGING = {
     'filters': {
         'hqcontext': {
             '()': 'corehq.util.log.HQRequestFilter',
+        },
+        'exclude_static': {
+            '()': 'corehq.util.log.SuppressStaticLogs',
         },
     },
     'handlers': {
@@ -1160,12 +1165,11 @@ LOGGING = {
             'backupCount': 200  # Backup 2000 MB of logs
         }
     },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['console', 'file'],
+    },
     'loggers': {
-        '': {
-            'handlers': ['console', 'file'],
-            'propagate': True,
-            'level': 'INFO',
-        },
         'couchdbkit.request': {
             'handlers': ['couch-request-handler'],
             'level': 'DEBUG',
@@ -1175,6 +1179,12 @@ LOGGING = {
             'handlers': ['sentry'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+            'filters': ['exclude_static'],
         },
         'django.security.DisallowedHost': {
             'handlers': ['null'],
@@ -1468,7 +1478,7 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error alert-danger',
+    messages.WARNING: 'alert-error alert-warning',
     messages.ERROR: 'alert-error alert-danger',
 }
 
@@ -1860,7 +1870,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'adherence.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'adherence.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
@@ -1950,31 +1960,29 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v3.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode_for_adherence_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
@@ -2050,6 +2058,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
     ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
+    ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -2221,3 +2230,5 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
             'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
         }
     ]
+
+PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')

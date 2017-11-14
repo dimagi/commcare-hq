@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from itertools import imap
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es import UserES
@@ -10,6 +11,38 @@ def get_all_commcare_users_by_domain(domain):
     """Returns all CommCareUsers by domain regardless of their active status"""
     ids = get_all_user_ids_by_domain(domain, include_web_users=False)
     return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), ids))
+
+
+def get_commcare_users_by_filters(domain, user_filters, count_only=False):
+    """
+    Returns CommCareUsers in domain per given filters. If user_filters is empty
+        returns all users in the domain
+
+    args:
+        user_filters: a dict with below structure.
+            {'role_id': <Role ID to filter users by>,
+             'search_string': <string to search users by username>}
+    kwargs:
+        count_only: If True, returns count of search results
+    """
+    role_id = user_filters.get('role_id', None)
+    search_string = user_filters.get('search_string', None)
+    query = UserES().domain(domain).mobile_users()
+    if not role_id and not search_string:
+        if count_only:
+            query.count()
+        else:
+            return get_all_commcare_users_by_domain(domain)
+
+    if role_id:
+        query = query.role_id(role_id)
+    if search_string:
+        query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
+
+    if count_only:
+        return query.count()
+    user_ids = [u['_id'] for u in query.source(['_id']).run().hits]
+    return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), user_ids))
 
 
 def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):

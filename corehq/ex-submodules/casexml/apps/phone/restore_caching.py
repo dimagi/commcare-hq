@@ -1,6 +1,9 @@
+from __future__ import absolute_import
 import hashlib
 import logging
 from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
+from corehq.toggles import ENABLE_LOADTEST_USERS
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 logger = logging.getLogger(__name__)
@@ -26,6 +29,16 @@ class _CacheAccessor(object):
         get_redis_default_cache().delete(self.cache_key)
 
 
+@quickcache(['domain', 'user_id'], timeout=24 * 60 * 60)
+def get_loadtest_factor_for_user(domain, user_id):
+    from corehq.apps.users.models import CouchUser, CommCareUser
+    if ENABLE_LOADTEST_USERS.enabled(domain) and user_id:
+        user = CouchUser.get_by_user_id(user_id, domain=domain)
+        if isinstance(user, CommCareUser):
+            return user.loadtest_factor or 1
+    return 1
+
+
 class RestorePayloadPathCache(_CacheAccessor):
     timeout = 24 * 60 * 60
 
@@ -36,12 +49,13 @@ class RestorePayloadPathCache(_CacheAccessor):
     @staticmethod
     def _make_cache_key(domain, user_id, sync_log_id, device_id):
         # to invalidate all restore cache keys, increment the number below
-        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id}'.format(
+        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor}'.format(
             domain=domain,
             prefix=RESTORE_CACHE_KEY_PREFIX,
             user=user_id,
             sync_log_id=sync_log_id or '',
             device_id=device_id or '',
+            loadtest_factor=get_loadtest_factor_for_user(domain, user_id),
         )
         return hashlib.md5(hashable_key).hexdigest()
 
@@ -56,11 +70,12 @@ class AsyncRestoreTaskIdCache(_CacheAccessor):
     @staticmethod
     def _make_cache_key(domain, user_id, sync_log_id, device_id):
         # to invalidate all restore cache keys, increment the number below
-        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id}'.format(
+        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor}'.format(
             domain=domain,
             prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
             user=user_id,
             sync_log_id=sync_log_id or '',
             device_id=device_id or '',
+            loadtest_factor=get_loadtest_factor_for_user(domain, user_id),
         )
         return hashlib.md5(hashable_key).hexdigest()

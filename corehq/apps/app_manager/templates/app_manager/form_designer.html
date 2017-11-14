@@ -1,7 +1,8 @@
 {% extends 'app_manager/managed_app.html'%}
-{% load xforms_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load xforms_extras %}
 
 {% block head %}{{ block.super }}
     {% if include_fullstory %}
@@ -24,12 +25,14 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'moment/moment.js' %}"></script>
-    <script src="{% static 'requirejs/require.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
-    <script src="{% static 'js/ws4redis.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+    {% compress js %}
+        <script src="{% static 'moment/moment.js' %}"></script>
+        <script src="{% static 'requirejs/require.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
+        <script src="{% static 'js/ws4redis.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -52,6 +55,14 @@
     {% initial_page_data 'vellum_options' vellum_options %}
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
     <div id="formdesigner" class="clearfix loading"></div>
+
+    <script type="text/html" id="js-fd-manage-case">
+      <div class="btn-group pull-right">
+        <a class="btn btn-manage" href="{% url "view_form" domain app.id form.unique_id %}">
+          <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
+        </a>
+      </div>
+    </script>
 
     <script type="text/html" id="fd-hq-helptext-registration">
         <h4>{% blocktrans %}This is a <i class="fcc fcc-app-createform"></i> Registration Form.{% endblocktrans %}</h4>

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -6,7 +7,9 @@ from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -17,6 +20,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -35,6 +39,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+        if 'age_tranche' not in config:
+            queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     map_data = {}
@@ -89,19 +95,21 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                 "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
                 "info": _((
                     "Percentage of children between 6 - 60 months enrolled for ICDS services with "
-                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+                    "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
                     "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                    "undernutrition usually as a consequence of insufficient food intake or a high "
-                    "incidence of infectious diseases."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                    "Wasting in children is a symptom of acute undernutrition usually as a consequence "
+                    "of insufficient food intake or a high incidence of infectious diseases. Severe Acute "
+                    "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
+                    "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
+                    "status for a child that has moderate wasting (weight-for-height) below -2Z."
+                ))
             },
             "data": map_data,
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -122,6 +130,8 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
+    if 'age_tranche' not in config:
+        chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
 
     data = {
         'red': OrderedDict(),
@@ -177,7 +187,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% normal",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
@@ -190,7 +200,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% moderately wasted (moderate acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": ORANGE
+                "color": ChartColors.ORANGE
             },
             {
                 "values": [
@@ -203,21 +213,19 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "key": "% severely wasted (severe acute malnutrition)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": ChartColors.RED
             }
         ],
         "all_locations": top_locations,
-        "top_three": top_locations[0:5],
-        "bottom_three": top_locations[-6:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "top_five": top_locations[:5],
+        "bottom_five": top_locations[-5:],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
-    if loc_level == LocationTypes.SUPERVISOR:
-        config['aggregation_level'] += 1
-        group_by.append('%s_name' % LocationTypes.AWC)
 
     config['month'] = datetime(*config['month'])
     data = AggChildHealthMonthly.objects.filter(
@@ -234,19 +242,11 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=Fa
 
     if not show_test:
         data = apply_exclude(domain, data)
-
-    loc_data = {
-        'green': 0,
-        'orange': 0,
-        'red': 0
-    }
-    tmp_name = ''
-    rows_for_location = 0
+    if 'age_tranche' not in config:
+        data = data.exclude(age_tranche__in=[0, 6, 72])
 
     chart_data = {
-        'green': [],
-        'orange': [],
-        'red': []
+        'blue': [],
     }
 
     tooltips_data = defaultdict(lambda: {
@@ -257,20 +257,14 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=Fa
         'total_measured': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
-        if tmp_name and name != tmp_name:
-            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
-            rows_for_location = 0
-            loc_data = {
-                'green': 0,
-                'orange': 0,
-                'red': 0
-            }
         severe = row['severe']
         moderate = row['moderate']
         normal = row['normal']
@@ -282,45 +276,34 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, show_test=Fa
         tooltips_data[name]['normal'] += normal
         tooltips_data[name]['total_measured'] += total_measured
 
-        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
+        value = ((moderate or 0) + (severe or 0)) / float(valid or 1)
+        chart_data['blue'].append([
+            name, value
+        ])
 
-        if value < 5.0:
-            loc_data['green'] += 1
-        elif 5.0 <= value <= 7.0:
-            loc_data['orange'] += 1
-        elif value > 7.0:
-            loc_data['red'] += 1
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
 
-        tmp_name = name
-        rows_for_location += 1
-
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
+        "info": _((
+            "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+            "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+            "<br/><br/>"
+            "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+            "undernutrition usually as a consequence of insufficient food intake or a high "
+            "incidence of infectious diseases."
+        )),
         "chart_data": [
             {
-                "values": chart_data['green'],
-                "key": "0%-5%",
+                "values": chart_data['blue'],
+                "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": BLUE
             },
-            {
-                "values": chart_data['orange'],
-                "key": "5%-7%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": chart_data['red'],
-                "key": "7%-100%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
-            }
         ]
     }

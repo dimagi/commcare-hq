@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 import logging
 from copy import copy
 from datetime import datetime
@@ -29,6 +30,7 @@ from soil.progress import set_task_progress
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
@@ -47,7 +49,7 @@ from corehq.apps.app_manager.models import (
     Application, AdvancedFormActions, RemoteApp, OpenSubCaseAction, CaseIndex
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
@@ -85,7 +87,7 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN)
+    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -99,6 +101,10 @@ from corehq.apps.export.utils import (
 )
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
+
+
+class PossibleHeterogenousDataException(AttributeError):
+    pass
 
 
 class PathNode(DocumentSchema):
@@ -453,10 +459,19 @@ class TableConfiguration(DocumentSchema):
         :param row_number: number indicating this documents index in the sequence of all documents in the export
         :return: List of ExportRows
         """
-        sub_documents = self._get_sub_documents(document, row_number)
+        document_id = document.get('_id')
+
+        try:
+            sub_documents = self._get_sub_documents(document, row_number)
+        except PossibleHeterogenousDataException as e:
+            doc = e.args[0]
+            path_name = e.args[1]
+            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+            _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
+                document_id, doc, path_name))
+            raise
 
         domain = document.get('domain')
-        document_id = document.get('_id')
 
         assert domain is not None, 'Form or Case must be associated with domain'
         assert document_id is not None, 'Form or Case must have an id'
@@ -530,7 +545,10 @@ class TableConfiguration(DocumentSchema):
             doc = row_doc.doc
             row_index = row_doc.row
 
-            next_doc = doc.get(path[0].name, {})
+            try:
+                next_doc = doc.get(path[0].name, {})
+            except AttributeError:
+                raise PossibleHeterogenousDataException(doc, path[0].name)
             if path[0].is_repeat:
                 if type(next_doc) != list:
                     # This happens when a repeat group has a single repeat iteration
@@ -859,14 +877,20 @@ class ExportInstance(BlobMixin, Document):
         def consider(column):
             return not isinstance(column, UserDefinedExportColumn)
 
+        def is_case_name(column):
+            return (
+                column.item.path[-1].name == 'case_name'
+                or (column.item.path[-1].name == '@case_id' and column.item.transform == CASE_NAME_TRANSFORM)
+            )
+
         from corehq.apps.export.system_properties import get_case_name_column
         case_id_columns = {
             _path_nodes_to_string(column.item.path[:-1]): column
             for column in table.columns if consider(column) and column.item.path[-1].name == '@case_id'
         }
         case_name_columns = {
-            _path_nodes_to_string(column.item.path[:-2]): column
-            for column in table.columns if consider(column) and column.item.path[-1].name == 'case_name'
+            _path_nodes_to_string(column.item.path[:-1]): column
+            for column in table.columns if consider(column) and is_case_name(column)
         }
         for path, column in case_id_columns.items():
             if path not in case_name_columns:
@@ -973,6 +997,15 @@ class CaseExportInstance(ExportInstance):
                 self.filters.users,
             )
         return []
+
+    @property
+    def has_case_history_table(self):
+        case_history_table = [table for table in self.tables if table.label == 'Case History']
+        return any(
+            column.selected
+            for column in table.columns
+            for table in case_history_table
+        )
 
 
 class FormExportInstance(ExportInstance):
@@ -2030,6 +2063,7 @@ class CaseExportDataSchema(ExportDataSchema):
             last_occurrences={app_id: app_version},
         )
         unknown_case_properties = set(case_property_mapping[case_property_mapping.keys()[0]])
+        unknown_case_properties -= set(KNOWN_CASE_PROPERTIES)
 
         def _add_to_group_schema(group_schema, path_start, prop, app_id, app_version):
             group_schema.items.append(ScalarItem(
@@ -2507,7 +2541,10 @@ class StockExportColumn(ExportColumn):
         return section_and_product_ids
 
     def _get_product_name(self, product_id):
-        return Product.get(product_id).name
+        try:
+            return SQLProduct.objects.values_list('name', flat=True).get(product_id=product_id, domain=self.domain)
+        except SQLProduct.DoesNotExist:
+            return product_id
 
     def get_headers(self, **kwargs):
         for product_id, section in self._column_tuples:

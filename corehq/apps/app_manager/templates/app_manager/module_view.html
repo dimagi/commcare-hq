@@ -1,8 +1,10 @@
 {% extends "app_manager/managed_app.html" %}
-{% load xforms_extras %}
+{% load app_manager_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load app_manager_extras %}
+{% load xforms_extras %}
+
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
@@ -19,19 +21,26 @@
     </style>
 {% endblock %}
 {% block js %}{{ block.super }}
+    {% compress js %}
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
+    {% endcompress %}
     {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+        {% compress js %}
         <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+        {% endcompress %}
     {% endif %}
+    {% compress js %}
     <script src="{% static 'app_manager/js/modules/module_view.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/case_list_setting.js' %}"></script>
+    {% endcompress %}
     {% include "app_manager/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include 'hqmedia/partials/multimedia_js.html' %}
+    {% compress js %}
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
@@ -40,6 +49,7 @@
     <script src="{% static 'app_manager/js/details/case_list_callout.js' %}"></script>
     <script src="{% static 'app_manager/js/details/screen_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
+    {% endcompress %}
 
     {% include 'hqwebapp/partials/key_value_mapping.html' %}
     {% include 'app_manager/partials/graph_configuration_modal.html' %}
