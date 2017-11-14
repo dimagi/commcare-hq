@@ -169,9 +169,7 @@ def overwrite_app(app, master_build, report_map=None):
                 raise AppEditingError('Report map not passed to overwrite_app')
 
     wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
-    wrapped_app.copy_attachments(master_build)
     enable_usercase_if_necessary(wrapped_app)
-    wrapped_app.save(increment_version=False)
     return wrapped_app
 
 
