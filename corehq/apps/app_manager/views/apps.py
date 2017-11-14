@@ -346,7 +346,7 @@ def copy_app(request, domain):
         else:
             app_id_or_source = app_id
 
-        def _inner(request, link_domain, data):
+        def _inner(request, link_domain, data, master_domain=domain):
             clear_app_cache(request, link_domain)
             if data['toggles']:
                 for slug in data['toggles'].split(","):
@@ -355,6 +355,7 @@ def copy_app(request, domain):
             linked = data.get('linked')
             if linked:
                 extra_properties['master'] = app_id
+                extra_properties['master_domain'] = master_domain
                 extra_properties['doc_type'] = 'LinkedApplication'
                 if link_domain not in app.linked_whitelist:
                     app.linked_whitelist.append(link_domain)
