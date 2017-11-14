@@ -8,6 +8,7 @@ hqDefine('analytics/js/kissmetrics', function () {
         _abTests = hqImport('analytics/js/initial').getAbTests('kissmetrics'),
         logger = hqImport('analytics/js/logging').getLoggerForApi('Kissmetrics'),
         _utils = hqImport('analytics/js/utils'),
+        _allAbTests = {},
         _init = {};
 
     logger.verbose.addCategory('data', 'DATA');
@@ -74,11 +75,14 @@ hqDefine('analytics/js/kissmetrics', function () {
         testName = _.last(testName.split('.'));
         if (_.isObject(ab) && ab.version) {
             test[ab.name || testName] = ab.version;
-        } else {
+        } else if (!_.isEmpty(ab)) {
             test[testName] = ab;
         }
-        logger.debug.ab(test, "New Test: " + testName);
-        _kmqPushCommand('set', test);
+        if (!_.isEmpty(test)) {
+            logger.debug.ab(test, "New Test: " + testName);
+            _kmqPushCommand('set', test);
+            _.extend(_allAbTests, test);
+        }
     });
 
     /**
@@ -137,6 +141,10 @@ hqDefine('analytics/js/kissmetrics', function () {
         _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
     };
 
+    var getAbTest = function (testSlug) {
+        return _allAbTests[testSlug] || {};
+    };
+
     return {
         logger: logger,
         identify: identify,
@@ -146,5 +154,6 @@ hqDefine('analytics/js/kissmetrics', function () {
             internalClick: internalClick,
             outboundLink: trackOutboundLink,
         },
+        getAbTest: getAbTest,
     };
 });
