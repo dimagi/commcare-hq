@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
-from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper, get_instances_for_module
+from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
@@ -102,14 +102,13 @@ class RemoteRequestFactory(object):
         ]
 
     def _build_remote_request_datums(self):
-        details_helper = DetailsHelper(self.app)
         return [SessionDatum(
             id='case_id',
             nodeset=(CaseTypeXpath(self.module.case_type)
                      .case(instance_name=RESULTS_INSTANCE)),
             value='./@case_id',
-            detail_select=details_helper.get_detail_id_safe(self.module, 'case_short'),
-            detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),
+            detail_select=id_strings.detail(self.module, 'search_short'),
+            detail_confirm=id_strings.detail(self.module, 'case_long'),
         )]
 
     def _get_remote_request_query_datums(self):

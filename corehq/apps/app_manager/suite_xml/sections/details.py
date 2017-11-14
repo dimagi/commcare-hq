@@ -95,6 +95,23 @@ class DetailContributor(SectionContributor):
                                     )
                                     if d:
                                         r.append(d)
+                                    if (module_offers_search(module)
+                                       and detail_type.endswith('short')
+                                       and not module.put_in_root):
+                                        # Case Search uses the same short detail with a different ID.
+                                        search_detail_id = id_strings.detail(
+                                            module,
+                                            detail_type.replace('case', 'search')
+                                        )
+                                        search_detail = self.build_detail(
+                                            module, detail_type,
+                                            detail, detail_column_infos,
+                                            tabs=list(detail.get_tabs()),
+                                            id=search_detail_id,
+                                            title=Text(locale_id=locale_id) if locale_id else Text(),
+                                            print_template=print_template_path)
+                                        if search_detail:
+                                            r.append(search_detail)
                         # add the persist case context if needed and if
                         # case tiles are present and have their own persistent block
                         if (detail.persist_case_context and
@@ -174,13 +191,15 @@ class DetailContributor(SectionContributor):
                 d.fields.extend(fields)
 
             # Add actions
-            if module.case_list_form.form_id and detail_type.endswith('short')\
-                    and not module.put_in_root:
-                target_form = self.app.get_form(module.case_list_form.form_id)
-                if target_form.is_registration_form(module.case_type):
-                    d.actions.append(self._get_reg_form_action(module))
-            if module_offers_search(module) and detail_type.endswith('short') and not module.put_in_root:
-                d.actions.append(self._get_case_search_action(module))
+            if detail_type.endswith('short') and not module.put_in_root:
+                if module.case_list_form.form_id:
+                    target_form = self.app.get_form(module.case_list_form.form_id)
+                    if target_form.is_registration_form(module.case_type):
+                        d.actions.append(self._get_reg_form_action(module))
+
+                if module_offers_search(module) and "search" not in id:
+                    # Add the search action only if this isn't a search detail
+                    d.actions.append(self._get_case_search_action(module))
 
             try:
                 if not self.app.enable_multi_sort:

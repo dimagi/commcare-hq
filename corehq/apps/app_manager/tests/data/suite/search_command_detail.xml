@@ -43,4 +43,66 @@
       </stack>
     </action>
   </detail>
+  <detail id="m0_search_short">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_whatever_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('reports')/report[1]/name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_whatever_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="instance('ledgerdb')/ledgers/name/name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
 </partial>
