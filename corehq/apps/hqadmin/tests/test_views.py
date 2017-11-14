@@ -33,4 +33,6 @@ class AdminRestoreViewTests(SimpleTestCase):
                 'num_cases': 0,
                 'num_locations': 0,
                 'hide_xml': False,
+                'case_type_counts': {},
+                'location_type_counts': {},
             })
