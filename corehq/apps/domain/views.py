@@ -2991,7 +2991,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             (privileges.Titles.get_name_from_privilege(privilege),
              domain_has_privilege(self.domain, privilege))
             for privilege in privileges.MAX_PRIVILEGES
-        ], key=lambda (name, has): (not has, name))
+        ], key=lambda name_has: (not name_has[1], name_has[0]))
 
     @property
     def page_context(self):
