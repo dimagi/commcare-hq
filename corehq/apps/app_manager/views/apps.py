@@ -346,20 +346,20 @@ def copy_app(request, domain):
         else:
             app_id_or_source = app_id
 
-        def _inner(request, domain, data):
-            clear_app_cache(request, domain)
+        def _inner(request, link_domain, data):
+            clear_app_cache(request, link_domain)
             if data['toggles']:
                 for slug in data['toggles'].split(","):
-                    set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+                    set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             extra_properties = {'name': data['name']}
             linked = data.get('linked')
             if linked:
                 extra_properties['master'] = app_id
                 extra_properties['doc_type'] = 'LinkedApplication'
-                if domain not in app.linked_whitelist:
-                    app.linked_whitelist.append(domain)
+                if link_domain not in app.linked_whitelist:
+                    app.linked_whitelist.append(link_domain)
                     app.save()
-            app_copy = import_app_util(app_id_or_source, domain, extra_properties)
+            app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
             if linked:
                 for module in app_copy.modules:
                     if isinstance(module, ReportModule):
