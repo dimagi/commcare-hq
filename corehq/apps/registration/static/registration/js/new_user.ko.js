@@ -28,7 +28,7 @@ hqDefine('registration/js/new_user.ko', function () {
         throw "please call setResetEmailFeedbackFn. " +
               "Expects boolean isValidating. " + isValidating;
     };
-    _private.submitAttemptAnalytics = function (data) {
+    _private.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
         _kissmetrics.track.event("Clicked Create Account");
     };
     _private.getPhoneNumberFn = function () {
