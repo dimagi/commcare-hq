@@ -12,7 +12,12 @@ hqDefine('registration/js/new_user.ko', function () {
     'use strict';
     var module = {};
 
-    var _private = {};
+    var _private = {},
+        _kissmetrics = hqImport('analytics/js/kissmetrics');
+
+    _private.isAbPersona = _kissmetrics.getAbTest('New User Persona Field') === 'show_persona';
+    _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
+
     _private.rmiUrl = null;
     _private.csrf = null;
     _private.showPasswordFeedback = false;
