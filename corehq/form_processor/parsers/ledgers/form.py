@@ -3,7 +3,6 @@ from collections import namedtuple
 import datetime
 from decimal import Decimal
 import logging
-import six
 
 from django.utils.translation import ugettext as _
 
@@ -18,8 +17,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.exceptions import InvalidDate
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper, StockReportHelper, \
     UniqueLedgerReference
-from corehq.form_processor.utils import adjust_datetimes
-from dimagi.utils.parsing import ISO_DATE_FORMAT, ISO_DATETIME_FORMAT
+from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from xml2json.lib import convert_xml_to_json
 
 
@@ -147,18 +145,7 @@ def get_all_stock_report_helpers_from_form(xform):
 
     for elem in _extract_ledger_nodes_from_xml(form_xml):
         report_type, ledger_json = convert_xml_to_json(elem, last_xmlns=COMMTRACK_REPORT_XMLNS)
-
-        adjust_datetimes(ledger_json.get('@date'), parent=ledger_json, key='@date')
-        ledger_date = ledger_json.get('@date')
-        if isinstance(ledger_date, six.string_types):
-            try:
-                try:
-                    ledger_json['@date'] = datetime.datetime.strptime(ledger_date, ISO_DATE_FORMAT).date()
-                except ValueError:
-                    ledger_json['@date'] = datetime.datetime.strptime(ledger_date, ISO_DATETIME_FORMAT).date()
-            except ValueError:
-                pass
-
+        ledger_json['@date'] = adjust_text_to_datetime(ledger_json['@date'])
         yield _ledger_json_to_stock_report_helper(xform, report_type, ledger_json)
 
 
