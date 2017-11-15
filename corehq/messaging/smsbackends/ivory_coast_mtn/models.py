@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import pytz
 import requests
 from datetime import datetime
-from django.db import models
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.ivory_coast_mtn.exceptions import IvoryCoastMTNError
 from corehq.messaging.smsbackends.ivory_coast_mtn.forms import IvoryCoastMTNBackendForm
