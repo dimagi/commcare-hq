@@ -157,6 +157,7 @@
 
         {# javascript #}
         {% include "hqwebapp/includes/ko.html" %}
+        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script><!-- depends on knockout -->
         {% include 'hqwebapp/includes/analytics_all.html' %}
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
