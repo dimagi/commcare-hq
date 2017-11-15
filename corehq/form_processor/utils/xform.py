@@ -146,7 +146,7 @@ def adjust_datetimes(data, parent=None, key=None):
     """
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, basestring) and jsonobject.re_loose_datetime.match(data):
+    if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
         try:
             parent[key] = unicode(json_format_datetime(
                 adjust_text_to_datetime(data)
