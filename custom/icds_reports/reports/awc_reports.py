@@ -351,7 +351,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             'stunting_severe'
         )
         wer_eligible = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
+            {'age_tranche': 72},
             'wer_eligible'
         )
         height_eligible = exclude_records_by_age_for_column(
