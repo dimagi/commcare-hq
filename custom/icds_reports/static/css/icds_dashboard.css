@@ -700,3 +700,35 @@ table.no-footer {
     stroke-opacity: 1 !important;
     fill-opacity: 1 !important;
 }
+
+
+table.dataTable.fixedHeader-floating,
+table.dataTable.fixedHeader-locked {
+    background-color: white;
+    top: 110px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+table.dataTable.fixedHeader-floating {
+    position: fixed !important;
+    width: 80.3% !important;
+}
+
+table.dataTable.fixedHeader-locked {
+    position: absolute !important;
+}
+
+@media print {
+  table.fixedHeader-floating {
+    display: none;
+  }
+}
+
+.medium-col {
+    width: 12% !important;
+}
+
+.big-col {
+    width: 16% !important;
+}
