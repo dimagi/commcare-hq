@@ -34,3 +34,9 @@ class TestIvoryCoastMTNBackendResponse(TestCase):
         with self.assertRaises(IvoryCoastMTNError):
             backend.handle_response(queued_sms, 200, ERROR_RESPONSE)
         self.assertEqual(queued_sms.backend_message_id, '1756d6f2-e15f-4397-9670-47b98e92ba62')
+
+    def test_get_result_and_transaction_id(self):
+        self.assertEqual(
+            IvoryCoastMTNBackend.get_result_and_transaction_id(SUCCESS_RESPONSE),
+            {'result': 'OK', 'transaction_id': '164b210b-748c-41d2-97f4-88d166415423'}
+        )

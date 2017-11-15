@@ -79,7 +79,8 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
         )
         self.handle_response(msg_obj, response.status_code, response.text)
 
-    def get_result_and_transaction_id(self, response_text):
+    @staticmethod
+    def get_result_and_transaction_id(response_text):
         root_tag = etree.fromstring(response_text.encode('utf-8'))
         result_tag = root_tag.find('{http://pmmsoapmessenger.com/}Result')
         transaction_id_tag = root_tag.find('{http://pmmsoapmessenger.com/}TransactionID')
