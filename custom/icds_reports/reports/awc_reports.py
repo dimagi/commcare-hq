@@ -351,7 +351,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             'stunting_severe'
         )
         wer_eligible = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
+            {'age_tranche': 72},
             'wer_eligible'
         )
         height_eligible = exclude_records_by_age_for_column(
@@ -815,9 +815,9 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'frequency': frequency
                 },
                 {
-                    'label': _('Percent Adhaar-seeded Beneficiaries'),
+                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': _(
-                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                        'Percentage of ICDS beneficiaries whose Aadhaar identification has been captured'
                     ),
                     'percent': percent_diff(
                         'person_aadhaar',
@@ -1159,13 +1159,13 @@ def get_beneficiary_details(case_id, month):
         if row.age_in_months <= 60:
             beneficiary['weight'][row.age_in_months] = {
                 'x': int(row.age_in_months),
-                'y': float(row.recorded_weight or None)
+                'y': float(row.recorded_weight) if row.recorded_weight else None
             }
             beneficiary['height'][row.age_in_months] = {
                 'x': int(row.age_in_months),
-                'y': float(row.recorded_height or None)
+                'y': float(row.recorded_height) if row.recorded_height else None
             }
         if row.recorded_height and min_height <= row.recorded_height <= max_height:
             index = int((row.recorded_height - min_height) * 2)
-            beneficiary['wfl'][index]['y'] = float(row.recorded_weight or None)
+            beneficiary['wfl'][index]['y'] = float(row.recorded_weight) if row.recorded_height else None
     return beneficiary

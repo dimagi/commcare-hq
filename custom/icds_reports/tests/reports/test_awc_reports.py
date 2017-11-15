@@ -22,3 +22,10 @@ class TestAWCReport(TestCase):
         self.assertEqual(filter(lambda r: r['x'] == 53, data['weight'])[0]['y'], 12.6)
         self.assertEqual(filter(lambda r: r['x'] == 53, data['height'])[0]['y'], 96.0)
         self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
+
+    def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
+        data = get_beneficiary_details(case_id='411c4234-8475-415a-9c28-911b85868aa5', month=(2017, 4, 1))
+        self.assertEqual(data['age_in_months'], 36)
+        self.assertEqual(data['sex'], 'F')
+        self.assertEqual(data['person_name'], 'Name 3483')
+        self.assertEqual(data['mother_name'], u'रींकीकुँवर')
