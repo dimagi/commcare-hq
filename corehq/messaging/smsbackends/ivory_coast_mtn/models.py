@@ -38,8 +38,8 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
     def get_form_class(cls):
         return IvoryCoastMTNBackendForm
 
-    @classmethod
-    def get_ivory_coast_timestamp(cls):
+    @staticmethod
+    def get_ivory_coast_timestamp():
         return ServerTime(datetime.utcnow()).user_time(pytz.timezone('Africa/Abidjan')).done()
 
     def get_params(self, msg_obj):
@@ -61,8 +61,8 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
             'recipientPhone': msg_obj.phone_number,
         }
 
-    @classmethod
-    def phone_number_is_valid(cls, phone_number):
+    @staticmethod
+    def phone_number_is_valid(phone_number):
         phone_number = strip_plus(phone_number)
         # Phone number must be an Ivory Coast phone number
         # Also avoid processing numbers that are obviously too short
@@ -79,7 +79,8 @@ class IvoryCoastMTNBackend(SQLSMSBackend):
         )
         self.handle_response(msg_obj, response.status_code, response.text)
 
-    def get_result_and_transaction_id(self, response_text):
+    @staticmethod
+    def get_result_and_transaction_id(response_text):
         root_tag = etree.fromstring(response_text.encode('utf-8'))
         result_tag = root_tag.find('{http://pmmsoapmessenger.com/}Result')
         transaction_id_tag = root_tag.find('{http://pmmsoapmessenger.com/}TransactionID')
