@@ -1718,7 +1718,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('createdRow', compile)
         .withPaginationType('full_numbers')
         .withFixedHeader({
-            bottom: true
+            bottom: true,
         })
         .withOption('oLanguage', {
             "sProcessing": "Loading. Please wait...",
@@ -2389,7 +2389,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     var config = {
         attributes: true,
         childList: true,
-        characterData: true
+        characterData: true,
     };
 
     observer.observe(document.body, config);
