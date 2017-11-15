@@ -651,8 +651,8 @@ class FormAccessorSQL(AbstractFormAccessor):
             else:
                 form.save()
 
-        if publish_changes:
-            publish_form_saved(form)
+            if publish_changes:
+                publish_form_saved(form)
 
     @staticmethod
     @transaction.atomic

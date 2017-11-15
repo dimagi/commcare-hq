@@ -128,8 +128,8 @@ class FormProcessorSQL(object):
                 ledgers_to_save = stock_result.models_to_save
                 LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
 
-        if publish_to_kafka:
-            cls._publish_changes(processed_forms, cases, stock_result)
+            if publish_to_kafka:
+                cls._publish_changes(processed_forms, cases, stock_result)
 
     @staticmethod
     def _publish_changes(processed_forms, cases, stock_result):
