@@ -362,7 +362,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
-    'Show text area for entering custom case list xml',
+    'Allow custom XML to define case lists (ex. for case tiles)',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
