@@ -137,7 +137,6 @@ hqDefine("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], functio
                .prop('disabled', false);
     };
 
-
     $.fn.koApplyBindings = function (context) {
         if (!this.length) {
             throw new Error("No element passed to koApplyBindings");
@@ -159,7 +158,6 @@ hqDefine("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], functio
             }
         },
     });
-
 
     // Return something so that hqModules understands that the module has been defined
     return 1;

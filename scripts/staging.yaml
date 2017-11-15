@@ -68,6 +68,5 @@ submodules:
   deployment/commcare-hq-deploy:
     branches:
       - jls/r-js # Jenny 10/2
-      - emord-patch-4
   submodules/commcare-translations:
     branches: []
