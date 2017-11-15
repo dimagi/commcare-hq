@@ -1599,7 +1599,7 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'beneficiary_persons'
             },
             {
-                'header': 'Percent Adhaar-seeded beneficaries',
+                'header': 'Percent Aadhaar-seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
@@ -2327,7 +2327,7 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Percent Adhaar-seeded beneficiaries',
+                                'header': 'Percent Aadhaar-seeded beneficiaries',
                                 'slug': 'aadhar',
                                 'format': 'percent',
                                 'average': [],

@@ -815,9 +815,9 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'frequency': frequency
                 },
                 {
-                    'label': _('Percent Adhaar-seeded Beneficiaries'),
+                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': _(
-                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                        'Percentage of ICDS beneficiaries whose Aadhaar identification has been captured'
                     ),
                     'percent': percent_diff(
                         'person_aadhaar',
