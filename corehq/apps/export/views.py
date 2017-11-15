@@ -2402,10 +2402,10 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
 class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
     urlname = 'new_export_download_sms'
     page_title = ugettext_noop("Export SMS")
-    form_or_case = None  # todo: remove this property from exports
+    form_or_case = None
     filter_form_class = FilterSmsESExportDownloadForm
     export_id = None
-    sms_export = True  # todo: remove this property from exports
+    sms_export = True
 
     @staticmethod
     def get_export_schema(domain, include_metadata):

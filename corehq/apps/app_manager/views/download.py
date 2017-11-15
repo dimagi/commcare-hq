@@ -296,9 +296,6 @@ def download_file(request, domain, app_id, path):
                     resolve_path(path)
                 except Resolver404:
                     # ok this was just a url that doesn't exist
-                    # todo: log since it likely exposes a mobile bug
-                    # logging was removed because such a mobile bug existed
-                    # and was spamming our emails
                     pass
                 else:
                     # this resource should exist but doesn't
