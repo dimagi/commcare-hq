@@ -8,6 +8,7 @@ import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
+from corehq.apps.export.views import get_export_count_by_domain
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string, get_meta
 from datetime import datetime, date, timedelta
@@ -34,6 +35,7 @@ from corehq.util.datadog.utils import (
 )
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 
@@ -378,6 +380,10 @@ def identify(email, properties):
         _raise_for_urllib3_response(res)
 
 
+@memoized
+def _get_export_count(domain):
+    return get_export_count_by_domain(domain)
+
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
 def track_periodic_data():
     """
@@ -419,12 +425,15 @@ def track_periodic_data():
         date_created = user.get('date_joined')
         max_forms = 0
         max_workers = 0
+        max_export
 
         for domain in user['domains']:
             if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
                 max_forms = domains_to_forms[domain]
             if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
                 max_workers = domains_to_mobile_users[domain]
+            if _get_export_count(domain) > max_export:
+                max_export = _get_export_count(domain)
 
         project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
@@ -450,6 +459,10 @@ def track_periodic_data():
                 {
                     'property': '{}date_created'.format(env),
                     'value': date_created
+                },
+                {
+                    'property': '{}max_exports_in_a_domain'.format(env),
+                    'value': max_export
                 }
             ]
         }
