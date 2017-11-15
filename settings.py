@@ -883,8 +883,6 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
-ONBOARDING_DOMAIN_TEST_DATE = ()
-
 HQ_INSTANCE = 'development'
 
 SENTRY_PUBLIC_KEY = None
