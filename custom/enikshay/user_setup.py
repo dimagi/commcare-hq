@@ -313,7 +313,6 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             'plc_lab_or_collection_center': 'plc',
             'plc_accredidation': 'plc',
             'plc_tb_tests': 'plc',
-            'plc_hf_if_nikshay': 'plc',
             'pcc_pharmacy_name': 'pcc',
             'pcc_pharmacy_affiliation': 'pcc',
             'pcc_tb_drugs_in_stock': 'pcc',
@@ -376,6 +375,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
         form = super(ENikshayUserLocationDataEditor, self).init_form(post_dict)
         fields_to_loc_types = {
             'facility_type': 'pcp',
+            'plc_hf_if_nikshay': 'plc',
         }
         return _make_fields_type_specific(self.domain, form, fields_to_loc_types)
 
