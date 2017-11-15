@@ -91,6 +91,10 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)
+        form = FormAccessorSQL.get_form(form.form_id)  # refetch to clear cached attachments
+        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
+            form.get_attachment_meta('form.xml')
+
         with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             form.get_attachment_meta('form.xml')
 
