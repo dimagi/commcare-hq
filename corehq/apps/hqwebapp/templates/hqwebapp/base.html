@@ -457,7 +457,8 @@
                     'hqwebapp/js/common',
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
-                    'hqwebapp/js/hq-bug-report'
+                    'hqwebapp/js/hq-bug-report',
+                    'notifications/js/notifications_service'
                 ], function () {
                     requirejs(['{{ requirejs_main }}']);
                 });
@@ -489,10 +490,6 @@
 
         {# JavaScript Display Logic Libaries #}
 
-        {% if request.couch_user and not requirejs_main %}
-        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-        {% endif %}
-
         {% if not requirejs_main %}
         {% include "hqwebapp/includes/ko.html" %}
         <!-- koApplyBindings in hq.helpers depends on knockout -->
@@ -500,6 +497,10 @@
         {% compress js %}
         <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
         {% endcompress %}
+        {% endif %}
+
+        {% if request.couch_user and not requirejs_main %}
+        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
         {% endif %}
 
         {% if request.use_angular_js and not requirejs_main %}

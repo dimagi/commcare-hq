@@ -16,6 +16,10 @@ requirejs.config({
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },
+        "jquery.rmi/jquery.rmi": {
+            deps: ['jquery', 'knockout', 'underscore'],
+            exports: 'RMI',
+        },
     },
     map: {
         "datatables.fixedColumns": {
