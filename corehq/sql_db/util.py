@@ -9,6 +9,7 @@ from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 import six
+from corehq.sql_db.models import PartitionedModel
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
@@ -129,3 +130,22 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
         return _inner
 
     return _inner2
+
+
+def get_all_sharded_models():
+    for subclass in _get_all_nested_subclasses(PartitionedModel):
+        if not subclass._meta.abstract:
+            yield subclass
+
+
+def _get_all_nested_subclasses(cls):
+    seen = set()
+    for subclass in cls.__subclasses__():
+        for sub_subclass in _get_all_nested_subclasses(subclass):
+            # in case of multiple inheritance
+            if sub_subclass not in seen:
+                seen.add(sub_subclass)
+                yield sub_subclass
+        if subclass not in seen:
+            seen.add(subclass)
+            yield subclass
