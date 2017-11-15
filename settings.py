@@ -368,6 +368,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'corehq.motech.openmrs',
+    'custom.champ',
 )
 
 ENIKSHAY_APPS = (
@@ -1988,7 +1989,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
+    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2164,7 +2167,8 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi'
+    'pnlppgi': 'custom.pnlppgi',
+    'champ-cameroon': 'custom.champ'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
