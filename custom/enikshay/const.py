@@ -133,7 +133,6 @@ AGENCY_USER_FIELDS = [
                                                  "MD - Medicine", "MS", "DM"]),
     ('pac_qualification', "AYUSH Qualification", ["BAMS", "BHMS", "BUMS", "DAMS", "DHMS", "ASHA",
                                                   "ANM", "GNM", "LCEH", "NGO", "Others", "None"]),
-    ('facility_type', "Facility type", ["Hospital", "Doctor"]),
     ('pcp_professional_org_membership', "Professional Org Membership", ["IMA", "WMA", "AMA", "AAFP",
                                                                         "Others", "None"]),
     ('plc_lab_collection_center_name', "Lab/Collection Center Name", []),
@@ -194,6 +193,7 @@ AGENCY_USER_FIELDS = [
 AGENCY_LOCATION_FIELDS = [
     ('private_sector_org_id', "Private Sector Org ID", []),
     ('nikshay_tu_id', "Nikshay TU id", []),
+    ('facility_type', "Facility type", ["Hospital", "Doctor"]),
 ]
 
 DSTB_EPISODE_TYPE = "confirmed_tb"

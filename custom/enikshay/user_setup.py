@@ -309,7 +309,6 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             'pcp_professional_org_membership': 'pcp',
             'pac_qualification': 'pac',
             'pcp_qualification': 'pcp',
-            'facility_type': 'pcp',
             'plc_lab_collection_center_name': 'plc',
             'plc_lab_or_collection_center': 'plc',
             'plc_accredidation': 'plc',
@@ -372,6 +371,13 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
             field for field in self.model.get_fields(required_only=False)
             if field.is_required or field.slug in fields_to_include
         ]
+
+    def init_form(self, post_dict=None):
+        form = super(ENikshayUserLocationDataEditor, self).init_form(post_dict)
+        fields_to_loc_types = {
+            'facility_type': 'pcp',
+        }
+        return _make_fields_type_specific(self.domain, form, fields_to_loc_types)
 
     def _make_field(self, field):
         if field.slug == 'private_sector_org_id':
