@@ -22,6 +22,7 @@ Example usage:
 
 """
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 
 from django.core.management import BaseCommand
@@ -53,7 +54,7 @@ class Command(BaseCommand):
             elif command == "get_outcome":
                 output = self.handle_get_outcome(argument, f)
         if output:
-            print output
+            print(output)
 
     @staticmethod
     def handle_get_row(case_id, file_):

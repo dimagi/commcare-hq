@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management import BaseCommand
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -20,7 +21,7 @@ class Command(BaseCommand):
             episode_case_ids = case_accessor.get_case_ids_in_domain(type='episode')
 
         for episode_case_id in episode_case_ids:
-            print episode_case_id
+            print(episode_case_id)
             episode_case = case_accessor.get_case(episode_case_id)
             try:
                 updater = EpisodeFacilityIDMigration(domain, episode_case)

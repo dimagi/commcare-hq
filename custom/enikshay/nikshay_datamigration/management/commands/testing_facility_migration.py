@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management import BaseCommand
 
 from dimagi.utils.decorators.memoized import memoized
@@ -30,8 +31,8 @@ class Command(BaseCommand):
             case_properties = test_case.dynamic_case_properties()
             if self.should_update(case_properties):
                 self.update_case(case_id, case_properties)
-                print case_id
-        print self.missing_nikshay_codes
+                print(case_id)
+        print(self.missing_nikshay_codes)
 
     @staticmethod
     def should_update(case_properties):
