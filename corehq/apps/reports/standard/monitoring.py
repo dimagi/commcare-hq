@@ -1231,9 +1231,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
     def activity_times(self):
         all_times = []
         users = _get_selected_users(self.domain, self.request)
-        user_ids = map(lambda user: user.user_id, users)
-        xmlnss = map(lambda form: form['xmlns'], self.all_relevant_forms.values())
-        app_ids = map(lambda form: form['app_id'], self.all_relevant_forms.values())
+        user_ids = [user.user_id for user in users]
+        xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
+        app_ids = [form['app_id'] for form in self.all_relevant_forms.values()]
 
         paged_result = get_forms(
             self.domain,

@@ -254,7 +254,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
     def _get_assigned_locations_default(self):
         user_locations = self.request.couch_user.get_sql_locations(self.domain)
-        return map(self.utils.location_tuple, user_locations)
+        return list(map(self.utils.location_tuple, user_locations))
 
     def get_default_selections(self):
         if not self.request.can_access_all_locations:
@@ -311,8 +311,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = self.selected_location_ids(mobile_user_and_group_slugs)
         if not location_ids:
             return []
-        return map(self.utils.location_tuple,
-                   SQLLocation.objects.filter(location_id__in=location_ids))
+        return list(map(self.utils.location_tuple,
+                        SQLLocation.objects.filter(location_id__in=location_ids)))
 
     @property
     def filter_context(self):
