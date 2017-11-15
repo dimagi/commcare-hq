@@ -74,7 +74,7 @@
     "intl-tel-input": "9.0.7",
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
-    "topojson": "^3.0.0",
+    "topojson": "^3.0.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
