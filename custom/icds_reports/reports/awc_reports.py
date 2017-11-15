@@ -1163,7 +1163,7 @@ def get_beneficiary_details(case_id, month):
             }
             beneficiary['height'][row.age_in_months] = {
                 'x': int(row.age_in_months),
-                'y': float(row.recorded_height or None) if row.recorded_height else None
+                'y': float(row.recorded_height) if row.recorded_height else None
             }
         if row.recorded_height and min_height <= row.recorded_height <= max_height:
             index = int((row.recorded_height - min_height) * 2)
