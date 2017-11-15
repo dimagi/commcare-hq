@@ -813,7 +813,7 @@ CUSTOM_INSTANCES = StaticToggle(
 APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
-    TAG_SOLUTIONS,
+    TAG_INTERNAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
