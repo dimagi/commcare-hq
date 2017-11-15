@@ -3,7 +3,7 @@
     "champ-cameroon"
   ],
   "server_environment": [
-    "default"
+    "production"
   ],
   "config": {
     "referenced_doc_type": "XFormInstance",

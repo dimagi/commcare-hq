@@ -3,14 +3,14 @@
     "champ-cameroon"
   ],
   "server_environment": [
-    "default"
+    "production"
   ],
   "config": {
     "referenced_doc_type": "CommCareCase",
     "asynchronous": false,
     "engine_id": "ucr",
     "description": "",
-    "table_id": "champ_cameroon",
+    "table_id": "champ_client_forms",
     "display_name": "Champ Cameroon",
     "base_item_expression": {
       "type": "get_case_forms",

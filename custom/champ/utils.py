@@ -1,5 +1,5 @@
 ENHANCED_PEER_MOBILIZATION = 'enhanced_peer_mobilization'
-CHAMP_CAMEROON = 'champ_cameroon'
+CHAMP_CAMEROON = 'champ_client_forms'
 
 TARGET_XMLNS = 'http://openrosa.org/formdesigner/A79467FD-4CDE-47B6-8218-4394699A5C95'
 PREVENTION_XMLNS = 'http://openrosa.org/formdesigner/DF2FBEEA-31DE-4537-9913-07D57591502C'
