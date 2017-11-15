@@ -42,8 +42,9 @@ def download_odk_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_profile(is_odk=True),
+        request.app.create_profile(is_odk=True, build_profile_id=profile),
         content_type="commcare/profile"
     )
 
@@ -55,8 +56,9 @@ def download_odk_media_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_profile(is_odk=True, with_media=True),
+        request.app.create_profile(is_odk=True, with_media=True, build_profile_id=profile),
         content_type="commcare/profile"
     )
 
@@ -70,8 +72,9 @@ def download_suite(request, domain, app_id):
     if not request.app.copy_of:
         previous_version = request.app.get_latest_app(released_only=False)
         request.app.set_form_versions(previous_version)
+    profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_suite()
+        request.app.create_suite(build_profile_id=profile)
     )
 
 
@@ -84,8 +87,9 @@ def download_media_suite(request, domain, app_id):
     if not request.app.copy_of:
         previous_version = request.app.get_latest_app(released_only=False)
         request.app.set_media_versions(previous_version)
+    profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_media_suite()
+        request.app.create_media_suite(build_profile_id=profile)
     )
 
 
@@ -95,8 +99,9 @@ def download_app_strings(request, domain, app_id, lang):
     See Application.create_app_strings
 
     """
+    profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_app_strings(lang)
+        request.app.create_app_strings(lang, build_profile_id=profile)
     )
 
 
@@ -106,9 +111,10 @@ def download_xform(request, domain, app_id, module_id, form_id):
     See Application.fetch_xform
 
     """
+    profile = request.GET.get('profile')
     try:
         return HttpResponse(
-            request.app.fetch_xform(module_id, form_id)
+            request.app.fetch_xform(module_id, form_id, build_profile_id=profile)
         )
     except (IndexError, ModuleNotFoundException):
         raise Http404()
@@ -324,8 +330,9 @@ def download_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_profile()
+        request.app.create_profile(build_profile_id=profile)
     )
 
 
@@ -336,8 +343,9 @@ def download_media_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = request.GET.get('profile')
     return HttpResponse(
-        request.app.create_profile(with_media=True)
+        request.app.create_profile(with_media=True, build_profile_id=profile)
     )
 
 
