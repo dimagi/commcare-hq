@@ -44,10 +44,6 @@ from corehq import toggles
 from dimagi.utils.decorators.memoized import memoized
 
 
-DetailColumnInfo = namedtuple('DetailColumnInfo',
-                              'column sort_element order')
-
-
 class DetailContributor(SectionContributor):
     section_name = 'details'
 
@@ -99,23 +95,6 @@ class DetailContributor(SectionContributor):
                                     )
                                     if d:
                                         r.append(d)
-                                    if (module_offers_search(module)
-                                       and detail_type.endswith('short')
-                                       and not module.put_in_root):
-                                        # Case Search uses the same short detail with a different ID.
-                                        search_detail_id = id_strings.detail(
-                                            module,
-                                            detail_type.replace('case', 'search')
-                                        )
-                                        search_detail = self.build_detail(
-                                            module, detail_type,
-                                            detail, detail_column_infos,
-                                            tabs=list(detail.get_tabs()),
-                                            id=search_detail_id,
-                                            title=Text(locale_id=locale_id) if locale_id else Text(),
-                                            print_template=print_template_path)
-                                        if search_detail:
-                                            r.append(search_detail)
                         # add the persist case context if needed and if
                         # case tiles are present and have their own persistent block
                         if (detail.persist_case_context and
@@ -188,9 +167,6 @@ class DetailContributor(SectionContributor):
                 #   column_info.column: an instance of app_manager.models.DetailColumn
                 #   column_info.sort_element: an instance of app_manager.models.SortElement
                 #   column_info.order: an integer
-                if "search" in id and column_info.sort_element and column_info.sort_element.type == 'index':
-                    # search details can't have index elements, so remove the sort element
-                    column_info = DetailColumnInfo(column_info.column, None, None)
                 fields = get_column_generator(
                     self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
@@ -445,6 +421,9 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
     """
+    DetailColumnInfo = namedtuple('DetailColumnInfo',
+                                  'column sort_element order')
+
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
@@ -460,11 +439,17 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     columns = []
     for column in detail.get_columns():
         sort_element, order = sort_columns.pop(column.field, (None, None))
-        columns.append(DetailColumnInfo(column, sort_element, order))
+        if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
+            columns.append(DetailColumnInfo(column, None, None))
+        else:
+            columns.append(DetailColumnInfo(column, sort_element, order))
 
     for field, sort_element, order in sort_only:
         column = create_temp_sort_column(sort_element, order)
-        columns.append(DetailColumnInfo(column, sort_element, order))
+        if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
+            columns.append(DetailColumnInfo(column, None, None))
+        else:
+            columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
 
