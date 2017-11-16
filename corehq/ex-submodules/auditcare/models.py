@@ -63,7 +63,7 @@ class AuditEvent(Document):
         try:
             ct = ContentType.objects.get(model=self.doc_type.lower())
             return ct.model_class().objects.get(id=self.id).summary
-        except Exception as e:
+        except Exception:
             return ""
 
     class Meta:
