@@ -186,7 +186,7 @@ def handle_401_response(f):
         if response.status_code == 401:
             auth_type = determine_authtype_from_request(request)
             if auth_type and auth_type == 'basic':
-                username, password = get_username_and_password_from_request(request)
+                username, _ = get_username_and_password_from_request(request)
                 if username:
                     valid, message, error_code = ensure_active_user_by_username(username)
                     if not valid:
