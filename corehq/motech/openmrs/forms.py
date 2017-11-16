@@ -71,7 +71,8 @@ class OpenmrsImporterForm(forms.Form):
     owner_id = forms.CharField(label=_('Owner ID'), required=False,
                                help_text=_('The ID of the mobile worker or location who will own new cases'))
     location_type_name = forms.CharField(label=_('Organization Level'), required=False,
-                                         help_text=_('The Organization Level whose owners will own new cases'))
+                                         help_text=_('The Organization Level whose mobile worker will own new '
+                                                     'cases'))
     external_id_column = forms.CharField(label=_('External ID Column'), required=True,
                                          help_text=_("The column that stores the case's external ID"))
     name_columns = forms.CharField(label=_('Name Columns'), required=True,
