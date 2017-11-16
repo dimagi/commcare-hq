@@ -34,7 +34,6 @@ from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scal
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
     get_awc_daily_status_data_map, get_awc_daily_status_sector_data
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
-from custom.icds_reports.reports.awc_opened import get_awc_opened_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
     get_awc_report_infrastructure
@@ -307,42 +306,6 @@ class ProgramSummaryView(View):
             )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(domain, config, include_test)
-        return JsonResponse(data=data)
-
-
-@method_decorator([login_and_domain_required], name='dispatch')
-class AwcOpenedView(View):
-
-    def get(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-
-        data = {}
-
-        now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        day = int(self.request.GET.get('day', now.day))
-
-        include_test = request.GET.get('include_test', False)
-
-        domain = self.kwargs['domain']
-
-        test_date = datetime(year, month, day)
-
-        yesterday = (test_date - relativedelta(days=1)).date()
-        two_days_ago = (test_date - relativedelta(days=2)).date()
-        month = datetime(year, month, 1)
-        prev_month = month - relativedelta(months=1)
-
-        config = {
-            'yesterday': tuple(yesterday.timetuple())[:3],
-            'two_days_ago': tuple(two_days_ago.timetuple())[:3],
-            'month': tuple(month.timetuple())[:3],
-            'prev_month': tuple(prev_month.timetuple())[:3]
-        }
-
-        if step == "map":
-            data = get_awc_opened_data(domain, config, include_test)
         return JsonResponse(data=data)
 
 
