@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
@@ -709,7 +710,18 @@ def get_contact_info(domain):
     case_ids = []
     mobile_worker_ids = []
     data = []
-    for p in PhoneNumber.by_domain(domain).filter(is_two_way=True):
+
+    if toggles.INBOUND_SMS_LENIENCY.enabled(domain):
+        phone_numbers_seen = set()
+        phone_numbers = []
+        for p in PhoneNumber.by_domain(domain).order_by('phone_number', '-is_two_way', 'created_on', 'couch_id'):
+            if p.phone_number not in phone_numbers_seen:
+                phone_numbers.append(p)
+                phone_numbers_seen.add(p.phone_number)
+    else:
+        phone_numbers = PhoneNumber.by_domain(domain).filter(is_two_way=True)
+
+    for p in phone_numbers:
         if p.owner_doc_type == 'CommCareCase':
             case_ids.append(p.owner_id)
             data.append([

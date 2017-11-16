@@ -625,6 +625,10 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         form.clear_tracked_models()
 
+        # keep these around since we might need them still e.g publishing changes to kafka
+        form.cached_attachments = unsaved_attachments
+
+
     @staticmethod
     def update_form(form, publish_changes=True):
         from corehq.form_processor.change_publishers import publish_form_saved

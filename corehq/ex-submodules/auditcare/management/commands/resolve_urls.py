@@ -19,7 +19,7 @@ class Command(BaseCommand):
             try:
                 print('%s|"%s"' % (path, view_name))
                 #print "%s\t%s" % (resolve_to_name(path), view_name)
-            except Exception, ex:
+            except Exception as ex:
                 print(ex)
                 pass
 

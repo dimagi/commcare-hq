@@ -44,6 +44,14 @@ $(function () {
         }
     });
 
+    // Analytics
+    reg.setSubmitAttemptFn(function () {
+        _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account"]);
+    });
+    reg.setSubmitSuccessFn(function () {
+        _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful"]);
+    });
+
     // Handle phone number input
     if (initial_page_data('show_number')) {
         var $number = $('#id_phone_number');
@@ -71,7 +79,11 @@ $(function () {
             }
         });
         reg.setGetPhoneNumberFn(function () {
-            return $number.intlTelInput("getNumber");
+            var phoneNumber = $number.intlTelInput("getNumber");
+            if (phoneNumber) {
+                _kmq.push(["trackClick", "submitted_phone_number", "Phone Number Field Filled Out"]);
+            }
+            return phoneNumber;
         });
     }
 
@@ -81,4 +93,12 @@ $(function () {
     new Blazy({
         container: 'body',
     });
+
+    // A/B test setup
+    var ab_test = hqImport('hqwebapp/js/initial_page_data').get('ab_test');
+    if (ab_test) {
+        var options = {};
+        options[ab_test.name] = ab_test.version;
+        _kmq.push(["set", options]);
+    }
 });

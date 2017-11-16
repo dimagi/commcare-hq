@@ -63,7 +63,7 @@ class AuditEvent(Document):
         try:
             ct = ContentType.objects.get(model=self.doc_type.lower())
             return ct.model_class().objects.get(id=self.id).summary
-        except Exception, e:
+        except Exception:
             return ""
 
     class Meta:
@@ -348,7 +348,7 @@ class NavigationEventAudit(AuditEvent):
             audit.view_kwargs = view_kwargs
             audit.save()
             return audit
-        except Exception, ex:
+        except Exception as ex:
             log.error("NavigationEventAudit.audit_view error: %s", ex)
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)

@@ -17,7 +17,6 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from corehq import toggles
 from corehq.apps.analytics import ab_tests
-from corehq.apps.analytics.decorators import use_new_analytics
 from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
@@ -54,25 +53,25 @@ def registration_default(request):
 class NewUserNumberAbTestMixin__Enabled(object):
     @property
     @memoized
-    def _ab_show_number(self):
+    def _ab(self):
         return ab_tests.ABTest(ab_tests.NEW_USER_NUMBER, self.request)
 
     @property
     def ab_show_number(self):
-        return self._ab_show_number.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM
+        return self._ab.version == ab_tests.NEW_USER_NUMBER_OPTION_SHOW_NUM
 
     @property
-    def ab_show_number_context(self):
-        return self._ab_show_number.context
+    def ab_context(self):
+        return self._ab.context
 
-    def ab_show_number_update_response(self, response):
-        self._ab_show_number.update_response(response)
+    def ab_update_response(self, response):
+        self._ab.update_response(response)
 
 
 class NewUserNumberAbTestMixin__NoAbEnabled(object):
     @property
     @memoized
-    def _ab_show_number(self):
+    def _ab(self):
         return None
 
     @property
@@ -80,10 +79,10 @@ class NewUserNumberAbTestMixin__NoAbEnabled(object):
         return True
 
     @property
-    def ab_show_number_context(self):
+    def ab_context(self):
         return None
 
-    def ab_show_number_update_response(self, response):
+    def ab_update_response(self, response):
         pass
 
 
@@ -93,29 +92,17 @@ class NewUserNumberAbTestMixin__Disabled(object):
         return False
 
     @property
-    def ab_show_number_context(self):
+    def ab_context(self):
         return None
 
-    def ab_show_number_update_response(self, response):
+    def ab_update_response(self, response):
         pass
 
 
 NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
 
 
-class NewUserProfileFieldAbTestMixin(object):
-    @property
-    @memoized
-    def ab_persona_field(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_PERSONA_FIELD, self.request)
-
-    @property
-    def ab_show_persona(self):
-        return self.ab_persona_field.version == ab_tests.NEW_USER_PERSONA_OPTION_SHOW
-
-
-class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
-                              NewUserProfileFieldAbTestMixin, View):
+class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
     urlname = 'process_registration'
 
     def get(self, request, *args, **kwargs):
@@ -138,8 +125,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
     def register_new_user(self, data):
         reg_form = RegisterWebUserForm(
             data['data'],
-            show_number=self.ab_show_number,
-            show_persona=self.ab_show_persona,
+            show_number=self.ab_show_number
         )
         if reg_form.is_valid():
             self._create_new_account(reg_form)
@@ -178,14 +164,12 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
         }
 
 
-class UserRegistrationView(NewUserNumberAbTestMixin,
-                           NewUserProfileFieldAbTestMixin, BasePageView):
+class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
     @use_jquery_ui
     @use_ko_validation
-    @use_new_analytics
     @method_decorator(transaction.atomic)
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -196,8 +180,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin,
             else:
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
-        self.ab_show_number_update_response(response)
-        self.ab_persona_field.update_response(response)
+        self.ab_update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -225,14 +208,12 @@ class UserRegistrationView(NewUserNumberAbTestMixin,
             'reg_form': RegisterWebUserForm(
                 initial=prefills,
                 show_number=self.ab_show_number,
-                show_persona=self.ab_show_persona,
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'show_number': self.ab_show_number,
-            'ab_show_number': self.ab_show_number_context,
-            'ab_persona_field': self.ab_persona_field.context,
+            'ab_test': self.ab_context,
         }
 
     @property

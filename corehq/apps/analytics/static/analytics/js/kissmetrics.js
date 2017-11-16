@@ -8,13 +8,26 @@ hqDefine('analytics/js/kissmetrics', function () {
         _abTests = hqImport('analytics/js/initial').getAbTests('kissmetrics'),
         logger = hqImport('analytics/js/logging').getLoggerForApi('Kissmetrics'),
         _utils = hqImport('analytics/js/utils'),
-        _allAbTests = {},
         _init = {};
 
     logger.verbose.addCategory('data', 'DATA');
     logger.debug.addCategory('ab', 'AB TEST');
 
     window.dataLayer = window.dataLayer || [];
+
+    var KmqWrapper = function (originalObject) {
+        Array.call(this, originalObject);
+    };
+    KmqWrapper.prototype = Object.create(Array.prototype);
+    KmqWrapper.prototype.constructor = KmqWrapper;
+    KmqWrapper.prototype.push = function () {
+        logger.deprecated.log(arguments, '_kmq.push');
+        Array.prototype.push.apply(this, arguments);
+    };
+    KmqWrapper.prototype.pushNew = function () {
+        Array.prototype.push.apply(this, arguments);
+    };
+    _kmq = new KmqWrapper(_kmq); // eslint-disable-line no-global-assign
 
     /**
      * Push data to _kmq by command type.
@@ -26,7 +39,7 @@ hqDefine('analytics/js/kissmetrics', function () {
     var _kmqPushCommand = function (commandName, properties, callbackFn, eventName) {
         var command, data;
         command = _.compact([commandName, eventName, properties, callbackFn]);
-        _kmq.push(command);
+        _kmq.pushNew(command);
         data = {
             event: 'km_' + commandName,
         };
@@ -61,14 +74,11 @@ hqDefine('analytics/js/kissmetrics', function () {
         testName = _.last(testName.split('.'));
         if (_.isObject(ab) && ab.version) {
             test[ab.name || testName] = ab.version;
-        } else if (!_.isEmpty(ab)) {
+        } else {
             test[testName] = ab;
         }
-        if (!_.isEmpty(test)) {
-            logger.debug.ab(test, "New Test: " + testName);
-            _kmqPushCommand('set', test);
-            _.extend(_allAbTests, test);
-        }
+        logger.debug.ab(test, "New Test: " + testName);
+        _kmqPushCommand('set', test);
     });
 
     /**
@@ -127,10 +137,6 @@ hqDefine('analytics/js/kissmetrics', function () {
         _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
     };
 
-    var getAbTest = function (testSlug) {
-        return _allAbTests[testSlug] || {};
-    };
-
     return {
         logger: logger,
         identify: identify,
@@ -140,6 +146,5 @@ hqDefine('analytics/js/kissmetrics', function () {
             internalClick: internalClick,
             outboundLink: trackOutboundLink,
         },
-        getAbTest: getAbTest,
     };
 });
