@@ -1733,7 +1733,7 @@ def clean_phone_number(value):
     if not value:
         return None
 
-    if not isinstance(value, (six.string_types, int)):
+    if not isinstance(value, six.string_types + (int,)):
         raise FieldValidationFailure(value, "phone number")
 
     try:

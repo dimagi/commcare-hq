@@ -202,7 +202,7 @@ class _DictToXML(object):
             return ''
         if isinstance(value, datetime):
             return unicode(json_format_datetime(value))
-        elif isinstance(value, (six.string_types, numbers.Number, date)):
+        elif isinstance(value, six.string_types + (numbers.Number, date)):
             return unicode(value)
         else:
             raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))

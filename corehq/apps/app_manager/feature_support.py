@@ -12,7 +12,7 @@ class CommCareFeatureSupportMixin(object):
         if settings.UNIT_TESTING and self.build_version is None:
             return False
         assert isinstance(self.build_version, Version)
-        assert isinstance(minimum_version, (six.string_types, Version))
+        assert isinstance(minimum_version, six.string_types + (Version,))
         return self.build_version >= minimum_version
 
     @property
