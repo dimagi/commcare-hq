@@ -16,12 +16,13 @@ from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions, UserRole
-from custom.icds_reports.const import LocationTypes, BHD_ROLE
+from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -1484,3 +1485,10 @@ class AggregationScriptPage(BaseDomainView):
         move_ucr_data_into_aggregation_tables.delay(date)
         messages.success(request, 'Aggregation task is running. Data should appear soon.')
         return redirect(self.urlname, domain=self.domain)
+
+
+class ICDSBugReportView(BugReportView):
+
+    @property
+    def recipients(self):
+        return [ICDS_SUPPORT_EMAIL]

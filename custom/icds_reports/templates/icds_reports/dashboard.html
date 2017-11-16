@@ -253,6 +253,11 @@
     </script>
     {% include 'hqwebapp/includes/modal_report_issue.html' %}
     <script type="text/javascript" src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+    <script>
+        var $modal = $('#modalReportIssue');
+        $modal.find('.modal-title').text('Report an Issue with ICDS-CAS Dashboard');
+        $modal.find('form').attr('action', '{% url 'icds_bug_report' domain %}');
+    </script>
 </div>
 
 <div class="commcarehq-urls" class="hide">
