@@ -88,7 +88,7 @@ class SqlSMSPillowTest(TestCase):
             processed=True,
             num_processing_attempts=1,
             queued_timestamp=datetime(2016, 1, 1, 11, 58),
-            processed_timestamp=datetime(2016, 1, 1, 12, 0o1),
+            processed_timestamp=datetime(2016, 1, 1, 12, 1),
             domain_scope=self.domain,
             ignore_opt_out=False,
             backend_message_id='fake-backend-message-id',
