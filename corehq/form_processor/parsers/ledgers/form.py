@@ -145,7 +145,8 @@ def get_all_stock_report_helpers_from_form(xform):
 
     for elem in _extract_ledger_nodes_from_xml(form_xml):
         report_type, ledger_json = convert_xml_to_json(elem, last_xmlns=COMMTRACK_REPORT_XMLNS)
-        ledger_json['@date'] = adjust_text_to_datetime(ledger_json['@date'])
+        if '@date' in ledger_json:
+            ledger_json['@date'] = adjust_text_to_datetime(ledger_json['@date'])
         yield _ledger_json_to_stock_report_helper(xform, report_type, ledger_json)
 
 
