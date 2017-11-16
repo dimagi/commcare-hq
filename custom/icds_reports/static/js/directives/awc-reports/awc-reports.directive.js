@@ -2037,6 +2037,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2088,6 +2089,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2378,7 +2380,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var hasClass = [].some.call(mutation.addedNodes, function(el) {
                     return el.classList.contains('fixedHeader-floating');
                 });
-                if (hasClass) {
+                if (hasClass && !vm.showBeneficiary) {
                     var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
                     mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
                 }

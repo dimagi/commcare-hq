@@ -387,6 +387,7 @@ class LocationView(View):
         if name:
             locations = locations.filter(name__iexact=name)
 
+        locations = locations.order_by('name')
         return JsonResponse(data={
             'locations': [
                 {
@@ -415,7 +416,7 @@ class LocationAncestorsView(View):
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
-        ).select_related('parent').distinct()
+        ).select_related('parent').distinct().order_by('name')
         return JsonResponse(data={
             'locations': [
                 {
