@@ -325,6 +325,11 @@ def current_age(dob, selected_date):
         age_format += "%s year%s " % (age.years, '' if age.years == 1 else 's')
     if age.months:
         age_format += "%s month%s " % (age.months, '' if age.months == 1 else 's')
+    if not age.years and not age.months:
+        if age.days > 0:
+            age_format = "%s day%s" % (age.days, '' if age.days == 1 else 's')
+        else:
+            age_format = "0 days"
     return age_format
 
 
