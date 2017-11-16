@@ -58,7 +58,7 @@ class ReportDispatcher(View):
     map_name = None
 
     def __init__(self, **kwargs):
-        if not self.map_name or not isinstance(self.map_name, six.string_types): # unicode?
+        if not self.map_name or not isinstance(self.map_name, six.string_types):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 
