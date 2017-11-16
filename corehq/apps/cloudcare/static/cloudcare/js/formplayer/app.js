@@ -257,13 +257,13 @@ FormplayerFrontend.on('configureDebugger', function() {
         return;
 
     var urlObject = Util.currentUrlToObject();
-    var steps = urlObject.steps;
+    var selections = urlObject.steps;
     var appId = urlObject.appId;
 
     $debug.html('');
     cloudCareDebugger = new CloudCareDebugger({
         baseUrl: user.formplayer_url,
-        steps: steps,
+        selections: selections,
         username: user.username,
         restoreAs: user.restoreAs,
         domain: user.domain,
