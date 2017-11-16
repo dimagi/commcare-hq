@@ -80,7 +80,6 @@ def get_username_and_password_from_request(request):
         try:
             return string.decode('utf-8')
         except UnicodeDecodeError:
-            raise
             # https://sentry.io/dimagi/commcarehq/issues/391378081/
             return string.decode('latin1')
 
