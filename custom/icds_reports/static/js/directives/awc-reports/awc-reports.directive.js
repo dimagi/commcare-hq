@@ -2037,6 +2037,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2088,6 +2089,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
