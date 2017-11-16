@@ -48,10 +48,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         _.defaults(self.options, {
             baseUrl: null,
             formSessionId: null,
-            menuSessionId: null,
+            steps: null,
             username: null,
             restoreAs: null,
             domain: null,
+            appId: null,
             tabs: [
                 TabIDs.FORM_DATA,
                 TabIDs.FORM_XML,
@@ -168,10 +169,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         API.menuDebuggerContent(
             this.options.baseUrl,
             {
-                session_id: this.options.menuSessionId,
+                selections: this.options.steps,
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
+                app_id: this.options.appId,
             }
         ).done(function(response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
@@ -186,11 +188,12 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         _.defaults(self.options, {
             baseUrl: null,
             formSessionId: null,
-            menuSessionId: null,
+            steps: null,
             username: null,
             restoreAs: null,
             domain: null,
             sessionType: SessionTypes.FORM,
+            appId: null,
         });
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
@@ -247,8 +250,6 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.getSessionId = function() {
             if (self.options.sessionType === SessionTypes.FORM) {
                 return self.options.formSessionId;
-            } else {
-                return self.options.menuSessionId;
             }
         };
 
@@ -261,6 +262,8 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     restoreAs: self.options.restoreAs,
                     domain: self.options.domain,
                     xpath: xpath,
+                    app_id: self.options.appId,
+                    selections: self.options.steps,
                 },
                 self.options.sessionType
             ).done(function(response) {
