@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import SQLLocation
@@ -99,7 +100,7 @@ class Command(BaseCommand):
             writer.writerow(self.field_names)
             for user in with_progress_bar(CommCareUser.by_domain(domain)):
                 self.add_user(user, writer)
-        print "Wrote to {}".format(filename)
+        print("Wrote to {}".format(filename))
 
         if self.locationless_users:
             with open('locationless_' + filename, 'w') as f:

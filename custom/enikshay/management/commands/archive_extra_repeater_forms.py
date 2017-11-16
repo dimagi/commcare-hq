@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.cleanup import rebuild_case_from_forms
@@ -70,7 +71,7 @@ class Command(BaseCommand):
             to_archive.extend(nikshay_to_archive)
             to_archive.extend(dots_99_to_archvie)
 
-        print "Will archive {} forms".format(len(to_archive))
+        print("Will archive {} forms".format(len(to_archive)))
 
         xform_archived.disconnect(rebuild_form_cases)
         with open(log_file, "w") as f:
@@ -81,6 +82,6 @@ class Command(BaseCommand):
                     form.archive(user_id="remove_duplicate_forms_script")
         xform_archived.connect(rebuild_form_cases)
 
-        print "Will rebuild {} cases".format(len(cases_affected))
+        print("Will rebuild {} cases".format(len(cases_affected)))
         for case_id in with_progress_bar(cases_affected):
             rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id="remove_duplicate_forms_script"))

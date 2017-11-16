@@ -93,6 +93,7 @@ for each case, then convert these to CaseStructure objects.
 """
 
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import decimal
 import logging
@@ -2259,7 +2260,7 @@ class Command(BaseCommand):
                     bad_rows_file_writer.writerow([i, exception_as_string] +
                                                   [unicode(c.value).encode('utf-8') for c in row])
 
-        print "{} rows with unknown exceptions".format(rows_with_unknown_exceptions)
+        print("{} rows with unknown exceptions".format(rows_with_unknown_exceptions))
 
     def generate_id(self):
         now = datetime.datetime.now()

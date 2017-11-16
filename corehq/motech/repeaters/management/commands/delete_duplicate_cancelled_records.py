@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import datetime
 from collections import defaultdict
@@ -44,7 +45,7 @@ class Command(BaseCommand):
         self.domain = domain
         self.repeater_id = repeater_id
         repeater = Repeater.get(repeater_id)
-        print "Looking up repeat records for '{}'".format(repeater.friendly_name)
+        print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         redundant_records = []
         records_by_payload_id = defaultdict(list)
@@ -66,9 +67,9 @@ class Command(BaseCommand):
                .format(total=total_records,
                        redundant=redundant_payloads,
                        unique=unique_payloads))
-        print "Delete {} duplicate records?".format(total_records - unique_payloads)
+        print("Delete {} duplicate records?".format(total_records - unique_payloads))
         if not input("(y/n)") == 'y':
-            print "Aborting"
+            print("Aborting")
             return
 
         redundant_log = self.delete_already_successful_records(redundant_records)
@@ -77,7 +78,7 @@ class Command(BaseCommand):
         filename = "cancelled_{}_records-{}.csv".format(
             repeater.__class__.__name__,
             datetime.datetime.utcnow().isoformat())
-        print "Writing log of changes to {}".format(filename)
+        print("Writing log of changes to {}".format(filename))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(('RepeatRecord ID', 'Payload ID', 'Failure Reason', 'Deleted?', 'Reason'))
