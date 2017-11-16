@@ -1,19 +1,9 @@
-{% extends "champ/base_template.html" %}
+{% extends "champ/base_async_template.html" %}
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
 
 {% block champjs %}
-    <script type="text/javascript" src="{% static 'champ/js/controlers/prevision_vs_achievements_graph.controller.js' %}"></script>
-    <script>
-        window.angular.module('champApp', ['ngSanitize', 'ui.select', 'nvd3', 'daterangepicker'])
-            .controller('MainController', PrevisionVsAchievementsGraphController)
-            .config(['$httpProvider', function($httpProvider) {
-                $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-                $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-                $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
-    }]);
-    </script>
 {% endblock %}
 
 {% block champcontent %}

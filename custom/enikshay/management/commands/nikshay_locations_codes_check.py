@@ -1,3 +1,4 @@
+from __future__ import print_function
 import csv
 from collections import namedtuple, defaultdict
 from datetime import datetime

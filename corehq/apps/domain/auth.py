@@ -119,7 +119,7 @@ def tokenauth(view):
             return HttpResponse(status=401)
         try:
             user, token = TokenAuthentication().authenticate(request)
-        except AuthenticationFailed, e:
+        except AuthenticationFailed as e:
             return HttpResponse(e, status=401)
 
         if user.is_active:

@@ -46,3 +46,6 @@ HELPDESK_ROLES = [
     'Test SHD (For VL Dashboard QA)',
     'Test CPMU (For VL Dashboard QA)'
 ]
+
+
+ICDS_SUPPORT_EMAIL = 'icds-support@dimagi.com'

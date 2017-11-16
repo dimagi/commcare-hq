@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
@@ -54,5 +55,5 @@ class Command(BaseCommand):
                 location_user.save()
                 user_ids_updated.append(location_user._id)
 
-        print user_ids_updated
-        print "Updated {} users".format(len(user_ids_updated))
+        print(user_ids_updated)
+        print("Updated {} users".format(len(user_ids_updated)))

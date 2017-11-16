@@ -362,7 +362,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
-    'Show text area for entering custom case list xml',
+    'Allow custom XML to define case lists (ex. for case tiles)',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
@@ -378,8 +378,8 @@ CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
 
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
-    'Allow configuration of case list tiles',
-    TAG_SOLUTIONS,
+    'REC: Allow configuration of the REC case list tile',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1113,7 +1113,7 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
-    'UPDATE: HQ will not automatically determine the case properties available for an export',
+    'Add user defined columns to exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
