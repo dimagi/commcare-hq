@@ -148,7 +148,7 @@ def adjust_datetimes(data, parent=None, key=None):
     # todo: in the future this will convert to UTC
     if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
         try:
-            parent[key] = unicode(json_format_datetime(
+            parent[key] = six.text_type(json_format_datetime(
                 adjust_text_to_datetime(data)
             ))
         except iso8601.ParseError:
