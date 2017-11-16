@@ -35,6 +35,9 @@ class OpenmrsImporter(Document):
     username = StringProperty()
     password = StringProperty()
 
+    # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
+    location_id = StringProperty()
+
     # How often should cases be imported
     import_frequency = StringProperty(choices=IMPORT_FREQUENCY_CHOICES, default=IMPORT_FREQUENCY_MONTHLY)
 
@@ -56,7 +59,8 @@ class OpenmrsImporter(Document):
 
     # If report_params includes "{{ location }}" then location_type_name is used to determine which locations to
     # pull the report for. Those locations will need an "openmrs_uuid" param set. Imported cases will be owned by
-    # the first mobile worker assigned to that location.
+    # the first mobile worker assigned to that location. If this OpenmrsImporter.location_id is set, only
+    # sub-locations will be returned
     location_type_name = StringProperty()
 
     external_id_column = StringProperty()
