@@ -13,7 +13,6 @@ from corehq.apps.app_manager.views.app_summary import (
     DownloadAppSummaryView,
 )
 from corehq.apps.app_manager.views.apps import (
-    app_from_template,
     app_settings,
     app_source,
     copy_app,

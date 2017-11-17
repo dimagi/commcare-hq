@@ -46,7 +46,6 @@ from corehq.apps.app_manager.models import (
     FormNotFoundException,
     Module,
     ModuleNotFoundException,
-    load_app_template,
     ReportModule, LinkedApplication)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.util import (
@@ -393,23 +392,6 @@ def copy_app(request, domain):
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
-
-
-@require_can_edit_apps
-def app_from_template(request, domain, slug):
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    clear_app_cache(request, domain)
-    template = load_app_template(slug)
-    app = import_app_util(template, domain, {
-        'created_from_template': '%s' % slug,
-    })
-    module_id = 0
-    form_id = 0
-    try:
-        app.get_module(module_id).get_form(form_id)
-    except (ModuleNotFoundException, FormNotFoundException):
-        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form_legacy', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
