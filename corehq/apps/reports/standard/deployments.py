@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from casexml.apps.phone.analytics import get_sync_logs_for_user
 from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
+from corehq.apps.es.aggregations import DateHistogram
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from couchexport.export import SCALAR_NEVER_WAS
 
@@ -536,8 +537,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
             ]
 
 
-# todo location safety
-# @location_safe
+@location_safe
 class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     slug = 'aggregate_app_status'
 
@@ -546,10 +546,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     description = ugettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
-        # todo: add one of these filters
-        # 'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
-        # 'corehq.apps.reports.filters.location.LocationGroupFilter',
-
+        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
     ]
     exportable = False
     emailable = False
@@ -559,17 +556,37 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(AggregateAppStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
 
+    @memoized
+    def user_query(self):
+        # partially inspired by ApplicationStatusReport.user_query
+        mobile_user_and_group_slugs = set(
+            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+        )
+        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
+        user_query = user_query.size(0)
+        user_query = user_query.aggregations([
+            DateHistogram('last_submission', 'reporting_metadata.last_submission_for_user.submission_date', '1d'),
+            DateHistogram('last_sync', 'reporting_metadata.last_sync_for_user.sync_date', '1d')
+        ])
+        return user_query
+
     @property
     def template_context(self):
-        # todo: use real data
-        with open('rec-results.json') as f:
-            import json
-            raw_data = json.loads(f.read())
-
-        print(raw_data)
-        aggregations = raw_data['aggregations']
-        last_sync_buckets = aggregations['last_sync']['buckets'][::-1]
-
+        fake = False  # todo remove after demo
+        if fake:
+            with open('rec-results.json') as f:
+                import json
+                raw_data = json.loads(f.read())
+            aggregations = raw_data['aggregations']
+            last_sync_buckets = aggregations['last_sync']['buckets']
+            last_submission_buckets = aggregations['last_submission']['buckets']
+        else:
+            aggregations = self.user_query().run().aggregations
+            last_submission_buckets = aggregations[0].raw_buckets
+            last_sync_buckets = aggregations[1].raw_buckets
 
         def _buckets_to_series(buckets):
             # start with N days of empty data
@@ -607,10 +624,10 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
         return {
             'last_sync_data': {
                 'key': 'Last Sync',
-                'values': _buckets_to_series(aggregations['last_sync']['buckets'][::-1])
+                'values': _buckets_to_series(last_sync_buckets)
             },
             'last_submission_data': {
                 'key': 'Last Submission',
-                'values': _buckets_to_series(aggregations['last_submission']['buckets'][::-1])
+                'values': _buckets_to_series(last_submission_buckets)
             }
         }
