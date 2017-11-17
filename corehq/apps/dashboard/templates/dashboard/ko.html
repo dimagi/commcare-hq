@@ -39,19 +39,15 @@
                     <div class="panel panel-dashboard panel-dashboard-medium">
                         <div class="panel-heading">
                             <a href="{{ tile.url }}"
-                               popover-title="{{ tile.title }}"
-                               popover="{{ tile.help_text }}"
-                               popover-trigger="mouseenter"
-                               popover-placement="bottom"
+                               data-popover-title="{{ tile.title }}"
+                               data-popover="{{ tile.help_text }}"
                                title="">{{ tile.title }}</a>
                         </div>
                         <div class="panel-body">
                             <a href="{{ tile.url }}"
                                class="dashboard-link"
-                               popover-title="{{ tile.title }}"
-                               popover="{{ tile.help_text }}"
-                               popover-trigger="mouseenter"
-                               popover-placement="top"
+                               data-popover-title="{{ tile.title }}"
+                               data-popover="{{ tile.help_text }}"
                                title="">
                                 <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
                             </a>
