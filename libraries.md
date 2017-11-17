@@ -1,6 +1,8 @@
 # Third-Party Libraries
 
-jQuery is available throughout HQ. We use [jQuery 3](https://github.com/dimagi/commcare-hq/blob/master/bower.json) everywhere except in Web Apps, which depends on [marionette](https://marionettejs.com/) v2, which is only compatible with jQuery 2.
+jQuery is available throughout HQ. We use [jQuery 3](https://jquery.com/) everywhere except in Web Apps, which depends on [marionette](https://marionettejs.com/) v2, which is only compatible with jQuery 2.
+
+[Underscore](http://underscorejs.org/) is available throughout HQ for utilities.
 
 [Knockout](http://knockoutjs.com/) is also available throughout HQ and should be used for new code. We use Knockout 3.0.
 
