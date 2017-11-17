@@ -579,18 +579,9 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def template_context(self):
-        fake = True  # todo remove after demo
-        if fake:
-            with open('rec-results.json') as f:
-                import json
-                raw_data = json.loads(f.read())
-            aggregations = raw_data['aggregations']
-            last_sync_buckets = aggregations['last_sync']['buckets']
-            last_submission_buckets = aggregations['last_submission']['buckets']
-        else:
-            aggregations = self.user_query().run().aggregations
-            last_submission_buckets = aggregations[0].raw_buckets
-            last_sync_buckets = aggregations[1].raw_buckets
+        aggregations = self.user_query().run().aggregations
+        last_submission_buckets = aggregations[0].raw_buckets
+        last_sync_buckets = aggregations[1].raw_buckets
 
         def _buckets_to_series(buckets):
             # start with N days of empty data
