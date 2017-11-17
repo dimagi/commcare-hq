@@ -573,6 +573,24 @@ def drop_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+def pause_repeater(request, domain, repeater_id):
+    rep = Repeater.get(repeater_id)
+    rep.pause()
+    messages.success(request, "Forwarding paused!")
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
+
+
+@require_POST
+@require_can_edit_web_users
+def resume_repeater(request, domain, repeater_id):
+    rep = Repeater.get(repeater_id)
+    rep.resume()
+    messages.success(request, "Forwarding resumed!")
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
+
+
+@require_POST
+@require_can_edit_web_users
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']

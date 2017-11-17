@@ -76,6 +76,8 @@ def process_repeat_record(repeat_record):
         repeat_record.save()
 
     try:
+        if repeat_record.repeater.paused:
+            return
         if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX

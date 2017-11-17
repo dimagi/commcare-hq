@@ -88,6 +88,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
+    paused = BooleanProperty(default=False)
 
     payload_generator_classes = ()
 
@@ -227,6 +228,14 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['doc_type'] += DELETED
         if DELETED not in self['base_doc']:
             self['base_doc'] += DELETED
+        self.save()
+
+    def pause(self):
+        self.paused = True
+        self.save()
+
+    def resume(self):
+        self.paused = False
         self.save()
 
     def get_url(self, repeat_record):
