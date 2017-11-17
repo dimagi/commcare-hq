@@ -265,9 +265,9 @@ def format_datatables_data(text, sort_key, raw=None):
 
 def app_export_filter(doc, app_id):
     if app_id:
-        return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
+        return (doc['app_id'] == app_id) if 'app_id' in doc else False
     elif app_id == '':
-        return (not doc['app_id']) if doc.has_key('app_id') else True
+        return (not doc['app_id']) if 'app_id' in doc else True
     else:
         return True
 

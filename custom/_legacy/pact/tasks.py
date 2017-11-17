@@ -46,7 +46,7 @@ def eval_dots_block(xform_json, callback=None):
 
     #first, set the pact_data to json if the dots update stuff is there.
     try:
-        if xform_json.get(PACT_DOTS_DATA_PROPERTY, {}).has_key('processed'):
+        if 'processed' in xform_json.get(PACT_DOTS_DATA_PROPERTY, {}):
             #already processed, skipping
             return
 
@@ -56,7 +56,7 @@ def eval_dots_block(xform_json, callback=None):
             pass
         else:
             #update is a dict
-            if xform_json['form']['case']['update'].has_key('dots'):
+            if 'dots' in xform_json['form']['case']['update']:
                 dots_json = xform_json['form']['case']['update']['dots']
                 if isinstance(dots_json, str) or isinstance(dots_json, unicode):
                     json_data = json.loads(dots_json)

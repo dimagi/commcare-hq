@@ -94,10 +94,10 @@ def query_per_case_submissions_facet(domain, username=None, limit=100):
 
 
 def get_case_id(xform):
-    if xform['form'].has_key('case'):
-        if xform['form']['case'].has_key('case_id'):
+    if 'case' in xform['form']:
+        if 'case_id' in xform['form']['case']:
             return xform['form']['case']['case_id']
-        elif xform['form']['case'].has_key('@case_id'):
+        elif '@case_id' in xform['form']['case']:
             return xform['form']['case']['@case_id']
     return None
 
