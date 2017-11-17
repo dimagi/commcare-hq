@@ -89,6 +89,7 @@ def REPORTS(project):
     )
     deployments_reports = (
         deployments.ApplicationStatusReport,
+        deployments.AggregateAppStatusReport,
         receiverwrapper.SubmissionErrorReport,
         phonelog.DeviceLogDetailsReport,
         deployments.SyncHistoryReport,

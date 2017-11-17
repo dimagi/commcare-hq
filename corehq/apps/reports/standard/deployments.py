@@ -4,11 +4,12 @@ from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from casexml.apps.phone.analytics import get_sync_logs_for_user
 from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from couchexport.export import SCALAR_NEVER_WAS
 
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
@@ -533,3 +534,83 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
                 error.version_number,
                 str(error.date),
             ]
+
+
+# todo location safety
+# @location_safe
+class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
+    slug = 'aggregate_app_status'
+
+    report_template_path = "reports/async/aggregate_app_status.html"
+    name = ugettext_lazy("Aggregate App Status")  # todo: better name / description
+    description = ugettext_lazy("See the last activity of your project's users in aggregate.")
+
+    fields = [
+        # todo: add one of these filters
+        # 'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        # 'corehq.apps.reports.filters.location.LocationGroupFilter',
+
+    ]
+    exportable = False
+    emailable = False
+    js_scripts = ['reports/js/aggregate_app_status.js']
+
+    @use_nvd3
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(AggregateAppStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+
+    @property
+    def template_context(self):
+        # todo: use real data
+        with open('rec-results.json') as f:
+            import json
+            raw_data = json.loads(f.read())
+
+        print(raw_data)
+        aggregations = raw_data['aggregations']
+        last_sync_buckets = aggregations['last_sync']['buckets'][::-1]
+
+
+        def _buckets_to_series(buckets):
+            # start with N days of empty data
+            # add bucket info to the data series
+            # add last bucket
+            days_of_history = 60
+            vals = {
+                i: 0 for i in range(days_of_history)
+            }
+            # todo: what to do with extra?
+            extra = 0
+            today = datetime.today().date()
+            for bucket_val in buckets:
+                bucket_date = datetime.fromtimestamp(bucket_val['key'] / 1000.0).date()
+                delta_days = (today - bucket_date).days
+                if delta_days in vals:
+                    vals[delta_days] += bucket_val['doc_count']
+                else:
+                    extra += bucket_val['doc_count']
+
+            return [
+                {
+                    'series': 0,
+                    'x': i,
+                    'y': vals[i]
+                } for i in range(days_of_history)
+            ] + [
+                {
+                    'series': 0,
+                    'x': days_of_history,
+                    'y': extra,
+                }
+            ]
+
+        return {
+            'last_sync_data': {
+                'key': 'Last Sync',
+                'values': _buckets_to_series(aggregations['last_sync']['buckets'][::-1])
+            },
+            'last_submission_data': {
+                'key': 'Last Submission',
+                'values': _buckets_to_series(aggregations['last_submission']['buckets'][::-1])
+            }
+        }
