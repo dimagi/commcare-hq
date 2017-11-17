@@ -39,6 +39,7 @@ from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
 from .export import get_writer
 import six
+from six.moves import zip
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -1107,7 +1108,7 @@ class SummaryTablularReport(GenericTabularReport):
     def summary_values(self):
         headers = list(self.headers)
         assert (len(self.data) == len(headers))
-        return zip(headers, self.data)
+        return list(zip(headers, self.data))
 
 
 class ProjectInspectionReportParamsMixin(object):

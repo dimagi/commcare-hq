@@ -20,6 +20,7 @@ from django.utils.translation import ugettext as _
 import re
 
 from corehq.form_processor.utils.general import should_use_sql_backend
+from six.moves import zip
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 

@@ -14,6 +14,7 @@ from django.template.loader import render_to_string, get_template
 import xlwt
 
 from couchexport.models import Format
+from six.moves import zip
 
 
 def _encode_if_needed(val):

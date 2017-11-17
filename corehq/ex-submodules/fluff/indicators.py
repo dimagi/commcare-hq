@@ -7,6 +7,7 @@ from .util import get_indicator_model, default_null_value_placeholder
 from .calculators import Calculator
 from .const import ALL_TYPES, TYPE_STRING
 import six
+from six.moves import zip
 
 
 class FlatField(schema.StringProperty):

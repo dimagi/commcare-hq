@@ -13,6 +13,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListRepo
 from corehq.apps.hqwebapp.decorators import use_maps_async
 from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
+from six.moves import zip
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
