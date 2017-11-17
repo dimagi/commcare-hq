@@ -170,7 +170,9 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
             update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
 
 
-class NikshayRegisterPatientPayloadGeneratorV2(NikshayRegisterPatientPayloadGenerator):
+class NikshayRegisterPatientPayloadGeneratorV2(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
     def get_payload(self, repeat_record, episode_case):
         """
         https://docs.google.com/spreadsheets/d/1LK6xQHldOT8tf3ctcypAyUlIuTN-C25zhyIC1jHJeS0/edit
@@ -634,7 +636,7 @@ def _get_person_age(person_case_properties):
 
 def _get_location_nikshay_code(location_id):
     if location_id:
-        district_location = SQLLocation.active_objects.get_or_None(location_id)
+        district_location = SQLLocation.active_objects.get_or_None(location_id=location_id)
         if district_location:
             district_location.metadata.get('nikshay_code')
     return ""
@@ -642,7 +644,7 @@ def _get_location_nikshay_code(location_id):
 
 def _get_location_name(location_id):
     if location_id:
-        district_location = SQLLocation.active_objects.get_or_None(location_id)
+        district_location = SQLLocation.active_objects.get_or_None(location_id=location_id)
         if district_location:
             return district_location.name
     return ""
@@ -694,9 +696,9 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "p_pincode": person_case_properties.get('current_address_postal_code', ''),
         # send 0 since that is accepted by Nikshay for this mandatory field
         "contact_no": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
-        "contact_person_name ": person_case_properties.get('secondary_contact_name_address', ''),
-        "contact_person_address ": person_case_properties.get('secondary_contact_name_address', ''),
-        "contact_person_mobile_no ": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
+        "contact_person_name": person_case_properties.get('secondary_contact_name_address', ''),
+        "contact_person_address": person_case_properties.get('secondary_contact_name_address', ''),
+        "contact_person_mobile_no": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
         "pcategory": person_category,
 
         "hiv_status": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
