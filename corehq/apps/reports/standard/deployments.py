@@ -1,5 +1,5 @@
 # coding=utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -609,7 +609,8 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
             for i in range(days_of_history):
                 running_total += vals[i]
-                daily_series.append({
+                daily_series.append(
+                    {
                         'series': 0,
                         'x': '{}'.format(today - timedelta(days=i)),
                         'y': vals[i]
