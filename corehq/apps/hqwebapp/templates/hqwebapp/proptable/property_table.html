@@ -14,12 +14,14 @@
                 <tr>
                     {% for cell in row %}
                     {% if not cell.colspan %}
-                        <th title="{{ cell.expr }}"
-                            {% if cell.info_url %}
-                            data-bind="openRemoteModal: '{{ cell.info_url }}'"
-                            {% endif %}
-                        >
-                        {{ cell.name }}
+                    <th title="{{ cell.expr }}">
+                        {% if cell.info_url %}
+                            <a href="#" data-bind="openRemoteModal: '{{ cell.info_url }}'">
+                                {{ cell.name }}
+                            </a>
+                        {% else %}
+                            {{ cell.name }}
+                        {% endif %}
                     </th>
                     <td>
                         {{ cell.value }}
