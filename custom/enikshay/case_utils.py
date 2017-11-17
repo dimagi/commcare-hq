@@ -162,7 +162,7 @@ def get_associated_episode_case_for_test(test_case, occurrence_case_id):
     return get_open_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
 
 
-def get_all_episode_cases_from_person(domain, person_case_id):
+def get_all_episode_confirmed_tb_cases_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
     episode_cases = []
     occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
@@ -633,6 +633,6 @@ def person_has_any_nikshay_notifiable_episode(person_case):
     if not is_valid_person_submission(person_case):
         return False
 
-    episode_cases = get_all_episode_cases_from_person(domain, person_case.case_id)
+    episode_cases = get_all_episode_confirmed_tb_cases_from_person(domain, person_case.case_id)
     return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
                for episode_case in episode_cases)

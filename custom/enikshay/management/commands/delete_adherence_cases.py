@@ -6,7 +6,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 
 
-from custom.enikshay.case_utils import get_all_episode_cases_from_person, get_adherence_cases_from_episode
+from custom.enikshay.case_utils import get_all_episode_confirmed_tb_cases_from_person, get_adherence_cases_from_episode
 
 
 class Command(BaseCommand):
@@ -46,7 +46,7 @@ class Command(BaseCommand):
             ])
 
             for person_id in person_ids:
-                episodes = get_all_episode_cases_from_person(domain, person_id)
+                episodes = get_all_episode_confirmed_tb_cases_from_person(domain, person_id)
                 for episode in episodes:
                     episode_adherence_cases = get_adherence_cases_from_episode(domain, episode.case_id)
                     dots_adherence_cases = [adherence for adherence in episode_adherence_cases
