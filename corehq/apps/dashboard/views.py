@@ -68,7 +68,7 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 class DomainDashboardView(HQJSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
-    template_name = 'dashboard/dashboard_domain.html'
+    template_name = 'dashboard/base.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(DomainDashboardView, self).dispatch(request, *args, **kwargs)
