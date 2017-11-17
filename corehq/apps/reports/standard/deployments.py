@@ -539,10 +539,10 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
 @location_safe
 class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
-    slug = 'aggregate_app_status'
+    slug = 'aggregate_user_status'
 
     report_template_path = "reports/async/aggregate_app_status.html"
-    name = ugettext_lazy("Aggregate App Status")  # todo: better name / description
+    name = ugettext_lazy("Aggregate User Status")  # todo: better name / description
     description = ugettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
@@ -575,7 +575,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def template_context(self):
-        fake = False  # todo remove after demo
+        fake = True  # todo remove after demo
         if fake:
             with open('rec-results.json') as f:
                 import json
@@ -596,38 +596,76 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
             vals = {
                 i: 0 for i in range(days_of_history)
             }
-            # todo: what to do with extra?
-            extra = 0
+            extra = total = running_total = 0
             today = datetime.today().date()
             for bucket_val in buckets:
                 bucket_date = datetime.fromtimestamp(bucket_val['key'] / 1000.0).date()
                 delta_days = (today - bucket_date).days
+                val = bucket_val['doc_count']
                 if delta_days in vals:
-                    vals[delta_days] += bucket_val['doc_count']
+                    vals[delta_days] += val
                 else:
-                    extra += bucket_val['doc_count']
+                    extra += val
+                total += val
 
-            return [
+
+            daily_series = []
+            running_total_series = []
+            for i in range(days_of_history):
+                running_total += vals[i]
+                daily_series.append({
+                        'series': 0,
+                        'x': '{}'.format(today - timedelta(days=i)),
+                        'y': vals[i]
+                    }
+                )
+                running_total_series.append(
+                    {
+                        'series': 0,
+                        'x': '{}'.format(today - timedelta(days=i)),
+                        'y': 100. * float(running_total) / float(total)
+                    }
+                )
+
+            # catchall / last row
+            daily_series.append(
                 {
                     'series': 0,
-                    'x': i,
-                    'y': vals[i]
-                } for i in range(days_of_history)
-            ] + [
-                {
-                    'series': 0,
-                    'x': days_of_history,
+                    'x': 'more than {} days ago'.format(days_of_history),
                     'y': extra,
                 }
-            ]
+            )
+            running_total_series.append(
+                {
+                    'series': 0,
+                    'x': 'more than {} days ago'.format(days_of_history),
+                    'y': 100. * float(running_total + extra) / float(total),  # should always be 1
+                }
+            )
+            return daily_series, running_total_series
+
+        last_submission_series, last_submission_totals = _buckets_to_series(last_submission_buckets)
+        last_sync_series, last_sync_totals = _buckets_to_series(last_sync_buckets)
 
         return {
-            'last_sync_data': {
-                'key': 'Last Sync',
-                'values': _buckets_to_series(last_sync_buckets)
-            },
             'last_submission_data': {
-                'key': 'Last Submission',
-                'values': _buckets_to_series(last_submission_buckets)
-            }
+                'key': _('Count of Users'),
+                'values': last_submission_series,
+                'color': '#004abf',
+            },
+            'last_submission_totals': {
+                'key': _('Percent of Users'),
+                'values': last_submission_totals,
+                'color': '#004abf',
+            },
+            'last_sync_data': {
+                'key': _('Count of Users'),
+                'values': last_sync_series,
+                'color': '#f58220',
+            },
+            'last_sync_totals': {
+                'key': _('Percent of Users'),
+                'values': last_sync_totals,
+                'color': '#f58220',
+            },
         }

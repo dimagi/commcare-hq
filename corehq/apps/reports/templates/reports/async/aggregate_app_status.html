@@ -6,13 +6,29 @@
 
 {% block reportcontent %}
 <div id="sync-data" class="hide" data-value='{{ last_sync_data|JSON }}'></div>
+<div id="sync-totals" class="hide" data-value='{{ last_sync_totals|JSON }}'></div>
 <div id="submission-data" class="hide" data-value='{{ last_submission_data|JSON }}'></div>
+<div id="submission-totals" class="hide" data-value='{{ last_submission_totals|JSON }}'></div>
 <div class="row">
     <div class="col-md-12">
         <h2>{% trans "Last Submission Dates for Selected Users" %}</h2>
+        <p class="lead">
+            {% trans "Daily breakdown" %}
+        </p>
         <div id="submission_dates"><svg height="300px"></svg></div>
+        <p class="lead">
+            {% trans "Percent of total since date" %}
+        </p>
+        <div id="submission_totals"><svg height="300px"></svg></div>
         <h2>{% trans "Last Sync Dates for Selected Users" %}</h2>
+        <p class="lead">
+            {% trans "Daily breakdown" %}
+        </p>
         <div id="sync_dates"><svg height="300px"></svg></div>
+        <p class="lead">
+            {% trans "Percent of total since date" %}
+        </p>
+        <div id="sync_totals"><svg height="300px"></svg></div>
     </div>
 </div>
 {% endblock reportcontent %}
