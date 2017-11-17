@@ -81,10 +81,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_case_search_action(self):
         """
-        Case search action should be added to case list
+        Case search action should be added to case list and a new search detail should be created
         """
         suite = self.app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail[1]")
+        self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
     def test_case_search_action_relevant_condition(self):
         condition = "'foo' = 'bar'"

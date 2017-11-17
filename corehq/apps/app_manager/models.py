@@ -124,7 +124,9 @@ from corehq.apps.app_manager.util import (
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
     LatestAppInfo,
-    update_report_module_ids)
+    update_report_module_ids,
+    module_offers_search,
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -2547,6 +2549,10 @@ class ModuleDetailsMixin():
         except Exception:
             return []
 
+    @property
+    def search_detail(self):
+        return deepcopy(self.case_details.short)
+
     def rename_lang(self, old_lang, new_lang):
         super(Module, self).rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
@@ -2560,12 +2566,15 @@ class ModuleDetailsMixin():
         return json.dumps(source) if dump_json else source
 
     def get_details(self):
-        return (
+        details = [
             ('case_short', self.case_details.short, True),
             ('case_long', self.case_details.long, True),
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
-        )
+        ]
+        if module_offers_search(self):
+            details.append(('search_short', self.search_detail, True))
+        return tuple(details)
 
     def validate_details_for_build(self):
         errors = []
