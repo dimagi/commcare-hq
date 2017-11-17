@@ -30,13 +30,15 @@ class BaseReindexAccessorTest(object):
         FormProcessorTestUtils.delete_all_sql_cases()
 
         cls.first_batch_domain = cls._get_doc_ids(cls._create_docs(cls.domain, 4))
-        cls.first_batch_global = cls.first_batch_domain + cls._get_doc_ids(cls._create_docs(cls.other_domain, 4))
-        cls.middle = datetime.utcnow()
+        batch = cls._create_docs(cls.other_domain, 4)
+        cls.first_batch_global = cls.first_batch_domain + cls._get_doc_ids(batch)
+        cls.middle_id = batch[-1].pk
         time.sleep(.02)
         cls.second_batch_domain = cls._get_doc_ids(cls._create_docs(cls.domain, 4))
-        cls.second_batch_global = cls.second_batch_domain + cls._get_doc_ids(cls._create_docs(cls.other_domain, 4))
+        batch = cls._create_docs(cls.other_domain, 4)
+        cls.second_batch_global = cls.second_batch_domain + cls._get_doc_ids(batch)
         time.sleep(.02)
-        cls.end = datetime.utcnow()
+        cls.end_id = batch[-1].pk
 
         cls.all_doc_ids = cls.first_batch_global + cls.second_batch_global
         cls.all_doc_ids_domain = cls.first_batch_domain + cls.second_batch_domain
@@ -57,24 +59,24 @@ class BaseReindexAccessorTest(object):
     def _create_docs(cls, domain, count):
         raise NotImplementedError
 
-    def _get_docs(self, start, last_doc_pk=None, limit=500):
-        return self.accessor_class().get_docs(None, start, last_doc_pk=last_doc_pk, limit=limit)
+    def _get_docs(self, last_doc_pk=None, limit=500):
+        return self.accessor_class().get_docs(None, last_doc_pk=last_doc_pk, limit=limit)
 
-    def _get_docs_for_domain(self, domain, start, last_doc_pk=None, limit=500):
-        return self.accessor_class(domain=domain).get_docs(None, start, last_doc_pk=last_doc_pk, limit=limit)
+    def _get_docs_for_domain(self, domain, last_doc_pk=None, limit=500):
+        return self.accessor_class(domain=domain).get_docs(None, last_doc_pk=last_doc_pk, limit=limit)
 
     def test_get_docs(self):
-        docs = self._get_docs(None)
+        docs = self._get_docs()
         self.assertEqual(len(self.all_doc_ids), len(docs))
         self.assertEqual(set(self._get_doc_ids(docs)),
                          set(self.all_doc_ids))
 
-        docs = self._get_docs(self.middle)
+        docs = self._get_docs(self.middle_id)
         self.assertEqual(8, len(docs))
         self.assertEqual(set(self._get_doc_ids(docs)),
                          set(self.second_batch_global))
 
-        self.assertEqual(0, len(self._get_docs(self.end)))
+        self.assertEqual(0, len(self._get_docs(self.end_id)))
 
     def test_get_docs_for_domain(self):
         docs = self._get_docs_for_domain(self.domain, None)
@@ -82,12 +84,12 @@ class BaseReindexAccessorTest(object):
         self.assertEqual(set(self._get_doc_ids(docs)),
                          set(self.all_doc_ids_domain))
 
-        docs = self._get_docs_for_domain(self.domain, self.middle)
+        docs = self._get_docs_for_domain(self.domain, self.middle_id)
         self.assertEqual(len(self.second_batch_domain), len(docs))
         self.assertEqual(set(self._get_doc_ids(docs)),
                          set(self.second_batch_domain))
 
-        self.assertEqual(0, len(self._get_docs_for_domain(self.domain, self.end)))
+        self.assertEqual(0, len(self._get_docs_for_domain(self.domain, self.end_id)))
 
 
 class BaseUnshardedAccessorMixin(object):
@@ -104,16 +106,16 @@ class BaseUnshardedAccessorMixin(object):
             cursor.execute('ANALYSE')  # the doc count query relies on this
 
     def test_limit(self):
-        docs = self._get_docs(None, limit=2)
+        docs = self._get_docs(limit=2)
         self.assertEqual(2, len(docs))
         self.assertEqual(self._get_doc_ids(docs), self.first_batch_global[:2])
 
     def test_last_doc_pk(self):
-        docs = self._get_docs(self.middle, limit=2)
+        docs = self._get_docs(self.middle_id, limit=2)
         self.assertEqual(self._get_doc_ids(docs), self.second_batch_global[:2])
 
         last_doc = self.accessor_class().get_doc(self.second_batch_global[0])
-        docs = self._get_docs(self._get_last_modified_date(last_doc), last_doc_pk=last_doc.pk, limit=2)
+        docs = self._get_docs(last_doc_pk=last_doc.pk, limit=2)
         self.assertEqual(self._get_doc_ids(docs), self.second_batch_global[1:3])
 
     def test_get_doc_count(self):
@@ -173,10 +175,6 @@ class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
     def _get_doc_ids(cls, docs):
         return [doc.case_id for doc in docs]
 
-    @classmethod
-    def _get_last_modified_date(cls, doc):
-        return doc.server_modified_on
-
 
 class UnshardedCaseReindexAccessorTests(BaseUnshardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):
     @classmethod
@@ -214,10 +212,6 @@ class BaseFormReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _get_doc_ids(cls, docs):
         return [doc.form_id for doc in docs]
-
-    @classmethod
-    def _get_last_modified_date(cls, doc):
-        return doc.received_on
 
 
 class UnshardedFormReindexAccessorTests(BaseUnshardedAccessorMixin, BaseFormReindexAccessorTest, TestCase):
@@ -257,10 +251,6 @@ class BaseLedgerReindexAccessorTest(BaseReindexAccessorTest):
     @classmethod
     def _get_doc_ids(cls, docs):
         return [doc.ledger_reference.as_id() for doc in docs]
-
-    @classmethod
-    def _get_last_modified_date(cls, doc):
-        return doc.last_modified
 
 
 class UnshardedLedgerReindexAccessorTests(BaseUnshardedAccessorMixin, BaseLedgerReindexAccessorTest, TestCase):

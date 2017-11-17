@@ -73,14 +73,13 @@ def iter_all_rows(reindex_accessor):
     reindex accessor
     """
     for db_alias in reindex_accessor.sql_db_aliases:
-        docs = reindex_accessor.get_docs(db_alias, reindex_accessor.startkey_min_value)
+        docs = reindex_accessor.get_docs(db_alias)
         while docs:
             for doc in docs:
                 yield doc
 
-            start_from_for_db = getattr(doc, reindex_accessor.startkey_attribute_name)
             last_id = doc.id
-            docs = reindex_accessor.get_docs(db_alias, start_from_for_db, last_doc_pk=last_id)
+            docs = reindex_accessor.get_docs(db_alias, last_doc_pk=last_id)
 
 
 class ShardAccessor(object):
@@ -182,8 +181,6 @@ class ShardAccessor(object):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
-    startkey_min_value = datetime.min
-
     def __init__(self, limit_db_aliases=None):
         self.limit_db_aliases = limit_db_aliases
 
@@ -212,13 +209,6 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
-    @abstractproperty
-    def startkey_attribute_name(self):
-        """
-        :return: The name of the attribute to filter successive batches by e.g. 'received_on'
-        """
-        raise NotImplementedError
-
     @abstractmethod
     def get_doc(self, doc_id):
         """
@@ -235,7 +225,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         return doc.to_json()
 
     @abstractmethod
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+    def get_docs(self, from_db, last_doc_pk=None, limit=500):
         """Get a batch of
         :param from_db: The DB alias to query
         :param startkey: The filter value to start from e.g. form.received_on
@@ -287,10 +277,6 @@ class FormReindexAccessor(ReindexAccessor):
     def model_class(self):
         return XFormInstanceSQL
 
-    @property
-    def startkey_attribute_name(self):
-        return 'received_on'
-
     def get_doc(self, doc_id):
         try:
             return FormAccessorSQL.get_form(doc_id)
@@ -300,12 +286,11 @@ class FormReindexAccessor(ReindexAccessor):
     def doc_to_json(self, doc):
         return doc.to_json(include_attachments=self.include_attachments)
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        received_on_since = startkey or datetime.min
+    def get_docs(self, from_db, last_doc_pk=None, limit=500):
         last_id = last_doc_pk or -1
 
         domain_clause = "form_table.domain = %s AND" if self.domain else ""
-        values = [received_on_since, last_id, limit]
+        values = [last_id, limit]
         if self.domain:
             values = [self.domain] + values
 
@@ -314,8 +299,8 @@ class FormReindexAccessor(ReindexAccessor):
             """SELECT * FROM {table} as form_table
         WHERE {domain_clause}
         state & {deleted_state} = 0 AND
-        (form_table.received_on, form_table.id) > (%s, %s)
-        ORDER BY form_table.received_on, form_table.id
+        form_table.id > %s
+        ORDER BY form_table.id
         LIMIT %s;""".format(
                 table=XFormInstanceSQL._meta.db_table,
                 domain_clause=domain_clause,
@@ -730,21 +715,16 @@ class CaseReindexAccessor(ReindexAccessor):
     def model_class(self):
         return CommCareCaseSQL
 
-    @property
-    def startkey_attribute_name(self):
-        return 'server_modified_on'
-
     def get_doc(self, doc_id):
         try:
             return CaseAccessorSQL.get_case(doc_id)
         except CaseNotFound:
             pass
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        server_modified_on_since = startkey or datetime.min
+    def get_docs(self, from_db, last_doc_pk=None, limit=500):
         last_id = last_doc_pk or -1
         domain_clause = "case_table.domain = %s AND" if self.domain else ""
-        values = [False, server_modified_on_since, last_id, limit]
+        values = [False, last_id, limit]
         if self.domain:
             values = [self.domain] + values
 
@@ -753,8 +733,8 @@ class CaseReindexAccessor(ReindexAccessor):
             """SELECT * FROM {table} as case_table
             WHERE {domain_clause}
             deleted = %s AND
-            (case_table.server_modified_on, case_table.id) > (%s, %s)
-            ORDER BY case_table.server_modified_on, case_table.id
+            case_table.id > %s
+            ORDER BY case_table.id
             LIMIT %s;""".format(
                 table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
             ),
@@ -1204,10 +1184,6 @@ class LedgerReindexAccessor(ReindexAccessor):
     def model_class(self):
         return LedgerValue
 
-    @property
-    def startkey_attribute_name(self):
-        return 'last_modified'
-
     def get_doc(self, doc_id):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
         ref = UniqueLedgerReference.from_id(doc_id)
@@ -1216,20 +1192,19 @@ class LedgerReindexAccessor(ReindexAccessor):
         except CaseNotFound:
             pass
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        modified_since = startkey or datetime.min
+    def get_docs(self, from_db, last_doc_pk=None, limit=500):
         last_id = last_doc_pk or -1
 
         domain_clause = "domain = %s AND" if self.domain else ""
-        values = [modified_since, last_id, limit]
+        values = [last_id, limit]
         if self.domain:
             values = [self.domain] + values
 
         results = LedgerValue.objects.using(from_db).raw(
             """SELECT * FROM {table}
         WHERE {domain_clause}
-        (last_modified, id) > (%s, %s)
-        ORDER BY last_modified, id
+        id > %s
+        ORDER BY id
         LIMIT %s""".format(
                 table=LedgerValue._meta.db_table,
                 domain_clause=domain_clause
