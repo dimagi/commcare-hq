@@ -18,6 +18,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from corehq.form_processor.utils import get_simple_form_xml
@@ -41,8 +42,8 @@ class FundamentalBaseTests(TestCase):
     def setUp(self):
         super(FundamentalBaseTests, self).setUp()
         self.interface = FormProcessorInterface()
-        self.casedb = CaseAccessors()
-        self.formdb = FormAccessors()
+        self.casedb = CaseAccessors(DOMAIN)
+        self.formdb = FormAccessors(DOMAIN)
 
 
 class FundamentalFormTestsCouch(FundamentalBaseTests):
@@ -69,6 +70,26 @@ class FundamentalFormTestsCouch(FundamentalBaseTests):
         before = datetime.utcnow()
         form.unarchive()
         form = self.formdb.get_form(form_id)
+        self.assertGreater(form.modified_on, before)
+
+    def test_modified_on_delete(self):
+        form_id = uuid.uuid4().hex
+        submit_form_locally(get_simple_form_xml(form_id), DOMAIN)
+
+        before = datetime.utcnow()
+        form = self.formdb.get_form(form_id)
+        form.soft_delete()
+        form = self.formdb.get_form(form_id)
+
+        self.assertTrue(form.is_deleted)
+        self.assertGreater(form.modified_on, before)
+
+        before = form.modified_on
+
+        self.formdb.soft_undelete_forms([form_id])
+        form = self.formdb.get_form(form_id)
+
+        self.assertFalse(form.is_deleted)
         self.assertGreater(form.modified_on, before)
 
 
