@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from casexml.apps.phone.analytics import get_sync_logs_for_user
-from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
+from casexml.apps.phone.models import SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from corehq.apps.es.aggregations import DateHistogram
 from corehq.apps.hqwebapp.decorators import use_nvd3
@@ -23,8 +23,6 @@ from phonelog.models import UserErrorEntry
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
 from corehq.apps.es import UserES
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info, \
-    get_version_from_build_id, AppVersionInfo
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
