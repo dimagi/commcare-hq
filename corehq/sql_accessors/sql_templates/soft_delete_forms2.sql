@@ -11,7 +11,7 @@ BEGIN
         state = state | {{ FORM_STATE_DELETED }},
         deletion_id = p_deletion_id,
         deleted_on = p_deletion_date,
-        modified_on = p_deletion_date
+        server_modified_on = p_deletion_date
     WHERE
         domain = p_domain
         AND form_id = ANY(form_ids);

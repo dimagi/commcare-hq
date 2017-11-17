@@ -85,7 +85,7 @@ class FormProcessorCouch(object):
         docs = list(processed_forms)
         for form in docs:
             if form:
-                form.modified_on = datetime.datetime.utcnow()
+                form.server_modified_on = datetime.datetime.utcnow()
         docs += (cases or [])
         docs = filter(None, docs)
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri

@@ -117,7 +117,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     xmlns = StringProperty()
     form = DictProperty()
     received_on = DateTimeProperty()
-    modified_on = DateTimeProperty()
+    server_modified_on = DateTimeProperty()
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
     partial_submission = BooleanProperty(default=False)
@@ -229,7 +229,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         RETRIES = 10
         SLEEP = 0.5  # seconds
         tries = 0
-        self.modified_on = datetime.datetime.utcnow()
+        self.server_modified_on = datetime.datetime.utcnow()
         while True:
             try:
                 return super(XFormInstance, self).save(**kwargs)

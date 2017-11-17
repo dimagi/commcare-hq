@@ -15,12 +15,12 @@ class Migration(migrations.Migration):
         # done in 2 stages to avoid setting the value for all existing data
         migrations.AddField(
             model_name='xforminstancesql',
-            name='modified_on',
+            name='server_modified_on',
             field=models.DateTimeField(null=True, db_index=True),
         ),
         migrations.AlterField(
             model_name='xforminstancesql',
-            name='modified_on',
+            name='server_modified_on',
             field=models.DateTimeField(auto_now=True, db_index=True, null=True),
         ),
     ]

@@ -179,7 +179,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # When a form is deprecated, the new form gets a reference to the deprecated form
     deprecated_form_id = models.CharField(max_length=255, null=True)
 
-    modified_on = models.DateTimeField(db_index=True, auto_now=True, null=True)
+    server_modified_on = models.DateTimeField(db_index=True, auto_now=True, null=True)
 
     # The time at which the server has received the form
     received_on = models.DateTimeField(db_index=True)

@@ -150,7 +150,7 @@ def _get_display_options(request, domain, user, form, support_enabled):
 def _get_form_metadata_context(domain, form, support_enabled=False):
     meta = _top_level_tags(form).get('meta', None) or {}
     meta['received_on'] = json_format_datetime(form.received_on)
-    meta['modified_on'] = json_format_datetime(form.modified_on) if form.modified_on else ''
+    meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 

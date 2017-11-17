@@ -13,7 +13,7 @@ BEGIN
         problem = p_reason,
         deletion_id = NULL,
         deleted_on = NULL,
-        modified_on = curtime
+        server_modified_on = curtime
     WHERE
         domain = p_domain
         AND form_id = ANY(form_ids);

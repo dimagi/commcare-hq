@@ -53,8 +53,8 @@ class FundamentalFormTestsCouch(FundamentalBaseTests):
         xml = get_simple_form_xml(form_id)
         submit_form_locally(xml, DOMAIN)
         form = self.formdb.get_form(form_id)
-        self.assertIsNotNone(form.modified_on)
-        self.assertGreater(form.modified_on, before)
+        self.assertIsNotNone(form.server_modified_on)
+        self.assertGreater(form.server_modified_on, before)
 
     def test_modified_on_archive(self):
         form_id = uuid.uuid4().hex
@@ -65,12 +65,12 @@ class FundamentalFormTestsCouch(FundamentalBaseTests):
         form.archive()
         form = self.formdb.get_form(form_id)
 
-        self.assertGreater(form.modified_on, before)
+        self.assertGreater(form.server_modified_on, before)
 
         before = datetime.utcnow()
         form.unarchive()
         form = self.formdb.get_form(form_id)
-        self.assertGreater(form.modified_on, before)
+        self.assertGreater(form.server_modified_on, before)
 
     def test_modified_on_delete(self):
         form_id = uuid.uuid4().hex
@@ -82,15 +82,15 @@ class FundamentalFormTestsCouch(FundamentalBaseTests):
         form = self.formdb.get_form(form_id)
 
         self.assertTrue(form.is_deleted)
-        self.assertGreater(form.modified_on, before)
+        self.assertGreater(form.server_modified_on, before)
 
-        before = form.modified_on
+        before = form.server_modified_on
 
         self.formdb.soft_undelete_forms([form_id])
         form = self.formdb.get_form(form_id)
 
         self.assertFalse(form.is_deleted)
-        self.assertGreater(form.modified_on, before)
+        self.assertGreater(form.server_modified_on, before)
 
 
 @use_sql_backend
