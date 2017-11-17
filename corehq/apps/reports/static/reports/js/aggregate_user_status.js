@@ -1,4 +1,4 @@
-/* globals d3, django, moment, nv */
+/* globals d3, nv */
 hqDefine("reports/js/aggregate_app_status", function() {
     function setupCharts(data, div) {
         nv.addGraph(function() {
