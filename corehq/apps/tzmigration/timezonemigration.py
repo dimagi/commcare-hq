@@ -35,9 +35,9 @@ FormJsonDiff = collections.namedtuple('FormJsonDiff', [
 
 def _json_diff(obj1, obj2, path, track_list_indices=True):
     if isinstance(obj1, str):
-        obj1 = unicode(obj1)
+        obj1 = six.text_type(obj1)
     if isinstance(obj2, str):
-        obj2 = unicode(obj2)
+        obj2 = six.text_type(obj2)
 
     if obj1 == obj2:
         return
@@ -97,7 +97,7 @@ def commit_plan(domain, planning_db):
 
 def _get_submission_xml(xform, db):
     xml = BlobHelper(xform, db).fetch_attachment('form.xml')
-    if isinstance(xml, unicode):
+    if isinstance(xml, six.text_type):
         xml = xml.encode('utf-8')
     return xml
 

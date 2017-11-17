@@ -132,7 +132,7 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
-        if isinstance(doc_id, unicode):
+        if isinstance(doc_id, six.text_type):
             doc_id = doc_id.encode('utf-8')
         elif isinstance(doc_id, UUID):
             # Hash the 16-byte string

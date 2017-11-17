@@ -26,6 +26,7 @@ from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_default_definition)
 from dimagi.utils.parsing import json_format_datetime
 from django_prbac.utils import has_privilege
+import six
 
 
 register = template.Library()
@@ -34,7 +35,7 @@ register = template.Library()
 @register.simple_tag
 def render_form_xml(form):
     xml = form.get_xml()
-    if isinstance(xml, unicode):
+    if isinstance(xml, six.text_type):
         xml = xml.encode('utf-8', errors='replace')
     formatted_xml = indent_xml(xml) if xml else ''
     return format_html(u'<pre class="prettyprint linenums"><code class="no-border language-xml">{}</code></pre>',

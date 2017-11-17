@@ -227,7 +227,7 @@ class ImportErrorDetail(object):
 
 def convert_field_value(value):
     # coerce to string unless it's a unicode string then we want that
-    if isinstance(value, unicode):
+    if isinstance(value, six.text_type):
         return value
     else:
         return str(value)

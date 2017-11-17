@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponseBadRequest
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.django.request import request_from_args_or_kwargs
 from dimagi.utils.parsing import ISO_DATE_FORMAT
+import six
 
 
 def datespan_in_request(from_param="from", to_param="to",
@@ -37,7 +38,7 @@ def datespan_in_request(from_param="from", to_param="to",
                     startdate = date_or_nothing(from_param)
                     enddate = date_or_nothing(to_param)
                 except ValueError as e:
-                    return HttpResponseBadRequest(unicode(e))
+                    return HttpResponseBadRequest(six.text_type(e))
                 if startdate or enddate:
                     req.datespan = DateSpan(startdate, enddate, format_string)
                 else:

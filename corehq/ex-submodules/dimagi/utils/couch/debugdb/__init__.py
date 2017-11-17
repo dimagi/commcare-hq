@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import six
 __author__ = 'dmyung'
 
 #taken from the django debug toolbar sql panel
@@ -28,7 +29,7 @@ couch_view_queries = []
 def process_key(key_obj):
 
     if isinstance(key_obj, list):
-       key_obj = [unicode(x).encode('utf-8') for x in key_obj]
+       key_obj = [six.text_type(x).encode('utf-8') for x in key_obj]
     else:
         key_obj = key_obj.encode('utf-8')
     return key_obj

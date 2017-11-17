@@ -9,6 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 
 from dimagi.utils.chunked import chunked
+import six
 
 
 class Command(BaseCommand):
@@ -40,11 +41,11 @@ class Command(BaseCommand):
                     fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
                     print('submission error')
-                    print(unicode(e))
+                    print(six.text_type(e))
                     failed_updates.extend(orphan_case_chunk)
                 except Exception as e:
                     print('unexpected error')
-                    print(unicode(e))
+                    print(six.text_type(e))
                     failed_updates.extend(orphan_case_chunk)
                 chunk_num += 1
             fh.write('--------Failed Cases--------------\n')

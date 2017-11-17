@@ -15,6 +15,7 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
+import six
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -84,7 +85,7 @@ class ChoiceProvider(object):
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.add(Choice(value, unicode(value) if value is not None else ''))
+                choices.add(Choice(value, six.text_type(value) if value is not None else ''))
                 used_values.add(value)
         return choices
 

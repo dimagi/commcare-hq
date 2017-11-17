@@ -116,7 +116,7 @@ class HQUserType(object):
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(cls.count)]
+        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(cls.count)]
 
 
 class HQToggle(object):
