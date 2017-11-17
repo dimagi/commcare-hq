@@ -1369,7 +1369,6 @@ def case_property_changes(request, domain, case_id, case_property_name):
 
     context = {
         'domain': domain,
-        'case_id': case_id,
         'timezone': timezone.localize(datetime.utcnow()).tzname(),
         'property_name': case_property_name,
         'changes': changes,

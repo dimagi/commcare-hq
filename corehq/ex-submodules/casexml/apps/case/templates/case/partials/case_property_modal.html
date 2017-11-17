@@ -17,7 +17,7 @@
                     {% for change in changes %}
                         <tr>
                             <td>{{ change.received_on }}</td>
-                            <td><a href="{% url 'case_details' domain case_id %}#!history?form_id={{ change.id }}" target="_blank">{{ change.readable_name }}</a></td>
+                            <td><a href="{% url 'render_form_data' domain change.id %}" target="_blank">{{ change.readable_name }}</a></td>
                             <td>{{ change.user.username }}</td>
                             <td>{{ change.new_value }}</td>
                         </tr>
