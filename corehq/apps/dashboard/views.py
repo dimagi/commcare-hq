@@ -5,6 +5,8 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import allow_remote_invocation
 
+import math
+
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
@@ -84,21 +86,29 @@ class KODomainDashboardView(BaseDashboardView):
 
     @property
     def page_context(self):
-        in_data = {'pagination': {}}    # TODO: get rid of
-        return {
-            'dashboard_tiles': [{
-                'title': t.tile_config.title,
-                'slug': t.tile_config.slug,
-                'icon': t.tile_config.icon,
-                'url': t.tile_config.get_url(self.request),
-                'help_text': t.tile_config.help_text,
-
-                # TODO: fix
-                'is_paginated': t.tile_config.context_processor_class.tile_type == TileType.PAGINATE,
-                'paginated_items': t.context_processor.paginated_items if t.tile_config.context_processor_class.tile_type == TileType.PAGINATE else [],
-                'total': t.context_processor.total if t.tile_config.context_processor_class.tile_type == TileType.PAGINATE else 0,
-            } for t in [self.make_tile(config.slug, in_data) for config in self.tile_configs] if t.is_visible],
-        }
+        tile_contexts = []
+        for config in self.tile_configs:
+            tile = self.make_tile(config.slug, {'pagination': {}})  # TODO: drop fake pagination data
+            if tile.is_visible:
+                tile_context = {
+                    'title': config.title,
+                    'slug': config.slug,
+                    'icon': config.icon,
+                    'url': config.get_url(self.request),
+                    'help_text': config.help_text,
+                }
+                if config.context_processor_class.tile_type == TileType.PAGINATE:    # TODO: better way to do this?
+                    processor = tile.context_processor
+                    items_per_page = 5
+                    tile_context.update({
+                        'pagination': {
+                            'items_per_page': items_per_page,
+                            'items': processor.paginated_items,
+                            'pages': range(int(math.ceil(processor.total / items_per_page))),
+                        },
+                    })
+                tile_contexts.append(tile_context)
+        return {'dashboard_tiles': tile_contexts}
 
 
 @location_safe

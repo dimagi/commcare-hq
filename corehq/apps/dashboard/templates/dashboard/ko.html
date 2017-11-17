@@ -45,13 +45,13 @@
                                title="">{{ tile.title }}</a>
                         </div>
                         <div class="panel-body">
-                            {% if tile.is_paginated %}
-                                {% if tile.total %}
+                            {% if tile.pagination %}
+                                {% if tile.pagination.pages %}
                                     <i class="dashboard-icon dashboard-icon-medium dashboard-icon-bg {{ tile.icon }}"></i>
                                     <!-- TODO: show this spinner as needed -->
                                     <!--i class="fa fa-spinner fa-spin fa-5x"></i-->
                                     <div class="list-group">
-                                        {% for item in tile.paginated_items %}
+                                        {% for item in tile.pagination.items %}
                                             <div class="list-group-item"
                                                  {% if item.description %}
                                                      data-popover-placement="right"
@@ -63,7 +63,15 @@
                                             </div>
                                         {% endfor %}
                                     </div>
-                                    <!-- TODO: pagination markup -->
+                                    {% if tile.pagination.pages|length > 1 %}
+                                        <ul class="pagination">
+                                            <li><a href="">&laquo;</a></li>
+                                            {% for page in tile.pagination.pages %}
+                                                <li><a href="">{{ forloop.counter }}</a></li>
+                                            {% endfor %}
+                                            <li><a href="">&raquo;</a></li>
+                                        </ul>
+                                    {% endif %}
                                 {% else %}
                                     <a href="{{ tile.url }}"
                                        class="dashboard-link "
