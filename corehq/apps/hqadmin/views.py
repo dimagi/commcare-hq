@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import HTMLParser
+import six.moves.html_parser
 import json
 import socket
 import uuid
@@ -628,7 +628,7 @@ def stats_data(request):
     datefield = request.GET.get("datefield")
     get_request_params_json = request.GET.get("get_request_params", None)
     get_request_params = (
-        json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
+        json.loads(six.moves.html_parser.HTMLParser().unescape(get_request_params_json))
         if get_request_params_json is not None else {}
     )
 
