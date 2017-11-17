@@ -55,6 +55,17 @@ def setUpModule():
         location_type=location_type
     )
 
+    awc_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='awc',
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='a7',
+        location_id='a7',
+        location_type=awc_location_type
+    )
+
     with override_settings(SERVER_ENVIRONMENT='icds'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]

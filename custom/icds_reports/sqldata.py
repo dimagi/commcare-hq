@@ -162,6 +162,18 @@ class ExportableMixin(object):
 
     def to_export(self, format, location):
         export_file = StringIO()
+        excel_data = self.get_excel_data(location)
+
+        export_from_tables(excel_data, export_file, format)
+        return export_response(export_file, format, self.title)
+
+    @property
+    def india_now(self):
+        utc_now = datetime.datetime.now(pytz.utc)
+        india_now = utc_now.astimezone(india_timezone)
+        return india_now.strftime("%H:%M:%S %d %B %Y")
+
+    def get_excel_data(self, location):
         excel_rows = []
         headers = []
         for column in self.columns:
@@ -182,11 +194,7 @@ class ExportableMixin(object):
                 else:
                     row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
-
-        utc_now = datetime.datetime.now(pytz.utc)
-        india_now = utc_now.astimezone(india_timezone)
-
-        filters = [['Generated at', india_now.strftime("%H:%M:%S %d %B %Y")]]
+        filters = [['Generated at', self.india_now]]
         if location:
             locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
             for loc in locs:
@@ -198,7 +206,7 @@ class ExportableMixin(object):
             date = self.config['month']
             filters.append(['Month', date.strftime("%B")])
             filters.append(['Year', date.year])
-        excel_data = [
+        return [
             [
                 self.title,
                 excel_rows
@@ -208,10 +216,6 @@ class ExportableMixin(object):
                 filters
             ]
         ]
-
-        export_from_tables(excel_data, export_file, format)
-        return export_response(export_file, format, self.title)
-
 
 class NationalAggregationDataSource(SqlData):
 
