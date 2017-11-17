@@ -229,6 +229,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         RETRIES = 10
         SLEEP = 0.5 # seconds
         tries = 0
+        self.modified_on = datetime.datetime.utcnow()
         while True:
             try:
                 return super(XFormInstance, self).save(**kwargs)

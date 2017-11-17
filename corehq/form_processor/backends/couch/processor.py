@@ -82,7 +82,11 @@ class FormProcessorCouch(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
-        docs = list(processed_forms) + (cases or [])
+        docs = list(processed_forms)
+        for form in docs:
+            if form:
+                form.modified_on = datetime.datetime.utcnow()
+        docs += (cases or [])
         docs = filter(None, docs)
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         with bulk_atomic_blobs(docs):
