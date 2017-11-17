@@ -70,6 +70,7 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
 DELETED = "-Deleted"
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
+OAUTH1 = "oauth1"
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
@@ -83,7 +84,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH), required=False)
+    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
@@ -160,6 +161,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     def clear_caches(self):
         super(Repeater, self).clear_caches()
+        # Also expire for cases repeater is fetched using Repeater class.
+        # The quick cache called in clear_cache also check on relies of doc class
+        # so in case the class is set as Repeater it is not expired like in edit forms.
+        # So expire it explicitly here with Repeater class as well.
+        Repeater.get.clear(Repeater, self._id)
         if self.__class__ == Repeater:
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
