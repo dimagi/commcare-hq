@@ -47,10 +47,6 @@ def default_dashboard_url(request, domain):
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
-    @use_angular_js
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseDashboardView, self).dispatch(request, *args, **kwargs)
-
     @property
     def main_context(self):
         context = super(BaseDashboardView, self).main_context
@@ -62,16 +58,6 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
-
-
-@location_safe
-class DomainDashboardView(HQJSONResponseMixin, BaseDashboardView):
-    urlname = 'dashboard_domain'
-    page_title = ugettext_noop("HQ Dashboard")
-    template_name = 'dashboard/base.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(DomainDashboardView, self).dispatch(request, *args, **kwargs)
 
     @property
     def tile_configs(self):
@@ -87,13 +73,40 @@ class DomainDashboardView(HQJSONResponseMixin, BaseDashboardView):
             'dashboard_tiles': [{
                 'title': d.title,
                 'slug': d.slug,
-                'ng_directive': d.ng_directive,
             } for d in self.tile_configs],
         }
 
     def make_tile(self, slug, in_data):
         config = self.slug_to_tile[slug]
         return Tile(config, self.request, in_data)
+
+
+@location_safe
+class KODomainDashboardView(BaseDashboardView):
+    urlname = 'ko_dashboard_domain'
+    page_title = ugettext_noop("HQ Dashboard")
+    template_name = 'dashboard/ko.html'
+
+
+@location_safe
+class DomainDashboardView(HQJSONResponseMixin, BaseDashboardView):
+    urlname = 'dashboard_domain'
+    page_title = ugettext_noop("HQ Dashboard")
+    template_name = 'dashboard/base.html'
+
+    @use_angular_js
+    def dispatch(self, request, *args, **kwargs):
+        return super(DomainDashboardView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'dashboard_tiles': [{
+                'title': d.title,
+                'slug': d.slug,
+                'ng_directive': d.ng_directive,
+            } for d in self.tile_configs],
+        }
 
     @allow_remote_invocation
     def update_tile(self, in_data):
