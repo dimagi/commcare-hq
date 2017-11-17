@@ -8,10 +8,14 @@ from djangular.views.mixins import allow_remote_invocation
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
-    TileConfiguration,
     AppsPaginatedContext,
+    DataPaginatedContext,
     IconContext,
-    ReportsPaginatedContext, Tile, DataPaginatedContext)
+    ReportsPaginatedContext,
+    Tile,
+    TileConfiguration,
+    TileType,
+)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
@@ -87,6 +91,7 @@ class KODomainDashboardView(BaseDashboardView):
                 'icon': t.tile_config.icon,
                 'url': t.tile_config.get_url(self.request),
                 'help_text': t.tile_config.help_text,
+                'is_paginated': t.tile_config.context_processor_class.tile_type == TileType.PAGINATE,   # TODO: ew
             } for t in [self.make_tile(config.slug, None) for config in self.tile_configs] if t.is_visible],
         }
 

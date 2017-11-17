@@ -1,5 +1,6 @@
 hqDefine("dashboard/js/dashboard", function() {
     $(function() {
+        // Set up popovers
         $(".panel-dashboard [data-popover]").each(function() {
             var $target = $(this),
                 data = $target.data();
@@ -10,5 +11,7 @@ hqDefine("dashboard/js/dashboard", function() {
                 trigger: 'hover',
             });
         });
+
+        // TODO: Initial fetch for paginated tiles
     });
 });

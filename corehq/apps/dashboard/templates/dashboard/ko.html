@@ -44,13 +44,29 @@
                                title="">{{ tile.title }}</a>
                         </div>
                         <div class="panel-body">
-                            <a href="{{ tile.url }}"
-                               class="dashboard-link"
-                               data-popover-title="{{ tile.title }}"
-                               data-popover="{{ tile.help_text }}"
-                               title="">
-                                <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
-                            </a>
+                            {% if tile.is_paginated %}
+                                <!-- TODO: show this background icon iff there are items -->
+                                <i class="dashboard-icon dashboard-icon-medium dashboard-icon-bg {{ tile.icon }}"></i>
+                                <!-- TODO: show this spinner as needed -->
+                                <!--i class="fa fa-spinner fa-spin fa-5x"></i-->
+                                <!-- TODO: items will go here -->
+                                <!-- TODO: show this icon link iff there are no items -->
+                                <!--a href="{{ tile.url }}"
+                                   class="dashboard-link "
+                                   data-popover-title="{{ tile.title }}"
+                                   data-popover="{{ tile.help_text }}"
+                                   title="">
+                                    <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
+                                </a-->
+                            {% else %}
+                                <a href="{{ tile.url }}"
+                                   class="dashboard-link"
+                                   data-popover-title="{{ tile.title }}"
+                                   data-popover="{{ tile.help_text }}"
+                                   title="">
+                                    <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
