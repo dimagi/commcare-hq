@@ -46,32 +46,33 @@
                         </div>
                         <div class="panel-body">
                             {% if tile.is_paginated %}
-                                <!-- TODO: show this background icon iff there are items -->
-                                <i class="dashboard-icon dashboard-icon-medium dashboard-icon-bg {{ tile.icon }}"></i>
-                                <!-- TODO: show this spinner as needed -->
-                                <!--i class="fa fa-spinner fa-spin fa-5x"></i-->
-                                <div class="list-group">
-                                    {% for item in tile.paginated_items %}
-                                        <div class="list-group-item"
-                                             {% if item.description %}
-                                                 data-popover-placement="right"
-                                                 data-popover-title="{{ item.name_full }}"
-                                                 data-popover="{{ item.description }}"
-                                             {% endif %}
-                                             title="">
-                                            <a href="{{ item.url }}">{{ item.name }}</a>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                <!-- TODO: pagination markup -->
-                                <!-- TODO: show this icon link iff there are no items -->
-                                <!--a href="{{ tile.url }}"
-                                   class="dashboard-link "
-                                   data-popover-title="{{ tile.title }}"
-                                   data-popover="{{ tile.help_text }}"
-                                   title="">
-                                    <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
-                                </a-->
+                                {% if tile.total %}
+                                    <i class="dashboard-icon dashboard-icon-medium dashboard-icon-bg {{ tile.icon }}"></i>
+                                    <!-- TODO: show this spinner as needed -->
+                                    <!--i class="fa fa-spinner fa-spin fa-5x"></i-->
+                                    <div class="list-group">
+                                        {% for item in tile.paginated_items %}
+                                            <div class="list-group-item"
+                                                 {% if item.description %}
+                                                     data-popover-placement="right"
+                                                     data-popover-title="{{ item.name_full }}"
+                                                     data-popover="{{ item.description }}"
+                                                 {% endif %}
+                                                 title="">
+                                                <a href="{{ item.url }}">{{ item.name }}</a>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <!-- TODO: pagination markup -->
+                                {% else %}
+                                    <a href="{{ tile.url }}"
+                                       class="dashboard-link "
+                                       data-popover-title="{{ tile.title }}"
+                                       data-popover="{{ tile.help_text }}"
+                                       title="">
+                                        <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
+                                    </a>
+                                {% endif %}
                             {% else %}
                                 <a href="{{ tile.url }}"
                                    class="dashboard-link"
