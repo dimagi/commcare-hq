@@ -112,13 +112,13 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         def _form_delete(doc):
-            doc['server_modified_on'] = datetime.utcnow()
+            doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
         return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id, _form_delete)
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
         def _form_undelete(doc):
-            doc['server_modified_on'] = datetime.utcnow()
+            doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
         return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
 
     @staticmethod
