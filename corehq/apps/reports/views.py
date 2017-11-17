@@ -1359,7 +1359,7 @@ def case_forms(request, domain, case_id):
 def case_property_changes(request, domain, case_id, case_property_name):
     """Returns all changes to a case property
     """
-    case = CaseAccessors(domain).get_case(case_id)
+    case = _get_case_or_404(domain, case_id)
     changes = []
     timezone = get_timezone_for_user(request.couch_user, domain)
     for change in reversed(get_all_changes_to_case_property(case, case_property_name)):
