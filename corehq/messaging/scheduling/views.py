@@ -19,7 +19,8 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import CommCareUser, Permissions
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models import (
@@ -60,6 +61,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
@@ -133,6 +135,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
     @use_jquery_ui
     @use_timepicker
     @use_select2
