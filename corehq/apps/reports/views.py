@@ -1363,11 +1363,13 @@ def case_property_changes(request, domain, case_id, case_property_name):
     changes = []
     timezone = get_timezone_for_user(request.couch_user, domain)
     for change in reversed(get_all_changes_to_case_property(case, case_property_name)):
-        form_json = form_to_json(domain, change.transaction.form, timezone=timezone)
-        form_json['new_value'] = change.new_value
-        changes.append(form_json)
+        change_json = form_to_json(domain, change.transaction.form, timezone=timezone)
+        change_json['new_value'] = change.new_value
+        changes.append(change_json)
 
     context = {
+        'domain': domain,
+        'case_id': case_id,
         'timezone': timezone.localize(datetime.utcnow()).tzname(),
         'property_name': case_property_name,
         'changes': changes,
