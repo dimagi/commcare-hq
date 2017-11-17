@@ -2,20 +2,20 @@ from __future__ import absolute_import
 from django.conf.urls import url
 
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
-    AwcOpenedView, PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
+    PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
     ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView, \
     ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
     ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
-    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage
+    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
+    ICDSBugReportView
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
     url(r'^icds_dashboard/', DashboardView.as_view(), name='icds_dashboard'),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
-    url(r'^awc_opened/(?P<step>[\w-]+)/', AwcOpenedView.as_view(), name='awc_opened'),
     url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
     url(
         r'^underweight_children/(?P<step>[\w-]+)/',
@@ -109,5 +109,6 @@ urlpatterns = [
         r'^adult_weight_scale/(?P<step>[\w-]+)/',
         AdultWeightScaleView.as_view(),
         name='adult_weight_scale'),
-    url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname)
+    url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
+    url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
 ]

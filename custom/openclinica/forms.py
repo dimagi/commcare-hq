@@ -58,7 +58,7 @@ class OpenClinicaSettingsForm(forms.Form):
         cleaned_data = super(OpenClinicaSettingsForm, self).clean()
         is_ws_enabled = cleaned_data.get('is_ws_enabled')
         if is_ws_enabled:
-            missing = [f for f in 'url', 'username', 'protocol_id' if not cleaned_data.get(f)]
+            missing = [f for f in ('url', 'username', 'protocol_id') if not cleaned_data.get(f)]
             if missing:
                 raise forms.ValidationError(
                     '%(missing)s field(s) required if web service is enabled',

@@ -22,6 +22,7 @@ from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
 import re
+import six
 
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
@@ -163,7 +164,7 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
-        if isinstance(xml, basestring):
+        if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
@@ -1133,7 +1134,6 @@ class XForm(WrappedNode):
             return None
 
     def get_path(self, node):
-        # TODO: add safety tests so that when something fails it fails with a good error
         path = None
         if 'nodeset' in node.attrib:
             path = node.attrib['nodeset']

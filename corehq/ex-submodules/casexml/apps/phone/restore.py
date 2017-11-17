@@ -287,7 +287,7 @@ class RestoreParams(object):
         self.app = app
         self.device_id = device_id
         self.openrosa_version = (LooseVersion(openrosa_version)
-            if isinstance(openrosa_version, basestring) else openrosa_version)
+            if isinstance(openrosa_version, six.string_types) else openrosa_version)
 
     @property
     def app_id(self):

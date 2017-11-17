@@ -116,7 +116,7 @@ from corehq.apps.app_manager.util import (
     save_xform,
     is_usercase_in_use,
     actions_use_usercase,
-    update_unique_ids,
+    update_form_unique_ids,
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
@@ -124,6 +124,8 @@ from corehq.apps.app_manager.util import (
     get_correct_app_class,
     get_and_assert_practice_user_in_domain,
     LatestAppInfo,
+    update_report_module_ids,
+    module_offers_search,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -149,6 +151,7 @@ from corehq.apps.app_manager.exceptions import (
     ActionNotPermitted)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
+import six
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
@@ -1444,7 +1447,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         # ToDo - Remove after migration
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
-            if old_media and isinstance(old_media, basestring):
+            if old_media and isinstance(old_media, six.string_types):
                 new_media = {'default': old_media}
                 data[media_attr] = new_media
 
@@ -2547,6 +2550,10 @@ class ModuleDetailsMixin():
         except Exception:
             return []
 
+    @property
+    def search_detail(self):
+        return deepcopy(self.case_details.short)
+
     def rename_lang(self, old_lang, new_lang):
         super(Module, self).rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
@@ -2560,12 +2567,15 @@ class ModuleDetailsMixin():
         return json.dumps(source) if dump_json else source
 
     def get_details(self):
-        return (
+        details = [
             ('case_short', self.case_details.short, True),
             ('case_long', self.case_details.long, True),
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
-        )
+        ]
+        if module_offers_search(self):
+            details.append(('search_short', self.search_detail, True))
+        return tuple(details)
 
     def validate_details_for_build(self):
         errors = []
@@ -4016,7 +4026,7 @@ class ReportAppConfig(DocumentSchema):
         # for backwards compatibility with apps that have localized or xpath descriptions
         old_description = doc.get('description')
         if old_description:
-            if isinstance(old_description, basestring) and not doc.get('xpath_description'):
+            if isinstance(old_description, six.string_types) and not doc.get('xpath_description'):
                 doc['xpath_description'] = old_description
             elif isinstance(old_description, dict) and not doc.get('localized_description'):
                 doc['localized_description'] = old_description
@@ -4280,7 +4290,7 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, basestring):
+                if isinstance(attachment, six.string_types):
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
@@ -4501,8 +4511,8 @@ class VersionedDoc(LazyBlobDoc):
                 attachments[name] = self.lazy_fetch_attachment(name)
         return attachments
 
-    def save_attachments(self, attachments):
-        with self.atomic_blobs():
+    def save_attachments(self, attachments, save=None):
+        with self.atomic_blobs(save=save):
             for name, attachment in attachments.items():
                 if re.match(ATTACHMENT_REGEX, name):
                     self.put_attachment(attachment, name)
@@ -4680,7 +4690,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
-        if "built_with" in data and isinstance(data['built_with'], basestring):
+        if "built_with" in data and isinstance(data['built_with'], six.string_types):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:
@@ -5829,7 +5839,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             raise RearrangeError()
 
     def scrub_source(self, source):
-        return update_unique_ids(source)
+        source = update_form_unique_ids(source)
+        return update_report_module_ids(source)
 
     def copy_form(self, module_id, form_id, to_module_id):
         """
@@ -6301,7 +6312,7 @@ class LinkedApplication(Application):
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
-    if isinstance(app_id_or_source, basestring):
+    if isinstance(app_id_or_source, six.string_types):
         app_id = app_id_or_source
         source = get_app(None, app_id)
         src_dom = source['domain']

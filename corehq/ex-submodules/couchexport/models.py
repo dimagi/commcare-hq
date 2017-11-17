@@ -24,6 +24,7 @@ from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from dimagi.utils.logging import notify_exception
+import six
 
 
 ColumnType = namedtuple('ColumnType', 'cls label')
@@ -306,7 +307,7 @@ class SplitColumn(ComplexExportColumn):
         else:
             row = [None] * opts_len
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return row if self.ignore_extras else row + [value]
 
         values = value.split(' ') if value else []
@@ -792,7 +793,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         # confusingly, the index isn't the actual index property,
         # but is the index appended with the id to this document.
         # this is to avoid conflicts among multiple exports
-        index = "%s-%s" % (self.index, self._id) if isinstance(self.index, basestring) else \
+        index = "%s-%s" % (self.index, self._id) if isinstance(self.index, six.string_types) else \
             self.index + [self._id] # self.index required to be a string or list
         return ExportConfiguration(index=index, name=self.name,
                                    format=self.default_format)

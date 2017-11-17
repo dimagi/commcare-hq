@@ -29,6 +29,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from dimagi.utils.django.fields import TrimmedCharField
+import six
 
 
 def true_or_false(value):
@@ -41,7 +42,7 @@ def true_or_false(value):
 
 
 def remove_quotes(value):
-    if isinstance(value, basestring) and len(value) >= 2:
+    if isinstance(value, six.string_types) and len(value) >= 2:
         for q in ("'", '"'):
             if value.startswith(q) and value.endswith(q):
                 return value[1:-1]
@@ -49,7 +50,7 @@ def remove_quotes(value):
 
 
 def validate_case_property_name(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property name."))
 
     value = value.strip()
@@ -80,7 +81,7 @@ def hidden_bound_field(field_name):
 
 
 def validate_case_property_value(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property value."))
 
     value = remove_quotes(value.strip()).strip()
@@ -239,7 +240,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     )
 
     def remove_quotes(self, value):
-        if isinstance(value, basestring) and len(value) >= 2:
+        if isinstance(value, six.string_types) and len(value) >= 2:
             for q in ("'", '"'):
                 if value.startswith(q) and value.endswith(q):
                     return value[1:-1]
@@ -410,7 +411,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         return value
 
     def _clean_case_property_name(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             raise ValidationError(_("Please specify a case property name."))
 
         value = value.strip()
@@ -442,7 +443,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             property_value = None
             if property_match_type != AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE:
                 property_value = obj.get('property_value')
-                if not isinstance(property_value, basestring):
+                if not isinstance(property_value, six.string_types):
                     raise ValidationError(_("Please specify a property value."))
 
                 property_value = property_value.strip()

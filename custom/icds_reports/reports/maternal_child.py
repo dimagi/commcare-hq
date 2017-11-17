@@ -39,7 +39,7 @@ def get_maternal_child_data(domain, config, show_test=False):
             'stunting_severe'
         )
         wer_eligible = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
+            {'age_tranche': 72},
             'wer_eligible'
         )
         height_eligible = exclude_records_by_age_for_column(

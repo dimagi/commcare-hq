@@ -106,7 +106,7 @@ def parent_child(domain):
     Returns a dict mapping from a location type to its possible
     child types
     """
-    return map_reduce(lambda (k, v): [(p, k) for p in v],
+    return map_reduce(lambda k_v: [(p, k_v[0]) for p in k_v[1]],
                       data=dict(location_hierarchy_config(domain)).iteritems())
 
 

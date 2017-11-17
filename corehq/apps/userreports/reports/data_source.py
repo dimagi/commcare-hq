@@ -4,6 +4,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration, get_datasour
 from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
 from corehq.apps.userreports.util import get_backend_id
+import six
 
 
 class ConfigurableReportDataSource(object):
@@ -15,7 +16,7 @@ class ConfigurableReportDataSource(object):
             self._config = config_or_config_id
             self._config_id = self._config._id
         else:
-            assert isinstance(config_or_config_id, basestring)
+            assert isinstance(config_or_config_id, six.string_types)
             self._config = None
             self._config_id = config_or_config_id
 

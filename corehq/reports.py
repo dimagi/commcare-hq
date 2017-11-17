@@ -186,7 +186,7 @@ def _make_dynamic_report(report_config, keyprefix):
 
     try:
         metaclass = to_function(report_config.report, failhard=True)
-    except StandardError:
+    except Exception:
         logging.error('dynamic report config for [%s] is invalid' % report_config.report)
         return None
 

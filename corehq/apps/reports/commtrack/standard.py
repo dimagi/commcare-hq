@@ -430,9 +430,9 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             for site in statuses:
                 if child_loc(site['loc_path']) is not None:
                     yield (site['loc_path'], site['reporting_status'])
-        status_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), status)],
+        status_by_agg_site = map_reduce(lambda path_status: [(child_loc(path_status[0]), path_status[1])],
                                         data=case_iter())
-        sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
+        sites_by_agg_site = map_reduce(lambda path_status1: [(child_loc(path_status1[0]), path_status1[0][-1])],
                                        data=case_iter())
 
         status_counts = dict((loc_id, self.status_tally(statuses))

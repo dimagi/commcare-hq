@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -28,7 +29,7 @@ class Command(BaseCommand):
             for i, agency in enumerate(
                 self.get_agencies_by_state_district_org(state_code, district_code, org_id, sub_org_id)
             ):
-                print 'handling agency %d...' % i
+                print('handling agency %d...' % i)
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id, sub_org_id)
                     self.create_user(agency, agency_loc, user_level)

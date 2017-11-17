@@ -11,7 +11,11 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
-from custom.enikshay.case_utils import get_open_episode_case_from_person, get_adherence_cases_between_dates
+from custom.enikshay.case_utils import (
+    get_open_episode_case_from_person,
+    get_all_episode_cases_from_person,
+    get_adherence_cases_between_dates,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.tasks import EpisodeUpdater
 
@@ -52,9 +56,18 @@ class AdherenceCaseFactory(object):
     @memoized
     def _episode_case(self):
         try:
-            return get_open_episode_case_from_person(self.domain, self._person_case.case_id)
+            episode_cases = get_all_episode_cases_from_person(self.domain, self._person_case.case_id)
         except ENikshayCaseNotFound as e:
-            raise AdherenceException(e.message)
+            raise AdherenceException(e)
+
+        if not episode_cases:
+            raise AdherenceException("No episode cases found for {}".format(self._person_case.case_id))
+
+        open_cases = [c for c in episode_cases if not c.closed]
+        if open_cases:
+            return sorted(open_cases, key=lambda c: c.opened_on)[0]
+
+        return episode_cases[0]
 
     def create_adherence_cases(self, adherence_points):
         case_structures = []

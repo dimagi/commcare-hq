@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import json
 
 from django.core.management.base import BaseCommand
@@ -281,8 +282,8 @@ class Command(BaseCommand):
             "phi",
         ]
         for location_level in location_levels:
-            print dump(get_location_level_indicator(location_level)) + ","
-            print dump(get_below_location_level_indicator(location_level)) + ","
+            print(dump(get_location_level_indicator(location_level)) + ",")
+            print(dump(get_below_location_level_indicator(location_level)) + ",")
 
-        print dump(get_referred_by_name_indicator()) + ", "
-        print dump(get_referred_to_name_indicator())
+        print(dump(get_referred_by_name_indicator()) + ", ")
+        print(dump(get_referred_to_name_indicator()))

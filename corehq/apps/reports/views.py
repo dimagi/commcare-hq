@@ -174,6 +174,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_multiselect,
 )
+import six
 
 
 datespan_default = datespan_in_request(
@@ -530,7 +531,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey(default='digest')
+@login_or_digest_or_basic_or_apikey()
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
@@ -540,7 +541,7 @@ def hq_download_saved_export(req, domain, export_id):
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey(default='digest')
+@login_or_digest_or_basic_or_apikey()
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):
@@ -1998,9 +1999,9 @@ def resave_form(request, domain, instance_id):
 
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
-    if isinstance(end, basestring):
+    if isinstance(end, six.string_types):
         end = parse_date(end)
-    if isinstance(start, basestring):
+    if isinstance(start, six.string_types):
         start = parse_date(start)
     if not end:
         end = datetime.utcnow()

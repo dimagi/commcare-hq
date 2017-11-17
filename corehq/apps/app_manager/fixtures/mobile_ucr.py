@@ -177,7 +177,6 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             report_config.report_id, domain
         )
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
@@ -351,7 +350,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))

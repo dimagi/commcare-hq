@@ -32,6 +32,7 @@ from custom.icds.case_relationships import (
     ccs_record_case_from_tasks_case,
 )
 from datetime import datetime, date, timedelta
+import six
 
 
 def _validate_tasks_case_and_immunization_product(tasks_case, immunization_product):
@@ -73,7 +74,7 @@ def get_date(value):
 
         return value
 
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         raise TypeError("Expected date, datetime, or string")
 
     if not re.match('^\d{4}-\d{2}-\d{2}', value):
@@ -165,7 +166,7 @@ def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immun
     if product_schedule_flag:
         tasks_case_schedule_flag = tasks_case.get_case_property('schedule_flag')
         if (
-            not isinstance(tasks_case_schedule_flag, basestring) or
+            not isinstance(tasks_case_schedule_flag, six.string_types) or
             product_schedule_flag not in tasks_case_schedule_flag
         ):
             return False
