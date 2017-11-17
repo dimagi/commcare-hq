@@ -188,8 +188,8 @@ class CaseRepeaterForm(GenericRepeaterForm):
 
     def clean(self):
         cleaned_data = super(CaseRepeaterForm, self).clean()
-        white_listed_case_types = cleaned_data['white_listed_case_types']
-        black_listed_users = cleaned_data['black_listed_users']
+        white_listed_case_types = cleaned_data.get('white_listed_case_types', [])
+        black_listed_users = cleaned_data.get('black_listed_users', [])
         if not set(white_listed_case_types).issubset([t[0] for t in self.case_type_choices]):
             raise ValidationError(_('Unknown case-type'))
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):
