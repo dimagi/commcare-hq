@@ -219,3 +219,14 @@ def get_datetime_case_property_changed(case, case_property_name, value):
     if property_changed_info:
         # get the date that case_property changed
         return parse_datetime(property_changed_info.modified_on)
+
+
+def get_all_changes_to_case_property(case, case_property_name):
+    case_property_changes = []
+    case_transactions = case.actions
+    for transaction in case_transactions:
+        property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
+        if property_changed_info:
+            case_property_changes.append(property_changed_info)
+
+    return case_property_changes
