@@ -539,8 +539,8 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     slug = 'aggregate_user_status'
 
-    report_template_path = "reports/async/aggregate_app_status.html"
-    name = ugettext_lazy("Aggregate User Status")  # todo: better name / description
+    report_template_path = "reports/async/aggregate_user_status.html"
+    name = ugettext_lazy("Aggregate User Status")
     description = ugettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
@@ -548,7 +548,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     ]
     exportable = False
     emailable = False
-    js_scripts = ['reports/js/aggregate_app_status.js']
+    js_scripts = ['reports/js/aggregate_user_status.js']
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
@@ -603,6 +603,10 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
             daily_series = []
             running_total_series = []
+
+            def _pct(val):
+                return (100. * float(val) / float(total)) if total else 0
+
             for i in range(days_of_history):
                 running_total += vals[i]
                 daily_series.append({
@@ -615,7 +619,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                     {
                         'series': 0,
                         'x': '{}'.format(today - timedelta(days=i)),
-                        'y': 100. * float(running_total) / float(total)
+                        'y': _pct(running_total)
                     }
                 )
 
@@ -631,7 +635,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                 {
                     'series': 0,
                     'x': 'more than {} days ago'.format(days_of_history),
-                    'y': 100. * float(running_total + extra) / float(total),  # should always be 1
+                    'y': _pct(running_total + extra),  # should always be 1
                 }
             )
             return daily_series, running_total_series
