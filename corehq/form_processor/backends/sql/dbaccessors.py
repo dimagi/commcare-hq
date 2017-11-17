@@ -16,7 +16,8 @@ import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
 from django.db.models import Q, F
-from django.db.models.functions import Greatest
+from django.db.models.functions import Greatest, Concat
+from django.db.models.expressions import Value
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
@@ -80,7 +81,18 @@ def iter_all_rows(reindex_accessor):
             for doc in docs:
                 yield doc
 
-            last_id = doc.id
+            last_id = getattr(doc, reindex_accessor.primary_key_field_name)
+            docs = reindex_accessor.get_docs(db_alias, last_doc_pk=last_id)
+
+
+def iter_all_ids(reindex_accessor):
+    for db_alias in reindex_accessor.sql_db_aliases:
+        docs = reindex_accessor.get_doc_ids(db_alias)
+        while docs:
+            for doc in docs:
+                yield doc['doc_id']
+
+            last_id = doc['primary_key']
             docs = reindex_accessor.get_docs(db_alias, last_doc_pk=last_id)
 
 
@@ -213,6 +225,14 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         raise NotImplementedError
 
+    @abstractproperty
+    def id_field(self):
+        """
+        :return: The name of the model field to return if 'id_only' is set. Return a string
+                 or a dict mapping an alias to a SQL expression
+        """
+        raise NotImplementedError
+
     @abstractmethod
     def get_doc(self, doc_id):
         """
@@ -242,12 +262,31 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
             query = query.filter(filters)
         return query
 
+    def get_doc_ids(self, from_db, last_doc_pk=None, limit=500):
+        """
+        :param from_db: The DB alias to query
+        :param last_doc_pk: The primary key of the last doc from the previous batch
+        :param limit: Desired batch size
+        :return: List of dict(doc_id=<document ID>, primary_key=<doc primary key>)
+        """
+        query = self.query(from_db, last_doc_pk)
+        field = self.id_field
+        if isinstance(field, dict):
+            query = query.annotate(**field)
+            field = field.keys()[0]
+        query = query.values(self.primary_key_field_name, field)
+        for row in query.order_by(self.primary_key_field_name)[:limit]:
+            yield {
+                'doc_id': row[field],
+                'primary_key': row[self.primary_key_field_name]
+            }
+
     def get_docs(self, from_db, last_doc_pk=None, limit=500):
         """Get a batch of
         :param from_db: The DB alias to query
         :param last_doc_pk: The primary key of the last doc from the previous batch
         :param limit: Desired batch size
-        :return: List of documents
+        :return: List of documents or document IDs
         """
         query = self.query(from_db, last_doc_pk)
         return query.order_by(self.primary_key_field_name)[:limit]
@@ -287,6 +326,10 @@ class FormReindexAccessor(ReindexAccessor):
     @property
     def model_class(self):
         return XFormInstanceSQL
+
+    @property
+    def id_field(self):
+        return 'form_id'
 
     def get_doc(self, doc_id):
         try:
@@ -703,6 +746,10 @@ class CaseReindexAccessor(ReindexAccessor):
     @property
     def model_class(self):
         return CommCareCaseSQL
+
+    @property
+    def id_field(self):
+        return 'case_id'
 
     def get_doc(self, doc_id):
         try:
@@ -1150,6 +1197,13 @@ class LedgerReindexAccessor(ReindexAccessor):
     @property
     def model_class(self):
         return LedgerValue
+
+    @property
+    def id_field(self):
+        slash = Value('/')
+        return {
+            'ledger_reference': Concat('case_id', slash, 'section_id', slash, 'entry_id')
+        }
 
     def get_doc(self, doc_id):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference

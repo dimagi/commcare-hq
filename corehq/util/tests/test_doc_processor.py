@@ -144,6 +144,10 @@ class SimulateDeleteReindexAccessor(ReindexAccessor):
     def model_class(self):
         return self.wrapped_accessor.model_class
 
+    @property
+    def id_field(self):
+        return self.wrapped_accessor.id_field
+
     def get_docs(self, from_db, last_doc_pk=None, limit=500):
         return self.wrapped_accessor.get_docs(from_db, last_doc_pk, limit)
 

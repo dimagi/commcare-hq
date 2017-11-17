@@ -91,6 +91,10 @@ class BaseReindexAccessorTest(object):
 
         self.assertEqual(0, len(self._get_docs_for_domain(self.domain, self.end_id)))
 
+    def test_ids_only(self):
+        doc_ids = list(self.accessor_class(ids_only=True).get_docs(None))
+        self.assertListEqual(doc_ids, self.all_doc_ids)
+
 
 class BaseUnshardedAccessorMixin(object):
     @classmethod

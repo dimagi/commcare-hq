@@ -467,6 +467,10 @@ def sql_blob_helper(id_attr, bucket):
 
 
 class PkReindexAccessor(ReindexAccessor):
+    @property
+    def id_field(self):
+        return 'id'
+
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
         raise NotImplementedError
