@@ -1305,16 +1305,23 @@ class CaseDetailsView(BaseProjectReportSectionView):
         }
 
 
-def form_to_json(domain, form):
+def form_to_json(domain, form, timezone=None):
     form_name = xmlns_to_name(
         domain,
         form.xmlns,
         app_id=form.app_id,
         lang=get_language(),
     )
+    if timezone is None:
+        received_on = json_format_datetime(form.received_on)
+    else:
+        offset = timezone.utcoffset(datetime.utcnow())
+        local_received_on = form.received_on + offset
+        received_on = local_received_on.strftime("%Y-%m-%d %H:%M")
+
     return {
         'id': form.form_id,
-        'received_on': json_format_datetime(form.received_on),
+        'received_on': received_on,
         'user': {
             "id": form.user_id or '',
             "username": form.metadata.username if form.metadata else '',
@@ -1354,12 +1361,14 @@ def case_property_changes(request, domain, case_id, case_property_name):
     """
     case = CaseAccessors(domain).get_case(case_id)
     changes = []
-    for change in get_all_changes_to_case_property(case, case_property_name):
-        form_json = form_to_json(domain, change.transaction.form)
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    for change in reversed(get_all_changes_to_case_property(case, case_property_name)):
+        form_json = form_to_json(domain, change.transaction.form, timezone=timezone)
         form_json['new_value'] = change.new_value
         changes.append(form_json)
 
     context = {
+        'timezone': timezone.localize(datetime.utcnow()).tzname(),
         'property_name': case_property_name,
         'changes': changes,
     }
