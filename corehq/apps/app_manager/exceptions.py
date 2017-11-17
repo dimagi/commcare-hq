@@ -169,3 +169,7 @@ class RemoteRequestError(AppManagerException):
 
 class RemoteAuthError(RemoteRequestError):
     pass
+
+
+class AppLinkError(AppManagerException):
+    pass
