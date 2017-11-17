@@ -337,7 +337,7 @@ class NavigationEventAudit(AuditEvent):
                 audit.request_path = request.path
             audit.ip_address = utils.get_ip(request)
             audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
-            audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
+            audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
                 header_item = request.META.get(k, None)
                 if header_item is not None:
