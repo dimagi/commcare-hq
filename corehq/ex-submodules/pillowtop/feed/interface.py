@@ -5,6 +5,7 @@ from corehq.sql_db.util import handle_connection_failure, get_default_and_partit
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
 from pillowtop.dao.exceptions import DocumentNotFoundError
+import six
 
 
 class ChangeMeta(jsonobject.JsonObject):
@@ -110,11 +111,10 @@ class Change(object):
         return self._dict
 
 
-class ChangeFeed(object):
+class ChangeFeed(six.with_metaclass(ABCMeta, object)):
     """
     Basic change feed API.
     """
-    __metaclass__ = ABCMeta
 
     sequence_format = 'text'
 

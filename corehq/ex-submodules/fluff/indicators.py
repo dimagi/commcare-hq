@@ -76,9 +76,8 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
         return cls
 
 
-class IndicatorDocument(schema.Document):
+class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Document)):
 
-    __metaclass__ = IndicatorDocumentMeta
     base_doc = 'IndicatorDocument'
 
     document_class = None
