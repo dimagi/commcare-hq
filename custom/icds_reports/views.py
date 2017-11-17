@@ -753,7 +753,7 @@ class NewbornsWithLowBirthWeightView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
 
         gender = self.request.GET.get('gender', None)
