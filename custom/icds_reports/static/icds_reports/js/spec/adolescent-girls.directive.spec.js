@@ -1,3 +1,4 @@
+/* global module, inject */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -21,7 +22,7 @@ describe('AdolescentGirlsDirective', function () {
         $location = _$location_;
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('adolescent_girls').respond(200, {
-            report_data: [],
+            report_data: ['report_test_data'],
         });
         var element = window.angular.element("<adolescent-girls data='test'></adolescent-girls>");
         var compiled = $compile(element)($scope);
@@ -42,13 +43,13 @@ describe('AdolescentGirlsDirective', function () {
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('adolescent_girls?location_id=test-id').respond(200, {
-            report_data: [],
+            report_data: ['report_test_data'],
         });
         controller.init();
         $httpBackend.flush();
         assert.equal(controller.mode, 'sector');
         assert.equal(controller.steps['map'].label, 'Sector View');
-        assert.deepEqual(controller.data.mapData, []);
+        assert.deepEqual(controller.data.mapData, ['report_test_data']);
     });
 
     it('tests location change', function () {
@@ -62,7 +63,7 @@ describe('AdolescentGirlsDirective', function () {
             {location_id: 'test_id6'}
         );
         $httpBackend.expectGET('adolescent_girls').respond(200, {
-            report_data: [],
+            report_data: ['report_test_data'],
         });
         $scope.$digest();
         $httpBackend.flush();
