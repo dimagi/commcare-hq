@@ -9,6 +9,7 @@ from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.export.views import get_export_count_by_domain
+from corehq.reports import get_report_builder_count
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string, get_meta
 from datetime import datetime, date, timedelta
@@ -385,6 +386,12 @@ def identify(email, properties):
 def _get_export_count(domain):
     return get_export_count_by_domain(domain)
 
+
+@memoized
+def _get_report_count(domain):
+    return get_report_builder_count(domain)
+
+
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
 def track_periodic_data():
     """
@@ -426,7 +433,8 @@ def track_periodic_data():
         date_created = user.get('date_joined')
         max_forms = 0
         max_workers = 0
-        max_export
+        max_export = 0
+        max_report = 0
 
         for domain in user['domains']:
             if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
@@ -435,6 +443,8 @@ def track_periodic_data():
                 max_workers = domains_to_mobile_users[domain]
             if _get_export_count(domain) > max_export:
                 max_export = _get_export_count(domain)
+            if _get_report_count(domain) > max_report:
+                max_report = _get_report_count(domain)
 
         project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
@@ -464,6 +474,10 @@ def track_periodic_data():
                 {
                     'property': '{}max_exports_in_a_domain'.format(env),
                     'value': max_export
+                },
+                {
+                    'property': '{}max_custom_reports_in_a_domain'.format(env),
+                    'value': max_report
                 }
             ]
         }
