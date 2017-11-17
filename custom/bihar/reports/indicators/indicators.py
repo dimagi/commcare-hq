@@ -354,7 +354,7 @@ class IndicatorDataProvider(object):
         # (0, 0) to set the dimensions
         # otherwise if results is ()
         # it'll be num, denom = () and that'll raise a ValueError
-        num, denom = map(sum, list(zip((0, 0), *pairs())))
+        num, denom = map(sum, zip((0, 0), *pairs()))
         return num, denom
 
     def get_indicator_value(self, indicator):

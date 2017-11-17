@@ -236,10 +236,10 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             total_row = data_source.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
-                    list(zip(
+                    zip(
                         map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
-                    ))
+                    )
                 ),
                 data_source.get_total_records(),
                 is_total_row=True,
@@ -414,10 +414,10 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             total_row = data_source.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
-                    list(zip(
+                    zip(
                         map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
-                    ))
+                    )
                 ),
                 data_source.get_total_records(),
                 is_total_row=True,

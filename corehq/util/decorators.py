@@ -86,7 +86,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     passes the result to `format_str.format()`.
     """
     varnames = fn.__code__.co_varnames
-    kwargs.update(dict(list(zip(varnames, args))))
+    kwargs.update(dict(zip(varnames, args)))
     return ("{}-" + format_str).format(fn.__name__, **kwargs)
 
 

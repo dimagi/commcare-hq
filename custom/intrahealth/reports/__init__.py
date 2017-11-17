@@ -133,7 +133,7 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         else:
             data = dict(formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by))
 
-        reversed_map = dict(list(zip(self.PRODUCT_NAMES.values(), self.PRODUCT_NAMES.keys())))
+        reversed_map = dict(zip(self.PRODUCT_NAMES.values(), self.PRODUCT_NAMES.keys()))
         for localization in localizations:
             row = [localization]
             for group in self.groups:

@@ -203,7 +203,7 @@ class GetFormattedRowsTests(SimpleTestCase):
         formatted_rows = get_formatted_rows(doc, schema, '.')
         headers = formatted_rows[0][1][0].get_data()
         values = formatted_rows[0][1][1].get_data()
-        row_dict = dict(list(zip(list(headers), list(values))))
+        row_dict = dict(zip(list(headers), list(values)))
         self.assertEqual(
             row_dict,
             {

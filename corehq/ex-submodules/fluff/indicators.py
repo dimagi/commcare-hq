@@ -351,7 +351,7 @@ class IndicatorDocument(schema.Document):
             connection.execute(delete)
 
             for key, columns in rows.items():
-                key_columns = dict(list(zip(names, key)))
+                key_columns = dict(zip(names, key))
                 for name, value in key_columns.items():
                     if value is None:
                         key_columns[name] = default_null_value_placeholder(types[name])

@@ -143,7 +143,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         headers = ['::'.join(k) for k in _headers(report.headers)]
 
         for row in report.rows:
-            yield dict(list(zip(headers, row)))
+            yield dict(zip(headers, row))
 
     def _get_data_case(self, params, filters):
         MAX_RESULTS = 200 # TODO vary by domain (cc-plus gets a higher limit?)

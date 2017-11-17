@@ -358,7 +358,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
         actual_workbook = [
             {'name': title,
-             'rows': [dict(list(zip(headers, row))) for row in actual_rows[title]]}
+             'rows': [dict(zip(headers, row)) for row in actual_rows[title]]}
             for title, headers in actual_headers
         ]
 

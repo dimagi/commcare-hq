@@ -153,7 +153,7 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
         def get_form_data(table):
             headers = export_data[table]['headers']
             return [
-                dict(list(zip(headers, row)))
+                dict(zip(headers, row))
                 for row in export_data[table]['rows']
             ]
 

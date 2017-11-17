@@ -1,6 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
+
+import itertools
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
@@ -831,7 +833,7 @@ def _update_case_list_translations(sheet, rows, app):
             ))
 
     for row, detail in \
-            list(zip(list_rows, short_details)) + list(zip(detail_rows, long_details)):
+            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
 
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.

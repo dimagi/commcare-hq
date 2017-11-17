@@ -31,7 +31,7 @@ def all_sms_codes(domain):
     actions = dict((action.keyword, action) for action in config.actions)
     products = dict((p.code, p) for p in Product.by_domain(domain))
 
-    sms_codes = list(zip(('action', 'product'), (actions, products)))
+    sms_codes = zip(('action', 'product'), (actions, products))
     return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
 
 

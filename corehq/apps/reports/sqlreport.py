@@ -330,7 +330,7 @@ class DataFormatter(object):
                 row_key = self._row_key(group_by, key_group)
                 row = data.get(row_key, None)
                 if not row:
-                    row = dict(list(zip(group_by, key_group)))
+                    row = dict(zip(group_by, key_group))
 
                 formatted_row = self._format.format_row(row)
                 if self.filter_row(row_key, formatted_row):
