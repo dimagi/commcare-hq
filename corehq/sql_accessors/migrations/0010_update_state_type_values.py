@@ -6,6 +6,7 @@ from django.db import migrations
 
 from corehq.sql_db.operations import noop_migration
 
+
 class Migration(migrations.Migration):
 
     dependencies = [

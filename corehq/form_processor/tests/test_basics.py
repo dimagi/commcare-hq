@@ -43,8 +43,8 @@ class FundamentalBaseTests(TestCase):
         self.interface = FormProcessorInterface()
         self.casedb = CaseAccessors()
         self.formdb = FormAccessors()
-        
-        
+
+
 class FundamentalFormTestsCouch(FundamentalBaseTests):
     def test_modified_on(self):
         form_id = uuid.uuid4().hex
@@ -55,11 +55,27 @@ class FundamentalFormTestsCouch(FundamentalBaseTests):
         self.assertIsNotNone(form.modified_on)
         self.assertGreater(form.modified_on, before)
 
+    def test_modified_on_archive(self):
+        form_id = uuid.uuid4().hex
+        submit_form_locally(get_simple_form_xml(form_id), DOMAIN)
+
+        before = datetime.utcnow()
+        form = self.formdb.get_form(form_id)
+        form.archive()
+        form = self.formdb.get_form(form_id)
+
+        self.assertGreater(form.modified_on, before)
+
+        before = datetime.utcnow()
+        form.unarchive()
+        form = self.formdb.get_form(form_id)
+        self.assertGreater(form.modified_on, before)
+
 
 @use_sql_backend
 class FundamentalFormTestsSQL(FundamentalFormTestsCouch):
     pass
-    
+
 
 class FundamentalCaseTests(FundamentalBaseTests):
     def test_create_case(self):

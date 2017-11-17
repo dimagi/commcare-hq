@@ -227,7 +227,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
         RETRIES = 10
-        SLEEP = 0.5 # seconds
+        SLEEP = 0.5  # seconds
         tries = 0
         self.modified_on = datetime.datetime.utcnow()
         while True:

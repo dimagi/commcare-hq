@@ -16,6 +16,7 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
     'FORM_OPERATION_UNARCHIVE': XFormOperationSQL.UNARCHIVE,
 })
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
