@@ -85,7 +85,7 @@ class KODomainDashboardView(BaseDashboardView):
                 'title': t.tile_config.title,
                 'slug': t.tile_config.slug,
                 'icon': t.tile_config.icon,
-                'url': t.tile_config.url,
+                'url': t.tile_config.get_url(self.request),
                 'help_text': t.tile_config.help_text,
                 'analytics_usage_label': t.tile_config.analytics_usage_label,
                 'analytics_workflow_labels': t.tile_config.analytics_workflow_labels or [],
