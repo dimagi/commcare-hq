@@ -35,7 +35,36 @@
     <div>
         <div class="row">
             {% for tile in dashboard_tiles %}
-                <div>{{ tile.slug }} goes here</div>
+                <div class="col-md-3">
+                    <div class="panel panel-dashboard panel-dashboard-medium">
+                        <div class="panel-heading">
+                            <a href="{{ tile.url }}"
+                               track-analytics
+                               analytics-usage-label="{{ tile.analytics_usage_label }}"
+                               analytics-workflow-labels="{{ tile.analytics_workflow_labels }}"
+                               popover-title="{{ tile.title }}"
+                               popover="{{ tile.help_text }}"
+                               popover-trigger="mouseenter"
+                               popover-placement="bottom"
+                               title="">{{ tile.title }}</a>
+                        </div>
+                        <div class="panel-body">
+                            <a href="{{ tile.url }}"
+                               class="dashboard-link"
+                               track-analytics
+                               analytics-usage-label="{{ tile.analytics_usage_label }}"
+                               analytics-workflow-labels="{{ tile.analytics_workflow_labels }}"
+                               process-external-link=""
+                               popover-title="{{ tile.title }}"
+                               popover="{{ tile.help_text }}"
+                               popover-trigger="mouseenter"
+                               popover-placement="top"
+                               title="">
+                                <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             {% endfor %}
         </div>
         <p class="lead text-center" style="margin-bottom: 5em;">

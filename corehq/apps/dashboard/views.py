@@ -67,15 +67,6 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     def slug_to_tile(self):
         return dict([(a.slug, a) for a in self.tile_configs])
 
-    @property
-    def page_context(self):
-        return {
-            'dashboard_tiles': [{
-                'title': d.title,
-                'slug': d.slug,
-            } for d in self.tile_configs],
-        }
-
     def make_tile(self, slug, in_data):
         config = self.slug_to_tile[slug]
         return Tile(config, self.request, in_data)
@@ -86,6 +77,20 @@ class KODomainDashboardView(BaseDashboardView):
     urlname = 'ko_dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
     template_name = 'dashboard/ko.html'
+
+    @property
+    def page_context(self):
+        return {
+            'dashboard_tiles': [{
+                'title': d.title,
+                'slug': d.slug,
+                'icon': d.icon,
+                'url': d.url,
+                'help_text': d.help_text,
+                'analytics_usage_label': d.analytics_usage_label,
+                'analytics_workflow_labels': d.analytics_workflow_labels or [],
+            } for d in self.tile_configs],
+        }
 
 
 @location_safe
