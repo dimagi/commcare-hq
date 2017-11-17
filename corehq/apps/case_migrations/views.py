@@ -7,8 +7,14 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.generic import FormView
 
+from casexml.apps.case.xml import V2
+from casexml.apps.phone.data_providers.case.clean_owners import CleanOwnerSyncPayload
+from casexml.apps.phone.restore import RestoreContent, RestoreResponse, RestoreState, RestoreParams
+from casexml.apps.phone.xml import get_registration_element
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
+from corehq.util.timer import TimingContext
 from corehq.util import reverse
 
 from .forms import MigrationForm
@@ -39,3 +45,22 @@ class MigrationView(BaseMigrationView, FormView):
         messages.add_message(self.request, messages.SUCCESS,
                              _('Migration submitted successfully!'))
         return HttpResponseRedirect(self.page_url)
+
+
+def migration_restore(request, domain, case_id):
+    domain_obj = Domain.get_by_name(domain)
+    restore_user = request.couch_user
+    restore_params = RestoreParams(device_id="case_migration", version=V2)
+    restore_state = RestoreState(domain_obj, restore_user.to_ota_restore_user(domain), restore_params)
+    restore_state.start_sync()
+    timing_context = TimingContext('migration-restore-{}-{}'.format(domain, restore_user.username))
+    with RestoreContent(restore_user.username) as content:
+        content.append(get_registration_element(restore_user))
+
+        sync_payload = CleanOwnerSyncPayload(timing_context, {case_id}, restore_state)
+        sync_payload.extend_response(content)
+
+        payload = content.get_fileobj()
+
+    restore_state.finish_sync()
+    return RestoreResponse(payload).get_http_response()
