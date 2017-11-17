@@ -154,7 +154,6 @@ class ConfigurableReportTableManagerMixin(object):
         self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
 
     def _rebuild_sql_tables(self, adapters):
-        # todo move this code to sql adapter rebuild_if_necessary
         tables_by_engine = defaultdict(dict)
         for adapter in adapters:
             sql_adapter = get_indicator_adapter(adapter.config)
@@ -255,7 +254,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                     table.delete(doc)
 
             if async_tables:
-                AsyncIndicator.update_indicators(change, async_tables)
+                AsyncIndicator.update_from_kafka_change(change, async_tables)
 
         self.domain_timing_context.update(**{
             domain: timer.duration

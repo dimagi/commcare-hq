@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.toggles import NINETYNINE_DOTS
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -156,6 +157,8 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
 
         try:
             episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
+            if episode_case.closed:
+                return False
         except ENikshayCaseNotFound:
             return False
 

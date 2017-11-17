@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from kafka import KafkaClient
 from kafka.common import KafkaUnavailableError

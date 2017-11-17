@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django.test import SimpleTestCase
 from corehq.apps.data_analytics.esaccessors import get_app_submission_breakdown_es

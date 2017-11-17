@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 from functools import cmp_to_key
 import logging
@@ -398,7 +399,7 @@ def _action_sort_key_function(case):
                     raise MissingServerDate()
 
                 def form_cmp(form_id):
-                    return form_ids.index(form_id) if form_id in form_ids else sys.maxint
+                    return form_ids.index(form_id) if form_id in form_ids else sys.maxsize
 
                 # if the user is the same you should compare with the special logic below
                 # if the user is not the same you should compare just using received_on

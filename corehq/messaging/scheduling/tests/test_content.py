@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.models import CustomContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (

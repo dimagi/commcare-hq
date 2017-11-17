@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 from corehq.apps.programs.views import (
     ProgramListView, FetchProgramListView, NewProgramView, EditProgramView,

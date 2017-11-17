@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 import mock
 from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields, \

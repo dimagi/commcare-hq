@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only
 

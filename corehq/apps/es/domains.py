@@ -16,6 +16,7 @@ faceted query), filtered by a provided list of domains and a report date range.
                           .size(0))
     histo_data = domains_after_date.run().aggregations.date.buckets_list
 """
+from __future__ import absolute_import
 from .es_query import HQESQuery
 from . import filters
 

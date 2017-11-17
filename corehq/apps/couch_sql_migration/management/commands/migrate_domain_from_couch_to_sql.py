@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from itertools import izip_longest, groupby
 
 from django.conf import settings
@@ -18,6 +19,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -179,7 +181,7 @@ class Command(BaseCommand):
 
 
 def _confirm(message):
-    if raw_input(
+    if input(
             '{} [y/n]'.format(message)
     ).lower() == 'y':
         return

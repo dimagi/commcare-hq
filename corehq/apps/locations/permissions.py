@@ -74,6 +74,7 @@ These each restrict access to a particular feature and don't affect the rest of
 HQ. These are deprecated, and we intend to transition projects off of those
 onto the whitelist once we've added enough features to meet their use-case.
 """
+from __future__ import absolute_import
 from django_prbac.decorators import requires_privilege_raise404
 from tastypie.resources import Resource
 from corehq import privileges
@@ -301,10 +302,10 @@ def location_restricted_exception(request):
     return no_permissions_exception(request, message=LOCATION_ACCESS_DENIED)
 
 
-def is_location_safe(view_fn, view_args, view_kwargs):
+def is_location_safe(view_fn, request, view_args, view_kwargs):
     """
     Check if view_fn had the @location_safe decorator applied.
-    view_args and kwargs are also needed because view_fn alone doesn't always
+    request, view_args and kwargs are also needed because view_fn alone doesn't always
     contain enough information
     """
     if getattr(view_fn, 'is_location_safe', False):
@@ -312,11 +313,11 @@ def is_location_safe(view_fn, view_args, view_kwargs):
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
     if getattr(view_fn, '_conditionally_location_safe_function', False):
-        return view_fn._conditionally_location_safe_function(view_fn, *view_args, **view_kwargs)
+        return view_fn._conditionally_location_safe_function(view_fn, request, *view_args, **view_kwargs)
     if getattr(view_fn, 'is_hq_report', False):
         if view_kwargs['report_slug'] in CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS:
             return CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_kwargs['report_slug']](
-                view_fn, *view_args, **view_kwargs
+                view_fn, request, *view_args, **view_kwargs
             )
         else:
             return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS

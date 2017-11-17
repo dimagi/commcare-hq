@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import argparse
 import yaml
 
@@ -56,4 +58,4 @@ if __name__ == "__main__":
                     output.append(format_string(value, prefix))
 
     for value in output:
-        print value
+        print(value)

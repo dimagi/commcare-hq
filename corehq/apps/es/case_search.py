@@ -9,11 +9,13 @@ from corehq.apps.es import case_search as case_search_es
     q = (case_search_es.CaseSearchES()
          .domain('testproject')
 """
-from . import filters, queries
+from __future__ import absolute_import
 
+from corehq.apps.es.aggregations import TermsAggregation, BucketResult
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
+from . import filters, queries
 
 PATH = "case_properties"
 RELEVANCE_SCORE = "commcare_search_score"
@@ -73,6 +75,16 @@ class CaseSearchES(CaseES):
         )
         return result._add_query(exact_query, clause)
 
+    def regexp_case_property_query(self, key, regex, clause=queries.MUST):
+        new_query = queries.nested(
+            PATH,
+            queries.filtered(
+                filters.term('{}.key'.format(PATH), key),
+                queries.regexp('{}.value'.format(PATH), regex)
+            )
+        )
+        return self._add_query(new_query, clause)
+
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
         if current_query is None:
@@ -120,3 +132,47 @@ def flatten_result(hit):
         if key and value:
             result[key] = value
     return result
+
+
+class CasePropertyAggregationResult(BucketResult):
+
+    @property
+    def raw_buckets(self):
+        return self.result[self.aggregation.field]['values']['buckets']
+
+    @property
+    def buckets(self):
+        """returns a list of buckets rather than a namedtuple since case property values can
+        have non-valid python names
+        """
+        return self.bucket_list
+
+
+class CasePropertyAggregation(TermsAggregation):
+    type = "case_property"
+    result_class = CasePropertyAggregationResult
+
+    def __init__(self, name, field, size=None):
+        self.name = name
+        self.field = field
+        self.body = {
+            "nested": {
+                "path": "case_properties"
+            },
+            "aggs": {
+                field: {
+                    "filter": {
+                        "term": {
+                            "case_properties.key": field,
+                        }
+                    },
+                    "aggs": {
+                        "values": {
+                            "terms": {
+                                "field": "case_properties.value"
+                            }
+                        }
+                    }
+                }
+            }
+        }

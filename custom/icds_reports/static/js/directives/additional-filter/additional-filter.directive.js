@@ -1,23 +1,18 @@
-function AdditionalModalController($location, $uibModalInstance, filters) {
+function AdditionalModalController($location, $uibModalInstance, filters, genders, ages) {
     var vm = this;
     vm.filters = filters;
 
-    vm.genders = [
-        {id: '', name: 'All'},
-        {id: 'M', name: 'Male'},
-        {id: 'F', name: 'Female'},
-    ];
+    vm.genders = genders;
 
-    vm.ages = [
-        {id: '', name: 'All'},
-        {id: '6', name: '0-6 months'},
-        {id: '12', name: '6-12 months'},
-        {id: '24', name: '12-24 months'},
-        {id: '36', name: '24-36 months'},
-        {id: '48', name: '36-48 months'},
-        {id: '60', name: '48-60 months'},
-        {id: '72', name: '60-72 months'},
-    ];
+    vm.ages = ages;
+
+    var path = $location.path();
+    if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
+        vm.ages.pop();
+        if (path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
+            vm.ages.splice(1,1);
+        }
+    }
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
@@ -39,8 +34,17 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
     };
 }
 
-function AdditionalFilterController($scope, $location, $uibModal) {
+function AdditionalFilterController($scope, $location, $uibModal, storageService) {
     var vm = this;
+
+    var page = $location.path().split('/')[1];
+    if (storageService.getKey('last_page') !== page) {
+        if (storageService.getKey('last_page') !== '') {
+            $location.search('gender', null);
+            $location.search('age', null);
+        }
+        storageService.setKey('last_page', page);
+    }
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
@@ -93,8 +97,8 @@ function AdditionalFilterController($scope, $location, $uibModal) {
     };
 }
 
-AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal' ];
-AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters'];
+AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
+AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

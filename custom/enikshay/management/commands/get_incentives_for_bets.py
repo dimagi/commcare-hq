@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import json
 
@@ -69,7 +71,7 @@ class Command(BaseCommand):
 
                 writer.writerow(row)
 
-        print "{} duplicates found".format(len(duplicate_incentive_ids))
+        print("{} duplicates found".format(len(duplicate_incentive_ids)))
         if duplicate_incentive_ids:
             with open('duplicates_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
@@ -77,7 +79,7 @@ class Command(BaseCommand):
                 for duplicate_id in duplicate_incentive_ids:
                     writer.writerow(duplicate_id)
 
-        print "{} errors".format(len(errors))
+        print("{} errors".format(len(errors)))
         if errors:
             with open('errors_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)

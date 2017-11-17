@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
@@ -65,7 +66,7 @@ class Change(object):
         if not self.document and self.document_store and not self._document_checked:
             try:
                 self.document = self.document_store.get_document(self.id)
-            except DocumentNotFoundError, e:
+            except DocumentNotFoundError as e:
                 self.document = None
                 self._document_checked = True  # set this flag to avoid multiple redundant lookups
                 self.error_raised = e

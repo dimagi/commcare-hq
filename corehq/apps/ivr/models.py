@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.sms.mixin import UnrecognizedBackendException
 from corehq.apps.sms.models import SQLMobileBackend, Log, OUTGOING

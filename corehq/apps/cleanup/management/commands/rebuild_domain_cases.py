@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import logging
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.cleanup import rebuild_case_from_forms

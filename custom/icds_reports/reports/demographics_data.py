@@ -1,13 +1,16 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
 from custom.icds_reports.utils import percent_increase, percent_diff, get_value, apply_exclude
 
 
+@quickcache(['domain', 'yesterday', 'config', 'show_test'], timeout=30 * 60)
 def get_demographics_data(domain, yesterday, config, show_test=False):
     yesterday_date = datetime(*yesterday)
     two_days_ago = (yesterday_date - relativedelta(days=1)).date()
@@ -59,7 +62,6 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
         prev_data = get_data_for(AggAwcMonthly, config)
         frequency = 'month'
 
-
     return {
         'records': [
             [
@@ -78,9 +80,9 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'redirect': 'registered_household'
                 },
                 {
-                    'label': _('Percent Adhaar-seeded Beneficiaries'),
+                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': _((
-                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                        'Percentage of ICDS beneficiaries whose Aadhaar identification has been captured'
                     )),
                     'percent': percent_diff(
                         'person_aadhaar',
@@ -112,7 +114,6 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'all': None,
                     'format': 'number',
                     'frequency': frequency,
-                    'redirect': 'enrolled_children'
                 },
                 {
                     'label': _('Children (0-6 years) enrolled for ICDS services'),
@@ -128,7 +129,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'child_health'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'enrolled_children'
                 }
             ], [
                 {
@@ -142,8 +144,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'ccs_pregnant_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'enrolled_women'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Pregnant Women enrolled for ICDS services'),
@@ -156,7 +157,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'enrolled_women'
                 }
             ],
             [
@@ -172,8 +174,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'css_lactating_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'lactating_enrolled_women'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Lactating Women enrolled for ICDS services'),
@@ -186,7 +187,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'css_lactating'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'lactating_enrolled_women'
                 }
             ], [
                 {
@@ -204,8 +206,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'person_adolescent_all'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency,
-                    'redirect': 'adolescent_girls'
+                    'frequency': frequency
                 },
                 {
                     'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
@@ -225,7 +226,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'person_adolescent'),
                     'all': None,
                     'format': 'number',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'adolescent_girls'
                 }
             ]
         ]

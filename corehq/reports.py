@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.urls import reverse
 from corehq import privileges
@@ -15,10 +16,12 @@ from corehq.apps.hqadmin.reports import (
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
     CommCareVersionReport,
-)
+    UserAuditReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
-from corehq.apps.reports.standard import (monitoring, inspect, export,
-    deployments, sms, ivr)
+from corehq.apps.reports.standard import (
+    monitoring, inspect, export,
+    deployments, sms, ivr
+)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -38,7 +41,7 @@ from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInte
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
-import toggles
+from . import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
@@ -183,7 +186,7 @@ def _make_dynamic_report(report_config, keyprefix):
 
     try:
         metaclass = to_function(report_config.report, failhard=True)
-    except StandardError:
+    except Exception:
         logging.error('dynamic report config for [%s] is invalid' % report_config.report)
         return None
 
@@ -369,6 +372,7 @@ ADMIN_REPORTS = (
         DeviceLogSoftAssertReport,
         CommCareVersionReport,
         AdminPhoneNumberReport,
+        UserAuditReport,
     )),
 )
 

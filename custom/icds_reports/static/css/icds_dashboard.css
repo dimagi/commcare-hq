@@ -173,6 +173,13 @@ nvd3 > svg {
     color: #0a6aa1;
 }
 
+.breadcrump-element-with-pointer {
+    font-weight: bold;
+    font-size: 18px;
+    color: #0a6aa1;
+    cursor: pointer;
+}
+
 .less-padding {
     padding: 6px 2px;
 }
@@ -459,7 +466,9 @@ h4 {
 
 .kpi-numbers {
     position: absolute;
-    top: 50%; left: 50%;
+    width: 100%;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%,-50%);
 }
 
@@ -644,7 +653,7 @@ table.no-footer {
     color: #555;
 }
 
-#detailsChart .nv-series-0, .nv-series-1, .nv-series-2{
+#detailsChart .nv-series-0, #detailsChart .nv-series-1, #detailsChart .nv-series-2{
     stroke-opacity: 0 !important;
 }
 
@@ -654,4 +663,72 @@ table.no-footer {
 
 #detailsChart line.nv-guideline {
     stroke: #ccc;
+}
+
+.headers-overflow-unset .dataTables_scrollHead {
+    overflow: unset !important;
+}
+
+.scroller {
+    overflow-x: hidden;
+    position: relative; /* relative or absolute positioning required by Perfect Scrollbar */
+    max-height: 500px;  /* height must be limited to induce scrolling behavior */
+}
+
+#beneficiariesTable_processing {
+    position: relative;
+    top: 20%;
+    left: 50%;
+    width: 100%;
+    height: 40px;
+    margin-left: -50%;
+    margin-top: -25px;
+    padding-top: 20px;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+#beneficiariesTable {
+    width: 100%;
+}
+
+.tick line {
+    stroke-opacity: .1 !important;
+}
+
+.chart-dot {
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+}
+
+
+table.dataTable.fixedHeader-floating,
+table.dataTable.fixedHeader-locked {
+    background-color: white;
+    top: 110px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+table.dataTable.fixedHeader-floating {
+    position: fixed !important;
+    width: 80.3% !important;
+}
+
+table.dataTable.fixedHeader-locked {
+    position: absolute !important;
+}
+
+@media print {
+  table.fixedHeader-floating {
+    display: none;
+  }
+}
+
+.medium-col {
+    width: 12% !important;
+}
+
+.big-col {
+    width: 16% !important;
 }

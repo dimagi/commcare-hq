@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.locations.models import get_location
 from custom.m4change.constants import M4CHANGE_DOMAINS

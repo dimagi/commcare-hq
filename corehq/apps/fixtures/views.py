@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 import json
 from tempfile import NamedTemporaryFile
@@ -207,7 +208,9 @@ def update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    transaction.add_post_commit_action(
+        lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    )
 
 
 def create_types(fields_patches, domain, data_tag, is_global, transaction):

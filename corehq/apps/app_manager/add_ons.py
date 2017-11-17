@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _

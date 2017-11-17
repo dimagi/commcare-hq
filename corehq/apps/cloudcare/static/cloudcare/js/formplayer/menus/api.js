@@ -23,6 +23,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                             menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                         }, gettext('Waiting for server progress'));
                     } else if (response.hasOwnProperty('exception')){
+                        FormplayerFrontend.trigger('clearProgress');
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
@@ -64,7 +65,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "search_text": params.search,
                 "menu_session_id": params.sessionId,
                 "query_dictionary": params.queryDict,
-                "previewCommand": params.previewCommand,
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                 "isPersistent": params.isPersistent,

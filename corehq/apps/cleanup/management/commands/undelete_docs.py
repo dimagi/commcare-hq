@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from datetime import datetime
 from collections import namedtuple
 from couchdbkit import ResourceNotFound
@@ -6,6 +7,7 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.chunked import chunked
 from corehq.util.couch import send_keys_to_couch, IterDB
 from corehq.util.couchdb_management import couch_config
+from six.moves import input
 
 Results = namedtuple('Results', ['restored', 'not_found', 'not_deleted'])
 
@@ -73,7 +75,7 @@ class Command(BaseCommand):
         # confirm
         msg = ("Are you sure you want to undelete {} docs from {}? (y/n)\n"
                .format(len(doc_ids), db.dbname))
-        if raw_input(msg) != "y":
+        if input(msg) != "y":
             return
 
         # actually do the work

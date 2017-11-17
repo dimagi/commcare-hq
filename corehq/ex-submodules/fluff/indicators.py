@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 from couchdbkit.ext.django import schema
 import datetime

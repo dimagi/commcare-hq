@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
@@ -139,7 +140,7 @@ class Dhis2LogDetailView(BaseProjectSettingsView, DetailView):
 
 
 @require_POST
-@method_decorator(require_permission(Permissions.edit_motech))
+@require_permission(Permissions.edit_motech)
 def send_dhis2_data(request, domain):
     send_datasets.delay(domain, send_now=True)
     return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)

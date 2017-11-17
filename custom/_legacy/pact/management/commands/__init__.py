@@ -1,15 +1,17 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import getpass
 import urllib2
 from django.core.management.base import BaseCommand
 from pact.management.commands.constants import RETRY_LIMIT
+from six.moves import input
 
 
 class PactMigrateCommand(BaseCommand):
     help = "OTA restore from pact server"
 
     def get_credentials(self):
-        self.username = raw_input("""\tEnter pact username: """)
+        self.username = input("""\tEnter pact username: """)
         if self.username == "":
             return
 

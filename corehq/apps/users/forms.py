@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
@@ -283,9 +284,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
-            twbscrispy.PrependedText('analytics_enabled', ''),
         ]
-
+        if self.set_analytics_enabled:
+            basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
         if self.set_email_opt_out:
             basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
 
@@ -309,8 +310,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         )
 
     @property
+    def set_analytics_enabled(self):
+        return not settings.ENTERPRISE_MODE
+
+    @property
     def set_email_opt_out(self):
-        return self.user.is_web_user()
+        return self.user.is_web_user() and not settings.ENTERPRISE_MODE
 
     @property
     def collapse_other_options(self):
@@ -319,12 +324,14 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     @property
     def direct_properties(self):
         result = self.fields.keys()
+        if not self.set_analytics_enabled:
+            result.remove('analytics_enabled')
         if not self.set_email_opt_out:
             result.remove('email_opt_out')
         return result
 
     def update_user(self, save=True, **kwargs):
-        if save:
+        if save and self.set_analytics_enabled:
             analytics_enabled = self.cleaned_data['analytics_enabled']
             if self.user.analytics_enabled != analytics_enabled:
                 set_analytics_opt_out(self.user, analytics_enabled)
@@ -340,13 +347,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ),
         widget=forms.HiddenInput())
 
-    mobile_ucr_sync_interval = forms.IntegerField(
-        label=ugettext_lazy("Mobile report sync delay"),
-        required=False,
-        help_text=ugettext_lazy("Time to wait between sending updated mobile report data to users (hours)."),
-        widget=forms.HiddenInput()
-    )
-
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
@@ -357,9 +357,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ))
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
-
-        if toggles.MOBILE_UCR.enabled(self.domain):
-            self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
 
     @property
     def direct_properties(self):

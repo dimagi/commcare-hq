@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.tabs.utils import path_starts_with_url
 
 __test__ = {

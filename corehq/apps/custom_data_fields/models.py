@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from dimagi.ext.jsonobject import JsonObject
@@ -63,8 +64,6 @@ class CustomDataFieldsDefinition(Document):
 
     @classmethod
     def get_or_create(cls, domain, field_type):
-        # todo: this overrides get_or_create from DocumentBase but with a completely different signature.
-        # This method should probably be renamed.
         existing = get_by_domain_and_type(domain, field_type)
 
         if existing:
@@ -74,7 +73,6 @@ class CustomDataFieldsDefinition(Document):
             new.save()
             return new
 
-    # TODO use this in the CustomDataEditor too?
     def get_validator(self, data_field_class):
         """
         Returns a validator to be used in bulk import

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from itertools import chain, imap
 
@@ -49,9 +50,19 @@ def get_latest_released_app(domain, app_id):
 
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
+    app = _get_latest_released_build_view_result(domain, app_id)
+    return app['id'] if app else None
+
+
+def get_latest_released_app_version(domain, app_id):
+    app = _get_latest_released_build_view_result(domain, app_id)
+    return app['key'][3] if app else None
+
+
+def _get_latest_released_build_view_result(domain, app_id):
     from .models import Application
     key = ['^ReleasedApplications', domain, app_id]
-    app = Application.get_db().view(
+    return Application.get_db().view(
         'app_manager/applications',
         startkey=key + [{}],
         endkey=key,
@@ -59,7 +70,6 @@ def get_latest_released_build_id(domain, app_id):
         include_docs=False,
         limit=1,
     ).first()
-    return app['id'] if app else None
 
 
 def _get_latest_build_view(domain, app_id, include_docs):

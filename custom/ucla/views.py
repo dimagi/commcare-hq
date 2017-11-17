@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from lxml import etree
 
 from django.urls import reverse

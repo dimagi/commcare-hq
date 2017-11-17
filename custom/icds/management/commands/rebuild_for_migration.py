@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from collections import namedtuple
 
@@ -39,7 +41,7 @@ class Command(BaseCommand):
             table = adapter.get_table()
             for case_id in self._get_case_ids_to_process(adapter, table, data_source_id):
                 change = FakeChange(case_id, fake_change_doc)
-                AsyncIndicator.update_indicators(change, [data_source_id])
+                AsyncIndicator.update_from_kafka_change(change, [data_source_id])
 
     def _add_filters(self, query, table, data_source_id):
         if data_source_id == 'static-icds-cas-static-child_cases_monthly_tableau_v2':

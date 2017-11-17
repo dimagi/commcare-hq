@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import absolute_import
 from codecs import BOM_UTF8
 from contextlib import closing
 import StringIO
@@ -130,3 +131,20 @@ class HeaderNameTest(SimpleTestCase):
         preview = writer.get_preview()
         self.assertGreater(len(table_index), writer.max_table_name_size)
         self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+
+    def test_max_header_length_duplicates(self):
+        writer = PythonDictWriter()
+        writer.max_table_name_size = 7
+        stringio = StringIO.StringIO()
+        table_headers = [("header1", "header2")]
+        writer.open(
+            [
+                ("prefix1: index", table_headers),
+                ("prefix2- index", table_headers),
+            ],
+            stringio
+        )
+        writer.close()
+        preview = writer.get_preview()
+        table_names = {table['table_name'] for table in preview}
+        self.assertEqual(len(table_names), 2)

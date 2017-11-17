@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.sql_db.connections import connection_manager

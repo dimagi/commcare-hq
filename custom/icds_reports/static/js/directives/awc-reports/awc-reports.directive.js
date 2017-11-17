@@ -642,67 +642,67 @@ var height_for_age = {
             {x: 60, y: 95.2},
         ],
         'orange': [
-            {x: 0, y:  1.8},
-            {x: 1, y:  2.0},
-            {x: 2, y:  2.0},
-            {x: 3, y:  2.1},
-            {x: 4, y:  2.2},
-            {x: 5, y:  2.2},
-            {x: 6, y:  2.3},
-            {x: 7, y:  2.4},
-            {x: 8, y:  2.3},
-            {x: 9, y:  2.4},
-            {x: 10, y: 2.4},
-            {x: 11, y: 2.5},
-            {x: 12, y: 2.6},
-            {x: 13, y: 2.7},
-            {x: 14, y: 2.7},
-            {x: 15, y: 2.7},
-            {x: 16, y: 2.8},
-            {x: 17, y: 2.9},
-            {x: 18, y: 2.9},
-            {x: 19, y: 3.0},
-            {x: 20, y: 3.0},
-            {x: 21, y: 3.0},
-            {x: 22, y: 3.2},
-            {x: 23, y: 3.2},
-            {x: 24, y: 3.3},
-            {x: 25, y: 3.2},
-            {x: 26, y: 3.3},
-            {x: 27, y: 3.4},
-            {x: 28, y: 3.4},
-            {x: 29, y: 3.4},
-            {x: 30, y: 3.5},
-            {x: 31, y: 3.6},
-            {x: 32, y: 3.6},
-            {x: 33, y: 3.7},
-            {x: 34, y: 3.7},
-            {x: 35, y: 3.7},
-            {x: 36, y: 3.8},
-            {x: 37, y: 3.8},
-            {x: 38, y: 3.9},
-            {x: 39, y: 3.9},
-            {x: 40, y: 4.0},
-            {x: 41, y: 4.1},
-            {x: 42, y: 4.1},
-            {x: 43, y: 4.1},
-            {x: 44, y: 4.1},
-            {x: 45, y: 4.1},
-            {x: 46, y: 4.2},
-            {x: 47, y: 4.3},
-            {x: 48, y: 4.3},
-            {x: 49, y: 4.3},
-            {x: 50, y: 4.4},
-            {x: 51, y: 4.4},
-            {x: 52, y: 4.4},
-            {x: 53, y: 4.5},
-            {x: 54, y: 4.5},
-            {x: 55, y: 4.6},
-            {x: 56, y: 4.7},
-            {x: 57, y: 4.6},
-            {x: 58, y: 4.7},
-            {x: 59, y: 4.8},
-            {x: 60, y: 4.7},
+            { x: 0, y: 45.4 },
+            { x: 1, y: 49.8 },
+            { x: 2, y: 53 },
+            { x: 3, y: 55.6 },
+            { x: 4, y: 57.8 },
+            { x: 5, y: 59.6 },
+            { x: 6, y: 61.2 },
+            { x: 7, y: 62.7 },
+            { x: 8, y: 64 },
+            { x: 9, y: 65.3 },
+            { x: 10, y: 66.5 },
+            { x: 11, y: 67.7 },
+            { x: 12, y: 68.9 },
+            { x: 13, y: 70 },
+            { x: 14, y: 71 },
+            { x: 15, y: 72 },
+            { x: 16, y: 73 },
+            { x: 17, y: 74 },
+            { x: 18, y: 74.9 },
+            { x: 19, y: 75.8 },
+            { x: 20, y: 76.7 },
+            { x: 21, y: 77.5 },
+            { x: 22, y: 78.4 },
+            { x: 23, y: 79.2 },
+            { x: 24, y: 80 },
+            { x: 25, y: 80 },
+            { x: 26, y: 80.8 },
+            { x: 27, y: 81.5 },
+            { x: 28, y: 82.2 },
+            { x: 29, y: 82.9 },
+            { x: 30, y: 83.6 },
+            { x: 31, y: 84.3 },
+            { x: 32, y: 84.9 },
+            { x: 33, y: 85.6 },
+            { x: 34, y: 86.2 },
+            { x: 35, y: 86.8 },
+            { x: 36, y: 87.4 },
+            { x: 37, y: 88 },
+            { x: 38, y: 88.6 },
+            { x: 39, y: 89.2 },
+            { x: 40, y: 89.8 },
+            { x: 41, y: 90.4 },
+            { x: 42, y: 90.9 },
+            { x: 43, y: 91.5 },
+            { x: 44, y: 92 },
+            { x: 45, y: 92.5 },
+            { x: 46, y: 93.1 },
+            { x: 47, y: 93.6 },
+            { x: 48, y: 94.1 },
+            { x: 49, y: 94.6 },
+            { x: 50, y: 95.1 },
+            { x: 51, y: 95.6 },
+            { x: 52, y: 96.1 },
+            { x: 53, y: 96.6 },
+            { x: 54, y: 97.1 },
+            { x: 55, y: 97.6 },
+            { x: 56, y: 98.1 },
+            { x: 57, y: 98.5 },
+            { x: 58, y: 99 },
+            { x: 59, y: 99.5 },
+            { x: 60, y: 99.9 },
         ],
         'green': [
             { x: 0, y: 52.9 },
@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, $filter, DTOptionsBuilder, storageService, userLocationId) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1705,11 +1705,83 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
     vm.step = $routeParams.step;
     vm.data = null;
     vm.filters = ['gender', 'age'];
-    vm.dtOptions = DTOptionsBuilder
-        .newOptions()
-        .withOption('scrollY', '300px')
-        .withOption('scrollX', '100%')
-        .withOption('scrollCollapse', true)
+
+    vm.dtOptions = DTOptionsBuilder.newOptions()
+        .withOption('ajax', {
+            url:  url('awc_reports', vm.step),
+            data: $location.search(),
+            type: 'GET',
+        })
+        .withDataProp('data')
+        .withOption('processing', true)
+        .withOption('serverSide', true)
+        .withOption('createdRow', compile)
+        .withPaginationType('full_numbers')
+        .withFixedHeader({
+            bottom: true,
+        })
+        .withOption('oLanguage', {
+            "sProcessing": "Loading. Please wait...",
+        })
+        .withDOM('ltipr');
+
+    vm.dtColumns = [
+        DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName).withClass('big-col'),
+        DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
+        DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
+        DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
+    ];
+
+    function compile(row) {
+        $compile(window.angular.element(row).contents())($scope);
+    }
+
+    function renderPersonName(data, type, full) {
+        return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(\''
+            + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
+    }
+
+    function renderDateOfBirth(data, type, full) {
+        return full.dob || 'Data not Entered';
+    }
+
+    function renderAge(data, type, full) {
+        return full.age || 'Data not Entered';
+    }
+
+    function renderFullyImmunizedDate(data, type, full) {
+        return full.fully_immunized || 'Data not Entered';
+    }
+
+    function renderWeightForAgeStatus(data, type, full) {
+        return '<span ng-class="row.nutrition_status.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'weight\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_nutrition_status.value + '</span>';
+    }
+
+    function renderHeightForAgeStatus(data, type, full) {
+        return '<span ng-class="row.stunning.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'both\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_stunting.value + '</span>';
+    }
+
+    function renderWeightForHeightStatus(data, type, full) {
+        return '<span ng-class="row.wasting.color" class="pointer" uib-popover-html="$ctrl.getPopoverContent(\''
+            + full.recorded_weight + '\',\'' + full.recorded_height + '\',\'' + full.age_in_months
+            + '\', \'height\')" popover-placement="right" popover-trigger="\'mouseenter\'">'
+            + full.current_month_wasting.value + '</span>';
+    }
+
+    function renderPseDaysAttended(data, type, full) {
+        return full.pse_days_attended || 'Data not Entered';
+    }
+
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
@@ -1748,6 +1820,20 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                                 lng: vm.markers[Object.keys(vm.markers)[0]].lng,
                                 zoom: 15,
                             };
+                        } else {
+                            vm.markers = [
+                                {
+                                    lat: 22.10,
+                                    lng: 78.22,
+                                    draggable: false,
+                                    icon: {
+                                        type: 'div',
+                                        iconSize: [350, 0],
+                                        html: '<h1><strong>No GPS recorded</strong></h1>',
+                                        popupAnchor:  [0, 0],
+                                    },
+                                },
+                            ];
                         }
                     }
                 },
@@ -1762,17 +1848,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         vm.getDataForStep(vm.step);
     });
 
-    vm.getPopoverContent = function (data, type) {
+    vm.getPopoverContent = function (recorded_weight, recorded_height, age_in_months, type) {
         var html = '';
 
         var recordedWeight = 'Data not Entered';
         var recordedHeight = 'Data not Entered';
         var age = 'Data not Entered';
 
-        if (data) {
-            recordedWeight = d3.format(".2f")(data.recorded_weight) + ' kg';
-            recordedHeight = d3.format(".2f")(data.recorded_height) + ' cm';
-            age = data.age_in_months + ' months';
+        if (recorded_weight) {
+            recordedWeight = d3.format(".2f")(recorded_weight) + ' kg';
+        }
+        if (recorded_height) {
+            recordedHeight = d3.format(".2f")(recorded_height) + ' cm';
+        }
+        if (age_in_months) {
+            age = age_in_months + ' months';
         }
 
         if (type === 'weight' || type === 'both') {
@@ -1856,6 +1946,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
                     tickFormat: function(d) {
                         return d3.time.format('Week of %d/%m')(new Date(d));
                     },
+                    staggerLabels: true,
+                    showMaxMin: false,
                 },
                 yAxis: {
                     axisLabel: 'Number of Days',
@@ -1945,6 +2037,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -1963,10 +2056,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    } else {
+                        html = "<p>Height: <strong>Data Not Recorded</strong></p>";
+                    }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
+                });
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -1988,6 +2089,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2006,10 +2108,19 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    } else {
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                    }
                     var month = d.value === 1 ? "month": "months";
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
+                });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2032,6 +2143,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             duration: 100,
             useInteractiveGuideline: true,
             xDomain: [45,120],
+            forceY: [0],
             xAxis: {
                 axisLabel: 'Height (Cm)',
                 showMaxMin: true,
@@ -2049,9 +2161,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var html = "";
+                    if (d.series[3].value !== null) {
+                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    } else {
+                        html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
+                    }
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
                     return html;
+                });
+
+                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function(key) {
+                    if (key.__data__.y !== null ) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2251,10 +2372,34 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, $fil
         },
     };
 
+    // hack to have the same width between origin table and fixture headers,
+    // without this fixture headers are bigger and not align to original columns
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                var hasClass = [].some.call(mutation.addedNodes, function(el) {
+                    return el.classList.contains('fixedHeader-floating');
+                });
+                if (hasClass && !vm.showBeneficiary) {
+                    var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
+                    mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
+                }
+            }
+        });
+    });
+
+    var config = {
+        attributes: true,
+        childList: true,
+        characterData: true,
+    };
+
+    observer.observe(document.body, config);
+
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', '$filter', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {

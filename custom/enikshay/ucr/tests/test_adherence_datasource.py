@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import mock
 
@@ -5,7 +6,7 @@ from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -104,6 +105,7 @@ class TestAdherenceUCRSource(TestCase):
                 cases_by_id[case_id].save()
 
         rebuild_indicators(self.data_store.datasource._id)
+        queue_async_indicators()
         self.data_store.adapter.refresh_table()
 
     def test_basic(self):

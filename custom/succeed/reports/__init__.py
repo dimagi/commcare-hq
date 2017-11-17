@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _, ugettext_noop
 from custom.succeed.utils import CONFIG
 from dimagi.utils.parsing import ISO_DATE_FORMAT

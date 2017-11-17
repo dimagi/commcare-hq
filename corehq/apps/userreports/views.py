@@ -28,6 +28,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -97,7 +98,6 @@ from corehq.apps.userreports.tasks import (
     delete_data_source_task,
     resume_building_indicators,
     rebuild_indicators_in_place,
-    recalculate_indicators,
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -266,12 +266,16 @@ class ReportBuilderView(BaseDomainView):
     @property
     def main_context(self):
         main_context = super(ReportBuilderView, self).main_context
+        allowed_num_reports = allowed_report_builder_reports(self.request)
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit':
-                number_of_report_builder_reports(self.domain) >= allowed_report_builder_reports(self.request),
-            'report_limit': allowed_report_builder_reports(self.request),
+            'at_report_limit': (
+                number_of_report_builder_reports(self.domain) >= allowed_num_reports
+                and allowed_num_reports is not None
+            ),
+            'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
         })
         return main_context
 
@@ -388,15 +392,15 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     @property
     def page_context(self):
         context = super(ReportBuilderPaywallPricing, self).page_context
-        if has_report_builder_access(self.request):
-            max_allowed_reports = allowed_report_builder_reports(self.request)
-            num_builder_reports = number_of_report_builder_reports(self.domain)
-            if num_builder_reports >= max_allowed_reports:
-                context.update({
-                    'at_report_limit': True,
-                    'max_allowed_reports': max_allowed_reports,
-
-                })
+        max_allowed_reports = allowed_report_builder_reports(self.request)
+        num_builder_reports = number_of_report_builder_reports(self.domain)
+        context.update({
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
+            'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
+            'support_email': settings.SUPPORT_EMAIL,
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+        })
         return context
 
 
@@ -483,7 +487,7 @@ class EditReportInBuilder(View):
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             try:
-                if not toggle_enabled(request, toggles.REPORT_BUILDER_V2):
+                if toggle_enabled(request, toggles.REPORT_BUILDER_V1):
                     from corehq.apps.userreports.v1.views import (
                         ConfigureChartReport,
                         ConfigureListReport,
@@ -654,6 +658,7 @@ class ConfigureReport(ReportBuilderView):
             'preview_datasource_id': self._get_preview_data_source(),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
         }
 
     def _handle_exception(self, response, exception):
@@ -1065,18 +1070,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
-            'can_rebuild': self.can_rebuild,
             'used_by_reports': self.get_reports(),
         }
-
-    @property
-    def can_rebuild(self):
-        # Don't allow rebuilds if there have been more than 1 million forms or cases
-        domain = DomainES().in_domains(self.domain).run().hits[0]
-        doc_type = self.config.referenced_doc_type
-        if doc_type == 'XFormInstance':
-            return domain.get('cp_n_forms', 0) < 1000000
-        return True
 
     @property
     def page_url(self):
@@ -1282,27 +1277,6 @@ def build_data_source_in_place(request, domain, config_id):
     ))
 
 
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
-def recalculate_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    if config.is_deactivated:
-        config.is_deactivated = False
-        config.save()
-
-    messages.success(
-        request,
-        _('Table "{}" is now being recalculated. New data should start showing up soon').format(
-            config.display_name
-        )
-    )
-
-    recalculate_indicators.delay(config_id, request.user.username)
-    return HttpResponseRedirect(reverse(
-        EditDataSourceView.urlname, args=[domain, config._id]
-    ))
-
-
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
@@ -1465,7 +1439,14 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    return json_response({'isBuilt': config.meta.build.finished or config.meta.build.rebuilt_asynchronously})
+    build = config.meta.build
+    # there appears to be a way that these can be built, but not have initiated set
+    if build.initiated or build.initiated_in_place:
+        return JsonResponse({
+            'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
+        })
+
+    return JsonResponse({'isBuilt': True})
 
 
 def _get_report_filter(domain, report_id, filter_id):
@@ -1476,7 +1457,7 @@ def _get_report_filter(domain, report_id, filter_id):
     return report_filter
 
 
-def _is_location_safe_choice_list(view_fn, domain, report_id, filter_id, **view_kwargs):
+def _is_location_safe_choice_list(view_fn, request, domain, report_id, filter_id, **view_kwargs):
     return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
 
 

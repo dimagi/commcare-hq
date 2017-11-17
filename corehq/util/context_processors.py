@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
@@ -76,7 +77,7 @@ def js_api_keys(request):
         return {}  # disable js analytics
     return {
         'ANALYTICS_IDS': settings.ANALYTICS_IDS,
-        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
+        'USE_NEW_ANALYTICS': hasattr(request, 'use_new_analytics'),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
 

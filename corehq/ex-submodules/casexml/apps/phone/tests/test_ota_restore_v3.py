@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
@@ -9,7 +10,8 @@ from casexml.apps.case.tests.util import (
 )
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.restore import RestoreContent
-from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import MockDevice
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)

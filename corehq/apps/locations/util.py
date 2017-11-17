@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
@@ -105,7 +106,7 @@ def parent_child(domain):
     Returns a dict mapping from a location type to its possible
     child types
     """
-    return map_reduce(lambda (k, v): [(p, k) for p in v],
+    return map_reduce(lambda k_v: [(p, k_v[0]) for p in k_v[1]],
                       data=dict(location_hierarchy_config(domain)).iteritems())
 
 

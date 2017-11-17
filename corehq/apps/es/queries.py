@@ -10,6 +10,7 @@ are available, and put 'em here if you end up using any of 'em.
 
 .. _`query_docs`: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-queries.html
 """
+from __future__ import absolute_import
 import re
 
 MUST = "must"
@@ -136,5 +137,15 @@ def filtered(query, filter_):
         "filtered": {
             "query": query,
             "filter": filter_,
+        }
+    }
+
+
+def regexp(field, regex):
+    return {
+        'regexp': {
+            field: {
+                'value': regex,
+            }
         }
     }

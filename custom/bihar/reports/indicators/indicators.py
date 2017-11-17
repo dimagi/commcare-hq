@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from inspect import ismethod
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.html import format_html

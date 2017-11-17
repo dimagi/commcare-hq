@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
@@ -1132,7 +1133,6 @@ class XForm(WrappedNode):
             return None
 
     def get_path(self, node):
-        # TODO: add safety tests so that when something fails it fails with a good error
         path = None
         if 'nodeset' in node.attrib:
             path = node.attrib['nodeset']

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 from corehq.util.celery_utils import revoke_tasks
 

@@ -2229,6 +2229,39 @@
         }
       },
       {
+        "column_id": "not_migrated",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "not",
+            "filter": {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "property_name": "migration_status",
+                  "type": "property_name"
+                }
+              },
+              "property_value": "migrated"
+            }
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
         "column_id": "count",
         "type": "count"
       },

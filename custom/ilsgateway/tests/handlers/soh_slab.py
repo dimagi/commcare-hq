@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.util.translation import localize

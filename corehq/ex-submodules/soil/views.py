@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import json
 import logging
@@ -68,4 +69,4 @@ def retrieve_download(request, download_id, template="soil/file_download.html", 
             raise Http404
         return download.toHttpResponse()
 
-    return render_to_response(template, context=context)
+    return render_to_response(template, context=context.flatten())

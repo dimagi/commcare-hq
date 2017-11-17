@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.models import CommCareCase
 from django.shortcuts import render

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -6,7 +7,9 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -17,7 +20,8 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
-def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -34,6 +38,8 @@ def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=Fal
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+        if 'age_tranche' not in config:
+            queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     map_data = {}
@@ -89,17 +95,17 @@ def get_prevalence_of_stunning_data_map(domain, config, loc_level, show_test=Fal
                     "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
                     "-2Z standard deviations of the WHO Child Growth Standards median."
                     "<br/><br/>"
-                    "Stunting in children is a sign of chronic undernutrition and has long lasting harmful "
+                    "Stunting is a sign of chronic undernutrition and has long lasting harmful "
                     "consequences on the growth of a child"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
-def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -119,6 +125,9 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
+
+    if 'age_tranche' not in config:
+        chart_data = chart_data.exclude(age_tranche__in=[0, 6, 72])
 
     data = {
         'red': OrderedDict(),
@@ -174,7 +183,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
                 "key": "% normal",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
@@ -187,7 +196,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
                 "key": "% moderately stunted",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": ORANGE
+                "color": ChartColors.ORANGE
             },
             {
                 "values": [
@@ -200,7 +209,7 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
                 "key": "% severely stunted",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": ChartColors.RED
             }
         ],
         "all_locations": top_locations,
@@ -210,7 +219,8 @@ def get_prevalence_of_stunning_data_chart(domain, config, loc_level, show_test=F
     }
 
 
-def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -228,6 +238,8 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=
 
     if not show_test:
         data = apply_exclude(domain, data)
+    if 'age_tranche' not in config:
+        data = data.exclude(age_tranche__in=[0, 6, 72])
 
     chart_data = {
         'blue': [],
@@ -241,9 +253,13 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=
         'total_measured': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         severe = row['severe']
         moderate = row['moderate']
@@ -266,13 +282,19 @@ def get_prevalence_of_stunning_sector_data(domain, config, loc_level, show_test=
             name, value
         ])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
             "-2Z standard deviations of the WHO Child Growth Standards median."
             "<br/><br/>"
-            "Stunting in children is a sign of chronic undernutrition and has long lasting harmful "
+            "Stunting is a sign of chronic undernutrition and has long lasting harmful "
             "consequences on the growth of a child"
         )),
         "chart_data": [

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.signals import cases_received
 from casexml.apps.case.models import XFormInstance
 from fluff.signals import indicator_document_updated

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from unittest import skipUnless, SkipTest
 from uuid import uuid4, UUID
@@ -10,6 +11,7 @@ from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, use_sql_backend
 from corehq.sql_db.config import partition_config
+import six
 
 DOMAIN = 'sharding-test'
 
@@ -174,7 +176,7 @@ class ShardAccessorTests(TestCase):
 
         csiphash_hashes = ShardAccessor.hash_doc_ids_python(doc_ids)
         self.assertEquals(len(csiphash_hashes), N)
-        self.assertTrue(all(isinstance(hash_, (int, long)) for hash_ in csiphash_hashes.values()))
+        self.assertTrue(all(isinstance(hash_, six.integer_types) for hash_ in csiphash_hashes.values()))
 
         N_shards = 1024
         part_mask = N_shards - 1

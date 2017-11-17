@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.test import TestCase
 
@@ -20,7 +21,7 @@ class TestDBAccessors(TestCase):
         from casexml.apps.case.tests.util import delete_all_xforms
         delete_all_xforms()
         cls.domain = 'evelyn'
-        cls.now = datetime.datetime.utcnow()
+        cls.now = datetime.datetime(2017, 10, 31)
         cls.user_id1 = 'xzy'
         cls.user_id2 = 'abc'
 
@@ -35,8 +36,8 @@ class TestDBAccessors(TestCase):
             received_on=cls.now,
         )
 
-        xform1 = get_simple_wrapped_form('123', metadata=metadata1)
-        xform2 = get_simple_wrapped_form('456', metadata=metadata2)
+        cls.xform1 = get_simple_wrapped_form('123', metadata=metadata1)
+        cls.xform2 = get_simple_wrapped_form('456', metadata=metadata2)
 
         xform_error = get_simple_wrapped_form('789', metadata=metadata2)
         xform_error = XFormError.wrap(xform_error.to_json())
@@ -47,8 +48,8 @@ class TestDBAccessors(TestCase):
         cls.xform_deleted.save()
 
         cls.xforms = [
-            xform1,
-            xform2,
+            cls.xform1,
+            cls.xform2,
         ]
         cls.xform_errors = [xform_error]
 
@@ -66,6 +67,21 @@ class TestDBAccessors(TestCase):
         form_ids = get_form_ids_by_type(self.domain, 'XFormError')
         self.assertEqual(len(form_ids), len(self.xform_errors))
         self.assertEqual(set(form_ids), {form._id for form in self.xform_errors})
+
+    def test_get_form_ids_by_type_bounded(self):
+
+        def assert_forms_in_range(start, end, forms):
+            form_ids = get_form_ids_by_type(self.domain, 'XFormInstance',
+                                            start=start, end=end)
+            self.assertEqual(set(form_ids), {form._id for form in forms})
+
+        before_both = datetime.date(2017, 9, 1)
+        in_between = datetime.date(2017, 10, 25)
+        after_both = datetime.date(2017, 11, 1)
+
+        assert_forms_in_range(before_both, after_both, [self.xform1, self.xform2])
+        assert_forms_in_range(before_both, in_between, [self.xform1])
+        assert_forms_in_range(in_between, after_both, [self.xform2])
 
     def test_get_forms_by_type_xforminstance(self):
         forms = get_forms_by_type(self.domain, 'XFormInstance', limit=10)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import csv
 import io
 import json
@@ -845,7 +846,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
                 form_data[f] = user_data.get(f)
             form_data['domain'] = self.domain
             return form_data
-        except Exception, e:
+        except Exception as e:
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
 
 

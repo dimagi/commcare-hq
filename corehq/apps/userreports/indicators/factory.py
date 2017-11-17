@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -155,6 +156,6 @@ class IndicatorFactory(object):
             raise BadSpecError(
                 _('Illegal indicator type: "{0}", must be one of the following choice: ({1})'.format(
                     spec['type'],
-                    ', '.join(self.constructor_map.keys())
+                    ', '.join(self.constructor_map)
                 ))
             )

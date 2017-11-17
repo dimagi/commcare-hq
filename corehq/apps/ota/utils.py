@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
@@ -185,7 +186,7 @@ def handle_401_response(f):
         if response.status_code == 401:
             auth_type = determine_authtype_from_request(request)
             if auth_type and auth_type == 'basic':
-                username, password = get_username_and_password_from_request(request)
+                username, _ = get_username_and_password_from_request(request)
                 if username:
                     valid, message, error_code = ensure_active_user_by_username(username)
                     if not valid:

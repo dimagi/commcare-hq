@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 from django.utils.translation import get_language
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
@@ -43,7 +44,7 @@ class CustomTransform(JsonObject):
     or owner name from the ID.
     """
     type = TypeProperty('custom')
-    custom_type = StringProperty(required=True, choices=_CUSTOM_TRANSFORM_MAP.keys())
+    custom_type = StringProperty(required=True, choices=list(_CUSTOM_TRANSFORM_MAP))
 
     def get_transform_function(self):
         return _CUSTOM_TRANSFORM_MAP[self.custom_type]
@@ -101,5 +102,23 @@ class TranslationTransform(Transform):
             display = self.translations.get(value, {})
             language = get_language()
             return localize(display, language)
+
+        return transform_function
+
+
+class MultipleValueStringTranslationTransform(TranslationTransform):
+    type = TypeProperty('multiple_value_string_translation')
+    delimiter = StringProperty(required=True)
+
+    def get_transform_function(self):
+        delimiter = self.delimiter
+        parent_transform_function = super(MultipleValueStringTranslationTransform, self).get_transform_function()
+
+        def transform_function(values):
+            values_list = values.split(delimiter)
+            translated_values_list = []
+            for value in values_list:
+                translated_values_list.append(parent_transform_function(value))
+            return delimiter.join(translated_values_list)
 
         return transform_function

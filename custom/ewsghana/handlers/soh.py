@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 
 from django.conf import settings
@@ -202,7 +203,7 @@ class SOHHandler(KeywordHandler):
         except ProductCodeException as e:
             self.respond(e.message)
             return True
-        except Exception as e:  # todo: should we only trap SMSErrors?
+        except Exception as e:
             if settings.UNIT_TESTING or settings.DEBUG:
                 raise
             self.respond('problem with stock report: %s' % str(e))

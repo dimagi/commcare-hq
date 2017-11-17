@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from auditcare.models import AccessAudit, ModelActionAudit
 
@@ -16,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         recompute = options['recompute']
-        print recompute
+        print(recompute)
         db = AccessAudit.get_db()
         vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
 
@@ -27,7 +29,7 @@ class Command(BaseCommand):
 
         for model, count in model_dict.items():
             #for each model type, query ALL audit instances.
-            print "### %s" % (model)
+            print("### %s" % (model))
             model_counts = db.view('auditcare/model_actions_by_id', group=True, startkey=[model,u''], endkey=[model,u'z']).all()
             #within a given model, query ALL instances
 

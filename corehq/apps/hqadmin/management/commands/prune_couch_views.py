@@ -1,10 +1,12 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from collections import defaultdict
 from couchdbkit import Database
 
 from django.core.management.base import BaseCommand
 from corehq.preindex import get_preindex_plugins
 from dimagi.utils.couch.database import get_design_docs
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -42,7 +44,7 @@ class Command(BaseCommand):
                 print('\n'.join(sorted(to_delete)))
 
         if designs_to_delete:
-            if options['noinput'] or raw_input('\n'.join([
+            if options['noinput'] or input('\n'.join([
                     '\n\nReally delete all the above design docs?',
                     'If any of these views are actually live, bad things will happen. '
                     '(Type "delete designs" to continue):',

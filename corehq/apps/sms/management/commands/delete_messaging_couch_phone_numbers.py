@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from corehq.apps.sms.mixin import VerifiedNumber
 from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification
 from django.core.management.base import BaseCommand

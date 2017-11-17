@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import hashlib
 import json
@@ -7,7 +8,11 @@ import platform
 import uuid
 from datetime import datetime
 
-from dimagi.ext.couchdbkit import Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
+from django.utils.functional import cached_property
+
+from dimagi.ext.couchdbkit import (
+    Document, StringProperty, DateTimeProperty, StringListProperty, DictProperty, IntegerProperty
+)
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User, AnonymousUser
@@ -58,7 +63,7 @@ class AuditEvent(Document):
         try:
             ct = ContentType.objects.get(model=self.doc_type.lower())
             return ct.model_class().objects.get(id=self.id).summary
-        except Exception, e:
+        except Exception:
             return ""
 
     class Meta:
@@ -314,6 +319,10 @@ class NavigationEventAudit(AuditEvent):
     class Meta:
         app_label = 'auditcare'
 
+    @cached_property
+    def domain(self):
+        from corehq.apps.domain.utils import get_domain_from_url
+        return get_domain_from_url(self.request_path)
 
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs, extra={}):
@@ -328,7 +337,7 @@ class NavigationEventAudit(AuditEvent):
                 audit.request_path = request.path
             audit.ip_address = utils.get_ip(request)
             audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
-            audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
+            audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
                 header_item = request.META.get(k, None)
                 if header_item is not None:
@@ -339,7 +348,7 @@ class NavigationEventAudit(AuditEvent):
             audit.view_kwargs = view_kwargs
             audit.save()
             return audit
-        except Exception, ex:
+        except Exception as ex:
             log.error("NavigationEventAudit.audit_view error: %s", ex)
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)

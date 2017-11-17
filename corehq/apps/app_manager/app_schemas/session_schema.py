@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import is_usercase_in_use

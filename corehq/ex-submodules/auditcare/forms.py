@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate
 from auditcare.signals import user_login_failed

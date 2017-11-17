@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.task import task
 from functools import wraps
 import logging
@@ -83,7 +84,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
     Lines args and kwargs up with those specified in the definition of fn and
     passes the result to `format_str.format()`.
     """
-    varnames = fn.func_code.co_varnames
+    varnames = fn.__code__.co_varnames
     kwargs.update(dict(zip(varnames, args)))
     return ("{}-" + format_str).format(fn.__name__, **kwargs)
 

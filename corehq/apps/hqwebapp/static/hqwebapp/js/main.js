@@ -278,7 +278,22 @@ hqDefine("hqwebapp/js/main", function() {
                 }
             }
         });
+
+        // EULA and CDA modals
+        _.each($(".remote-modal"), function(modal) {
+            var $modal = $(modal);
+            $modal.on("show show.bs.modal", function() {
+                $(this).find(".fetched-data").load($(this).data("url"));
+            });
+            if ($modal.data("showOnPageLoad")) {
+                $modal.modal('show');
+            }
+        });
     });
+
+    var capitalize = function(string) {
+        return string.charAt(0).toUpperCase() + string.substring(1).toLowerCase();
+    };
 
     return {
         beforeUnloadCallback: beforeUnloadCallback,
@@ -297,5 +312,6 @@ hqDefine("hqwebapp/js/main", function() {
         makeHqHelp: makeHqHelp,
         transformHelpTemplate: transformHelpTemplate,
         updateDOM: updateDOM,
+        capitalize: capitalize,
     };
 });

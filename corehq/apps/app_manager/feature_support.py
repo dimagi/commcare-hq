@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from distutils.version import LooseVersion, Version
 from django.conf import settings
 
@@ -155,4 +156,4 @@ class CommCareFeatureSupportMixin(object):
         """
         Enable Remote Request question type in the form builder.
         """
-        return self._require_minimum_version('2.41')
+        return self._require_minimum_version('2.40')

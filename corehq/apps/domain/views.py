@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import datetime
 from decimal import Decimal
@@ -2289,7 +2290,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
-        'corehq.apps.reports.filters.search.RepeaterPayloadIdFilter',
+        'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
 
     def _make_cancel_payload_button(self, record_id):
@@ -2990,7 +2991,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
             (privileges.Titles.get_name_from_privilege(privilege),
              domain_has_privilege(self.domain, privilege))
             for privilege in privileges.MAX_PRIVILEGES
-        ], key=lambda (name, has): (not has, name))
+        ], key=lambda name_has: (not name_has[1], name_has[0]))
 
     @property
     def page_context(self):

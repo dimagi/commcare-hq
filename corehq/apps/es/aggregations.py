@@ -34,6 +34,7 @@ want.
 As of this writing, there's not much else developed, but it's pretty easy to
 add support for other aggregation types and more results processing
 """
+from __future__ import absolute_import
 from copy import deepcopy
 import re
 from collections import namedtuple, defaultdict
@@ -72,7 +73,11 @@ class Aggregation(object):
         return self
 
     def assemble(self):
-        assembled = {self.type: self.body}
+        if self.type == "case_property":
+            assembled = self.body
+        else:
+            assembled = {self.type: self.body}
+
         if self.aggregations:
             assembled['aggs'] = {}
             for agg in self.aggregations:

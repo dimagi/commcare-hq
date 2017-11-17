@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.task import task
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins

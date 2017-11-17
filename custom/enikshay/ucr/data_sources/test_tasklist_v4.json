@@ -1,0 +1,1284 @@
+{
+    "domains": [
+        "enikshay",
+        "enikshay-performance-test"
+    ],
+    "server_environment": [
+        "enikshay"
+    ],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
+        "engine_id": "ucr",
+        "description": "updated to include combined diagnostic and followup TLs",
+        "base_item_expression": {},
+        "table_id": "test_tasklist_v4",
+        "display_name": "test (task list) v4",
+        "configured_filter": {
+          "filters": [
+              {
+                  "comment": null,
+                  "expression": {
+                      "datatype": null,
+                      "property_name": "type",
+                      "type": "property_name"
+                  },
+                  "operator": "eq",
+                  "property_value": "test",
+                  "type": "boolean_expression"
+              },
+              {
+                  "comment": null,
+                  "expression": {
+                      "datatype": "string",
+                      "name": "owner_id",
+                      "type": "named"
+                  },
+                  "operator": "not_eq",
+                  "property_value": "_archive_",
+                  "type": "boolean_expression"
+              },
+              {
+                  "comment": null,
+                  "expression": {
+                      "datatype": "string",
+                      "name": "owner_id",
+                      "type": "named"
+                  },
+                  "operator": "not_eq",
+                  "property_value": "_invalid_",
+                  "type": "boolean_expression"
+              },
+              {
+                  "comment": null,
+                  "filter": {
+                      "comment": null,
+                      "expression": {
+                          "datatype": "string",
+                          "name": "owner_id",
+                          "type": "named"
+                      },
+                      "operator": "in",
+                      "property_value": [
+                          null,
+                          ""
+                      ],
+                      "type": "boolean_expression"
+                  },
+                  "type": "not"
+              },
+              {
+                  "comment": null,
+                  "expression": {
+                      "datatype": null,
+                      "property_name": "closed",
+                      "type": "property_name"
+                  },
+                  "operator": "eq",
+                  "property_value": false,
+                  "type": "boolean_expression"
+              }
+          ],
+          "type": "and"
+      },
+        "configured_indicators": [
+          {
+              "column_id": "owner_id",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": "owner id",
+              "expression": {
+                  "datatype": "string",
+                  "name": "owner_id",
+                  "type": "named"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "owner_name",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "doc_id_expression": {
+                      "name": "owner_id",
+                      "type": "named"
+                  },
+                  "related_doc_type": "Location",
+                  "type": "related_doc",
+                  "value_expression": {
+                      "datatype": null,
+                      "property_name": "name",
+                      "type": "property_name"
+                  }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "location_type",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "location_id_expression": {
+                      "name": "owner_id",
+                      "type": "named"
+                  },
+                  "type": "location_type_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "tu_id",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": "TU ID",
+              "expression": {
+                  "location_id_expression": {
+                      "name": "owner_id",
+                      "type": "named"
+                  },
+                  "type": "location_parent_id"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "dto_id",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": "DTO ID",
+              "expression": {
+                  "location_id_expression": {
+                      "location_id_expression": {
+                          "name": "owner_id",
+                          "type": "named"
+                      },
+                      "type": "location_parent_id"
+                  },
+                  "type": "location_parent_id"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "person_name",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "doc_id_expression": {
+                      "datatype": null,
+                      "name": "person_id",
+                      "type": "named"
+                  },
+                  "related_doc_type": "CommCareCase",
+                  "type": "related_doc",
+                  "value_expression": {
+                      "datatype": "string",
+                      "property_name": "name",
+                      "type": "property_name"
+                  }
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "date_opened",
+              "comment": null,
+              "create_index": false,
+              "datatype": "date",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "opened_on",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "awaiting_claim",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": null,
+              "expression": {
+                  "name": "has_open_referral",
+                  "type": "named"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "mdr_suspects",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": "MDR suspects",
+              "expression": {
+                  "context_variables": {
+                      "episode_type_at_request_is_confirmed_tb": {
+                          "name": "episode_type_at_request_is_confirmed_tb",
+                          "type": "named"
+                      },
+                      "follow_up_test_reason": {
+                          "name": "follow_up_test_reason",
+                          "type": "named"
+                      },
+                      "hiv_status_reactive": {
+                          "name": "hiv_status_reactive",
+                          "type": "named"
+                      },
+                      "key_populations": {
+                          "name": "key_populations",
+                          "type": "named"
+                      },
+                      "test_type_value": {
+                          "name": "test_type_value",
+                          "type": "named"
+                      }
+                  },
+                  "datatype": null,
+                  "statement": "key_populations or hiv_status_reactive or episode_type_at_request_is_confirmed_tb or follow_up_test_reason and test_type_value",
+                  "type": "evaluator"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "result_recorded",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": "result_recorded",
+              "expression": {
+                  "datatype": null,
+                  "property_name": "result_recorded",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "result_recorded_bool",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": "result_recorded_bool",
+              "expression": {
+                  "name": "result_recorded",
+                  "type": "named"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "episode_type_at_request",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "episode_type_at_request",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "not_direct_test_entry",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": null,
+              "expression": {
+                  "name": "not_direct_test_entry",
+                  "type": "named"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "not_line_probe_assay",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": null,
+              "expression": {
+                  "name": "not_line_probe_assay",
+                  "type": "named"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "sample_status",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "sample_status",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "test_facility_referred_to",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "test_facility_referred_to",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "test_requested",
+              "comment": "",
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": "test_requested",
+              "expression": {
+                  "name": "test_requested",
+                  "type": "named"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "test_results_awaited",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": "test results awaited",
+              "expression": {
+                  "context_variables": {
+                      "has_open_referral": {
+                          "name": "has_open_referral",
+                          "type": "named"
+                      },
+                      "result_recorded": {
+                          "name": "result_recorded",
+                          "type": "named"
+                      },
+                      "test_requested": {
+                          "name": "test_requested",
+                          "type": "named"
+                      },
+                      "test_result_awaited_test_type": {
+                          "name": "test_result_awaited_test_type",
+                          "type": "named"
+                      }
+                  },
+                  "datatype": "integer",
+                  "statement": "test_requested and test_result_awaited_test_type and (1 - result_recorded) and (1 - has_open_referral)",
+                  "type": "evaluator"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "follow_up_test_results_awaited",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": "follow up test results awaited",
+              "expression": {
+                  "context_variables": {
+                      "is_follow_up_test": {
+                          "name": "is_follow_up_test",
+                          "type": "named"
+                      },
+                      "not_collection_required": {
+                          "name": "not_collection_required",
+                          "type": "named"
+                      },
+                      "not_direct_test_entry": {
+                          "name": "not_direct_test_entry",
+                          "type": "named"
+                      },
+                      "not_line_probe_assay": {
+                          "name": "not_line_probe_assay",
+                          "type": "named"
+                      },
+                      "result_recorded": {
+                          "name": "result_recorded",
+                          "type": "named"
+                      }
+                  },
+                  "datatype": "integer",
+                  "statement": "not_direct_test_entry and (1 - result_recorded) and not_collection_required and not_line_probe_assay and is_follow_up_test",
+                  "type": "evaluator"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "diagnosis_test_results_awaited",
+              "comment": null,
+              "create_index": false,
+              "datatype": "integer",
+              "display_name": "diagnosis test results awaited",
+              "expression": {
+                  "context_variables": {
+                      "is_diagnosis_test": {
+                          "name": "is_diagnosis_test",
+                          "type": "named"
+                      },
+                      "not_collection_required": {
+                          "name": "not_collection_required",
+                          "type": "named"
+                      },
+                      "not_direct_test_entry": {
+                          "name": "not_direct_test_entry",
+                          "type": "named"
+                      },
+                      "not_line_probe_assay": {
+                          "name": "not_line_probe_assay",
+                          "type": "named"
+                      },
+                      "result_recorded": {
+                          "name": "result_recorded",
+                          "type": "named"
+                      }
+                  },
+                  "datatype": "integer",
+                  "statement": "not_direct_test_entry and (1 - result_recorded) and not_collection_required and not_line_probe_assay and is_diagnosis_test",
+                  "type": "evaluator"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "test_requested_date",
+              "comment": null,
+              "create_index": false,
+              "datatype": "date",
+              "display_name": "test requested date",
+              "expression": {
+                  "datatype": null,
+                  "property_name": "test_requested_date",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "rft_general",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "rft_general",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "culture_type",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "culture_type",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "test_type_label",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "test_type_label",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "test_type_value",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "test_type_value",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "trigger_date",
+              "comment": null,
+              "create_index": false,
+              "datatype": "date",
+              "display_name": "trigger date",
+              "expression": {
+                  "datatype": null,
+                  "name": "trigger_date",
+                  "type": "named"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          },
+          {
+              "column_id": "referring_facility_saved_name",
+              "comment": null,
+              "create_index": false,
+              "datatype": "string",
+              "display_name": null,
+              "expression": {
+                  "datatype": null,
+                  "property_name": "referring_facility_saved_name",
+                  "type": "property_name"
+              },
+              "is_nullable": true,
+              "is_primary_key": false,
+              "transform": {},
+              "type": "expression"
+          }
+      ],
+        "named_expressions": {
+          "diagnosis_result_trigger": {
+              "expression_if_false": {
+                  "cases": {
+                      "cbnaat": {
+                          "constant": 6,
+                          "type": "constant"
+                      },
+                      "fl_line_probe_assay": {
+                          "constant": 9,
+                          "type": "constant"
+                      },
+                      "microscopy-fluorescent": {
+                          "constant": 6,
+                          "type": "constant"
+                      },
+                      "microscopy-zn": {
+                          "constant": 6,
+                          "type": "constant"
+                      },
+                      "sl_line_probe_assay": {
+                          "constant": 9,
+                          "type": "constant"
+                      }
+                  },
+                  "default": {
+                      "constant": 0,
+                      "type": "constant"
+                  },
+                  "switch_on": {
+                      "property_name": "test_type_value",
+                      "type": "property_name"
+                  },
+                  "type": "switch"
+              },
+              "expression_if_true": {
+                  "cases": {
+                      "lc": {
+                          "constant": 90,
+                          "type": "constant"
+                      },
+                      "lj": {
+                          "constant": 48,
+                          "type": "constant"
+                      }
+                  },
+                  "default": {
+                      "constant": 42,
+                      "type": "constant"
+                  },
+                  "switch_on": {
+                      "property_name": "culture_type",
+                      "type": "property_name"
+                  },
+                  "type": "switch"
+              },
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "test_type_value",
+                      "type": "property_name"
+                  },
+                  "operator": "in",
+                  "property_value": [
+                      "culture",
+                      "dst"
+                  ],
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "episode_type_at_request_is_confirmed_tb": {
+              "comment": "TODO: This is poorly named and should be something like is confirmed_tb",
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "episode_type_at_request",
+                      "type": "property_name"
+                  },
+                  "operator": "eq",
+                  "property_value": "confirmed_tb",
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "follow_up_result_trigger": {
+              "expression_if_false": {
+                  "cases": {
+                      "cbnaat": {
+                          "constant": 6,
+                          "type": "constant"
+                      },
+                      "fl_line_probe_assay": {
+                          "constant": 9,
+                          "type": "constant"
+                      },
+                      "microscopy-fluorescent": {
+                          "constant": 6,
+                          "type": "constant"
+                      },
+                      "microscopy-zn": {
+                          "constant": 6,
+                          "type": "constant"
+                      },
+                      "sl_line_probe_assay": {
+                          "constant": 9,
+                          "type": "constant"
+                      }
+                  },
+                  "default": {
+                      "constant": 0,
+                      "type": "constant"
+                  },
+                  "switch_on": {
+                      "property_name": "test_type_value",
+                      "type": "property_name"
+                  },
+                  "type": "switch"
+              },
+              "expression_if_true": {
+                  "cases": {
+                      "lc": {
+                          "constant": 90,
+                          "type": "constant"
+                      },
+                      "lj": {
+                          "constant": 48,
+                          "type": "constant"
+                      }
+                  },
+                  "default": {
+                      "constant": 42,
+                      "type": "constant"
+                  },
+                  "switch_on": {
+                      "property_name": "culture_type",
+                      "type": "property_name"
+                  },
+                  "type": "switch"
+              },
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "test_type_value",
+                      "type": "property_name"
+                  },
+                  "operator": "in",
+                  "property_value": [
+                      "culture",
+                      "dst"
+                  ],
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "follow_up_test_reason": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "filters": [
+                      {
+                          "expression": {
+                              "name": "rft_dstb_followup",
+                              "type": "named"
+                          },
+                          "operator": "eq",
+                          "property_value": "end_of_ip",
+                          "type": "boolean_expression"
+                      },
+                      {
+                          "expression": {
+                              "name": "rft_dstb_followup",
+                              "type": "named"
+                          },
+                          "operator": "eq",
+                          "property_value": "end_of_cp",
+                          "type": "boolean_expression"
+                      }
+                  ],
+                  "type": "or"
+              },
+              "type": "conditional"
+          },
+          "has_open_referral": {
+              "expression_if_false": {
+                  "constant": 0,
+                  "type": "constant"
+              },
+              "expression_if_true": {
+                  "constant": 1,
+                  "type": "constant"
+              },
+              "test": {
+                  "expression": {
+                      "aggregation_fn": "count",
+                      "items_expression": {
+                          "filter_expression": {
+                              "filters": [
+                                  {
+                                      "expression": {
+                                          "property_name": "type",
+                                          "type": "property_name"
+                                      },
+                                      "operator": "eq",
+                                      "property_value": "referral",
+                                      "type": "boolean_expression"
+                                  },
+                                  {
+                                      "expression": {
+                                          "property_name": "closed",
+                                          "type": "property_name"
+                                      },
+                                      "operator": "eq",
+                                      "property_value": false,
+                                      "type": "boolean_expression"
+                                  }
+                              ],
+                              "type": "and"
+                          },
+                          "items_expression": {
+                              "case_id_expression": {
+                                  "name": "occurrence_id",
+                                  "type": "named"
+                              },
+                              "type": "get_subcases"
+                          },
+                          "type": "filter_items"
+                      },
+                      "type": "reduce_items"
+                  },
+                  "operator": "gt",
+                  "property_value": 0,
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "hiv_status_reactive": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "doc_id_expression": {
+                          "datatype": null,
+                          "name": "person_id",
+                          "type": "named"
+                      },
+                      "related_doc_type": "CommCareCase",
+                      "type": "related_doc",
+                      "value_expression": {
+                          "datatype": "string",
+                          "property_name": "hiv_status",
+                          "type": "property_name"
+                      }
+                  },
+                  "operator": "eq",
+                  "property_value": "reactive",
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "is_diagnosis_test": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "rft_general",
+                      "type": "property_name"
+                  },
+                  "operator": "in",
+                  "property_value": [
+                      "diagnosis_drtb",
+                      "diagnosis_dstb"
+                  ],
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "is_follow_up_test": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "rft_general",
+                      "type": "property_name"
+                  },
+                  "operator": "in",
+                  "property_value": [
+                      "follow_up_drtb",
+                      "follow_up_dstb"
+                  ],
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "key_populations": {
+              "expression_if_false": 1,
+              "expression_if_true": 0,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "key_populations",
+                      "type": "property_name"
+                  },
+                  "operator": "eq",
+                  "property_value": "none",
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "not_collection_required": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "sample_status",
+                      "type": "property_name"
+                  },
+                  "operator": "not_eq",
+                  "property_value": "collection_required",
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "not_direct_test_entry": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "is_direct_test_entry",
+                      "type": "property_name"
+                  },
+                  "operator": "not_eq",
+                  "property_value": "yes",
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "not_line_probe_assay": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "test_type_value",
+                      "type": "property_name"
+                  },
+                  "operator": "not_eq",
+                  "property_value": "line_probe_assay",
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "occurrence_id": {
+              "argument_expression": {
+                  "array_expression": {
+                      "datatype": null,
+                      "property_name": "indices",
+                      "type": "property_name"
+                  },
+                  "index_expression": {
+                      "constant": 0,
+                      "type": "constant"
+                  },
+                  "type": "array_index"
+              },
+              "type": "nested",
+              "value_expression": {
+                  "datatype": null,
+                  "property_name": "referenced_id",
+                  "type": "property_name"
+              }
+          },
+          "owner_id": {
+              "doc_id_expression": {
+                  "name": "person_id",
+                  "type": "named"
+              },
+              "related_doc_type": "CommCareCase",
+              "type": "related_doc",
+              "value_expression": {
+                  "datatype": "string",
+                  "property_name": "owner_id",
+                  "type": "property_name"
+              }
+          },
+          "person_case_version": {
+              "doc_id_expression": {
+                  "name": "person_id",
+                  "type": "named"
+              },
+              "related_doc_type": "CommCareCase",
+              "type": "related_doc",
+              "value_expression": {
+                  "datatype": "string",
+                  "property_name": "case_version",
+                  "type": "property_name"
+              }
+          },
+          "person_id": {
+              "doc_id_expression": {
+                  "argument_expression": {
+                      "array_expression": {
+                          "datatype": null,
+                          "property_name": "indices",
+                          "type": "property_name"
+                      },
+                      "index_expression": {
+                          "constant": 0,
+                          "type": "constant"
+                      },
+                      "type": "array_index"
+                  },
+                  "type": "nested",
+                  "value_expression": {
+                      "datatype": null,
+                      "property_name": "referenced_id",
+                      "type": "property_name"
+                  }
+              },
+              "related_doc_type": "CommCareCase",
+              "type": "related_doc",
+              "value_expression": {
+                  "argument_expression": {
+                      "array_expression": {
+                          "datatype": null,
+                          "property_name": "indices",
+                          "type": "property_name"
+                      },
+                      "index_expression": {
+                          "constant": 0,
+                          "type": "constant"
+                      },
+                      "type": "array_index"
+                  },
+                  "type": "nested",
+                  "value_expression": {
+                      "datatype": null,
+                      "property_name": "referenced_id",
+                      "type": "property_name"
+                  }
+              }
+          },
+          "result_recorded": {
+              "expression_if_false": 0,
+              "expression_if_true": 1,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "result_recorded",
+                      "type": "property_name"
+                  },
+                  "operator": "eq",
+                  "property_value": "yes",
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "rft_dstb_followup": {
+              "cases": {
+                  "20": {
+                      "property_name": "rft_dstb_followup",
+                      "type": "property_name"
+                  }
+              },
+              "default": {
+                  "property_name": "follow_up_test_reason",
+                  "type": "property_name"
+              },
+              "switch_on": {
+                  "name": "person_case_version",
+                  "type": "named"
+              },
+              "type": "switch"
+          },
+          "test_requested": {
+              "expression_if_false": 1,
+              "expression_if_true": 0,
+              "test": {
+                  "expression": {
+                      "datatype": "string",
+                      "property_name": "test_requested_date",
+                      "type": "property_name"
+                  },
+                  "operator": "in",
+                  "property_value": [
+                      "",
+                      null
+                  ],
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          },
+          "test_result_awaited_test_type": {
+              "expression_if_false": {
+                  "constant": 0,
+                  "type": "constant"
+              },
+              "expression_if_true": {
+                  "constant": 1,
+                  "type": "constant"
+              },
+              "test": {
+                  "filters": [
+                      {
+                          "filter": {
+                              "expression": {
+                                  "datatype": "string",
+                                  "property_name": "test_type_value",
+                                  "type": "property_name"
+                              },
+                              "operator": "eq",
+                              "property_value": "dst",
+                              "type": "boolean_expression"
+                          },
+                          "type": "not"
+                      },
+                      {
+                          "filter": {
+                              "expression": {
+                                  "datatype": "string",
+                                  "property_name": "test_type_value",
+                                  "type": "property_name"
+                              },
+                              "operator": "eq",
+                              "property_value": "culture",
+                              "type": "boolean_expression"
+                          },
+                          "type": "not"
+                      },
+                      {
+                          "filter": {
+                              "expression": {
+                                  "datatype": "string",
+                                  "property_name": "test_type_value",
+                                  "type": "property_name"
+                              },
+                              "operator": "eq",
+                              "property_value": "fl_line_probe_assay",
+                              "type": "boolean_expression"
+                          },
+                          "type": "not"
+                      },
+                      {
+                          "filter": {
+                              "expression": {
+                                  "datatype": "string",
+                                  "property_name": "test_type_value",
+                                  "type": "property_name"
+                              },
+                              "operator": "eq",
+                              "property_value": "sl_line_probe_assay",
+                              "type": "boolean_expression"
+                          },
+                          "type": "not"
+                      },
+                      {
+                          "filter": {
+                              "expression": {
+                                  "datatype": "string",
+                                  "property_name": "test_type_value",
+                                  "type": "property_name"
+                              },
+                              "operator": "eq",
+                              "property_value": "line_probe_assay",
+                              "type": "boolean_expression"
+                          },
+                          "type": "not"
+                      }
+                  ],
+                  "type": "and"
+              },
+              "type": "conditional"
+          },
+          "test_type_value": {
+              "expression_if_false": 1,
+              "expression_if_true": 0,
+              "test": {
+                  "filters": [
+                      {
+                          "expression": {
+                              "datatype": "string",
+                              "property_name": "test_type_value",
+                              "type": "property_name"
+                          },
+                          "operator": "eq",
+                          "property_value": "dst",
+                          "type": "boolean_expression"
+                      },
+                      {
+                          "expression": {
+                              "datatype": "string",
+                              "property_name": "test_type_value",
+                              "type": "property_name"
+                          },
+                          "operator": "eq",
+                          "property_value": "culture",
+                          "type": "boolean_expression"
+                      }
+                  ],
+                  "type": "or"
+              },
+              "type": "conditional"
+          },
+          "trigger_date": {
+              "expression_if_false": {
+                  "expression_if_false": "",
+                  "expression_if_true": {
+                      "count_expression": {
+                          "name": "follow_up_result_trigger",
+                          "type": "named"
+                      },
+                      "date_expression": {
+                          "property_name": "test_requested_date",
+                          "type": "property_name"
+                      },
+                      "type": "add_days"
+                  },
+                  "test": {
+                      "expression": {
+                          "datatype": "integer",
+                          "name": "is_follow_up_test",
+                          "type": "named"
+                      },
+                      "operator": "eq",
+                      "property_value": 1,
+                      "type": "boolean_expression"
+                  },
+                  "type": "conditional"
+              },
+              "expression_if_true": {
+                  "count_expression": {
+                      "name": "diagnosis_result_trigger",
+                      "type": "named"
+                  },
+                  "date_expression": {
+                      "property_name": "test_requested_date",
+                      "type": "property_name"
+                  },
+                  "type": "add_days"
+              },
+              "test": {
+                  "expression": {
+                      "datatype": "integer",
+                      "name": "is_diagnosis_test",
+                      "type": "named"
+                  },
+                  "operator": "eq",
+                  "property_value": 1,
+                  "type": "boolean_expression"
+              },
+              "type": "conditional"
+          }
+      },
+        "named_filters": {}
+    }
+}

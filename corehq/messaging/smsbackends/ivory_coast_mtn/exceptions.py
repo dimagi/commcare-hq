@@ -1,0 +1,4 @@
+
+
+class IvoryCoastMTNError(Exception):
+    pass

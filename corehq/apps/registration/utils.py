@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import logging
 from django.utils.translation import ugettext
 import uuid
@@ -21,8 +23,7 @@ from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.analytics.tasks import track_created_new_project_space_on_hubspot
-from corehq.apps.analytics.utils import get_meta
+from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -131,8 +132,7 @@ def request_new_domain(request, form, is_new_user=True):
                                        request.user.get_full_name())
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
-    meta = get_meta(request)
-    track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)
+    send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
 
 

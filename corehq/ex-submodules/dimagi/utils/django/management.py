@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 import csv
 from django.http import HttpResponse
 
 from dimagi.utils.parsing import string_to_boolean
+from six.moves import input
 
 
 def are_you_sure(prompt="Are you sure you want to proceed? (yes or no): "):
@@ -9,7 +11,7 @@ def are_you_sure(prompt="Are you sure you want to proceed? (yes or no): "):
     Ask a user if they are sure before doing something.  Return
     whether or not they are sure
     """
-    should_proceed = raw_input(prompt)
+    should_proceed = input(prompt)
     try:
         return string_to_boolean(should_proceed)
     except Exception:

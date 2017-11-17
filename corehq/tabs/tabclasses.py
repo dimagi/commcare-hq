@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from urllib import urlencode
 
 from django.urls import reverse
@@ -14,7 +15,7 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
-    DeviceLogSoftAssertReport
+    DeviceLogSoftAssertReport, UserAuditReport
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
@@ -38,7 +39,7 @@ from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
-from corehq.toggles import PUBLISH_CUSTOM_REPORTS, MOTECH
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -93,12 +94,15 @@ class ProjectReportsTab(UITab):
     def _get_report_builder_items(self):
         user_reports = []
         if self.couch_user.can_edit_data():
+            has_access = has_report_builder_access(self._request)
             user_reports = [(
                 _("Create Reports"),
                 [{
-                    "title": _('Create new report'),
+                    "title": _('Create New Report'),
                     "url": self._get_create_report_url(),
-                    "icon": "icon-plus fa fa-plus",
+                    "icon": "icon-plus fa fa-plus {}".format(
+                        "has-access" if has_access else "preview"
+                    ),
                     "id": "create-new-report-left-nav",
                 }]
             )]
@@ -109,7 +113,7 @@ class ProjectReportsTab(UITab):
         Return the url for the start of the report builder, or the paywall.
         """
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-        if toggle_enabled(self._request, toggles.REPORT_BUILDER_V2):
+        if not toggle_enabled(self._request, toggles.REPORT_BUILDER_V1):
             from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
             return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
         else:
@@ -1007,11 +1011,11 @@ class MessagingTab(UITab):
                         'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
-                                'title': _("New Message"),
+                                'title': _("New"),
                                 'urlname': CreateScheduleView.urlname,
                             },
                             {
-                                'title': _("Edit Message"),
+                                'title': _("Edit"),
                                 'urlname': EditScheduleView.urlname,
                             },
                         ],
@@ -1839,6 +1843,7 @@ class AdminTab(UITab):
                     CommConnectProjectSpacesReport,
                     CommTrackProjectSpacesReport,
                     DeviceLogSoftAssertReport,
+                    UserAuditReport,
                 ]
             ]),
         ]

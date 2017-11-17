@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from mock import patch
 
@@ -137,7 +138,7 @@ class AppAwareSyncTests(TestCase):
         self.assertEqual(len(fixtures), 0)
 
     def test_user_restore(self):
-        from casexml.apps.phone.tests.utils import MockDevice
+        from casexml.apps.phone.utils import MockDevice
         from casexml.apps.case.xml import V3
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 

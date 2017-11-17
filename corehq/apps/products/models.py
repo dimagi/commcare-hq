@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from decimal import Decimal
 import itertools
@@ -48,7 +49,7 @@ class Product(Document):
         return super(Product, cls).wrap(data)
 
     @classmethod
-    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False, codes_by_domain=None):
+    def save_docs(cls, docs, use_uuids=True, codes_by_domain=None):
         from corehq.apps.commtrack.util import generate_code
 
         codes_by_domain = codes_by_domain or {}
@@ -67,7 +68,7 @@ class Product(Document):
                     get_codes(doc['domain'])
                 )
 
-        super(Product, cls).save_docs(docs, use_uuids, all_or_nothing)
+        super(Product, cls).save_docs(docs, use_uuids)
 
     bulk_save = save_docs
 

@@ -11,6 +11,7 @@ See render_case() in casexml for an example of the display definition format.
 
 """
 
+from __future__ import absolute_import
 import collections
 import datetime
 import itertools
@@ -86,7 +87,7 @@ def _to_html(val, key=None, level=0, timeago=False):
         else:
             return ""
 
-    if isinstance(val, types.DictionaryType):
+    if isinstance(val, dict):
         ret = "".join(
             ["<dl %s>" % ("class='well'" if level == 0 else '')] + 
             ["<dt>%s</dt><dd>%s</dd>" % (_key_format(k, v), recurse(k, v))
@@ -109,7 +110,7 @@ def _to_html(val, key=None, level=0, timeago=False):
         ret = mark_safe("<time %s title='%s' datetime='%s'>%s</time>" % (
             "class='timeago'" if timeago else "", iso, iso, safe_strftime(val, fmt)))
     else:
-        if val is None or val == '':
+        if val is None:
             val = '---'
 
         ret = escape(val)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 import logging
 
@@ -37,6 +38,7 @@ from soil.util import get_download_file_path, expose_download
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
+import six
 
 
 class UserUploadError(Exception):
@@ -294,7 +296,7 @@ def create_or_update_groups(domain, group_specs, log):
 def get_location_from_site_code(site_code, location_cache):
     if isinstance(site_code, basestring):
         site_code = site_code.lower()
-    elif isinstance(site_code, (int, long)):
+    elif isinstance(site_code, six.integer_types):
         site_code = str(site_code)
     else:
         raise UserUploadError(

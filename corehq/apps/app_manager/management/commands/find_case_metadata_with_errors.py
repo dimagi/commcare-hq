@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
 from corehq.apps.app_manager.models import Application

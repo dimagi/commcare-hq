@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from cStringIO import StringIO
 from dimagi.utils.csv import UnicodeWriter
@@ -660,6 +661,8 @@ class EpisodeVoucherUpdate(object):
 
         try:
             first_prescription = get_prescription_from_voucher(self.domain, first_voucher_generated.case_id)
+            if first_prescription.closed:
+                return {}
         except ENikshayCaseNotFound:
             return {}
 

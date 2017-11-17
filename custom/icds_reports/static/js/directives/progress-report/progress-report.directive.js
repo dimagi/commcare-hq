@@ -3,7 +3,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgressReportController($scope, $location, progressReportService,
-                                  storageService, $routeParams, userLocationId) {
+                                  storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -18,6 +18,25 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.now = new Date().getMonth() + 1;
     vm.showWarning = storageService.getKey('search') === void(0) && (storageService.getKey('search')['month'] === void(0) || vm.now === storageService.getKey('search')['month']);
     vm.report = $routeParams.report;
+
+    vm.dtOptions = DTOptionsBuilder
+        .newOptions()
+        .withOption('scrollY', '400px')
+        .withOption('scrollX', false)
+        .withOption('scrollCollapse', true)
+        .withOption('paging', false)
+        .withOption('order', false)
+        .withOption('sortable', false)
+        .withDOM('<t>');
+
+    vm.dtColumnDefs = [
+        DTColumnDefBuilder.newColumnDef(0).notSortable(),
+        DTColumnDefBuilder.newColumnDef(1).notSortable(),
+        DTColumnDefBuilder.newColumnDef(2).notSortable(),
+        DTColumnDefBuilder.newColumnDef(3).notSortable(),
+        DTColumnDefBuilder.newColumnDef(4).notSortable(),
+    ];
+    vm.showTable = true;
 
     $scope.$on('filtersChange', function() {
         vm.showWarning =  vm.now === storageService.getKey('search')['month'];
@@ -103,14 +122,20 @@ function ProgressReportController($scope, $location, progressReportService,
     };
 
     vm.goToReport = function(reportName) {
-        $location.path('progress_report/' + reportName);
+        $location.path('fact_sheets/' + reportName);
+    };
+
+    vm.goBack = function() {
+        vm.report = null;
+        vm.title = null;
+        $location.path('fact_sheets/');
     };
 
     vm.loadData();
 }
 
 ProgressReportController.$inject = [
-    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId',
+    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder',
 ];
 
 window.angular.module('icdsApp').directive('progressReport', function() {

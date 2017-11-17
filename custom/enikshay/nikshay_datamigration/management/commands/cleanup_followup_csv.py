@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.enikshay.nikshay_datamigration.management.commands.base_cleanup_command import BaseCleanupCommand
 
 

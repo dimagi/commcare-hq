@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
@@ -107,7 +108,6 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
 
 
 def get_pillow_by_name(pillow_class_name, instantiate=True, **kwargs):
-    # todo(emord) get rid of instantiate (only needed in fluff reindex)
     config = get_pillow_config_by_name(pillow_class_name)
     return config.get_instance(**kwargs) if instantiate else config.get_class()
 
