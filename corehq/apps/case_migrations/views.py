@@ -12,6 +12,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.util import reverse
 
 from .forms import MigrationForm
+from .migration import perform_migration
 
 
 @method_decorator(domain_admin_required, name='dispatch')
@@ -30,6 +31,11 @@ class MigrationView(BaseMigrationView, FormView):
     form_class = MigrationForm
 
     def form_valid(self, form):
+        perform_migration(
+            self.domain,
+            form.cleaned_data['case_type'],
+            form.cleaned_data['migration_xml'],
+        )
         messages.add_message(self.request, messages.SUCCESS,
                              _('Migration submitted successfully!'))
         return HttpResponseRedirect(self.page_url)
