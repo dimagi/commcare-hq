@@ -2491,6 +2491,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 class BaseRepeaterView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Forward Data")
     repeater_form_class = GenericRepeaterForm
+    template_name = 'domain/admin/add_form_repeater.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
@@ -2567,7 +2568,6 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
 
 class AddRepeaterView(BaseRepeaterView):
     urlname = 'add_repeater'
-    template_name = 'domain/admin/add_form_repeater.html'
 
     @property
     @memoized

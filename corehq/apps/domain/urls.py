@@ -66,7 +66,14 @@ from corehq.apps.domain.views import (
     test_repeater,
     toggle_diff,
 )
-from corehq.motech.repeaters.views import AddCaseRepeaterView, RepeatRecordView
+from corehq.motech.repeaters.views import (
+    AddCaseRepeaterView,
+    RepeatRecordView,
+    EditCaseRepeaterView,
+    EditFormRepeaterView,
+    EditRepeaterView,
+)
+
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
 
@@ -160,6 +167,12 @@ domain_settings = [
         name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
+    url(r'^forwarding/CaseRepeater/edit/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
+        {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
+    url(r'^forwarding/FormRepeater/edit/(?P<repeater_id>\w+)/$', EditFormRepeaterView.as_view(),
+        {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
+    url(r'^forwarding/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
+        name=EditRepeaterView.urlname),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),

@@ -284,6 +284,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
 
+    @property
+    def is_form_repeater(self):
+        # check if any of parent class is FormRepeater
+        return bool(filter(lambda parent_class: parent_class.__name__ == "FormRepeater", self.__class__.__mro__))
+
+    @property
+    def is_case_repeater(self):
+        # check if any of parent class is CaseRepeater
+        return bool(filter(lambda parent_class: parent_class.__name__ == "CaseRepeater", self.__class__.__mro__))
+
 
 class FormRepeater(Repeater):
     """

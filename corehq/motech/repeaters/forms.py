@@ -49,6 +49,7 @@ class GenericRepeaterForm(forms.Form):
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
         self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
+        self.submit_btn_text = kwargs.pop('submit_btn_text', _("Start Forwarding"))
         super(GenericRepeaterForm, self).__init__(*args, **kwargs)
 
         self.set_extra_django_form_fields()
@@ -79,7 +80,7 @@ class GenericRepeaterForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Start Forwarding"),
+                    self.submit_btn_text,
                     type="submit",
                     css_class='btn-primary',
                 )
