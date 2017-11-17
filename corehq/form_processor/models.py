@@ -37,6 +37,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound
+import six
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -436,7 +437,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         content_readable = content
-        if isinstance(content, basestring):
+        if isinstance(content, six.string_types):
             content_readable = StringIO(content)
 
         db = get_blob_db()

@@ -21,6 +21,7 @@ from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+import six
 
 
 def get_unicode_dicts(iterable):
@@ -192,7 +193,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     assert isinstance(languages, list)
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
-    assert isinstance(unique_id, basestring)
+    assert isinstance(unique_id, six.string_types)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages

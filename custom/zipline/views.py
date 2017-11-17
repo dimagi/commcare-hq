@@ -14,6 +14,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+import six
 
 
 ZIPLINE_PERMISSION = 'ZIPLINE'
@@ -103,14 +104,14 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
         value = data.get(field_name)
         error_msg = "Field '{}' is required and expected to be a string".format(field_name)
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             raise OrderStatusValidationError(error_msg)
 
     def validate_and_clean_time(self, data, field_name):
         value = data.get(field_name)
         error_msg = "Field '{}' is required and expected to be a 24-hour time string HH:MM".format(field_name)
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             raise OrderStatusValidationError(error_msg)
 
         if not re.match('^\d\d?:\d\d$', value):
@@ -127,7 +128,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
         value = data.get(field_name)
         error_msg = "Field '{}' is required and expected to be a numeric string".format(field_name)
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             raise OrderStatusValidationError(error_msg)
 
         try:

@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from __future__ import absolute_import
 from gevent import monkey
+import six
 monkey.patch_all()
 
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
@@ -49,7 +50,7 @@ def do_reindex(alias_name, reset):
     print("Starting pillow preindex %s" % alias_name)
     reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
-        if isinstance(reindex_command, basestring):
+        if isinstance(reindex_command, six.string_types):
             kwargs = {"reset": True} if reset else {}
             FACTORIES_BY_SLUG[reindex_command](**kwargs).build().reindex()
         else:

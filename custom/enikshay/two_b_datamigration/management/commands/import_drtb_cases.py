@@ -121,6 +121,7 @@ from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, C
 from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
 from custom.enikshay.user_setup import compress_nikshay_id
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 logger = logging.getLogger('two_b_datamigration')
 
@@ -1732,7 +1733,7 @@ def clean_phone_number(value):
     if not value:
         return None
 
-    if not isinstance(value, (basestring, int)):
+    if not isinstance(value, six.string_types + (int,)):
         raise FieldValidationFailure(value, "phone number")
 
     try:
