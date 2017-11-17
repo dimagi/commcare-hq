@@ -203,8 +203,8 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.debugTraceOptions = ko.observableArray([
             new DebugResponseLevel("Output", "basic"),
             new DebugResponseLevel("Output + Reduced Trace", "reduce"),
-            new DebugResponseLevel("Output + Deep Trace", "deep")
-        ])
+            new DebugResponseLevel("Output + Deep Trace", "deep"),
+        ]);
         self.xpath = ko.observable('');
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
@@ -285,7 +285,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     restoreAs: self.options.restoreAs,
                     domain: self.options.domain,
                     xpath: xpath,
-                    debugOutput: self.selectedDebugOption().key
+                    debugOutput: self.selectedDebugOption().key,
                 },
                 self.options.sessionType
             ).done(function(response) {
