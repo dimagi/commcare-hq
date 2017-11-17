@@ -467,26 +467,12 @@ def sql_blob_helper(id_attr, bucket):
 
 
 class PkReindexAccessor(ReindexAccessor):
-    primary_key_field_name = 'id'
-    primary_key_min_val = -1
-
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
         raise NotImplementedError
 
     def doc_to_json(self, obj):
         return {"_id": obj.id, "_obj_not_json": obj}
-
-    def get_docs(self, from_db, last_doc_pk=None, limit=500):
-        params = {
-            self.primary_key_field_name + "__gt": last_doc_pk or self.primary_key_min_val
-        }
-        return (
-            self.model_class.objects
-            .using(from_db)
-            .filter(**params)
-            .order_by(self.primary_key_field_name)[:limit]
-        )
 
 
 class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):

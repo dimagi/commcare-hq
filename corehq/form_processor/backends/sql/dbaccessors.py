@@ -10,10 +10,12 @@ from uuid import UUID
 
 import csiphash
 import re
+
+import operator
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
-from django.db.models import Q
+from django.db.models import Q, F
 from django.db.models.functions import Greatest
 
 from corehq.blobs import get_blob_db
@@ -181,6 +183,9 @@ class ShardAccessor(object):
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
+    primary_key_field_name = 'id'
+    primary_key_min_val = -1
+
     def __init__(self, limit_db_aliases=None):
         self.limit_db_aliases = limit_db_aliases
 
@@ -224,46 +229,49 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         return doc.to_json()
 
-    @abstractmethod
+    def filters(self, last_doc_pk=None, for_count=False):
+        filters = Q(**{self.primary_key_field_name + "__gt": last_doc_pk or self.primary_key_min_val})
+        extra_filters = self.extra_filters(for_count=for_count)
+        if extra_filters:
+            filters = filters & extra_filters
+        return filters
+
+    def query(self, from_db, last_doc_pk=None, for_count=False):
+        filters = self.filters(last_doc_pk, for_count)
+        return self.model_class.objects.using(from_db).filter(filters)
+
     def get_docs(self, from_db, last_doc_pk=None, limit=500):
         """Get a batch of
         :param from_db: The DB alias to query
-        :param startkey: The filter value to start from e.g. form.received_on
         :param last_doc_pk: The primary key of the last doc from the previous batch
         :param limit: Desired batch size
         :return: List of documents
         """
-        raise NotImplementedError
+        query = self.query(from_db, last_doc_pk)
+        return query.order_by(self.primary_key_field_name)[:limit]
 
-    @property
-    def count_query(self):
-        """Define a custom query to use to get the doc count (only used for filtered reindex).
-        :returns: tuple('query_string', [query values])
+    def extra_filters(self, for_count=False):
         """
-        return
+        :param for_count: True if only filters required for the count query. Only simple filters
+                          should be included for the count query.
+        """
+        pass
 
     def get_doc_count(self, from_db):
         """Get the doc count from the given DB
         :param from_db: The DB alias to query
         """
-        if self.count_query:
-            query, values = self.count_query
-            query = 'EXPLAIN {}'.format(query)
-            db_cursor = connections[from_db].cursor()
-            with db_cursor as cursor:
-                cursor.execute(query, values)
-                for row in cursor.fetchall():
-                    search = re.search(r' rows=(\d+)', row[0])
-                    if search:
-                        return int(search.group(1))
-            return 0
-        else:
-            from_db = 'default' if from_db is None else from_db
-            sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
-            db_cursor = connections[from_db].cursor()
-            with db_cursor as cursor:
-                cursor.execute(sql_query.format(self.model_class._meta.db_table))
-                return int(fetchone_as_namedtuple(cursor).reltuples)
+        query = self.query(from_db, for_count=True)
+        sql, params = query.query.sql_with_params()
+        explain_query = 'EXPLAIN {}'.format(sql)
+        db_cursor = connections[from_db].cursor()
+        with db_cursor as cursor:
+            cursor.execute(explain_query, params)
+            for row in cursor.fetchall():
+                search = re.search(r' rows=(\d+)', row[0])
+                if search:
+                    return int(search.group(1))
+        return 0
 
 
 class FormReindexAccessor(ReindexAccessor):
@@ -286,37 +294,15 @@ class FormReindexAccessor(ReindexAccessor):
     def doc_to_json(self, doc):
         return doc.to_json(include_attachments=self.include_attachments)
 
-    def get_docs(self, from_db, last_doc_pk=None, limit=500):
-        last_id = last_doc_pk or -1
-
-        domain_clause = "form_table.domain = %s AND" if self.domain else ""
-        values = [last_id, limit]
+    def extra_filters(self, for_count=False):
+        filters = []
+        if not for_count:
+            # don't inlucde in count query since the query planner can't account for it
+            # hack for django: 'state & DELETED = 0' so 'state = state + state & DELETED'
+            filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
         if self.domain:
-            values = [self.domain] + values
-
-        # using raw query to avoid having to expand the tuple comparison
-        results = XFormInstanceSQL.objects.using(from_db).raw(
-            """SELECT * FROM {table} as form_table
-        WHERE {domain_clause}
-        state & {deleted_state} = 0 AND
-        form_table.id > %s
-        ORDER BY form_table.id
-        LIMIT %s;""".format(
-                table=XFormInstanceSQL._meta.db_table,
-                domain_clause=domain_clause,
-                deleted_state=XFormInstanceSQL.DELETED
-            ),
-            values
-        )
-        return list(results)
-
-    @property
-    def count_query(self):
-        # deletion clause left out on purpose since it throws off the count estimate
-        if self.domain:
-            return """SELECT * FROM {table} WHERE domain = %s""".format(
-                table=XFormInstanceSQL._meta.db_table,
-            ), [self.domain]
+            filters.append(Q(domain=self.domain))
+        return reduce(operator.and_, filters) if filters else None
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -721,33 +707,11 @@ class CaseReindexAccessor(ReindexAccessor):
         except CaseNotFound:
             pass
 
-    def get_docs(self, from_db, last_doc_pk=None, limit=500):
-        last_id = last_doc_pk or -1
-        domain_clause = "case_table.domain = %s AND" if self.domain else ""
-        values = [False, last_id, limit]
+    def extra_filters(self, for_count=False):
+        filters = Q(deleted=False)
         if self.domain:
-            values = [self.domain] + values
-
-        # using raw query to avoid having to expand the tuple comparison
-        results = CommCareCaseSQL.objects.using(from_db).raw(
-            """SELECT * FROM {table} as case_table
-            WHERE {domain_clause}
-            deleted = %s AND
-            case_table.id > %s
-            ORDER BY case_table.id
-            LIMIT %s;""".format(
-                table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
-            ),
-            values
-        )
-        return list(results)
-
-    @property
-    def count_query(self):
-        if self.domain:
-            return """SELECT * FROM {table} WHERE domain = %s AND deleted = %s""".format(
-                    table=CommCareCaseSQL._meta.db_table
-            ), [self.domain, False]
+            filters &= Q(domain=self.domain)
+        return filters
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -1192,38 +1156,14 @@ class LedgerReindexAccessor(ReindexAccessor):
         except CaseNotFound:
             pass
 
-    def get_docs(self, from_db, last_doc_pk=None, limit=500):
-        last_id = last_doc_pk or -1
-
-        domain_clause = "domain = %s AND" if self.domain else ""
-        values = [last_id, limit]
+    def extra_filters(self, for_count=False):
         if self.domain:
-            values = [self.domain] + values
-
-        results = LedgerValue.objects.using(from_db).raw(
-            """SELECT * FROM {table}
-        WHERE {domain_clause}
-        id > %s
-        ORDER BY id
-        LIMIT %s""".format(
-                table=LedgerValue._meta.db_table,
-                domain_clause=domain_clause
-            ),
-            values,
-        )
-        return list(results)
+            return Q(domain=self.domain)
 
     def doc_to_json(self, doc):
         json_doc = doc.to_json()
         json_doc['_id'] = doc.ledger_reference.as_id()
         return json_doc
-
-    @property
-    def count_query(self):
-        if self.domain:
-            return """SELECT * FROM {table} WHERE domain = %s""".format(
-                table=LedgerValue._meta.db_table,
-            ), [self.domain]
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):

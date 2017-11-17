@@ -144,8 +144,8 @@ class SimulateDeleteReindexAccessor(ReindexAccessor):
     def model_class(self):
         return self.wrapped_accessor.model_class
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        return self.wrapped_accessor.get_docs(from_db, startkey, last_doc_pk, limit)
+    def get_docs(self, from_db, last_doc_pk=None, limit=500):
+        return self.wrapped_accessor.get_docs(from_db, last_doc_pk, limit)
 
     def get_doc(self, doc_id):
         if doc_id in self.deleted_doc_ids:
