@@ -63,14 +63,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             'total': 0,
         })
 
-    def custom_locations_search(self):
-        """
-        When the query is specifically searching for just locations and not any other entity like user, group.
-        For ex: enter "Bihar"/patn would match child locations under locations named Bihar, having name like
-        patn.
-        """
-        return self.q.startswith('"')
-
     @staticmethod
     def _get_location_specific_custom_filters(query):
         query_sections = query.split("/")
@@ -87,7 +79,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return parent_name, search_query
 
     def get_locations_query(self, query):
-        if self.custom_locations_search():
+        if self.q.startswith('"'):
             parent_name, search_query = self._get_location_specific_custom_filters(query)
             if search_query is None:
                 # autocomplete parent names while user is looking for just the parent name
@@ -120,11 +112,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     @property
     def data_sources(self):
-        # data sources for options for selection in filter
-        # when searcing for custom locations search limit to just locations
-        if self.custom_locations_search():
-            return [(self.get_locations_size, self.get_locations)]
-        elif self.request.can_access_all_locations:
+        if self.request.can_access_all_locations:
             return [
                 (self.get_static_options_size, self.get_static_options),
                 (self.get_groups_size, self.get_groups),
