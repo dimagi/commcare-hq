@@ -505,16 +505,6 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-REPORT_BUILDER_V1 = StaticToggle(
-    "report_builder_v1",
-    "Report builder V1",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        'Enables the old report builder. Note that the project must already have access to report builder.'
-    )
-)
-
 ASYNC_RESTORE = StaticToggle(
     'async_restore',
     'Generate restore response in an asynchronous task to prevent timeouts',
