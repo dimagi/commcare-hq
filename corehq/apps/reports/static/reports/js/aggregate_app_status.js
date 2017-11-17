@@ -3,7 +3,7 @@ hqDefine("reports/js/aggregate_app_status", function() {
     function setupCharts(data, div) {
         nv.addGraph(function() {
         var chart = nv.models.multiBarChart()
-          .transitionDuration(350)
+          .transitionDuration(100)
           .showControls(false)
           .reduceXTicks(true)
           .rotateLabels(0)
@@ -25,9 +25,12 @@ hqDefine("reports/js/aggregate_app_status", function() {
     $(document).ajaxSuccess(function(event, xhr, settings) {
         if (settings.url.match(/reports\/async\/aggregate_user_status/)) {
             setupCharts($("#submission-data").data("value"), 'submission_dates');
-            setupCharts($("#submission-totals").data("value"), 'submission_totals');
             setupCharts($("#sync-data").data("value"), 'sync_dates');
-            setupCharts($("#sync-totals").data("value"), 'sync_totals');
+            $('.chart-toggle').click(function () {
+                $(this).parent().children().not(this).removeClass('btn-primary');
+                $(this).addClass('btn-primary');
+                setupCharts($("#" + $(this).data('chart-data')).data("value"), $(this).data('chart-div'));
+            })
         }
     });
 });

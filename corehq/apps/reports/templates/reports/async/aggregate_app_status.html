@@ -12,23 +12,21 @@
 <div class="row">
     <div class="col-md-12">
         <h2>{% trans "Last Submission Dates for Selected Users" %}</h2>
-        <p class="lead">
-            {% trans "Daily breakdown" %}
-        </p>
+        <div class="btn-group btn-group-lg">
+            <button type="button" class="btn btn-primary chart-toggle"
+                    data-chart-data="submission-data" data-chart-div="submission_dates">Daily Breakdown</button>
+            <button type="button" class="btn chart-toggle"
+                    data-chart-data="submission-totals" data-chart-div="submission_dates">Percent of Total</button>
+        </div>
         <div id="submission_dates"><svg height="300px"></svg></div>
-        <p class="lead">
-            {% trans "Percent of total since date" %}
-        </p>
-        <div id="submission_totals"><svg height="300px"></svg></div>
         <h2>{% trans "Last Sync Dates for Selected Users" %}</h2>
-        <p class="lead">
-            {% trans "Daily breakdown" %}
-        </p>
+        <div class="btn-group btn-group-lg">
+            <button type="button" class="btn btn-primary chart-toggle"
+                    data-chart-data="sync-data" data-chart-div="sync_dates">Daily Breakdown</button>
+            <button type="button" class="btn chart-toggle"
+                    data-chart-data="sync-totals" data-chart-div="sync_dates">Percent of Total</button>
+        </div>
         <div id="sync_dates"><svg height="300px"></svg></div>
-        <p class="lead">
-            {% trans "Percent of total since date" %}
-        </p>
-        <div id="sync_totals"><svg height="300px"></svg></div>
     </div>
 </div>
 {% endblock reportcontent %}
