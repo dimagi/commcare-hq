@@ -30,7 +30,7 @@ hqDefine("reports/js/aggregate_app_status", function() {
                 $(this).addClass('btn-primary');  // select self
                 // update data
                 setupCharts($("#" + $(this).data('chart-data')).data("value"), $(this).data('chart-div'));
-            })
+            });
         }
     });
 });
