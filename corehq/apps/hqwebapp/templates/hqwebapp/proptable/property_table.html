@@ -14,7 +14,11 @@
                 <tr>
                     {% for cell in row %}
                     {% if not cell.colspan %}
-                    <th title="{{ cell.expr }}">
+                        <th title="{{ cell.expr }}"
+                            {% if cell.info_url %}
+                            data-bind="openRemoteModal: '{{ cell.info_url }}'"
+                            {% endif %}
+                        >
                         {{ cell.name }}
                     </th>
                     <td>

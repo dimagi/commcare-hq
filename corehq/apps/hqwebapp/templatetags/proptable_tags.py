@@ -118,7 +118,7 @@ def _to_html(val, key=None, level=0, timeago=False):
     return mark_safe(ret)
 
 
-def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
+def get_display_data(data, prop_def, processors=None, timezone=pytz.utc, info_url=None):
     # when prop_def came from a couchdbkit document, it will be a LazyDict with
     # a broken pop method.  This conversion also has the effect of a shallow
     # copy, which we want.
@@ -165,7 +165,8 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     return {
         "expr": expr_name,
         "name": name,
-        "value": val
+        "value": val,
+        "info_url": info_url.replace("__placeholder__", expr) if info_url is not None else None,
     }
 
 
@@ -188,7 +189,7 @@ def eval_expr(expr, dict_data):
         return dict_data.get(expr, None)
 
 
-def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
+def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc, info_url=None):
     """
     Return a low-level definition of a group of tables, given a data object and
     a high-level declarative definition of the table rows and value
@@ -200,7 +201,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
 
     for section in definition:
         rows = [
-            [get_display_data(data, prop, timezone=timezone, processors=processors) for prop in row]
+            [get_display_data(data, prop, timezone=timezone, processors=processors, info_url=info_url) for prop in row]
             for row in section['layout']
         ]
 

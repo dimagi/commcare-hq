@@ -61,6 +61,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
+from casexml.apps.case.util import get_all_changes_to_case_property
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
@@ -1304,6 +1305,24 @@ class CaseDetailsView(BaseProjectReportSectionView):
         }
 
 
+def form_to_json(domain, form):
+    form_name = xmlns_to_name(
+        domain,
+        form.xmlns,
+        app_id=form.app_id,
+        lang=get_language(),
+    )
+    return {
+        'id': form.form_id,
+        'received_on': json_format_datetime(form.received_on),
+        'user': {
+            "id": form.user_id or '',
+            "username": form.metadata.username if form.metadata else '',
+        },
+        'readable_name': form_name,
+    }
+
+
 @location_safe
 @require_case_view_permission
 @login_and_domain_required
@@ -1319,28 +1338,32 @@ def case_forms(request, domain, case_id):
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
-    def form_to_json(form):
-        form_name = xmlns_to_name(
-            domain,
-            form.xmlns,
-            app_id=form.app_id,
-            lang=get_language(),
-        )
-        return {
-            'id': form.form_id,
-            'received_on': json_format_datetime(form.received_on),
-            'user': {
-                "id": form.user_id or '',
-                "username": form.metadata.username if form.metadata else '',
-            },
-            'readable_name': form_name,
-        }
-
     slice = list(reversed(case.xform_ids))[start_range:end_range]
     forms = FormAccessors(domain).get_forms(slice, ordered=True)
     return json_response([
-        form_to_json(form) for form in forms
+        form_to_json(domain, form) for form in forms
     ])
+
+
+@location_safe
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_property_changes(request, domain, case_id, case_property_name):
+    """Returns all changes to a case property
+    """
+    case = CaseAccessors(domain).get_case(case_id)
+    changes = []
+    for change in get_all_changes_to_case_property(case, case_property_name):
+        form_json = form_to_json(domain, change.transaction.form)
+        form_json['new_value'] = change.new_value
+        changes.append(form_json)
+
+    context = {
+        'property_name': case_property_name,
+        'changes': changes,
+    }
+    return render(request, "case/partials/case_property_modal.html", context)
 
 
 @location_safe
