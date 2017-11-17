@@ -1,6 +1,11 @@
 # Third-Party Libraries
 
-- jQuery: Available throughout HQ. We use [jQuery 3](https://github.com/dimagi/commcare-hq/blob/master/bower.json) everywhere except in Web Apps, which depends on [marionette](https://marionettejs.com/) v2, which is only compatible with jQuery 2.
-- Knockout: available throughout HQ. Should be on Knockout 3.0, although there are a few places that haven't yet been upgraded from 2.x.
-- Backbone: Used in CloudCare. Prefer Knockout for new code.
-- Angular: Used in a few places (dashboards, exports, app summaries). Prefer Knockout for new code.
+jQuery is available throughout HQ. We use [jQuery 3](https://jquery.com/) everywhere except in Web Apps, which depends on [marionette](https://marionettejs.com/) v2, which is only compatible with jQuery 2.
+
+[Underscore](http://underscorejs.org/) is available throughout HQ for utilities.
+
+[Knockout](http://knockoutjs.com/) is also available throughout HQ and should be used for new code. We use Knockout 3.0.
+
+[Backbone](http://backbonejs.org/) is used in Web Apps. It **should not** be used outside of Web Apps.
+
+[Angular](https://angularjs.org/) is used in a couple of places (dashboards, exports, app summary). It **should not** be used for new code. The angular we do have is Angular 1, which is outdated but is effectively a different framework than later versions of angular, making upgrading non-trivial. It's [unclear](https://toddmotto.com/future-of-angular-1-x#whats-next-for-angular-1x) how long Angular 1 will be supported by its creators.
