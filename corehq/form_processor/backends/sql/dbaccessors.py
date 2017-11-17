@@ -184,7 +184,6 @@ class ShardAccessor(object):
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
     primary_key_field_name = 'id'
-    primary_key_min_val = -1
 
     def __init__(self, limit_db_aliases=None):
         self.limit_db_aliases = limit_db_aliases
@@ -230,15 +229,18 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         return doc.to_json()
 
     def filters(self, last_doc_pk=None, for_count=False):
-        filters = Q(**{self.primary_key_field_name + "__gt": last_doc_pk or self.primary_key_min_val})
-        extra_filters = self.extra_filters(for_count=for_count)
-        if extra_filters:
-            filters = filters & extra_filters
-        return filters
+        filters = []
+        if last_doc_pk is not None:
+            filters.append(Q(**{self.primary_key_field_name + "__gt": last_doc_pk}))
+        filters.extend(self.extra_filters(for_count=for_count))
+        return reduce(operator.and_, filters) if filters else None
 
     def query(self, from_db, last_doc_pk=None, for_count=False):
         filters = self.filters(last_doc_pk, for_count)
-        return self.model_class.objects.using(from_db).filter(filters)
+        query = self.model_class.objects.using(from_db)
+        if filters:
+            query = query.filter(filters)
+        return query
 
     def get_docs(self, from_db, last_doc_pk=None, limit=500):
         """Get a batch of
@@ -254,8 +256,9 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         :param for_count: True if only filters required for the count query. Only simple filters
                           should be included for the count query.
+        :return: list of sql filters
         """
-        pass
+        return []
 
     def get_doc_count(self, from_db):
         """Get the doc count from the given DB
@@ -302,7 +305,7 @@ class FormReindexAccessor(ReindexAccessor):
             filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
         if self.domain:
             filters.append(Q(domain=self.domain))
-        return reduce(operator.and_, filters) if filters else None
+        return filters
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -708,9 +711,9 @@ class CaseReindexAccessor(ReindexAccessor):
             pass
 
     def extra_filters(self, for_count=False):
-        filters = Q(deleted=False)
+        filters = [Q(deleted=False)]
         if self.domain:
-            filters &= Q(domain=self.domain)
+            filters.append(Q(domain=self.domain))
         return filters
 
 
@@ -1158,7 +1161,8 @@ class LedgerReindexAccessor(ReindexAccessor):
 
     def extra_filters(self, for_count=False):
         if self.domain:
-            return Q(domain=self.domain)
+            return [Q(domain=self.domain)]
+        return []
 
     def doc_to_json(self, doc):
         json_doc = doc.to_json()
