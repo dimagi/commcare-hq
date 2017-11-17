@@ -99,8 +99,19 @@ class BaseUserSelfRegistrationValidation(Validation):
 
             if field_def.name in data:
                 if not isinstance(data[field_def.name], field_def.type):
+                    if isinstance(field_def.type, tuple):
+                        if len(field_def.type) > 1:
+                            raise SelfRegistrationValidationException(
+                                {field_def.name: 'Expected type in {}'.format(
+                                    ', '.join(t.__name__ for t in field_def.type)
+                                )}
+                            )
+                        else:
+                            type_name = field_def.type[0].__name__
+                    else:
+                        type_name = field_def.type.__name__
                     raise SelfRegistrationValidationException(
-                        {field_def.name: 'Expected type: {}'.format(field_def.type.__name__)}
+                        {field_def.name: 'Expected type: {}'.format(type_name)}
                     )
 
     def _validate_app_id(self, domain, app_id):
