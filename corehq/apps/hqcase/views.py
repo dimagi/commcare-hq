@@ -28,7 +28,6 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         context = super(ExplodeCasesView, self).get_context_data(**kwargs)
         context.update({
             'domain': self.domain,
-            'users': CommCareUser.by_domain(self.domain),
             'previous_explosions': self._get_previous_explosions()
         })
         return context
