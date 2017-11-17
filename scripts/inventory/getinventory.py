@@ -31,7 +31,14 @@ def import_read_inventory_file():
 
     """
     sys.path.append(os.path.join(ROOT, 'deployment', 'commcare-hq-deploy'))
-    from fab.utils import read_inventory_file
+    try:
+        from fab.utils import read_inventory_file
+    except ImportError:
+        print('Ooops. It looks like the commcare-hq-deploy repo is no longer '
+              'at "{}". Please update this script with its new location, or '
+              'resolve the dependency.'
+              .format(os.path.join(ROOT, 'deployment', 'commcare-hq-deploy')))
+        raise
     sys.path.remove(os.path.join(ROOT, 'deployment', 'commcare-hq-deploy'))
     return read_inventory_file
 
