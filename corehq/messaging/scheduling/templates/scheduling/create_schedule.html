@@ -32,6 +32,7 @@
 {% block page_content %}
     {% initial_page_data 'current_values' form.current_values %}
     {% initial_page_data 'current_select2_user_recipients' form.current_select2_user_recipients %}
+    {% initial_page_data 'current_select2_user_group_recipients' form.current_select2_user_group_recipients %}
     <div id="create-schedule-form">
         {% crispy form %}
     </div>

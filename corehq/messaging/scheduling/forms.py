@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import re
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
@@ -21,6 +22,7 @@ from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
+from couchdbkit.resource import ResourceNotFound
 
 
 def validate_time(value):
@@ -141,6 +143,10 @@ class ScheduleForm(Form):
     user_recipients = RecipientField(
         required=False,
         label=_("User Recipient(s)"),
+    )
+    user_group_recipients = RecipientField(
+        required=False,
+        label=_("User Group Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
@@ -306,9 +312,17 @@ class ScheduleForm(Form):
                 crispy.Field(
                     'user_recipients',
                     data_bind='value: user_recipients.value',
-                    placeholder=_("Select mobile worker recipients")
+                    placeholder=_("Select mobile worker(s)")
                 ),
                 data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER,
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_group_recipients',
+                    data_bind='value: user_group_recipients.value',
+                    placeholder=_("Select user group(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER_GROUP,
             ),
         ]
 
@@ -364,6 +378,22 @@ class ScheduleForm(Form):
 
         return result
 
+    @property
+    def current_select2_user_group_recipients(self):
+        value = self['user_group_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for group_id in value.strip().split(','):
+            group_id = group_id.strip()
+            group = Group.get(group_id)
+            if group.domain != self.domain:
+                continue
+            result.append({"id": group_id, "text": group.name})
+
+        return result
+
     def clean_user_recipients(self):
         if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
             return []
@@ -377,8 +407,35 @@ class ScheduleForm(Form):
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if not user:
                 raise ValidationError(
-                    _("One or more users were unexpectedly not found. Please select user recipients again.")
+                    _("One or more users were unexpectedly not found. Please select user(s) again.")
                 )
+
+        return data
+
+    def clean_user_group_recipients(self):
+        if self.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_group_recipients']
+
+        if not data:
+            raise ValidationError(_("Please specify the groups(s) or deselect user groups as recipients"))
+
+        not_found_error = ValidationError(
+            _("One or more user groups were unexpectedly not found. Please select group(s) again.")
+        )
+
+        for group_id in data:
+            try:
+                group = Group.get(group_id)
+            except ResourceNotFound:
+                raise not_found_error
+
+            if group.doc_type != 'Group':
+                raise not_found_error
+
+            if group.domain != self.domain:
+                raise not_found_error
 
         return data
 
