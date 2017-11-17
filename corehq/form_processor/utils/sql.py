@@ -60,6 +60,7 @@ def form_adapter(form):
         form.initial_processing_complete,
         form.deleted_on,
         form.deletion_id,
+        form.modified_on,
     ]
     return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
 

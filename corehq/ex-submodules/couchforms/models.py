@@ -117,6 +117,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     xmlns = StringProperty()
     form = DictProperty()
     received_on = DateTimeProperty()
+    modified_on = DateTimeProperty()
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
     partial_submission = BooleanProperty(default=False)
