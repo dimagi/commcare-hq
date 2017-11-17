@@ -369,6 +369,10 @@ class ScheduleForm(Form):
             return []
 
         data = self.cleaned_data['user_recipients']
+
+        if not data:
+            raise ValidationError(_("Please specify the user(s) or deselect users as recipients"))
+
         for user_id in data:
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
             if not user:
