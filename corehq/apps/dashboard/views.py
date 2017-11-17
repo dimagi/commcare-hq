@@ -82,14 +82,14 @@ class KODomainDashboardView(BaseDashboardView):
     def page_context(self):
         return {
             'dashboard_tiles': [{
-                'title': d.title,
-                'slug': d.slug,
-                'icon': d.icon,
-                'url': d.url,
-                'help_text': d.help_text,
-                'analytics_usage_label': d.analytics_usage_label,
-                'analytics_workflow_labels': d.analytics_workflow_labels or [],
-            } for d in self.tile_configs],
+                'title': t.tile_config.title,
+                'slug': t.tile_config.slug,
+                'icon': t.tile_config.icon,
+                'url': t.tile_config.url,
+                'help_text': t.tile_config.help_text,
+                'analytics_usage_label': t.tile_config.analytics_usage_label,
+                'analytics_workflow_labels': t.tile_config.analytics_workflow_labels or [],
+            } for t in [self.make_tile(config.slug, None) for config in self.tile_configs] if t.is_visible],
         }
 
 
