@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import re
 import sh
-from .sh_verbose import ShVerbose
+from sh_verbose import ShVerbose
 
 
 def get_git(path=None):
