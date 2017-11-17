@@ -13,7 +13,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test, use_sql_backend
 from corehq.sql_db.config import partition_config
 
 
@@ -180,6 +180,7 @@ class BaseCaseReindexAccessorTest(BaseReindexAccessorTest):
         return [doc.case_id for doc in docs]
 
 
+@use_sql_backend
 class UnshardedCaseReindexAccessorTests(BaseUnshardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):
     @classmethod
     def setUpClass(cls):
@@ -193,6 +194,7 @@ class UnshardedCaseReindexAccessorTests(BaseUnshardedAccessorMixin, BaseCaseRein
         super(UnshardedCaseReindexAccessorTests, cls).tearDownClass()
 
 
+@use_sql_backend
 class ShardedCaseReindexAccessorTests(BaseShardedAccessorMixin, BaseCaseReindexAccessorTest, TestCase):
     @classmethod
     def setUpClass(cls):
@@ -218,6 +220,7 @@ class BaseFormReindexAccessorTest(BaseReindexAccessorTest):
         return [doc.form_id for doc in docs]
 
 
+@use_sql_backend
 class UnshardedFormReindexAccessorTests(BaseUnshardedAccessorMixin, BaseFormReindexAccessorTest, TestCase):
 
     @classmethod
@@ -231,6 +234,8 @@ class UnshardedFormReindexAccessorTests(BaseUnshardedAccessorMixin, BaseFormRein
         super(UnshardedFormReindexAccessorTests, cls).class_teardown_reindex()
         super(UnshardedFormReindexAccessorTests, cls).tearDownClass()
 
+
+@use_sql_backend
 class ShardedFormReindexAccessorTests(BaseShardedAccessorMixin, BaseFormReindexAccessorTest, TestCase):
 
     @classmethod
@@ -257,6 +262,7 @@ class BaseLedgerReindexAccessorTest(BaseReindexAccessorTest):
         return [doc.ledger_reference.as_id() for doc in docs]
 
 
+@use_sql_backend
 class UnshardedLedgerReindexAccessorTests(BaseUnshardedAccessorMixin, BaseLedgerReindexAccessorTest, TestCase):
 
     @classmethod
@@ -271,6 +277,7 @@ class UnshardedLedgerReindexAccessorTests(BaseUnshardedAccessorMixin, BaseLedger
         super(UnshardedLedgerReindexAccessorTests, cls).tearDownClass()
 
 
+@use_sql_backend
 class ShardedLedgerReindexAccessorTests(BaseShardedAccessorMixin, BaseLedgerReindexAccessorTest, TestCase):
 
     @classmethod
