@@ -84,6 +84,7 @@ class KODomainDashboardView(BaseDashboardView):
 
     @property
     def page_context(self):
+        in_data = {'pagination': {}}    # TODO: get rid of
         return {
             'dashboard_tiles': [{
                 'title': t.tile_config.title,
@@ -91,8 +92,12 @@ class KODomainDashboardView(BaseDashboardView):
                 'icon': t.tile_config.icon,
                 'url': t.tile_config.get_url(self.request),
                 'help_text': t.tile_config.help_text,
-                'is_paginated': t.tile_config.context_processor_class.tile_type == TileType.PAGINATE,   # TODO: ew
-            } for t in [self.make_tile(config.slug, None) for config in self.tile_configs] if t.is_visible],
+
+                # TODO: fix
+                'is_paginated': t.tile_config.context_processor_class.tile_type == TileType.PAGINATE,
+                'paginated_items': t.context_processor.paginated_items if t.tile_config.context_processor_class.tile_type == TileType.PAGINATE else [],
+                'total': t.context_processor.total if t.tile_config.context_processor_class.tile_type == TileType.PAGINATE else 0,
+            } for t in [self.make_tile(config.slug, in_data) for config in self.tile_configs] if t.is_visible],
         }
 
 
