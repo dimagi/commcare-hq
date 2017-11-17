@@ -51,12 +51,15 @@ class AppReindexerFactory(ReindexerFactory):
     def build(self):
         iteration_key = "ApplicationToElasticsearchPillow_{}_reindexer".format(APP_INDEX_INFO.index)
         doc_provider = CouchDocumentProvider(iteration_key, [Application, RemoteApp, LinkedApplication])
+        options = {
+            'chunk_size': 5
+        }
+        options.update(self.options)
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             elasticsearch=get_es_new(),
             index_info=APP_INDEX_INFO,
             doc_transform=transform_app_for_es,
             pillow=get_app_to_elasticsearch_pillow(),
-            chunk_size=5,
-            **self.options
+            **options
         )
