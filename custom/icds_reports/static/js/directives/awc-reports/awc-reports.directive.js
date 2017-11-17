@@ -2057,7 +2057,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartTwoData, function(x) { return  x.x === d.value});
+                    var tooltip_data = _.find(vm.lineChartTwoData, function(x) { return  x.x === d.value; });
 
                     if (tooltip_data) {
                         html = "<p>Height: <strong>" + tooltip_data.y + "</strong> cm</p>";
@@ -2111,7 +2111,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartOneData, function(x) { return  x.x === d.value});
+                    var tooltip_data = _.find(vm.lineChartOneData, function(x) { return  x.x === d.value; });
 
                     if (tooltip_data) {
                         html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
@@ -2166,7 +2166,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    var tooltip_data = _.find(vm.lineChartThreeData, function(x) { return  x.x === d.value});
+                    var tooltip_data = _.find(vm.lineChartThreeData, function(x) { return  x.x === d.value; });
 
                     if (tooltip_data) {
                         html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
@@ -2250,7 +2250,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                                 strokeWidth: 2,
                                 yAxis: 1,
                             }
-                        )
+                        );
                     }
                     vm.beneficiaryChartTwoData = [
                         {
@@ -2284,7 +2284,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                                 color: 'black',
                                 yAxis: 1,
                             }
-                        )
+                        );
                     }
                     vm.beneficiaryChartThreeData = [
                         {
@@ -2321,7 +2321,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                                 color: 'black',
                                 yAxis: 1,
                             }
-                        )
+                        );
                     }
                     $scope.$apply();
                 }, 500);
