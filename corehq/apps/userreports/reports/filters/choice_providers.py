@@ -15,6 +15,7 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
+import six
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -48,9 +49,7 @@ class ChoiceQueryContext(object):
             raise TypeError("One of page or offset must be passed in")
 
 
-class ChoiceProvider(object):
-    __metaclass__ = ABCMeta
-
+class ChoiceProvider(six.with_metaclass(ABCMeta, object)):
     location_safe = False
 
     def __init__(self, report, filter_slug):
@@ -128,9 +127,7 @@ class StaticChoiceProvider(ChoiceProvider):
                 if choice.value in values}
 
 
-class ChainableChoiceProvider(ChoiceProvider):
-    __metaclass__ = ABCMeta
-
+class ChainableChoiceProvider(six.with_metaclass(ABCMeta, ChoiceProvider)):
     @abstractmethod
     def query(self, query_context):
         pass
