@@ -285,17 +285,17 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
 
         self.getBody = function(output) {
             if (!output) {
-               return ['',''];
+                return ['',''];
             }
             var first = self.formatResult(output);
             var numLines = (first.match(/\r?\n/g) || '').length + 1;
-	    var second = '';
+            var second = '';
             if(numLines > self.maxLines) {
                 second = first;
                 first = self.truncateResult(second, self.maxLines, false);
             }
             return [first, second];
-        }
+        };
 
         self.formatResult = function (output) {
             return output.replace(resultRegex, "$1");
@@ -498,10 +498,10 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         };
         ko.bindingHandlers.clipboardButton = {
             init: function(element, valueAccessor) {
-                var clipboard = new Clipboard('.clickable',
-                {
-                    text: function() {
-                        return ko.unwrap(valueAccessor());
+                new Clipboard('.clickable',
+                    {
+                        text: function() {
+                            return ko.unwrap(valueAccessor());
                     }});
             },
         };
