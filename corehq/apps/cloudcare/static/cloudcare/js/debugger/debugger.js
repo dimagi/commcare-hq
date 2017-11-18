@@ -502,7 +502,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     {
                         text: function() {
                             return ko.unwrap(valueAccessor());
-                        }
+                        },
                     });
             },
         };
