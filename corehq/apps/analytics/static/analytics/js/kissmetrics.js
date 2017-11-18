@@ -1,6 +1,6 @@
 /* globals _, _kmq */
 
-var _kmq = _kmq || [];
+var _kmq = window._kmq = _kmq || [];
 
 hqDefine('analytics/js/kissmetrics', function () {
     'use strict';
@@ -15,20 +15,6 @@ hqDefine('analytics/js/kissmetrics', function () {
 
     window.dataLayer = window.dataLayer || [];
 
-    var KmqWrapper = function (originalObject) {
-        Array.call(this, originalObject);
-    };
-    KmqWrapper.prototype = Object.create(Array.prototype);
-    KmqWrapper.prototype.constructor = KmqWrapper;
-    KmqWrapper.prototype.push = function () {
-        logger.deprecated.log(arguments, '_kmq.push');
-        Array.prototype.push.apply(this, arguments);
-    };
-    KmqWrapper.prototype.pushNew = function () {
-        Array.prototype.push.apply(this, arguments);
-    };
-    _kmq = new KmqWrapper(_kmq); // eslint-disable-line no-global-assign
-
     /**
      * Push data to _kmq by command type.
      * @param {string} commandName
@@ -39,7 +25,7 @@ hqDefine('analytics/js/kissmetrics', function () {
     var _kmqPushCommand = function (commandName, properties, callbackFn, eventName) {
         var command, data;
         command = _.compact([commandName, eventName, properties, callbackFn]);
-        _kmq.pushNew(command);
+        _kmq.push(command);
         data = {
             event: 'km_' + commandName,
         };
