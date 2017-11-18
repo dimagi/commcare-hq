@@ -24,6 +24,7 @@
 {% endblock %}
 
 {% block content %}
+{% initial_page_data 'dashboard_tiles' dashboard_tiles %}
 <div class="container" id="hq-content">
     <div class="page-header">
         <h1>
@@ -32,68 +33,66 @@
             {% endblocktrans %}
         </h1>
     </div>
-    <div>
-        <div class="row">
-            {% for tile in dashboard_tiles %}
-                <div class="col-md-3">
-                    <div class="panel panel-dashboard panel-dashboard-medium">
-                        <div class="panel-heading">
-                            <a href="{{ tile.url }}"
-                               data-popover-placement="bottom"
-                               data-popover-title="{{ tile.title }}"
-                               data-popover="{{ tile.help_text }}"
-                               title="">{{ tile.title }}</a>
-                        </div>
-                        <div class="panel-body">
-                            {% if tile.pagination %}
-                                {% if tile.pagination.pages %}
-                                    <i class="dashboard-icon dashboard-icon-medium dashboard-icon-bg {{ tile.icon }}"></i>
-                                    <!-- TODO: show this spinner as needed -->
-                                    <!--i class="fa fa-spinner fa-spin fa-5x"></i-->
-                                    <div class="list-group">
-                                        {% for item in tile.pagination.items %}
-                                            <div class="list-group-item"
-                                                 {% if item.description %}
-                                                     data-popover-placement="right"
-                                                     data-popover-title="{{ item.name_full }}"
-                                                     data-popover="{{ item.description }}"
-                                                 {% endif %}
-                                                 title="">
-                                                <a href="{{ item.url }}">{{ item.name }}</a>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                    {% if tile.pagination.pages|length > 1 %}
-                                        <ul class="pagination">
-                                            <li><a href="">&laquo;</a></li>
-                                            {% for page in tile.pagination.pages %}
-                                                <li><a href="">{{ forloop.counter }}</a></li>
-                                            {% endfor %}
-                                            <li><a href="">&raquo;</a></li>
-                                        </ul>
-                                    {% endif %}
-                                {% else %}
-                                    <a href="{{ tile.url }}"
-                                       class="dashboard-link "
-                                       data-popover-title="{{ tile.title }}"
-                                       data-popover="{{ tile.help_text }}"
-                                       title="">
-                                        <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
-                                    </a>
-                                {% endif %}
-                            {% else %}
-                                <a href="{{ tile.url }}"
-                                   class="dashboard-link"
-                                   data-popover-title="{{ tile.title }}"
-                                   data-popover="{{ tile.help_text }}"
-                                   title="">
-                                    <i class="dashboard-icon dashboard-icon-medium {{ tile.icon }}"></i>
-                                </a>
-                            {% endif %}
-                        </div>
+    <div id="dashboard-tiles">
+        <div class="row" data-bind="foreach: tiles">
+            <div class="col-md-3">
+                <div class="panel panel-dashboard panel-dashboard-medium">
+                    <div class="panel-heading">
+                        <a data-bind="
+                               text: title,
+                               attr: {
+                                   href: url,
+                                   'data-popover-placement': 'bottom',
+                                   'data-popover-title': title,
+                                   'data-popover': help_text,
+                               },
+                           "></a>
+                    </div>
+                    <div class="panel-body">
+
+                        <!-- List of items, with pagination if there are multiple pages -->
+                        <!-- ko if: hasItemList -->
+                            <i data-bind="css: icon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
+                            <!-- TODO: show this spinner as needed -->
+                            <!--i class="fa fa-spinner fa-spin fa-5x"></i-->
+                            <div class="list-group" data-bind="foreach: pagination.items">
+                                <div class="list-group-item"
+                                     data-bind="attr: {
+                                         'data-popover-placement': description ? 'right' : '',
+                                         'data-popover-title': description ? name_full : '',
+                                         'data-popover': description,
+                                     }"
+                                     title="">
+                                    <a data-bind="attr: {href: url}, text: name"></a>
+                                </div>
+                            </div>
+
+                            <ul class="pagination" data-bind="visible: pagination.pages > 1">
+                                <li><a href="">&laquo;</a></li>
+                                <!-- ko foreach: new Array(pagination.pages) -->
+                                    <li><a href="" data-bind="text: $index() + 1"></a></li>
+                                <!-- /ko -->
+                                <li><a href="">&raquo;</a></li>
+                            </ul>
+                        <!-- /ko -->
+
+                        <!-- No items to show, just show an icon that links -->
+                        <!-- ko ifnot: hasItemList -->
+                            <a class="dashboard-link"
+                               data-bind="
+                                   attr: {
+                                       href: url,
+                                       'data-popover-title': title,
+                                       'data-popover': help_text,
+                                   },
+                               ">
+                                <i class="dashboard-icon dashboard-icon-medium" data-bind="css: icon"></i>
+                            </a>
+                        <!-- /ko -->
+
                     </div>
                 </div>
-            {% endfor %}
+            </div>
         </div>
         <p class="lead text-center" style="margin-bottom: 5em;">
             {% if enterprise_mode %}

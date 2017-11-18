@@ -103,8 +103,8 @@ class KODomainDashboardView(BaseDashboardView):
                     tile_context.update({
                         'pagination': {
                             'items_per_page': items_per_page,
-                            'items': processor.paginated_items,
-                            'pages': range(int(math.ceil(processor.total / items_per_page))),
+                            'items': list(processor.paginated_items),
+                            'pages': int(math.ceil(processor.total / items_per_page)),
                         },
                     })
                 tile_contexts.append(tile_context)
