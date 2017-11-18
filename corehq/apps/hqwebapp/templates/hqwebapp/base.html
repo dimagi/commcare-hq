@@ -207,19 +207,6 @@
         {% block head %}
         {% endblock %}
 
-        {% if not USE_NEW_ANALYTICS and not request|toggle_enabled:"ANALYTICS_NEW" %}
-          {% include 'hqwebapp/includes/analytics_all.html' %}
-          {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-            {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
-              {% compress js %}
-              <script src="{% static 'hqwebapp/js/drift.js' %}"></script>
-              <script src="{% static 'hqwebapp/js/hubspot_drift.js' %}"></script>
-              {% endcompress %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-
-
         {% if less_debug %}
             <script>
                 less = {
@@ -408,7 +395,6 @@
             {# do not override this block, use registerurl template tag to populate #}
         {% endblock %}
         </div>
-        {% if request|toggle_enabled:"ANALYTICS_NEW" or USE_NEW_ANALYTICS %}
         {% include 'analytics/initial/all.html' %}
         <div class="initial-analytics-data hide">
         {% block initial_analytics_data %}
@@ -420,7 +406,6 @@
             {# do not override this block, use analytics_ab_test template tag to populate #}
         {% endblock %}
         </div>
-        {% endif %}
 
         {# javascript below this line #}
 
@@ -433,9 +418,7 @@
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         {% endcompress %}
 
-        {% if request|toggle_enabled:"ANALYTICS_NEW" or USE_NEW_ANALYTICS %}
         {% include 'analytics/analytics_js.html' %}
-        {% endif %}
 
         {% compress js %}
         <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
