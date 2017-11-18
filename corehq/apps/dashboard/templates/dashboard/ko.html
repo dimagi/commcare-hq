@@ -44,7 +44,7 @@
                                    href: url,
                                    'data-popover-placement': 'bottom',
                                    'data-popover-title': title,
-                                   'data-popover': help_text,
+                                   'data-popover': helpText,
                                },
                            "></a>
                     </div>
@@ -53,27 +53,28 @@
                         <!-- List of items, with pagination if there are multiple pages -->
                         <!-- ko if: hasItemList -->
                             <i data-bind="css: icon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
-                            <!-- TODO: show this spinner as needed -->
-                            <!--i class="fa fa-spinner fa-spin fa-5x"></i-->
-                            <div class="list-group" data-bind="foreach: pagination.items">
-                                <div class="list-group-item"
-                                     data-bind="attr: {
-                                         'data-popover-placement': description ? 'right' : '',
-                                         'data-popover-title': description ? name_full : '',
-                                         'data-popover': description,
-                                     }"
-                                     title="">
-                                    <a data-bind="attr: {href: url}, text: name"></a>
+                            <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
+                            <div data-bind="visible: showItemList">
+                                <div class="list-group" data-bind="foreach: items">
+                                    <div class="list-group-item"
+                                         data-bind="attr: {
+                                             'data-popover-placement': description ? 'right' : '',
+                                             'data-popover-title': description ? name_full : '',
+                                             'data-popover': description,
+                                         }"
+                                         title="">
+                                        <a data-bind="attr: {href: url}, text: name"></a>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <ul class="pagination" data-bind="visible: pagination.pages > 1">
-                                <li><a href="">&laquo;</a></li>
-                                <!-- ko foreach: new Array(pagination.pages) -->
-                                    <li><a href="" data-bind="text: $index() + 1"></a></li>
-                                <!-- /ko -->
-                                <li><a href="">&raquo;</a></li>
-                            </ul>
+                                <ul class="pagination" data-bind="visible: pages > 1">
+                                    <li><a href="">&laquo;</a></li>
+                                    <!-- ko foreach: new Array(pages) -->
+                                        <li><a href="" data-bind="text: $index() + 1"></a></li>
+                                    <!-- /ko -->
+                                    <li><a href="">&raquo;</a></li>
+                                </ul>
+                            </div>
                         <!-- /ko -->
 
                         <!-- No items to show, just show an icon that links -->
@@ -83,7 +84,7 @@
                                    attr: {
                                        href: url,
                                        'data-popover-title': title,
-                                       'data-popover': help_text,
+                                       'data-popover': helpText,
                                    },
                                ">
                                 <i class="dashboard-icon dashboard-icon-medium" data-bind="css: icon"></i>

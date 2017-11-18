@@ -27,6 +27,7 @@ from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.apps.hqwebapp.decorators import use_angular_js
+from dimagi.utils.web import json_response
 from django_prbac.utils import has_privilege
 
 
@@ -49,6 +50,20 @@ def default_dashboard_url(request, domain):
         return reverse('default_app', args=[domain])
 
     return reverse(DomainDashboardView.urlname, args=[domain])
+
+
+def dashboard_tile(request, domain, slug):
+    try:
+        tile_config = [t for t in _get_default_tile_configurations() if t.slug == slug][0]
+    except IndexError:
+        return json_response(
+            {'message': _("Tile not found: {}").format(slug)},
+            status_code=404,
+        )
+
+    tile = Tile(tile_config, request, {'pagination': {}})  # TODO: real pagination data; DRY up with make_tile
+    items = list(tile.context_processor.paginated_items)
+    return json_response({'items': items})
 
 
 class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
@@ -103,7 +118,6 @@ class KODomainDashboardView(BaseDashboardView):
                     tile_context.update({
                         'pagination': {
                             'items_per_page': items_per_page,
-                            'items': list(processor.paginated_items),
                             'pages': int(math.ceil(processor.total / items_per_page)),
                         },
                     })
