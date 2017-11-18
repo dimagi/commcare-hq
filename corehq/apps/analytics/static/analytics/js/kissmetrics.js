@@ -41,8 +41,7 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @private
      */
     var _addKissmetricsScript = function (srcUrl) {
-        logger.verbose.data(srcUrl, "Injected Script");
-        _utils.insertAsyncScript(srcUrl);
+        _utils.insertScript(srcUrl, logger.debug.log);
     };
 
     _init.apiId = _get('apiId');
