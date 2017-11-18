@@ -33,7 +33,7 @@ hqDefine('analytics/js/drift', function () {
         _data.apiId = _get('apiId');
 
         if (_data.apiId) {
-            _data.scriptUrl = "https://js.driftt.com/include/" + _utils.getDateHash() + "/" + _data.apiId;
+            _data.scriptUrl = "https://js.driftt.com/include/" + _utils.getDateHash() + "/" + _data.apiId + '.js';
             logger.verbose.log(_data.scriptUrl, "Adding Script");
             _utils.insertScript(_data.scriptUrl, logger.debug.log, {
                 crossorigin: 'anonymous',
