@@ -190,7 +190,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=get_all_repeater_types().keys())
+                                       additional_doc_types=list(get_all_repeater_types()))
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']
