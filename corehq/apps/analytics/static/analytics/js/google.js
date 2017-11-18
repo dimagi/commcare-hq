@@ -57,6 +57,7 @@ hqDefine('analytics/js/google', function () {
 
     if (_global('isEnabled')) {
         __init__();
+        logger.debug.log('Initialized');
     }
 
     /**
