@@ -284,16 +284,16 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
 
         self.getBody = function(output) {
-             if (!output) {
-                return ['','']
-             }
-             first = self.formatResult(output);
-             numLines = (first.match(/\r?\n/g) || '').length + 1;
-	     second = '';
-	     if(numLines > self.maxLines) {
-	         second = first;
-	         first = self.truncateResult(second, self.maxLines, false);
-	    }
+            if (!output) {
+               return ['',''];
+            }
+            var first = self.formatResult(output);
+            var numLines = (first.match(/\r?\n/g) || '').length + 1;
+	    var second = '';
+            if(numLines > self.maxLines) {
+                second = first;
+                first = self.truncateResult(second, self.maxLines, false);
+            }
             return [first, second];
         }
 
@@ -302,13 +302,13 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         };
 
         self.truncateResult = function(output, maxLines, addElipsis) {
-            items = output.split(RegExp("\r?\n"));
+            var items = output.split(RegExp("\r?\n"));
             if(items.length > maxLines) {
-                 toReturn= items.slice(0, maxLines).join("\n")
-                 if(addElipsis) {
-                     return toReturn + "\n" + "..."
-                 }
-                 return toReturn;
+                var toReturn= items.slice(0, maxLines).join("\n");
+                if(addElipsis) {
+                    return toReturn + "\n" + "...";
+                }
+                return toReturn;
             }
             return output;
         };
@@ -498,12 +498,12 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         };
         ko.bindingHandlers.clipboardButton = {
             init: function(element, valueAccessor) {
-                new Clipboard('.clickable',
-		    {
-		    text: function() {
-			return ko.unwrap(valueAccessor());
-		    }});
-            }
+                var clipboard = new Clipboard('.clickable',
+                {
+                    text: function() {
+                        return ko.unwrap(valueAccessor());
+                    }});
+            },
         };
 
     });
