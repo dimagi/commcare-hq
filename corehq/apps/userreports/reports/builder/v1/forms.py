@@ -52,6 +52,7 @@ from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -707,7 +708,7 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in self.data_source_properties.iteritems():
+        for id_, prop in six.iteritems(self.data_source_properties):
             if prop.type == "question":
                 if prop.source['type'] == "MSelect":
                     option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
@@ -824,7 +825,7 @@ class ConfigureNewReportBase(forms.Form):
         else:
             indicators = self.ds_builder.indicators(self._number_columns)
             if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
+                for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
                     setattr(data_source, property_name, value)
                 data_source.save()
                 tasks.rebuild_indicators.delay(data_source._id)
