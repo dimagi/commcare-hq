@@ -78,7 +78,7 @@
                                     <li><a data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
                                     <!-- ko foreach: pageList -->
                                         <li data-bind="css: {active: $parent.currentPage() == $data}">
-                                            <a data-bind="text: $data, click: function() { $parent.showPage($data); }"></a>
+                                            <a data-bind="text: $data, click: function() { $parent.currentPage($data); }"></a>
                                         </li>
                                     <!-- /ko -->
                                     <li><a data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>

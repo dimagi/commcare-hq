@@ -32,62 +32,60 @@ hqDefine("dashboard/js/dashboard", function() {
         });
 
         // Paging
-        // TODO: subscribe to currentPage rather than having other places call this function directly?
-        self.showPage = function(newCurrentPage) {
-            self.currentPage(newCurrentPage);
+        if (self.hasItemList) {
+            self.currentPage.subscribe(function(newValue) {
+                // If request takes a noticeable amount of time, clear items, which will show spinner
+                var done = false;
+                _.delay(function() {
+                    if (!done) {
+                        self.items([]);     // clear items to show spinner
+                    }
+                }, 500);
 
-            // If request takes a noticeable amount of time, clear items, which will show spinner
-            var done = false;
-            _.delay(function() {
-                if (!done) {
-                    self.items([]);     // clear items to show spinner
+                // Send request
+                $.ajax({
+                    method: "GET",
+                    url: hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_tile', self.slug),
+                    data: {
+                        itemsPerPage: self.itemsPerPage,
+                        currentPage: self.currentPage,
+                    },
+                    success: function(data) {
+                        self.items(data.items);
+                        done = true;
+                    },
+                    error: function() {
+                        self.hasError(true);
+                    },
+                });
+
+                // Update pagination, which shows links for at most 8 pages
+                var maxPages = 8,
+                    midpoint = maxPages / 2 + 1,
+                    lowestPage = 1,
+                    highestPage = Math.min(self.totalPages, maxPages);
+
+                // If current page is getting close to the edge of visible pages,
+                // bump up which pages are visible. The exact math isn't important, just
+                // that the page above and below currentPage, if they exist, are visible.
+                if (self.totalPages > maxPages && self.currentPage() > midpoint) {
+                    highestPage = Math.min(self.totalPages, maxPages + self.currentPage() - midpoint);
+                    lowestPage = highestPage - maxPages;
                 }
-            }, 500);
 
-            // Send request
-            $.ajax({
-                method: "GET",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_tile', self.slug),
-                data: {
-                    itemsPerPage: self.itemsPerPage,
-                    currentPage: self.currentPage,
-                },
-                success: function(data) {
-                    self.items(data.items);
-                    done = true;
-                },
-                error: function() {
-                    self.hasError(true);
-                },
+                self.pageList(_.range(lowestPage, highestPage + 1));
             });
 
-            // Update pagination, which shows links for at most 8 pages
-            var maxPages = 8,
-                midpoint = maxPages / 2 + 1,
-                lowestPage = 1,
-                highestPage = Math.min(self.totalPages, maxPages);
+            self.incrementPage = function(increment) {
+                var newCurrentPage = self.currentPage() + increment;
+                if (newCurrentPage <= 0 || newCurrentPage > self.totalPages) {
+                    return;
+                }
+                self.currentPage(newCurrentPage);
+            };
 
-            // If current page is getting close to the edge of visible pages,
-            // bump up which pages are visible. The exact math isn't important, just
-            // that the page above and below currentPage, if they exist, are visible.
-            if (self.totalPages > maxPages && self.currentPage() > midpoint) {
-                highestPage = Math.min(self.totalPages, maxPages + self.currentPage() - midpoint);
-                lowestPage = highestPage - maxPages;
-            }
-
-            self.pageList(_.range(lowestPage, highestPage + 1));
-        };
-        self.incrementPage = function(increment) {
-            var newCurrentPage = self.currentPage() + increment;
-            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages) {
-                return;
-            }
-            self.showPage(newCurrentPage);
-        };
-
-        // Initialize with first page of data
-        if (self.hasItemList) {
-            self.showPage(1);
+            // Initialize with first page of data
+            self.currentPage(1);
         }
 
         return self;
