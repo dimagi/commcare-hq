@@ -7,9 +7,10 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_EPISODE,
     get_occurrence_case_from_episode)
-from custom.enikshay.management.commands.base_model_reconciliation import BaseModelReconciliationCommand
-
-DOMAIN = "enikshay"
+from custom.enikshay.management.commands.base_model_reconciliation import (
+    BaseModelReconciliationCommand,
+    DOMAIN,
+)
 
 
 class Command(BaseModelReconciliationCommand):

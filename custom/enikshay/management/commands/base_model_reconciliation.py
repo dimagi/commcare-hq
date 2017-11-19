@@ -8,6 +8,8 @@ from django.conf import settings
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 
+DOMAIN = "enikshay"
+
 
 class BaseModelReconciliationCommand(BaseCommand):
     email_subject = None

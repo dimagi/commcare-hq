@@ -7,10 +7,12 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     CASE_TYPE_INVESTIGATION,
 )
-from custom.enikshay.management.commands.base_model_reconciliation import BaseModelReconciliationCommand
+from custom.enikshay.management.commands.base_model_reconciliation import (
+    BaseModelReconciliationCommand,
+    DOMAIN,
+)
 from corehq.apps.hqcase.utils import bulk_update_cases
 
-DOMAIN = "enikshay"
 CONFIRMED_DRTB_EPISODE_TYPE = "confirmed_drtb"
 DATE_MODIFIED_FIELD = "modified_on"
 PROPERTIES_TO_BE_COALESCED = [

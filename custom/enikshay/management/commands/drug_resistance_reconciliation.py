@@ -9,10 +9,11 @@ from custom.enikshay.case_utils import (
     get_person_case_from_occurrence,
     CASE_TYPE_DRUG_RESISTANCE,
 )
-from custom.enikshay.management.commands.base_model_reconciliation import BaseModelReconciliationCommand
+from custom.enikshay.management.commands.base_model_reconciliation import (
+    BaseModelReconciliationCommand,
+    DOMAIN,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-
-DOMAIN = "enikshay"
 
 
 class Command(BaseModelReconciliationCommand):
