@@ -597,7 +597,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
             def get_summary_data(self):
                 def _readable_pct_from_total(total_series, index):
-                    return '{0:.1f}%'.format(total_series[index - 1]['y'])
+                    return '{0:.0f}%'.format(total_series[index - 1]['y'])
 
                 return [
                     [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
