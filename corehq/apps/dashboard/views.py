@@ -129,48 +129,6 @@ class KODomainDashboardView(BaseDashboardView):
         return {'dashboard_tiles': tile_contexts}
 
 
-@location_safe
-class DomainDashboardView(HQJSONResponseMixin, BaseDashboardView):
-    urlname = 'dashboard_domain'
-    page_title = ugettext_noop("HQ Dashboard")
-    template_name = 'dashboard/base.html'
-
-    @use_angular_js
-    def dispatch(self, request, *args, **kwargs):
-        return super(DomainDashboardView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'dashboard_tiles': [{
-                'title': d.title,
-                'slug': d.slug,
-                'ng_directive': d.ng_directive,
-            } for d in self.tile_configs],
-        }
-
-    @allow_remote_invocation
-    def update_tile(self, in_data):
-        tile = self.make_tile(in_data['slug'], in_data)
-        if not tile.is_visible:
-            return {
-                'success': False,
-                'message': _('You do not have permission to access this tile.'),
-            }
-        return {
-            'response': tile.context,
-            'success': True,
-        }
-
-    @allow_remote_invocation
-    def check_permissions(self, in_data):
-        tile = self.make_tile(in_data['slug'], in_data)
-        return {
-            'success': True,
-            'hasPermissions': tile.is_visible,
-        }
-
-
 def _get_default_tile_configurations():
     can_edit_data = lambda request: (request.couch_user.can_edit_data()
                                      or request.couch_user.can_access_any_exports())
