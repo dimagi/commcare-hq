@@ -70,11 +70,15 @@ def dashboard_tile(request, domain, slug):
     return json_response({'items': items})
 
 
-class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
+@location_safe
+class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
+    urlname = 'dashboard_domain'
+    page_title = ugettext_noop("HQ Dashboard")
+    template_name = 'dashboard/base.html'
 
     @property
     def main_context(self):
-        context = super(BaseDashboardView, self).main_context
+        context = super(DomainDashboardView, self).main_context
         context.update({
             'domain': self.domain,
         })
@@ -91,17 +95,6 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @property
     def slug_to_tile(self):
         return dict([(a.slug, a) for a in self.tile_configs])
-
-    def make_tile(self, slug, in_data):
-        config = self.slug_to_tile[slug]
-        return Tile(config, self.request, in_data)
-
-
-@location_safe
-class DomainDashboardView(BaseDashboardView):
-    urlname = 'dashboard_domain'
-    page_title = ugettext_noop("HQ Dashboard")
-    template_name = 'dashboard/base.html'
 
     @property
     def page_context(self):
@@ -127,6 +120,11 @@ class DomainDashboardView(BaseDashboardView):
                     })
                 tile_contexts.append(tile_context)
         return {'dashboard_tiles': tile_contexts}
+
+    def make_tile(self, slug, in_data):
+        config = self.slug_to_tile[slug]
+        return Tile(config, self.request, in_data)
+
 
 
 def _get_default_tile_configurations():
