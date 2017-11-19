@@ -83,7 +83,7 @@ class ChoiceProvider(six.with_metaclass(ABCMeta, object)):
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.add(Choice(value, unicode(value) if value is not None else ''))
+                choices.add(Choice(value, six.text_type(value) if value is not None else ''))
                 used_values.add(value)
         return choices
 

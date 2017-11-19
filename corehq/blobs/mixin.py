@@ -22,6 +22,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class BlobMeta(DocumentSchema):
@@ -91,7 +92,7 @@ class BlobMixin(Document):
             raise InvalidAttachment("cannot save attachment without name")
         old_meta = self.blobs.get(name)
 
-        if isinstance(content, unicode):
+        if isinstance(content, six.text_type):
             content = StringIO(content.encode("utf-8"))
         elif isinstance(content, bytes):
             content = StringIO(content)
@@ -436,7 +437,7 @@ class DeferredBlobMixin(BlobMixin):
 
         This method takes the same parameters as `put_attachment`.
         """
-        if isinstance(content, unicode):
+        if isinstance(content, six.text_type):
             content = content.encode('utf-8')
         elif not isinstance(content, bytes):
             content = content.read()

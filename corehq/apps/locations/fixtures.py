@@ -8,6 +8,7 @@ from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
+import six
 
 
 class LocationSet(object):
@@ -314,7 +315,7 @@ def _get_metadata_node(location, data_fields):
     # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
     for field in data_fields:
         element = Element(field.slug)
-        element.text = unicode(location.metadata.get(field.slug, ''))
+        element.text = six.text_type(location.metadata.get(field.slug, ''))
         node.append(element)
     return node
 
@@ -339,7 +340,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
     for field in fixture_fields:
         field_node = Element(field)
         val = getattr(location, field)
-        field_node.text = unicode(val if val is not None else '')
+        field_node.text = six.text_type(val if val is not None else '')
         xml_root.append(field_node)
 
     # in order to be indexed, custom data fields need to be top-level
@@ -348,7 +349,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
         if field.index_in_fixture:
             field_node = Element(_get_indexed_field_name(field.slug))
             val = location.metadata.get(field.slug)
-            field_node.text = unicode(val if val is not None else '')
+            field_node.text = six.text_type(val if val is not None else '')
             xml_root.append(field_node)
 
     xml_root.append(_get_metadata_node(location, data_fields))

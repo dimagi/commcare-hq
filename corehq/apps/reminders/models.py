@@ -212,7 +212,7 @@ class MessageVariable(object):
         self.variable = variable
 
     def __repr__(self):
-        return unicode(self.variable).encode('utf-8')
+        return six.text_type(self.variable).encode('utf-8')
 
     @property
     def days_until(self):
@@ -267,8 +267,8 @@ class Message(object):
     @classmethod
     def render(cls, template, **params):
         if isinstance(template, str):
-            template = unicode(template, encoding='utf-8')
-        return unicode(cls(template, **params))
+            template = six.text_type(template, encoding='utf-8')
+        return six.text_type(cls(template, **params))
 
 
 class CaseReminderEvent(DocumentSchema):

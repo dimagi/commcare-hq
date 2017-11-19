@@ -35,6 +35,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
+import six
 
 
 logger = logging.getLogger(__name__)
@@ -548,7 +549,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
                 form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
             except XFormException as e:
                 form_meta['error'] = {
-                    'details': unicode(e),
+                    'details': six.text_type(e),
                     'edit_url': reverse(
                         'form_source',
                         args=[domain, app._id, form.unique_id]

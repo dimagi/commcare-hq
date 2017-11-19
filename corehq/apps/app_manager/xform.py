@@ -31,7 +31,7 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio'
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
     # declaration are not supported.
-    if isinstance(string, unicode):
+    if isinstance(string, six.text_type):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
@@ -290,7 +290,7 @@ class ItextOutput(object):
         return context.get(self.ref)
 
 
-class ItextValue(unicode):
+class ItextValue(six.text_type):
 
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
@@ -563,7 +563,7 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(domain, source):
-    if isinstance(source, unicode):
+    if isinstance(source, six.text_type):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))

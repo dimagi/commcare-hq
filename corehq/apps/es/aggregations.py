@@ -437,7 +437,7 @@ class AggregationRange(namedtuple('AggregationRange', 'start end key')):
                 if isinstance(value, datetime.date):
                     value = value.isoformat()
                 elif not isinstance(value, six.string_types):
-                    value = unicode(value)
+                    value = six.text_type(value)
                 range_[key] = value
         return range_
 

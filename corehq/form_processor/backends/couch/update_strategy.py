@@ -18,6 +18,7 @@ from corehq.form_processor.update_strategy_base import UpdateStrategy
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
+import six
 
 
 def coerce_to_datetime(v):
@@ -316,7 +317,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if item not in const.RESTRICTED_PROPERTIES:
                 value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
-                    value = unicode(value)
+                    value = six.text_type(value)
                 try:
                     self.case[item] = value
                 except (AttributeError, BadValueError):

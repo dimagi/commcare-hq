@@ -20,6 +20,7 @@ from django.utils.translation import ugettext as _
 import re
 
 from corehq.form_processor.utils.general import should_use_sql_backend
+import six
 from six.moves import zip
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
@@ -185,7 +186,7 @@ def submit_mapping_case_block(user, index):
 def location_map_case_id(user):
     if should_use_sql_backend(user.domain):
         user_id = user.user_id
-        if isinstance(user_id, unicode):
+        if isinstance(user_id, six.text_type):
             user_id = user_id.encode('utf8')
         return uuid.uuid5(const.MOBILE_WORKER_UUID_NS, user_id).hex
     return 'user-owner-mapping-' + user.user_id
@@ -210,11 +211,11 @@ def get_case_wrapper(data):
 
 
 def unicode_slug(text):
-    return slugify(unicode(unidecode(text)))
+    return slugify(six.text_type(unidecode(text)))
 
 
 def encode_if_needed(val):
-    return val.encode("utf8") if isinstance(val, unicode) else val
+    return val.encode("utf8") if isinstance(val, six.text_type) else val
 
 
 def _fetch_ending_numbers(s):

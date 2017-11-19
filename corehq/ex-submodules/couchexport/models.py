@@ -964,7 +964,7 @@ class SavedBasicExport(BlobMixin, Document):
 
     def get_attachment_name(self):
         # obfuscate this because couch doesn't like attachments that start with underscores
-        return hashlib.md5(unicode(self.configuration.filename).encode('utf-8')).hexdigest()
+        return hashlib.md5(six.text_type(self.configuration.filename).encode('utf-8')).hexdigest()
 
     def set_payload(self, payload):
         self.put_attachment(payload, self.get_attachment_name())

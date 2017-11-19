@@ -7,14 +7,15 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from six.moves import input
+import six
 
 
 class Command(BaseCommand):
     help = "Delete all cases that are in a specific case's network/footprint"
 
     def add_arguments(self, parser):
-        parser.add_argument('domain', type=unicode)
-        parser.add_argument('case_id', type=unicode)
+        parser.add_argument('domain', type=six.text_type)
+        parser.add_argument('case_id', type=six.text_type)
         parser.add_argument('--filename', dest='filename', default='case-delete-info.csv')
 
     def handle(self, domain, case_id, **options):

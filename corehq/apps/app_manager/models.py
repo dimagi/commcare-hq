@@ -845,7 +845,7 @@ class CaseLoadReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     path = StringProperty()
-    properties = ListProperty(unicode)
+    properties = ListProperty(six.text_type)
 
 
 class CaseSaveReference(DocumentSchema):
@@ -855,7 +855,7 @@ class CaseSaveReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     case_type = StringProperty()
-    properties = ListProperty(unicode)
+    properties = ListProperty(six.text_type)
     create = BooleanProperty(default=False)
     close = BooleanProperty(default=False)
 
@@ -914,7 +914,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty(unicode)
+    name = DictProperty(six.text_type)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -1079,7 +1079,7 @@ class FormBase(DocumentSchema):
             except XFormException as e:
                 errors.append(dict(
                     type="invalid xml",
-                    message=unicode(e) if self.source else '',
+                    message=six.text_type(e) if self.source else '',
                     **meta
                 ))
             except ValueError:
@@ -1089,7 +1089,7 @@ class FormBase(DocumentSchema):
         try:
             questions = self.get_questions(self.get_app().langs, include_triggers=True)
         except XFormException as e:
-            error = {'type': 'validation error', 'validation_message': unicode(e)}
+            error = {'type': 'validation error', 'validation_message': six.text_type(e)}
             error.update(meta)
             errors.append(error)
 
@@ -1100,7 +1100,7 @@ class FormBase(DocumentSchema):
                 try:
                     self.validate_form()
                 except XFormValidationError as e:
-                    error = {'type': 'validation error', 'validation_message': unicode(e)}
+                    error = {'type': 'validation error', 'validation_message': six.text_type(e)}
                     error.update(meta)
                     errors.append(error)
                 except XFormValidationFailed:
@@ -1365,7 +1365,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
             questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
             valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
-            errors.append({'type': 'invalid xml', 'message': unicode(e)})
+            errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
         else:
             no_multimedia = not self.get_app().enable_multimedia_case_property
             for path in set(paths):
@@ -1429,7 +1429,7 @@ class CustomIcon(DocumentSchema):
     an xpath expression to be evaluated for example count of cases within.
     """
     form = StringProperty()
-    text = DictProperty(unicode)
+    text = DictProperty(six.text_type)
     xpath = StringProperty()
 
 
@@ -2306,7 +2306,7 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
-    name = DictProperty(unicode)
+    name = DictProperty(six.text_type)
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
@@ -2433,7 +2433,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
-                        'details': unicode(e),
+                        'details': six.text_type(e),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -5021,12 +5021,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         except PracticeUserException as pue:
             errors.append({
                 'type': 'practice user config error',
-                'message': unicode(pue),
+                'message': six.text_type(pue),
                 'build_profile_id': pue.build_profile_id,
             })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
-            errors.append({'type': 'error', 'message': unicode(e)})
+            errors.append({'type': 'error', 'message': six.text_type(e)})
         except Exception as e:
             if settings.DEBUG:
                 raise
@@ -5681,7 +5681,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
                 except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
         return files
 
     get_modules = IndexedSchema.Getter('modules')

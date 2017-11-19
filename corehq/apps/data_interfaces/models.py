@@ -102,7 +102,7 @@ class AutomaticUpdateRule(models.Model):
         pass
 
     def __unicode__(self):
-        return unicode("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
+        return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
 
     def migrate(self):
         if not self.pk:

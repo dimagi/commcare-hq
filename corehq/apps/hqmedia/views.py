@@ -46,6 +46,7 @@ from dimagi.utils.decorators.memoized import memoized
 from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _
 from django_prbac.decorators import requires_privilege_raise404
+import six
 
 
 class BaseMultimediaView(ApplicationViewMixin, View):
@@ -491,7 +492,7 @@ def iter_media_files(media_objects):
             try:
                 data, _ = media.get_display_file()
                 folder = path.replace(MULTIMEDIA_PREFIX, "")
-                if not isinstance(data, unicode):
+                if not isinstance(data, six.text_type):
                     yield os.path.join(folder), data
             except NameError as e:
                 errors.append("%(path)s produced an ERROR: %(error)s" % {
@@ -670,7 +671,7 @@ def iter_index_files(app, build_profile_id=None):
         return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
 
     def _encode_if_unicode(s):
-        return s.encode('utf-8') if isinstance(s, unicode) else s
+        return s.encode('utf-8') if isinstance(s, six.text_type) else s
 
     def _files(files):
         for name, f in files:
@@ -685,6 +686,6 @@ def iter_index_files(app, build_profile_id=None):
         files = download_index_files(app, build_profile_id)
     except Exception as e:
         notify_exception(None, e.message)
-        errors = [unicode(e)]
+        errors = [six.text_type(e)]
 
     return _files(files), errors

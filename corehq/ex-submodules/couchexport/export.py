@@ -286,7 +286,7 @@ def fit_to_schema(doc, schema):
             doc = ""
         if not isinstance(doc, six.string_types):
         #log("%s is not a string" % doc)
-            doc = unicode(doc)
+            doc = six.text_type(doc)
         return doc
 
 
@@ -393,7 +393,7 @@ class FormattedRow(object):
     def formatted_id(self):
         if isinstance(self.id, six.string_types):
             return self.id
-        return self.separator.join(map(unicode, self.id))
+        return self.separator.join(map(six.text_type, self.id))
 
     def include_compound_id(self):
         return len(self.compound_id) > 1

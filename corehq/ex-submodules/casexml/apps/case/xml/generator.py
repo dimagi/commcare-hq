@@ -23,7 +23,7 @@ def safe_element(tag, text=None):
     # bad! copied from the phone's XML module
     if text:
         e = ElementTree.Element(tag)
-        e.text = unicode(text)
+        e.text = six.text_type(text)
         return e
     else:
         return ElementTree.Element(tag)
@@ -46,12 +46,12 @@ def get_dynamic_element(key, val):
     """
     element = ElementTree.Element(key)
     if isinstance(val, dict):
-        element.text = unicode(val.get('#text', ''))
-        element.attrib = dict([(x[1:], unicode(val[x])) for x in \
+        element.text = six.text_type(val.get('#text', ''))
+        element.attrib = dict([(x[1:], six.text_type(val[x])) for x in \
                                filter(lambda x: x and x.startswith("@"), val.keys())])
     else:
         # assume it's a string. Hopefully this is valid
-        element.text = unicode(val)
+        element.text = six.text_type(val)
     return element
 
 

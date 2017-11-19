@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
+import six
 
 
 class CaseMetaException(Exception):
@@ -85,7 +86,7 @@ class CaseFormMeta(JsonObject):
     form_id = StringProperty()
     load_questions = ListProperty(ConditionalFormQuestionResponse)
     save_questions = ListProperty(ConditionalFormQuestionResponse)
-    errors = ListProperty(unicode)
+    errors = ListProperty(six.text_type)
 
 
 class CaseProperty(JsonObject):
@@ -396,7 +397,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
         path_context += '/'
     if not output_context:
         output_context = {
-            '%s%s' % (path_context, '/'.join(map(unicode, key))): unicode(value)
+            '%s%s' % (path_context, '/'.join(map(six.text_type, key))): six.text_type(value)
             for key, value in _flatten_json(relative_data).items()
         }
 
@@ -465,7 +466,7 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
 
     if relative_data:
         for key, response in sorted(_flatten_json(relative_data).items()):
-            joined_key = '/'.join(map(unicode, key))
+            joined_key = '/'.join(map(six.text_type, key))
             result.append(
                 FormQuestionResponse(
                     label=joined_key,
