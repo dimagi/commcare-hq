@@ -14,6 +14,11 @@ from custom.enikshay.management.commands.base_model_reconciliation import (
     DOMAIN,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.const import (
+    DRUG_RESISTANCE_SENSITIVITY,
+    DRUG_RESISTANCE_SENSITIVITY_RESISTANT,
+    DRUG_RESISTANCE_SENSITIVITY_SENSITIVE,
+)
 
 
 class Command(BaseModelReconciliationCommand):
@@ -98,10 +103,10 @@ class Command(BaseModelReconciliationCommand):
         # group cases by their sensitivity
         # possible values are resistant/ sensitive/ unknown
         for drug_resistance_case in drug_resistance_cases:
-            sensitivity = drug_resistance_case.get_case_property('sensitivity')
-            if sensitivity == 'resistant':
+            sensitivity = drug_resistance_case.get_case_property(DRUG_RESISTANCE_SENSITIVITY)
+            if sensitivity == DRUG_RESISTANCE_SENSITIVITY_RESISTANT:
                 resistant_drug_resistance_cases.append(drug_resistance_case)
-            elif sensitivity == 'sensitive':
+            elif sensitivity == DRUG_RESISTANCE_SENSITIVITY_SENSITIVE:
                 sensitive_drug_resistance_cases.append(drug_resistance_case)
             else:
                 if sensitivity not in self.sensitivity_values:
@@ -135,7 +140,7 @@ class Command(BaseModelReconciliationCommand):
         # No case has sensitivity resistant and sensitive. Probably multiple cases with unknown status
         # keep the one opened first, close rest.
         else:
-            retain_case = sorted(drug_resistance_cases)
+            retain_case = self.get_first_opened_case(drug_resistance_cases)
             self.close_cases(drug_resistance_cases, occurrence_case_id, drug_id, retain_case,
                              "Picked first opened.")
 
