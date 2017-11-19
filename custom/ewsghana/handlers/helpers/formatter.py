@@ -68,7 +68,7 @@ class EWSFormatter(object):
         while True:
             try:
                 while commodity is None or not commodity.isalpha():
-                    commodity = an_iter.next().lower()
+                    commodity = next(an_iter).lower()
                 count = next(an_iter)
                 while not count.isdigit():
                     count = next(an_iter)
