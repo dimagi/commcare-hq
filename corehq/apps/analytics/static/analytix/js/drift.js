@@ -17,7 +17,7 @@ hqDefine('analytics/js/drift', function () {
         if (!_drift.init && !_drift.invoked ) {
             _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];
             _drift.factory = function (methodName) {
-               return function() {
+                return function() {
                     var methodFn = Array.prototype.slice.call(arguments);
                     methodFn.unshift(methodName);
                     _drift.push(methodFn);
