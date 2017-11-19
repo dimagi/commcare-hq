@@ -606,21 +606,11 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                     [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
                 ]
 
-        fake = True  # todo remove after demo
-        if fake:
-            with open('rec-results.json') as f:
-                import json
-                raw_data = json.loads(f.read())
-            aggregations = raw_data['aggregations']
-            last_sync_buckets = aggregations['last_sync']['buckets']
-            last_submission_buckets = aggregations['last_submission']['buckets']
-            total_users = raw_data['hits']['total']
-        else:
-            query = self.user_query().run()
-            aggregations = query.aggregations
-            last_submission_buckets = aggregations[0].raw_buckets
-            last_sync_buckets = aggregations[1].raw_buckets
-            total_users = query.total
+        query = self.user_query().run()
+        aggregations = query.aggregations
+        last_submission_buckets = aggregations[0].raw_buckets
+        last_sync_buckets = aggregations[1].raw_buckets
+        total_users = query.total
 
         def _buckets_to_series(buckets):
             # start with N days of empty data
