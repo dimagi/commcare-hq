@@ -113,7 +113,7 @@ class Command(BaseModelReconciliationCommand):
                     self.sensitivity_values.append(sensitivity)
                     print("New sensitivity value found, %s" % sensitivity)
         resistant_drug_resistance_cases_count = len(resistant_drug_resistance_cases)
-        sensitive_drug_resistance_cases_count = len(resistant_drug_resistance_cases)
+        sensitive_drug_resistance_cases_count = len(sensitive_drug_resistance_cases)
 
         # if there is more than one case with sensitivity resistant, keep the one
         # opened first.
