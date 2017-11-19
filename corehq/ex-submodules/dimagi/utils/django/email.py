@@ -12,6 +12,7 @@ from requests.exceptions import SSLError
 
 from dimagi.utils.logging import notify_error
 import logging
+import six
 
 
 NO_HTML_EMAIL_MESSAGE = """
@@ -25,15 +26,15 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None, ga_track=False, ga_tracking_info=None):
 
-    recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
+    recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
 
-    if not isinstance(html_content, unicode):
+    if not isinstance(html_content, six.text_type):
         html_content = html_content.decode('utf-8')
 
     if not text_content:
         text_content = getattr(settings, 'NO_HTML_EMAIL_MESSAGE',
                                NO_HTML_EMAIL_MESSAGE)
-    elif not isinstance(text_content, unicode):
+    elif not isinstance(text_content, six.text_type):
         text_content = text_content.decode('utf-8')
 
 

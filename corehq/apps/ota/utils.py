@@ -18,6 +18,7 @@ from custom.enikshay.user_setup import set_enikshay_device_id
 
 from .models import DemoUserRestore
 from .exceptions import RestorePermissionDenied
+import six
 
 
 def turn_off_demo_mode(commcare_user):
@@ -121,7 +122,7 @@ def is_permitted_to_restore(domain, couch_user, as_user_obj):
             _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
     except RestorePermissionDenied as e:
-        return False, unicode(e)
+        return False, six.text_type(e)
     else:
         return True, None
 

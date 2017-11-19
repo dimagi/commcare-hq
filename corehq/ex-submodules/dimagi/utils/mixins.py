@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+import six
 class UnicodeMixIn(object):
     """
     Override objects so that str calls unicode and you only have to override
@@ -5,7 +7,7 @@ class UnicodeMixIn(object):
     """
     
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return six.text_type(self).encode('utf-8')
     
     def __unicode__(self):
         # avoid recursion when we forget to override this

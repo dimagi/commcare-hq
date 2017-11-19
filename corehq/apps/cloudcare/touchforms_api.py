@@ -3,6 +3,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.users.models import CouchUser
+import six
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
@@ -50,7 +51,7 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
         super(CaseSessionDataHelper, self).__init__(domain, couch_user)
         self.form = form
         self.app = app
-        if case_id_or_case is None or isinstance(case_id_or_case, basestring):
+        if case_id_or_case is None or isinstance(case_id_or_case, six.string_types):
             self.case_id = case_id_or_case
             self._case = None
         else:

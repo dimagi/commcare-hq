@@ -50,6 +50,7 @@ from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from django.utils.translation import ugettext_lazy
 from jsonobject.api import JsonObject
 from jsonobject.properties import StringProperty, BooleanProperty, IntegerProperty
+import six
 
 ALLOWED_DATE_REGEX = re.compile('^\d{4}-\d{2}-\d{2}')
 AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
@@ -57,7 +58,7 @@ AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 def _try_date_conversion(date_or_string):
     if (
-        isinstance(date_or_string, basestring) and
+        isinstance(date_or_string, six.string_types) and
         ALLOWED_DATE_REGEX.match(date_or_string)
     ):
         date_or_string = parse(date_or_string)
@@ -101,7 +102,7 @@ class AutomaticUpdateRule(models.Model):
         pass
 
     def __unicode__(self):
-        return unicode("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
+        return six.text_type("rule: '{s.name}', id: {s.id}, domain: {s.domain}").format(s=self)
 
     def migrate(self):
         if not self.pk:
@@ -243,7 +244,7 @@ class AutomaticUpdateRule(models.Model):
             query = query.server_modified_range(lte=boundary_date)
 
         for case_id in query.scroll():
-            if not isinstance(case_id, basestring):
+            if not isinstance(case_id, six.string_types):
                 raise ValueError("Something is wrong with the query, expected ids only")
 
             yield case_id
@@ -531,7 +532,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         for value in values:
             if value is None:
                 continue
-            if isinstance(value, basestring) and not value.strip():
+            if isinstance(value, six.string_types) and not value.strip():
                 continue
             return True
 
@@ -677,7 +678,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
         for value in values:
             if value is None:
                 continue
-            if isinstance(value, basestring) and not value.strip():
+            if isinstance(value, six.string_types) and not value.strip():
                 continue
             return True
 

@@ -11,6 +11,7 @@ from corehq.util.quickcache import quickcache
 from corehq.apps.receiverwrapper.util import get_app_version_info
 
 from .interface import PillowProcessor
+import six
 
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
@@ -96,7 +97,7 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
 
     last_submission = filter_by_app(user.reporting_metadata.last_submissions, app_id)
 
-    if metadata and metadata.get('appVersion') and not isinstance(metadata['appVersion'], basestring):
+    if metadata and metadata.get('appVersion') and not isinstance(metadata['appVersion'], six.string_types):
         metadata = format_form_meta_for_es(metadata)
 
     app_version_info = get_app_version_info(

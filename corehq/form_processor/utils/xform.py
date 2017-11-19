@@ -10,6 +10,7 @@ from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
+import six
 
 # The functionality below to create a simple wrapped XForm is used in production code (repeaters) and so is
 # not in the test utils

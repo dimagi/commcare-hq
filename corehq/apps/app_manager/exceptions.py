@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import couchdbkit
 from corehq.apps.app_manager.const import APP_V2
+import six
 
 
 class AppManagerException(Exception):
@@ -83,8 +84,8 @@ class XFormValidationError(XFormException):
         # and just return the undecorated string
         #
         # ... unless the first line says
-        message_lines = unicode(msg).split('\n')[2:]
-        if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(msg):
+        message_lines = six.text_type(msg).split('\n')[2:]
+        if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in six.text_type(msg):
             message = ' '.join(message_lines[0].split(':')[1:])
         else:
             message = '\n'.join(message_lines)

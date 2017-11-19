@@ -61,6 +61,7 @@ from corehq.elastic import (
 from corehq.apps.sms.models import SQLMobileBackend
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.util.dates import get_timestamp_millis, iso_string_to_date
+import six
 
 CASE_COUNT_UPPER_BOUND = 1000 * 1000 * 10
 COUNTRY_COUNT_UPPER_BOUND = 1000 * 1000 * 10
@@ -110,7 +111,7 @@ def get_timestep(interval):
         return relativedelta(months=1)
     elif interval == 'year':
         return relativedelta(years=1)
-    raise IntervalNotFoundException(unicode(interval))
+    raise IntervalNotFoundException(six.text_type(interval))
 
 
 def daterange(interval, start_date, end_date):

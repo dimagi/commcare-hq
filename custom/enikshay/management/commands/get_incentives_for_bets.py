@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
+import six
 
 
 class Command(BaseCommand):
@@ -59,7 +60,7 @@ class Command(BaseCommand):
                 try:
                     payload = json.loads(record.get_payload())['incentive_details'][0]
                 except Exception as e:
-                    errors.append([record.payload_id, record._id, unicode(e)])
+                    errors.append([record.payload_id, record._id, six.text_type(e)])
                     continue
                 payload['Succeeded'] = record.succeeded
                 incentive_episode_pair = (payload.get('EpisodeID'), payload.get('EventID'),)

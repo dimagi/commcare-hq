@@ -13,6 +13,7 @@ from django.utils.safestring import mark_safe
 from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
+import six
 
 Tag = namedtuple('Tag', 'name css_class description')
 TAG_CUSTOM = Tag(
@@ -199,7 +200,7 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
-    if isinstance(input_string, unicode):
+    if isinstance(input_string, six.text_type):
         input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 

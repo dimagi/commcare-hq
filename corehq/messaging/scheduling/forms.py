@@ -21,12 +21,13 @@ from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
+import six
 
 
 def validate_time(value):
     error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
 
-    if not isinstance(value, (unicode, str)) or not re.match('^\d?\d:\d\d$', value):
+    if not isinstance(value, (six.text_type, str)) or not re.match('^\d?\d:\d\d$', value):
         raise error
 
     try:
@@ -40,7 +41,7 @@ def validate_time(value):
 def validate_date(value):
     error = ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
 
-    if not isinstance(value, (unicode, str)) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
+    if not isinstance(value, (six.text_type, str)) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
         raise error
 
     try:

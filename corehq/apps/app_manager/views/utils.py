@@ -23,6 +23,7 @@ from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.util.couch import DocumentNotFound
+import six
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -122,7 +123,7 @@ def bail(request, domain, app_id, not_found=""):
 
 
 def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, unicode) else s
+    return s.encode('utf-8') if isinstance(s, six.text_type) else s
 
 
 def validate_langs(request, existing_langs):

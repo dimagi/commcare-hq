@@ -70,9 +70,9 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
-        var sever = row ? d3.format(".0%")(row.severe / (row.total || 1)) : 'N/A';
-        var moderate = row ? d3.format(".0%")(row.moderate / (row.total || 1)) : 'N/A';
-        var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
+        var sever = row ? d3.format(".2%")(row.severe / (row.total || 1)) : 'N/A';
+        var moderate = row ? d3.format(".2%")(row.moderate / (row.total || 1)) : 'N/A';
+        var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
