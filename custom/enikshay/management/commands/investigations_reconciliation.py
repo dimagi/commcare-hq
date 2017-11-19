@@ -184,26 +184,24 @@ class Command(BaseModelReconciliationCommand):
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
 
-def get_all_occurrence_cases_from_person(person_case_id):
+def get_all_occurrence_case_ids_from_person(person_case_id):
     case_accessor = CaseAccessors(DOMAIN)
     all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    return [case for case in all_cases if case.type == CASE_TYPE_OCCURRENCE]
+    return [case.case_id for case in all_cases if case.type == CASE_TYPE_OCCURRENCE]
 
 
 def get_open_confirmed_drtb_episode_cases(person_case_id):
-    occurrence_cases = get_all_occurrence_cases_from_person(
+    occurrence_case_ids = get_all_occurrence_case_ids_from_person(
         person_case_id
     )
-    open_confirmed_drtb_episode_cases = []
-    for occurrence_case in occurrence_cases:
-        case_accessor = CaseAccessors(DOMAIN)
-        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.case_id])
-        open_confirmed_drtb_episode_cases += [
-            case for case in all_cases
-            if not case.closed
-            and case.type == CASE_TYPE_EPISODE
-            and case.get_case_property("episode_type") == CONFIRMED_DRTB_EPISODE_TYPE
-        ]
+    case_accessor = CaseAccessors(DOMAIN)
+    all_cases = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
+    open_confirmed_drtb_episode_cases = [
+        case for case in all_cases
+        if not case.closed
+        and case.type == CASE_TYPE_EPISODE
+        and case.get_case_property("episode_type") == CONFIRMED_DRTB_EPISODE_TYPE
+    ]
     return open_confirmed_drtb_episode_cases
 
 
