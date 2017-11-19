@@ -74,10 +74,9 @@
 
                                 <ul class="pagination" data-bind="visible: totalPages > 1">
                                     <li><a data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
-                                    <!-- ko foreach: new Array(totalPages) -->
-                                        <!-- TODO: fix .active, which isn't matching the right li -->
-                                        <li data-bind="css: {active: $parent.currentPage == $index() + 1;">
-                                            <a data-bind="text: $index() + 1, click: function() { $parent.showPage($index() + 1); }"></a>
+                                    <!-- ko foreach: pageList -->
+                                        <li data-bind="css: {active: $parent.currentPage() == $data}">
+                                            <a data-bind="text: $data, click: function() { $parent.showPage($data); }"></a>
                                         </li>
                                     <!-- /ko -->
                                     <li><a data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>

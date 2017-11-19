@@ -12,7 +12,8 @@ hqDefine("dashboard/js/dashboard", function() {
         if (self.hasItemList) {
             self.itemsPerPage = options.pagination.items_per_page;
             self.totalPages = options.pagination.pages;
-            self.currentPage = ko.observable();                   // 1-indexed
+            self.currentPage = ko.observable();         // 1-indexed
+            self.pageList = ko.observableArray();
             self.items = ko.observableArray();
         }
 
@@ -43,6 +44,7 @@ hqDefine("dashboard/js/dashboard", function() {
                 }
             }, 500);
 
+            // Send request
             $.ajax({
                 method: "GET",
                 url: hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_tile', self.slug),
@@ -58,6 +60,22 @@ hqDefine("dashboard/js/dashboard", function() {
                     self.hasError(true);
                 },
             });
+
+            // Update pagination, which shows links for at most 8 pages
+            var maxPages = 8,
+                midpoint = maxPages / 2 + 1,
+                lowestPage = 1,
+                highestPage = Math.min(self.totalPages, maxPages);
+
+            // If current page is getting close to the edge of visible pages,
+            // bump up which pages are visible. The exact math isn't important, just
+            // that the page above and below currentPage, if they exist, are visible.
+            if (self.totalPages > maxPages && self.currentPage() > midpoint) {
+                highestPage = Math.min(self.totalPages, maxPages + self.currentPage() - midpoint);
+                lowestPage = highestPage - maxPages;
+            }
+
+            self.pageList(_.range(lowestPage, highestPage + 1));
         };
         self.incrementPage = function(increment) {
             var newCurrentPage = self.currentPage() + increment;

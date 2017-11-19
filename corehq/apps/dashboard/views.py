@@ -118,11 +118,11 @@ class KODomainDashboardView(BaseDashboardView):
                 }
                 if config.context_processor_class.tile_type == TileType.PAGINATE:    # TODO: better way to do this?
                     processor = tile.context_processor
-                    items_per_page = 5
+                    items_per_page = 2
                     tile_context.update({
                         'pagination': {
                             'items_per_page': items_per_page,
-                            'pages': int(math.ceil(processor.total / items_per_page)),
+                            'pages': int(math.ceil(float(processor.total) / items_per_page)),
                         },
                     })
                 tile_contexts.append(tile_context)
