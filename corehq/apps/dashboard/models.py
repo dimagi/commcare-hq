@@ -316,6 +316,8 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
     @property
     @memoized
     def applications(self):
+        # TODO: would be nice if this sorted in a case-insensitive manner
+        # ...although the top nav apps dropdown is also case-sensitive
         return get_brief_apps_in_domain(self.request.domain)
 
     @property

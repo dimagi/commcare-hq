@@ -98,10 +98,10 @@ class BaseDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
 
 @location_safe
-class KODomainDashboardView(BaseDashboardView):
-    urlname = 'ko_dashboard_domain'
+class DomainDashboardView(BaseDashboardView):
+    urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
-    template_name = 'dashboard/ko.html'
+    template_name = 'dashboard/base.html'
 
     @property
     def page_context(self):
