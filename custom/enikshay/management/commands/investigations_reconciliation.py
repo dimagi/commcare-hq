@@ -1,9 +1,3 @@
-import csv
-from datetime import datetime
-
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from django.core.mail import EmailMessage
 from collections import defaultdict
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -13,8 +7,8 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     CASE_TYPE_INVESTIGATION,
 )
+from custom.enikshay.management.commands.base_model_reconciliation import BaseModelReconciliationCommand
 from corehq.apps.hqcase.utils import bulk_update_cases
-from custom.enikshay.const import ENROLLED_IN_PRIVATE
 
 DOMAIN = "enikshay"
 CONFIRMED_DRTB_EPISODE_TYPE = "confirmed_drtb"
@@ -38,73 +32,40 @@ PROPERTIES_TO_BE_COALESCED = [
 ]
 
 
-class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument('--dry_run', action='store_true')
-        parser.add_argument('--recipient', type=str)
+class Command(BaseModelReconciliationCommand):
+    email_subject = "Investigations Reconciliation Report"
+    result_file_name_prefix = "investigations_reconciliation_report"
+    result_file_headers = ([
+        "episode_id",
+        "investigation_case_id",
+        "modified_on",
+        "update_or_close"
+    ] + PROPERTIES_TO_BE_COALESCED)
 
     def handle(self, *args, **options):
-        # self.dry_run = options.get('dry_run')
-        self.dry_run = True
+        # self.commit = options.get('commit')
+        self.commit = False
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
         self.case_accessor = CaseAccessors(DOMAIN)
         self.investigation_interval_values = []
-        with open(self.result_file_name, 'a') as csvfile:
-            self.writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
-            # iterate all person cases
-            for person_case_id in self._get_open_person_case_ids_to_process():
-                person_case = self.case_accessor.get_case(person_case_id)
-                # check if person is a public app case
-                if self.public_app_case(person_case):
-                    # get all confirmed drtb cases to check for cases under them
-                    open_confirmed_drtb_episode_cases = get_open_confirmed_drtb_episode_cases(person_case_id)
-                    for episode_case in open_confirmed_drtb_episode_cases:
-                        episode_case_id = episode_case.case_id
-                        # get any investigations that need to be reconciled under this episode
-                        investigations_to_be_reconciled = self.episode_case_needs_reconciliation(episode_case)
-                        if investigations_to_be_reconciled:
-                            for interval_type, investigation_cases in investigations_to_be_reconciled.items():
-                                self.reconcile_investigation_cases(episode_case_id, investigation_cases, csvfile)
+        # iterate all person cases
+        for person_case_id in self._get_open_person_case_ids_to_process():
+            person_case = self.case_accessor.get_case(person_case_id)
+            # check if person is a public app case
+            if self.public_app_case(person_case):
+                # get all confirmed drtb cases to check for cases under them
+                open_confirmed_drtb_episode_cases = get_open_confirmed_drtb_episode_cases(person_case_id)
+                for episode_case in open_confirmed_drtb_episode_cases:
+                    episode_case_id = episode_case.case_id
+                    # get any investigations that need to be reconciled under this episode
+                    investigations_to_be_reconciled = self.episode_case_needs_reconciliation(episode_case)
+                    if investigations_to_be_reconciled:
+                        for interval_type, investigation_cases in investigations_to_be_reconciled.items():
+                            self.reconcile_investigation_cases(episode_case_id, investigation_cases, csvfile)
 
         self.email_report()
-
-    def email_report(self):
-        csvfile = open(self.result_file_name)
-        email = EmailMessage(
-            subject="Investigations Reconciliation Report",
-            body="Please find attached report for a %s run finished at %s." %
-                 ('dry' if self.dry_run else 'real', datetime.now()),
-            to=self.recipient,
-            from_email=settings.DEFAULT_FROM_EMAIL
-        )
-        email.attach(filename=self.result_file_name, content=csvfile.read())
-        csvfile.close()
-        email.send()
-
-    @staticmethod
-    def get_result_file_headers():
-        headers = [
-            "episode_id",
-            "investigation_case_id",
-            "modified_on",
-            "update_or_close"
-        ]
-        headers += PROPERTIES_TO_BE_COALESCED
-        return headers
-
-    def setup_result_file(self):
-        file_name = "investigations_reconciliation_report_{timestamp}.csv".format(
-            timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
-        )
-        with open(file_name, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
-            writer.writeheader()
-        return file_name
-
-    def writerow(self, row):
-        self.writer.writerow(row)
 
     def reconcile_investigation_cases(self, episode_case_id, investigation_cases, csvfile):
         # fetch latest investigation case which would retain final values
@@ -176,7 +137,7 @@ class Command(BaseCommand):
                 "update/close": ('update' if investigation_case.case_id == retain_case_id
                                  else 'closed')
             })
-        if not self.dry_run:
+        if self.commit:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
@@ -203,12 +164,6 @@ class Command(BaseCommand):
                 investigation_cases_to_reconcile[interval_type] = investigation_cases
 
         return investigation_cases_to_reconcile
-
-    @staticmethod
-    def public_app_case(person_case):
-        if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
-            return False
-        return True
 
     @staticmethod
     def _get_open_person_case_ids_to_process():

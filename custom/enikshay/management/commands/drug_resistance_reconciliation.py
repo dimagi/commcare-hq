@@ -1,11 +1,6 @@
-import csv
-
-from datetime import datetime
 from collections import defaultdict
 
-from django.conf import settings
-from django.core.mail import EmailMessage
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import CommandError
 
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -14,22 +9,29 @@ from custom.enikshay.case_utils import (
     get_person_case_from_occurrence,
     CASE_TYPE_DRUG_RESISTANCE,
 )
-from custom.enikshay.const import (
-    ENROLLED_IN_PRIVATE,
-)
+from custom.enikshay.management.commands.base_model_reconciliation import BaseModelReconciliationCommand
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 DOMAIN = "enikshay"
 
 
-class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument('--dry_run', action='store_true')
-        parser.add_argument('--recipient', type=str)
+class Command(BaseModelReconciliationCommand):
+    email_subject = "Drug Resistance Reconciliation Report"
+    result_file_name_prefix = "drug_resistance_reconciliation_report"
+    result_file_headers = [
+        "occurrence_case_id",
+        "person_case_id",
+        "drug_id",
+        "retain_case_id",
+        "retain_reason",
+        "closed_case_ids",
+        "closed_extension_case_ids",
+        "notes"
+    ]
 
     def handle(self, *args, **options):
-        # self.dry_run = options.get('dry_run')
-        self.dry_run = True
+        # self.commit = options.get('commit')
+        self.commit = False
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
@@ -47,46 +49,6 @@ class Command(BaseCommand):
 
         self.email_report()
 
-    def email_report(self):
-        csvfile = open(self.result_file_name)
-        email = EmailMessage(
-            subject="Drug Resistance Reconciliation Report",
-            body="Please find attached report for a %s run finished at %s." %
-                 ('dry' if self.dry_run else 'real', datetime.now()),
-            to=self.recipient,
-            from_email=settings.DEFAULT_FROM_EMAIL
-        )
-        email.attach(filename=self.result_file_name, content=csvfile.read())
-        csvfile.close()
-        email.send()
-
-    @staticmethod
-    def get_result_file_headers():
-        return [
-            "occurrence_case_id",
-            "person_case_id",
-            "drug_id",
-            "retain_case_id",
-            "retain_reason",
-            "closed_case_ids",
-            "closed_extension_case_ids",
-            "notes"
-        ]
-
-    def setup_result_file(self):
-        file_name = "drug_resistance_reconciliation_report_{timestamp}.csv".format(
-            timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
-        )
-        with open(file_name, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
-            writer.writeheader()
-        return file_name
-
-    def writerow(self, row):
-        with open(self.result_file_name, 'a') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers())
-            writer.writerow(row)
-
     def public_app_case(self, occurrence_case_id):
         try:
             person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
@@ -96,10 +58,8 @@ class Command(BaseCommand):
                 "notes": "person case not found"
             })
             return False
-        if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
-            return False
         self.person_case_id = person_case.case_id
-        return True
+        return super(Command, self).public_app_case(person_case)
 
     def reconcile_case(self, occurrence_case_id):
         # get all open drug resistance cases
@@ -220,7 +180,7 @@ class Command(BaseCommand):
             "closed_case_ids": ','.join(map(str, case_ids_to_close)),
             "closed_extension_case_ids": ','.join(map(str, closing_extension_case_ids))
         })
-        if not self.dry_run:
+        if self.commit:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
