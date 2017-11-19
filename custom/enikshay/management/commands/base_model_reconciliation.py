@@ -30,9 +30,7 @@ class BaseModelReconciliationCommand(BaseCommand):
             "One of it's inherited commands should be run.")
 
     def public_app_case(self, person_case):
-        if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
-            return False
-        return True
+        return person_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
 
     def email_report(self):
         csv_file = open(self.result_file_name)
