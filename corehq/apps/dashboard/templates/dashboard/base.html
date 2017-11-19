@@ -41,11 +41,12 @@
                     <div class="panel-heading">
                         <a data-bind="
                                text: title,
-                               attr: {
-                                   href: url,
-                                   'data-popover-placement': 'bottom',
-                                   'data-popover-title': title,
-                                   'data-popover': helpText,
+                               attr: {href: url},
+                               popover: {
+                                    title: title,
+                                    content: helpText,
+                                    placement: 'bottom',
+                                    trigger: 'hover',
                                },
                            "></a>
                     </div>
@@ -62,10 +63,11 @@
                             <div data-bind="visible: showItemList">
                                 <div class="list-group" data-bind="foreach: items">
                                     <div class="list-group-item"
-                                         data-bind="attr: {
-                                             'data-popover-placement': description ? 'right' : '',
-                                             'data-popover-title': description ? name_full : '',
-                                             'data-popover': description,
+                                         data-bind="popover: {
+                                            title: description ? name_full : '',
+                                            content: description,
+                                            placement: 'right',
+                                            trigger: 'hover',
                                          }"
                                          title="">
                                         <a data-bind="attr: {href: url}, text: name"></a>
@@ -88,10 +90,12 @@
                         <!-- ko if: showIconLink -->
                             <a class="dashboard-link"
                                data-bind="
-                                   attr: {
-                                       href: url,
-                                       'data-popover-title': title,
-                                       'data-popover': helpText,
+                                   attr: {href: url},
+                                   popover: {
+                                       title: title,
+                                       content: helpText,
+                                       placement: 'top',
+                                       trigger: 'hover',
                                    },
                                ">
                                 <i class="dashboard-icon dashboard-icon-medium" data-bind="css: icon"></i>
