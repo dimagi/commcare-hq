@@ -12,6 +12,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -166,7 +167,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['percent']
     )
 
@@ -178,7 +179,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['peach'].iteritems()
+                    } for key, value in six.iteritems(data['peach'])
                 ],
                 "key": "% normal",
                 "strokeWidth": 2,
@@ -191,7 +192,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['orange'].iteritems()
+                    } for key, value in six.iteritems(data['orange'])
                 ],
                 "key": "% moderately stunted",
                 "strokeWidth": 2,
@@ -204,7 +205,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['red'].iteritems()
+                    } for key, value in six.iteritems(data['red'])
                 ],
                 "key": "% severely stunted",
                 "strokeWidth": 2,
@@ -274,7 +275,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
             'total_measured': total_measured or 0,
         }
 
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = ((moderate or 0) + (severe or 0)) / float(valid or 1)

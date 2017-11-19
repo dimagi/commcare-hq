@@ -13,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -136,7 +137,7 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
             'children': in_month or 0,
             'all': valid or 0
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)
@@ -227,7 +228,7 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
             dict(
                 loc_name=key,
                 percent=(value['in_month'] * 100) / float(value['all'] or 1)
-            ) for key, value in best_worst.iteritems()
+            ) for key, value in six.iteritems(best_worst)
         ],
         key=lambda x: x['percent'],
         reverse=True
@@ -242,7 +243,7 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "% Children received complete immunizations by 1 year",
                 "strokeWidth": 2,

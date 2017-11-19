@@ -13,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -129,7 +130,7 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
             'in_month': in_month or 0,
             'all': valid or 0
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)
@@ -215,7 +216,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
             dict(
                 loc_name=key,
                 percent=(value['in_month'] * 100) / float(value['all'] or 1)
-            ) for key, value in best_worst.iteritems()
+            ) for key, value in six.iteritems(best_worst)
         ],
         key=lambda x: x['percent'],
         reverse=True
@@ -229,7 +230,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "Percentage of beneficiaries with Aadhaar numbers",
                 "strokeWidth": 2,

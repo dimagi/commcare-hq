@@ -15,6 +15,7 @@ from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, Da
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, get_status, \
     current_age, exclude_records_by_age_for_column
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -291,7 +292,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                         dict(
                             x=x_val,
                             y=y_val
-                        ) for x_val, y_val in open_count_chart.iteritems()
+                        ) for x_val, y_val in six.iteritems(open_count_chart)
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
@@ -307,7 +308,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                             y=y_val['avg_percent'],
                             attended=y_val['attended'],
                             eligible=y_val['eligible']
-                        ) for x_val, y_val in attended_children_chart.iteritems()
+                        ) for x_val, y_val in six.iteritems(attended_children_chart)
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
@@ -791,7 +792,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
         'chart': [
             {
                 'key': 'Children (0-6 years)',
-                'values': [[key, value] for key, value in chart_data.iteritems()],
+                'values': [[key, value] for key, value in six.iteritems(chart_data)],
                 "classed": "dashed",
             }
         ],

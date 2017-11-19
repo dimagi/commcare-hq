@@ -12,6 +12,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -136,7 +137,7 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
         data_for_month['y'] = data_for_month['birth'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
+        [dict(loc_name=key, percent=val) for key, val in six.iteritems(best_worst)],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -150,7 +151,7 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
                         'y': val['y'],
                         'all': val['all'],
                         'birth': val['birth']
-                    } for key, val in data['blue'].iteritems()
+                    } for key, val in six.iteritems(data['blue'])
                 ],
                 "key": "% Early Initiation of Breastfeeding",
                 "strokeWidth": 2,
