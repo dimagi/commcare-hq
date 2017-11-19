@@ -58,12 +58,15 @@ class Command(BaseModelReconciliationCommand):
 
     def reconcile_cases(self, open_occurrence_cases, person_case_id):
         """
-        For each occurrence, use the following priority order to identify which (single)
+        For occurrences, use the following priority order to identify which (single) occurrence
             has an open episode case where is_active=yes, episode_type = confirmed_drtb
-                if multiple, pick first opened from relevant occurrence case
+                if multiple, reconcile episode cases and then pick occurrence corresponding
+                to retained episode to retain
             has an open episode case where is_active=yes, episode_type = confirmed_tb
-                if multiple, pick first opened from relevant occurrence case
-            @date_opened (first opened occurrence case)
+                if multiple, reconcile episode cases and then pick occurrence corresponding
+                to retained episode to retain
+            reconcile all corresponding episode cases and then pick occurrence corresponding
+            to retained episode to retain
         """
         open_occurrence_case_ids = [case.case_id for case in open_occurrence_cases]
         # get all episode cases for all open occurrences
