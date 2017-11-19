@@ -11,11 +11,38 @@ hqDefine("dashboard/js/dashboard", function() {
         self.hasItemList = options.pagination && options.pagination.pages;
         if (self.hasItemList) {
             self.itemsPerPage = options.pagination.items_per_page;
-            self.pages = options.pagination.pages;
-            self.currentPage = 1;
+            self.totalPages = options.pagination.pages;
+            self.currentPage = ko.observable();                   // 1-indexed
             self.items = ko.observableArray();
+        }
 
-            // Fetch first page of data
+        // Control visibility of various parts of tile content
+        self.showBackgroundIcon = ko.computed(function() {
+            return self.hasItemList && !self.hasError();
+        });
+        self.showSpinner = ko.computed(function() {
+            return self.hasItemList && self.items().length === 0 && !self.hasError();
+        });
+        self.showItemList = ko.computed(function() {
+            return !self.showSpinner() && !self.hasError();
+        });
+        self.showIconLink = ko.computed(function() {
+            return !self.hasItemList || self.hasError();
+        });
+
+        // Paging
+        // TODO: subscribe to currentPage rather than having other places call this function directly?
+        self.showPage = function(newCurrentPage) {
+            self.currentPage(newCurrentPage);
+
+            // If request takes a noticeable amount of time, clear items, which will show spinner
+            var done = false;
+            _.delay(function() {
+                if (!done) {
+                    self.items([]);     // clear items to show spinner
+                }
+            }, 500);
+
             $.ajax({
                 method: "GET",
                 url: hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_tile', self.slug),
@@ -25,28 +52,25 @@ hqDefine("dashboard/js/dashboard", function() {
                 },
                 success: function(data) {
                     self.items(data.items);
+                    done = true;
                 },
                 error: function() {
                     self.hasError(true);
                 },
             });
+        };
+        self.incrementPage = function(increment) {
+            var newCurrentPage = self.currentPage() + increment;
+            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages) {
+                return;
+            }
+            self.showPage(newCurrentPage);
+        };
+
+        // Initialize with first page of data
+        if (self.hasItemList) {
+            self.showPage(1);
         }
-
-        self.showBackgroundIcon = ko.computed(function() {
-            return self.hasItemList && !self.hasError();
-        });
-
-        self.showSpinner = ko.computed(function() {
-            return self.hasItemList && self.items().length === 0 && !self.hasError();
-        });
-
-        self.showItemList = ko.computed(function() {
-            return !self.showSpinner() && !self.hasError();
-        });
-
-        self.showIconLink = ko.computed(function() {
-            return !self.hasItemList || self.hasError();
-        });
 
         return self;
     };

@@ -72,14 +72,15 @@
                                     </div>
                                 </div>
 
-                                <ul class="pagination" data-bind="visible: pages > 1">
-                                    <li><a href="">&laquo;</a></li>
-                                    <!-- ko foreach: new Array(pages) -->
-                                        <li data-bind="css: {active: $parent.currentPage == $index() + 1}">
-                                            <a href="" data-bind="text: $index() + 1"></a>
+                                <ul class="pagination" data-bind="visible: totalPages > 1">
+                                    <li><a data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
+                                    <!-- ko foreach: new Array(totalPages) -->
+                                        <!-- TODO: fix .active, which isn't matching the right li -->
+                                        <li data-bind="css: {active: $parent.currentPage == $index() + 1;">
+                                            <a data-bind="text: $index() + 1, click: function() { $parent.showPage($index() + 1); }"></a>
                                         </li>
                                     <!-- /ko -->
-                                    <li><a href="">&raquo;</a></li>
+                                    <li><a data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
                                 </ul>
                             </div>
                         <!-- /ko -->
