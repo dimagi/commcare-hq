@@ -18,7 +18,10 @@ hqDefine("dashboard/js/dashboard", function() {
             $.ajax({
                 method: "GET",
                 url: "/a/jennytraining/dashboard/ko-project/tile/" + self.slug + "/",  // TODO: registerurl
-                data: {},
+                data: {
+                    itemsPerPage: self.itemsPerPage,
+                    currentPage: self.currentPage,
+                },
                 success: function(data) {
                     self.items(data.items);
                 },

@@ -61,7 +61,11 @@ def dashboard_tile(request, domain, slug):
             status_code=404,
         )
 
-    tile = Tile(tile_config, request, {'pagination': {}})  # TODO: real pagination data; DRY up with make_tile
+    pagination_data = {
+        'limit': int(request.GET.get('itemsPerPage', 5)),
+        'currentPage': int(request.GET.get('currentPage', 1)),
+    }
+    tile = Tile(tile_config, request, {'pagination': pagination_data})  # TODO: DRY up with make_tile
     items = list(tile.context_processor.paginated_items)
     return json_response({'items': items})
 
