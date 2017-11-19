@@ -782,7 +782,7 @@ def get_updated_fields(existing_properties, new_properties):
 
 
 @task(queue='background_queue', ignore_result=True)
-def run_model_reconciliation(command_name, email, dry_run=True):
+def run_model_reconciliation(command_name, email, commit=False):
     call_command(command_name,
                  recipient=email,
-                 dry_run=dry_run)
+                 commit=commit)

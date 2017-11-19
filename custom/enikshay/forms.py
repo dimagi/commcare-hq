@@ -11,7 +11,7 @@ class ReconciliationTaskForm(forms.Form):
                        'multiple_open_referrals_reconciliation'
                        ]
     email = forms.EmailField(label='Your email')
-    dry_run = forms.BooleanField(label='Dry run', required=False)
+    commit = forms.BooleanField(label='Commit Changes', required=False)
     task = forms.ChoiceField(label='Task', choices=(
         [('all', 'All')] + [(choice, choice.capitalize().replace('_', ' ')) for choice in permitted_tasks]
     ))
@@ -26,7 +26,7 @@ class ReconciliationTaskForm(forms.Form):
             Fieldset(
                 "Details",
                 crispy.Field('email'),
-                crispy.Field('dry_run'),
+                crispy.Field('commit'),
                 crispy.Field('task'),
             ),
             ButtonHolder(

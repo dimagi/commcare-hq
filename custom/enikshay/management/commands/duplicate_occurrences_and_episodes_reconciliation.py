@@ -279,7 +279,8 @@ def get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=False):
                 recently_modified_time = last_user_edit_on_phone
                 recently_modified_case = case
             elif recently_modified_time and recently_modified_time == last_user_edit_on_phone:
-                print("This looks like a super edge case that needs to be looked at. Not blocking as of now.")
+                print("This looks like a super edge case that can be looked at. "
+                      "Not blocking as of now. Case id: {case_id}".format(case_id=case.case_id))
 
     return recently_modified_case
 

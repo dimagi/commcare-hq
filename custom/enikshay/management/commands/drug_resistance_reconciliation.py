@@ -162,8 +162,7 @@ class Command(BaseModelReconciliationCommand):
     def close_cases(self, all_cases, occurrence_case_id, drug_id, retain_case, retain_reason):
         # remove duplicates in case ids to remove so that we dont retain and close
         # the same case by mistake
-        all_case_ids = set([case.case_id for case in all_cases])
-        all_case_ids = set(all_case_ids)
+        all_case_ids = {case.case_id for case in all_cases}
         retain_case_id = retain_case.case_id
         case_ids_to_close = all_case_ids.copy()
         case_ids_to_close.remove(retain_case_id)

@@ -71,7 +71,7 @@ class ReconciliationTaskView(TemplateView):
             run_model_reconciliation.delay(
                 task_name,
                 request.POST.get('email'),
-                (request.POST.get('dry_run') == 'on')
+                (request.POST.get('commit') == 'on')
             )
 
         task_requested = request.POST.get('task')
