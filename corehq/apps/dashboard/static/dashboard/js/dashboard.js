@@ -6,6 +6,7 @@ hqDefine("dashboard/js/dashboard", function() {
         self.icon = options.icon;
         self.url = options.url;
         self.helpText = options.help_text;
+        self.hasError = ko.observable(false);
 
         self.hasItemList = options.pagination && options.pagination.pages;
         if (self.hasItemList) {
@@ -17,7 +18,7 @@ hqDefine("dashboard/js/dashboard", function() {
             // Fetch first page of data
             $.ajax({
                 method: "GET",
-                url: "/a/jennytraining/dashboard/ko-project/tile/" + self.slug + "/",  // TODO: registerurl
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_tile', self.slug),
                 data: {
                     itemsPerPage: self.itemsPerPage,
                     currentPage: self.currentPage,
@@ -26,17 +27,25 @@ hqDefine("dashboard/js/dashboard", function() {
                     self.items(data.items);
                 },
                 error: function() {
-                    // TODO: display generic error
+                    self.hasError(true);
                 },
             });
         }
 
+        self.showBackgroundIcon = ko.computed(function() {
+            return self.hasItemList && !self.hasError();
+        });
+
         self.showSpinner = ko.computed(function() {
-            return self.hasItemList && self.items().length === 0;
+            return self.hasItemList && self.items().length === 0 && !self.hasError();
         });
 
         self.showItemList = ko.computed(function() {
-            return !self.showSpinner();
+            return !self.showSpinner() && !self.hasError();
+        });
+
+        self.showIconLink = ko.computed(function() {
+            return !self.hasItemList || self.hasError();
         });
 
         return self;
@@ -66,7 +75,5 @@ hqDefine("dashboard/js/dashboard", function() {
                 trigger: 'hover',
             });
         });
-
-        // TODO: Initial fetch for paginated tiles
     });
 });

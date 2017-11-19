@@ -25,6 +25,7 @@
 
 {% block content %}
 {% initial_page_data 'dashboard_tiles' dashboard_tiles %}
+{% registerurl 'dashboard_tile' domain '---' %}
 <div class="container" id="hq-content">
     <div class="page-header">
         <h1>
@@ -50,10 +51,14 @@
                     </div>
                     <div class="panel-body">
 
+                        <!-- Icon in a watermark style, displayed under item list -->
+                        <i data-bind="css: icon, visible: showBackgroundIcon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
+
+                        <!-- Spinner -->
+                        <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
+
                         <!-- List of items, with pagination if there are multiple pages -->
                         <!-- ko if: hasItemList -->
-                            <i data-bind="css: icon" class="dashboard-icon dashboard-icon-medium dashboard-icon-bg"></i>
-                            <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
                             <div data-bind="visible: showItemList">
                                 <div class="list-group" data-bind="foreach: items">
                                     <div class="list-group-item"
@@ -70,15 +75,17 @@
                                 <ul class="pagination" data-bind="visible: pages > 1">
                                     <li><a href="">&laquo;</a></li>
                                     <!-- ko foreach: new Array(pages) -->
-                                        <li><a href="" data-bind="text: $index() + 1"></a></li>
+                                        <li data-bind="css: {active: $parent.currentPage == $index() + 1}">
+                                            <a href="" data-bind="text: $index() + 1"></a>
+                                        </li>
                                     <!-- /ko -->
                                     <li><a href="">&raquo;</a></li>
                                 </ul>
                             </div>
                         <!-- /ko -->
 
-                        <!-- No items to show, just show an icon that links -->
-                        <!-- ko ifnot: hasItemList -->
+                        <!-- No items to show or there's an error, just show an icon that links -->
+                        <!-- ko if: showIconLink -->
                             <a class="dashboard-link"
                                data-bind="
                                    attr: {
