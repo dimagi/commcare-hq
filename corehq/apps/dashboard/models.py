@@ -55,23 +55,6 @@ class Tile(object):
             self.tile_config, self.request, self.in_data
         )
 
-    @property
-    def context(self):
-        """This is sent back to the Angular JS controller created the remote
-        Remote Method Invocation of the Dashboard view.
-        :return: dict
-        """
-        tile_context = {
-            'slug': self.tile_config.slug,
-            'helpText': self.tile_config.help_text,
-            'analytics': {
-                'usage_label': self.tile_config.analytics_usage_label,
-                'workflow_labels': self.tile_config.analytics_workflow_labels,
-            }
-        }
-        tile_context.update(self.context_processor.context)
-        return tile_context
-
 
 class TileConfiguration(object):
 
@@ -180,17 +163,6 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
     tile_type = TileType.PAGINATE
 
     @property
-    def context(self):
-        return {
-            'pagination': self.pagination_context,
-            'default': {
-                'show': self.tile_config.icon is not None,
-                'icon': self.tile_config.icon,
-                'url': self.tile_config.get_url(self.request),
-            },
-        }
-
-    @property
     def pagination_data(self):
         """The data we READ to figure out the current pagination state.
         :return: dict
@@ -218,15 +190,6 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
         :return: integer
         """
         return (self.current_page - 1) * self.limit
-
-    @property
-    def pagination_context(self):
-        return {
-            'total': self.total,
-            'limit': self.limit,
-            'currentPage': self.current_page,
-            'paginatedItems': list(self.paginated_items),
-        }
 
     @staticmethod
     def _fmt_item(name,
