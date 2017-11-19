@@ -14,6 +14,7 @@ from corehq.apps.hqwebapp.decorators import use_maps_async
 from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
 import six
+from six.moves import zip
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):

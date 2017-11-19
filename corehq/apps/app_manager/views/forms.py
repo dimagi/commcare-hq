@@ -88,6 +88,7 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
 import six
+from six.moves import zip
 
 
 @no_conflict_require_POST

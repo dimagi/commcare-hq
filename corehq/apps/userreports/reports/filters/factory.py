@@ -145,7 +145,7 @@ class ReportFilterFactory(object):
             raise BadSpecError(
                 _('Illegal report filter type: {0}, must be one of the following choice: ({1})').format(
                     spec.get('type', _('(missing from spec)')),
-                    ', '.join(cls.constructor_map.keys())
+                    ', '.join(cls.constructor_map)
                 )
             )
 

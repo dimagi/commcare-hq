@@ -511,11 +511,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
         filters_without_prefilters = {
             filter_slug: filter_value
-            for filter_slug, filter_value in self.filter_values.iteritems()
+            for filter_slug, filter_value in six.iteritems(self.filter_values)
             if not isinstance(slug_to_filter[filter_slug], PreFilter)
         }
 
-        for filter_slug, filter_value in filters_without_prefilters.iteritems():
+        for filter_slug, filter_value in six.iteritems(filters_without_prefilters):
             label = slug_to_filter[filter_slug].label
             yield label, self._get_filter_export_format(filter_value)
 

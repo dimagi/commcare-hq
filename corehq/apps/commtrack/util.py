@@ -21,6 +21,7 @@ import re
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 import six
+from six.moves import zip
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 

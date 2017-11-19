@@ -120,8 +120,11 @@ class DataTablesColumnGroup(object):
             length += 1
         return length
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
+
+    def __nonzero__(self):
+        return self.__bool__()
 
 
 class DataTablesHeader(object):
@@ -230,5 +233,8 @@ class DataTablesHeader(object):
             length += len(col) if isinstance(col, DataTablesColumnGroup) else 1
         return length
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
+
+    def __nonzero__(self):
+        return self.__bool__()

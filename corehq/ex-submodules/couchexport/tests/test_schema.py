@@ -9,6 +9,7 @@ from couchexport.util import SerializableFunction
 from dimagi.utils.couch.database import get_safe_write_kwargs
 import json
 from couchexport.models import Format
+from six.moves import zip
 
 
 class ExportSchemaTest(TestCase, DocTestMixin):

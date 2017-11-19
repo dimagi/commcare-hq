@@ -212,8 +212,11 @@ class WrappedNode(object):
     def __getattr__(self, attr):
         return getattr(self.xml, attr)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.xml is not None
+
+    def __nonzero__(self):
+        return self.__bool__()
 
     def __len__(self):
         return len(self.xml) if self.exists() else 0

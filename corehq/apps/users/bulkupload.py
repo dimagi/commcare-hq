@@ -148,7 +148,7 @@ class GroupMemoizer(object):
         self.groups.add(new_group)
 
     def by_name(self, group_name):
-        if not self.groups_by_name.has_key(group_name):
+        if group_name not in self.groups_by_name:
             group = Group.by_name(self.domain, group_name)
             if not group:
                 self.groups_by_name[group_name] = None
@@ -157,7 +157,7 @@ class GroupMemoizer(object):
         return self.groups_by_name[group_name]
 
     def get(self, group_id):
-        if not self.groups_by_id.has_key(group_id):
+        if group_id not in self.groups_by_id:
             group = Group.get(group_id)
             if group.domain != self.domain:
                 raise ResourceNotFound()

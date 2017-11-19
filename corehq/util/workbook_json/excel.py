@@ -4,6 +4,7 @@ from zipfile import BadZipfile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 import six
+from six.moves import zip
 
 
 class InvalidExcelFileException(Exception):

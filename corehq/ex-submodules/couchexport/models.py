@@ -25,6 +25,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from dimagi.utils.logging import notify_exception
 import six
+from six.moves import zip
 
 
 ColumnType = namedtuple('ColumnType', 'cls label')
@@ -361,7 +362,7 @@ class ExportTable(DocumentSchema):
         for c in all_cols:
             if c not in selected_cols:
                 column = ExportColumn(index=c)
-                column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else ''
+                column.display = self.displays_by_index[c] if c in self.displays_by_index else ''
                 yield column.to_config_format(selected=False)
 
     def get_headers_row(self):
@@ -388,7 +389,7 @@ class ExportTable(DocumentSchema):
     @property
     @memoized
     def row_positions_by_index(self):
-        return dict((h, i) for i, h in enumerate(self._headers) if self.displays_by_index.has_key(h))
+        return dict((h, i) for i, h in enumerate(self._headers) if h in self.displays_by_index)
 
     @property
     @memoized
@@ -649,7 +650,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def get_table_configuration(self, index):
         def column_configuration():
             columns = self.schema.get_columns(index)
-            if self.tables_by_index.has_key(index):
+            if index in self.tables_by_index:
                 return list(self.tables_by_index[index].get_column_configuration(columns))
             else:
                 return [
@@ -661,7 +662,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
                 ]
 
         def display():
-            if self.tables_by_index.has_key(index):
+            if index in self.tables_by_index:
                 return self.tables_by_index[index].display
             else:
                 return ''
@@ -938,7 +939,7 @@ class GroupExportConfiguration(Document):
         and an ExportSchema-like document that can be used to get at
         the data.
         """
-        return zip(self.all_configs, self.all_export_schemas)
+        return list(zip(self.all_configs, self.all_export_schemas))
 
 
 class SavedBasicExport(BlobMixin, Document):

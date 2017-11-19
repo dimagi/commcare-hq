@@ -15,6 +15,7 @@ import xlwt
 
 from couchexport.models import Format
 import six
+from six.moves import zip
 
 
 def _encode_if_needed(val):

@@ -49,9 +49,7 @@ class ChoiceQueryContext(object):
             raise TypeError("One of page or offset must be passed in")
 
 
-class ChoiceProvider(object):
-    __metaclass__ = ABCMeta
-
+class ChoiceProvider(six.with_metaclass(ABCMeta, object)):
     location_safe = False
 
     def __init__(self, report, filter_slug):
@@ -129,9 +127,7 @@ class StaticChoiceProvider(ChoiceProvider):
                 if choice.value in values}
 
 
-class ChainableChoiceProvider(ChoiceProvider):
-    __metaclass__ = ABCMeta
-
+class ChainableChoiceProvider(six.with_metaclass(ABCMeta, ChoiceProvider)):
     @abstractmethod
     def query(self, query_context):
         pass
