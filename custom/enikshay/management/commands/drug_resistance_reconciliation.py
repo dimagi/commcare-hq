@@ -25,13 +25,11 @@ class Command(BaseModelReconciliationCommand):
         "retain_case_id",
         "retain_reason",
         "closed_case_ids",
-        "closed_extension_case_ids",
-        "notes"
+        "closed_extension_case_ids"
     ]
 
     def handle(self, *args, **options):
-        # self.commit = options.get('commit')
-        self.commit = False
+        self.commit = options.get('commit')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
@@ -53,10 +51,6 @@ class Command(BaseModelReconciliationCommand):
         try:
             person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         except ENikshayCaseNotFound:
-            self.writerow({
-                "occurrence_case_id": occurrence_case_id,
-                "notes": "person case not found"
-            })
             return False
         self.person_case_id = person_case.case_id
         return super(Command, self).public_app_case(person_case)
