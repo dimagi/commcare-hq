@@ -31,7 +31,8 @@ class Command(BaseModelReconciliationCommand):
         "retained_case_date_opened",
         "retained_case_episode_type",
         "retained_case_is_active",
-        "closed_cases_details"
+        "closed_cases_details",
+        "notes"
     ]
 
     def handle(self, *args, **options):
@@ -45,14 +46,14 @@ class Command(BaseModelReconciliationCommand):
         for person_case_id in self._get_open_person_case_ids_to_process():
             person_case = self.case_accessor.get_case(person_case_id)
             if self.public_app_case(person_case):
-                open_occurrence_cases = get_open_occurrence_cases_from_person(person_case_id)
+                open_occurrence_cases = get_open_occurrence_cases_for_person(person_case_id)
                 if len(open_occurrence_cases) > 1:
                     # reconcile occurrence cases
                     # also reconcile episode cases under these if needed
                     self.reconcile_cases(open_occurrence_cases, person_case_id)
                 elif open_occurrence_cases:
                     # if needed reconcile episode cases under the open occurrence case
-                    self.get_open_reconciled_episode_cases_for_occurrence(open_occurrence_cases[0].get_id)
+                    self.get_open_active_reconciled_episode_cases_for_occurrence(open_occurrence_cases[0].get_id)
 
         self.email_report()
 
@@ -61,7 +62,7 @@ class Command(BaseModelReconciliationCommand):
             For each episode, use the following priority order to identify which case to keep (single)
                 episode_type = confirmed_drtb
                 episode_type = confirmed_tb
-                get_relevant_episode_case_to_retain
+                get_relevant_episode_case_by_dates
         """
         open_active_confirmed_drtb_episode_cases = []
         open_active_confirmed_tb_episode_cases = []
@@ -80,38 +81,41 @@ class Command(BaseModelReconciliationCommand):
             return open_active_confirmed_drtb_episode_cases[0]
 
         elif open_active_confirmed_drtb_episode_cases_count > 1:
-            return get_relevant_episode_case_to_retain(open_active_confirmed_drtb_episode_cases,
-                                                       log_progress=self.log_progress)
+            return get_relevant_episode_case_by_dates(open_active_confirmed_drtb_episode_cases,
+                                                      log_progress=self.log_progress)
         elif open_active_confirmed_tb_episode_cases_count == 1:
             return open_active_confirmed_tb_episode_cases[0]
         elif open_active_confirmed_tb_episode_cases_count > 1:
-            return get_relevant_episode_case_to_retain(open_active_confirmed_tb_episode_cases,
-                                                       log_progress=self.log_progress)
+            return get_relevant_episode_case_by_dates(open_active_confirmed_tb_episode_cases,
+                                                      log_progress=self.log_progress)
         else:
-            return get_relevant_episode_case_to_retain(open_active_episode_cases, log_progress=self.log_progress)
+            return get_relevant_episode_case_by_dates(open_active_episode_cases, log_progress=self.log_progress)
 
     def reconcile_cases(self, open_occurrence_cases, person_case_id):
         """
-        For occurrences, use the following priority order to identify which (single) occurrence
-            has an open episode case where is_active=yes, episode_type = confirmed_drtb
-                if multiple, reconcile episode cases and then pick occurrence corresponding
-                to retained episode to retain
-            has an open episode case where is_active=yes, episode_type = confirmed_tb
-                if multiple, reconcile episode cases and then pick occurrence corresponding
-                to retained episode to retain
-            reconcile all corresponding episode cases and then pick occurrence corresponding
-            to retained episode to retain
+        Find the occurrence with most relevant reconciled(if needed) episode case
         """
         open_occurrence_case_ids = [case.case_id for case in open_occurrence_cases]
         # get reconciled(if needed) episode cases for all open occurrences
-        all_episode_cases = []
+        all_open_active_episode_cases_for_person = []
         for open_occurrence_case_id in open_occurrence_case_ids:
-            all_episode_cases += self.get_open_reconciled_episode_cases_for_occurrence(open_occurrence_case_id)
-        relevant_episode_case = get_relevant_episode_case_to_retain(all_episode_cases)
-        retain_case = get_occurrence_case_from_episode(DOMAIN, relevant_episode_case)
-        self.close_cases(open_occurrence_cases, retain_case, person_case_id, "occurrence")
+            all_open_active_episode_cases_for_person += self.get_open_active_reconciled_episode_cases_for_occurrence(
+                open_occurrence_case_id)
+        if all_open_active_episode_cases_for_person:
+            relevant_episode_case = self.get_relevant_episode_case(all_open_active_episode_cases_for_person)
+            retain_case = get_occurrence_case_from_episode(DOMAIN, relevant_episode_case)
+            self.close_cases(open_occurrence_cases, retain_case, person_case_id, "occurrence")
+        else:
+            # Log the case where no open and active episode case was found for reconciliation
+            # This should imply a person with multiple open occurrence cases but none of them with
+            # an open and active episode case to consider
+            self.writerow({
+                "case_type": "occurrence",
+                "associated_case_id": person_case_id,
+                "notes": "Found no active open episodes cases to reconcile occurrences for this person"
+            })
 
-    def close_cases(self, all_cases, retain_case, associated_case_id, reconcilling_case_type):
+    def close_cases(self, all_cases, retain_case, associated_case_id, reconciling_case_type):
         # remove duplicates in case ids to remove so that we don't retain and close
         # the same case by mistake
         all_case_ids = set([case.case_id for case in all_cases])
@@ -123,7 +127,7 @@ class Command(BaseModelReconciliationCommand):
         closing_extension_case_ids = case_accessor.get_extension_case_ids(case_ids_to_close)
 
         self.writerow({
-            "case_type": reconcilling_case_type,
+            "case_type": reconciling_case_type,
             "associated_case_id": associated_case_id,
             "retain_case_id": retain_case_id,
             "closed_case_ids": ','.join(map(str, case_ids_to_close)),
@@ -166,11 +170,11 @@ class Command(BaseModelReconciliationCommand):
                 if i % 1000 == 0 and self.log_progress:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
-    def reconcile_episode_cases(self, open_active_episode_cases, occurrence_case_id):
+    def reconcile_open_active_episode_cases_for_occurrence(self, open_active_episode_cases, occurrence_case_id):
         retain_case = self.get_relevant_episode_case(open_active_episode_cases)
         self.close_cases(open_active_episode_cases, retain_case, occurrence_case_id, 'episode')
 
-    def get_open_reconciled_episode_cases_for_occurrence(self, occurrence_case_id):
+    def get_open_active_reconciled_episode_cases_for_occurrence(self, occurrence_case_id):
         def _get_open_episode_cases_for_occurrence(occurrence_case_id):
             all_cases = self.case_accessor.get_reverse_indexed_cases([occurrence_case_id])
             return [case for case in all_cases
@@ -182,17 +186,18 @@ class Command(BaseModelReconciliationCommand):
                     if open_episode_case.get_case_property('is_active') == 'yes']
 
         all_open_episode_cases = _get_open_episode_cases_for_occurrence(occurrence_case_id)
-        open_active_episode_cases = _get_open_active_episode_cases(all_open_episode_cases)
+        open_active_episode_cases_for_occurrence = _get_open_active_episode_cases(all_open_episode_cases)
 
         # if there are multiple active open episode cases, reconcile them first
-        if len(open_active_episode_cases) > 1:
-            self.reconcile_episode_cases(open_active_episode_cases, occurrence_case_id)
+        if len(open_active_episode_cases_for_occurrence) > 1:
+            self.reconcile_open_active_episode_cases_for_occurrence(open_active_episode_cases_for_occurrence,
+                                                                    occurrence_case_id)
 
         if self.commit:
             # just confirm again that the episodes were reconciled well
             all_open_episode_cases = _get_open_episode_cases_for_occurrence(occurrence_case_id)
-            open_active_episode_cases = _get_open_active_episode_cases(all_open_episode_cases)
-            if len(open_active_episode_cases) > 1:
+            open_active_episode_cases_for_occurrence = _get_open_active_episode_cases(all_open_episode_cases)
+            if len(open_active_episode_cases_for_occurrence) > 1:
                 raise CommandError("Resolved open active episode cases were not resolved for occurrence, %s" %
                                    occurrence_case_id)
 
@@ -206,7 +211,7 @@ def last_user_edit_at(case):
             return form.metadata.timeEnd
 
 
-def get_relevant_episode_case_to_retain(all_cases, log_progress=False):
+def get_relevant_episode_case_by_dates(all_cases, log_progress=False):
     episodes_with_treatment_completed_on_earliest_date = []
     treatment_completed_earliest_date = None
     for episode_case in all_cases:
@@ -262,7 +267,7 @@ def get_case_recently_modified_on_phone(all_cases, log_progress):
     return recently_modified_case
 
 
-def get_open_occurrence_cases_from_person(person_case_id):
+def get_open_occurrence_cases_for_person(person_case_id):
     case_accessor = CaseAccessors(DOMAIN)
     all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     return [case for case in all_cases
