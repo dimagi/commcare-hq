@@ -27,6 +27,7 @@ from django.utils.translation import ugettext_lazy
 from custom.enikshay.tasks import EpisodeAdherenceUpdate, calculate_dose_status_by_day
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 Schedule = namedtuple("Schedule", ['days_dose_expected', 'mark_expected', 'title'])
 india_timezone = pytz.timezone(ENIKSHAY_TIMEZONE)
@@ -129,7 +130,7 @@ class HistoricalAdherenceReport(EnikshayReport):
 
     def get_doses(self):
         adherence_cases = []
-        for day, cases in self.get_adherence_cases_dict().iteritems():
+        for day, cases in six.iteritems(self.get_adherence_cases_dict()):
             adherence_cases.extend(cases)
 
         doses_taken_by_date = calculate_dose_status_by_day(

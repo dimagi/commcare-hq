@@ -274,7 +274,7 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
             )
             trigger_by_threshold[n] = trigger_for_n
 
-        trigger_dates_unique = self._list_items_unique(filter(None, threshold_prop_values_by_threshold.values()))
+        trigger_dates_unique = self._list_items_unique(filter(None, list(threshold_prop_values_by_threshold.values())))
         if not trigger_dates_unique:
             self._flag_program_team()
 
