@@ -1007,7 +1007,7 @@ class XForm(WrappedNode):
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
 
-        for path, data_node in leaf_data_nodes.iteritems():
+        for path, data_node in six.iteritems(leaf_data_nodes):
             if path not in excluded_paths:
                 bind = self.get_bind(path)
                 try:

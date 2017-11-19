@@ -3,6 +3,7 @@ import logging
 from django.core.management import BaseCommand, call_command
 
 from corehq.apps.es.apps import AppES
+import six
 
 
 logger = logging.getLogger('app_migration')
@@ -29,7 +30,7 @@ class Command(BaseCommand):
                 logger.info('migration failed')
                 failures[hit['_id']] = hit['domain']
 
-        for id, domain in failures.iteritems():
+        for id, domain in six.iteritems(failures):
             logger.info('Failed: {} in {}'.format(id, domain))
         logger.info('Total: {} successes, {} failures'.format(len(hits) - len(failures), len(failures)))
         logger.info('Done with migrate_all_apps_to_cmitfb')

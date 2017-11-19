@@ -22,6 +22,7 @@ from corehq.apps.hqwebapp.decorators import use_angular_js
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+import six
 
 
 class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -142,7 +143,7 @@ def _translate_name(names, language):
     try:
         return names[language]
     except KeyError:
-        first_name = names.iteritems().next()
+        first_name = six.iteritems(names)
         return u"{} [{}]".format(first_name[1], first_name[0])
 
 
@@ -439,7 +440,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         rows = []
         relationships = case_type.relationships
         relationships.update({'': case_type.name})
-        for relationship, type in relationships.iteritems():
+        for relationship, type in six.iteritems(relationships):
             if relationship and not opened_by[type] and not closed_by[type]:
                 rows.append((case_type.name, "[{}] {}".format(relationship, type)))
             for i in range(max(len(opened_by[type]), len(closed_by[type]))):
