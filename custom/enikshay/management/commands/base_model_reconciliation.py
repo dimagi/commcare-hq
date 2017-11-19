@@ -34,10 +34,6 @@ class BaseModelReconciliationCommand(BaseCommand):
             return False
         return True
 
-    @staticmethod
-    def get_result_file_headers():
-        raise NotImplementedError
-
     def email_report(self):
         csv_file = open(self.result_file_name)
         email = EmailMessage(
@@ -57,11 +53,11 @@ class BaseModelReconciliationCommand(BaseCommand):
             timestamp=datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),
         )
         with open(file_name, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers)
+            writer = csv.DictWriter(csvfile, fieldnames=self.result_file_headers)
             writer.writeheader()
         return file_name
 
     def writerow(self, row):
         with open(self.result_file_name, 'a') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=self.get_result_file_headers)
+            writer = csv.DictWriter(csvfile, fieldnames=self.result_file_headers)
             writer.writerow(row)
