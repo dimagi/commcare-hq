@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import, division
+from collections import namedtuple
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -577,9 +578,49 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def template_context(self):
-        aggregations = self.user_query().run().aggregations
-        last_submission_buckets = aggregations[0].raw_buckets
-        last_sync_buckets = aggregations[1].raw_buckets
+
+        class BucketSeries(namedtuple('Bucket', 'data_series total_series total')):
+            @property
+            @memoized
+            def percent_series(self):
+                def _pct(val, total):
+                    return (100. * float(val) / float(total)) if total else 0
+
+                return [
+                    {
+                        'series': 0,
+                        'x': row['x'],
+                        'y': _pct(row['y'], self.total)
+                    }
+                    for row in self.total_series
+                ]
+
+            def get_summary_data(self):
+                def _readable_pct_from_total(total_series, index):
+                    return '{0:.1f}%'.format(total_series[index - 1]['y'])
+
+                return [
+                    [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
+                    [_readable_pct_from_total(self.percent_series, 7), _('in the last week')],
+                    [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
+                    [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
+                ]
+
+        fake = True  # todo remove after demo
+        if fake:
+            with open('rec-results.json') as f:
+                import json
+                raw_data = json.loads(f.read())
+            aggregations = raw_data['aggregations']
+            last_sync_buckets = aggregations['last_sync']['buckets']
+            last_submission_buckets = aggregations['last_submission']['buckets']
+            total_users = raw_data['hits']['total']
+        else:
+            query = self.user_query().run()
+            aggregations = query.aggregations
+            last_submission_buckets = aggregations[0].raw_buckets
+            last_sync_buckets = aggregations[1].raw_buckets
+            total_users = query.total
 
         def _buckets_to_series(buckets):
             # start with N days of empty data
@@ -604,9 +645,6 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
             daily_series = []
             running_total_series = []
 
-            def _pct(val):
-                return (100. * float(val) / float(total)) if total else 0
-
             for i in range(days_of_history):
                 running_total += vals[i]
                 daily_series.append(
@@ -620,7 +658,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                     {
                         'series': 0,
                         'x': '{}'.format(today - timedelta(days=i)),
-                        'y': _pct(running_total)
+                        'y': running_total
                     }
                 )
 
@@ -636,33 +674,37 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                 {
                     'series': 0,
                     'x': 'more than {} days ago'.format(days_of_history),
-                    'y': _pct(running_total + extra),  # should always be 1
+                    'y': running_total + extra,
                 }
             )
-            return daily_series, running_total_series
+            return BucketSeries(daily_series, running_total_series, total)
 
-        last_submission_series, last_submission_totals = _buckets_to_series(last_submission_buckets)
-        last_sync_series, last_sync_totals = _buckets_to_series(last_sync_buckets)
-
+        submission_series = _buckets_to_series(last_submission_buckets)
+        sync_series = _buckets_to_series(last_sync_buckets)
         return {
             'last_submission_data': {
                 'key': _('Count of Users'),
-                'values': last_submission_series,
+                'values': submission_series.data_series,
                 'color': '#004abf',
             },
             'last_submission_totals': {
                 'key': _('Percent of Users'),
-                'values': last_submission_totals,
+                'values': submission_series.percent_series,
                 'color': '#004abf',
             },
             'last_sync_data': {
                 'key': _('Count of Users'),
-                'values': last_sync_series,
+                'values': sync_series.data_series,
                 'color': '#f58220',
             },
             'last_sync_totals': {
                 'key': _('Percent of Users'),
-                'values': last_sync_totals,
+                'values': sync_series.percent_series,
                 'color': '#f58220',
             },
+            'total_users': total_users,
+            'ever_submitted': submission_series.total,
+            'ever_synced': sync_series.total,
+            'submission_summary': submission_series.get_summary_data(),
+            'sync_summary': sync_series.get_summary_data(),
         }
