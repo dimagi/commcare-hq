@@ -198,7 +198,7 @@ class Product(Document):
         from corehq.apps.commtrack.util import encode_if_needed
         property_dict = {}
 
-        for prop, val in self.product_data.iteritems():
+        for prop, val in six.iteritems(self.product_data):
             property_dict['data: ' + prop] = encode_if_needed(val)
 
         return property_dict

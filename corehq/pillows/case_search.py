@@ -28,6 +28,7 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
 from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory, \
     ResumableBulkElasticPillowReindexer
+import six
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -55,7 +56,7 @@ def _get_case_properties(doc_dict):
 
     return base_case_properties + [
         {'key': key, 'value': value}
-        for key, value in dynamic_case_properties.iteritems()
+        for key, value in six.iteritems(dynamic_case_properties)
     ]
 
 

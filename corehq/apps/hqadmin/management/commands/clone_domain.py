@@ -11,6 +11,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
 from six.moves import input
+import six
 
 types = [
     "feature_flags",
@@ -320,7 +321,7 @@ class Command(BaseCommand):
         attachments = {}
         attachemnt_stubs = None
         if isinstance(doc, BlobMixin) and doc.blobs:
-            attachemnt_stubs = {k: v.to_json() for k, v in doc.blobs.iteritems()}
+            attachemnt_stubs = {k: v.to_json() for k, v in six.iteritems(doc.blobs)}
             doc['external_blobs'] = {}
             if doc._attachments:
                 del doc['_attachments']

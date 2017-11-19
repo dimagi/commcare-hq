@@ -353,7 +353,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
-        matches = {k for k, v in PERMISSIONS_PRESETS.iteritems() if v['name'] == name}
+        matches = {k for k, v in six.iteritems(PERMISSIONS_PRESETS) if v['name'] == name}
         return matches.pop() if matches else None
 
     @classmethod
@@ -362,7 +362,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def preset_permissions_names(cls):
-        return {details['name'] for role, details in PERMISSIONS_PRESETS.iteritems()}
+        return {details['name'] for role, details in six.iteritems(PERMISSIONS_PRESETS)}
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor',

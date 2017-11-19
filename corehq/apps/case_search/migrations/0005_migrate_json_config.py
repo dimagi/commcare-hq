@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 from corehq.sql_db.operations import HqRunPython
 from django.db import migrations
+import six
 
 
 def migrate_json_config_to_model(apps, schema_editor):
@@ -19,7 +20,7 @@ def migrate_json_config_to_model(apps, schema_editor):
             for p in old_fuzzy_property['properties']:
                 old_fuzzy_properties_by_casetype[old_fuzzy_property['case_type']].append(p)
 
-        for case_type, fuzzy_properties in old_fuzzy_properties_by_casetype.iteritems():
+        for case_type, fuzzy_properties in six.iteritems(old_fuzzy_properties_by_casetype):
             new_fuzzy_properties = FuzzyProperties(
                 domain=config.domain,
                 case_type=case_type,

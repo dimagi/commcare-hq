@@ -27,6 +27,7 @@ from corehq.apps.commtrack.exceptions import (
 )
 import re
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
+import six
 
 logger = logging.getLogger('commtrack.sms')
 
@@ -476,7 +477,7 @@ def send_confirmation(v, data):
     msg = 'received stock report for %s(%s) %s' % (
         static_loc.site_code,
         truncate(location_name, 20),
-        ' '.join(sorted(summarize_action(a, txs) for a, txs in tx_by_action.iteritems()))
+        ' '.join(sorted(summarize_action(a, txs) for a, txs in six.iteritems(tx_by_action)))
     )
 
     send_sms_to_verified_number(v, msg, metadata=metadata)

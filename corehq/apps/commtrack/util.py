@@ -33,7 +33,7 @@ def all_sms_codes(domain):
     products = dict((p.code, p) for p in Product.by_domain(domain))
 
     sms_codes = zip(('action', 'product'), (actions, products))
-    return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in codes.iteritems()] for type, codes in sms_codes)))
+    return dict(itertools.chain(*([(k.lower(), (type, v)) for k, v in six.iteritems(codes)] for type, codes in sms_codes)))
 
 
 def get_supply_point_and_location(domain, site_code):

@@ -690,7 +690,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return self.deleted
 
     def dynamic_case_properties(self):
-        return OrderedDict(sorted(self.case_json.iteritems()))
+        return OrderedDict(sorted(six.iteritems(self.case_json)))
 
     def to_api_json(self, lite=False):
         from .serializers import CommCareCaseSQLAPISerializer

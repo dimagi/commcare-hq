@@ -61,7 +61,7 @@ def check_headers(user_specs):
     headers = set(user_specs.fieldnames)
 
     # Backwards warnings
-    for (old_name, new_name) in old_headers.iteritems():
+    for (old_name, new_name) in six.iteritems(old_headers):
         if old_name in headers:
             messages.append(
                 _("'The column header '{old_name}' is deprecated, please use '{new_name}' instead.").format(

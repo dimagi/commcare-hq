@@ -1785,7 +1785,7 @@ class FormExportDataSchema(ExportDataSchema):
             _add_to_group_schema(path, case_attribute)
 
         # Add case updates
-        for case_property, case_path in case_properties.iteritems():
+        for case_property, case_path in six.iteritems(case_properties):
             if repeat_context:
                 # This removes the repeat part of the path. For example, if inside
                 # a repeat group that has the following path:
@@ -2024,7 +2024,7 @@ class CaseExportDataSchema(ExportDataSchema):
             last_occurrences={app_id: app_version},
         )
 
-        for case_type, case_properties in case_property_mapping.iteritems():
+        for case_type, case_properties in six.iteritems(case_property_mapping):
 
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(

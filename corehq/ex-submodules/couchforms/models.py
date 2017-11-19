@@ -307,7 +307,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             return meta_json
 
         return {name: _meta_to_json(meta)
-            for name, meta in self.blobs.iteritems()
+            for name, meta in six.iteritems(self.blobs)
             if name != ATTACHMENT_NAME}
 
     def xml_md5(self):

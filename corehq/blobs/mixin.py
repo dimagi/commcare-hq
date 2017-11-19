@@ -71,7 +71,7 @@ class BlobMixin(Document):
             content_length=info.get("length", None),
             content_type=info.get("content_type", None),
             digest=info.get("digest", None),
-        ) for name, info in self._attachments.iteritems()}
+        ) for name, info in six.iteritems(self._attachments)}
         value.update(self.external_blobs)
         return value
 
@@ -211,7 +211,7 @@ class BlobMixin(Document):
             except:
                 typ, exc, tb = sys.exc_info()
                 # delete new blobs that were not saved
-                for name, meta in self.external_blobs.iteritems():
+                for name, meta in six.iteritems(self.external_blobs):
                     old_meta = old_external_blobs.get(name)
                     if old_meta is None or meta.id != old_meta.id:
                         db.delete(meta.id, bucket)
@@ -225,12 +225,12 @@ class BlobMixin(Document):
                 # delete replaced blobs
                 deleted = set()
                 blobs = self.blobs
-                for name, meta in list(old_external_blobs.iteritems()):
+                for name, meta in list(six.iteritems(old_external_blobs)):
                     if name not in blobs or meta.id != blobs[name].id:
                         db.delete(meta.id, bucket)
                         deleted.add(meta.id)
                 # delete newly created blobs that were overwritten or deleted
-                for meta in chain.from_iterable(new_deleted.itervalues()):
+                for meta in chain.from_iterable(six.itervalues(new_deleted)):
                     if meta.id not in deleted:
                         db.delete(meta.id, bucket)
         return atomic_blobs_context()
@@ -268,7 +268,7 @@ class BlobHelper(object):
         self._attachments = doc.get("_attachments")
         blobs = self.get_external_blobs(doc, {})
         self.external_blobs = {n: BlobMeta.wrap(m.copy())
-                               for n, m in blobs.iteritems()}
+                               for n, m in six.iteritems(blobs)}
 
     _atomic_blobs = None
 
@@ -331,7 +331,7 @@ class BlobHelper(object):
                 except:
                     self.doc["_attachments"] = self._attachments
                     self.doc["external_blobs"] = {name: meta.to_json()
-                        for name, meta in self.external_blobs.iteritems()}
+                        for name, meta in six.iteritems(self.external_blobs)}
                     raise
         return context()
 
@@ -341,7 +341,7 @@ class BlobHelper(object):
         if "external_blobs" in self.doc:
             # because put_attachment calls self.save()
             self.doc["external_blobs"] = {name: meta.to_json()
-                for name, meta in self.external_blobs.iteritems()}
+                for name, meta in six.iteritems(self.external_blobs)}
 
     def save(self):
         self._sync_doc()
@@ -366,7 +366,7 @@ class DeferredBlobMixin(BlobMixin):
         value = super(DeferredBlobMixin, self).blobs
         if self._deferred_blobs:
             value = dict(value)
-            for name, info in self._deferred_blobs.iteritems():
+            for name, info in six.iteritems(self._deferred_blobs):
                 if info is not None:
                     value[name] = BlobMeta(
                         id=None,
@@ -461,7 +461,7 @@ class DeferredBlobMixin(BlobMixin):
             delete_names = []
             with self.atomic_blobs(super(DeferredBlobMixin, self).save):
                 # list deferred blobs to avoid modification during iteration
-                for name, info in list(self._deferred_blobs.iteritems()):
+                for name, info in list(six.iteritems(self._deferred_blobs)):
                     if info is not None:
                         self.put_attachment(name=name, **info)
                     else:
@@ -517,7 +517,7 @@ def bulk_atomic_blobs(docs):
         delete_blobs = []
         for doc in docs:
             if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
-                for name, info in list(doc._deferred_blobs.iteritems()):
+                for name, info in list(six.iteritems(doc._deferred_blobs)):
                     if info is not None:
                         doc.put_attachment(name=name, **info)
                     else:

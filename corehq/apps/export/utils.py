@@ -42,11 +42,12 @@ from .const import (
 )
 
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
+import six
 
 
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     is_deleted = True
-    for app_id, version in app_ids_and_versions.iteritems():
+    for app_id, version in six.iteritems(app_ids_and_versions):
         if last_occurrences.get(app_id) >= version:
             is_deleted = False
             break
@@ -391,7 +392,7 @@ def _convert_transform(serializable_transform):
     transform_fn = to_function(serializable_transform.dumps_simple())
     if not transform_fn:
         return None
-    for slug, fn in list(TRANSFORM_FUNCTIONS.iteritems()) + list(DEID_TRANSFORM_FUNCTIONS.iteritems()):
+    for slug, fn in list(six.iteritems(TRANSFORM_FUNCTIONS)) + list(six.iteritems(DEID_TRANSFORM_FUNCTIONS)):
         if fn == transform_fn:
             return slug
     return None
@@ -432,7 +433,7 @@ def _get_column_for_stock_form_export(new_table, column_path, index):
     stock_column_to_readable_path = {c: c.item.readable_path for c in stock_columns}
 
     matched_columns = []
-    for column, readable_path in stock_column_to_readable_path.iteritems():
+    for column, readable_path in six.iteritems(stock_column_to_readable_path):
         if _remove_question_id_from_path(readable_path) == index:
             matched_columns.append(column)
 

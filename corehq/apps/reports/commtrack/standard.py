@@ -21,6 +21,7 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, ge
     get_product_ids_for_program, get_consumption_helper_from_ledger_value
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
+import six
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -436,7 +437,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
                                        data=case_iter())
 
         status_counts = dict((loc_id, self.status_tally(statuses))
-                             for loc_id, statuses in status_by_agg_site.iteritems())
+                             for loc_id, statuses in six.iteritems(status_by_agg_site))
 
         master_tally = self.status_tally([site['reporting_status'] for site in statuses])
 

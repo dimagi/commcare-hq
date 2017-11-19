@@ -416,7 +416,7 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
         locs = _location_map(by_supply_point.keys())
 
-        for loc_id, subcases in by_supply_point.iteritems():
+        for loc_id, subcases in six.iteritems(by_supply_point):
             if loc_id not in locs:
                 continue  # it's archived, skip
             loc = locs[loc_id]

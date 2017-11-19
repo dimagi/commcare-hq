@@ -38,7 +38,7 @@ def explode_cases(domain, user_id, factor, task=None):
 
     cases = {}
     new_case_ids = {}
-    for case_id, case in sync_result.cases.iteritems():
+    for case_id, case in six.iteritems(sync_result.cases):
         if case.case_type != USERCASE_TYPE:
             cases[case_id] = case
             new_case_ids[case_id] = [str(uuid.uuid4()) for _ in range(factor - 1)]
@@ -71,7 +71,7 @@ def explode_cases(domain, user_id, factor, task=None):
             new_case.index = {
                 key: IndexAttrs(
                     i.case_type, new_case_ids[i.case_id][explosion], i.relationship
-                ) for key, i in cases[old_case_id].index.iteritems()
+                ) for key, i in six.iteritems(cases[old_case_id].index)
             }
             progress += queue_case(new_case.as_string(), queue, progress)
 

@@ -1,3 +1,6 @@
+import six
+
+
 def values_list(hits, *fields, **kwargs):
     """modeled after django's QuerySet.values_list"""
     flat = kwargs.pop('flat', False)
@@ -26,7 +29,7 @@ def flatten_field_dict(results, fields_property='fields'):
     https://www.elastic.co/guide/en/elasticsearch/reference/1.3/_return_values.html
     """
     field_dict = results.get(fields_property, {})
-    for key, val in field_dict.iteritems():
+    for key, val in six.iteritems(field_dict):
         new_val = val
         if type(val) == list and len(val) == 1:
             new_val = val[0]

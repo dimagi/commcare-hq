@@ -101,6 +101,7 @@ from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
+import six
 
 
 @require_superuser
@@ -977,7 +978,7 @@ def doc_in_es(request):
 
 @require_superuser
 def raw_couch(request):
-    get_params = dict(request.GET.iteritems())
+    get_params = dict(six.iteritems(request.GET))
     return HttpResponseRedirect(reverse("raw_doc", params=get_params))
 
 

@@ -37,7 +37,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
             loader = getattr(self, '_get_data_%s' % adapter)
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
-        data = loader(self.data_source, dict(self.request.GET.iteritems()))
+        data = loader(self.data_source, dict(six.iteritems(self.request.GET)))
 
         return self._to_geojson(data, geo_col)
 
@@ -80,13 +80,13 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                         depth += 1
                     feature_type = 'MultiPolygon' if depth == 4 else 'Polygon'
 
-                properties = dict((k, v) for k, v in row.iteritems() if k != geo_col)
+                properties = dict((k, v) for k, v in six.iteritems(row) if k != geo_col)
                 # handle 'display value / raw value' fields (for backwards compatibility with
                 # existing data sources)
                 # note: this is not ideal for the maps report, as we have no idea how to properly
                 # format legends; it's better to use a formatter function in the maps report config
                 display_props = {}
-                for k, v in properties.iteritems():
+                for k, v in six.iteritems(properties):
                     if isinstance(v, dict) and set(v.keys()) == set(('html', 'sort_key')):
                         properties[k] = v['sort_key']
                         display_props['__disp_%s' % k] = v['html']
@@ -184,7 +184,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 'external_id',
                 'owner_id',
              )
-            data.update(('prop_%s' % k, v) for k, v in case['properties'].iteritems() if k not in standard_props)
+            data.update(('prop_%s' % k, v) for k, v in six.iteritems(case['properties']) if k not in standard_props)
 
             GEO_DEFAULT = 'gps' # case property
             geo = None

@@ -19,6 +19,7 @@ from corehq.blobs.tests.util import (TemporaryFilesystemBlobDB,
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 from mock import patch
+import six
 
 
 class BaseTestCase(SimpleTestCase):
@@ -579,12 +580,12 @@ class TestBlobHelper(BaseTestCase):
         if "doc_type" not in doc:
             doc["doc_type"] = "FakeDoc"
         if doc.get("_attachments"):
-            for name, attach in doc["_attachments"].iteritems():
+            for name, attach in six.iteritems(doc["_attachments"]):
                 self.couch.put_attachment(doc, name=name, **attach)
         obj = type_(doc, self.couch)
         if "external_blobs" in doc:
             save_log = list(self.couch.save_log)
-            for name, attach in list(doc["external_blobs"].iteritems()):
+            for name, attach in list(six.iteritems(doc["external_blobs"])):
                 obj.put_attachment(name=name, **attach)
             self.couch.save_log = save_log
         return obj
