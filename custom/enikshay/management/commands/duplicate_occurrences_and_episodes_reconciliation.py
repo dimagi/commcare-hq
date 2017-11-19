@@ -36,6 +36,7 @@ class Command(BaseModelReconciliationCommand):
 
     def handle(self, *args, **options):
         self.commit = options.get('commit')
+        self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
@@ -91,7 +92,8 @@ class Command(BaseModelReconciliationCommand):
         # Multiple active case found with confirmed drtb
         # find the most relevant episode case and retain the occurrence associated with it
         elif active_episode_confirmed_drtb_cases_count > 1:
-            episode_case_to_retained = get_relevant_episode_case_to_retain(active_episode_confirmed_drtb_cases)
+            episode_case_to_retained = get_relevant_episode_case_to_retain(active_episode_confirmed_drtb_cases,
+                                                                           log_progress=self.log_progress)
             retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_to_retained.case_id)
         # Only one active case found with confirmed tb
         # Simply retain the corresponding occurrence case
@@ -101,12 +103,14 @@ class Command(BaseModelReconciliationCommand):
         # Multiple active case found with confirmed tb
         # find the most relevant episode case and retain the occurrence associated with it
         elif active_episode_confirmed_tb_cases_count > 1:
-            episode_case_to_retained = get_relevant_episode_case_to_retain(active_episode_confirmed_tb_cases)
+            episode_case_to_retained = get_relevant_episode_case_to_retain(active_episode_confirmed_tb_cases,
+                                                                           log_progress=self.log_progress)
             retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_to_retained.case_id)
         # No active case found with confirmed drtb or confirmed tb
         # find the most relevant episode case and retain the occurrence associated with it
         else:
-            episode_case_to_retained = get_relevant_episode_case_to_retain(all_episode_cases)
+            episode_case_to_retained = get_relevant_episode_case_to_retain(all_episode_cases,
+                                                                           log_progress=self.log_progress)
             retain_case = get_occurrence_case_from_episode(DOMAIN, episode_case_to_retained.case_id)
         self.close_cases(open_occurrence_cases, retain_case, person_case_id, "occurrence")
 
@@ -147,8 +151,7 @@ class Command(BaseModelReconciliationCommand):
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 
-    @staticmethod
-    def _get_open_person_case_ids_to_process():
+    def _get_open_person_case_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
@@ -159,10 +162,11 @@ class Command(BaseModelReconciliationCommand):
                 .values_list('case_id', flat=True)
             )
             num_case_ids = len(case_ids)
-            print("processing %d docs from db %s" % (num_case_ids, db))
+            if self.log_progress:
+                print("processing %d docs from db %s" % (num_case_ids, db))
             for i, case_id in enumerate(case_ids):
                 yield case_id
-                if i % 1000 == 0:
+                if i % 1000 == 0 and self.log_progress:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
     def reconcile_episode_cases(self, episode_cases, occurrence_case_id):
@@ -187,13 +191,16 @@ class Command(BaseModelReconciliationCommand):
         if confirmed_drtb_episode_cases_count == 1:
             retain_case = confirmed_drtb_episode_cases[0]
         elif confirmed_drtb_episode_cases_count > 1:
-            retain_case = get_relevant_episode_case_to_retain(confirmed_drtb_episode_cases)
+            retain_case = get_relevant_episode_case_to_retain(confirmed_drtb_episode_cases,
+                                                              log_progress=self.log_progress)
         elif confirmed_tb_episode_cases_count == 1:
             retain_case = confirmed_tb_episode_cases[0]
         elif confirmed_tb_episode_cases_count > 1:
-            retain_case = get_relevant_episode_case_to_retain(confirmed_tb_episode_cases)
+            retain_case = get_relevant_episode_case_to_retain(confirmed_tb_episode_cases,
+                                                              log_progress=self.log_progress)
         else:
-            retain_case = get_relevant_episode_case_to_retain(episode_cases)
+            retain_case = get_relevant_episode_case_to_retain(episode_cases,
+                                                              log_progress=self.log_progress)
         self.close_cases(episode_cases, retain_case, occurrence_case_id, 'episode')
 
     def get_open_reconciled_episode_cases_for_occurrence(self, occurrence_case_id):
@@ -232,7 +239,7 @@ def last_user_edit_at(case):
             return form.metadata.timeEnd
 
 
-def get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=False):
+def get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=False, log_progress=False):
     if not by_last_user_edit:
         episodes_with_treatment_completed_on_earliest_date = []
         treatment_completed_earliest_date = None
@@ -262,11 +269,13 @@ def get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=False):
         # so just get the one recently user edited from these ones
         elif len(episodes_with_treatment_completed_on_earliest_date) > 1:
             return get_relevant_episode_case_to_retain(episodes_with_treatment_completed_on_earliest_date,
-                                                       by_last_user_edit=True)
+                                                       by_last_user_edit=True,
+                                                       log_progress=log_progress)
         # no case found with treatment_card_completed_date set
         # so just get the recently user edit case
         else:
-            return get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=True)
+            return get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=True,
+                                                       log_progress=log_progress)
 
     recently_modified_case = None
     recently_modified_time = None
@@ -279,7 +288,8 @@ def get_relevant_episode_case_to_retain(all_cases, by_last_user_edit=False):
             elif recently_modified_time and recently_modified_time < last_user_edit_on_phone:
                 recently_modified_time = last_user_edit_on_phone
                 recently_modified_case = case
-            elif recently_modified_time and recently_modified_time == last_user_edit_on_phone:
+            elif (recently_modified_time and recently_modified_time == last_user_edit_on_phone
+                    and log_progress):
                 print("This looks like a super edge case that can be looked at. "
                       "Not blocking as of now. Case id: {case_id}".format(case_id=case.case_id))
 

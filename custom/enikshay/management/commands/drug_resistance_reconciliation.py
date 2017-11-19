@@ -31,6 +31,7 @@ class Command(BaseModelReconciliationCommand):
 
     def handle(self, *args, **options):
         self.commit = options.get('commit')
+        self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
@@ -43,8 +44,9 @@ class Command(BaseModelReconciliationCommand):
             if self.public_app_case(occurrence_case_id):
                 self.reconcile_case(occurrence_case_id)
 
-        print("All drug id values found %s" % self.drug_id_values)
-        print("All sensitivity values found %s" % self.sensitivity_values)
+        if self.log_progress:
+            print("All drug id values found %s" % self.drug_id_values)
+            print("All sensitivity values found %s" % self.sensitivity_values)
 
         self.email_report()
 
@@ -65,7 +67,8 @@ class Command(BaseModelReconciliationCommand):
         for drug_resistance_case in drug_resistance_cases:
             drug_id = drug_resistance_case.get_case_property('drug_id')
             if drug_id not in self.drug_id_values:
-                print("New drug_id value found, %s" % drug_id)
+                if self.log_progress:
+                    print("New drug_id value found, %s" % drug_id)
                 self.drug_id_values.append(drug_id)
             drug_resistance_cases_by_drug_id[drug_id].append(drug_resistance_case)
         for drug_id, drug_resistance_cases_for_drug in drug_resistance_cases_by_drug_id.items():
@@ -110,7 +113,7 @@ class Command(BaseModelReconciliationCommand):
         # if there is more than one case with sensitivity resistant, keep the one
         # opened first.
         if resistant_drug_resistance_cases_count > 1:
-            retain_case = sorted(resistant_drug_resistance_cases, key=lambda x: x.opened_on)[0]
+            retain_case = self.get_first_opened_case(resistant_drug_resistance_cases)
             self.close_cases(drug_resistance_cases, occurrence_case_id, drug_id, retain_case,
                              "More than one resistance drug cases, picked first opened.")
         # if there is only one case with sensitivity resistant, keep that, close rest.
@@ -118,26 +121,25 @@ class Command(BaseModelReconciliationCommand):
             retain_case = resistant_drug_resistance_cases[0]
             self.close_cases(drug_resistance_cases, occurrence_case_id, drug_id, retain_case,
                              "Only one resistance drug case found.")
-        # if there are more than one cases with sensitivity sensitive, keep the one
+        # if there is more than one case with sensitivity sensitive, keep the one
         # opened first.
         elif sensitive_drug_resistance_cases_count > 1:
-            retain_case = sorted(sensitive_drug_resistance_cases, key=lambda x: x.opened_on)[0]
+            retain_case = self.get_first_opened_case(sensitive_drug_resistance_cases)
             self.close_cases(drug_resistance_cases, occurrence_case_id, drug_id, retain_case,
                              "More than one sensitive drug cases, picked first opened.")
         # if there is only one case with sensitivity sensitive, keep that, close rest.
         elif sensitive_drug_resistance_cases_count == 1:
-            retain_case = sensitive_drug_resistance_cases[0].get
+            retain_case = sensitive_drug_resistance_cases[0]
             self.close_cases(drug_resistance_cases, occurrence_case_id, drug_id, retain_case,
                              "Only one sensitive drug case found.")
         # No case has sensitivity resistant and sensitive. Probably multiple cases with unknown status
         # keep the one opened first, close rest.
         else:
-            retain_case = sorted(drug_resistance_cases, key=lambda x: x.opened_on)[0]
+            retain_case = sorted(drug_resistance_cases)
             self.close_cases(drug_resistance_cases, occurrence_case_id, drug_id, retain_case,
                              "Picked first opened.")
 
-    @staticmethod
-    def _get_open_occurrence_case_ids_to_process():
+    def _get_open_occurrence_case_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
@@ -148,10 +150,11 @@ class Command(BaseModelReconciliationCommand):
                 .values_list('case_id', flat=True)
             )
             num_case_ids = len(case_ids)
-            print("processing %d docs from db %s" % (num_case_ids, db))
+            if self.log_progress:
+                print("processing %d docs from db %s" % (num_case_ids, db))
             for i, case_id in enumerate(case_ids):
                 yield case_id
-                if i % 1000 == 0:
+                if i % 1000 == 0 and self.log_progress:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
     def close_cases(self, all_cases, occurrence_case_id, drug_id, retain_case, retain_reason):

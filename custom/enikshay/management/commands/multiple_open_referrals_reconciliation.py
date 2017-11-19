@@ -26,6 +26,7 @@ class Command(BaseModelReconciliationCommand):
     def handle(self, *args, **options):
         # self.commit = options.get('commit')
         self.commit = False
+        self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
@@ -38,7 +39,7 @@ class Command(BaseModelReconciliationCommand):
         self.email_report()
 
     def reconcile_cases(self, referral_cases, occurrence_case_id):
-        retain_case = sorted(referral_cases, key=lambda x: x.opened_on)[0]
+        retain_case = self.get_first_opened_case(referral_cases)
         self.close_cases(referral_cases, occurrence_case_id, retain_case)
 
     def public_app_case(self, occurrence_case_id):
@@ -52,8 +53,7 @@ class Command(BaseModelReconciliationCommand):
             return False
         return super(Command, self).public_app_case(person_case)
 
-    @staticmethod
-    def _get_open_occurrence_case_ids_to_process():
+    def _get_open_occurrence_case_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
@@ -64,10 +64,11 @@ class Command(BaseModelReconciliationCommand):
                 .values_list('case_id', flat=True)
             )
             num_case_ids = len(case_ids)
-            print("processing %d docs from db %s" % (num_case_ids, db))
+            if self.log_progress:
+                print("processing %d docs from db %s" % (num_case_ids, db))
             for i, case_id in enumerate(case_ids):
                 yield case_id
-                if i % 1000 == 0:
+                if i % 1000 == 0 and self.log_progress:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
     def close_cases(self, all_cases, occurrence_case_id, retain_case):

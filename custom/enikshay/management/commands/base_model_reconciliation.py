@@ -19,12 +19,14 @@ class BaseModelReconciliationCommand(BaseCommand):
     def __init__(self, *args, **kwargs):
         super(BaseModelReconciliationCommand, self).__init__(*args, **kwargs)
         self.commit = False
+        self.log_progress = None
         self.recipient = None
         self.result_file_name = None
 
     def add_arguments(self, parser):
         parser.add_argument('--commit', action='store_true')
         parser.add_argument('--recipient', type=str)
+        parser.add_argument('--log_progress', action='store_true')
 
     def handle(self, *args, **options):
         raise CommandError(
@@ -61,3 +63,7 @@ class BaseModelReconciliationCommand(BaseCommand):
         with open(self.result_file_name, 'a') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.result_file_headers)
             writer.writerow(row)
+
+    @staticmethod
+    def get_first_opened_case(all_cases):
+        return sorted(all_cases, key=lambda x: x.opened_on)[0]

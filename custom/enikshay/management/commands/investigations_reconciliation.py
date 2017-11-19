@@ -47,6 +47,7 @@ class Command(BaseModelReconciliationCommand):
     def handle(self, *args, **options):
         # self.commit = options.get('commit')
         self.commit = False
+        self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
@@ -167,8 +168,7 @@ class Command(BaseModelReconciliationCommand):
 
         return investigation_cases_to_reconcile
 
-    @staticmethod
-    def _get_open_person_case_ids_to_process():
+    def _get_open_person_case_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
@@ -179,10 +179,11 @@ class Command(BaseModelReconciliationCommand):
                 .values_list('case_id', flat=True)
             )
             num_case_ids = len(case_ids)
-            print("processing %d docs from db %s" % (num_case_ids, db))
+            if self.log_progress:
+                print("processing %d docs from db %s" % (num_case_ids, db))
             for i, case_id in enumerate(case_ids):
                 yield case_id
-                if i % 1000 == 0:
+                if i % 1000 == 0 and self.log_progress:
                     print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
 
