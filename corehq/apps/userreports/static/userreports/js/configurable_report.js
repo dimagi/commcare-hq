@@ -1,4 +1,4 @@
-/* globals HQReport, kmqPushSafe */
+/* globals HQReport */
 hqDefine("userreports/js/configurable_report", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -19,7 +19,7 @@ hqDefine("userreports/js/configurable_report", function() {
             });
             hqImport('userreports/js/report_analytics').track.event("Loaded Report Builder Report");
             $editReportButton.click(function () {
-                kmqPushSafe(["trackClick", "rbv2_click_edit_report", "RBv2 - Click Edit Report"]);
+                hqImport('analytics/js/kissmetrics').track.event("RBv2 - Click Edit Report");
             });
         }
 
