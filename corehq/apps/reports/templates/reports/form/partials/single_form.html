@@ -63,7 +63,7 @@ requires imports/proptable.html to be included in the main template
                 }
             );
             _analytics_usage('Archive Form Submission', analyticsCallback);
-            analytics.workflow("Clicked on Archive Form", {}, analyticsCallback);
+            hqImport('analytics/js/kissmetrics').track.event("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
         });

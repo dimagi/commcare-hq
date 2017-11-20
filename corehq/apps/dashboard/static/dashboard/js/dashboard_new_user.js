@@ -1,7 +1,7 @@
 /* globals hqDefine */
 hqDefine("static/dashboard/js/dashboard_new_user", function() {
     $(function() {
-        analytics.workflow('Visited new user dashboard');
+        hqImport('analytics/js/kissmetrics').track.event('Visited new user dashboard');
         var $links = [];
         var templates = hqImport('hqwebapp/js/initial_page_data').get('templates');
         _.each(templates, function(template, index) {

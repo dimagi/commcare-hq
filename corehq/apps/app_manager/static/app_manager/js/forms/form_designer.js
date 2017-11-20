@@ -47,7 +47,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 app_manager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
                 if (initial_page_data("days_since_created")) {
-                    analytics.workflow('Saved the Form Builder within first 24 hours');
+                    hqImport('analytics/js/kissmetrics').track.event('Saved the Form Builder within first 24 hours');
                 }
             },
             onReady: function() {
@@ -65,7 +65,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
                 if (initial_page_data('days_since_created') === 0) {
                     $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
-                        analytics.workflow('Added question in Form Builder within first 24 hours');
+                        hqImport('analytics/js/kissmetrics').track.event('Added question in Form Builder within first 24 hours');
                     });
                 }
             },
@@ -112,7 +112,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
             });
         });
-        analytics.workflow('Entered the Form Builder');
+        hqImport('analytics/js/kissmetrics').track.event('Entered the Form Builder');
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
 
@@ -159,7 +159,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         });
         $('#edit-form-name-modal').koApplyBindings(editDetails);
         $("#edit-form-name-modal button[type='submit']").click(function() {
-            window.analytics.workflow("Renamed form from form builder");
+            hqImport('analytics/js/kissmetrics').track.event("Renamed form from form builder");
         });
     });
 });

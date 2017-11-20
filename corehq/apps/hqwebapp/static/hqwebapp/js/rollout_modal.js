@@ -7,7 +7,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
     function snooze(slug) {
         $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
         _trackSoftRollout.event("snooze", slug);
-        window.analytics.workflow("Soft Rollout snooze " + slug);
+        hqImport('analytics/js/kissmetrics').track.event("Soft Rollout snooze " + slug);
     }
 
     function cookieName(slug) {
@@ -45,7 +45,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                 },
             });
             _trackSoftRollout.event("enable", slug);
-            window.analytics.workflow("Soft Rollout enable " + slug);
+            hqImport('analytics/js/kissmetrics').track.event("Soft Rollout enable " + slug);
         });
 
         // User clicks to snooze
@@ -75,7 +75,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                 },
             });
             _trackSoftRollout.event("disable", slug);
-            window.analytics.workflow("Soft Rollout disable " + slug);
+            hqImport('analytics/js/kissmetrics').track.event("Soft Rollout disable " + slug);
         });
     });
 });

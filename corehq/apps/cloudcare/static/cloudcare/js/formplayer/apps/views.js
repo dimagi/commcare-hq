@@ -88,7 +88,7 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
         startApp: function(e) {
             e.preventDefault();
-            window.analytics.workflow("[app-preview] User clicked Start App");
+            hqImport('analytics/js/kissmetrics').track.event("[app-preview] User clicked Start App");
             hqImport('analytics/js/google').track.event("App Preview", "User clicked Start App");
             FormplayerFrontend.trigger("app:select", this.appId);
         },

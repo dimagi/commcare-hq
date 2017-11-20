@@ -1,4 +1,3 @@
-/* global analytics */
 (function (angular, undefined) {
     'use strict';
     // module: hq.download_export
@@ -139,7 +138,7 @@
             $scope.formData['location_restricted_mobile_worker'] = hqImport('reports/js/reports.util').urlSerialize($('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
-            analytics.workflow("Clicked Prepare Export");
+            hqImport('analytics/js/kissmetrics').track.event("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -283,7 +282,7 @@
             hqImport('analytics/js/google').track.event(
                 "Download Export",
                             hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
-            analytics.workflow("Clicked Download button");
+            hqImport('analytics/js/kissmetrics').track.event("Clicked Download button");
         };
     };
     download_export.controller(exportsControllers);

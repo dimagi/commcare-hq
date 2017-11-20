@@ -145,7 +145,7 @@
                 $scope.resetForm();
             });
             $(formModalSelector).on('show.bs.modal', function () {
-                window.analytics.workflow("Clicked New Export");
+                hqImport('analytics/js/kissmetrics').track.event("Clicked New Export");
             });
         }
 

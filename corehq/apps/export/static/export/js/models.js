@@ -1,4 +1,3 @@
-/* globals analytics */
 /**
  * @file Defines all models for the export page. Models map to python models in
  * corehq/apps/export/models/new.py
@@ -267,7 +266,7 @@ hqDefine('export/js/models', function () {
         if (this.isNew()) {
             eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
             hqImport('analytics/js/google').track.event(eventCategory, 'Custom export creation', '');
-            analytics.workflow("Clicked 'Create' in export edit page", callback);
+            hqImport('analytics/js/kissmetrics').track.event("Clicked 'Create' in export edit page", callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
         }
