@@ -302,7 +302,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         };
 
         self.truncateResult = function(output, maxLines, addElipsis) {
-            var items = output.split(RegExp("\r?\n"));
+            var items = output.split(RegExp("\r?\n")); // eslint-disable-line no-control-regex
             if(items.length > maxLines) {
                 var toReturn= items.slice(0, maxLines).join("\n");
                 if(addElipsis) {
