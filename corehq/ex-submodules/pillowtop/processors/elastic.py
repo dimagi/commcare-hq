@@ -68,12 +68,12 @@ class ElasticProcessor(PillowProcessor):
 class BulkElasticProcessor(ElasticProcessor):
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
         super(BulkElasticProcessor, self).__init__(elasticsearch, index_info, doc_prep_fn, doc_filter_fn)
-        self.docs_to_save = []
-        self.doc_ids_to_delete = []
+        self.docs_to_save = dict()
+        self.doc_ids_to_delete = set()
 
     def process_change(self, pillow_instance, change):
         if change.deleted and change.id:
-            self.docs_to_delete.append(change.id)
+            self.docs_to_delete.add(change.id)
             return
 
         doc = change.get_document()
@@ -86,7 +86,7 @@ class BulkElasticProcessor(ElasticProcessor):
 
         # prepare doc for es
         doc_ready_to_save = self.doc_transform_fn(doc)
-        self.docs_to_save.append(doc_ready_to_save)
+        self.docs_to_save[doc['_id']] = doc_ready_to_save
 
     def save_docs(self):
         # pretty similar to build_bulk_payload, but that uses changes and doesn't ensure revisions
@@ -100,25 +100,32 @@ class BulkElasticProcessor(ElasticProcessor):
                 }
             })
 
-        for doc in self.docs_to_save:
+        errors = dict()
+        for doc_id, doc in self.docs_to_save.items():
+            if doc_id in self.doc_ids_to_delete:
+                continue
+
             try:
                 payload.append({
                     "index": {
                         "_index": self.index_info.index,
                         "_type": self.index_info.type,
-                        "_id": doc['_id']
+                        "_id": doc_id
                     }
                 })
                 payload.append(doc)
             except Exception as e:
-                # handle error
-                pass
+                errors[doc_id] = e
 
         payloads = prepare_bulk_payloads(payload, 10 ** 7)
 
         for payload in payloads:
             # aggregate results and return docs with errors to be put in pillow error
             results = self._send_payload_with_retries(payload)
+            errors.update(results)
+
+        for error in errors:
+            handle_pillow_error(False, False, error)
 
         return True
 
@@ -127,7 +134,6 @@ class BulkElasticProcessor(ElasticProcessor):
 
         retries = 0
         bulk_start = datetime.utcnow()
-        success = False
         while retries < 3:
             if retries:
                 retry_time = (datetime.utcnow() - bulk_start).seconds + retries * 15
@@ -138,16 +144,19 @@ class BulkElasticProcessor(ElasticProcessor):
                 bulk_start = datetime.utcnow()
 
             try:
-                self.es.bulk(payload)
-                # figure out docs with errors and send them back
-                # https://www.elastic.co/guide/en/elasticsearch/guide/1.x/bulk.html
-                success = True
-                break
+                res = self.es.bulk(payload)
             except Exception:
                 retries += 1
                 pillow_logging.exception("\tException sending payload to ES")
+            else:
+                return {
+                    value['_id']: value['error']
+                    for doc_result in res['items']
+                    for value in doc_result.values()
+                    if value.get('error')
+                }
 
-        return success
+        return False
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
