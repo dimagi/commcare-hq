@@ -18,7 +18,7 @@ from django.forms.forms import Form
 from django.forms.widgets import Textarea, CheckboxSelectMultiple
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _, ugettext
-
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -152,6 +152,10 @@ class ScheduleForm(Form):
     user_organization_recipients = RecipientField(
         required=False,
         label=_("User Organization Recipient(s)"),
+    )
+    case_group_recipients = RecipientField(
+        required=False,
+        label=_("Case Group Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
@@ -337,6 +341,14 @@ class ScheduleForm(Form):
                 ),
                 data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
             ),
+            crispy.Div(
+                crispy.Field(
+                    'case_group_recipients',
+                    data_bind='value: case_group_recipients.value',
+                    placeholder=_("Select case group(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_CASE_GROUP,
+            ),
         ]
 
     def get_content_layout_fields(self):
@@ -425,6 +437,23 @@ class ScheduleForm(Form):
 
         return result
 
+    @property
+    def current_select2_case_group_recipients(self):
+        value = self['case_group_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for case_group_id in value.strip().split(','):
+            case_group_id = case_group_id.strip()
+            case_group = CommCareCaseGroup.get(case_group_id)
+            if case_group.domain != self.domain:
+                continue
+
+            result.append({"id": case_group_id, "text": case_group.name})
+
+        return result
+
     def clean_user_recipients(self):
         if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
             return []
@@ -489,6 +518,35 @@ class ScheduleForm(Form):
                     _("One or more user organizations were unexpectedly not found. "
                       "Please select organization(s) again.")
                 )
+
+        return data
+
+    def clean_case_group_recipients(self):
+        if self.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['case_group_recipients']
+
+        if not data:
+            raise ValidationError(
+                _("Please specify the case groups(s) or deselect case groups as recipients")
+            )
+
+        not_found_error = ValidationError(
+            _("One or more case groups were unexpectedly not found. Please select group(s) again.")
+        )
+
+        for case_group_id in data:
+            try:
+                case_group = CommCareCaseGroup.get(case_group_id)
+            except ResourceNotFound:
+                raise not_found_error
+
+            if case_group.doc_type != 'CommCareCaseGroup':
+                raise not_found_error
+
+            if case_group.domain != self.domain:
+                raise not_found_error
 
         return data
 

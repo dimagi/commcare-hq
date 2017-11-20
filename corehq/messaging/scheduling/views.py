@@ -208,7 +208,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         return (
             [('CommCareUser', user_id) for user_id in form_data['user_recipients']] +
             [('Group', group_id) for group_id in form_data['user_group_recipients']] +
-            [('Location', location_id) for location_id in form_data['user_organization_recipients']]
+            [('Location', location_id) for location_id in form_data['user_organization_recipients']] +
+            [('CommCareCaseGroup', case_group_id) for case_group_id in form_data['case_group_recipients']]
         )
 
     def distill_total_iterations(self):
@@ -449,6 +450,7 @@ class EditScheduleView(CreateScheduleView):
         user_recipients = []
         user_group_recipients = []
         user_organization_recipients = []
+        case_group_recipients = []
         for doc_type, doc_id in broadcast.recipients:
             if doc_type == 'CommCareUser':
                 recipient_types.add(ScheduleForm.RECIPIENT_TYPE_USER)
@@ -459,6 +461,9 @@ class EditScheduleView(CreateScheduleView):
             elif doc_type == 'Location':
                 recipient_types.add(ScheduleForm.RECIPIENT_TYPE_LOCATION)
                 user_organization_recipients.append(doc_id)
+            elif doc_type == 'CommCareCaseGroup':
+                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_CASE_GROUP)
+                case_group_recipients.append(doc_id)
 
         initial = {
             'schedule_name': broadcast.name,
@@ -466,6 +471,7 @@ class EditScheduleView(CreateScheduleView):
             'user_recipients': ','.join(user_recipients),
             'user_group_recipients': ','.join(user_group_recipients),
             'user_organization_recipients': ','.join(user_organization_recipients),
+            'case_group_recipients': ','.join(case_group_recipients),
             'content': 'sms',
             # only works for SMS
             'message': schedule.memoized_events[0].content.message,

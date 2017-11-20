@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import json
-
+from corehq.apps.casegroups.dbaccessors import search_case_groups_in_domain
 from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
@@ -14,6 +14,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         'user_recipients',
         'user_group_recipients',
         'user_organization_recipients',
+        'case_group_recipients',
     ]
 
     @property
@@ -60,6 +61,15 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         return [
             {'id': row[0], 'text': row[1]}
             for row in result
+        ]
+
+    @property
+    def case_group_recipients_response(self):
+        domain = self.request.domain
+        query = self.data.get('searchString')
+        return [
+            {'id': result[0], 'text': result[1]}
+            for result in search_case_groups_in_domain(domain, query, limit=10)
         ]
 
     def _fmt_success(self, data):
