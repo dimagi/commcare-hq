@@ -87,9 +87,9 @@
                   $('#reparenting').modal();
               }
               if (this.name === 'update-loc') {
-                  ga_track_event('Organization Structure', 'Edit', 'Update Location');
+                  hqImport('analytics/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
               } else {
-                  ga_track_event('Organization Structure', 'Edit', 'Create Child Location');
+                  hqImport('analytics/js/google').track.event('Organization Structure', 'Edit', 'Create Child Location');
               }
           });
 

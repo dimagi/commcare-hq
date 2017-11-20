@@ -67,7 +67,7 @@ hqDefine('locations/js/location_types', function(){
             };
             self.loc_types.push(new_loctype);
             $(".include-only").last().select2();
-            ga_track_event('Organization Levels', 'New Organization Level');
+            hqImport('analytics/js/google').track.event('Organization Levels', 'New Organization Level');
         };
 
         self.validate = function() {

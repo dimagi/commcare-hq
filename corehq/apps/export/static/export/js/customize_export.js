@@ -364,9 +364,7 @@ var CustomExportView = {
 
                     if (event_category) {
                         // Record an event
-                        ga_track_event(event_category, 'Custom export creation', "", {
-                            'hitCallback': redirect
-                        });
+                        hqImport('analytics/js/google').track.event(event_category, 'Custom export creation', "", "", {}, redirect);
                         return;
                     }
                 }

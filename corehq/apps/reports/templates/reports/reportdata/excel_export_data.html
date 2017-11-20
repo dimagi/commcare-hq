@@ -52,12 +52,12 @@
 
         $('.daily-saved-download').click(function(){
             var exportName = $(this).attr("data-exportName");
-            ga_track_event("Download Form Export", "Download Saved Form Export", exportName);
+            hqImport('analytics/js/google').track.event("Download Form Export", "Download Saved Form Export", exportName);
         });
 
         $('.daily-saved-update').click(function(){
             var exportName = $(this).attr("data-exportName");
-            ga_track_event("Update Form Export", "Update Saved Form Export", exportName);
+            hqImport('analytics/js/google').track.event("Update Form Export", "Update Saved Form Export", exportName);
         });
 
         $(function () {

@@ -28,7 +28,7 @@ hqDefine("domain/js/snapshot_settings", function() {
     
         _.each(hqImport('hqwebapp/js/initial_page_data').get('snapshots'), function(snapshot) {
             $('#publish_' + snapshot.name).click(function() {
-                ga_track_event('Exchange', 'Publish Previous Version', snapshot.name);
+                hqImport('analytics/js/google').track.event('Exchange', 'Publish Previous Version', snapshot.name);
             });
             $('#view_' + snapshot.name).click(function() {
                 hqImport('analytics/js/google').track.click($('#view_' + snapshot.name), 'Exchange', 'View', snapshot.name);

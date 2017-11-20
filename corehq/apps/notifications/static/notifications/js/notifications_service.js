@@ -146,7 +146,7 @@ hqDefine('notifications/js/notifications_service', function () {
         notifications.initUINotify('.alert-ui-notify');
 
         $(document).on('click', '.notification-link', function() {
-            ga_track_event('Notification', 'Opened Message', this.href);
+            hqImport('analytics/js/google').track.event('Notification', 'Opened Message', this.href);
         });
         hqImport('analytics/js/google').track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     });

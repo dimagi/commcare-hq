@@ -41,10 +41,7 @@ requires imports/proptable.html to be included in the main template
             {% if context_case_id %}
             label = 'case';
             {% endif %}
-            if (callback) {
-                extra.hitCallback = callback;
-            }
-            analytics.usage('Edit Data', action, label, extra);
+            analytics.usage('Edit Data', action, label, '', extra, callback);
         }
 
         $('.hq-help-template').each(function () {
@@ -73,10 +70,8 @@ requires imports/proptable.html to be included in the main template
         $("#unarchive-form").submit(function() {
             document.getElementById('unarchive-form-btn').disabled=true;
             $('#unarchive-spinner').show();
-            ga_track_event('Reports', 'Case History', 'Restore this form', {
-                'hitCallback': function () {
-                    document.getElementById('unarchive-form').submit();
-                }
+            hqImport('analytics/js/google').track.event('Reports', 'Case History', 'Restore this form', "", {}, function () {
+                document.getElementById('unarchive-form').submit();
             });
             return false;
         });

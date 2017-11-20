@@ -108,9 +108,9 @@
                     <a href="#" class="btn btn-default" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</a>
                     <div class="btn-group"
                          onclick="
-                            ga_track_event('Scheduled Reports', 'Create a saved report', '-');
+                            hqImport('analytics/js/google').track.event('Scheduled Reports', 'Create a saved report', '-');
                             {% if report.spec.report_meta.created_by_builder %}
-                            ga_track_event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
+                            hqImport('analytics/js/google').track.event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
                             {% endif %}
                     ">
                         <span

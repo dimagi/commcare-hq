@@ -38,7 +38,7 @@
                 <a class="btn btn-default"
                    data-toggle="#report-config-modal"
                    data-bind="click: setConfigBeingEdited"
-                        onclick="ga_track_event('Scheduled Reports', 'Configure a saved report', '-');">
+                        onclick="hqImport('analytics/js/google').track.event('Scheduled Reports', 'Configure a saved report', '-');">
                     {% trans "Save" %}...
                 </a>
 
@@ -140,9 +140,9 @@
                                 <button type="button" class="btn btn-default" data-bind="click: $root.unsetConfigBeingEdited">{% trans 'Cancel' %}</button>
                                 <div class="btn-group"
                                      onclick="
-                                        ga_track_event('Scheduled Reports', 'Create a saved report', '-');
+                                        hqImport('analytics/js/google').track.event('Scheduled Reports', 'Create a saved report', '-');
                                         {% if report.spec.report_meta.created_by_builder %}
-                                        ga_track_event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
+                                        hqImport('analytics/js/google').track.event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
                                         {% endif %}
                                 ">
                                     <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
