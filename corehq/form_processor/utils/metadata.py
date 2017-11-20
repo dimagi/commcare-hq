@@ -6,6 +6,7 @@ from jsonobject.api import re_date
 
 from dimagi.utils.parsing import json_format_datetime
 from corehq.util.dates import iso_string_to_datetime
+import six
 
 
 def scrub_meta(xform):
@@ -124,6 +125,6 @@ def _get_text_attribute(node):
     else:
         value = node
 
-    if not isinstance(value, basestring):
-        value = unicode(value)
+    if not isinstance(value, six.string_types):
+        value = six.text_type(value)
     return value

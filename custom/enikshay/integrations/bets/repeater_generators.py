@@ -43,6 +43,7 @@ from .const import (
     TOTAL_DAY_THRESHOLDS
 )
 from .utils import get_bets_location_json
+import six
 
 
 def _get_district_location_id(pcp_location):
@@ -356,7 +357,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
-                "bets_{}_error".format(self.event_id): u"RequestConnectionError: {}".format(unicode(exception))
+                "bets_{}_error".format(self.event_id): u"RequestConnectionError: {}".format(six.text_type(exception))
             })
 
     def handle_success(self, response, case, repeat_record):
@@ -379,7 +380,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
                     if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): unicode(response.json()),
+                "bets_{}_error".format(self.event_id): six.text_type(response.json()),
             }
         )
 
@@ -488,7 +489,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
                     if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): unicode(response.json()),
+                "bets_{}_error".format(self.event_id): six.text_type(response.json()),
             }
         )
 

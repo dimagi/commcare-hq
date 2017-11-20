@@ -6,6 +6,7 @@ from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.util.workbook_json.excel import WorkbookJSONReader, InvalidExcelFileException, \
     HeaderValueError, JSONReaderError, WorksheetNotFound
+import six
 
 
 def get_workbook(file_or_filename):
@@ -26,9 +27,9 @@ class _FixtureWorkbook(object):
         except InvalidExcelFileException:
             raise FixtureUploadError([FAILURE_MESSAGES['not_excel_file']])
         except HeaderValueError as e:
-            raise FixtureUploadError([unicode(e)])
+            raise FixtureUploadError([six.text_type(e)])
         except JSONReaderError as e:
-            raise FixtureUploadError([unicode(e)])
+            raise FixtureUploadError([six.text_type(e)])
 
     def get_types_sheet(self):
         try:
@@ -103,7 +104,7 @@ class _FixtureTableDefinition(object):
             return is_indexed
 
         def is_number(text):
-            text = unicode(text)
+            text = six.text_type(text)
             try:
                 float(text)
                 return True

@@ -6,6 +6,7 @@ from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.util.translation import localize
 from custom.bihar import BIHAR_DOMAINS
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
+import six
 
 # meh
 hard_coded_domains = BIHAR_DOMAINS
@@ -52,7 +53,7 @@ class IndicatorFixtureProvider(FixtureProvider):
         """
         def _el(tag, text, _attrib=None):
             el = ElementTree.Element(tag, _attrib or {})
-            el.text = unicode(text)
+            el.text = six.text_type(text)
             return el
 
         def _indicator_to_fixture(indicator):

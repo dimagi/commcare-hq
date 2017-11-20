@@ -18,16 +18,6 @@ from corehq.apps.userreports.views import (
     ReportPreview,
 )
 
-from corehq.apps.userreports.v1.views import (
-    ReportBuilderDataSourceSelect as ReportBuilderDataSourceSelectV1,
-    ReportBuilderTypeSelect,
-    ConfigureChartReport,
-    ConfigureListReport,
-    ConfigureTableReport,
-    ConfigureWorkerReport,
-    ConfigureMapReport,
-)
-
 from .dispatcher import (
     BasicReportDispatcher,
     CustomProjectReportDispatcher,
@@ -86,23 +76,11 @@ urlpatterns = [
     ConfigurableReport.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
 
-    # Report Builder V2 urls
+    # Report Builder
     url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(),
         name=ReportBuilderDataSourceSelect.urlname),
     url(r'^builder/configure/$', ConfigureReport.as_view(), name=ConfigureReport.urlname),
     url(r'^builder/preview/(?P<data_source>[\w\-]+)/$', ReportPreview.as_view(), name=ReportPreview.urlname),
-
-    # Report Builder V1 urls
-    url(r'^builder/select_type/$', ReportBuilderTypeSelect.as_view(), name=ReportBuilderTypeSelect.urlname),
-    url(r'^builder/(?P<report_type>list|chart|table|worker|map)/select_source/$',
-        ReportBuilderDataSourceSelectV1.as_view(), name='report_builder_select_source'),
-    url(r'^builder/configure/chart/$', ConfigureChartReport.as_view(), name="configure_chart_report"),
-    url(r'^builder/configure/list/$', ConfigureListReport.as_view(), name="configure_list_report"),
-    url(r'^builder/configure/table/$', ConfigureTableReport.as_view(), name="configure_table_report"),
-    url(r'^builder/configure/worker/$', ConfigureWorkerReport.as_view(), name="configure_worker_report"),
-    url(r'^builder/configure/map/$', ConfigureMapReport.as_view(), name="configure_map_report"),
-
-    # Shared Report Builder V1/V2 urls
     url(r'^builder/edit/(?P<report_id>[\w\-]+)/$', EditReportInBuilder.as_view(), name='edit_report_in_builder'),
     url(r'builder/subscribe/pricing/$', ReportBuilderPaywallPricing.as_view(),
         name=ReportBuilderPaywallPricing.urlname),

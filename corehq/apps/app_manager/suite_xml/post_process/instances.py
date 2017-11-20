@@ -6,6 +6,7 @@ from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class EntryInstances(PostProcessor):
@@ -185,7 +186,7 @@ def get_all_instances_referenced_in_xpaths(domain, xpaths):
             if instance:
                 instances.add(instance)
             else:
-                class UnicodeWithContext(unicode):
+                class UnicodeWithContext(six.text_type):
                     pass
                 instance_name = UnicodeWithContext(instance_name)
                 instance_name.xpath = xpath

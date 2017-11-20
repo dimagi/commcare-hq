@@ -21,6 +21,7 @@ from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.util.quickcache import quickcache
+import six
 
 
 datespan_default = datespan_in_request(
@@ -57,7 +58,7 @@ class ReportDispatcher(View):
     map_name = None
 
     def __init__(self, **kwargs):
-        if not self.map_name or not isinstance(self.map_name, basestring): # unicode?
+        if not self.map_name or not isinstance(self.map_name, six.string_types):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 

@@ -17,6 +17,7 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
+import six
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 
@@ -48,7 +49,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     """
     attachments = attachments or {}
     now = json_format_datetime(datetime.datetime.utcnow())
-    if not isinstance(case_blocks, basestring):
+    if not isinstance(case_blocks, six.string_types):
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {

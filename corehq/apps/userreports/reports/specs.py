@@ -35,6 +35,7 @@ from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from corehq.apps.es import aggregations
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 SQLAGG_COLUMN_MAP = {
@@ -528,7 +529,7 @@ class MultibarChartSpec(ChartSpec):
     def wrap(cls, obj):
         def _convert_columns_to_properly_dicts(cols):
             for column in cols:
-                if isinstance(column, basestring):
+                if isinstance(column, six.string_types):
                     yield {'column_id': column, 'display': column}
                 else:
                     yield column

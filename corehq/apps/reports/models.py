@@ -67,6 +67,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
+import six
 
 
 class HQUserType(object):
@@ -115,7 +116,7 @@ class HQUserType(object):
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(cls.count)]
+        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(cls.count)]
 
 
 class HQToggle(object):
@@ -1122,12 +1123,12 @@ def ordering_config_validator(value):
     for group in value:
         if not isinstance(group, list) or len(group) != 2:
             raise error
-        if not isinstance(group[0], basestring):
+        if not isinstance(group[0], six.string_types):
             raise error
         if not isinstance(group[1], list):
             raise error
         for report in group[1]:
-            if not isinstance(report, basestring):
+            if not isinstance(report, six.string_types):
                 raise error
 
 

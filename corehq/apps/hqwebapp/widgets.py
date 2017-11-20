@@ -15,6 +15,7 @@ from django.utils.safestring import mark_safe
 import json
 from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
+import six
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -176,7 +177,7 @@ class Select2Ajax(forms.TextInput):
         self._initial = val
 
     def _clean_initial(self, val):
-        if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+        if isinstance(val, collections.Sequence) and not isinstance(val, (str, six.text_type)):
             # if its a tuple or list
             return {"id": val[0], "text": val[1]}
         elif val is None:

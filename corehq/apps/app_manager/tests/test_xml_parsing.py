@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import _parse_xml
 import os
+import six
 
 
 class XMLParsingTest(SimpleTestCase):
@@ -16,6 +17,6 @@ class XMLParsingTest(SimpleTestCase):
         except:    
             self.fail("Parsing normal string data shouldn't fail!")
         try:
-            _parse_xml(unicode(xml_data))
+            _parse_xml(six.text_type(xml_data))
         except:    
             self.fail("Parsing unicode data shouldn't fail!")

@@ -27,6 +27,7 @@ from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from custom.ewsghana.alerts.alerts import SOHAlerts
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 from dimagi.utils.couch.database import iter_docs
+import six
 
 
 def get_transactions_by_product(transactions):
@@ -99,7 +100,7 @@ class SOHHandler(KeywordHandler):
         if bad_codes:
             kwargs['err'] = 'Unrecognized commodity codes: {bad_codes}.'.format(bad_codes=bad_codes)
 
-        self.respond('{} {}'.format(error_message.format(**kwargs), unicode(ASSISTANCE_MESSAGE)))
+        self.respond('{} {}'.format(error_message.format(**kwargs), six.text_type(ASSISTANCE_MESSAGE)))
 
     def send_ms_alert(self, previous_stockouts, transactions, ms_type):
         stockouts = {
@@ -198,7 +199,7 @@ class SOHHandler(KeywordHandler):
         except NotAUserClassError:
             return False
         except (SMSError, NoDefaultLocationException):
-            self.respond(unicode(INVALID_MESSAGE))
+            self.respond(six.text_type(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
             self.respond(e.message)

@@ -34,6 +34,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from phonelog.reports import BaseDeviceLogReport
 from phonelog.models import DeviceReportEntry
 from corehq.apps.es.domains import DomainES
+import six
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -809,7 +810,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return _('No info')
 
         for dom in domains:
-            if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:  # for some reason when using the statistical facet, ES adds an empty dict to hits
                 first_form_default_message = _("No Forms")
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")
@@ -1327,7 +1328,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     @memoized
     def phone_number_filter(self):
         value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return apply_leniency(value.strip())
 
         return None

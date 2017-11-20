@@ -151,6 +151,7 @@ from corehq.apps.app_manager.exceptions import (
     ActionNotPermitted)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
+import six
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
@@ -837,7 +838,7 @@ class CaseLoadReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     path = StringProperty()
-    properties = ListProperty(unicode)
+    properties = ListProperty(six.text_type)
 
 
 class CaseSaveReference(DocumentSchema):
@@ -847,7 +848,7 @@ class CaseSaveReference(DocumentSchema):
     """
     _allow_dynamic_properties = False
     case_type = StringProperty()
-    properties = ListProperty(unicode)
+    properties = ListProperty(six.text_type)
     create = BooleanProperty(default=False)
     close = BooleanProperty(default=False)
 
@@ -906,7 +907,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty(unicode)
+    name = DictProperty(six.text_type)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -1071,7 +1072,7 @@ class FormBase(DocumentSchema):
             except XFormException as e:
                 errors.append(dict(
                     type="invalid xml",
-                    message=unicode(e) if self.source else '',
+                    message=six.text_type(e) if self.source else '',
                     **meta
                 ))
             except ValueError:
@@ -1081,7 +1082,7 @@ class FormBase(DocumentSchema):
         try:
             questions = self.get_questions(self.get_app().langs, include_triggers=True)
         except XFormException as e:
-            error = {'type': 'validation error', 'validation_message': unicode(e)}
+            error = {'type': 'validation error', 'validation_message': six.text_type(e)}
             error.update(meta)
             errors.append(error)
 
@@ -1092,7 +1093,7 @@ class FormBase(DocumentSchema):
                 try:
                     self.validate_form()
                 except XFormValidationError as e:
-                    error = {'type': 'validation error', 'validation_message': unicode(e)}
+                    error = {'type': 'validation error', 'validation_message': six.text_type(e)}
                     error.update(meta)
                     errors.append(error)
                 except XFormValidationFailed:
@@ -1357,7 +1358,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
             questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
             valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
-            errors.append({'type': 'invalid xml', 'message': unicode(e)})
+            errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
         else:
             no_multimedia = not self.get_app().enable_multimedia_case_property
             for path in set(paths):
@@ -1421,7 +1422,7 @@ class CustomIcon(DocumentSchema):
     an xpath expression to be evaluated for example count of cases within.
     """
     form = StringProperty()
-    text = DictProperty(unicode)
+    text = DictProperty(six.text_type)
     xpath = StringProperty()
 
 
@@ -1439,7 +1440,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         # ToDo - Remove after migration
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
-            if old_media and isinstance(old_media, basestring):
+            if old_media and isinstance(old_media, six.string_types):
                 new_media = {'default': old_media}
                 data[media_attr] = new_media
 
@@ -2298,7 +2299,7 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
-    name = DictProperty(unicode)
+    name = DictProperty(six.text_type)
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
@@ -2425,7 +2426,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
-                        'details': unicode(e),
+                        'details': six.text_type(e),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -4018,7 +4019,7 @@ class ReportAppConfig(DocumentSchema):
         # for backwards compatibility with apps that have localized or xpath descriptions
         old_description = doc.get('description')
         if old_description:
-            if isinstance(old_description, basestring) and not doc.get('xpath_description'):
+            if isinstance(old_description, six.string_types) and not doc.get('xpath_description'):
                 doc['xpath_description'] = old_description
             elif isinstance(old_description, dict) and not doc.get('localized_description'):
                 doc['localized_description'] = old_description
@@ -4282,7 +4283,7 @@ class LazyBlobDoc(BlobMixin):
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
             for name, attachment in attachments.items():
-                if isinstance(attachment, basestring):
+                if isinstance(attachment, six.string_types):
                     info = {"content": attachment}
                 else:
                     raise ValueError("Unknown attachment format: {!r}"
@@ -4682,7 +4683,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
-        if data.has_key("built_with") and isinstance(data['built_with'], basestring):
+        if "built_with" in data and isinstance(data['built_with'], six.string_types):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:
@@ -5013,12 +5014,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         except PracticeUserException as pue:
             errors.append({
                 'type': 'practice user config error',
-                'message': unicode(pue),
+                'message': six.text_type(pue),
                 'build_profile_id': pue.build_profile_id,
             })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
-            errors.append({'type': 'error', 'message': unicode(e)})
+            errors.append({'type': 'error', 'message': six.text_type(e)})
         except Exception as e:
             if settings.DEBUG:
                 raise
@@ -5673,7 +5674,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     raise XFormException(_('Unable to validate the forms due to a server error. '
                                            'Please try again later.'))
                 except XFormException as e:
-                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
+                    raise XFormException(_('Error in form "{}": {}').format(trans(form.name), six.text_type(e)))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
@@ -6304,7 +6305,7 @@ class LinkedApplication(Application):
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
-    if isinstance(app_id_or_source, basestring):
+    if isinstance(app_id_or_source, six.string_types):
         app_id = app_id_or_source
         source = get_app(None, app_id)
         src_dom = source['domain']
