@@ -74,22 +74,6 @@ hqDefine('analytics/js/deprecated', function () {
     if (_global('isEnabled')) {
         ga_track_event = _makeLegacyFn(_google, 'ga_track_event', _google.track.event, _addCallbackToArgs); // eslint-disable-line no-global-assign
 
-        // Debug gtag's use of the ga function vs. the old usages
-        var _oldGA = ga;
-        ga = function () {
-            var args = Array.from(arguments);
-            if (args.length > 1 && args[0].startsWith('gtag')) {
-                _google.logger.debug.log(arguments, 'direct gtag > ga call');
-            } else if (args.length > 2 && args[1] === 'event') {
-                args = args.splice(2);
-                args = _addCallbackToArgs(args);
-                _google.logger.deprecated.log(arguments, 'ga');
-                return _google.track.event.apply(null, args);
-            } else {
-                _google.logger.debug.log(arguments, 'unknown ga call');
-            }
-            return _oldGA.apply(null, arguments);
-        };
         trackLinkHelper = _makeLegacyFn(_google, 'trackLinkHelper', _utils.trackClickHelper);
         kmqPushSafe = _makeLegacyFn(_kissmetrics, 'kmqPushSafe', function (args, timeout) {
             var lastArg = _.last(args);
