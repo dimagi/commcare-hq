@@ -93,7 +93,7 @@
               }
           });
 
-          gaTrackLink($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
+          hqImport('analytics/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
 
           $('#move_confirm').click(function(e) {
               e.preventDefault();
