@@ -7,55 +7,16 @@ from corehq.apps.reports.models import ReportConfig, FormExportSchema, CaseExpor
 from dimagi.utils.decorators.memoized import memoized
 
 
-class TileConfigurationError(Exception):
-    pass
-
-
 class Tile(object):
-    """This class creates the tile and its context
-    when it's called by Django Angular's Remote Method Invocation.
-    """
 
-    def __init__(self, tile_config, request):
-        if not isinstance(tile_config, TileConfiguration):
-            raise TileConfigurationError(
-                "tile_config must be an instance of TileConfiguration"
-            )
-        self.tile_config = tile_config
-        self.request = request
-
-    @property
-    def is_visible(self):
-        """Whether or not the tile is visible on the dashboard (permissions).
-        :return: Boolean
-        """
-        if not self.request.can_access_all_locations:
-            url = self.tile_config.get_url(self.request)
-            try:
-                match = resolve(url)
-            except Resolver404:
-                pass
-            else:
-                if 'domain' in match.kwargs and not url_is_location_safe(url):
-                    return False
-        return bool(self.tile_config.visibility_check(self.request))
-
-    @property
-    @memoized
-    def paginator(self):
-        return self.tile_config.paginator_class(self.request)
-
-
-class TileConfiguration(object):
-
-    def __init__(self, title, slug, icon, paginator_class=None,
+    def __init__(self, request, title, slug, icon, paginator_class=None,
                  url=None, urlname=None, visibility_check=None,
                  url_generator=None, help_text=None):
         """
         :param title: The title of the tile
         :param slug: The tile's slug
         :param icon: The class of the icon
-        :param paginator: A Subclass of TilePaginator
+        :param paginator_class: A Subclass of TilePaginator
         :param url: the url that the icon will link to
         :param urlname: the urlname of the view that the icon will link to
         :param visibility_check: (optional) a lambda that accepts a request
@@ -67,6 +28,7 @@ class TileConfiguration(object):
         analytics event tracking.
         analytics event tracking.
         """
+        self.request = request
         self.paginator_class = paginator_class
         self.title = title
         self.slug = slug
@@ -77,6 +39,29 @@ class TileConfiguration(object):
                                  or self._default_visibility_check)
         self.url_generator = url_generator or self._default_url_generator
         self.help_text = help_text
+
+    @property
+    def is_visible(self):
+        """Whether or not the tile is visible on the dashboard (permissions).
+        :return: Boolean
+        """
+        if not self.request.can_access_all_locations:
+            url = self.get_url(self.request)
+            try:
+                match = resolve(url)
+            except Resolver404:
+                pass
+            else:
+                if 'domain' in match.kwargs and not url_is_location_safe(url):
+                    return False
+        return bool(self.visibility_check(self.request))
+
+
+    @property
+    @memoized
+    def paginator(self):
+        return self.paginator_class(self.request)
+
 
     def get_url(self, request):
         if self.urlname is not None:
@@ -132,14 +117,16 @@ class TilePaginator(object):
         """
         raise NotImplementedError('total must return an int')
 
-    def paginated_items(self, limit, skip):
-        """The items (as dictionaries/objects) to be passed to the angularjs
-        template for rendering. It's recommended that you use the
-        _fmt_item() helper function to return the correctly formatted dict
-        for each item.
+    def paginated_items(self, current_page, items_per_page):
+        """The items (as dictionaries/objects). It's recommended that you use the
+        _fmt_item() helper function to return correctly formatted dicts.
         :return: list of dicts formatted with _fmt_item
         """
-        raise NotImplementedError('pagination must be overridden')
+        return self._paginated_items(items_per_page, (current_page - 1) * items_per_page)
+
+    def _paginated_items(self, limit, skip):
+        """Helper for paginated_items that calculated index of start item"""
+        raise NotImplementedError('_paginated_items must be overridden')
 
 
 class ReportsPaginator(TilePaginator):
@@ -156,7 +143,7 @@ class ReportsPaginator(TilePaginator):
         ).all()
         return results[0]['value'] if results else 0
 
-    def paginated_items(self, limit, skip):
+    def _paginated_items(self, limit, skip):
         reports = ReportConfig.by_domain_and_owner(
             self.request.domain, self.request.couch_user._id,
             limit=limit, skip=skip
@@ -177,8 +164,6 @@ class AppsPaginator(TilePaginator):
 
     @property
     def total(self):
-        # todo: optimize this at some point. unfortunately applications_brief
-        # doesn't have a reduce view and for now we'll avoid refactoring.
         return len(self.applications)
 
     @property
@@ -188,7 +173,7 @@ class AppsPaginator(TilePaginator):
         apps = sorted(apps, key=lambda item: item.name.lower())
         return apps
 
-    def paginated_items(self, limit, skip):
+    def _paginated_items(self, limit, skip):
         def _get_app_url(app):
             return (
                 _get_view_app_url(app)
@@ -230,7 +215,7 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
             exports = CaseExportSchema.get_stale_exports(self.request.domain)
         return exports
 
-    def paginated_items(self, limit, skip):
+    def _paginated_items(self, limit, skip):
         exports = (self.form_exports + self.case_exports)[skip:skip + limit]
         for export in exports:
             urlname = 'export_download_forms' if isinstance(export, FormExportSchema) else 'export_download_cases'

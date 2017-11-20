@@ -14,7 +14,7 @@ from corehq.apps.dashboard.models import (
     DataPaginator,
     ReportsPaginator,
     Tile,
-    TileConfiguration,
+    Tile,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
@@ -52,18 +52,16 @@ def default_dashboard_url(request, domain):
 
 def dashboard_tile(request, domain, slug):
     try:
-        tile_config = [t for t in _get_default_tile_configurations() if t.slug == slug][0]
+        tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]
     except IndexError:
         return json_response(
             {'message': _("Tile not found: {}").format(slug)},
             status_code=404,
         )
 
-    tile = Tile(tile_config, request)  # TODO: DRY up with make_tile
-
-    limit = int(request.GET.get('itemsPerPage', 5))
-    skip = (int(request.GET.get('currentPage', 1)) - 1) * limit
-    items = list(tile.paginator.paginated_items(limit, skip))
+    current_page = int(request.GET.get('currentPage', 1))
+    items_per_page = int(request.GET.get('itemsPerPage', 5))
+    items = list(tile.paginator.paginated_items(current_page, items_per_page))
     return json_response({'items': items})
 
 
@@ -86,46 +84,31 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
         return reverse(self.urlname, args=[self.domain])
 
     @property
-    def tile_configs(self):
-        return _get_default_tile_configurations()
-
-    @property
-    def slug_to_tile(self):
-        return dict([(a.slug, a) for a in self.tile_configs])
-
-    @property
     def page_context(self):
         tile_contexts = []
-        for config in self.tile_configs:
-            tile = self.make_tile(config.slug)
+        for tile in _get_default_tiles(self.request):
             if tile.is_visible:
                 tile_context = {
-                    'title': config.title,
-                    'slug': config.slug,
-                    'icon': config.icon,
-                    'url': config.get_url(self.request),
-                    'help_text': config.help_text,
+                    'title': tile.title,
+                    'slug': tile.slug,
+                    'icon': tile.icon,
+                    'url': tile.get_url(self.request),
+                    'help_text': tile.help_text,
                 }
-                if config.paginator_class:
-                    processor = tile.paginator
+                if tile.paginator_class:
                     items_per_page = 5
                     tile_context.update({
                         'pagination': {
                             'items_per_page': items_per_page,
-                            'pages': int(math.ceil(float(processor.total) / items_per_page)),
+                            'pages': int(math.ceil(float(tile.paginator.total) / items_per_page)),
                         },
                     })
                 tile_contexts.append(tile_context)
         return {'dashboard_tiles': tile_contexts}
 
-    # TODO: get rid of this?
-    def make_tile(self, slug):
-        config = self.slug_to_tile[slug]
-        return Tile(config, self.request)
 
 
-
-def _get_default_tile_configurations():
+def _get_default_tiles(request):
     can_edit_data = lambda request: (request.couch_user.can_edit_data()
                                      or request.couch_user.can_access_any_exports())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
@@ -161,7 +144,8 @@ def _get_default_tile_configurations():
     is_billing_admin = lambda request: request.couch_user.can_edit_billing()
 
     return [
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Applications'),
             slug='applications',
             icon='fcc fcc-applications',
@@ -170,7 +154,8 @@ def _get_default_tile_configurations():
             urlname='default_new_app',
             help_text=_('Build, update, and deploy applications'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Reports'),
             slug='reports',
             icon='fcc fcc-reports',
@@ -179,7 +164,8 @@ def _get_default_tile_configurations():
             visibility_check=can_view_reports,
             help_text=_('View worker monitoring reports and inspect project data'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
@@ -187,7 +173,8 @@ def _get_default_tile_configurations():
             visibility_check=can_view_commtrack_setup,
             help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
@@ -196,7 +183,8 @@ def _get_default_tile_configurations():
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Users'),
             slug='users',
             icon='fcc fcc-users',
@@ -204,7 +192,8 @@ def _get_default_tile_configurations():
             visibility_check=can_edit_users,
             help_text=_('Manage accounts for mobile workers and CommCareHQ users'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Organization'),
             slug='locations',
             icon='fcc fcc-users',
@@ -212,7 +201,8 @@ def _get_default_tile_configurations():
             visibility_check=can_edit_locations_not_users,
             help_text=_('Manage the Organization Hierarchy'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Messaging'),
             slug='messaging',
             icon='fcc fcc-messaging',
@@ -220,7 +210,8 @@ def _get_default_tile_configurations():
             visibility_check=can_use_messaging,
             help_text=_('Configure and schedule SMS messages and keywords'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Exchange'),
             slug='exchange',
             icon='fcc fcc-exchange',
@@ -229,7 +220,8 @@ def _get_default_tile_configurations():
             url_generator=lambda urlname, req: reverse(urlname),
             help_text=_('Download and share CommCare applications with other users around the world'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Settings'),
             slug='settings',
             icon='fcc fcc-settings',
@@ -237,7 +229,8 @@ def _get_default_tile_configurations():
             visibility_check=is_billing_admin,
             help_text=_('Set project-wide settings and manage subscriptions'),
         ),
-        TileConfiguration(
+        Tile(
+            request,
             title=_('Help Site'),
             slug='help',
             icon='fcc fcc-help',
