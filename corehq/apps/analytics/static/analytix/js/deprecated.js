@@ -6,23 +6,6 @@ var kmqPushSafe, // eslint-disable-line no-unused-vars
 
 window.analytics = {};
 
-// to support deprecated direct ga() calls
-var ga = window.ga || function () {
-    var _global = hqImport('analytics/js/initial').getFn('global');
-    if (_global('isEnabled')) {
-        hqImport('analytics/js/google').logger.warning.log(arguments, 'no global ga function was defined');
-        if (arguments.length) {
-            var lastArg = arguments[arguments.length - 1];
-            if (lastArg) {
-                var callback = lastArg.hitCallback;
-                if (callback) {
-                    callback();
-                }
-            }
-        }
-    }
-};
-
 /**
  * This creates wrappers with warnings around legacy global functions to help with refactoring of HQ's analytics.
  * Eventually this will be phased out and all the old globals replaced.
@@ -54,21 +37,6 @@ hqDefine('analytics/js/deprecated', function () {
         };
     };
 
-    /**
-     * Gets the callback frunction (from Google Analytics' hitCallback) from the last argument, if available,
-     * and re-adds to arguments
-     * @param args - Array of arguments
-     * @returns {array} - Array of arguments
-     * @private
-     */
-    var _addCallbackToArgs = function (args) {
-        var lastArg = _.last(args);
-        if (lastArg && _.isFunction(lastArg.hitCallback)) {
-            delete lastArg.hitCallback;
-            args = _.union(args, [lastArg.hitCallback]);
-        }
-        return args;
-    };
     if (_global('isEnabled')) {
         kmqPushSafe = _makeLegacyFn(_kissmetrics, 'kmqPushSafe', function (args, timeout) {
             var lastArg = _.last(args);
