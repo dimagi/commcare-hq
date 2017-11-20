@@ -148,7 +148,7 @@ hqDefine('notifications/js/notifications_service', function () {
         $(document).on('click', '.notification-link', function() {
             ga_track_event('Notification', 'Opened Message', this.href);
         });
-        window.analytics.trackUsageLink($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
+        hqImport('analytics/js/google').track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     });
 
     return module;

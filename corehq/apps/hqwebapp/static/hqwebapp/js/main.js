@@ -267,7 +267,7 @@ hqDefine("hqwebapp/js/main", function() {
         $(document).on('click', '.track-usage-link', function(e) {
             var $link = $(e.currentTarget),
                 data = $link.data();
-            window.analytics.trackUsageLink($link, data.category, data.action, data.label, data.value);
+            hqImport('analytics/js/google').track.click($link, data.category, data.action, data.label, data.value);
         });
 
         $(document).on('click', '.mainmenu-tab a', function(e) {
