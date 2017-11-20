@@ -180,6 +180,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         }.bind(this));
     };
 
+    var DebugResponseLevel = function(label, key) {
+        this.key = key;
+        this.label = label;
+    };
+
     var EvaluateXPath = function(options) {
         var self = this;
         self.options = options || {};
@@ -192,18 +197,37 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             domain: null,
             sessionType: SessionTypes.FORM,
         });
+
+
+
+        self.debugTraceOptions = ko.observableArray([
+            new DebugResponseLevel("Output", "basic"),
+            new DebugResponseLevel("Output + Eval Summary", "reduce"),
+            new DebugResponseLevel("Output + Full Evaluation", "deep"),
+        ]);
+        self.xpath = ko.observable('');
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
+        self.selectedDebugOption = ko.observable('basic');
         self.$xpath = null;
         self.newXPathQuery = function (data) {
             return {
                 status: data.status,
                 output: data.output,
+                trace: data.trace,
                 xpath: data.xpath,
                 successResult: function () {
                     if (this.success()) {
                         return self.formatResult(data.output);
                     }
+                },
+                traceResult: function () {
+                    if (this.success()) {
+                        return self.formatResult(data.trace);
+                    }
+                },
+                hasTrace: function () {
+                    return this.trace;
                 },
                 errorResult: function () {
                     if (!this.success()) {
@@ -261,12 +285,14 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     restoreAs: self.options.restoreAs,
                     domain: self.options.domain,
                     xpath: xpath,
+                    debugOutput: self.selectedDebugOption().key,
                 },
                 self.options.sessionType
             ).done(function(response) {
                 var xPathQuery = self.newXPathQuery({
                     status: response.status,
                     output: response.output,
+                    trace: response.trace,
                     xpath: xpath,
                 });
                 self.xPathQuery(xPathQuery);

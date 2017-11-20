@@ -94,6 +94,11 @@
         codeMirror: xPathQuery.successResult()
     "></textarea>
     <!--/ko-->
+    <!--ko if: options.useCodeMirror && xPathQuery.hasTrace()-->
+    <textarea type="text" data-bind="
+        codeMirror: xPathQuery.traceResult()
+    "></textarea>
+    <!--/ko-->
     <!--ko if: !options.useCodeMirror && xPathQuery.successResult()-->
         <pre data-bind="text: xPathQuery.successResult()"></pre>
     <!--/ko-->
@@ -122,6 +127,9 @@
                     value="Evaluate Selection"
                     type="button"
                     data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
+                <div class="col-sm-3 pull-right">
+                    <select class="form-control" data-bind="value: selectedDebugOption, options: debugTraceOptions, optionsText: 'label'"></select>
+                </div>
             </div>
         </div>
         <div class="col-sm-12" data-bind="template: {
