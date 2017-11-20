@@ -46,7 +46,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
         parser.add_argument('-m', '--months', default=3, type=int, help="Months to average data over")
-        parser.add_argument('--include-current', action='store_true', default=False, help="Include the current month")
+        parser.add_argument(
+            '--include-current', action='store_true', default=False, help="Include the current month"
+        )
         parser.add_argument('--csv', action='store_true', default=False, help="Output as CSV")
 
     def handle(self, domain, months, csv, **options):
@@ -58,7 +60,7 @@ class Command(BaseCommand):
 
         self.active_not_deleted_users = (
             UserES(es_instance_alias=ES_EXPORT_INSTANCE)
-                .domain(domain).values_list("_id", flat=True)
+            .domain(domain).values_list("_id", flat=True)
         )
 
         self._forms_per_user_per_month()
@@ -120,8 +122,9 @@ class Command(BaseCommand):
     def _cases_created_per_user_per_month(self, case_type=None):
         query = (
             CaseES(es_instance_alias=ES_EXPORT_INSTANCE).domain(self.domain)
-                .opened_range(gte=self.date_start, lt=self.date_end)
-                .aggregation(TermsAggregation('cases_per_user', 'owner_id', size=100)
+            .opened_range(gte=self.date_start, lt=self.date_end)
+            .aggregation(
+                TermsAggregation('cases_per_user', 'owner_id', size=100)
                 .aggregation(DateHistogram('cases_by_date', 'opened_on', interval='month')))
         )
         if case_type:
@@ -189,7 +192,7 @@ class Command(BaseCommand):
     def _ledgers_per_case(self):
         results = (
             LedgerES(es_instance_alias=ES_EXPORT_INSTANCE)
-                .domain(self.domain).aggregation(
+            .domain(self.domain).aggregation(
                 TermsAggregation('by_case', 'case_id', size=100)
             ).size(0).run()
         )
@@ -220,9 +223,9 @@ class Command(BaseCommand):
                 db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
                 results = (
                     CommCareCaseSQL.objects.using(db_name).filter(domain=self.domain, closed=True, type=type_)
-                        .annotate(lifespan=F('closed_on') - F('opened_on'))
-                        .annotate(avg_lifespan=Avg('lifespan'))
-                        .values('avg_lifespan', flat=True)
+                    .annotate(lifespan=F('closed_on') - F('opened_on'))
+                    .annotate(avg_lifespan=Avg('lifespan'))
+                    .values('avg_lifespan', flat=True)
                 )
                 self._print_value('Average lifespan for "%s" cases' % type_, results[0]['avg_lifespan'])
 
@@ -235,14 +238,15 @@ class Command(BaseCommand):
             for db_name, case_ids_p in split_list_by_db_partition(case_ids):
                 transactions_per_case_per_month = (
                     LedgerTransaction.objects.using(db_name).filter(case_id__in=case_ids)
-                        .annotate(m=Month('server_date'), y=Year('server_date')).values('case_id', 'y', 'm')
-                        .annotate(count=Count('id'))
+                    .annotate(m=Month('server_date'), y=Year('server_date')).values('case_id', 'y', 'm')
+                    .annotate(count=Count('id'))
                 )
                 for row in transactions_per_case_per_month:
                     month = date(row['y'], row['m'], 1)
                     stats[month].append(row['count'])
         else:
-            transactions_per_case_per_month = (StockTransaction.objects.filter(case_id__in=case_ids)
+            transactions_per_case_per_month = (
+                StockTransaction.objects.filter(case_id__in=case_ids)
                 .annotate(m=Month('report__date'), y=Year('report__date')).values('case_id', 'y', 'm')
                 .annotate(count=Count('id'))
             )
@@ -286,7 +290,7 @@ class Command(BaseCommand):
                     width_bucket(content_length, 0, 2900000, 10) AS bucket,
                     min(content_length) as bucket_min, max(content_length) AS bucket_max,
                     count(content_length) AS freq
-                FROM form_processor_xformattachmentsql INNER JOIN form_processor_xforminstancesql 
+                FROM form_processor_xformattachmentsql INNER JOIN form_processor_xforminstancesql
                   ON form_processor_xformattachmentsql.form_id = form_processor_xforminstancesql.form_id
                 WHERE content_length IS NOT NULL AND form_processor_xforminstancesql.domain = %s
                 GROUP BY content_type, bucket
@@ -306,7 +310,6 @@ class Command(BaseCommand):
         dynamic_datasources = DataSourceConfiguration.by_domain(self.domain)
         self._print_value('Static UCR data sources', len(static_datasources))
         self._print_value('Dynamic UCR data sources', len(dynamic_datasources))
-
 
         def _get_count(config):
             table_name = get_table_name(config.domain, config.table_id)
