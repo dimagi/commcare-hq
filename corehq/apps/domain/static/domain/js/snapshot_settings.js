@@ -1,7 +1,7 @@
 /* globals hqDefine */
 hqDefine("domain/js/snapshot_settings", function() {
     function view_on_exchange(version_name) {
-        gaTrackLink($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
+        hqImport('analytics/js/google').track.click($('#view-on-exchange'), 'Exchange', 'View on exchange', version_name);
         return false;
     }
     
@@ -31,7 +31,7 @@ hqDefine("domain/js/snapshot_settings", function() {
                 ga_track_event('Exchange', 'Publish Previous Version', snapshot.name);
             });
             $('#view_' + snapshot.name).click(function() {
-                gaTrackLink($('#view_' + snapshot.name), 'Exchange', 'View', snapshot.name);
+                hqImport('analytics/js/google').track.click($('#view_' + snapshot.name), 'Exchange', 'View', snapshot.name);
             });
         });
     });

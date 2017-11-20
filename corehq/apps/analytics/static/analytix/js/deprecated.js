@@ -3,7 +3,6 @@
 // Deprecated analytics globals
 var ga_track_event, // eslint-disable-line no-unused-vars
     trackLinkHelper, // eslint-disable-line no-unused-vars
-    gaTrackLink, // eslint-disable-line no-unused-vars
     kmqPushSafe, // eslint-disable-line no-unused-vars
     analytics; // eslint-disable-line no-unused-vars
 
@@ -92,7 +91,6 @@ hqDefine('analytics/js/deprecated', function () {
             return _oldGA.apply(null, arguments);
         };
         trackLinkHelper = _makeLegacyFn(_google, 'trackLinkHelper', _utils.trackClickHelper);
-        gaTrackLink = _makeLegacyFn(_google, 'gaTrackLink', _google.track.click);
         kmqPushSafe = _makeLegacyFn(_kissmetrics, 'kmqPushSafe', function (args, timeout) {
             var lastArg = _.last(args);
             args[args.length - 1] = _utils.createSafeCallback(lastArg, timeout);

@@ -6,7 +6,7 @@
 {% block js-inline %} {{ block.super }}
     <script>
         $(function() {
-            gaTrackLink($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
+            hqImport('analytics/js/google').track.click($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
             $("button[type='submit']").click(function() {
                ga_track_event('Organization Structure', 'Bulk Import', 'Upload');
             });
