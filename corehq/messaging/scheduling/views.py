@@ -20,7 +20,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jqu
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models import Permissions
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models import (

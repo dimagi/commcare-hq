@@ -212,7 +212,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients")
         );
         $('#create-schedule-form').koApplyBindings(cmvm);
         cmvm.init();

@@ -518,7 +518,7 @@ class ScheduleForm(Form):
 
         for location_id in data:
             try:
-                location = SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
+                SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
             except SQLLocation.DoesNotExist:
                 raise ValidationError(
                     _("One or more user organizations were unexpectedly not found. "
