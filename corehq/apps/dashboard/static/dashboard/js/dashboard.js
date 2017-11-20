@@ -48,7 +48,7 @@ hqDefine("dashboard/js/dashboard", function() {
                     url: hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_tile', self.slug),
                     data: {
                         itemsPerPage: self.itemsPerPage,
-                        currentPage: self.currentPage,
+                        currentPage: newValue,
                     },
                     success: function(data) {
                         self.items(data.items);

@@ -141,7 +141,7 @@ class ReportsPaginator(TilePaginator):
     def _paginated_items(self, items_per_page, skip):
         reports = ReportConfig.by_domain_and_owner(
             self.request.domain, self.request.couch_user._id,
-            items_per_page=items_per_page, skip=skip
+            limit=items_per_page, skip=skip
         )
         for report in reports:
             yield self._fmt_item(

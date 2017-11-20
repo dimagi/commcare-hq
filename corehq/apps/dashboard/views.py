@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -105,7 +105,6 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                     })
                 tile_contexts.append(tile_context)
         return {'dashboard_tiles': tile_contexts}
-
 
 
 def _get_default_tiles(request):
