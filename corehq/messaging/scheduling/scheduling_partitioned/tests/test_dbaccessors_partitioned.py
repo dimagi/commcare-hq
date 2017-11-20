@@ -22,27 +22,25 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     TimedScheduleInstance,
 )
 from corehq.sql_db.config import partition_config
-from corehq.util.exceptions import AccessRestricted
+from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
 from datetime import datetime, date
-from django.conf import settings
 from django.test import TestCase
 
 
 @only_run_with_partitioned_database
-class BaseSchedulingPartitionedDBAccessorsTest(TestCase):
+class BaseSchedulingPartitionedDBAccessorsTest(DefaultShardingTestConfigMixIn, TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(BaseSchedulingPartitionedDBAccessorsTest, cls).setUpClass()
         cls.domain = 'scheduling-partitioned-models-test'
-        cls.db1 = 'p1'
-        cls.db2 = 'p2'
 
     @classmethod
-    def make_alert_schedule_instance(cls, schedule_instance_id, schedule_id=None, active=True):
+    def make_alert_schedule_instance(cls, schedule_instance_id, schedule_id=None, active=True, domain=None):
+        domain = domain or cls.domain
         return AlertScheduleInstance(
             schedule_instance_id=schedule_instance_id,
-            domain=cls.domain,
+            domain=domain,
             recipient_type='CommCareUser',
             recipient_id='user-id',
             current_event_num=0,
@@ -81,18 +79,7 @@ class TestSchedulingPartitionedDBAccessorsGetAndSave(BaseSchedulingPartitionedDB
             AlertScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
             TimedScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
 
-    def test_settings(self):
-        """
-        The tests in this class assume a certain partitioned setup to ensure the
-        partitioning is working properly, so this test makes sure those assumptions
-        are valid.
-        """
-        self.assertEqual(len(settings.PARTITION_DATABASE_CONFIG['shards']), 2)
-        self.assertIn(self.db1, settings.PARTITION_DATABASE_CONFIG['shards'])
-        self.assertIn(self.db2, settings.PARTITION_DATABASE_CONFIG['shards'])
-        self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db1], [0, 1])
-        self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db2], [2, 3])
-        self.assertEqual(set(partition_config.get_form_processing_dbs()), set([self.db1, self.db2]))
+    def test_uuids_used(self):
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p1_uuid), self.db1)
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p2_uuid), self.db2)
 
@@ -179,18 +166,7 @@ class TestSchedulingPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingPartitio
             AlertScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
             TimedScheduleInstance.objects.using(db).filter(domain=self.domain).delete()
 
-    def test_settings(self):
-        """
-        The tests in this class assume a certain partitioned setup to ensure the
-        partitioning is working properly, so this test makes sure those assumptions
-        are valid.
-        """
-        self.assertEqual(len(settings.PARTITION_DATABASE_CONFIG['shards']), 2)
-        self.assertIn(self.db1, settings.PARTITION_DATABASE_CONFIG['shards'])
-        self.assertIn(self.db2, settings.PARTITION_DATABASE_CONFIG['shards'])
-        self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db1], [0, 1])
-        self.assertEqual(settings.PARTITION_DATABASE_CONFIG['shards'][self.db2], [2, 3])
-        self.assertEqual(set(partition_config.get_form_processing_dbs()), set([self.db1, self.db2]))
+    def test_uuids_used(self):
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p1_uuid1), self.db1)
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p1_uuid2), self.db1)
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p1_uuid3), self.db1)
