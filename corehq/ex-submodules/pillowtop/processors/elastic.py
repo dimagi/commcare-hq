@@ -4,7 +4,6 @@ import time
 
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
 
-from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
@@ -61,6 +60,18 @@ class ElasticProcessor(PillowProcessor):
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
             self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
+
+
+class BulkElasticProcessor(ElasticProcessor):
+    # def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+    #     super(BulkElasticProcessor, self).__init__(elasticsearch, index_info, doc_prep_fn, doc_filter_fn)
+    #     self.changes = []
+    #
+    # def process_change(self, pillow_instance, change):
+    #     self.changes.append(change)
+    #
+    def save_docs(self):
+        pass
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
