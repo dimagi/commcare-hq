@@ -27,7 +27,7 @@ from pact.enums import (PACT_DOMAIN, XMLNS_PATIENT_UPDATE, PACT_HP_GROUPNAME, PA
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.tasks import set_schedule_case_properties
-from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
+from pact.utils import pact_script_fields, case_script_field, submit_xform
 from corehq.apps.app_manager.dbaccessors import get_latest_build_id
 
 PACT_CLOUD_APPNAME = "PACT Cloud"
@@ -119,9 +119,6 @@ class PactFormAPI(DomainAPI):
         query['script_fields'].update(case_script_field())
 
         res = self.xform_es.run_query(query)
-
-        my_patients_ever_submitted_query = query_per_case_submissions_facet(PACT_DOMAIN, username)
-        patients_res = self.xform_es.run_query(my_patients_ever_submitted_query)
 
         #filter by active/discharged?
         #get all the forms

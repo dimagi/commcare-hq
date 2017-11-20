@@ -102,7 +102,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         query = query_per_case_submissions_facet(self.request.domain, limit=limit)
         results = self.xform_es.run_query(query)
         case_id_count_map = {}
-        for f in results['facets']['case_submissions']['terms']:
+        for f in results['aggs']['agg_filters']['case_submissions']['terms']:
             case_id_count_map[f['term']] = f['count']
         return case_id_count_map
 
