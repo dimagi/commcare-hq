@@ -20,6 +20,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _, ugettext
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from couchdbkit.resource import ResourceNotFound
@@ -147,6 +148,10 @@ class ScheduleForm(Form):
     user_group_recipients = RecipientField(
         required=False,
         label=_("User Group Recipient(s)"),
+    )
+    user_organization_recipients = RecipientField(
+        required=False,
+        label=_("User Organization Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
@@ -324,6 +329,14 @@ class ScheduleForm(Form):
                 ),
                 data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER_GROUP,
             ),
+            crispy.Div(
+                crispy.Field(
+                    'user_organization_recipients',
+                    data_bind='value: user_organization_recipients.value',
+                    placeholder=_("Select user organization(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
+            ),
         ]
 
     def get_content_layout_fields(self):
@@ -394,6 +407,24 @@ class ScheduleForm(Form):
 
         return result
 
+    @property
+    def current_select2_user_organization_recipients(self):
+        value = self['user_organization_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for location_id in value.strip().split(','):
+            location_id = location_id.strip()
+            try:
+                location = SQLLocation.objects.get(domain=self.domain, location_id=location_id)
+            except SQLLocation.DoesNotExist:
+                continue
+
+            result.append({"id": location_id, "text": location.name})
+
+        return result
+
     def clean_user_recipients(self):
         if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
             return []
@@ -436,6 +467,28 @@ class ScheduleForm(Form):
 
             if group.domain != self.domain:
                 raise not_found_error
+
+        return data
+
+    def clean_user_organization_recipients(self):
+        if self.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_organization_recipients']
+
+        if not data:
+            raise ValidationError(
+                _("Please specify the organization(s) or deselect user organizations as recipients")
+            )
+
+        for location_id in data:
+            try:
+                location = SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
+            except SQLLocation.DoesNotExist:
+                raise ValidationError(
+                    _("One or more user organizations were unexpectedly not found. "
+                      "Please select organization(s) again.")
+                )
 
         return data
 

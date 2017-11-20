@@ -1,6 +1,6 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
     var CreateMessageViewModel = function (initial_values, select2_user_recipients,
-            select2_user_group_recipients) {
+            select2_user_group_recipients, select2_user_organization_recipients) {
         var self = this;
 
         self.schedule_name = ko.observable(initial_values.schedule_name);
@@ -18,6 +18,9 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.user_group_recipients = new RecipientsSelect2Handler(select2_user_group_recipients,
             initial_values.user_group_recipients, 'user_group_recipients');
         self.user_group_recipients.init();
+        self.user_organization_recipients = new RecipientsSelect2Handler(select2_user_organization_recipients,
+            initial_values.user_organization_recipients, 'user_organization_recipients');
+        self.user_organization_recipients.init();
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
@@ -204,6 +207,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             hqImport("hqwebapp/js/initial_page_data").get("current_values"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
         );
         $('#create-schedule-form').koApplyBindings(cmvm);
         cmvm.init();

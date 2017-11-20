@@ -4,6 +4,7 @@ import json
 from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 
 
@@ -12,6 +13,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
     allowed_actions = [
         'user_recipients',
         'user_group_recipients',
+        'user_organization_recipients',
     ]
 
     @property
@@ -42,6 +44,22 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         return [
             {'id': group['_id'], 'text': group['name']}
             for group in group_result.run().hits
+        ]
+
+    @property
+    def user_organization_recipients_response(self):
+        domain = self.request.domain
+        query = self.data.get('searchString')
+        result = (
+            SQLLocation
+            .active_objects
+            .filter(domain=domain, name__icontains=query)
+            .order_by('name')
+            .values_list('location_id', 'name')
+        )[0:10]
+        return [
+            {'id': row[0], 'text': row[1]}
+            for row in result
         ]
 
     def _fmt_success(self, data):
