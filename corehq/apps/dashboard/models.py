@@ -13,6 +13,7 @@ class Tile(object):
                  url=None, urlname=None, visibility_check=None,
                  url_generator=None, help_text=None):
         """
+        :param request: Request object for the page
         :param title: The title of the tile
         :param slug: The tile's slug
         :param icon: The class of the icon
@@ -25,8 +26,6 @@ class Tile(object):
         :param url_generator: a lambda that accepts a request and returns
         a string that is the url the tile will take the user to if it's clicked
         :param help_text: (optional) text that will appear on hover of tile
-        analytics event tracking.
-        analytics event tracking.
         """
         self.request = request
         self.paginator_class = paginator_class
@@ -35,8 +34,7 @@ class Tile(object):
         self.icon = icon
         self.url = url
         self.urlname = urlname
-        self.visibility_check = (visibility_check
-                                 or self._default_visibility_check)
+        self.visibility_check = (visibility_check or self._default_visibility_check)
         self.url_generator = url_generator or self._default_url_generator
         self.help_text = help_text
 
@@ -56,12 +54,10 @@ class Tile(object):
                     return False
         return bool(self.visibility_check(self.request))
 
-
     @property
     @memoized
     def paginator(self):
         return self.paginator_class(self.request)
-
 
     def get_url(self, request):
         if self.urlname is not None:
@@ -78,9 +74,8 @@ class Tile(object):
 
 
 class TilePaginator(object):
-    """A resource for serving data to the Angularjs PaginatedTileController
-    for the hq.dashboard Angular JS module.
-    To use, subclass this and override :total: and :paginated_items: properties.
+    """A container for logic to page through a particular type of item (e.g., applications).
+    To use, subclass this and override :total: and :_paginated_items:.
     """
 
     def __init__(self, request):
@@ -124,8 +119,8 @@ class TilePaginator(object):
         """
         return self._paginated_items(items_per_page, (current_page - 1) * items_per_page)
 
-    def _paginated_items(self, limit, skip):
-        """Helper for paginated_items that calculated index of start item"""
+    def _paginated_items(self, items_per_page, skip):
+        """Helper for paginated_items, with index of start item already calculated"""
         raise NotImplementedError('_paginated_items must be overridden')
 
 
@@ -143,10 +138,10 @@ class ReportsPaginator(TilePaginator):
         ).all()
         return results[0]['value'] if results else 0
 
-    def _paginated_items(self, limit, skip):
+    def _paginated_items(self, items_per_page, skip):
         reports = ReportConfig.by_domain_and_owner(
             self.request.domain, self.request.couch_user._id,
-            limit=limit, skip=skip
+            items_per_page=items_per_page, skip=skip
         )
         for report in reports:
             yield self._fmt_item(
@@ -173,7 +168,7 @@ class AppsPaginator(TilePaginator):
         apps = sorted(apps, key=lambda item: item.name.lower())
         return apps
 
-    def _paginated_items(self, limit, skip):
+    def _paginated_items(self, items_per_page, skip):
         def _get_app_url(app):
             return (
                 _get_view_app_url(app)
@@ -187,7 +182,7 @@ class AppsPaginator(TilePaginator):
         def _get_release_manager_url(app):
             return reverse('release_manager', args=[self.request.domain, app.get_id])
 
-        apps = self.applications[skip:skip + limit]
+        apps = self.applications[skip:skip + items_per_page]
 
         return [self._fmt_item(a.name,
                                _get_app_url(a)) for a in apps]
@@ -215,8 +210,8 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
             exports = CaseExportSchema.get_stale_exports(self.request.domain)
         return exports
 
-    def _paginated_items(self, limit, skip):
-        exports = (self.form_exports + self.case_exports)[skip:skip + limit]
+    def _paginated_items(self, items_per_page, skip):
+        exports = (self.form_exports + self.case_exports)[skip:skip + items_per_page]
         for export in exports:
             urlname = 'export_download_forms' if isinstance(export, FormExportSchema) else 'export_download_cases'
             yield self._fmt_item(
