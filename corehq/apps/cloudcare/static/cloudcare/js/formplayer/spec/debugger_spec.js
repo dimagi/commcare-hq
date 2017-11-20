@@ -39,9 +39,6 @@ describe('Debugger', function() {
             ccDebugger = new CloudCareDebugger();
             sinon.stub(API, 'evaluateXPath').returns($.Deferred());
             sinon.stub(API, 'formattedQuestions').returns($.Deferred());
-            window.analytics = {
-                workflow: sinon.spy(),
-            };
         });
 
         afterEach(function() {

@@ -1,4 +1,4 @@
-/* globals hqDefine, hqImport, define, require, analytics, form_tour_start, WS4Redis, django */
+/* globals hqDefine, hqImport, define, require, form_tour_start, WS4Redis, django */
 hqDefine("app_manager/js/forms/form_designer", function() {
     $(function() {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
