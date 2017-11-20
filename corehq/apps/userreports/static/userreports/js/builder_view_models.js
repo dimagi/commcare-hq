@@ -273,7 +273,7 @@ hqDefine('userreports/js/builder_view_models', function () {
     PropertyList.prototype.buttonHandler = function () {
         this.columns.push(this._createListItem());
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
-            window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
+            hqImport('userreports/js/report_analytics').track.event(this.analyticsAction, this.analyticsLabel);
             window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
         }
         if (_.isFunction(this.addItemCallback)) {
@@ -389,8 +389,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             requireColumns: reportType !== "chart",
             requireColumnsText: "At least one column is required",
             noColumnsValidationCallback: function(){
-                window.analytics.usage(
-                    'Report Builder',
+                hqImport('userreports/js/report_analytics').track.event(
                     'Click On Done (No Columns)',
                     reportType
                 );

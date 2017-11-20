@@ -2,9 +2,11 @@
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
 hqDefine("hqwebapp/js/rollout_modal", function() {
+    var _trackSoftRollout = hqImport('analytics/js/google').trackCategory("Soft Rollout");
+
     function snooze(slug) {
         $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
-        window.analytics.usage("Soft Rollout", "snooze", slug);
+        _trackSoftRollout.event("snooze", slug);
         window.analytics.workflow("Soft Rollout snooze " + slug);
     }
 
@@ -42,7 +44,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                                        'to turn it on the next time you visit this page.'), 'danger');
                 },
             });
-            window.analytics.usage("Soft Rollout", "enable", slug);
+            _trackSoftRollout.event("enable", slug);
             window.analytics.workflow("Soft Rollout enable " + slug);
         });
 
@@ -72,7 +74,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                     alert_user(gettext('We could not turn off the new feature. Please try again later.'), 'danger');
                 },
             });
-            window.analytics.usage("Soft Rollout", "disable", slug);
+            _trackSoftRollout.event("disable", slug);
             window.analytics.workflow("Soft Rollout disable " + slug);
         });
     });

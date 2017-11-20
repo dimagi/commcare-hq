@@ -99,7 +99,6 @@ hqDefine('analytics/js/deprecated', function () {
             _kmq.push(args);
         });
 
-        window.analytics.usage = _makeLegacyFn(_google, 'window.analytics.usage', _google.track.event, _addCallbackToArgs);
         window.analytics.trackUsageLink = _makeLegacyFn(_google, 'window.analytics.trackUsageLink', _google.track.click);
 
         window.analytics.identify = _makeLegacyFn(_kissmetrics, 'window.analytics.identify', function (userId, traits) {
