@@ -16,16 +16,13 @@ class Tile(object):
     when it's called by Django Angular's Remote Method Invocation.
     """
 
-    def __init__(self, tile_config, request, in_data):
+    def __init__(self, tile_config, request):
         if not isinstance(tile_config, TileConfiguration):
             raise TileConfigurationError(
                 "tile_config must be an instance of TileConfiguration"
             )
         self.tile_config = tile_config
         self.request = request
-
-        # this is the data provided by Django Angular's Remote Method Invocation
-        self.in_data = in_data
 
     @property
     def is_visible(self):
@@ -46,9 +43,7 @@ class Tile(object):
     @property
     @memoized
     def context_processor(self):
-        return self.tile_config.context_processor_class(
-            self.tile_config, self.request, self.in_data
-        )
+        return self.tile_config.context_processor_class(self.tile_config, self.request)
 
 
 class TileConfiguration(object):
@@ -72,10 +67,6 @@ class TileConfiguration(object):
         analytics event tracking.
         analytics event tracking.
         """
-        if context_processor_class and not issubclass(context_processor_class, BaseTileContextProcessor):
-            raise TileConfigurationError(
-                "context processor must be subclass of BaseTileContextProcessor"
-            )
         self.context_processor_class = context_processor_class
         self.title = title
         self.slug = slug
@@ -101,62 +92,20 @@ class TileConfiguration(object):
         return True
 
 
-class BaseTileContextProcessor(object):
-    tile_type = None
-
-    def __init__(self, tile_config, request, in_data):
-        """
-        :param tile_config: An instance of TileConfiguration
-        :param request: An instance of HttpRequest
-        :param in_data: A dictionary provided by Django Angular's
-        Remote Method Invocation
-        """
-        self.request = request
-        self.tile_config = tile_config
-        self.in_data = in_data
-
-    @property
-    def context(self):
-        """This is the context specific to the type of tile we're creating.
-        :return: dict
-        """
-        raise NotImplementedError('context must be overridden')
-
-
-class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
+class BasePaginatedTileContextProcessor(object):
     """A resource for serving data to the Angularjs PaginatedTileController
     for the hq.dashboard Angular JS module.
     To use, subclass this and override :total: and :paginated_items: properties.
     """
 
-    @property
-    def pagination_data(self):
-        """The data we READ to figure out the current pagination state.
-        :return: dict
+    def __init__(self, tile_config, request):
         """
-        return self.in_data['pagination']
-
-    @property
-    def limit(self):
-        """The maximum number of items for this page.
-        :return: integer
+        :param tile_config: An instance of TileConfiguration
+        :param request: An instance of HttpRequest
+        Remote Method Invocation
         """
-        return self.pagination_data.get('limit', 5)
-
-    @property
-    def current_page(self):
-        """The current page that the paginator is on.
-        :return: integer
-        """
-        return self.pagination_data.get('currentPage', 1)
-
-    @property
-    def skip(self):
-        """The number of items to skip over to get to the current page in
-        the list of paginated items (or in the queryset).
-        :return: integer
-        """
-        return (self.current_page - 1) * self.limit
+        self.request = request
+        self.tile_config = tile_config
 
     @staticmethod
     def _fmt_item(name,
@@ -189,8 +138,7 @@ class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
         """
         raise NotImplementedError('total must return an int')
 
-    @property
-    def paginated_items(self):
+    def paginated_items(self, limit, skip):
         """The items (as dictionaries/objects) to be passed to the angularjs
         template for rendering. It's recommended that you use the
         _fmt_item() helper function to return the correctly formatted dict
@@ -215,11 +163,10 @@ class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
         ).all()
         return results[0]['value'] if results else 0
 
-    @property
-    def paginated_items(self):
+    def paginated_items(self, limit, skip):
         reports = ReportConfig.by_domain_and_owner(
             self.request.domain, self.request.couch_user._id,
-            limit=self.limit, skip=self.skip
+            limit=limit, skip=skip
         )
         for report in reports:
             yield self._fmt_item(
@@ -250,8 +197,7 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
         apps = sorted(apps, key=lambda item: item.name.lower())
         return apps
 
-    @property
-    def paginated_items(self):
+    def paginated_items(self, limit, skip):
         def _get_app_url(app):
             return (
                 _get_view_app_url(app)
@@ -265,7 +211,7 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
         def _get_release_manager_url(app):
             return reverse('release_manager', args=[self.request.domain, app.get_id])
 
-        apps = self.applications[self.skip:self.skip + self.limit]
+        apps = self.applications[skip:skip + limit]
 
         return [self._fmt_item(a.name,
                                _get_app_url(a)) for a in apps]
@@ -275,9 +221,9 @@ class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissions
     """Generates the Paginated context for the Data Tile."""
     domain = None
 
-    def __init__(self, tile_config, request, in_data):
+    def __init__(self, tile_config, request):
         self.domain = request.domain
-        super(DataPaginatedContext, self).__init__(tile_config, request, in_data)
+        super(DataPaginatedContext, self).__init__(tile_config, request)
 
     @property
     def total(self):
@@ -299,9 +245,8 @@ class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissions
             exports = CaseExportSchema.get_stale_exports(self.domain)
         return exports
 
-    @property
-    def paginated_items(self):
-        exports = (self.form_exports + self.case_exports)[self.skip:self.skip + self.limit]
+    def paginated_items(self, limit, skip):
+        exports = (self.form_exports + self.case_exports)[skip:skip + limit]
         for export in exports:
             urlname = 'export_download_forms' if isinstance(export, FormExportSchema) else 'export_download_cases'
             yield self._fmt_item(

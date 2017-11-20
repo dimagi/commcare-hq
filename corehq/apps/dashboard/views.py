@@ -59,12 +59,11 @@ def dashboard_tile(request, domain, slug):
             status_code=404,
         )
 
-    pagination_data = {
-        'limit': int(request.GET.get('itemsPerPage', 5)),
-        'currentPage': int(request.GET.get('currentPage', 1)),
-    }
-    tile = Tile(tile_config, request, {'pagination': pagination_data})  # TODO: DRY up with make_tile
-    items = list(tile.context_processor.paginated_items)
+    tile = Tile(tile_config, request)  # TODO: DRY up with make_tile
+
+    limit = int(request.GET.get('itemsPerPage', 5))
+    skip = (int(request.GET.get('currentPage', 1)) - 1) * limit
+    items = list(tile.context_processor.paginated_items(limit, skip))
     return json_response({'items': items})
 
 
@@ -98,7 +97,7 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     def page_context(self):
         tile_contexts = []
         for config in self.tile_configs:
-            tile = self.make_tile(config.slug, {'pagination': {}})  # TODO: drop fake pagination data
+            tile = self.make_tile(config.slug)
             if tile.is_visible:
                 tile_context = {
                     'title': config.title,
@@ -119,9 +118,10 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                 tile_contexts.append(tile_context)
         return {'dashboard_tiles': tile_contexts}
 
-    def make_tile(self, slug, in_data):
+    # TODO: get rid of this?
+    def make_tile(self, slug):
         config = self.slug_to_tile[slug]
-        return Tile(config, self.request, in_data)
+        return Tile(config, self.request)
 
 
 
@@ -177,8 +177,7 @@ def _get_default_tile_configurations():
             context_processor_class=ReportsPaginatedContext,
             urlname='reports_home',
             visibility_check=can_view_reports,
-            help_text=_('View worker monitoring reports and inspect '
-                        'project data'),
+            help_text=_('View worker monitoring reports and inspect project data'),
         ),
         TileConfiguration(
             title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
@@ -203,8 +202,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-users',
             urlname=DefaultProjectUserSettingsView.urlname,
             visibility_check=can_edit_users,
-            help_text=_('Manage accounts for mobile workers '
-                        'and CommCareHQ users'),
+            help_text=_('Manage accounts for mobile workers and CommCareHQ users'),
         ),
         TileConfiguration(
             title=_('Organization'),
@@ -229,8 +227,7 @@ def _get_default_tile_configurations():
             urlname='appstore',
             visibility_check=can_view_exchange,
             url_generator=lambda urlname, req: reverse(urlname),
-            help_text=_('Download and share CommCare applications with '
-                        'other users around the world'),
+            help_text=_('Download and share CommCare applications with other users around the world'),
         ),
         TileConfiguration(
             title=_('Settings'),
