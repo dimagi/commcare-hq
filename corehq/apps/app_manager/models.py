@@ -3512,13 +3512,20 @@ class AdvancedModule(ModuleBase):
     def all_forms_require_a_case(self):
         return all(form.requires_case() for form in self.forms)
 
+    @property
+    def search_detail(self):
+        return deepcopy(self.case_details.short)
+
     def get_details(self):
-        return (
+        details = [
             ('case_short', self.case_details.short, True),
             ('case_long', self.case_details.long, True),
             ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
-        )
+        ]
+        if module_offers_search(self):
+            details.append(('search_short', self.search_detail, True))
+        return details
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):
 
