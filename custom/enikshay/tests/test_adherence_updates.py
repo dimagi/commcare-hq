@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import mock
 import datetime
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
@@ -35,6 +35,7 @@ from custom.enikshay.tests.utils import (
 )
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestAdherenceUpdater(TestCase):
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
