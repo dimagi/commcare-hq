@@ -116,7 +116,7 @@ hqDefine("userreports/js/configurable_report", function() {
         });
 
         if (initial_page_data("created_by_builder")) {
-            hqDefine('userreports/js/report_analytics').track.event(
+            hqImport('userreports/js/report_analytics').track.event(
                     initial_page_data("builder_report_type"),
                     'Load a report that was built in report builder'
             );
