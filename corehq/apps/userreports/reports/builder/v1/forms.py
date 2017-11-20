@@ -1,4 +1,5 @@
 
+from __future__ import absolute_import
 from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
@@ -51,6 +52,7 @@ from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -70,7 +72,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in REPORT_BUILDER_FILTER_TYPE_MAP.keys() + [""]:
+            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -87,7 +89,7 @@ class Select2(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
             u'<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
@@ -114,7 +116,7 @@ class QuestionSelect(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
             u"""
@@ -190,7 +192,7 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
+                self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=False
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
@@ -706,7 +708,7 @@ class ConfigureNewReportBase(forms.Form):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in self.data_source_properties.iteritems():
+        for id_, prop in six.iteritems(self.data_source_properties):
             if prop.type == "question":
                 if prop.source['type'] == "MSelect":
                     option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
@@ -823,7 +825,7 @@ class ConfigureNewReportBase(forms.Form):
         else:
             indicators = self.ds_builder.indicators(self._number_columns)
             if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
+                for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
                     setattr(data_source, property_name, value)
                 data_source.save()
                 tasks.rebuild_indicators.delay(data_source._id)

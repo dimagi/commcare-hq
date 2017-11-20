@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import datetime
 from custom.bihar.calculations.types import CaseCalculator, DoneDueCalculator, AddCalculator
 from custom.bihar.calculations.utils.calculations import get_related_prop, get_form
 from custom.bihar.calculations.utils.filters import get_add, A_MONTH, A_DAY
 import fluff
+import six
 
 
 def _get_tob(case):  # only guaranteed to be accurate within 24 hours
@@ -31,7 +33,7 @@ class BirthPlace(AddCalculator):
 
     def __init__(self, at, window=None):
         super(BirthPlace, self).__init__(window=window)
-        self.at = at if not isinstance(at, basestring) else (at,)
+        self.at = at if not isinstance(at, six.string_types) else (at,)
 
     @fluff.filter_by
     def correct_birthplace(self, case):

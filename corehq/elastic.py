@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import copy
 import logging
@@ -23,6 +24,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
+import six
 
 
 def _es_hosts():
@@ -83,7 +85,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     """
     Check if a document exists, by ID or the whole document.
     """
-    if isinstance(doc_id_or_dict, basestring):
+    if isinstance(doc_id_or_dict, six.string_types):
         doc_id = doc_id_or_dict
     else:
         assert isinstance(doc_id_or_dict, dict)
@@ -456,7 +458,7 @@ def generate_sortables_from_facets(results, params=None):
     """
 
     def generate_facet_dict(f_name, ft):
-        if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
+        if isinstance(ft['term'], six.text_type): #hack to get around unicode encoding issues. However it breaks this specific facet
             ft['term'] = ft['term'].encode('ascii','replace')
 
         return {'name': ft["term"],
@@ -466,7 +468,7 @@ def generate_sortables_from_facets(results, params=None):
     sortable = []
     res_facets = results.get("facets", [])
     for facet in res_facets:
-        if res_facets[facet].has_key("terms"):
+        if "terms" in res_facets[facet]:
             sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
 
     return sortable

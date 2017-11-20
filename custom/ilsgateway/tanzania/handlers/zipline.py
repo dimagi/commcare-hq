@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from corehq.apps.products.models import SQLProduct
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import INVALID_PRODUCT_CODE
 from custom.zipline.api import ProductQuantity
+from six.moves import zip
 
 
 class ParseError(Exception):
@@ -37,7 +39,7 @@ class ZiplineGenericHandler(KeywordHandler):
             raise ParseError(self.error_message)
         self._check_quantities(quantities)
         self._check_product_codes(product_codes)
-        return zip(product_codes, quantities)
+        return list(zip(product_codes, quantities))
 
     def help(self):
         self.respond(self.help_message)

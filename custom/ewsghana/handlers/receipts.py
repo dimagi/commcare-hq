@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 
 from corehq.apps.domain.models import Domain
@@ -25,7 +26,7 @@ class ReceiptsHandler(KeywordHandler):
                 return False
         except NotAUserClassError:
             return False
-        except Exception as e:  # todo: should we only trap SMSErrors?
+        except Exception as e:
             if settings.UNIT_TESTING or settings.DEBUG:
                 raise
             send_sms_to_verified_number(verified_contact, 'problem with stock report: %s' % str(e))

@@ -194,7 +194,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
     function ReportConfig(report_id, display,
                           localizedDescription, xpathDescription, useXpathDescription,
-                          showDataTable, uuid, availableReportIds,
+                          showDataTable, syncDelay, uuid, availableReportIds,
                           reportCharts, graph_configs, columnXpathTemplate, dataPathPlaceholders,
                           filterValues, reportFilters,
                           language, languages, changeSaveButton) {
@@ -211,6 +211,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.xpathDescription = ko.observable(xpathDescription);
         this.useXpathDescription = ko.observable(useXpathDescription);
         this.showDataTable = ko.observable(showDataTable);
+        this.syncDelay = ko.observable(syncDelay);
 
         this.reportId.subscribe(changeSaveButton);
         this.display.subscribe(changeSaveButton);
@@ -218,6 +219,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.xpathDescription.subscribe(changeSaveButton);
         this.useXpathDescription.subscribe(changeSaveButton);
         this.showDataTable.subscribe(changeSaveButton);
+        this.syncDelay.subscribe(changeSaveButton);
 
         self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
                                            graph_configs, columnXpathTemplate, dataPathPlaceholders,
@@ -239,6 +241,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 xpath_description: self.xpathDescription(),
                 use_xpath_description: self.useXpathDescription(),
                 show_data_table: self.showDataTable(),
+                sync_delay: self.syncDelay(),
                 uuid: self.uuid,
             };
         };
@@ -259,6 +262,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
+        self.supportSyncDelay = options.supportSyncDelay;
+        self.globalSyncDelay = options.globalSyncDelay;
         self.staticFilterData = options.staticFilterData;
         self.languages = options.languages;
         self.lang = options.lang;
@@ -349,6 +354,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 options.xpath_description,
                 options.use_xpath_description,
                 options.show_data_table,
+                options.sync_delay,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,

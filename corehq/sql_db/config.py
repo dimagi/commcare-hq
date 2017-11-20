@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.conf import settings
@@ -6,6 +7,7 @@ from jsonobject.properties import IntegerProperty, StringProperty
 
 from dimagi.utils.decorators.memoized import memoized
 from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError
+from six.moves import zip
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'

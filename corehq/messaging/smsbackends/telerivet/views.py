@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
@@ -16,6 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+import six
 
 
 # Tuple of (hq field name, telerivet field name) tuples
@@ -141,7 +143,7 @@ class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
             }
 
     def trim(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return value.strip()
 
         return value

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager.models import Application
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors

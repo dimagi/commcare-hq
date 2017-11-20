@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date, timedelta
 from celery import current_task, current_app
 from celery.schedules import crontab
@@ -68,7 +69,7 @@ def update_celery_state(sender=None, body=None, **kwargs):
 
 
 @periodic_task(
-    run_every=crontab(hour="23", minute="0"),
+    run_every=crontab(hour="1", minute="0"),
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def prune_synclogs():

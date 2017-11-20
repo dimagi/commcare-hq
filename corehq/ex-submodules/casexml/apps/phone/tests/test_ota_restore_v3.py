@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
@@ -8,8 +9,9 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
 )
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.restore import FileRestoreResponse
-from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
+from casexml.apps.phone.restore import RestoreContent
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import MockDevice
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -42,7 +44,7 @@ class OtaV3RestoreTest(TestCase):
         self.assertIn(case_id, device.sync().cases)
 
 
-class TestRestoreResponse(SimpleTestCase):
+class TestRestoreContent(SimpleTestCase):
 
     def _expected(self, username, body, items=None):
         items_text = (b' items="%s"' % items) if items is not None else b''
@@ -61,14 +63,16 @@ class TestRestoreResponse(SimpleTestCase):
         user = u'user1'
         body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=None)
-        with FileRestoreResponse(user, False) as response:
+        with RestoreContent(user, False) as response:
             response.append(body)
-        self.assertEqual(expected, str(response))
+            with response.get_fileobj() as fileobj:
+                self.assertEqual(expected, fileobj.read())
 
     def test_items(self):
         user = u'user1'
         body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=2)
-        with FileRestoreResponse(user, True) as response:
+        with RestoreContent(user, True) as response:
             response.append(body)
-        self.assertEqual(expected, str(response))
+            with response.get_fileobj() as fileobj:
+                self.assertEqual(expected, fileobj.read())

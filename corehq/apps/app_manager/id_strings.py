@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import re
+from six.moves import zip
 
 ROOT = u'root'
 
@@ -65,7 +67,7 @@ def current_language():
 
 @pattern('m%d.%s.title')
 def detail_title_locale(detail_type):
-    if detail_type.startswith('case'):
+    if detail_type.startswith('case') or detail_type.startswith('search'):
         return "cchq.case"
     elif detail_type.startswith('referral'):
         return "cchq.referral"

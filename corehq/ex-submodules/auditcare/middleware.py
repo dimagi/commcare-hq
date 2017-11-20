@@ -71,7 +71,7 @@ class AuditMiddleware(MiddlewareMixin):
                 getattr(settings, "AUDIT_VIEWS", False)):
 
             if hasattr(view_func, 'func_name'): #is this just a plain jane __builtin__.function
-                fqview = "%s.%s" % (view_func.__module__, view_func.func_name)
+                fqview = "%s.%s" % (view_func.__module__, view_func.__name__)
             else:
                 #just assess it from the classname for the class based view
                 fqview = "%s.%s" % (view_func.__module__, view_func.__class__.__name__)

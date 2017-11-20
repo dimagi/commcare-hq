@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ValidationError

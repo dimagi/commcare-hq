@@ -74,7 +74,7 @@
     {% blocktrans %}
         You have selected to automatically pay this invoice using a credit card
         with the last four digits {{ last_4 }}. Your credit card will automatically
-        be charged on the 15th day of this month. You can alter this
+        be charged on {{ date_due }}. You can alter this
         setting by logging into your project space on CommCareHQ and navigating to
         <a href="{{ statements_url }}">Billing Statements</a>.
     {% endblocktrans %}

@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from decimal import Decimal, InvalidOperation
 from jsonobject.base_properties import JsonProperty
 from jsonobject.exceptions import BadValueError
 import re
 from .datatypes import GeoPoint
+import six
 
 
 def _canonical_decimal(n):
@@ -18,7 +20,7 @@ def _canonical_decimal(n):
     except InvalidOperation:
         value_error = True
     else:
-        if unicode(decimal) != n:
+        if six.text_type(decimal) != n:
             value_error = True
     if value_error:
         raise ValueError('{!r} is not a canonically formatted decimal'

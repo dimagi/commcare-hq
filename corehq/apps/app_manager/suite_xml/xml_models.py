@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from eulxml.xmlmap import (
     IntegerField, NodeField, NodeListField,
     SimpleBooleanField, StringField, XmlObject,
@@ -125,7 +126,7 @@ class Annotation(OrderedXmlObject):
 class Graph(XmlObject):
     ROOT_NAME = 'graph'
 
-    type = StringField("@type", choices=["xy", "bubble"])
+    type = StringField("@type", choices=["xy", "bubble", "bar", "time"])
     series = NodeListField('series', Series)
     configuration = NodeField('configuration', ConfigurationGroup)
     annotations = NodeListField('annotation', Annotation)

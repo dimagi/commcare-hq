@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from datetime import datetime
 import uuid
 from django.conf import settings
@@ -353,11 +354,11 @@ class FundamentalCaseTests(TestCase):
             submit_form_locally(
                 xml, domain=DOMAIN
             )
-        with self.assertRaisesMessage(AssertionError, 'Case created without create block in CC version >= 2.38'):
-            _submit_form_with_cc_version("2.38")
+        with self.assertRaisesMessage(AssertionError, 'Case created without create block in CC version >= 2.39'):
+            _submit_form_with_cc_version("2.39")
 
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
-            _submit_form_with_cc_version("2.37")
+            _submit_form_with_cc_version("2.38")
 
     def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \

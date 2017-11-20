@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from couchdbkit import ResourceNotFound
 from django.http import (
@@ -33,6 +34,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 from couchforms.const import MAGIC_PROPERTY
+from couchforms import openrosa_response
 from couchforms.getters import MultimediaBug
 from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
@@ -47,12 +49,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     ]
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
-        response = SubmissionPost.submission_ignored_response()
+        response = openrosa_response.SUBMISSION_IGNORED_RESPONSE
         _record_metrics(metric_tags, 'ignored', response)
         return response
 
     if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
-        response = SubmissionPost.get_blacklisted_response()
+        response = openrosa_response.BLACKLISTED_RESPONSE
         _record_metrics(metric_tags, 'blacklisted', response)
         return response
 

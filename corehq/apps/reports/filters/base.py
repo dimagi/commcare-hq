@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from django.template.loader import render_to_string
 from dimagi.utils.decorators.memoized import memoized
@@ -329,4 +330,24 @@ class BaseTagsFilter(BaseReportFilter):
             'tags': self.tags,
             'selected': self.selected,
             'placeholder': self.placeholder,
+        }
+
+
+class BaseSimpleFilter(BaseReportFilter):
+    template = "reports/filters/simple.html"
+    slug = None
+
+    # use ugettext_lazy for below properties
+    label = None
+    help_title = None
+    help_content = None
+    help_inline = None
+
+    @property
+    def filter_context(self):
+        return {
+            'default': self.request.GET.get(self.slug, ""),
+            'help_title': self.help_title,
+            'help_content': self.help_content,
+            'help_inline': self.help_inline
         }

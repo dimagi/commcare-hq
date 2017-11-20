@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 from dateutil import parser
 from corehq.pillows.xform import transform_xform_for_elasticsearch

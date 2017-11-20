@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
@@ -23,6 +24,7 @@ from custom.ilsgateway.tanzania.handlers.randr import RandrHandler
 from custom.ilsgateway.tanzania.handlers.yes import YesHandler
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.tanzania.reminders import CONTACT_SUPERVISOR
+import six
 
 
 def choose_handler(keyword, handlers):
@@ -126,5 +128,5 @@ def handle(verified_contact, text, msg):
             return handler.help()
     elif keyword != 'l':
         with localize(verified_contact.owner.get_language_code()):
-            send_sms_to_verified_number(verified_contact, unicode(CONTACT_SUPERVISOR))
+            send_sms_to_verified_number(verified_contact, six.text_type(CONTACT_SUPERVISOR))
         return True

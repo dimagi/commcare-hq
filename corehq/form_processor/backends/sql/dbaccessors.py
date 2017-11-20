@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import itertools
 import logging
 import struct
@@ -67,6 +68,21 @@ def get_cursor(model):
     return connections[db].cursor()
 
 
+def iter_all_rows(reindex_accessor):
+    """Returns a generator that will iterate over all rows provided by the
+    reindex accessor
+    """
+    for db_alias in reindex_accessor.sql_db_aliases:
+        docs = reindex_accessor.get_docs(db_alias, reindex_accessor.startkey_min_value)
+        while docs:
+            for doc in docs:
+                yield doc
+
+            start_from_for_db = getattr(doc, reindex_accessor.startkey_attribute_name)
+            last_id = doc.id
+            docs = reindex_accessor.get_docs(db_alias, start_from_for_db, last_doc_pk=last_id)
+
+
 class ShardAccessor(object):
     hash_key = b'\x00' * 16
 
@@ -116,7 +132,7 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
-        if isinstance(doc_id, unicode):
+        if isinstance(doc_id, six.text_type):
             doc_id = doc_id.encode('utf-8')
         elif isinstance(doc_id, UUID):
             # Hash the 16-byte string
@@ -364,6 +380,18 @@ class FormAccessorSQL(AbstractFormAccessor):
         )
 
     @staticmethod
+    def iter_form_ids_by_xmlns(domain, xmlns=None):
+        from corehq.sql_db.util import run_query_across_partitioned_databases
+
+        q_expr = Q(domain=domain) & Q(state=XFormInstanceSQL.NORMAL)
+        if xmlns:
+            q_expr &= Q(xmlns=xmlns)
+
+        for form_id in run_query_across_partitioned_databases(
+                XFormInstanceSQL, q_expr, values=['form_id']):
+            yield form_id
+
+    @staticmethod
     def get_with_attachments(form_id):
         """
         It's necessary to store these on the form rather than use a memoized property
@@ -596,6 +624,10 @@ class FormAccessorSQL(AbstractFormAccessor):
             pass
 
         form.clear_tracked_models()
+
+        # keep these around since we might need them still e.g publishing changes to kafka
+        form.cached_attachments = unsaved_attachments
+
 
     @staticmethod
     def update_form(form, publish_changes=True):

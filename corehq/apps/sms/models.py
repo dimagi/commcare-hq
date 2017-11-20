@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 import base64
 import hashlib
 import jsonfield
@@ -27,6 +28,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext_lazy
+import six
 
 
 INCOMING = "I"
@@ -542,7 +544,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
@@ -1275,7 +1277,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
 
     # If this was a reminder that spawned off of a case, this is the case's id
-    case_id = models.CharField(max_length=126, null=True)
+    case_id = models.CharField(max_length=126, null=True, db_index=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)

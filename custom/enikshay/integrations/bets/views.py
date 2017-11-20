@@ -1,6 +1,7 @@
 """
 https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/edit
 """
+from __future__ import absolute_import
 import datetime
 import json
 
@@ -17,13 +18,12 @@ from jsonobject.exceptions import BadValueError
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from corehq.apps.locations.resources.v0_5 import LocationResource
-from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
+from .tasks import process_payment_confirmations
 from .utils import get_bets_location_json
 
 SUCCESS = "Success"
@@ -195,9 +195,7 @@ def payment_confirmation(request, domain):
             notify_exception(request, "BETS sent the eNikshay API a bad request.")
         return json_response({"error": e.message}, status_code=e.status_code)
 
-    bulk_update_cases(domain, [
-        (update.case_id, update.properties, False) for update in updates
-    ], __name__ + ".payment_confirmation")
+    process_payment_confirmations.delay(domain, updates)
     return json_response({'status': SUCCESS})
 
 

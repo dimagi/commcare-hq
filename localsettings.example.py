@@ -109,6 +109,7 @@ DEBUG = True
 # log directories must exist and be writeable!
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"
+SHARED_DRIVE_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sharedfiles")
 
 CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
@@ -201,6 +202,7 @@ LOCAL_APPS = (
 #    'testapps.test_pillowtop',
 #    'django_fsm', # Adds the ability to generate state diagrams for models using django-fsm
 #    'kombu.transport.django', # required for celery
+#    'package_monitor',
 )
 
 LOCAL_MIDDLEWARE = [

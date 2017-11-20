@@ -1,4 +1,5 @@
 # Standard library imports
+from __future__ import absolute_import
 import datetime
 
 from tastypie import fields
@@ -16,6 +17,7 @@ from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions
 from dimagi.utils.parsing import string_to_boolean
+import six
 
 TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username']
 
@@ -92,7 +94,7 @@ class CommCareUserResource(UserResource):
         user_data = bundle.obj.user_data
         if self.determine_format(bundle.request) == 'application/xml':
             # attribute names can't start with digits in xml
-            user_data = {k: v for k, v in user_data.iteritems() if not k[0].isdigit()}
+            user_data = {k: v for k, v in six.iteritems(user_data) if not k[0].isdigit()}
         return user_data
 
     def obj_get_list(self, bundle, **kwargs):

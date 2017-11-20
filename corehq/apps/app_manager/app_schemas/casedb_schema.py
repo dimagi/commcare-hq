@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import get_shared_case_types, \
     get_per_type_defaults, ParentCasePropertyBuilder, get_usercase_properties

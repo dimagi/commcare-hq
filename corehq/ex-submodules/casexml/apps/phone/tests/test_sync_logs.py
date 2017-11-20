@@ -1,10 +1,12 @@
+from __future__ import absolute_import
 import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.phone.restore import RestoreParams, RestoreConfig
-from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import MockDevice
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 

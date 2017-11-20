@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import WebUser

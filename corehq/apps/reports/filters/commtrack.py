@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, CheckboxFilter
 from django.utils.translation import ugettext_lazy, ugettext_noop

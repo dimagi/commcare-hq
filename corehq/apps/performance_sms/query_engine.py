@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple, defaultdict
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form

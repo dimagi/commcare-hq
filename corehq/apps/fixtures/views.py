@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 import json
 from tempfile import NamedTemporaryFile
@@ -41,6 +42,7 @@ from copy import deepcopy
 from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
+import six
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -207,7 +209,9 @@ def update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    transaction.add_post_commit_action(
+        lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    )
 
 
 def create_types(fields_patches, domain, data_tag, is_global, transaction):
@@ -229,7 +233,7 @@ def data_table(request, domain):
     try:
         sheets = prepare_fixture_html(table_ids, domain)
     except FixtureDownloadError as e:
-        messages.info(request, unicode(e))
+        messages.info(request, six.text_type(e))
         raise Http404()
     sheets.pop("types")
     if not sheets:

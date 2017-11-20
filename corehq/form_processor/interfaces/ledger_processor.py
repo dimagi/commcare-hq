@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
+import six
 
 
 class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_delete'])):
@@ -17,14 +19,13 @@ class StockModelUpdateResult(namedtuple('StockModelUpdate', ['to_save', 'to_dele
         )
 
 
-class LedgerDBInterface(object):
+class LedgerDBInterface(six.with_metaclass(ABCMeta, object)):
     """
     A very lightweight in-memory processing DB for ledgers, modeled after the CaseDb.
 
     This allows you to do multiple in-memory transactional updates on a single form
     without committing them to the database.
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self):
         self._balances = {}
@@ -54,9 +55,7 @@ class LedgerDBInterface(object):
         pass
 
 
-class LedgerProcessorInterface(object):
-    __metaclass__ = ABCMeta
-
+class LedgerProcessorInterface(six.with_metaclass(ABCMeta, object)):
     def __init__(self, domain):
         self.domain = domain
 

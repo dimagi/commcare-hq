@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 
 from corehq.apps.locations.permissions import location_safe

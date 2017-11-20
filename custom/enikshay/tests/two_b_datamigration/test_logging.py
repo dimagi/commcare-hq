@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import csv
 import datetime
 import os
@@ -13,7 +14,7 @@ from corehq.apps.users.models import DeviceIdLastUsed
 from corehq.util.workbook_reading.adapters.xlsx import _XLSXWorkbookAdaptor
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import (
     Command as ImportDRTBCasesCommand,
-    ALL_DRUGS,
+    DRUG_MAP,
 )
 from custom.enikshay.two_b_datamigration.management.commands.drtb_import_history import (
     Command as DRTBImportHistoryCommand
@@ -48,6 +49,7 @@ class ImportDRTBTestMixin(object):
         get_users_path = \
             "custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases.get_users_by_location_id"
         mock_user = MagicMock(
+            domain=self.domain,
             devices=[DeviceIdLastUsed(device_id="drtb-case-import-script")],
             is_demo_user=False,
             user_data={"id_issuer_body": "FOO"},
@@ -105,7 +107,7 @@ class TestLogCreation(SimpleTestCase, ImportDRTBTestMixin):
                 len(result_rows[0].get("case_ids", "").split(",")),
                 # A person, occurrence, episode, and two secondary_owner cases, plus one drug_resistance case for
                 # each drug
-                5 + len(ALL_DRUGS)
+                5 + len(DRUG_MAP)
             )
             self.assertIsNone(result_rows[0]['exception'])
 
@@ -138,7 +140,7 @@ class TestDRTBImportHistoryCommand(SimpleTestCase, ImportDRTBTestMixin):
             self.assertNotIn("Traceback", output, "Expected list of case ids, but output was: {}".format(output))
             self.assertEqual(
                 len(output.split()),
-                5 + len(ALL_DRUGS)
+                5 + len(DRUG_MAP)
             )
 
             output = DRTBImportHistoryCommand.handle_get_outcome("3", csv_file)

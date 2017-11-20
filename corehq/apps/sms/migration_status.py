@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.sms.models import MigrationStatus
 from django.conf import settings
 from django.template import Template

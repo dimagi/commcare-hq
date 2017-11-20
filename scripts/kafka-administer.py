@@ -5,6 +5,7 @@ Utilities for administering kafka.
 This can be run locally when connected to the VPN.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 from string import ljust
 from argparse import ArgumentParser, RawDescriptionHelpFormatter

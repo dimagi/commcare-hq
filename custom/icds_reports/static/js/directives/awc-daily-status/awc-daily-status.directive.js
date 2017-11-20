@@ -88,6 +88,18 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [0, (max + range/10).toFixed(2)];
             }
         });
     };
@@ -166,7 +178,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(",")(d);
                 },
                 axisLabelDistance: 20,
                 forceY: [0],
@@ -176,16 +188,16 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return d3.format(",.2f")(day['y']);
+                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num.x)) === date;});
+                        return day.y;
                     };
 
-                    var total = findValue(vm.chartData[1].values, d.value);
-                    var value = findValue(vm.chartData[0].values, d.value);
+                    var total = findValue(vm.chartData[0].values, d.value);
+                    var value = findValue(vm.chartData[1].values, d.value);
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of AWCs that were open yesterday: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of AWCs that were open yesterday: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    tooltip_content += "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
                     tooltip_content += "<p>% of AWCs open yesterday: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;

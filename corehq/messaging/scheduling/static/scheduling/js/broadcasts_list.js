@@ -33,9 +33,10 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 },
                 {
                     "targets": [1],
-                    "render": function(data) {
-                        // TODO link this to the view
-                        return data;
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'scheduled', id);
+                        return "<a href='" + url + "'>" + data + "</a>";
                     },
                 },
                 {
@@ -77,10 +78,10 @@ hqDefine("scheduling/js/broadcasts_list", function() {
             "columnDefs": [
                 {
                     "targets": [0],
-                    "render": function(name, something, args) {
-                        var id = args[2],
-                            url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_message', id);
-                        return "<a href='" + url + "'>" + name + "</a>";
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'immediate', id);
+                        return "<a href='" + url + "'>" + data + "</a>";
                     },
                 },
             ],

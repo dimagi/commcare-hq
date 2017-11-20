@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test.testcases import TestCase, SimpleTestCase
 from django.test.client import Client
 from tastypie.resources import Resource

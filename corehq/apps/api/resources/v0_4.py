@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
 from tastypie import fields
@@ -36,6 +37,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import doc_types
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
+import six
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -189,7 +191,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=get_all_repeater_types().keys())
+                                       additional_doc_types=list(get_all_repeater_types()))
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']
@@ -366,7 +368,23 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         list_allowed_methods = ['post']
 
 
-class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
+
+    def obj_get_list(self, bundle, domain, **kwargs):
+        return get_apps_in_domain(domain, include_remote=False)
+
+    def obj_get(self, bundle, **kwargs):
+        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
+
+    class Meta(CustomResourceMeta):
+        authentication = LoginAndDomainAuthentication()
+        object_class = Application
+        list_allowed_methods = ['get']
+        detail_allowed_methods = ['get']
+        resource_name = 'application'
+
+
+class ApplicationResource(BaseApplicationResource):
 
     id = fields.CharField(attribute='_id')
     name = fields.CharField(attribute='name')
@@ -428,7 +446,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
             return dehydrated
         except Exception as e:
             return {
-                'error': unicode(e)
+                'error': six.text_type(e)
             }
 
     def dehydrate_modules(self, bundle):
@@ -447,19 +465,6 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
             app_data.update(bundle.obj._doc)
             app_data.update(bundle.data)
             return app_data
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        return get_apps_in_domain(domain, include_remote=False)
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
-
-    class Meta(CustomResourceMeta):
-        authentication = LoginAndDomainAuthentication()
-        object_class = Application
-        list_allowed_methods = ['get']
-        detail_allowed_methods = ['get']
-        resource_name = 'application'
 
 
 class HOPECaseResource(CommCareCaseResource):

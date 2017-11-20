@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pillowtop.reindexer.change_providers.interface import ChangeProvider
 from django.core.paginator import Paginator
 from django.core.paginator import EmptyPage

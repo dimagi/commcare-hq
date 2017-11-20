@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
@@ -40,6 +41,8 @@ from .views.mobile.users import (
     demo_restore_job_poll,
     DemoRestoreStatusView,
     download_commcare_users,
+    FilteredUserDownload,
+    count_users,
     EditCommCareUserView,
     MobileWorkerListView,
     reset_demo_user_restore,
@@ -116,6 +119,9 @@ urlpatterns = [
     url(r'^commcare/upload/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         user_upload_job_poll, name='user_upload_job_poll'),
     url(r'^commcare/download/$', download_commcare_users, name='download_commcare_users'),
+    url(r'^commcare/filter_and_download/$', FilteredUserDownload.as_view(),
+        name=FilteredUserDownload.urlname),
+    url(r'^commcare/count_users/$', count_users, name='count_users'),
     url(r'^commcare/download/status/(?P<download_id>[0-9a-fA-Z]{25,32})/$', DownloadUsersStatusView.as_view(),
         name=DownloadUsersStatusView.urlname),
     url(r'^commcare/download/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',

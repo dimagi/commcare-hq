@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 import re
 
@@ -6,6 +7,7 @@ from django.utils.translation import ugettext_noop, ugettext
 from corehq.apps.app_manager import static_strings
 import os
 import yaml
+import six
 
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
@@ -23,7 +25,7 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 
 def _translate_setting(setting, prop):
     value = setting[prop]
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         return [ugettext(v) for v in value]
     else:
         return ugettext(value)

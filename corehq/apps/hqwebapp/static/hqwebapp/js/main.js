@@ -261,8 +261,39 @@ hqDefine("hqwebapp/js/main", function() {
         'use strict';
         $(window).on('beforeunload', beforeUnloadCallback);
         initBlock($("body"));
+
         $('#modalTrial30Day').modal('show');
+
+        $(document).on('click', '.track-usage-link', function(e) {
+            var $link = $(e.currentTarget),
+                data = $link.data();
+            window.analytics.trackUsageLink($link, data.category, data.action, data.label, data.value);
+        });
+
+        $(document).on('click', '.mainmenu-tab a', function(e) {
+            if (typeof(ga) !== 'undefined') {
+                var data = $(e.currentTarget).closest(".mainmenu-tab").data();
+                if (data.category && data.action) {
+                    ga('send', 'event', data.category, data.action, data.label);
+                }
+            }
+        });
+
+        // EULA and CDA modals
+        _.each($(".remote-modal"), function(modal) {
+            var $modal = $(modal);
+            $modal.on("show show.bs.modal", function() {
+                $(this).find(".fetched-data").load($(this).data("url"));
+            });
+            if ($modal.data("showOnPageLoad")) {
+                $modal.modal('show');
+            }
+        });
     });
+
+    var capitalize = function(string) {
+        return string.charAt(0).toUpperCase() + string.substring(1).toLowerCase();
+    };
 
     return {
         beforeUnloadCallback: beforeUnloadCallback,
@@ -281,5 +312,6 @@ hqDefine("hqwebapp/js/main", function() {
         makeHqHelp: makeHqHelp,
         transformHelpTemplate: transformHelpTemplate,
         updateDOM: updateDOM,
+        capitalize: capitalize,
     };
 });

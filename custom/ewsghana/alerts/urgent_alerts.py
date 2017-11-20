@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
 from corehq.apps.commtrack.models import StockState

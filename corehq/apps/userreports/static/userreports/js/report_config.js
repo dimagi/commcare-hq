@@ -1,10 +1,15 @@
-/* global _, $, django */
+/* global _, $, django, window, kmqPushSafe */
 var reportBuilder = function () {  // eslint-disable-line
     var self = this;
 
     var PropertyList = hqImport('userreports/js/builder_view_models').PropertyList;
     var PropertyListItem = hqImport('userreports/js/builder_view_models').PropertyListItem;
     var constants = hqImport('userreports/js/constants');
+
+    var GA_CATEGORY = 'Report Builder v2';
+    var _kmq_track_click = function (action) {
+        kmqPushSafe(["trackClick", "rbv2_" + action.toLowerCase().replace(/ /g,"_"), "RBv2 - " + action]);
+    };
 
     var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
         PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
@@ -47,6 +52,9 @@ var reportBuilder = function () {  // eslint-disable-line
             item.calculation(item.getDefaultCalculation());
             this.newProperty(null);
             this.columns.push(item);
+            if (_.isFunction(this.addItemCallback)) {
+                this.addItemCallback();
+            }
         }
     };
     ColumnList.prototype.reorderColumns = function () {
@@ -92,6 +100,8 @@ var reportBuilder = function () {  // eslint-disable-line
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
 
+        self.dateRangeOptions = config['dateRangeOptions'];
+
         self.existingReportId = config['existingReport'];
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
@@ -102,6 +112,7 @@ var reportBuilder = function () {  // eslint-disable-line
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
         self.reportType = ko.observable(config['existingReportType'] || constants.REPORT_TYPE_LIST);
         self.reportType.subscribe(function (newValue) {
+            _ga_track_config_change('Change Report Type', newValue);
             self._suspendPreviewRefresh = true;
             var wasAggregationEnabled = self.isAggregationEnabled();
             self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
@@ -127,10 +138,22 @@ var reportBuilder = function () {  // eslint-disable-line
             if (newValue === "none") {
                 self.previewChart(false);
             } else {
+                if (self.previewChart()) {
+                    window.analytics.usage(GA_CATEGORY, 'Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
+                }
                 self.previewChart(true);
                 self.refreshPreview();
             }
         });
+        self.addChart = function () {
+            self.selectedChart('bar');
+            window.analytics.usage(GA_CATEGORY, 'Add Chart');
+            _kmq_track_click('Add Chart');
+        };
+        self.removeChart = function () {
+            self.selectedChart('none');
+            window.analytics.usage(GA_CATEGORY, 'Remove Chart');
+        };
 
         self.previewChart = ko.observable(false);
         self.tooManyChartCategoriesWarning = ko.observable(false);
@@ -176,6 +199,11 @@ var reportBuilder = function () {  // eslint-disable-line
             }
         };
 
+        var _ga_track_config_change = function (analyticsAction, optReportType) {
+            var analyticsLabel = hqImport('hqwebapp/js/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/main').capitalize(optReportType || self.reportType());
+            window.analytics.usage(GA_CATEGORY, analyticsAction, analyticsLabel);
+        };
+
         /**
          * Return true if the given data source indicators contain question indicators (as opposed to just meta
          * properties or case properties)
@@ -190,6 +218,7 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.location_field = ko.observable(config['initialLocation']);
         self.location_field.subscribe(function () {
+            _kmq_track_click('Select Location (map)');
             self.refreshPreview();
         });
 
@@ -204,6 +233,22 @@ var reportBuilder = function () {  // eslint-disable-line
             reportType: self.reportType(),
             propertyOptions: self.columnOptions,
             selectablePropertyOptions: self.selectableReportColumnOptions,
+            addItemCallback: function () {
+                _ga_track_config_change('Add Column');
+                _kmq_track_click('Add Column');
+            },
+            removeItemCallback: function () {
+                _ga_track_config_change('Remove Column');
+                _kmq_track_click('Delete Column');
+            },
+            reorderItemCallback: function () {
+                _ga_track_config_change('Reorder Column');
+            },
+            afterRenderCallback: function (elem, col) {
+                col.inputBoundCalculation.subscribe(function (val) {
+                    window.analytics.usage(GA_CATEGORY, 'Change Format', val);
+                });
+            },
         });
         window.columnList = self.columnList;
 
@@ -212,21 +257,22 @@ var reportBuilder = function () {  // eslint-disable-line
             self.saveButton.fire('change');
         });
 
-        var _isMissingAggColumn = function() {
-            return (self.reportType() === constants.REPORT_TYPE_TABLE) && (
-                ! _.some(self.columnList.columns(), function (c) {
-                    return c.calculation() === constants.GROUP_BY;
-                })
-            );
-        };
-        self.missingAggColumn = ko.computed(_isMissingAggColumn, this);
-
         self.filterList = new PropertyList({
             hasFormatCol: self._sourceType === "case",
             hasCalculationCol: false,
             initialCols: config['initialUserFilters'],
             buttonText: 'Add User Filter',
-            analyticsAction: 'Add User Filter',
+            addItemCallback: function () {
+                _ga_track_config_change('Add User Filter');
+                _kmq_track_click('Add User Filter');
+            },
+            removeItemCallback: function () {
+                _ga_track_config_change('Remove User Filter');
+                _kmq_track_click('Delete User Filter');
+            },
+            reorderItemCallback: function () {
+                _ga_track_config_change('Reorder User Filter');
+            },
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
             displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
@@ -244,7 +290,17 @@ var reportBuilder = function () {  // eslint-disable-line
             hasFilterValueCol: true,
             initialCols: config['initialDefaultFilters'],
             buttonText: 'Add Default Filter',
-            analyticsAction: 'Add Default Filter',
+            addItemCallback: function () {
+                _ga_track_config_change('Add Default Filter');
+                _kmq_track_click('Add Default Filter');
+            },
+            removeItemCallback: function () {
+                _ga_track_config_change('Remove Default Filter');
+                _kmq_track_click('Delete Default Filter');
+            },
+            reorderItemCallback: function () {
+                _ga_track_config_change('Reorder Default Filter');
+            },
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
             filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
@@ -263,8 +319,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 $('#preview').hide();
 
                 // Check if a preview should be requested from the server
-                // Note: We can't use self.missingAggColumn() because it gets updated after this function is called.
-                if (serializedColumns === "[]" || _isMissingAggColumn()) {
+                if (serializedColumns === "[]") {
                     return;  // Nothing to do.
                 }
                 $.ajax({
@@ -294,6 +349,8 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.renderReportPreview = function (data) {
             self.previewError(false);
+            self.noChartForConfigWarning(false);
+            self.tooManyChartCategoriesWarning(false);
             self._renderTablePreview(data['table']);
             self._renderChartPreview(data['chart_configs'], data['aaData']);
             self._renderMapPreview(data['map_config'], data["aaData"]);
@@ -343,9 +400,6 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.validate = function () {
             var isValid = true;
-            if (self.missingAggColumn()) {
-                isValid = false;
-            }
             if (!self.columnList.validate()) {
                 isValid = false;
                 $("#report-config-columns").collapse('show');
@@ -380,21 +434,12 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         var button = hqImport("hqwebapp/js/main").SaveButton;
-        if (config['existingReport']) {
-            button = hqImport("hqwebapp/js/main").makeSaveButton({
-                // The SAVE text is the only thing that distringuishes this from SaveButton
-                SAVE: django.gettext("Update Report"),
-                SAVING: django.gettext("Saving..."),
-                SAVED: django.gettext("Saved"),
-                RETRY: django.gettext("Try Again"),
-                ERROR_SAVING: django.gettext("There was an error saving"),
-            }, 'btn btn-success');
-        }
-
         self.saveButton = button.init({
             unsavedMessage: "You have unsaved settings.",
             save: function () {
                 var isValid = self.validate();
+                _ga_track_config_change('Save Report');
+                _kmq_track_click('Save Report');
                 if (isValid) {
                     self.saveButton.ajax({
                         url: window.location.href,  // POST here; keep URL params
@@ -416,6 +461,8 @@ var reportBuilder = function () {  // eslint-disable-line
         $("#btnSaveView").click(function () {
             var isValid = self.validate();
             if (isValid) {
+                _ga_track_config_change('Save and View Report');
+                _kmq_track_click('Save and View Report');
                 $.ajax({
                     url: window.location.href,
                     type: "POST",
@@ -433,10 +480,15 @@ var reportBuilder = function () {  // eslint-disable-line
             }
         });
 
+        $('#deleteReport').click(function () {
+            _ga_track_config_change('Delete Report');
+            _kmq_track_click('Delete Report');
+        });
+
         if (!self.existingReportId) {
             self.saveButton.fire('change');
         }
-        self.refreshPreview();
+        self.refreshPreview(self.columnList.serializedProperties());
         if (config['initialChartType']) {
             self.selectedChart(config['initialChartType']);
         }

@@ -1,7 +1,10 @@
+from __future__ import absolute_import
 import csv
 from django.http import HttpResponse
 
 from dimagi.utils.parsing import string_to_boolean
+from six.moves import input
+import six
 
 
 def are_you_sure(prompt="Are you sure you want to proceed? (yes or no): "):
@@ -9,7 +12,7 @@ def are_you_sure(prompt="Are you sure you want to proceed? (yes or no): "):
     Ask a user if they are sure before doing something.  Return
     whether or not they are sure
     """
-    should_proceed = raw_input(prompt)
+    should_proceed = input(prompt)
     try:
         return string_to_boolean(should_proceed)
     except Exception:
@@ -33,7 +36,7 @@ def export_as_csv_action(description="Export selected objects as CSV file",
             # All other encodings will be converted to UTF-8 (the conversion
             # is potentially lossy).
             return value.decode('utf-8', 'replace').encode('utf-8')
-        return unicode(value).encode('utf-8')
+        return six.text_type(value).encode('utf-8')
 
     def export_as_csv(modeladmin, request, queryset):
         """
@@ -50,7 +53,7 @@ def export_as_csv_action(description="Export selected objects as CSV file",
             field_names = field_names - excludeset
 
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = u'attachment; filename=%s.csv' % unicode(opts).replace('.', '_')
+        response['Content-Disposition'] = u'attachment; filename=%s.csv' % six.text_type(opts).replace('.', '_')
 
         writer = csv.writer(response)
         if header:

@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
@@ -15,6 +16,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
+from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 
@@ -37,6 +39,7 @@ from .analytics.esaccessors import (
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
 )
+import six
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -167,7 +170,7 @@ def namedtupledict(name, fields):
     cls = namedtuple(name, fields)
 
     def __getitem__(self, item):
-        if isinstance(item, basestring):
+        if isinstance(item, six.string_types):
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,
@@ -262,9 +265,9 @@ def format_datatables_data(text, sort_key, raw=None):
 
 def app_export_filter(doc, app_id):
     if app_id:
-        return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
+        return (doc['app_id'] == app_id) if 'app_id' in doc else False
     elif app_id == '':
-        return (not doc['app_id']) if doc.has_key('app_id') else True
+        return (not doc['app_id']) if 'app_id' in doc else True
     else:
         return True
 
@@ -495,3 +498,17 @@ def is_query_too_big(domain, mobile_user_and_group_slugs):
         mobile_user_and_group_slugs,
     )
     return user_es_query.count() > USER_QUERY_LIMIT
+
+
+def send_report_download_email(title, user, link):
+    subject = "%s: Requested export excel data"
+    body = "The export you requested for the '%s' report is ready.<br>" \
+           "You can download the data at the following link: %s<br><br>" \
+           "Please remember that this link will only be active for 24 hours."
+
+    send_HTML_email(
+        _(subject) % title,
+        user.get_email(),
+        _(body) % (title, "<a href='%s'>%s</a>" % (link, link)),
+        email_from=settings.DEFAULT_FROM_EMAIL
+    )

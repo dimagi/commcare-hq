@@ -1,10 +1,12 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (SMSLog, SMS, CallLog, LastReadMessage,
     ExpectedCallbackEventLog, ExpectedCallback)
 from custom.fri.models import FRISMSLog
 from dimagi.utils.couch.database import iter_docs_with_retry, iter_bulk_delete_with_doc_type_verification
 from django.core.management.base import BaseCommand
+import six
 
 
 # Number of seconds to wait between each bulk delete operation
@@ -74,12 +76,12 @@ class Command(BaseCommand):
         with null because there was no recipient to those sms.
         """
         date = doc.get('date')
-        if isinstance(date, basestring) and date.endswith('+00:00Z'):
+        if isinstance(date, six.string_types) and date.endswith('+00:00Z'):
             date = date[:-7] + 'Z'
             doc['date'] = date
 
         phone_number = doc.get('phone_number')
-        if isinstance(phone_number, basestring) and len(phone_number) > 126:
+        if isinstance(phone_number, six.string_types) and len(phone_number) > 126:
             doc['phone_number'] = None
 
     def get_sms_compare_fields(self):

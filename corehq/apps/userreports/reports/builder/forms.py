@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
@@ -55,6 +56,7 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -83,7 +85,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in REPORT_BUILDER_FILTER_TYPE_MAP.keys() + [""]:
+            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -100,7 +102,7 @@ class Select2(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
             u'<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
@@ -127,7 +129,7 @@ class QuestionSelect(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
             u"""
@@ -262,6 +264,10 @@ class DataSourceProperty(object):
         }
         if configuration['format'] == 'Date':
             filter.update({'compare_as_string': True})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "owner"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "user"}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
@@ -301,7 +307,7 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
+                self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=False
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
@@ -575,7 +581,7 @@ class DataSourceBuilder(object):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in self.data_source_properties.iteritems():
+        for id_, prop in six.iteritems(self.data_source_properties):
             options[id_] = prop.to_report_column_option()
 
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
@@ -663,6 +669,7 @@ class DataSourceForm(forms.Form):
                 StrictButton(
                     _('Next'),
                     type="submit",
+                    css_id='js-next-data-source',
                     css_class="btn-primary",
                 )
             ),
@@ -722,7 +729,7 @@ class ConfigureNewReportBase(forms.Form):
 
         if self.existing_report:
             self._bootstrap(self.existing_report)
-            self.button_text = _('Update Report')
+            self.button_text = _('Save')
         else:
             self.report_name = report_name
             assert source_type in ['case', 'form']
@@ -929,7 +936,7 @@ class ConfigureNewReportBase(forms.Form):
                 self._is_multiselect_chart_report,
             )
             if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
+                for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
                     setattr(data_source, property_name, value)
                 data_source.save()
                 tasks.rebuild_indicators.delay(data_source._id)
@@ -1337,19 +1344,18 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
             calculation=COUNT_PER_CHOICE
         ))
-        for prop in self.data_source_properties.values():
-            questions_found = 0
-            if prop.get_type() == PROPERTY_TYPE_QUESTION:
-                questions_found += 1
-                cols.append(ColumnViewModel(
-                    display_text=prop.get_text(),
-                    exists_in_current_version=True,
-                    property=prop.get_id(),
-                    data_source_field=prop.get_id(),
-                    calculation=COUNT_PER_CHOICE,
-                ))
-                if questions_found == 4:
-                    break
+        questions = [p for p in self.data_source_properties.values()
+                     if p.get_type() == PROPERTY_TYPE_QUESTION]
+        if len(questions) > 9:
+            questions = questions[:9]
+        for q in questions:
+            cols.append(ColumnViewModel(
+                display_text=q.get_text(),
+                exists_in_current_version=True,
+                property=q.get_id(),
+                data_source_field=q.get_id(),
+                calculation=COUNT_PER_CHOICE,
+            ))
         return cols
 
 
@@ -1376,7 +1382,8 @@ class ConfigureTableReportForm(ConfigureListReportForm):
         u'of that property.  For example, if you add a column for a yes or no question, the report will show a '
         u'column for "yes" and a column for "no."'
     )
-    group_by = forms.MultipleChoiceField(label=_("Show one row for each"))
+    group_by = forms.MultipleChoiceField(label=_("Show one row for each"),
+                                         required=False)
     chart = forms.CharField(widget=forms.HiddenInput)
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -1424,11 +1431,15 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
         def get_non_agged_columns():
             return [c for c in self._report_columns if c['aggregation'] != "simple"]
+
+        def get_agged_columns():
+            return [c for c in self._report_columns if c['aggregation'] == "simple"]
+
         if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
                 return [{
                     "type": "multibar",
-                    "x_axis_column": "column_agg_0",
+                    "x_axis_column": get_agged_columns()[0]['column_id'] if get_agged_columns() else '',
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()

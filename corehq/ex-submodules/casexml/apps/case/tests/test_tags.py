@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from casexml.apps.case.templatetags.case_tags import normalize_date
 from datetime import date, datetime

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from collections import namedtuple
 from datetime import datetime
@@ -560,7 +561,7 @@ class CaseAccessorTestsSQL(TestCase):
         case1 = _create_case()
         _create_case_transactions(case1)
         self.assertTrue(
-            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 01, 30))
+            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 1, 30))
         )
         self.assertFalse(
             CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())

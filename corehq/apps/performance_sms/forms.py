@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 from corehq.apps.groups.fields import GroupField
 from django import forms
@@ -13,6 +14,7 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 import corehq.apps.hqwebapp.crispy as hqcrispy
+import six
 
 
 class PerformanceFormMixin(object):
@@ -30,7 +32,7 @@ class PerformanceFormMixin(object):
         try:
             config.validate()
         except InvalidParameterException as e:
-            raise forms.ValidationError(unicode(e))
+            raise forms.ValidationError(six.text_type(e))
 
         return cleaned_data
 
@@ -132,7 +134,7 @@ def _clean_template(template):
     try:
         parser.validate(template)
     except InvalidParameterException as e:
-        raise forms.ValidationError(unicode(e))
+        raise forms.ValidationError(six.text_type(e))
     return template
 
 

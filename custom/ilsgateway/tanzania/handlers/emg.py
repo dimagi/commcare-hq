@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.ilsgateway.tanzania.handlers.zipline import ZiplineGenericHandler
 from custom.ilsgateway.tanzania.reminders import EMG_ERROR, EMG_HELP
 from custom.zipline.api import initiate_emergency_order

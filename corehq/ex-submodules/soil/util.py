@@ -1,3 +1,13 @@
+from __future__ import absolute_import
+import os
+import tempfile
+
+from wsgiref.util import FileWrapper
+
+from django.conf import settings
+
+from couchexport.models import Format
+
 from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload, BlobDownload
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import is_alive, heartbeat_enabled
@@ -81,3 +91,33 @@ def get_download_context(download_id, message=None, require_result=False):
 def get_task(task_id):
     from celery.task.base import Task
     return Task.AsyncResult(task_id)
+
+
+def get_download_file_path(use_transfer, filename):
+    if use_transfer:
+        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, filename)
+    else:
+        _, fpath = tempfile.mkstemp()
+
+    return fpath
+
+
+def expose_download(use_transfer, file_path, filename, download_id, file_type):
+    common_kwargs = dict(
+        mimetype=Format.from_format(file_type).mimetype,
+        content_disposition='attachment; filename="{fname}"'.format(fname=filename),
+        download_id=download_id,
+    )
+    if use_transfer:
+        expose_file_download(
+            file_path,
+            use_transfer=use_transfer,
+            **common_kwargs
+        )
+    else:
+        expose_cached_download(
+            FileWrapper(open(file_path, 'r')),
+            expiry=(1 * 60 * 60),
+            file_extension=file_type,
+            **common_kwargs
+        )

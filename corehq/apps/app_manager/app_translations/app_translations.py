@@ -1,5 +1,8 @@
 # coding=utf-8
+from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
+
+import itertools
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
@@ -20,6 +23,8 @@ from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+import six
+from six.moves import zip
 
 
 def get_unicode_dicts(iterable):
@@ -34,11 +39,11 @@ def get_unicode_dicts(iterable):
 
     """
     def none_or_unicode(val):
-        return unicode(val) if val is not None else val
+        return six.text_type(val) if val is not None else val
 
     rows = []
     for row in iterable:
-        rows.append({unicode(k): none_or_unicode(v) for k, v in row.iteritems()})
+        rows.append({six.text_type(k): none_or_unicode(v) for k, v in row.iteritems()})
     return rows
 
 
@@ -137,7 +142,7 @@ def process_bulk_app_translation_upload(app, f):
         if len(missing_cols) > 0:
             msgs.append((
                 messages.warning,
-                'Sheet "%s" has less columns than expected. '
+                'Sheet "%s" has fewer columns than expected. '
                 'Sheet will be processed but the following'
                 ' translations will be unchanged: %s'
                 % (sheet.worksheet.title, " ,".join(missing_cols))
@@ -191,7 +196,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     assert isinstance(languages, list)
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
-    assert isinstance(unique_id, basestring)
+    assert isinstance(unique_id, six.string_types)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages
@@ -238,6 +243,9 @@ def expected_bulk_app_sheet_headers(app):
         headers.append([module_string, ['case_property', 'list_or_detail'] + languages_list])
 
         for form_index, form in enumerate(module.get_forms()):
+            if form.form_type == 'shadow_form':
+                continue
+
             form_string = module_string + "_form" + str(form_index + 1)
             headers.append([
                 form_string,
@@ -340,6 +348,9 @@ def expected_bulk_app_sheet_rows(app):
                             )
 
             for form_index, form in enumerate(module.get_forms()):
+                if form.form_type == 'shadow_form':
+                    continue
+
                 form_string = module_string + "_form" + str(form_index + 1)
                 xform = form.wrapped_xform()
 
@@ -459,6 +470,7 @@ def _process_modules_and_forms_sheet(rows, app):
 
 
 def _update_translation_dict(prefix, language_dict, row, langs):
+    # update translations as requested
     for lang in langs:
         key = '%s%s' % (prefix, lang)
         if key not in row:
@@ -467,6 +479,11 @@ def _update_translation_dict(prefix, language_dict, row, langs):
         if translation:
             language_dict[lang] = translation
         else:
+            language_dict.pop(lang, None)
+
+    # delete anything in language_dict that isn't in langs (anymore)
+    for lang in language_dict.keys():
+        if lang not in langs:
             language_dict.pop(lang, None)
 
 
@@ -816,7 +833,7 @@ def _update_case_list_translations(sheet, rows, app):
             ))
 
     for row, detail in \
-            zip(list_rows, short_details) + zip(detail_rows, long_details):
+            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
 
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.

@@ -1,12 +1,4 @@
 {% load i18n %}
-<script>
-    $(function() {
-        $('#notification-link').click(function() {
-            ga_track_event('Notification', 'Opened Message', this.href);
-        });
-        window.analytics.trackUsageLink($('#notification-icon'), 'Notification', 'Clicked Bell Icon')
-    });
-</script>
 <li id="js-settingsmenu-notifications" class="dropdown">
     <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown" id="notification-icon">
         <i class="icon-bell-alt fa fa-bell nav-main-icon"
@@ -24,7 +16,7 @@
                 'notifications-info': isInfo(),
                 'notifications-unread': !isRead()
             }">
-            <a data-bind="attr: {href: url}, click: markAsRead" class="clearfix" target="_blank" id="notification-link">
+            <a data-bind="attr: {href: url}, click: markAsRead" class="clearfix notification-link" target="_blank">
                 <span class="notifications-icon">
                     <i class="notifications-type fa"
                        data-bind="css: {

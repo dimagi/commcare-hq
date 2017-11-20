@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dropbox.oauth import DropboxOAuth2Flow
 
 from django.conf import settings

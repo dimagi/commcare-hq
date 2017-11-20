@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.indicators.admin import BaseIndicatorAdminInterface
 from corehq.apps.indicators.admin.forms import CombinedIndicatorForm
 from corehq.apps.indicators.models import CombinedCouchViewIndicatorDefinition

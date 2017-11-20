@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from captcha.fields import CaptchaField
 from django import forms
 from django.conf import settings
@@ -9,7 +10,7 @@ from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.forms import RoleForm, SupplyPointSelectWidget
-from corehq.apps.domain.forms import clean_password, max_pwd, NoAutocompleteMixin
+from corehq.apps.domain.forms import clean_password, NoAutocompleteMixin
 from corehq.apps.domain.models import Domain
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.hqwebapp.utils import decode_password
@@ -199,7 +200,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -235,7 +236,7 @@ class DomainRegistrationForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -253,7 +254,6 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                              help_text=_('You will use this email to log in.'),
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_('Create Password'),
-                               max_length=max_pwd,
                                widget=forms.PasswordInput(render_value=False,
                                                           attrs={
                                                             'data-bind': "value: password, valueUpdate: 'input'",
@@ -307,7 +307,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -327,7 +327,7 @@ class _BaseForm(object):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 

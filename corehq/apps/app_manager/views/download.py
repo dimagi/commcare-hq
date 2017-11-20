@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import os
 
@@ -24,6 +25,7 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.web import json_response
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
+import six
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
@@ -238,6 +240,19 @@ def download_file(request, domain, app_id, path):
         return RegexURLResolver(
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
+    def create_build_files_if_necessary_handling_conflicts(is_retry=False):
+        try:
+            try:
+                # look for file guaranteed to exist if profile is created
+                request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
+            except ResourceNotFound:
+                request.app.create_build_files(save=True, build_profile_id=build_profile)
+                request.app.save()
+        except ResourceConflict:
+            if is_retry:
+                raise
+            create_build_files_if_necessary_handling_conflicts(True)
+
     try:
         assert request.app.copy_of
         # lazily create language profiles to avoid slowing initial build
@@ -245,19 +260,11 @@ def download_file(request, domain, app_id, path):
             payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
             if build_profile in request.app.build_profiles and build_profile_access:
-                try:
-                    # look for file guaranteed to exist if profile is created
-                    request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
-                except ResourceNotFound:
-                    request.app.create_build_files(save=True, build_profile_id=build_profile)
-                    request.app.save()
-                    payload = request.app.fetch_attachment(full_path)
-                else:
-                    # if profile.xml is found the profile has been built and its a bad request
-                    raise
+                create_build_files_if_necessary_handling_conflicts()
+                payload = request.app.fetch_attachment(full_path)
             else:
                 raise
-        if type(payload) is unicode:
+        if type(payload) is six.text_type:
             payload = payload.encode('utf-8')
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
@@ -290,9 +297,6 @@ def download_file(request, domain, app_id, path):
                     resolve_path(path)
                 except Resolver404:
                     # ok this was just a url that doesn't exist
-                    # todo: log since it likely exposes a mobile bug
-                    # logging was removed because such a mobile bug existed
-                    # and was spamming our emails
                     pass
                 else:
                     # this resource should exist but doesn't

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from casexml.apps.case.mock import CaseBlock

@@ -1,0 +1,15 @@
+<?xml version='1.0' ?>
+<form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
+	<meta>
+	    <DeviceID>myphone</DeviceID>
+	    <TimeStart>2010-06-29T13:42:50.137</TimeStart>
+	    <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
+	    <username>someuser</username>
+	    <userID>someuserid</userID>
+	    <uid>ad38211be256653bceac8e2156475664</uid>
+	</meta>
+	<foo>bar</foo>
+	<baz>
+	    <bop>bong</bop>
+	</baz>
+</form>

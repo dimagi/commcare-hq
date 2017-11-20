@@ -1,19 +1,20 @@
+from __future__ import absolute_import
 import json
 import logging
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
-from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
@@ -24,12 +25,14 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.tasks import download_locations_async
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
 from custom.enikshay.user_setup import ENikshayLocationFormSet
@@ -54,6 +57,7 @@ from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationFormSet, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
+import six
 
 
 logger = logging.getLogger(__name__)
@@ -256,6 +260,7 @@ class LocationTypesView(BaseDomainView):
     @method_decorator(can_edit_location_types)
     @use_jquery_ui
     @method_decorator(check_pending_locations_import())
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
@@ -282,6 +287,7 @@ class LocationTypesView(BaseDomainView):
             'expand_to': loc_type.expand_to_id if loc_type.expand_to_id else None,
             'include_without_expanding': (loc_type.include_without_expanding_id
                                           if loc_type.include_without_expanding_id else None),
+            'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -290,7 +296,7 @@ class LocationTypesView(BaseDomainView):
         sql_loc_types = {}
 
         def _is_fake_pk(pk):
-            return isinstance(pk, basestring) and pk.startswith("fake-pk-")
+            return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative, has_user,
                        shares_cases, view_descendants, pk, code, **kwargs):
@@ -358,6 +364,7 @@ class LocationTypesView(BaseDomainView):
         expand_from_id = loc_type_data['expand_from']
         expand_to_id = loc_type_data['expand_to']
         include_without_expanding_id = loc_type_data['include_without_expanding']
+        include_only_ids = loc_type_data['include_only']
         try:
             loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
         except KeyError:        # expand_from location type was deleted
@@ -372,7 +379,29 @@ class LocationTypesView(BaseDomainView):
                                                   if include_without_expanding_id else None)
         except KeyError:        # include_without_expanding location type was deleted
             loc_type.include_without_expanding = None
+        include_only = LocationTypesView._get_include_only(include_only_ids, loc_type_db)
+        loc_type.include_only.set(include_only)
         loc_type.save()
+
+    @staticmethod
+    def _get_include_only(include_only_ids, loc_type_db):
+        """The user specified that we include loc types `include_only_ids`, but
+        we need to insert any parent location types"""
+        loc_types_by_pk = {lt.pk: lt for lt in loc_type_db.values()}
+        include_only = {}
+
+        def insert_with_parents(pk):
+            if pk not in include_only:
+                loc_type = loc_types_by_pk[pk]
+                include_only[pk] = loc_type
+                if loc_type.parent_type_id:
+                    insert_with_parents(loc_type.parent_type_id)
+
+        # if these types were just created, the user-provided IDs were placeholders
+        user_specified = [loc_type_db[lt_id].pk for lt_id in include_only_ids]
+        for pk in user_specified:
+            insert_with_parents(pk)
+        return include_only
 
     def remove_old_location_types(self, pks):
         existing_pks = (LocationType.objects.filter(domain=self.domain)
@@ -828,10 +857,44 @@ def location_export(request, domain):
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
-    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename="{}_locations.xlsx"'.format(domain)
-    dump_locations(response, domain, include_consumption=include_consumption)
-    return response
+    download = DownloadBase()
+    res = download_locations_async.delay(domain, download.download_id, include_consumption)
+    download.set_task(res)
+    return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
+
+
+@require_can_edit_locations
+def location_download_job_poll(request, domain,
+                               download_id,
+                               template="hqwebapp/partials/shared_download_status.html"):
+    try:
+        context = get_download_context(download_id, 'Preparing download')
+        context.update({'link_text': _('Download Organization Structure')})
+    except TaskFailedError as e:
+        return HttpResponseServerError(e.errors)
+    return render(request, template, context)
+
+
+class DownloadLocationStatusView(BaseLocationView):
+    urlname = 'download_org_structure_status'
+    page_title = ugettext_noop('Download Organization Structure Status')
+
+    def get(self, request, *args, **kwargs):
+        context = super(DownloadLocationStatusView, self).main_context
+        context.update({
+            'domain': self.domain,
+            'download_id': kwargs['download_id'],
+            'poll_url': reverse('org_download_job_poll', args=[self.domain, kwargs['download_id']]),
+            'title': _("Download Organization Structure Status"),
+            'progress_text': _("Preparing organization structure download."),
+            'error_text': _("There was an unexpected error! Please try again or report an issue."),
+            'next_url': reverse(LocationsListView.urlname, args=[self.domain]),
+            'next_url_text': _("Go back to organization structure"),
+        })
+        return render(request, 'hqwebapp/soil_status_full.html', context)
+
+    def page_url(self):
+        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
 @locations_access_required

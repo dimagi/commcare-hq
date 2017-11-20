@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import datetime
+import six
 
 COUCH_FORMATS = ['%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.%fZ']
 EXCEL_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -9,7 +11,7 @@ def identity(val, doc):
 
 
 def couch_to_excel_datetime(val, doc):
-    if isinstance(val, basestring):
+    if isinstance(val, six.string_types):
         # todo: subtree merge couchexport into commcare-hq
         # todo: and replace this with iso_string_to_datetime
         dt_val = None

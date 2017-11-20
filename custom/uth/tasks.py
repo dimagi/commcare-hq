@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.blobs.mixin import BlobMixin
 from custom.uth.utils import create_case, match_case, attach_images_to_case, submit_error_case
 from custom.uth.models import SonositeUpload, VscanUpload

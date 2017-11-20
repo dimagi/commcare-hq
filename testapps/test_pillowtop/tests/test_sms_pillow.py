@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
@@ -87,7 +88,7 @@ class SqlSMSPillowTest(TestCase):
             processed=True,
             num_processing_attempts=1,
             queued_timestamp=datetime(2016, 1, 1, 11, 58),
-            processed_timestamp=datetime(2016, 1, 1, 12, 01),
+            processed_timestamp=datetime(2016, 1, 1, 12, 1),
             domain_scope=self.domain,
             ignore_opt_out=False,
             backend_message_id='fake-backend-message-id',

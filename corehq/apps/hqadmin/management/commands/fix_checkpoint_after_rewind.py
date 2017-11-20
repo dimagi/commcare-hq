@@ -1,12 +1,14 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.utils import get_pillow_by_name
+from six.moves import input
 
 
 def confirm(msg):
-    input = raw_input("{} Type ['y', 'yes'] to continue.\n".format(msg))
-    if input not in ['y', 'yes']:
+    user_input = input("{} Type ['y', 'yes'] to continue.\n".format(msg))
+    if user_input not in ['y', 'yes']:
         print('abort')
         exit()
 

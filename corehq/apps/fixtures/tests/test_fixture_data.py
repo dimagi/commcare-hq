@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 
 import six

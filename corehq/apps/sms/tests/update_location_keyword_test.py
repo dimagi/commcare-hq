@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test.testcases import TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.models import SoftwarePlanEdition

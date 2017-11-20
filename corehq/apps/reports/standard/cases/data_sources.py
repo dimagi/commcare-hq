@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import dateutil
 from django.core import cache
@@ -134,7 +135,7 @@ class CaseInfo(object):
         mc = cache.caches['default']
         cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
-            if mc.has_key(cache_key):
+            if cache_key in mc:
                 cached_obj = json.loads(mc.get(cache_key))
                 wrapped = Group.wrap(cached_obj)
                 return wrapped

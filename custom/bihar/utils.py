@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import itertools
 import logging
 from xml.etree import cElementTree as ElementTree
@@ -11,6 +12,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+import six
 
 ASHA_ROLE = ugettext_noop('ASHA')
 AWW_ROLE = ugettext_noop('AWW')
@@ -64,7 +66,7 @@ def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=Tr
     Assigns a case to an owner. Optionally traverses through subcases and parent cases
     and reassigns those to the same owner.
     """
-    if isinstance(case_or_case_id, basestring):
+    if isinstance(case_or_case_id, six.string_types):
         primary_case = CommCareCase.get(case_or_case_id)
     else:
         primary_case = case_or_case_id

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 import hashlib
 import re
 
@@ -12,6 +13,9 @@ from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateIn
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    CaseSearch,
+    CaseSearchProperty,
+    DefaultCaseSearchProperty,
     DetailColumn,
     FormActionCondition,
     GraphConfiguration,
@@ -137,6 +141,26 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.get_xml('sort-cache'),
             app.create_suite(),
             "./detail[@id='m0_case_short']"
+        )
+
+    def test_sort_cache_search(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.modules[0].search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+        )
+        detail = app.modules[0].case_details.short
+        detail.sort_elements.append(
+            SortElement(
+                field=detail.columns[0].field,
+                type='index',
+                direction='descending',
+                blanks='first',
+            )
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('sort-cache-search'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']"
         )
 
     def test_sort_calculation(self):

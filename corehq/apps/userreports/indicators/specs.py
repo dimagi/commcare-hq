@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
@@ -96,7 +97,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
 
 class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('choice_list')
-    choices = ListProperty(required=True)
+    choices = ListProperty()
     select_style = StringProperty(choices=['single', 'multiple'])
 
     def get_operator(self):

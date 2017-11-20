@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn

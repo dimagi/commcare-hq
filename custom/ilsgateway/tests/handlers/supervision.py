@@ -1,14 +1,16 @@
+from __future__ import absolute_import
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import SUPERVISION_CONFIRM_YES, SUPERVISION_CONFIRM_NO
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
+import six
 
 
 class TestSupervision(ILSTestScript):
 
     def test_supervision_yes(self):
         with localize('sw'):
-            response = unicode(SUPERVISION_CONFIRM_YES)
+            response = six.text_type(SUPERVISION_CONFIRM_YES)
 
         script = """
           5551234 > usimamizi ndio
@@ -24,7 +26,7 @@ class TestSupervision(ILSTestScript):
 
     def test_supervision_no(self):
         with localize('sw'):
-            response = unicode(SUPERVISION_CONFIRM_NO)
+            response = six.text_type(SUPERVISION_CONFIRM_NO)
 
         script = """
           5551234 > usimamizi hapana

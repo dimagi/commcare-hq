@@ -1,6 +1,8 @@
+from __future__ import absolute_import
 import json
 from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
+from django.conf import settings
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
@@ -145,6 +147,7 @@ class ToggleEditView(ToggleBaseView):
             'expanded': self.expanded,
             'namespaces': [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces],
             'usage_info': self.usage_info,
+            'server_environment': settings.SERVER_ENVIRONMENT,
         }
         if self.expanded:
             context['domain_toggle_list'] = sorted(

@@ -39,6 +39,15 @@
                         <th>{% trans "Report" %}</th>
                         <th>{% trans "Display Text" %}</th>
                         <th>{% trans "Description" %}</th>
+                        <th data-bind="visible: $root.supportSyncDelay">
+                            {% trans "Sync Delay (in hours)" %}
+                            <span class="hq-help-template"
+                                data-title="Sync Delay"
+                                data-content="Hours to delay before sending new report data to mobile devices. Final value is MAX(domain delay, report delay)."
+                                data-placement="left"
+                            ></span>
+                        </th>
+
                         <th>
                             {% trans "Data Table" %}
                             <span class="hq-help-template"
@@ -60,6 +69,8 @@
                             <select class="form-control"
                                     data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
                             </select>
+                            <label>Report UUID to use in custom expressions: </label>
+                            <span data-bind="text: uuid"></span>
                             {% include 'app_manager/partials/filter_configs.html' %}
                             {% include 'app_manager/partials/graph_configs.html' %}
                         </td>
@@ -85,6 +96,12 @@
                                     {% trans "Not localizable." %}
                                 </p>
                             </div>
+                        </td>
+                        <td data-bind="visible: $root.supportSyncDelay">
+                            <input type="number" class="form-control" data-bind="value: syncDelay">
+                            <p data-bind="visible: $root.globalSyncDelay > 0">
+                                {% trans "Domain sync delay set to: " %}<span data-bind="text: $root.globalSyncDelay"></span>{% trans " hours." %}
+                            </p>
                         </td>
                         <td>
                             <label>
