@@ -148,7 +148,7 @@ FormplayerFrontend.on('startForm', function (data) {
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 window.analytics.workflow("[app-preview] User submitted a form");
-                window.analytics.usage("[app-preview] User submitted a form");
+                hqImport('analytics/js/google').track.event("App Preview", "User submitted a form");
             }
 
             // After end of form nav, we want to clear everything except app and sesson id

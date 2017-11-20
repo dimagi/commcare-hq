@@ -6,7 +6,6 @@ var reportBuilder = function () {  // eslint-disable-line
     var PropertyListItem = hqImport('userreports/js/builder_view_models').PropertyListItem;
     var constants = hqImport('userreports/js/constants');
 
-    var GA_CATEGORY = 'Report Builder v2';
     var _kmq_track_click = function (action) {
         kmqPushSafe(["trackClick", "rbv2_" + action.toLowerCase().replace(/ /g,"_"), "RBv2 - " + action]);
     };
@@ -139,7 +138,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 self.previewChart(false);
             } else {
                 if (self.previewChart()) {
-                    window.analytics.usage(GA_CATEGORY, 'Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
+                    hqImport('userreports/js/report_analytics').track.event('Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
                 }
                 self.previewChart(true);
                 self.refreshPreview();
@@ -147,12 +146,12 @@ var reportBuilder = function () {  // eslint-disable-line
         });
         self.addChart = function () {
             self.selectedChart('bar');
-            window.analytics.usage(GA_CATEGORY, 'Add Chart');
+            hqImport('userreports/js/report_analytics').track.event('Add Chart');
             _kmq_track_click('Add Chart');
         };
         self.removeChart = function () {
             self.selectedChart('none');
-            window.analytics.usage(GA_CATEGORY, 'Remove Chart');
+            hqImport('userreports/js/report_analytics').track.event('Remove Chart');
         };
 
         self.previewChart = ko.observable(false);
@@ -201,7 +200,7 @@ var reportBuilder = function () {  // eslint-disable-line
 
         var _ga_track_config_change = function (analyticsAction, optReportType) {
             var analyticsLabel = hqImport('hqwebapp/js/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/main').capitalize(optReportType || self.reportType());
-            window.analytics.usage(GA_CATEGORY, analyticsAction, analyticsLabel);
+            hqImport('userreports/js/report_analytics').track.event(analyticsAction, analyticsLabel);
         };
 
         /**
@@ -246,7 +245,7 @@ var reportBuilder = function () {  // eslint-disable-line
             },
             afterRenderCallback: function (elem, col) {
                 col.inputBoundCalculation.subscribe(function (val) {
-                    window.analytics.usage(GA_CATEGORY, 'Change Format', val);
+                    hqImport('userreports/js/report_analytics').track.event('Change Format', val);
                 });
             },
         });
