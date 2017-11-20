@@ -25,10 +25,10 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.$httpBackend.flush();
             assert.isFalse(DnldExpData.currentScope.preparingExport);
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
-            var lastCallNum = analytics.usage.callCount - 1;
-            var userTypeCall = analytics.usage.getCall(lastCallNum - 1);
+            var lastCallNum = hqImport('analytics/js/google').track.event.callCount - 1;
+            var userTypeCall = hqImport('analytics/js/google').track.event.getCall(lastCallNum - 1);
             assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', "mobile"));
-            assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Regular"));
+            assert.isTrue(hqImport('analytics/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
             assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Prepare Export"));
         });
 
@@ -40,10 +40,10 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.currentScope.formData.user_types = testUserTypes;
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
-            assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Regular"));
-            var lastCallNum = analytics.usage.callCount - 1;
+            assert.isTrue(hqImport('analytics/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
+            var lastCallNum = hqImport('analytics/js/google').track.event.callCount - 1;
             for (var i = 1; i < 4; i++) {
-                var userTypeCall = analytics.usage.getCall(lastCallNum - i);
+                var userTypeCall = hqImport('analytics/js/google').track.event.getCall(lastCallNum - i);
                 assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', testUserTypes[testUserTypes.length - i]));
             }
             assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Prepare Export"));
@@ -56,7 +56,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
-            assert.isTrue(analytics.usage.lastCall.calledWith("Download Export", "Form", "Bulk"));
+            assert.isTrue(hqImport('analytics/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Bulk"));
             assert.isTrue(analytics.workflow.lastCall.calledWith("Clicked Prepare Export"));
         });
 

@@ -32,9 +32,13 @@
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}
 
+    {% include 'analytics/analytics_js.html' %}
+    <script>
+        hqImport('analytics/js/google').track.event = sinon.spy();
+        hqImport('analytics/js/google').track.click = sinon.spy();
+    </script>
   </head>
   <body>
-      {% include 'analytics/analytics_js.html' %}
       <div class="initial-analytics-data hide"></div>
       <div class="analytics-ab-tests hide"></div>
       <!-- HTML Fixtures -->
