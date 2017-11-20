@@ -25,6 +25,8 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
@@ -189,7 +191,6 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
-
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
 
