@@ -93,7 +93,7 @@ $.fn.hqHelp = function () {
 
         // Prevent jumping to the top of the page when link is clicked
         $helpElem.find('a').click(function(event) {
-            ga_track_event("Clicked Help Bubble", $(this).data('title'), '-');
+            hqImport('analytics/js/google').track.event("Clicked Help Bubble", $(this).data('title'), '-');
             event.preventDefault();
         });
     });

@@ -11,10 +11,8 @@ hqDefine('users/js/edit_commcare_user', function () {
     });
 
     $('#add_phone_number').submit(function() {
-        ga_track_event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), {
-            'hitCallback': function () {
-                document.getElementById('add_phone_number').submit();
-            },
+        hqImport('analytics/js/google').track.event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), '', {}, function () {
+            document.getElementById('add_phone_number').submit();
         });
         return false;
     });
@@ -43,7 +41,7 @@ hqDefine('users/js/edit_commcare_user', function () {
                 form.find('#user-password').html(response.formHTML);
                 if (response.status === "OK") {
                     alert_user(gettext("Password changed successfully"), 'success');
-                    ga_track_event("Edit Mobile Worker", "Reset password", couch_user_id);
+                    hqImport('analytics/js/google').track.event("Edit Mobile Worker", "Reset password", couch_user_id);
                 } else {
                     var message = gettext('Password was not changed ');
                     if (initial_page_data('hide_password_feedback')) {
@@ -79,10 +77,8 @@ hqDefine('users/js/edit_commcare_user', function () {
         // Event tracking
         var $deleteModalForm = $("#delete_user_" + couch_user_id + " form");
         $("button:submit", $deleteModalForm).on("click", function() {
-            ga_track_event("Edit Mobile Worker", "Deleted User", couch_user_id, {
-                'hitCallback': function() {
-                    $deleteModalForm.submit();
-                },
+            hqImport('analytics/js/google').track.event("Edit Mobile Worker", "Deleted User", couch_user_id, "", {}, function() {
+                $deleteModalForm.submit();
             });
             return false;
         });
@@ -140,10 +136,8 @@ hqDefine('users/js/edit_commcare_user', function () {
 
     // Analytics
     $("button:submit", $userInformationForm).on("click", function(){
-        ga_track_event("Edit Mobile Worker", "Updated user info", couch_user_id, {
-            'hitCallback': function() {
-                $userInformationForm.submit();
-            },
+        hqImport('analytics/js/google').track.event("Edit Mobile Worker", "Updated user info", couch_user_id, "", {}, function() {
+            $userInformationForm.submit();
         });
         return false;
     });

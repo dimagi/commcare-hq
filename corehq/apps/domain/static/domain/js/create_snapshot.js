@@ -34,10 +34,8 @@ hqDefine("domain/js/create_snapshot", function() {
         });
     
         $('#publish-now-button').on('click', function() {
-            ga_track_event('Exchange', 'Publish Now', '?', {
-                'hitCallback': function() {
-                    $('#snapshot-form').submit();
-                }
+            hqImport('analytics/js/google').track.event('Exchange', 'Publish Now', '?', "", {}, function() {
+                $('#snapshot-form').submit();
             });
         });
     });

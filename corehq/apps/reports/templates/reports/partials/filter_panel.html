@@ -31,7 +31,7 @@
         </div>
 
         <button class="btn btn-default" data-bind="click: setConfigBeingEdited"
-                onclick="ga_track_event('Scheduled Reports', 'Configure a saved report', '-');">
+                onclick="hqImport('analytics/js/google').track.event('Scheduled Reports', 'Configure a saved report', '-');">
             {% trans "Save" %}...
         </button>
     {% endif %}

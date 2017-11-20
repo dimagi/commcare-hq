@@ -71,9 +71,9 @@
 
             $('#submitForms').click(function() {
                 if ($allFormsButton[0].checked) {
-                    ga_track_event('Bulk Archive', 'All', 'Checkbox');
+                    hqImport('analytics/js/google').track.event('Bulk Archive', 'All', 'Checkbox');
                 } else {
-                    ga_track_event('Bulk Archive', 'All', 'Selected Forms');
+                    hqImport('analytics/js/google').track.event('Bulk Archive', 'All', 'Selected Forms');
                 }
             })
 
