@@ -172,6 +172,12 @@ def _get_form_exports_by_domain(domain, has_deid_permissions):
     return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
 
 
+def get_export_count_by_domain(domain):
+    exports = _get_form_exports_by_domain(domain, True)
+    exports += _get_case_exports_by_domain(domain, True)
+    return len(exports)
+
+
 class ExportsPermissionsMixin(object):
     """For mixing in with a subclass of BaseDomainView
 
