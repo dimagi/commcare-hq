@@ -208,16 +208,17 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
-                        "tribal_population": "Tribal population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "slum_dweller": "Slum dweller",
                         "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "slum_dweller": "Slum dweller",
                         "prison_inmate": "Prison inmate"
                     }
                 },
