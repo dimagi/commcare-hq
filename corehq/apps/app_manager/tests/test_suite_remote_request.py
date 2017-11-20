@@ -5,6 +5,7 @@ from mock import patch
 
 from corehq.apps.app_manager.const import CLAIM_DEFAULT_RELEVANT_CONDITION
 from corehq.apps.app_manager.models import (
+    AdvancedModule,
     Application,
     Module,
     CaseSearch,
@@ -83,6 +84,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         Case search action should be added to case list and a new search detail should be created
         """
+        advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
+        advanced_module.search_config = CaseSearch(
+            command_label={'en': 'Advanced Search'},
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
+        )
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
