@@ -106,7 +106,9 @@
 {% initial_page_data 'show_number' show_number %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
-{% initial_page_data 'ab_test' ab_test %}
+
+{% analytics_ab_test 'kissmetrics.register_phone_number_ab' ab_test %}
+
 {% registerurl 'process_registration' %}
 <div class="container">
   <div class="row">
