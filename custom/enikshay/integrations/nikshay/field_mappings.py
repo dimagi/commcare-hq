@@ -61,6 +61,7 @@ occupation = {
     'unemployed': 28,
     'worker': 29,
     'writer': 7,
+    'not_known': 31,
 }
 
 episode_site = {

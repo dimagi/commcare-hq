@@ -736,11 +736,11 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
     if use_new_2b_structure:
         occurence_case_properties = occurence_case.dynamic_case_properties()
         episode_site_choice = occurence_case_properties.get('site_choice')
-        patient_occupation = person_case.dynamic_case_properties().get('occupation', 'other')
+        patient_occupation = person_case.dynamic_case_properties().get('occupation')
         episode_disease_classification = occurence_case_properties.get('disease_classification', '')
     else:
         episode_site_choice = episode_case_properties.get('site_choice')
-        patient_occupation = episode_case_properties.get('occupation', 'other')
+        patient_occupation = episode_case_properties.get('occupation')
         episode_disease_classification = episode_case_properties.get('disease_classification', '')
 
     if episode_site_choice:
@@ -755,19 +755,15 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
 
     episode_year = episode_date.year
     if v2:
-        episode_properties.update({
-            "occupation": occupation.get(
-                patient_occupation,
-                'Not known'
-            )
-        })
+        _patient_occupation = (
+            occupation.get(patient_occupation, occupation['other'])
+            if patient_occupation
+            else occupation['not_known']
+        )
+        episode_properties.update({"occupation": _patient_occupation})
     else:
-        episode_properties.update({
-            "poccupation": occupation.get(
-                patient_occupation,
-                occupation['other']
-            )
-        })
+        _patient_occupation = occupation.get(patient_occupation, occupation['other'])
+        episode_properties.update({"poccupation": _patient_occupation})
     episode_properties.update({
         "pregdate": str(episode_date),
         "ptbyr": str(episode_year),
