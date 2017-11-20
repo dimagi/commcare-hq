@@ -255,18 +255,18 @@ hqDefine('export/js/models', function () {
             args,
             eventCategory;
 
-        analytics.usage("Create Export", analyticsExportType, analyticsAction);
+        hqImport('analytics/js/google').track.event("Create Export", analyticsExportType, analyticsAction);
         if (this.export_format === constants.EXPORT_FORMATS.HTML) {
-            args = ["Create Export", analyticsExportType, 'Excel Dashboard'];
+            args = ["Create Export", analyticsExportType, 'Excel Dashboard', '', {}];
             // If it's not new then we have to add the callback in to redirect
             if (!this.isNew()) {
                 args.push(callback);
             }
-            analytics.usage.apply(null, args);
+            hqImport('analytics/js/google').track.event.apply(null, args);
         }
         if (this.isNew()) {
             eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
-            analytics.usage(eventCategory, 'Custom export creation', '');
+            hqImport('analytics/js/google').track.event(eventCategory, 'Custom export creation', '');
             analytics.workflow("Clicked 'Create' in export edit page", callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();

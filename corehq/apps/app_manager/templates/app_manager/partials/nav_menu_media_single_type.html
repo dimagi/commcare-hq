@@ -43,7 +43,7 @@
                         visible: showDefaultPath,
                         click: function () {
                             setCustomPath();
-                            analytics.usage('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
+                            hqImport('analytics/js/google').track.event('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
                         }">
                 <i class="fa fa-cog"></i>
                 {% trans 'Set Path' %}
