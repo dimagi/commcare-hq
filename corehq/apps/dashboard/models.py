@@ -59,10 +59,8 @@ class Tile(object):
 class TileConfiguration(object):
 
     def __init__(self, title, slug, icon, context_processor_class,
-                 url=None, urlname=None, is_external_link=False,
-                 visibility_check=None, url_generator=None,
-                 help_text=None, analytics_usage_label=None,
-                 analytics_workflow_labels=None):
+                 url=None, urlname=None, visibility_check=None,
+                 url_generator=None, help_text=None):
         """
         :param title: The title of the tile
         :param slug: The tile's slug
@@ -70,16 +68,13 @@ class TileConfiguration(object):
         :param context_processor: A Subclass of BaseTileContextProcessor
         :param url: the url that the icon will link to
         :param urlname: the urlname of the view that the icon will link to
-        :param is_external_link: True if the tile opens links in new window/tab
         :param visibility_check: (optional) a lambda that accepts a request
         and urlname and returns a boolean value if the tile is visible to the
         user.
         :param url_generator: a lambda that accepts a request and returns
         a string that is the url the tile will take the user to if it's clicked
         :param help_text: (optional) text that will appear on hover of tile
-        :param analytics_usage_label: (optional) label to be used in usage
         analytics event tracking.
-        :param analytics_workflow_labels: (optional) label to be used in workflow
         analytics event tracking.
         """
         if not issubclass(context_processor_class, BaseTileContextProcessor):
@@ -92,17 +87,10 @@ class TileConfiguration(object):
         self.icon = icon
         self.url = url
         self.urlname = urlname
-        self.is_external_link = is_external_link
         self.visibility_check = (visibility_check
                                  or self._default_visibility_check)
         self.url_generator = url_generator or self._default_url_generator
         self.help_text = help_text
-        self.analytics_usage_label = analytics_usage_label
-        self.analytics_workflow_labels = analytics_workflow_labels if analytics_workflow_labels is not None else []
-
-    @property
-    def ng_directive(self):
-        return self.context_processor_class.tile_type
 
     def get_url(self, request):
         if self.urlname is not None:
@@ -151,7 +139,6 @@ class IconContext(BaseTileContextProcessor):
         return {
             'url': self.tile_config.get_url(self.request),
             'icon': self.tile_config.icon,
-            'isExternal': self.tile_config.is_external_link,
         }
 
 
