@@ -289,6 +289,13 @@ def _get_report_builder_reports(project):
              for config in report_builder_reports]
         )
 
+
+def get_report_builder_count(domain):
+    configs = _safely_get_report_configs(domain)
+    report_builder_reports = [c for c in configs if c.report_meta.created_by_builder]
+    return len(report_builder_reports)
+
+
 DATA_INTERFACES = (
     (ugettext_lazy("Export Data"), (
         export.DeidExportReport,

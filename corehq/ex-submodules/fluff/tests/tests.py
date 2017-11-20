@@ -7,6 +7,7 @@ from pillowtop.feed.couch import change_from_couch_row
 
 import sqlalchemy
 from fluff.signals import rebuild_table, indicator_document_updated
+import six
 
 if not settings.configured:
     settings.configure(DEBUG=True)
@@ -22,7 +23,7 @@ WEEK = timedelta(days=7)
 
 def flat_field(fn):
     def getter(item):
-        return unicode(fn(item) or "")
+        return six.text_type(fn(item) or "")
     return fluff.FlatField(getter)
 
 

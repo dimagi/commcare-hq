@@ -20,6 +20,7 @@ from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
     update_form_translations,
     get_unicode_dicts)
+from six.moves import zip
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):

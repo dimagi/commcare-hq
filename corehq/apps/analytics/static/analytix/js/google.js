@@ -6,56 +6,59 @@
 hqDefine('analytics/js/google', function () {
     'use strict';
     var _get = hqImport('analytics/js/initial').getFn('google'),
+        _global = hqImport('analytics/js/initial').getFn('global'),
         logger = hqImport('analytics/js/logging').getLoggerForApi('Google Analytics'),
         _utils = hqImport('analytics/js/utils'),
-        _init = {},
-        _gtag;
+        _data = {},
+        _gtag = function () {};
 
-    logger.verbose.addCategory('data', 'DATA');
+    var __init__ = function () {
+        _data.apiId = _get('apiId');
+        logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
 
-    _init.apiId = _get('apiId');
-    logger.verbose.data(_init.apiId || "NOT SET", "API ID");
+        if (_data.apiId) {
+            _data.scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + _data.apiId;
+            _utils.insertScript(_data.scriptUrl, logger.debug.log);
+        }
 
-    var _addGoogleScript = function (srcUrl) {
-        logger.verbose.log(srcUrl, "Added Script");
-        _utils.insertAsyncScript(srcUrl);
+        window.dataLayer = window.dataLayer || [];
+        _gtag = function () {
+            window.dataLayer.push(arguments);
+            logger.verbose.log(arguments, 'gtag');
+        };
+        _gtag('js', new Date());
+
+        _data.user = {
+            user_id: _get('userId', 'none'),
+            isDimagi: _get('userIsDimagi', 'no', 'yes'),
+            isCommCare: _get('userIsCommCare', 'no', 'yes'),
+            domain: _get('domain', 'none'),
+            hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
+        };
+
+        // Update User Data & Legacy "Dimensions"
+        _data.dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
+        if (_data.user.user_id !== 'none') {
+            _data.user.daysOld = _get('userDaysSinceCreated');
+            _data.user.isFirstDay = _data.user.daysOld < 1 ? 'yes' : 'no';
+            _data.dimLabels.push('isFirstDay');
+            _data.user.isFirstWeek = _data.user.daysOld >= 1 && _data.user.daysOld < 7 ? 'yes' : 'no';
+            _data.dimLabels.push('isFirstWeek');
+        }
+        // Legacy Dimensions
+        _data.user.custom_map = {};
+        _.each(_data.dimLabels, function (val, ind) {
+            _data.user.custom_map['dimension' + ind] = _data.user[val];
+        });
+
+        // Configure Gtag with User Info
+        _gtag('config', _data.apiId, _data.user);
     };
 
-    if (_init.apiId) {
-        _addGoogleScript('//www.googletagmanager.com/gtag/js?id=' + _init.apiId);
+    if (_global('isEnabled')) {
+        __init__();
+        logger.debug.log('Initialized');
     }
-
-    window.dataLayer = window.dataLayer || [];
-    _gtag = function () {
-        window.dataLayer.push(arguments);
-        logger.verbose.log(arguments, 'gtag');
-    };
-    _gtag('js', new Date());
-
-    _init.user = {
-        user_id: _get('userId', 'none'),
-        isDimagi: _get('userIsDimagi', 'no', 'yes'),
-        isCommCare: _get('userIsCommCare', 'no', 'yes'),
-        domain: _get('domain', 'none'),
-        hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
-    };
-    // Update User Data & Legacy "Dimensions"
-    _init.dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
-    if (_init.user.user_id !== 'none') {
-        _init.user.daysOld = _get('userDaysSinceCreated');
-        _init.user.isFirstDay = _init.user.daysOld < 1 ? 'yes' : 'no';
-        _init.dimLabels.push('isFirstDay');
-        _init.user.isFirstWeek = _init.user.daysOld >= 1 && _init.user.daysOld < 7 ? 'yes' : 'no';
-        _init.dimLabels.push('isFirstWeek');
-    }
-    // Legacy Dimensions
-    _init.user.custom_map = {};
-    _.each(_init.dimLabels, function (val, ind) {
-        _init.user.custom_map['dimension' + ind] = _init.user[val];
-    });
-
-    // Configure Gtag with User Info
-    _gtag('config', _init.apiId, _init.user);
 
     /**
      * Helper function for sending a Google Analytics Event.
@@ -68,18 +71,20 @@ hqDefine('analytics/js/google', function () {
      * @param {function} eventCallback - (optional) Event callback fn
      */
     var trackEvent = function (eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-        var params = {
-            event_category: eventCategory,
-            event_label: eventLabel,
-            event_value: eventValue,
-            event_callback: eventCallback,
-            event_action: eventAction,
-        };
-        if (_.isObject(eventParameters)) {
-            params = _.extend(params, eventParameters);
+        if (_global('isEnabled')) {
+            var params = {
+                event_category: eventCategory,
+                event_label: eventLabel,
+                event_value: eventValue,
+                event_callback: eventCallback,
+                event_action: eventAction,
+            };
+            if (_.isObject(eventParameters)) {
+                params = _.extend(params, eventParameters);
+            }
+            logger.debug.log(logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
+            _gtag('event', eventAction, params);
         }
-        logger.debug.log(logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
-        _gtag('event', eventAction, params);
     };
 
     /**
@@ -95,13 +100,15 @@ hqDefine('analytics/js/google', function () {
      * @param {object} eventParameters - (optional) Extra event parameters
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
-        _utils.trackClickHelper(
-            element,
-            function (callbackFn) {
-                trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);
-            }
-        );
-        logger.debug.log(logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
+        if (_global('isEnabled')) {
+            _utils.trackClickHelper(
+                element,
+                function (callbackFn) {
+                    trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);
+                }
+            );
+            logger.debug.log(logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
+        }
     };
 
     /**

@@ -39,6 +39,7 @@ from .analytics.esaccessors import (
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
 )
+import six
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -169,7 +170,7 @@ def namedtupledict(name, fields):
     cls = namedtuple(name, fields)
 
     def __getitem__(self, item):
-        if isinstance(item, basestring):
+        if isinstance(item, six.string_types):
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,
@@ -264,9 +265,9 @@ def format_datatables_data(text, sort_key, raw=None):
 
 def app_export_filter(doc, app_id):
     if app_id:
-        return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
+        return (doc['app_id'] == app_id) if 'app_id' in doc else False
     elif app_id == '':
-        return (not doc['app_id']) if doc.has_key('app_id') else True
+        return (not doc['app_id']) if 'app_id' in doc else True
     else:
         return True
 

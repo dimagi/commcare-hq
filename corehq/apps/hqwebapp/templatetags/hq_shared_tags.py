@@ -27,6 +27,7 @@ from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
+import six
 
 
 register = template.Library()
@@ -201,7 +202,7 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
-    if isinstance(name_or_instance, basestring):
+    if isinstance(name_or_instance, six.string_types):
         obj = getattr(module, name_or_instance)
     else:
         obj = name_or_instance
@@ -651,7 +652,7 @@ def registerurl(parser, token):
 
 @register.simple_tag
 def html_attr(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(value)
 

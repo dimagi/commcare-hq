@@ -1125,47 +1125,44 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     return config
 
 
-@quickcache(['case_id', 'month'], timeout=30 * 60)
-def get_beneficiary_details(case_id, month):
+@quickcache(['case_id'], timeout=30 * 60)
+def get_beneficiary_details(case_id):
     data = ChildHealthMonthlyView.objects.filter(
-        case_id=case_id, month__lte=datetime(*month)
+        case_id=case_id
     ).order_by('month')
 
     min_height = 45
-    wfl = []
-
     max_height = 120.0
 
-    i = min_height
-
-    while i <= max_height:
-        wfl.append({'x': i, 'y': None})
-        i += 0.5
-
     beneficiary = {
-        'weight': [{'x': x, 'y': None} for x in range(0, 61)],
-        'height': [{'x': x, 'y': None} for x in range(0, 61)],
-        'wfl': wfl
+        'weight': [],
+        'height': [],
+        'wfl': []
     }
     for row in data:
         beneficiary.update({
             'person_name': row.person_name,
             'mother_name': row.mother_name,
             'dob': row.dob,
-            'age': current_age(row.dob, datetime(*month).date()),
+            'age': current_age(row.dob, datetime.now().date()),
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
         if row.age_in_months <= 60:
-            beneficiary['weight'][row.age_in_months] = {
-                'x': int(row.age_in_months),
-                'y': float(row.recorded_weight) if row.recorded_weight else None
-            }
-            beneficiary['height'][row.age_in_months] = {
-                'x': int(row.age_in_months),
-                'y': float(row.recorded_height) if row.recorded_height else None
-            }
+            if row.recorded_weight:
+                beneficiary['weight'].append({
+                    'x': int(row.age_in_months),
+                    'y': float(row.recorded_weight)
+                })
+            if row.recorded_height:
+                beneficiary['height'].append({
+                    'x': int(row.age_in_months),
+                    'y': float(row.recorded_height)
+                })
         if row.recorded_height and min_height <= row.recorded_height <= max_height:
-            index = int((row.recorded_height - min_height) * 2)
-            beneficiary['wfl'][index]['y'] = float(row.recorded_weight) if row.recorded_height else None
+            if row.recorded_height:
+                beneficiary['wfl'].append({
+                    'x': float(row.recorded_height),
+                    'y': float(row.recorded_weight) if row.recorded_height else 0
+                })
     return beneficiary

@@ -157,7 +157,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
                 yield row_field_dict.get("form.meta.username", "")
 
             res = self.es_results
-            if res.has_key('error'):
+            if 'error' in res:
                 pass
             else:
                 for result in res['hits']['hits']:

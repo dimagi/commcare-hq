@@ -9,6 +9,7 @@ from django.http import Http404
 
 from corehq.apps.es import AppES
 from dimagi.utils.couch.database import iter_docs
+import six
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
@@ -230,7 +231,7 @@ def get_app_ids_in_domain(domain):
 def get_apps_by_id(domain, app_ids):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
-    if isinstance(app_ids, basestring):
+    if isinstance(app_ids, six.string_types):
         app_ids = [app_ids]
     docs = iter_docs(Application.get_db(), app_ids)
     return [get_correct_app_class(doc).wrap(doc) for doc in docs]

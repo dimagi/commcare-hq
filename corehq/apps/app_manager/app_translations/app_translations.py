@@ -1,6 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
+
+import itertools
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
@@ -21,6 +23,8 @@ from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+import six
+from six.moves import zip
 
 
 def get_unicode_dicts(iterable):
@@ -35,11 +39,11 @@ def get_unicode_dicts(iterable):
 
     """
     def none_or_unicode(val):
-        return unicode(val) if val is not None else val
+        return six.text_type(val) if val is not None else val
 
     rows = []
     for row in iterable:
-        rows.append({unicode(k): none_or_unicode(v) for k, v in row.iteritems()})
+        rows.append({six.text_type(k): none_or_unicode(v) for k, v in row.iteritems()})
     return rows
 
 
@@ -192,7 +196,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     assert isinstance(languages, list)
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
-    assert isinstance(unique_id, basestring)
+    assert isinstance(unique_id, six.string_types)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages
@@ -829,7 +833,7 @@ def _update_case_list_translations(sheet, rows, app):
             ))
 
     for row, detail in \
-            zip(list_rows, short_details) + zip(detail_rows, long_details):
+            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
 
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.

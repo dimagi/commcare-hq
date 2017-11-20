@@ -33,13 +33,14 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from dimagi.utils.dates import safe_strftime
+import six
 
 register = template.Library()
 
 
 def _is_list_like(val):
     return (isinstance(val, collections.Iterable) and
-            not isinstance(val, basestring))
+            not isinstance(val, six.string_types))
 
 
 def _parse_date_or_datetime(val):

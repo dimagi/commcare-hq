@@ -31,6 +31,7 @@ from custom.enikshay.integrations.utils import (
     is_valid_archived_submission, is_valid_person_submission, case_was_created,
     is_migrated_uatbc_episode, string_to_date_or_None)
 from .utils import get_bets_location_json, queued_payload, get_bets_user_json
+import six
 
 
 class BETSRepeaterMixin(object):
@@ -397,7 +398,7 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
         """Store the payload as extra information
         """
         try:
-            return unicode(self.get_payload(repeat_record))
+            return six.text_type(self.get_payload(repeat_record))
         except ENikshayException:
             return None
 
@@ -448,7 +449,7 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
     def get_attempt_info(self, repeat_record):
         """Store the payload as extra information
         """
-        return unicode(self.get_payload(repeat_record))
+        return six.text_type(self.get_payload(repeat_record))
 
     def allowed_to_forward(self, location):
         # if this location is already in the repeater queue, don't forward again

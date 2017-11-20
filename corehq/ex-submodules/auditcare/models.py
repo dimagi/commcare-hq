@@ -19,6 +19,7 @@ from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
+import six
 
 log = logging.getLogger(__name__)
 
@@ -279,7 +280,7 @@ class ModelActionAudit(AuditEvent):
     @classmethod
     def audit_django_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
-        instance_id = unicode(instance.id)
+        instance_id = six.text_type(instance.id)
         revision_id = None
         cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=True)
 

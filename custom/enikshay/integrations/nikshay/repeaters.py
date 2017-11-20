@@ -50,6 +50,7 @@ from custom.enikshay.integrations.utils import (
 
 from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
+import six
 
 
 class BaseNikshayRepeater(CaseRepeater):
@@ -256,7 +257,7 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
             result,
             verify=self.verify
         )
-        if isinstance(message, basestring) and message.isdigit():
+        if isinstance(message, six.string_types) and message.isdigit():
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:

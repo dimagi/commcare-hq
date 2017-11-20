@@ -54,6 +54,7 @@ branches:
   - es/loc-safe-reports  # Ethan 11/1
   - np/tb/counts  # NP 11/10
   - ce/latest-saved-profile # Jenny Nov 15
+  - jls/kill-report-builder-v1 # Jenny Nov 17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

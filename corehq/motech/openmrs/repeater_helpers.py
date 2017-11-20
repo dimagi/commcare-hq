@@ -6,6 +6,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
+from six.moves import zip
 
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])

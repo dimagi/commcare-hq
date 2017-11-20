@@ -96,7 +96,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         '''
         if '_id' in user:
             user['id'] = user.pop('_id')
-        return namedtuple('user', user.keys())(**user)
+        return namedtuple('user', list(user))(**user)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
@@ -123,7 +123,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
         params = bundle.request.GET
         param = lambda p: params.get(p, None)
-        fields = self.fields.keys()
+        fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
         fn = MOCK_BULK_USER_ES or user_es_call

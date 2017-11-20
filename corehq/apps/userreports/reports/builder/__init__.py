@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import six
 DEFAULT_CASE_PROPERTY_DATATYPES = {
     "name": "string",
     "modified_on": "datetime",
@@ -64,103 +65,6 @@ def make_case_property_indicator(property_name, column_id=None, datatype=None):
     }
 
 
-def _make_user_group_or_location_indicator(property_name, column_id):
-    """
-    Return a data source indicator config with the given column_id that stores
-    a user name, group name, or location name for the id corresponding to the
-    given property_name.
-    """
-    return {
-        "datatype": "string",
-        "type": "expression",
-        "column_id": column_id,
-        "expression": {
-            "test": {
-                "operator": "eq",
-                "expression": {
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "doc_type"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Group",
-                    "doc_id_expression": {
-                        "type": "property_name",
-                        "property_name": property_name
-                    }
-                },
-                "type": "boolean_expression",
-                "property_value": "Group"
-            },
-            "expression_if_true": {
-                "value_expression": {
-                    "type": "property_name",
-                    "property_name": "name"
-                },
-                "type": "related_doc",
-                "related_doc_type": "Group",
-                "doc_id_expression": {
-                    "type": "property_name",
-                    "property_name": property_name
-                }
-            },
-            "type": "conditional",
-            "expression_if_false": {
-                "type": "conditional",
-                "test": {
-                    "operator": "eq",
-                    "expression": {
-                        "value_expression": {
-                            "type": "property_name",
-                            "property_name": "doc_type"
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareUser",
-                        "doc_id_expression": {
-                            "type": "property_name",
-                            "property_name": property_name
-                        }
-                    },
-                    "type": "boolean_expression",
-                    "property_value": "CommCareUser"
-                },
-                "expression_if_true": {
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "username"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                        "type": "property_name",
-                        "property_name": property_name
-                    }
-                },
-                "expression_if_false": {
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "name"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "Location",
-                    "doc_id_expression": {
-                        "type": "property_name",
-                        "property_name": property_name
-                    }
-                }
-            }
-        }
-    }
-
-
-def make_user_name_indicator(column_id):
-    return _make_user_group_or_location_indicator("user_id", column_id)
-
-
-def make_owner_name_indicator(column_id):
-    return _make_user_group_or_location_indicator("owner_id", column_id)
-
-
 def make_form_question_indicator(question, column_id=None, data_type=None, root_doc=False):
     """
     Return a data source indicator configuration (a dict) for the given form
@@ -200,7 +104,7 @@ def make_form_meta_block_indicator(spec, column_id=None, root_doc=False):
     form meta field and data type.
     """
     field_name = spec[0]
-    if isinstance(field_name, basestring):
+    if isinstance(field_name, six.string_types):
         field_name = [field_name]
     data_type = spec[1]
     column_id = column_id or field_name[0]

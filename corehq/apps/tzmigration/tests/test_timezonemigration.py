@@ -17,6 +17,7 @@ from corehq.apps.tzmigration.timezonemigration import \
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
+from six.moves import zip
 
 
 class TimeZoneMigrationTest(TestCase, TestFileMixin):

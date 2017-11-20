@@ -4,6 +4,7 @@ from zipfile import BadZipfile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 import six
+from six.moves import zip
 
 
 class InvalidExcelFileException(Exception):
@@ -63,14 +64,14 @@ class IteratorJSONReader(object):
     def get_fieldnames(self):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
-            if not isinstance(field, basestring):
+            if not isinstance(field, six.string_types):
                 raise HeaderValueError(u'Field %s is not a string.' % field)
             self.set_field_value(obj, field, value)
         return obj.keys()
 
     @classmethod
     def set_field_value(cls, obj, field, value):
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             value = value.strip()
         # try dict
         try:
@@ -187,7 +188,7 @@ class WorksheetJSONReader(IteratorJSONReader):
 class WorkbookJSONReader(object):
 
     def __init__(self, f):
-        if isinstance(f, basestring):
+        if isinstance(f, six.string_types):
             filename = f
         elif not isinstance(f, file):
             tmp = NamedTemporaryFile(mode='wb', suffix='.xlsx', delete=False)
@@ -246,7 +247,7 @@ def format_header(path, value):
     # pretty sure making a string-builder would be slower than concatenation
     s = path[0]
     for p in path[1:]:
-        if isinstance(p, basestring):
+        if isinstance(p, six.string_types):
             s += ': %s' % p
         elif isinstance(p, int):
             s += ' %s' % (p + 1)
@@ -276,7 +277,7 @@ def alphanumeric_sort_key(key):
 
 
 def enforce_string_type(value):
-    if isinstance(value, basestring):
+    if isinstance(value, six.string_types):
         return value
 
     if isinstance(value, six.integer_types):

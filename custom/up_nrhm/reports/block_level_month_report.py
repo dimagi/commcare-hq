@@ -9,6 +9,7 @@ from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 from django.utils.translation import ugettext as _, ugettext_noop
+from six.moves import zip
 
 
 class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectReport):

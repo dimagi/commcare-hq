@@ -17,6 +17,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
     update_default_confidence_level,
     update_episode_adherence_properties,
 )
+import six
 
 
 class RegisterPatientRepeaterView(AddCaseRepeaterView):
@@ -127,7 +128,7 @@ def update_default_confidence(request, domain):
 def validate_beneficiary_id(beneficiary_id):
     if beneficiary_id is None:
         raise AdherenceException("Beneficiary ID is null")
-    if not isinstance(beneficiary_id, basestring):
+    if not isinstance(beneficiary_id, six.string_types):
         raise AdherenceException("Beneficiary ID should be a string")
 
 

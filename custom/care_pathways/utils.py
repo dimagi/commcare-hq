@@ -7,6 +7,7 @@ import json
 from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.reports.sqlreport import DataFormatter
+import six
 
 
 @quickcache(['domain'], timeout=5 * 60)
@@ -126,7 +127,7 @@ class CareDataFormatter(DataFormatter):
             result = [disp_name]
 
             for element in row[1:]:
-                result.append(unicode(round(element['html'] * sum_of_elements)) + '%')
+                result.append(six.text_type(round(element['html'] * sum_of_elements)) + '%')
             yield result
 
             for value in chunk:

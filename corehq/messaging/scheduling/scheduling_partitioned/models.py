@@ -23,6 +23,7 @@ from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+import six
 
 
 class ScheduleInstance(PartitionedModel):
@@ -90,7 +91,7 @@ class ScheduleInstance(PartitionedModel):
         if isinstance(timezone, tzinfo):
             return timezone
 
-        if isinstance(timezone, basestring):
+        if isinstance(timezone, six.string_types):
             try:
                 return coerce_timezone_value(timezone)
             except ValidationError:

@@ -202,8 +202,8 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
 
         self.debugTraceOptions = ko.observableArray([
             new DebugResponseLevel("Output", "basic"),
-            new DebugResponseLevel("Output + Reduced Trace", "reduce"),
-            new DebugResponseLevel("Output + Deep Trace", "deep"),
+            new DebugResponseLevel("Output + Eval Summary", "reduce"),
+            new DebugResponseLevel("Output + Full Evaluation", "deep"),
         ]);
         self.xpath = ko.observable('');
         self.xpath = ko.observable('');

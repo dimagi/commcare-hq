@@ -367,7 +367,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
 class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('role_choices'):
+        if 'role_choices' in kwargs:
             role_choices = kwargs.pop('role_choices')
         else:
             role_choices = ()
@@ -980,7 +980,7 @@ class CommtrackUserForm(forms.Form):
         from corehq.apps.locations.util import get_locations_from_ids
 
         value = self.cleaned_data.get('assigned_locations')
-        if not isinstance(value, basestring) or value.strip() == '':
+        if not isinstance(value, six.string_types) or value.strip() == '':
             return []
 
         location_ids = [location_id.strip() for location_id in value.split(',')]

@@ -30,6 +30,7 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
+from six.moves import zip
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
