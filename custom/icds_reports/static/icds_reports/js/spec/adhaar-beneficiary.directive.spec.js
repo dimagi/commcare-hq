@@ -1,4 +1,4 @@
-/* global module, inject */
+/* global d3, module, inject */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');

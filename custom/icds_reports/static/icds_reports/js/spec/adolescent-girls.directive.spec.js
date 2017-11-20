@@ -109,7 +109,7 @@ describe('AdolescentGirlsDirective', function () {
         assert.equal(searchData.location_name, 'name');
     });
 
-     it('tests show all locations', function () {
+    it('tests show all locations', function () {
         controller.all_locations.push(
             {name: 'name1', location_id: 'test_id1'}
         );
