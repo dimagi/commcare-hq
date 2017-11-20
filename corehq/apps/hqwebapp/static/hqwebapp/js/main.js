@@ -271,11 +271,9 @@ hqDefine("hqwebapp/js/main", function() {
         });
 
         $(document).on('click', '.mainmenu-tab a', function(e) {
-            if (typeof(ga) !== 'undefined') {
-                var data = $(e.currentTarget).closest(".mainmenu-tab").data();
-                if (data.category && data.action) {
-                    ga('send', 'event', data.category, data.action, data.label);
-                }
+            var data = $(e.currentTarget).closest(".mainmenu-tab").data();
+            if (data.category && data.action) {
+                hqImport('analytics/js/google').track.event(data.category, data.action, data.label);
             }
         });
 
