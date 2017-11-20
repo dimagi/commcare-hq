@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from functools import wraps
 
@@ -60,7 +61,7 @@ class LoginAndDomainAuthentication(Authentication):
     def _get_auth_decorator(self, request):
         # the initial digest request doesn't have any authorization, so default to
         # digest in order to send back
-        return self.decorator_map[determine_authtype_from_header(request, default='digest')]
+        return self.decorator_map[determine_authtype_from_header(request)]
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'

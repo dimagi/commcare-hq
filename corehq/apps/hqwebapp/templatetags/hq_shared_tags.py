@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import hashlib
@@ -26,6 +27,7 @@ from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
+import six
 
 
 register = template.Library()
@@ -200,7 +202,7 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
-    if isinstance(name_or_instance, basestring):
+    if isinstance(name_or_instance, six.string_types):
         obj = getattr(module, name_or_instance)
     else:
         obj = name_or_instance
@@ -650,20 +652,18 @@ def registerurl(parser, token):
 
 @register.simple_tag
 def html_attr(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(value)
 
 
-@register.tag
-def initial_page_data(parser, token):
+def _create_page_data(parser, token, node_slug):
     split_contents = token.split_contents()
     tag = split_contents[0]
     name = parse_literal(split_contents[1], parser, tag)
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
-
         def render(self, context):
             resolved = value.resolve(context)
             return (u"<div data-name=\"{}\" data-value=\"{}\"></div>"
@@ -671,7 +671,22 @@ def initial_page_data(parser, token):
 
     nodelist = NodeList([FakeNode()])
 
-    return AddToBlockNode(nodelist, 'initial_page_data')
+    return AddToBlockNode(nodelist, node_slug)
+
+
+@register.tag
+def initial_page_data(parser, token):
+    return _create_page_data(parser, token, 'initial_page_data')
+
+
+@register.tag
+def initial_analytics_data(parser, token):
+    return _create_page_data(parser, token, 'initial_analytics_data')
+
+
+@register.tag
+def analytics_ab_test(parser, token):
+    return _create_page_data(parser, token, 'analytics_ab_test')
 
 
 @register.inclusion_tag('hqwebapp/basic_errors.html')

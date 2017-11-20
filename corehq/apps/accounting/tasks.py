@@ -12,6 +12,7 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
+from couchdbkit import ResourceConflict
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
@@ -723,14 +724,17 @@ def _create_overdue_notification(invoice, context):
     note.activate()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
-def archive_logos(domain_name):
+@task(queue='background_queue', ignore_result=True, acks_late=True,
+      default_retry_delay=10, max_retries=10, bind=True)
+def archive_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
             if isinstance(app, HQMediaMixin):
                 has_archived = app.archive_logos()
                 if has_archived:
                     app.save()
+    except ResourceConflict as e:
+        raise self.retry(exc=e)
     except Exception as e:
         log_accounting_error(
             "Failed to remove all commcare logos for domain %s." % domain_name,
@@ -739,14 +743,17 @@ def archive_logos(domain_name):
         raise e
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
-def restore_logos(domain_name):
+@task(queue='background_queue', ignore_result=True, acks_late=True,
+      default_retry_delay=10, max_retries=10, bind=True)
+def restore_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
             if isinstance(app, HQMediaMixin):
                 has_restored = app.restore_logos()
                 if has_restored:
                     app.save()
+    except ResourceConflict as e:
+        raise self.retry(exc=e)
     except Exception as e:
         log_accounting_error(
             "Failed to restore all commcare logos for domain %s." % domain_name,

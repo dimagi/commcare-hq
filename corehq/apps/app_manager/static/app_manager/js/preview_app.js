@@ -138,13 +138,15 @@ hqDefine('app_manager/js/preview_app', function() {
         localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
     };
 
-    module.initPreviewWindow = function (layoutController) {
+    module.initPreviewWindow = function () {
 
-        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
+        var layoutController = hqImport("hqwebapp/js/layout"),
+            $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
             $appBody = $(module.SELECTORS.APP_MANAGER_BODY),
             $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
             $iframe = $(module.SELECTORS.PREVIEW_WINDOW_IFRAME),
-            $messages = $(layoutController.selector.messages);
+            $messages = layoutController.getMessagesContainer();
+
 
         _private.isFormdesigner = $(module.SELECTORS.FORMDESIGNER).length > 0;
 
@@ -160,7 +162,7 @@ hqDefine('app_manager/js/preview_app', function() {
 
         var _resizeAppPreview = function () {
 
-            var $nav = $(layoutController.selector.navigation),
+            var $nav = layoutController.getNavigationContainer(),
                 $alerts = $('.alert-maintenance');
             var maxHeight = $appPreview.find('.preview-phone-container').outerHeight() + $nav.outerHeight() + 80;
             var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $appBody;
@@ -198,7 +200,7 @@ hqDefine('app_manager/js/preview_app', function() {
 
         };
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
-        layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
+        layoutController.setBalancePreviewFn(_resizeAppPreview);
         $('.js-preview-toggle-tablet-view').click(_private.toggleTabletView);
         $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
         $('.js-preview-refresh').click(function() {

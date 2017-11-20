@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from corehq.apps.toggle_ui.views import ToggleListView, ToggleEditView, toggle_app_manager_v2

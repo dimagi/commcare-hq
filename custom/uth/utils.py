@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.models import CommCareCase
 from lxml import etree

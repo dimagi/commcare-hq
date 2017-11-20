@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -7,7 +8,9 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -18,6 +21,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -79,14 +83,14 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
                 "info": _((
                     "Percentage of children between 6 - 8 months given timely introduction to solid, "
                     "semi-solid or soft food."
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_children_initiated_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -116,17 +120,18 @@ def get_children_initiated_data_chart(domain, config, loc_level, show_test=False
         miliseconds = int(date.strftime("%s")) * 1000
         data['blue'][miliseconds] = {'y': 0, 'all': 0, 'in_month': 0}
 
-    best_worst = {}
+    best_worst = defaultdict(lambda: {
+        'in_month': 0,
+        'all': 0
+    })
     for row in chart_data:
         date = row['month']
         in_month = row['in_month']
         location = row['%s_name' % loc_level]
         valid = row['eligible']
 
-        if location in best_worst:
-            best_worst[location].append(in_month / (valid or 1))
-        else:
-            best_worst[location] = [in_month / (valid or 1)]
+        best_worst[location]['in_month'] = in_month
+        best_worst[location]['all'] = (valid or 0)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -136,7 +141,12 @@ def get_children_initiated_data_chart(domain, config, loc_level, show_test=False
         data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [
+            dict(
+                loc_name=key,
+                percent=(value['in_month'] * 100) / float(value['all'] or 1)
+            ) for key, value in best_worst.iteritems()
+        ],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -155,17 +165,18 @@ def get_children_initiated_data_chart(domain, config, loc_level, show_test=False
                 "key": "% Children began complementary feeding",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_children_initiated_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_children_initiated_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -190,9 +201,13 @@ def get_children_initiated_sector_data(domain, config, loc_level, show_test=Fals
         'all': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         in_month = row['in_month']
         row_values = {
@@ -208,8 +223,14 @@ def get_children_initiated_sector_data(domain, config, loc_level, show_test=Fals
             name, value
         ])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of children between 6 - 8 months given timely introduction to solid, "
             "semi-solid or soft food."

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
@@ -13,6 +14,7 @@ from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.workbook_reading import make_worksheet
+import six
 
 
 class ImporterTest(TestCase):
@@ -56,7 +58,7 @@ class ImporterTest(TestCase):
     def testImportNone(self):
         res = bulk_import_async(self._config(['anything']), self.domain, None)
         self.assertEqual('Sorry, your session has expired. Please start over and try again.',
-                         unicode(res['errors']))
+                         six.text_type(res['errors']))
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     @run_with_all_backends

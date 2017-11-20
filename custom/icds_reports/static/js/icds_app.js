@@ -1,9 +1,10 @@
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl, isWebUser) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
+    $scope.isWebUser = isWebUser;
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
@@ -26,9 +27,10 @@ MainController.$inject = [
     '$uibModal',
     '$window',
     'reportAnIssueUrl',
+    'isWebUser',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy'])
+window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -69,11 +71,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/wasting/:step", {
                 template : "<prevalence-of-severe></prevalence-of-severe>",
             })
-            .when("/stunning", {
-                redirectTo : "/stunning/map",
+            .when("/stunting", {
+                redirectTo : "/stunting/map",
             })
-            .when("/stunning/:step", {
-                template : "<prevalence-of-stunning></prevalence-of-stunning>",
+            .when("/stunting/:step", {
+                template : "<prevalence-of-stunting></prevalence-of-stunting>",
             })
             .when("/comp_feeding", {
                 template : "comp_feeding",
@@ -90,10 +92,10 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/download", {
                 template : "<download></download>",
             })
-            .when("/progress_report", {
+            .when("/fact_sheets", {
                 template : "<progress-report></progress-report>",
             })
-            .when("/progress_report/:report", {
+            .when("/fact_sheets/:report", {
                 template : "<progress-report></progress-report>",
             })
             .when("/exclusive_breastfeeding", {

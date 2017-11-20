@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, genders) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -10,6 +10,14 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+
+    var genderIndex = genders.findIndex(function (x) {
+        return x.id === vm.filtersData.gender;
+    });
+    if (genderIndex !== -1) {
+        vm.genderLabel = genders[genderIndex].name;
+    }
+
     vm.label = "Newborns with Low Birth Weight";
     vm.step = $routeParams.step;
     vm.steps = {
@@ -55,11 +63,13 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
+        var unweighed_percent = row ? d3.format('.2%')((row.in_month - row.low_birth) / (row.in_month || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Number of Newborns born in given month: <strong>' + total + '</strong></div>' +
             '<div>Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div>' +
-            '<div>% newborns with LBW in given month: <strong>' + percent + '</strong></div>';
+            '<div>% newborns with LBW in given month: <strong>' + percent + '</strong></div>' +
+            '<div>% Unweighed: <strong>' + unweighed_percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -90,6 +100,18 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
             }
         });
     };
@@ -151,8 +173,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                     return d3.format(".2%")(d);
                 },
                 axisLabelDistance: 20,
-                forceY: [0],
             },
+            forceY: [0],
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
@@ -163,6 +185,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                     tooltip_content += "<p>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
                     tooltip_content += "<p>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(day.low_birth) + "</strong></p>";
                     tooltip_content += "<p>% newborns with LBW in given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
+                    tooltip_content += "<p>% Unweighed: <strong>" + d3.format('.2%')(1 - day.y) + "</strong></p>";
 
                     return tooltip_content;
                 });
@@ -194,12 +217,17 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         }
     };
 
+    vm.resetAdditionalFilter = function() {
+        vm.filtersData.gender = '';
+        $location.search('gender', null);
+    };
+
     vm.showAllLocations = function () {
         return vm.all_locations.length < 10;
     };
 }
 
-NewbornWithLowBirthController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+NewbornWithLowBirthController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
 
 window.angular.module('icdsApp').directive('newbornLowWeight', function() {
     return {

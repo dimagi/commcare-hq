@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
 from corehq.apps.analytics.tasks import (

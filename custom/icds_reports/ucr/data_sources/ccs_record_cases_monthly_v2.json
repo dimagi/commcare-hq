@@ -5,6 +5,7 @@
     "icds-cas"
   ],
   "server_environment": [
+    "softlayer",
     "icds"
   ],
   "config": {

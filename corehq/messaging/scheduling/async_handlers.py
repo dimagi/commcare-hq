@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler

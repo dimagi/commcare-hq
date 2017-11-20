@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
+from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -48,7 +49,8 @@ from corehq.apps.users.util import (
     username_to_user_id,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
-    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
+    tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted, \
+    undelete_system_forms
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -59,6 +61,7 @@ from xml.etree import cElementTree as ElementTree
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 from dimagi.utils.web import get_site_domain
+import six
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -85,6 +88,7 @@ class Permissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     edit_commcare_users = BooleanProperty(default=False)
     edit_locations = BooleanProperty(default=False)
+    edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
@@ -175,6 +179,7 @@ class Permissions(DocumentSchema):
             edit_web_users=True,
             edit_commcare_users=True,
             edit_locations=True,
+            edit_motech=True,
             edit_data=True,
             edit_apps=True,
             view_reports=True,
@@ -867,13 +872,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     has_built_app = BooleanProperty(default=False)
     analytics_enabled = BooleanProperty(default=True)
 
+    two_factor_auth_disabled_until = DateTimeProperty()
+
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
     _user = None
 
     @classmethod
     def wrap(cls, data, should_save=False):
-        if data.has_key("organizations"):
+        if "organizations" in data:
             del data["organizations"]
             should_save = True
 
@@ -915,6 +922,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 key=key,
                 value=getattr(self, key)
             ) for key in properties),
+        )
+
+    @property
+    def two_factor_disabled(self):
+        return (
+            self.two_factor_auth_disabled_until
+            and datetime.utcnow() < self.two_factor_auth_disabled_until
         )
 
     @property
@@ -1045,7 +1059,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
-        if not isinstance(phone_number, basestring):
+        if not isinstance(phone_number, six.string_types):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
 
@@ -1490,8 +1504,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     is_anonymous = BooleanProperty(default=False)
 
-    mobile_ucr_sync_interval = IntegerProperty()
-
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
@@ -1524,6 +1536,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def clear_quickcache_for_user(self):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
+        get_loadtest_factor_for_user.clear(self.domain, self.user_id)
 
         if self._is_demo_user_cached_value_is_stale():
             get_practice_mode_mobile_workers.clear(self.domain)
@@ -1660,6 +1673,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         deleted_case_ids = self._get_deleted_case_ids()
         CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
+
+        undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
 
     def retire(self):
@@ -2232,7 +2247,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def set_location(self, domain, location_object_or_id):
         # set the primary location for user's domain_membership
-        if isinstance(location_object_or_id, basestring):
+        if isinstance(location_object_or_id, six.string_types):
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id

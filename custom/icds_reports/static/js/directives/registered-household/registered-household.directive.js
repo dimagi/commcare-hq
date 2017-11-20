@@ -24,7 +24,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.bottom_five = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['month', 'age', 'gender'];
+    vm.filters = ['age', 'gender'];
     vm.rightLegend = {
         info: 'Total AWCs that have launched ICDS CAS',
     };
@@ -84,6 +84,18 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [(min - range/10).toFixed(2), (max + range/10).toFixed(2)];
             }
         });
     };
@@ -162,15 +174,14 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 },
                 axisLabelDistance: -100,
             },
-
             yAxis: {
                 axisLabel: '',
                 tickFormat: function (d) {
                     return d3.format(",")(d);
                 },
                 axisLabelDistance: 20,
-                forceY: [0],
             },
+            forceY: [0],
             callback: function (chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase
@@ -64,7 +65,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
     @property
     def report_context(self):
         ret = {}
-        if not self.request.GET.has_key('dot_patient') or self.request.GET.get('dot_patient') == "":
+        if 'dot_patient' not in self.request.GET or self.request.GET.get('dot_patient') == "":
             self.report_template_path = "pact/dots/dots_report_nopatient.html"
             return ret
         submit_id = self.request.GET.get('submit_id', None)

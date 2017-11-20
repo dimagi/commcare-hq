@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 import json
 import phonenumbers
@@ -7,6 +8,7 @@ from django.utils.dateparse import parse_date
 from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from custom.enikshay.case_utils import (
+    get_person_case,
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
     get_open_episode_case_from_person,
@@ -39,6 +41,7 @@ from custom.enikshay.const import (
     MERM_RT_HOURS,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+import six
 
 
 class MermParams(jsonobject.JsonObject):
@@ -148,7 +151,7 @@ class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
-                "dots_99_error": u"RequestConnectionError: {}".format(unicode(exception))
+                "dots_99_error": u"RequestConnectionError: {}".format(six.text_type(exception))
             })
 
 
@@ -263,11 +266,7 @@ class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_payload(self, repeat_record, adherence_case):
         domain = adherence_case.domain
-        person_case = get_person_case_from_occurrence(
-            domain, get_occurrence_case_from_episode(
-                domain, get_episode_case_from_adherence(domain, adherence_case.case_id).case_id
-            ).case_id
-        )
+        person_case = get_person_case(domain, adherence_case.case_id)
         adherence_case_properties = adherence_case.dynamic_case_properties()
         date = parse_date(adherence_case.dynamic_case_properties().get('adherence_date'))
         payload = {

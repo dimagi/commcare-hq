@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 from datetime import datetime
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchdbkit import MultipleResultsFound
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_noop
+from six.moves import zip
 
 
 XFORMS_SESSION_SMS = "SMS"
@@ -31,7 +33,7 @@ class SQLXFormsSession(models.Model):
     app_id = models.CharField(null=True, blank=True, max_length=50)
     submission_id = models.CharField(null=True, blank=True, max_length=50)
     survey_incentive = models.CharField(null=True, blank=True, max_length=100)
-    session_type = models.CharField(max_length=10, choices=zip(XFORMS_SESSION_TYPES, XFORMS_SESSION_TYPES),
+    session_type = models.CharField(max_length=10, choices=list(zip(XFORMS_SESSION_TYPES, XFORMS_SESSION_TYPES)),
                                     default=XFORMS_SESSION_SMS)
     workflow = models.CharField(null=True, blank=True, max_length=20)
     reminder_id = models.CharField(null=True, blank=True, max_length=50)

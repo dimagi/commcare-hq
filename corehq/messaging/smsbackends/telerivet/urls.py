@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.messaging.smsbackends.telerivet.views import TelerivetSetupView, incoming_message
 from django.conf.urls import url
 

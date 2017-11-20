@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
@@ -107,7 +108,7 @@ class RemoteRequestFactory(object):
             nodeset=(CaseTypeXpath(self.module.case_type)
                      .case(instance_name=RESULTS_INSTANCE)),
             value='./@case_id',
-            detail_select=details_helper.get_detail_id_safe(self.module, 'case_short'),
+            detail_select=details_helper.get_detail_id_safe(self.module, 'search_short'),
             detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),
         )]
 

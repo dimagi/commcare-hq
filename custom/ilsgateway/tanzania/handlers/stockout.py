@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.exceptions import InvalidProductCodeException
 from custom.ilsgateway.tanzania.handlers.generic_stock_report_handler import GenericStockReportHandler

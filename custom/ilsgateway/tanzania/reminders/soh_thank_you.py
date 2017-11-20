@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.stock.models import StockTransaction
 from custom.ilsgateway.tanzania.reminders import SOH_THANK_YOU
 from custom.ilsgateway.tanzania.reminders.reminder import Reminder

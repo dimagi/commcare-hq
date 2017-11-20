@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import datetime
 from decimal import Decimal
@@ -42,7 +43,7 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -80,7 +81,7 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, NAMESPACE_USER
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -130,6 +131,7 @@ from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
+    get_repeat_records_by_payload_id,
 )
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.motech.repeaters.const import (
@@ -757,12 +759,12 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=SoftwareProductType.ANY
+                    subscription, is_product=True
                 ) if subscription else None
             )),
             'account_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
-                    account, product_type=SoftwareProductType.ANY
+                    account, is_product=True
                 ) if account else None
             )),
         }
@@ -2288,6 +2290,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
+        'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
 
     def _make_cancel_payload_button(self, record_id):
@@ -2359,32 +2362,65 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     @property
     def total_records(self):
-        return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+        if self.payload_id:
+            return len(self._get_all_records_by_payload())
+        else:
+            return get_repeat_record_count(self.domain, self.repeater_id, self.state)
 
     @property
     def shared_pagination_GET_params(self):
         return [
             {'name': 'repeater', 'value': self.request.GET.get('repeater')},
             {'name': 'record_state', 'value': self.request.GET.get('record_state')},
+            {'name': 'payload_id', 'value': self.request.GET.get('payload_id')},
         ]
 
     def _format_date(self, date):
         tz_utc_aware_date = pytz.utc.localize(date)
         return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
+    @memoized
+    def _get_all_records_by_payload(self):
+        # It is assumed that there are relatively few repeat records for a given payload,
+        # so this is just filtered in memory.  If that changes, we should filter in the db.
+        return [
+            r for r in get_repeat_records_by_payload_id(self.domain, self.payload_id)
+            if (not self.repeater_id or r.repeater_id == self.repeater_id)
+            and (not self.state or r.state == self.state)
+        ]
+
+    @property
+    def payload_id(self):
+        return self.request.GET.get('payload_id', None)
+
     @property
     def rows(self):
         self.repeater_id = self.request.GET.get('repeater', None)
         self.state = self.request.GET.get('record_state', None)
-        records = get_paged_repeat_records(
-            self.domain,
-            self.pagination.start,
-            self.pagination.count,
-            repeater_id=self.repeater_id,
-            state=self.state
-        )
+        if self.payload_id:
+            end = self.pagination.start + self.pagination.count
+            records = self._get_all_records_by_payload()[self.pagination.start:end]
+        else:
+            records = get_paged_repeat_records(
+                self.domain,
+                self.pagination.start,
+                self.pagination.count,
+                repeater_id=self.repeater_id,
+                state=self.state
+            )
         rows = [self._make_row(record) for record in records]
         return rows
+
+    def _payload_id_and_search_link(self, payload_id):
+        return (
+            '<a href="{url}?q={payload_id}">'
+            '<img src="{flower}" title="Search in HQ" width="14px" height="14px" />'
+            '</a> {payload_id}'
+        ).format(
+            url=reverse('global_quick_find'),
+            flower=static('prelogin/images/commcare-flower.png'),
+            payload_id=payload_id,
+        )
 
     def _make_row(self, record):
         row = [
@@ -2402,7 +2438,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         ]
 
         if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(1, record.payload_id)
+            row.insert(1, self._payload_id_and_search_link(record.payload_id))
         return row
 
     @property
@@ -2428,7 +2464,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2458,7 +2494,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2727,7 +2763,7 @@ def toggle_diff(request, domain):
     if Domain.get_by_name(other_domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
                 for t in feature_previews.all_previews() + all_toggles()
-                if t.enabled(request.domain) and not t.enabled(other_domain)]
+                if t.enabled(request.domain, NAMESPACE_DOMAIN) and not t.enabled(other_domain, NAMESPACE_DOMAIN)]
         diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
     return json_response(diff)
 
@@ -2943,18 +2979,19 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
             return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
-        return sorted(
-            [(toggle, toggle.enabled(self.domain), toggle.enabled(self.request.couch_user.username))
-                for toggle in all_toggles()],
-            key=_sort_key,
-        )
+        unsorted_toggles = [(
+            toggle,
+            toggle.enabled(self.domain, namespace=NAMESPACE_DOMAIN),
+            toggle.enabled(self.request.couch_user.username, namespace=NAMESPACE_USER)
+        ) for toggle in all_toggles()]
+        return sorted(unsorted_toggles, key=_sort_key)
 
     def _get_privileges(self):
         return sorted([
             (privileges.Titles.get_name_from_privilege(privilege),
              domain_has_privilege(self.domain, privilege))
             for privilege in privileges.MAX_PRIVILEGES
-        ], key=lambda (name, has): (not has, name))
+        ], key=lambda name_has: (not name_has[1], name_has[0]))
 
     @property
     def page_context(self):

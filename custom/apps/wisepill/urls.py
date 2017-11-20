@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from custom.apps.wisepill.views import device_data, export_events

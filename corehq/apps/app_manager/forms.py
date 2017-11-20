@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
@@ -25,7 +26,8 @@ class CopyApplicationForm(forms.Form):
     linked = forms.BooleanField(
         required=False,
         label=_('Copy as Linked Application'),
-        help_text=_("This will create an application that can be updated from changes to this application.")
+        help_text=_("This will create an application that can be updated from changes to this application."
+                    " This requires your app to have at least one released version.")
     )
 
     # Toggles to enable when copying the app
@@ -69,6 +71,7 @@ class CopyApplicationForm(forms.Form):
         if self.cleaned_data.get('linked'):
             if not LINKED_APPS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
+        return self.cleaned_data
 
 
 class PromptUpdateSettingsForm(forms.Form):

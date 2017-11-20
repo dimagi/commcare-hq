@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.form_processor.interfaces.supply import SupplyInterface
 
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import subprocess
 from django.conf import settings
@@ -83,7 +84,7 @@ class JsUglifySourcemapCompressor(JsCompressor):
                 settings.STATIC_ROOT, self.output_dir, self.output_prefix
             )
             if not os.path.exists(js_compress_dir):
-                os.makedirs(js_compress_dir, 0775)
+                os.makedirs(js_compress_dir, 0o775)
             filepath = self.get_filepath(concatenated_content, basename=None)
 
             # UglifySourcemapFilter writes the file directly, as it needs to

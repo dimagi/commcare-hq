@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 from jsonobject import JsonObject
 import yaml
@@ -5,6 +6,7 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class AbtSupervisorExpressionSpec(JsonObject):
@@ -115,14 +117,14 @@ class AbtSupervisorExpressionSpec(JsonObject):
 
     @classmethod
     def _get_warning(cls, spec, item):
-        default = unicode(spec.get("warning", u""))
+        default = six.text_type(spec.get("warning", u""))
         language = cls._get_language(item)
         warning_key_map = {
             "fra": "warning_fr",
             "por": "warning_por",
             "en": "warning"
         }
-        warning = unicode(spec.get(warning_key_map[language], default))
+        warning = six.text_type(spec.get(warning_key_map[language], default))
         return warning if warning else default
 
     @classmethod

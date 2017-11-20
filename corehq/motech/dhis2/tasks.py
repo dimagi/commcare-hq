@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from base64 import b64decode
 import bz2
 from datetime import datetime

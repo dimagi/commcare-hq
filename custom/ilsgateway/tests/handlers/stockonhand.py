@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
@@ -6,13 +7,14 @@ from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, SOH_BAD_FORMAT, LANGUAGE_CONFIRM
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
+import six
 
 
 class ILSSoHTest(ILSTestScript):
 
     def test_stock_on_hand(self):
         with localize('sw'):
-            response = unicode(SOH_CONFIRM)
+            response = six.text_type(SOH_CONFIRM)
         script = """
             5551234 > Hmk Id 400 Dp 569 Ip 678
             5551234 < %(soh_confirm)s
@@ -35,7 +37,7 @@ class ILSSoHTest(ILSTestScript):
 
     def test_stock_on_hand_stockouts(self):
         with localize('sw'):
-            response = unicode(SOH_CONFIRM)
+            response = six.text_type(SOH_CONFIRM)
         script = """
             5551234 > Hmk Id 0 Dp 0 Ip 0
             5551234 < %(soh_confirm)s
@@ -50,7 +52,7 @@ class ILSSoHTest(ILSTestScript):
 
     def test_stock_on_hand_update(self):
         with localize('sw'):
-            response = unicode(SOH_CONFIRM)
+            response = six.text_type(SOH_CONFIRM)
         prod_amt_configs = [
             (('Id', 100), ('Dp', 200), ('Ip', 300)),
             (('Id', 0), ('Dp', 100), ('Ip', 200)),
@@ -94,7 +96,7 @@ class ILSSoHTest(ILSTestScript):
 
     def test_stock_on_hand_invalid_code(self):
         with localize('sw'):
-            response = unicode(SOH_BAD_FORMAT)
+            response = six.text_type(SOH_BAD_FORMAT)
 
         script = """
             5551234 > hmk asdds 100 ff 100

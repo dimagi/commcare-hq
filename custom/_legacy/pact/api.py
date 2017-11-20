@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, time
 import logging
 import uuid
@@ -340,7 +341,7 @@ class PactAPI(DomainAPI):
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
         resp = HttpResponse()
         if self.method == "rm_schedule":
-            if self.request.POST.has_key('rm_schedule'):
+            if 'rm_schedule' in self.request.POST:
                 #hacky remove schedule method
                 pdoc.rm_last_schedule()
                 pdoc.save()

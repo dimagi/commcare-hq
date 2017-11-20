@@ -1,5 +1,6 @@
 from __future__ import print_function, unicode_literals
 
+from __future__ import absolute_import
 from django.test import TestCase
 
 from corehq.apps.domain.models import Domain

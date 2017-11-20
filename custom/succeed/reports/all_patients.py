@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 from couchdbkit import ResourceNotFound
 from django.utils.translation import ugettext_noop

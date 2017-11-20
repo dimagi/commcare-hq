@@ -1,9 +1,10 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import argparse
 import sh
 import yaml
-from gitutils import get_git, git_submodules, OriginalBranch
-from rebuildstaging import BranchConfig, check_merges
+from .gitutils import get_git, git_submodules, OriginalBranch
+from .rebuildstaging import BranchConfig, check_merges
 
 
 def get_unmerged_remote_branches(git=None):

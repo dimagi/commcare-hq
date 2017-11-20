@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.elastic import send_to_elasticsearch
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.util.test_utils import make_es_ready_form

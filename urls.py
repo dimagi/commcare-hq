@@ -82,6 +82,7 @@ domain_specific = [
     url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
+    url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
@@ -121,6 +122,7 @@ urlpatterns = [
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
     url(r'^megamobile/', include('corehq.messaging.smsbackends.megamobile.urls')),
+    url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
     url(r'^kookoo/', include('corehq.messaging.ivrbackends.kookoo.urls')),
     url(r'^yo/', include('corehq.messaging.smsbackends.yo.urls')),
@@ -170,6 +172,14 @@ if settings.DEBUG:
         ]
     except ImportError:
         pass
+
+    if 'package_monitor' in settings.INSTALLED_APPS:
+        try:
+            urlpatterns += [
+                url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
+            ]
+        except ImportError:
+            pass
 
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),

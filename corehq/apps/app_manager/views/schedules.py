@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.http import HttpResponseBadRequest
@@ -12,6 +13,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
+import six
 
 
 @no_conflict_require_POST
@@ -36,7 +38,7 @@ def edit_schedule_phases(request, domain, app_id, module_unique_id):
         module.update_schedule_phases(all_anchors)
         module.has_schedule = enabled
     except ScheduleError as e:
-        return HttpResponseBadRequest(unicode(e))
+        return HttpResponseBadRequest(six.text_type(e))
 
     response_json = {}
     app.save(response_json)
@@ -59,7 +61,7 @@ def edit_visit_schedule(request, domain, app_id, form_unique_id):
         try:
             phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
         except ScheduleError as e:
-            return HttpResponseBadRequest(unicode(e))
+            return HttpResponseBadRequest(six.text_type(e))
         form.schedule_form_id = schedule_form_id
         form.schedule = FormSchedule.wrap(json_loads)
         phase.add_form(form)

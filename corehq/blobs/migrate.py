@@ -66,6 +66,7 @@ models' attachments to the blob database:
 That's it, you're done!
 """
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 import os
 import traceback
@@ -107,6 +108,7 @@ from corehq.apps.case_importer.tracking.filestorage import BUCKET as CASE_UPLOAD
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from couchexport.models import SavedBasicExport
 import corehq.form_processor.models as sql_xform
+import six
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -143,7 +145,7 @@ the total number of migrated blobs were not found.
 
 
 def encode_content(data):
-    if isinstance(data, unicode):
+    if isinstance(data, six.text_type):
         data = data.encode("utf-8")
     return b64encode(data)
 

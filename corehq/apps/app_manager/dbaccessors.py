@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from itertools import chain, imap
 
@@ -8,6 +9,7 @@ from django.http import Http404
 
 from corehq.apps.es import AppES
 from dimagi.utils.couch.database import iter_docs
+import six
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
@@ -49,9 +51,19 @@ def get_latest_released_app(domain, app_id):
 
 def get_latest_released_build_id(domain, app_id):
     """Get the latest starred build id for an application"""
+    app = _get_latest_released_build_view_result(domain, app_id)
+    return app['id'] if app else None
+
+
+def get_latest_released_app_version(domain, app_id):
+    app = _get_latest_released_build_view_result(domain, app_id)
+    return app['key'][3] if app else None
+
+
+def _get_latest_released_build_view_result(domain, app_id):
     from .models import Application
     key = ['^ReleasedApplications', domain, app_id]
-    app = Application.get_db().view(
+    return Application.get_db().view(
         'app_manager/applications',
         startkey=key + [{}],
         endkey=key,
@@ -59,7 +71,6 @@ def get_latest_released_build_id(domain, app_id):
         include_docs=False,
         limit=1,
     ).first()
-    return app['id'] if app else None
 
 
 def _get_latest_build_view(domain, app_id, include_docs):
@@ -220,7 +231,7 @@ def get_app_ids_in_domain(domain):
 def get_apps_by_id(domain, app_ids):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
-    if isinstance(app_ids, basestring):
+    if isinstance(app_ids, six.string_types):
         app_ids = [app_ids]
     docs = iter_docs(Application.get_db(), app_ids)
     return [get_correct_app_class(doc).wrap(doc) for doc in docs]

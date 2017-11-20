@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL

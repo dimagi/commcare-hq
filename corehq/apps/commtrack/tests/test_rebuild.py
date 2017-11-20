@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.mock import CaseFactory

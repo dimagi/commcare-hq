@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -7,7 +8,9 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -19,6 +22,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -35,6 +39,8 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+        if 'age_tranche' not in config:
+            queryset = queryset.exclude(age_tranche=72)
         return queryset
 
     map_data = {}
@@ -77,7 +83,9 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     fills.update({'35%-100%': RED})
     fills.update({'defaultFill': GREY})
 
-    average = ((moderately_underweight_total or 0) + (severely_underweight_total or 0)) * 100 / (valid_total or 1)
+    average = (
+        (moderately_underweight_total or 0) + (severely_underweight_total or 0)
+    ) * 100 / float(valid_total or 1)
 
     return [
         {
@@ -91,14 +99,14 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                     "less than -2 standard deviations of the WHO Child Growth Standards median. "
                     "<br/><br/>"
                     "Children who are moderately or severely underweight have a higher risk of mortality"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -119,6 +127,9 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
     if not show_test:
         chart_data = apply_exclude(domain, chart_data)
+
+    if 'age_tranche' not in config:
+        chart_data = chart_data.exclude(age_tranche=72)
 
     data = {
         'peach': OrderedDict(),
@@ -174,7 +185,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "key": "% Normal",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
@@ -187,7 +198,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "key": "% Moderately Underweight (-2 SD)",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": ORANGE
+                "color": ChartColors.ORANGE
             },
             {
                 "values": [
@@ -200,17 +211,18 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "key": "% Severely Underweight (-3 SD) ",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": RED
+                "color": ChartColors.RED
             }
         ],
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -228,6 +240,9 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, show
     if not show_test:
         data = apply_exclude(domain, data)
 
+    if 'age_tranche' not in config:
+        data = data.exclude(age_tranche=72)
+
     chart_data = {
         'blue': []
     }
@@ -239,9 +254,13 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, show
         'normal': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['valid']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
@@ -256,6 +275,12 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, show
             name,
             ((moderately_underweight or 0) + (severely_underweight or 0)) / float(valid or 1)
         ])
+
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
 
     return {
         "tooltips_data": dict(tooltips_data),

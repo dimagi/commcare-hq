@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from jsonobject import DefaultProperty
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.app_manager.models import Application
 from corehq.util.couch import stale_ok
 from dimagi.ext import jsonobject
+import six
 
 
 SimpleFormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
@@ -12,7 +14,7 @@ SimpleFormInfo = namedtuple('FormInfo', ['app_id', 'xmlns'])
 class AppInfo(jsonobject.JsonObject):
     id = jsonobject.StringProperty()
     names = jsonobject.StringProperty()
-    langs = jsonobject.ListProperty(unicode)
+    langs = jsonobject.ListProperty(six.text_type)
 
 
 class AppPart(jsonobject.JsonObject):

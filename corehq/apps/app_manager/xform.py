@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
@@ -21,6 +22,7 @@ from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
 import re
+import six
 
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
@@ -29,7 +31,7 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio'
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
     # declaration are not supported.
-    if isinstance(string, unicode):
+    if isinstance(string, six.text_type):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
@@ -162,7 +164,7 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
-        if isinstance(xml, basestring):
+        if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
@@ -210,8 +212,11 @@ class WrappedNode(object):
     def __getattr__(self, attr):
         return getattr(self.xml, attr)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.xml is not None
+
+    def __nonzero__(self):
+        return self.__bool__()
 
     def __len__(self):
         return len(self.xml) if self.exists() else 0
@@ -285,7 +290,7 @@ class ItextOutput(object):
         return context.get(self.ref)
 
 
-class ItextValue(unicode):
+class ItextValue(six.text_type):
 
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
@@ -558,7 +563,7 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(domain, source):
-    if isinstance(source, unicode):
+    if isinstance(source, six.text_type):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
@@ -1132,7 +1137,6 @@ class XForm(WrappedNode):
             return None
 
     def get_path(self, node):
-        # TODO: add safety tests so that when something fails it fails with a good error
         path = None
         if 'nodeset' in node.attrib:
             path = node.attrib['nodeset']

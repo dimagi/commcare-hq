@@ -3,6 +3,7 @@ Tasks are used to pull data from OpenMRS. They either use OpenMRS's
 Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
+from __future__ import absolute_import
 import uuid
 from collections import namedtuple
 from datetime import datetime
@@ -28,6 +29,7 @@ from corehq.motech.openmrs.models import POSIX_MILLISECONDS
 from corehq.motech.openmrs.repeater_helpers import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from toggle.shortcuts import find_domains_with_toggle_enabled
+import six
 
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
@@ -40,7 +42,7 @@ def parse_params(params, location=None):
 
     parsed = {}
     for key, value in params.items():
-        if isinstance(value, basestring) and '{{' in value:
+        if isinstance(value, six.string_types) and '{{' in value:
             template = Template(value)
             value = template.render(today=today, location=location_uuid)
         parsed[key] = value

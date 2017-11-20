@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 import calendar
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import get_location
@@ -9,6 +10,7 @@ from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
+from six.moves import zip
 
 
 def get_localized_months():

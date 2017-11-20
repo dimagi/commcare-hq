@@ -2600,13 +2600,27 @@
         ]
       },
       "lactating_all": {
-        "type": "boolean_expression",
-        "operator": "eq",
-        "expression": {
-          "type": "named",
-          "name": "ccs_lactating"
-        },
-        "property_value": "yes"
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "ccs_lactating"
+            },
+            "property_value": "yes"
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "not_migrated"
+            },
+            "property_value": "yes"
+          }
+        ]
       },
       "pregnant": {
         "type": "and",
@@ -2641,13 +2655,27 @@
         ]
       },
       "pregnant_all": {
-        "type": "boolean_expression",
-        "operator": "eq",
-        "expression": {
-          "type": "named",
-          "name": "ccs_pregnant"
-        },
-        "property_value": "yes"
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "ccs_pregnant"
+            },
+            "property_value": "yes"
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "not_migrated"
+            },
+            "property_value": "yes"
+          }
+        ]
       },
       "is_disabled": {
         "type": "boolean_expression",

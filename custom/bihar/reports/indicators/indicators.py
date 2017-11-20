@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from inspect import ismethod
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.html import format_html
@@ -6,6 +7,7 @@ from custom.bihar.models import CareBiharFluff
 from custom.bihar.utils import get_all_owner_ids_from_group
 from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator, PostDeliveryDoneDueCLD
 from django.utils.translation import ugettext_noop as _
+from six.moves import zip
 
 
 # static config - should this eventually live in the DB?

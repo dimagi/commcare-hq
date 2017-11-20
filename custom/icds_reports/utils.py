@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import os
 
@@ -5,18 +6,21 @@ from datetime import datetime, timedelta
 
 import operator
 
+from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, APP_ID
+from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
+from django.db.models import Case, When, Q, F, IntegerField
+import six
 
 
 OPERATORS = {
@@ -37,6 +41,7 @@ GREY = '#9D9D9D'
 
 DEFAULT_VALUE = "Data not Entered"
 
+DATA_NOT_ENTERED = "Data Not Entered"
 
 class MPRData(object):
     resource_file = 'resources/block_mpr.json'
@@ -157,7 +162,7 @@ class ICDSMixin(object):
                     op = column['condition']['operator']
 
                     def check_condition(v):
-                        if isinstance(v, basestring):
+                        if isinstance(v, six.string_types):
                             fil_v = str(value)
                         elif isinstance(v, int):
                             fil_v = int(value)
@@ -223,7 +228,7 @@ def percent_diff(property, current_data, prev_data, all):
 
     current_percent = current / float(curr_all) * 100
     prev_percent = prev / float(prev_all) * 100
-    return current_percent - prev_percent
+    return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
 
 
 def get_value(data, prop):
@@ -260,33 +265,78 @@ def match_age(age):
         return '3-6 years'
 
 
-def get_location_filter(location, domain, config):
-    loc_level = 'state'
-    if location:
-        try:
-            sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
-            locations = sql_location.get_ancestors(include_self=True)
-            aggregation_level = locations.count() + 1
-            if sql_location.location_type.code != LocationTypes.AWC:
-                loc_level = LocationType.objects.filter(
-                    parent_type=sql_location.location_type,
-                    domain=domain
-                )[0].code
-            else:
-                loc_level = LocationTypes.AWC
-            for loc in locations:
-                location_key = '%s_id' % loc.location_type.code
-                config.update({
-                    location_key: loc.location_id,
-                })
-            config.update({
-                'aggregation_level': aggregation_level
-            })
-        except SQLLocation.DoesNotExist:
-            pass
-    return loc_level
+def get_location_filter(location_id, domain):
+    """
+    Args:
+        location_id (str)
+        domain (str)
+    Returns:
+        dict
+    """
+    if not location_id:
+        return {}
+
+    config = {}
+    try:
+        sql_location = SQLLocation.objects.get(location_id=location_id, domain=domain)
+    except SQLLocation.DoesNotExist:
+        return {'aggregation_level': 1}
+    config.update(
+        {
+            ('%s_id' % ancestor.location_type.code): ancestor.location_id
+            for ancestor in sql_location.get_ancestors(include_self=True)
+        }
+    )
+    config['aggregation_level'] = len(config) + 1
+    return config
+
+
+def get_location_level(aggregation_level):
+    if not aggregation_level:
+        return LOCATION_TYPES[0]
+    elif aggregation_level >= len(LOCATION_TYPES):
+        return LOCATION_TYPES[-1]
+    return LOCATION_TYPES[aggregation_level - 1]
 
 
 @quickcache([])
 def get_latest_issue_tracker_build_id():
-    return get_latest_released_build_id('icds-cas', APP_ID)
+    return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
+
+
+def get_status(value, second_part='', normal_value='', exportable=False):
+    status = ''
+    if not value or value in ['unweighed', 'unmeasured', 'unknown']:
+        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+    elif value in ['severely_underweight', 'severe']:
+        status = {'value': 'Severely ' + second_part, 'color': 'red'}
+    elif value in ['moderately_underweight', 'moderate']:
+        status = {'value': 'Moderately ' + second_part, 'color': 'black'}
+    elif value in ['normal']:
+        status = {'value': normal_value, 'color': 'black'}
+    else:
+        return ''
+    return status if not exportable else status['value']
+
+
+def current_age(dob, selected_date):
+    age = relativedelta(selected_date, dob)
+    age_format = ""
+    if age.years:
+        age_format += "%s year%s " % (age.years, '' if age.years == 1 else 's')
+    if age.months:
+        age_format += "%s month%s " % (age.months, '' if age.months == 1 else 's')
+    if not age.years and not age.months:
+        if age.days > 0:
+            age_format = "%s day%s" % (age.days, '' if age.days == 1 else 's')
+        else:
+            age_format = "0 days"
+    return age_format
+
+
+def exclude_records_by_age_for_column(exclude_config, column):
+    return Case(
+        When(~Q(**exclude_config), then=F(column)),
+        default=0,
+        output_field=IntegerField()
+    )

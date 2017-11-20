@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
 from django_prbac.models import Grant, Role
+from six.moves import input
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,10 @@ class Command(BaseCommand):
         self.verbose = verbose
 
         if fresh_start:
-            confirm_fresh_start = raw_input("Are you sure you want to delete all Roles and start over? You can't do this"
-                                            " if accounting is already set up. Type 'yes' to continue.")
+            confirm_fresh_start = input(
+                "Are you sure you want to delete all Roles and start over? You can't do this"
+                " if accounting is already set up. Type 'yes' to continue."
+            )
             if confirm_fresh_start == 'yes':
                 self.flush_roles()
 
@@ -199,6 +202,7 @@ class Command(BaseCommand):
         privileges.DATA_CLEANUP,
         privileges.TEMPLATED_INTENTS,
         privileges.RESTRICT_ACCESS_BY_LOCATION,
+        privileges.REPORT_BUILDER_5,
     ]
 
     advanced_plan_features = pro_plan_features + [
@@ -212,18 +216,6 @@ class Command(BaseCommand):
 
     enterprise_plan_features = advanced_plan_features + []
 
-    standard_plan_with_report_builder_features = standard_plan_features + [
-        privileges.REPORT_BUILDER_5,
-    ]
-
-    pro_plan_with_report_builder_features = pro_plan_features + [
-        privileges.REPORT_BUILDER_5,
-    ]
-
-    advanced_plan_with_report_builder_features = advanced_plan_features + [
-        privileges.REPORT_BUILDER_5,
-    ]
-
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
         CROSS_PROJECT_REPORTS,
@@ -236,9 +228,5 @@ class Command(BaseCommand):
         'pro_plan_v0': pro_plan_features,
         'advanced_plan_v0': advanced_plan_features,
         'enterprise_plan_v0': enterprise_plan_features,
-
-        'standard_plan_report_builder_v0': standard_plan_with_report_builder_features,
-        'pro_plan_report_builder_v0': pro_plan_with_report_builder_features,
-        'advanced_plan_report_builder_v0': advanced_plan_with_report_builder_features,
     }
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import timedelta
 import dateutil
 from django import forms
@@ -408,6 +409,7 @@ class BaseFilterExportDownloadForm(forms.Form):
             'export_type': self._export_type,
             'name': export.name,
             'edit_url': self.get_edit_url(export),
+            'has_case_history_table': export.has_case_history_table if self._export_type == 'case' else None
         }
 
 

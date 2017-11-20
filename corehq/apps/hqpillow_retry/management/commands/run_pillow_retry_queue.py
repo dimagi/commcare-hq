@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from psycopg2._psycopg import InterfaceError
 import pytz
@@ -19,8 +20,6 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
     @staticmethod
     def _get_items(utcnow):
         errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
-        error_pks = [error['id'] for error in errors]
-        PillowError.objects.filter(pk__in=error_pks).update(queued=True)
         return [dict(id=e['id'], key=e['date_next_attempt']) for e in errors]
 
     @classmethod

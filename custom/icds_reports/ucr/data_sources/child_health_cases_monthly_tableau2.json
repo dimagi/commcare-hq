@@ -3442,6 +3442,15 @@
                 "type": "named",
                 "name": "age_in_months_month_start"
               }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "not_migrated"
+              }
             }
           ]
         },

@@ -1,6 +1,8 @@
+from __future__ import absolute_import
 import hashlib
 import binascii
 from copy import copy
+from six.moves import zip
 
 
 EMPTY_HASH = ""

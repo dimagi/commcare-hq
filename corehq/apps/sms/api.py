@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import random
 import string
@@ -26,6 +27,7 @@ from datetime import datetime
 
 from corehq.apps.sms.util import register_sms_contact, strip_plus
 from corehq import toggles
+import six
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -477,7 +479,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 
 
 def is_opt_message(text, keyword_list):
-    if not isinstance(text, basestring):
+    if not isinstance(text, six.string_types):
         return False
 
     text = text.strip().upper()
@@ -572,7 +574,7 @@ def process_incoming(msg):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
             if not handled and v and v.pending_verification:
-                import verify
+                from . import verify
                 handled = verify.process_verification(v, msg,
                     create_subevent_for_inbound=not has_domain_two_way_scope)
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import mock
 from datetime import date, datetime
@@ -9,7 +10,7 @@ from corehq.util.test_utils import TestFileMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.tasks import _iteratively_build_table
+from corehq.apps.userreports.tasks import _iteratively_build_table, queue_async_indicators
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -86,7 +87,7 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
         with mock.patch('custom.icds_reports.ucr.expressions._datetime_now') as now:
             now.return_value = datetime.combine(start_date, datetime.min.time()) + relativedelta(months=1)
             _iteratively_build_table(self.datasource)
-        # TODO(Sheel/J$) filter_by does not work on ES
+            queue_async_indicators()
         query = self._get_query_object().filter_by(doc_id=case_id)
         self.assertEqual(query.count(), len(cases))
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from sqlagg import CountUniqueColumn
 from sqlagg.filters import LTE, AND, EQ, OR, GTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn

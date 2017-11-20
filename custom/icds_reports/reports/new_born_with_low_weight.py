@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -6,7 +7,9 @@ from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
 
@@ -18,6 +21,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -80,14 +84,14 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                     "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
                     "mortality and morbidity, inhibited growth and cognitive development, and chronic "
                     "diseases later in life"
-                )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                ))
             },
             "data": map_data,
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -152,17 +156,18 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                 "key": "% Newborns with Low Birth Weight",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,
         "top_five": top_locations[:5],
         "bottom_five": top_locations[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
     }
 
 
-def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -187,9 +192,13 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=
         'low_birth': 0,
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         in_month = row['in_month']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         low_birth = row['low_birth'] or 0
 
@@ -202,8 +211,14 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, show_test=
             name, value
         ])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of newborns with born with birth weight less than 2500 grams."
             "<br/><br/>"

@@ -20,6 +20,7 @@ from corehq.apps.groups.dbaccessors import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.util.quickcache import quickcache
+import six
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
@@ -61,11 +62,11 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         refresh_group_views()
 
     @classmethod
-    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
+    def save_docs(cls, docs, use_uuids=True):
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
-        super(Group, cls).save_docs(docs, use_uuids, all_or_nothing)
+        super(Group, cls).save_docs(docs, use_uuids)
         refresh_group_views()
 
     bulk_save = save_docs
@@ -87,7 +88,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         self.ids_by_domain.clear(self.__class__, self.domain)
 
     def add_user(self, couch_user_id, save=True):
-        if not isinstance(couch_user_id, basestring):
+        if not isinstance(couch_user_id, six.string_types):
             couch_user_id = couch_user_id.user_id
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
@@ -100,7 +101,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         '''
         Returns True if it removed a user, False otherwise
         '''
-        if not isinstance(couch_user_id, basestring):
+        if not isinstance(couch_user_id, six.string_types):
             couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
             for i in range(0, len(self.users)):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import jsonfield
 import uuid
 from dimagi.utils.decorators.memoized import memoized
@@ -12,6 +13,12 @@ from corehq.messaging.scheduling import util
 
 
 class Schedule(models.Model):
+    UI_TYPE_IMMEDIATE = 'I'
+    UI_TYPE_DAILY = 'D'
+    UI_TYPE_WEEKLY = 'W'
+    UI_TYPE_MONTHLY = 'M'
+    UI_TYPE_UNKNOWN = 'X'
+
     schedule_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126, db_index=True)
     active = models.BooleanField(default=True)
@@ -31,6 +38,10 @@ class Schedule(models.Model):
 
     # This metadata will be passed to any messages generated from this schedule.
     custom_metadata = jsonfield.JSONField(null=True, default=None)
+
+    # One of the UI_TYPE_* constants describing the type of UI that should be used
+    # to edit this schedule.
+    ui_type = models.CharField(max_length=1, default=UI_TYPE_UNKNOWN)
 
     class Meta:
         abstract = True
@@ -149,6 +160,9 @@ class Broadcast(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=1000)
     last_sent_timestamp = models.DateTimeField(null=True)
+
+    # A List of [recipient_type, recipient_id]
+    recipients = jsonfield.JSONField(default=list)
 
     class Meta:
         abstract = True

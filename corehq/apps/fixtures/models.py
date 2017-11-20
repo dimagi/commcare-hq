@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
@@ -19,6 +20,7 @@ from corehq.util.xml_utils import serialize
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.locations.models import SQLLocation
+import six
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
@@ -43,7 +45,7 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
         if not obj["doc_type"] == "FixtureDataType":
             raise ResourceNotFound
         # Migrate fixtures without attributes on item-fields to fields with attributes
-        if obj["fields"] and isinstance(obj['fields'][0], basestring):
+        if obj["fields"] and isinstance(obj['fields'][0], six.string_types):
             obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
 
         # Migrate fixtures without attributes on items to items with attributes
@@ -173,7 +175,7 @@ class FixtureDataItem(Document):
         fields_dict = {}
 
         def _is_new_type(field_val):
-            old_types = (basestring, int, float)
+            old_types = (six.string_types, int, float)
             return field_val is not None and not isinstance(field_val, old_types)
 
         for field in obj['fields']:
@@ -184,7 +186,7 @@ class FixtureDataItem(Document):
                 break
             fields_dict[field] = {
                 "field_list": [{
-                    'field_value': str(field_val) if not isinstance(field_val, basestring) else field_val,
+                    'field_value': str(field_val) if not isinstance(field_val, six.string_types) else field_val,
                     'properties': {}
                 }]
             }
@@ -294,7 +296,7 @@ class FixtureDataItem(Document):
                 )
         for field in self.data_type.fields:
             escaped_field_name = clean_fixture_field_name(field.field_name)
-            if not self.fields.has_key(field.field_name):
+            if field.field_name not in self.fields:
                 xField = ElementTree.SubElement(xData, escaped_field_name)
                 xField.text = ""
             else:
@@ -462,7 +464,7 @@ class FixtureDataItem(Document):
 
 
 def _id_from_doc(doc_or_doc_id):
-    if isinstance(doc_or_doc_id, basestring):
+    if isinstance(doc_or_doc_id, six.string_types):
         doc_id = doc_or_doc_id
     else:
         doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None

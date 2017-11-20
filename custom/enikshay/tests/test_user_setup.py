@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import mock
 import uuid
@@ -8,6 +9,7 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import LocationFieldsView
+from corehq.apps.ota.utils import update_device_id
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE, UserFieldsView
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
@@ -27,6 +29,7 @@ from ..user_setup import (
     ENikshayLocationFormSet,
     compress_nikshay_id,
     get_new_username_and_id,
+    set_enikshay_device_id,
 )
 from ..models import IssuerId
 
@@ -44,10 +47,11 @@ class TestUserSetupUtils(TestCase):
         cls.domain_obj.save()
         cls.location_types, cls.locations = setup_enikshay_locations(cls.domain)
 
-        for location_type in cls.location_types.values():
-            if location_type.code in AGENCY_LOCATION_TYPES:
-                location_type.has_user = True
-                location_type.save()
+        with mock.patch('corehq.apps.locations.tasks._create_or_unarchive_users', mock.MagicMock()):
+            for location_type in cls.location_types.values():
+                if location_type.code in AGENCY_LOCATION_TYPES:
+                    location_type.has_user = True
+                    location_type.save()
 
         # set up data fields
         user_fields = CustomDataFieldsDefinition.get_or_create(
@@ -250,12 +254,30 @@ class TestUserSetupUtils(TestCase):
         user.update_device_id_last_used('rotary', datetime(1984, 1, 1))
         user.update_device_id_last_used('palm-pilot', datetime(1997, 1, 1))
         user.update_device_id_last_used('blackberry', datetime(2008, 1, 1))
+        set_enikshay_device_id(user, 'blackberry')
         user.save()
         self.assertEqual(user.user_data['id_device_number'], 3)
 
         # Oberyn uses the palm-pilot again, which was device #2
-        user.update_device_id_last_used('palm-pilot', datetime(2017, 1, 1))
-        user.save()
+        update_device_id(user, 'palm-pilot')
+        self.assertEqual(user.user_data['id_device_number'], 2)
+
+    def test_device_id_same_day(self):
+        user = self.make_user('redviper@martell.biz', 'DTO')
+        update_device_id(user, 'rotary')
+        update_device_id(user, 'palm-pilot')
+        update_device_id(user, 'blackberry')
+        palm_pilot_last_used_1 = [device.last_used for device in user.devices
+                                  if device.device_id == 'palm-pilot'][0]
+        self.assertEqual(user.user_data['id_device_number'], 3)
+
+        # Updating the device ID a second time in the same day doesn't change
+        # the entry in user.devices, but it SHOULD update the enikshay user data
+        update_device_id(user, 'palm-pilot')
+        palm_pilot_last_used_2 = [device.last_used for device in user.devices
+                                  if device.device_id == 'palm-pilot'][0]
+        self.assertEqual(palm_pilot_last_used_1, palm_pilot_last_used_2)
+        user = CommCareUser.get(user._id)  # make sure it's set in the DB
         self.assertEqual(user.user_data['id_device_number'], 2)
 
     def test_add_drtb_hiv_to_dto(self):

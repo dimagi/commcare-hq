@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
 from corehq.motech.openmrs.repeaters import (
     RegisterOpenmrsPatientRepeater,

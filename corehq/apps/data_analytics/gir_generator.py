@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from collections import namedtuple, defaultdict
@@ -15,6 +16,7 @@ from corehq.apps.data_analytics.const import (
     TEST_COUCH_TO_SQL_MAP, AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET, BU_MAPPING, NO_BU,
     DEFAULT_EXPERIENCED_THRESHOLD, DEFAULT_PERFORMANCE_THRESHOLD
 )
+import six
 
 
 UserCategories = namedtuple('UserCategories', 'active performing experienced total sms eligible')
@@ -112,7 +114,7 @@ class GIRTableGenerator(object):
             'month': monthspan.startdate,
             'domain_name': domain.name,
             'country':
-                ', '.join([unicode(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
+                ', '.join([six.text_type(COUNTRIES.get(abbr, abbr)) for abbr in domain.deployment.countries]),
             'sector': domain.internal.area,
             'subsector': domain.internal.sub_area,
             'bu': GIRTableGenerator.get_bu(domain),

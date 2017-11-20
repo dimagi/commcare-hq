@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -21,6 +22,7 @@ from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
+import six
 
 
 PARAM_SLUG_STATUS = 'status'
@@ -385,7 +387,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         If obj is a string, just output that string.
         """
-        if isinstance(obj, basestring):
+        if isinstance(obj, six.string_types):
             return obj
         val = obj.get(display_lang)
         if val:

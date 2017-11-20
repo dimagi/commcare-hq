@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from itertools import imap
 import time
@@ -46,6 +47,8 @@ from importlib import import_module
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
 from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
+
+from .project_access.models import SuperuserProjectEntryRecord  # noqa
 
 lang_lookup = defaultdict(str)
 
@@ -1065,19 +1068,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return (self.has_privilege(privileges.LOCATIONS)
                 and (self.commtrack_enabled
                      or LocationType.objects.filter(domain=self.name).exists()))
-
-    @property
-    def is_onboarding_domain(self):
-        # flag used for case management onboarding analytics
-        if not settings.ONBOARDING_DOMAIN_TEST_DATE:
-            return False
-        onboarding_date = datetime(
-            settings.ONBOARDING_DOMAIN_TEST_DATE[0],
-            settings.ONBOARDING_DOMAIN_TEST_DATE[1],
-            settings.ONBOARDING_DOMAIN_TEST_DATE[2],
-        )
-        return self.first_domain_for_user and self.date_created > onboarding_date
-
 
     def convert_to_commtrack(self):
         """

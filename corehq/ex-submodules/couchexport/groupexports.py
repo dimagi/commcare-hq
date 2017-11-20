@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -6,10 +7,11 @@ import os
 import json
 from couchexport.tasks import rebuild_schemas
 from dimagi.utils.logging import notify_exception
+import six
 
 
 def export_for_group(export_id_or_group, last_access_cutoff=None):
-    if isinstance(export_id_or_group, basestring):
+    if isinstance(export_id_or_group, six.string_types):
         try:
             config = GroupExportConfiguration.get(export_id_or_group)
         except ResourceNotFound:

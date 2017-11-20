@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from custom.ewsghana.handlers import INVALID_MESSAGE, NO_SUPPLY_POINT_MESSAGE
 from custom.ewsghana.tests.handlers.utils import EWSScriptTest
+import six
 
 
 class TestDefault(EWSScriptTest):
@@ -15,12 +17,12 @@ class TestDefault(EWSScriptTest):
         a = """
             5551234 > some random message
             5551234 < {}
-        """.format(unicode(INVALID_MESSAGE))
+        """.format(six.text_type(INVALID_MESSAGE))
         self.run_script(a)
 
     def test_default_when_user_has_no_location_association(self):
         a = """
             77777 > dp 10
             77777 < {}
-        """.format(unicode(NO_SUPPLY_POINT_MESSAGE))
+        """.format(six.text_type(NO_SUPPLY_POINT_MESSAGE))
         self.run_script(a)

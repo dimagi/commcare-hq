@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ
@@ -72,7 +73,7 @@ class PatientSubmissionReport(GenericTabularReport, CustomProjectReport, Project
 
     @property
     def rows(self):
-        if self.request.GET.has_key('patient_id'):
+        if 'patient_id' in self.request.GET:
             def _format_row(row_field_dict):
                 return [
                     self.submit_history_form_link(row_field_dict["doc_id"],

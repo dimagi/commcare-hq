@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.ext.django.loading import get_db
 from django.test import TestCase, SimpleTestCase
 from corehq.util.test_utils import DocTestMixin
@@ -8,6 +9,7 @@ from couchexport.util import SerializableFunction
 from dimagi.utils.couch.database import get_safe_write_kwargs
 import json
 from couchexport.models import Format
+from six.moves import zip
 
 
 class ExportSchemaTest(TestCase, DocTestMixin):

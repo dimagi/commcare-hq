@@ -22,6 +22,7 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
+from __future__ import absolute_import
 from copy import deepcopy
 from .es_query import HQESQuery
 from . import filters
@@ -47,6 +48,7 @@ class UserES(HQESQuery):
             last_logged_in,
             analytics_enabled,
             is_practice_user,
+            role_id,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -145,3 +147,7 @@ def location(location_id):
 
 def is_practice_user(practice_mode=True):
     return filters.term('is_demo_user', practice_mode)
+
+
+def role_id(role_id):
+    return filters.term('domain_membership.role_id', role_id)

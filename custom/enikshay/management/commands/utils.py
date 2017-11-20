@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 import csv
 import datetime
 
@@ -9,6 +10,7 @@ from casexml.apps.case.mock import CaseFactory
 from casexml.apps.case.xform import get_case_updates
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.log import with_progress_bar
 
 from custom.enikshay.case_utils import (
     get_person_case
@@ -56,6 +58,9 @@ class BaseEnikshayCaseMigration(BaseCommand):
             "real" if commit else "fake", domain, datetime.datetime.utcnow()
         ))
 
+        accessor = CaseAccessors(domain)
+        case_ids = case_ids or accessor.get_case_ids_in_domain(type=self.case_type)
+
         with open(log_file_name, "w") as log_file:
             writer = csv.writer(log_file)
             writer.writerow(
@@ -64,8 +69,9 @@ class BaseEnikshayCaseMigration(BaseCommand):
                 + self.case_properties_to_update
                 + [self.datamigration_case_property]
             )
-            for case in self.get_cases(domain, self.case_type, case_ids):
-                if self.is_valid_case(domain, case):
+            for case_id in with_progress_bar(case_ids):
+                if self.is_valid_case(domain, case_id):
+                    case = accessor.get_case(case_id)
                     updated_case_properties = self.get_case_property_updates(case, domain)
                     needs_update = bool(updated_case_properties)
                     updated_case_properties[self.datamigration_case_property] = 'yes' if needs_update else 'no'
@@ -80,10 +86,9 @@ class BaseEnikshayCaseMigration(BaseCommand):
 
             print("Finished at {}".format(datetime.datetime.utcnow()))
 
-    def is_valid_case(self, domain, case):
+    def is_valid_case(self, domain, case_id):
         try:
-            person_case_id = get_person_case(domain, case.case_id)
-            person_case = CaseAccessors(domain).get_case(person_case_id)
+            person_case = get_person_case(domain, case_id)
             return (self.include_public_cases == self._is_person_public(domain, person_case)
                     and self.include_private_cases == self._is_person_private(domain, person_case))
         except ENikshayCaseNotFound:
@@ -96,12 +101,6 @@ class BaseEnikshayCaseMigration(BaseCommand):
     @staticmethod
     def _is_person_private(domain, person_case):
         return person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
-
-    @staticmethod
-    def get_cases(domain, case_type, case_ids):
-        accessor = CaseAccessors(domain)
-        case_ids = case_ids or accessor.get_case_ids_in_domain(type=case_type)
-        return accessor.iter_cases(case_ids)
 
     @staticmethod
     def commit_updates(domain, case_id, updated_case_properties):

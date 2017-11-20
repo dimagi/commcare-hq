@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict
 from datetime import date, datetime
 
@@ -118,7 +119,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_lfu'),
                 ('site_choice', 'abdominal'),
-                ('transfer_in', ''),
+                ('transfer_in', 'no'),
                 ('treatment_card_completed_date', '2016-12-13'),
                 ('treatment_initiated', 'yes_phi'),
                 ('treatment_initiating_facility_id', self.phi.location_id),

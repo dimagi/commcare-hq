@@ -1,12 +1,14 @@
+from __future__ import absolute_import
 from corehq.apps.reports.util import get_INFilter_element_bindparam
 from dimagi.utils.couch.database import get_db
 from corehq.apps.domain.utils import DOMAIN_MODULE_KEY
 import fluff
+import six
 
 
 def flat_field(fn):
     def getter(item):
-        return unicode(fn(item) or "")
+        return six.text_type(fn(item) or "")
     return fluff.FlatField(getter)
 
 

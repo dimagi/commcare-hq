@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 import json
 from crispy_forms.bootstrap import InlineField, StrictButton
@@ -25,6 +26,7 @@ from corehq.apps.groups.models import Group
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
+import six
 
 FORWARDING_CHOICES = (
     (FORWARD_ALL, ugettext_noop("All messages")),
@@ -587,7 +589,7 @@ class SettingsForm(Form):
             value = self[field_name].value()
             if field_name in ["restricted_sms_times_json",
                 "sms_conversation_times_json"]:
-                if isinstance(value, basestring):
+                if isinstance(value, six.string_types):
                     current_values[field_name] = json.loads(value)
                 else:
                     current_values[field_name] = value

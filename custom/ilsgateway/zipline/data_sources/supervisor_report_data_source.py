@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext_lazy as _
 

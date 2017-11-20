@@ -1,9 +1,9 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractproperty, abstractmethod
+import six
 
 
-class UpdateStrategy(object):
-    __metaclass__ = ABCMeta
-
+class UpdateStrategy(six.with_metaclass(ABCMeta, object)):
     @abstractproperty
     def case_implementation_class(self):
         pass
