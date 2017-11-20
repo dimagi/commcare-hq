@@ -10,9 +10,9 @@ import math
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
-    AppsPaginatedContext,
-    DataPaginatedContext,
-    ReportsPaginatedContext,
+    AppsPaginator,
+    DataPaginator,
+    ReportsPaginator,
     Tile,
     TileConfiguration,
 )
@@ -63,7 +63,7 @@ def dashboard_tile(request, domain, slug):
 
     limit = int(request.GET.get('itemsPerPage', 5))
     skip = (int(request.GET.get('currentPage', 1)) - 1) * limit
-    items = list(tile.context_processor.paginated_items(limit, skip))
+    items = list(tile.paginator.paginated_items(limit, skip))
     return json_response({'items': items})
 
 
@@ -106,8 +106,8 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                     'url': config.get_url(self.request),
                     'help_text': config.help_text,
                 }
-                if config.context_processor_class:
-                    processor = tile.context_processor
+                if config.paginator_class:
+                    processor = tile.paginator
                     items_per_page = 5
                     tile_context.update({
                         'pagination': {
@@ -165,7 +165,7 @@ def _get_default_tile_configurations():
             title=_('Applications'),
             slug='applications',
             icon='fcc fcc-applications',
-            context_processor_class=AppsPaginatedContext,
+            paginator_class=AppsPaginator,
             visibility_check=can_edit_apps,
             urlname='default_new_app',
             help_text=_('Build, update, and deploy applications'),
@@ -174,7 +174,7 @@ def _get_default_tile_configurations():
             title=_('Reports'),
             slug='reports',
             icon='fcc fcc-reports',
-            context_processor_class=ReportsPaginatedContext,
+            paginator_class=ReportsPaginator,
             urlname='reports_home',
             visibility_check=can_view_reports,
             help_text=_('View worker monitoring reports and inspect project data'),
@@ -191,7 +191,7 @@ def _get_default_tile_configurations():
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
-            context_processor_class=DataPaginatedContext,
+            paginator_class=DataPaginator,
             urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),

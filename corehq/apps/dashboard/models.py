@@ -42,20 +42,20 @@ class Tile(object):
 
     @property
     @memoized
-    def context_processor(self):
-        return self.tile_config.context_processor_class(self.request)
+    def paginator(self):
+        return self.tile_config.paginator_class(self.request)
 
 
 class TileConfiguration(object):
 
-    def __init__(self, title, slug, icon, context_processor_class=None,
+    def __init__(self, title, slug, icon, paginator_class=None,
                  url=None, urlname=None, visibility_check=None,
                  url_generator=None, help_text=None):
         """
         :param title: The title of the tile
         :param slug: The tile's slug
         :param icon: The class of the icon
-        :param context_processor: A Subclass of BaseTileContextProcessor
+        :param paginator: A Subclass of TilePaginator
         :param url: the url that the icon will link to
         :param urlname: the urlname of the view that the icon will link to
         :param visibility_check: (optional) a lambda that accepts a request
@@ -67,7 +67,7 @@ class TileConfiguration(object):
         analytics event tracking.
         analytics event tracking.
         """
-        self.context_processor_class = context_processor_class
+        self.paginator_class = paginator_class
         self.title = title
         self.slug = slug
         self.icon = icon
@@ -92,7 +92,7 @@ class TileConfiguration(object):
         return True
 
 
-class BasePaginatedTileContextProcessor(object):
+class TilePaginator(object):
     """A resource for serving data to the Angularjs PaginatedTileController
     for the hq.dashboard Angular JS module.
     To use, subclass this and override :total: and :paginated_items: properties.
@@ -142,9 +142,8 @@ class BasePaginatedTileContextProcessor(object):
         raise NotImplementedError('pagination must be overridden')
 
 
-class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
-    """Generates the Paginated context for the Reports Tile.
-    """
+class ReportsPaginator(TilePaginator):
+
     @property
     def total(self):
         key = ["name", self.request.domain, self.request.couch_user._id]
@@ -174,9 +173,7 @@ class ReportsPaginatedContext(BasePaginatedTileContextProcessor):
             )
 
 
-class AppsPaginatedContext(BasePaginatedTileContextProcessor):
-    """Generates the Paginated context for the Applications Tile.
-    """
+class AppsPaginator(TilePaginator):
 
     @property
     def total(self):
@@ -211,13 +208,7 @@ class AppsPaginatedContext(BasePaginatedTileContextProcessor):
                                _get_app_url(a)) for a in apps]
 
 
-class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissionsMixin):
-    """Generates the Paginated context for the Data Tile."""
-    domain = None
-
-    def __init__(self, request):
-        self.domain = request.domain
-        super(DataPaginatedContext, self).__init__(request)
+class DataPaginator(TilePaginator, ExportsPermissionsMixin):
 
     @property
     def total(self):
@@ -236,7 +227,7 @@ class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissions
     def case_exports(self):
         exports = []
         if self.has_edit_permissions:
-            exports = CaseExportSchema.get_stale_exports(self.domain)
+            exports = CaseExportSchema.get_stale_exports(self.request.domain)
         return exports
 
     def paginated_items(self, limit, skip):
