@@ -8,7 +8,6 @@ import tinys3
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
-from corehq.reports import get_report_builder_count
 from corehq.util.dates import unix_time
 from corehq.apps.analytics.utils import get_instance_string, get_meta
 from datetime import datetime, date, timedelta
@@ -390,6 +389,8 @@ def _get_export_count(domain):
 
 @memoized
 def _get_report_count(domain):
+    from corehq.reports import get_report_builder_count
+
     return get_report_builder_count(domain)
 
 
