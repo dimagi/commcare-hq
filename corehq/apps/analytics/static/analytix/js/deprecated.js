@@ -99,26 +99,6 @@ hqDefine('analytics/js/deprecated', function () {
             _kmq.push(args);
         });
 
-        window.analytics.identify = _makeLegacyFn(_kissmetrics, 'window.analytics.identify', function (userId, traits) {
-            if (typeof userId === 'object'){
-                if (traits === undefined){
-                    // the first and only argument passed was traits
-                    traits = userId;
-                    userId = null;
-                } else {
-                    // uh-oh... can't tell what the first argument was intended to be.
-                    throw "Unexpected argument types";
-                }
-            }
-            // Record identity
-            if (userId !== null) {
-                _kissmetrics.identify(userId);
-            }
-            if (traits !== undefined){
-                _kissmetrics.identifyTraits(traits);
-            }
-        });
-
         window.analytics.workflow = _makeLegacyFn(_kissmetrics, 'window.analytics.workflow', _kissmetrics.track.event);
         window.analytics.track = window.analytics.workflow;
 
