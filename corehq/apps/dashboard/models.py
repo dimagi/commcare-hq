@@ -11,11 +11,6 @@ class TileConfigurationError(Exception):
     pass
 
 
-class TileType(object):
-    ICON = 'icon'
-    PAGINATE = 'paginate'
-
-
 class Tile(object):
     """This class creates the tile and its context
     when it's called by Django Angular's Remote Method Invocation.
@@ -58,7 +53,7 @@ class Tile(object):
 
 class TileConfiguration(object):
 
-    def __init__(self, title, slug, icon, context_processor_class,
+    def __init__(self, title, slug, icon, context_processor_class=None,
                  url=None, urlname=None, visibility_check=None,
                  url_generator=None, help_text=None):
         """
@@ -77,7 +72,7 @@ class TileConfiguration(object):
         analytics event tracking.
         analytics event tracking.
         """
-        if not issubclass(context_processor_class, BaseTileContextProcessor):
+        if context_processor_class and not issubclass(context_processor_class, BaseTileContextProcessor):
             raise TileConfigurationError(
                 "context processor must be subclass of BaseTileContextProcessor"
             )
@@ -128,26 +123,11 @@ class BaseTileContextProcessor(object):
         raise NotImplementedError('context must be overridden')
 
 
-class IconContext(BaseTileContextProcessor):
-    """This type of tile is just an icon with a link to another page on HQ
-    or an external link (like the help site).
-    """
-    tile_type = TileType.ICON
-
-    @property
-    def context(self):
-        return {
-            'url': self.tile_config.get_url(self.request),
-            'icon': self.tile_config.icon,
-        }
-
-
 class BasePaginatedTileContextProcessor(BaseTileContextProcessor):
     """A resource for serving data to the Angularjs PaginatedTileController
     for the hq.dashboard Angular JS module.
     To use, subclass this and override :total: and :paginated_items: properties.
     """
-    tile_type = TileType.PAGINATE
 
     @property
     def pagination_data(self):

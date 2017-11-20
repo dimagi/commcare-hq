@@ -12,11 +12,9 @@ from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_
 from corehq.apps.dashboard.models import (
     AppsPaginatedContext,
     DataPaginatedContext,
-    IconContext,
     ReportsPaginatedContext,
     Tile,
     TileConfiguration,
-    TileType,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
@@ -109,7 +107,7 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                     'url': config.get_url(self.request),
                     'help_text': config.help_text,
                 }
-                if config.context_processor_class.tile_type == TileType.PAGINATE:    # TODO: better way to do this?
+                if config.context_processor_class:
                     processor = tile.context_processor
                     items_per_page = 5
                     tile_context.update({
@@ -186,7 +184,6 @@ def _get_default_tile_configurations():
             title=_('{cc_name} Supply Setup').format(cc_name=settings.COMMCARE_NAME),
             slug='commtrack_setup',
             icon='fcc fcc-commtrack',
-            context_processor_class=IconContext,
             urlname='default_commtrack_setup',
             visibility_check=can_view_commtrack_setup,
             help_text=_("Update {cc_name} Supply Settings").format(cc_name=settings.COMMCARE_NAME),
@@ -204,7 +201,6 @@ def _get_default_tile_configurations():
             title=_('Users'),
             slug='users',
             icon='fcc fcc-users',
-            context_processor_class=IconContext,
             urlname=DefaultProjectUserSettingsView.urlname,
             visibility_check=can_edit_users,
             help_text=_('Manage accounts for mobile workers '
@@ -214,7 +210,6 @@ def _get_default_tile_configurations():
             title=_('Organization'),
             slug='locations',
             icon='fcc fcc-users',
-            context_processor_class=IconContext,
             urlname='default_locations_view',
             visibility_check=can_edit_locations_not_users,
             help_text=_('Manage the Organization Hierarchy'),
@@ -223,7 +218,6 @@ def _get_default_tile_configurations():
             title=_('Messaging'),
             slug='messaging',
             icon='fcc fcc-messaging',
-            context_processor_class=IconContext,
             urlname='sms_default',
             visibility_check=can_use_messaging,
             help_text=_('Configure and schedule SMS messages and keywords'),
@@ -232,7 +226,6 @@ def _get_default_tile_configurations():
             title=_('Exchange'),
             slug='exchange',
             icon='fcc fcc-exchange',
-            context_processor_class=IconContext,
             urlname='appstore',
             visibility_check=can_view_exchange,
             url_generator=lambda urlname, req: reverse(urlname),
@@ -243,7 +236,6 @@ def _get_default_tile_configurations():
             title=_('Settings'),
             slug='settings',
             icon='fcc fcc-settings',
-            context_processor_class=IconContext,
             urlname=DefaultProjectSettingsView.urlname,
             visibility_check=is_billing_admin,
             help_text=_('Set project-wide settings and manage subscriptions'),
@@ -252,7 +244,6 @@ def _get_default_tile_configurations():
             title=_('Help Site'),
             slug='help',
             icon='fcc fcc-help',
-            context_processor_class=IconContext,
             url='http://help.commcarehq.org/',
             help_text=_("Visit CommCare's knowledge base"),
         ),
