@@ -438,7 +438,7 @@
         {% endif %}
 
         {% compress js %}
-        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
         <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
@@ -574,11 +574,6 @@
 
         {# Report Issue #}
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
-
-        {# Remote modals (EULA and CDA) #}
-        {% compress js %}
-            <script src="{% static 'hqwebapp/js/remote-modals.js' %}"></script>
-        {% endcompress %}
 
         {# EULA #}
         {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}

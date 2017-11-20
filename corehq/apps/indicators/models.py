@@ -17,6 +17,7 @@ from dimagi.utils.dates import DateSpan, add_months, months_between
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.couch.cache import cache_core
+import six
 
 
 class DocumentNotInDomainError(Exception):
@@ -757,7 +758,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
         """
             question_id must be formatted like: path.to.question_id
         """
-        if isinstance(question_id, basestring):
+        if isinstance(question_id, six.string_types):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])

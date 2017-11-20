@@ -134,7 +134,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         location = row['%s_name' % loc_level]
         valid = row['all'] or 0
 
-        if date.month == (month - relativedelta(months=1)).month:
+        if date.month == month.month:
             best_worst[location]['in_day'] = in_day
             best_worst[location]['all'] = valid
 

@@ -5,6 +5,7 @@ from corehq.sql_db.util import handle_connection_failure, get_default_and_partit
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
 from pillowtop.dao.exceptions import DocumentNotFoundError
+import six
 
 
 class ChangeMeta(jsonobject.JsonObject):
@@ -66,7 +67,7 @@ class Change(object):
         if not self.document and self.document_store and not self._document_checked:
             try:
                 self.document = self.document_store.get_document(self.id)
-            except DocumentNotFoundError, e:
+            except DocumentNotFoundError as e:
                 self.document = None
                 self._document_checked = True  # set this flag to avoid multiple redundant lookups
                 self.error_raised = e
@@ -110,11 +111,10 @@ class Change(object):
         return self._dict
 
 
-class ChangeFeed(object):
+class ChangeFeed(six.with_metaclass(ABCMeta, object)):
     """
     Basic change feed API.
     """
-    __metaclass__ = ABCMeta
 
     sequence_format = 'text'
 

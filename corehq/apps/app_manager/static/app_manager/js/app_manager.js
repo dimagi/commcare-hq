@@ -1,4 +1,4 @@
-/* globals hqDefine django hqLayout hqImport */
+/* globals hqDefine django hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
     var module = hqImport("hqwebapp/js/main").eventize({});
@@ -87,10 +87,11 @@ hqDefine('app_manager/js/app_manager', function () {
     };
 
     module.setPublishStatus = function (isOn) {
+        var layout = hqImport("hqwebapp/js/layout");
         if (isOn) {
-            $(hqLayout.selector.publishStatus).fadeIn();
+            layout.showPublishStatus();
         } else {
-            $(hqLayout.selector.publishStatus).fadeOut();
+            layout.hidePublishStatus();
         }
     };
 

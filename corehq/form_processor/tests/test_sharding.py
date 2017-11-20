@@ -89,7 +89,7 @@ class ShardingTests(TestCase):
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc, new_id_in_same_dbalias
         for i in range(10):
             # test multiple times to test a wider probability
-            f1_id = unicode(uuid4())
+            f1_id = six.text_type(uuid4())
             old_db_alias = get_db_alias_for_partitioned_doc(f1_id)
             f2_id = new_id_in_same_dbalias(f1_id)
             new_db_alias = get_db_alias_for_partitioned_doc(f2_id)

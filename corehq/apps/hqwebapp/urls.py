@@ -10,9 +10,9 @@ from two_factor.urls import urlpatterns as tf_urls
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
-    yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
+    yui_crossdomain, password_change, no_permissions, login, logout, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
-    retrieve_download, toggles_js, couch_doc_counts, server_up)
+    retrieve_download, toggles_js, couch_doc_counts, server_up, BugReportView)
 from corehq.apps.hqwebapp.session_details_endpoint.views import SessionDetailsView
 
 urlpatterns = [
@@ -27,7 +27,7 @@ urlpatterns = [
     url(r'^accounts/login/$', login, name="login"),
     url(r'^accounts/logout/$', logout, name="logout"),
     url(r'^reports/$', redirect_to_default),
-    url(r'^bug_report/$', bug_report, name='bug_report'),
+    url(r'^bug_report/$', BugReportView.as_view(), name='bug_report'),
     url(r'^debug/notify/$', debug_notify, name='debug_notify'),
     url(r'^search/$', quick_find, name="global_quick_find"),
     url(r'^searchDescription.xml$', osdd, name="osdd"),

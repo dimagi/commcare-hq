@@ -37,6 +37,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound
+import six
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -76,7 +77,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
         else:
             data = self.raw_content
 
-        if isinstance(data, unicode):
+        if isinstance(data, six.text_type):
             data = data.encode("utf-8")
         return data
 
@@ -363,7 +364,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if not xml:
             return None
 
-        if isinstance(xml, unicode):
+        if isinstance(xml, six.text_type):
             xml = xml.encode('utf-8', errors='replace')
 
         return etree.fromstring(xml)
@@ -436,7 +437,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         content_readable = content
-        if isinstance(content, basestring):
+        if isinstance(content, six.string_types):
             content_readable = StringIO(content)
 
         db = get_blob_db()
@@ -506,7 +507,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     )
 
     def __unicode__(self):
-        return unicode(
+        return six.text_type(
             "XFormAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
             "form_id='{a.form_id}', "
@@ -992,7 +993,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         return ret
 
     def __unicode__(self):
-        return unicode(
+        return six.text_type(
             "CaseAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "

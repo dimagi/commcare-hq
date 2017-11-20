@@ -169,7 +169,7 @@ def _check_es_rev(index, doc_id, couch_revs):
         status = False
         message = "Not in sync"
 
-        if res.has_key('hits'):
+        if 'hits' in res:
             if res['hits'].get('total', 0) == 0:
                 status = False
                 # if doc doesn't exist it's def. not in sync

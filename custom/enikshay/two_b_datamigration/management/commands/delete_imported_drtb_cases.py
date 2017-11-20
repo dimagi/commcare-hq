@@ -11,6 +11,7 @@ Example usage:
     ...
 """
 from __future__ import absolute_import
+from __future__ import print_function
 from corehq.apps.es import CaseSearchES
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.chunked import chunked
@@ -41,10 +42,10 @@ class Command(BaseCommand):
         case_ids = [hit['_id'] for hit in hits]
 
         for case_id in case_ids:
-            print case_id
+            print(case_id)
 
         if options['commit']:
-            print "Deleting cases"
+            print("Deleting cases")
             for ids in chunked(case_ids, 100):
                 CaseAccessors(domain).soft_delete_cases(list(ids))
-            print "Deletion finished"
+            print("Deletion finished")

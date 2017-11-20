@@ -293,6 +293,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.icds_nic',
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
+    'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -368,6 +369,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'corehq.motech.openmrs',
+    'custom.champ',
 )
 
 ENIKSHAY_APPS = (
@@ -465,8 +467,6 @@ CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
 # These are non-standard setting names that are used in localsettings
 # The standard variables are then set to these variables after localsettings
 # Todo: Change to use standard settings variables
-# Todo: Will require changing salt pillar and localsettings template
-# Todo: or more likely in ansible once that's a thing
 EMAIL_LOGIN = "user@domain.com"
 EMAIL_PASSWORD = "changeme"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
@@ -884,8 +884,6 @@ ENTERPRISE_MODE = False
 CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
-ONBOARDING_DOMAIN_TEST_DATE = ()
 
 HQ_INSTANCE = 'development'
 
@@ -1522,6 +1520,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
+    'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
 ]
 
 IVR_LOADED_SQL_BACKENDS = [
@@ -1963,6 +1962,7 @@ STATIC_DATA_SOURCES = [
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
@@ -1989,7 +1989,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
+    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2165,7 +2167,8 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi'
+    'pnlppgi': 'custom.pnlppgi',
+    'champ-cameroon': 'custom.champ'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

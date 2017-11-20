@@ -30,6 +30,7 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
+from six.moves import zip
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -177,7 +178,6 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             report_config.report_id, domain
         )
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
@@ -351,7 +351,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))

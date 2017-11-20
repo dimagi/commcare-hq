@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, CustomDataField,
                      validate_reserved_words)
+import six
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -114,7 +115,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def page_name(cls):
-        return _("Edit {} Fields").format(unicode(cls.entity_string))
+        return _("Edit {} Fields").format(six.text_type(cls.entity_string))
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain,
@@ -174,7 +175,7 @@ class CustomDataModelMixin(object):
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             msg = _(u"{} fields saved successfully").format(
-                unicode(self.entity_string)
+                six.text_type(self.entity_string)
             )
             messages.success(request, msg)
             return self.get(request, success=True, *args, **kwargs)

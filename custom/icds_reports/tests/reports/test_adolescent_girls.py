@@ -60,21 +60,21 @@ class TestAdolescentGirls(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st2",
-                        "value": 31
+                        "value": 25
                     },
                     {
                         "loc_name": "st1",
-                        "value": 26
+                        "value": 22
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st2",
-                        "value": 31
+                        "value": 25
                     },
                     {
                         "loc_name": "st1",
-                        "value": 26
+                        "value": 22
                     }
                 ],
                 "chart_data": [
@@ -110,11 +110,11 @@ class TestAdolescentGirls(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st2",
-                        "value": 31
+                        "value": 25
                     },
                     {
                         "loc_name": "st1",
-                        "value": 26
+                        "value": 22
                     }
                 ]
             }

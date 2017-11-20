@@ -1707,9 +1707,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.filters = ['gender', 'age'];
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
-        .withOption('scrollY', '300px')
-        .withOption('scrollX', '100%')
-        .withOption('scrollCollapse', true)
         .withOption('ajax', {
             url:  url('awc_reports', vm.step),
             data: $location.search(),
@@ -1720,20 +1717,23 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('serverSide', true)
         .withOption('createdRow', compile)
         .withPaginationType('full_numbers')
+        .withFixedHeader({
+            bottom: true,
+        })
         .withOption('oLanguage', {
             "sProcessing": "Loading. Please wait...",
         })
         .withDOM('ltipr');
 
     vm.dtColumns = [
-        DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName),
-        DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth),
-        DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge),
-        DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate),
-        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight for Age Status').renderWith(renderWeightForAgeStatus),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight for Height Status').renderWith(renderWeightForHeightStatus),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height for Age status').renderWith(renderHeightForAgeStatus),
-        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended),
+        DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName).withClass('big-col'),
+        DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
+        DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
+        DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
     ];
 
     function compile(row) {
@@ -2037,6 +2037,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2056,8 +2057,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    var tooltip_data = _.find(vm.lineChartTwoData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Height: <strong>" + tooltip_data.y + "</strong> cm</p>";
                     } else {
                         html = "<p>Height: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2088,6 +2091,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2107,8 +2111,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var tooltip_data = _.find(vm.lineChartOneData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2160,8 +2166,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var tooltip_data = _.find(vm.lineChartThreeData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2231,15 +2239,19 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             color: 'red',
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartOneData,
-                            color: 'black',
-                            strokeWidth: 2,
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartOneData.length > 0) {
+                        vm.beneficiaryChartOneData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartOneData,
+                                color: 'black',
+                                strokeWidth: 2,
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     vm.beneficiaryChartTwoData = [
                         {
                             key: 'green',
@@ -2262,14 +2274,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             color: 'red',
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartTwoData,
-                            color: 'black',
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartTwoData.length > 0) {
+                        vm.beneficiaryChartTwoData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartTwoData,
+                                color: 'black',
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     vm.beneficiaryChartThreeData = [
                         {
                             key: 'green',
@@ -2295,14 +2311,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             yAxis: 1,
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartThreeData,
-                            color: 'black',
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartThreeData.length > 0) {
+                        vm.beneficiaryChartThreeData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartThreeData,
+                                color: 'black',
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     $scope.$apply();
                 }, 500);
 
@@ -2369,6 +2389,30 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
         },
     };
+
+    // hack to have the same width between origin table and fixture headers,
+    // without this fixture headers are bigger and not align to original columns
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                var hasClass = [].some.call(mutation.addedNodes, function(el) {
+                    return el.classList.contains('fixedHeader-floating');
+                });
+                if (hasClass && vm.beneficiary === null) {
+                    var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
+                    mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
+                }
+            }
+        });
+    });
+
+    var config = {
+        attributes: true,
+        childList: true,
+        characterData: true,
+    };
+
+    observer.observe(document.body, config);
 
     vm.getDataForStep(vm.step);
 }

@@ -103,8 +103,7 @@ class ColumnCollector(type):
         return super(ColumnCollector, cls).__new__(cls, name, bases, attrs)
 
 
-class BasicTabularReport(GenericTabularReport):
-    __metaclass__ = ColumnCollector
+class BasicTabularReport(six.with_metaclass(ColumnCollector, GenericTabularReport)):
     update_after = False
 
     @property

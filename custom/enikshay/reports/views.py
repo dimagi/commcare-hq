@@ -19,6 +19,7 @@ from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
 from custom.enikshay.const import VOUCHER_ID, ENIKSHAY_ID
 from custom.enikshay.reports.utils import StubReport
 from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
+import six
 
 
 @location_safe
@@ -115,7 +116,7 @@ class DuplicateIdsReport(TemplateView):
                     device_number = user_dict['device_ids'].index(device_id) + 1
                 except ValueError:
                     device_number = -1
-                case['real_device_number'] = unicode(device_number)
+                case['real_device_number'] = six.text_type(device_number)
 
     def get_cases_with_duplicate_ids(self, all_case_ids):
         id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[self.case_type]

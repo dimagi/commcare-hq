@@ -76,12 +76,12 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
     return [
         {
             "slug": "adhaar",
-            "label": "Percent Adhaar-seeded Beneficiaries",
+            "label": "Percent Aadhaar-seeded Beneficiaries",
             "fills": fills,
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
-                    "Percentage of individuals registered using CAS whose Adhaar identification has been captured"
+                    "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
                 ))
             },
             "data": map_data,
@@ -148,7 +148,7 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of individuals registered using CAS whose Adhaar identification has been captured"
+            "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
         )),
         "chart_data": [
             {
@@ -231,7 +231,7 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
                         'all': value['all']
                     } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Percentage of beneficiaries with Adhaar numbers",
+                "key": "Percentage of beneficiaries with Aadhaar numbers",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE

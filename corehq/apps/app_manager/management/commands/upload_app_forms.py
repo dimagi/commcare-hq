@@ -53,8 +53,6 @@ class Command(BaseCommand):
             if not user:
                 raise CommandError("Couldn't find user with username {}".format(options['user']))
 
-        # todo: would be nice if this worked off remote servers too
-
         app = Application.get(app_id)
         for module_dir in os.listdir(path):
             module_index, name = module_dir.split(' - ')

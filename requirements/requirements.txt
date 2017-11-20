@@ -3,7 +3,7 @@ cython==0.23.4
 restkit==4.2.2
 iso8601==0.1.11
 jsonobject==0.7.1
-jsonobject-couchdbkit==0.8.0.2
+jsonobject-couchdbkit==0.9.0.0
 celery==3.1.18
 # required by django-digest
 decorator==4.0.11
@@ -87,7 +87,7 @@ boto3==1.4.4
 simpleeval==0.9.5
 laboratory==0.2.0
 ConcurrentLogHandler==0.9.1
-github3.py==1.0.0a4
+PyGithub==1.35
 django-bulk-update==1.1.10
 csiphash==0.0.5
 json-delta==2.0

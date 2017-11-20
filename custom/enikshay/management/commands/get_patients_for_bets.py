@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import SQLLocation
@@ -80,7 +81,7 @@ class Command(BaseCommand):
             for person in with_progress_bar(self.accessor.iter_cases(person_ids), len(person_ids)):
                 if person.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
                     self.add_person(person, writer)
-        print "Wrote to {}".format(filename)
+        print("Wrote to {}".format(filename))
 
     def add_person(self, person, writer):
         person_data = BETSBeneficiaryPayloadGenerator.serialize(person)

@@ -76,7 +76,7 @@ class DomainStatsReport(GenericTabularReport):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for dom in domains:
-            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom: # for some reason when using the statistical facet, ES adds an empty dict to hits
                 first_form_default_message = _("No Forms")
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")

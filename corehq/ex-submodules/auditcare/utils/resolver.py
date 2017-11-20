@@ -13,7 +13,7 @@ def _pattern_resolve_to_name(self, path):
         elif hasattr(self, '_callback_str'):
             name = self._callback_str
         else:
-            name = "%s.%s" % (self.callback.__module__, self.callback.func_name)
+            name = "%s.%s" % (self.callback.__module__, self.callback.__name__)
         return name
 
 def _resolver_resolve_to_name(self, path):
@@ -24,7 +24,7 @@ def _resolver_resolve_to_name(self, path):
         for pattern in self.url_patterns:
             try:
                 name = _pattern_resolve_to_name(pattern,new_path)
-            except Resolver404, e:
+            except Resolver404 as e:
                 tried.extend([(pattern.regex.pattern + '   ' + t) for t in e.args[0]['tried']])
             else:
                 if name:

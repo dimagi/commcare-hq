@@ -1,10 +1,10 @@
 from __future__ import absolute_import
-import HTMLParser
+import six.moves.html_parser
 import json
 import socket
 import uuid
 from StringIO import StringIO
-from collections import defaultdict, namedtuple, OrderedDict
+from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
 import dateutil
@@ -511,10 +511,27 @@ class AdminRestoreView(TemplateView):
             string_payload = ''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
-            num_locations = len(
-                xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
-                                    .format(RESPONSE_XMLNS)))
+            cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
+            num_cases = len(cases)
+            case_type_counts = dict(Counter(
+                case.find(
+                    '{http://commcarehq.org/case/transaction/v2}create/'
+                    '{http://commcarehq.org/case/transaction/v2}case_type'
+                ).text for case in cases
+            ))
+            locations = xml_payload.findall(
+                "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
+            )
+            num_locations = len(locations)
+            location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
+            reports = xml_payload.findall(
+                "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS)
+            )
+            num_reports = len(reports)
+            report_row_counts = {
+                report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+                for report in reports
+            }
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -529,8 +546,13 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            case_type_counts = {}
             num_locations = 0
+            location_type_counts = {}
+            num_reports = 0
+            report_row_counts = {}
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
@@ -538,6 +560,11 @@ class AdminRestoreView(TemplateView):
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
             'num_locations': num_locations,
+            'num_reports': num_reports,
+            'hide_xml': hide_xml,
+            'case_type_counts': case_type_counts,
+            'location_type_counts': location_type_counts,
+            'report_row_counts': report_row_counts,
         })
         return context
 
@@ -601,7 +628,7 @@ def stats_data(request):
     datefield = request.GET.get("datefield")
     get_request_params_json = request.GET.get("get_request_params", None)
     get_request_params = (
-        json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
+        json.loads(six.moves.html_parser.HTMLParser().unescape(get_request_params_json))
         if get_request_params_json is not None else {}
     )
 

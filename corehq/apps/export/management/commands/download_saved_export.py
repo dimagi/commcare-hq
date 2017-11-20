@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import shutil
 from datetime import datetime
 from django.conf import settings
@@ -18,10 +19,10 @@ def download_saved_export(export_id, dest_dir=None):
         datetime.utcnow().isoformat()
     )
     payload = export_instance.get_payload(stream=True)
-    print "Downloading Export to {}".format(export_archive_path)
+    print("Downloading Export to {}".format(export_archive_path))
     with open(export_archive_path, 'w') as download:
         shutil.copyfileobj(payload, download)
-    print "Download Finished!"
+    print("Download Finished!")
 
 
 class Command(BaseCommand):

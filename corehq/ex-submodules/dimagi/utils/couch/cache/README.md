@@ -34,14 +34,6 @@ The `GenerationCache` class is a registry for matching doc_types along with view
 
 At runtime, these are bootstrapped and created into a look up table to match doc changes and seeing if they need generation updates.
 
-## Cache Invalidation Methods
-
-TODO
-
-Signals
-
-pillow
-
 
 ## Debugging
 

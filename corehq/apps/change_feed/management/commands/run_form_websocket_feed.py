@@ -11,6 +11,7 @@ import json
 import time
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
+import six
 
 
 class Command(BaseCommand):
@@ -62,4 +63,4 @@ class Command(BaseCommand):
 def _get_country(domain):
     project = Domain.get_by_name(domain)
     if project and project.deployment.countries:
-        return unicode(COUNTRIES.get(project.deployment.countries[0], ''))
+        return six.text_type(COUNTRIES.get(project.deployment.countries[0], ''))

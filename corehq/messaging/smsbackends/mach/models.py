@@ -4,6 +4,7 @@ from django.conf import settings
 import urllib2
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.messaging.smsbackends.mach.forms import MachBackendForm
+import six
 
 MACH_URL = "http://smsgw.a2p.mme.syniverse.com/sms.php"
 
@@ -65,7 +66,7 @@ class SQLMachBackend(SQLSMSBackend):
         )
 
     def handle_response(self, msg, response):
-        if not isinstance(response, basestring):
+        if not isinstance(response, six.string_types):
             raise SyniverseException(
                 "Unrecognized response received from Syniverse "
                 "backend %s" % self.pk

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import xmlrpclib
+import six.moves.xmlrpc_client
 from amqplib.client_0_8.method_framing import defaultdict
 from django.conf import settings
 from jsonobject.api import JsonObject
@@ -62,7 +62,7 @@ class SupervisorApi(object):
             password=settings.SUPERVISOR_PASSWORD,
             host=host
         )
-        self._server = xmlrpclib.Server(self._url)
+        self._server = six.moves.xmlrpc_client.Server(self._url)
         self.check_state()
 
     @wrap_exception()
@@ -87,7 +87,7 @@ class SupervisorApi(object):
     def stop_process(self, name, wait=True):
         try:
             return self._server.supervisor.stopProcess(name, wait)
-        except xmlrpclib.Fault as f:
+        except six.moves.xmlrpc_client.Fault as f:
             if f.faultCode == FAULT_NOT_RUNNING:
                 return True
             else:
