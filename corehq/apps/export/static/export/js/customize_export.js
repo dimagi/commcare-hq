@@ -400,9 +400,9 @@ var CustomExportView = {
             if (self.presave()) {
                 action = "Saved";
             }
-            analytics.usage("Create Export", exportType, action);
+            hqImport('analytics/js/google').track.event("Create Export", exportType, action);
             if (self.custom_export.default_format() === 'html') {
-                analytics.usage("Create Export", exportType, "Excel Dashboard");
+                hqImport('analytics/js/google').track.event("Create Export", exportType, "Excel Dashboard");
             }
 
             if (!self.custom_export._id || !self.custom_export._id()) {

@@ -202,7 +202,7 @@
             type="button"
              data-bind="click: function(data, event){
                         refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{form.unique_id}}', event);
-                        analytics.usage('Refresh case management', 'Button Clicked');
+                        hqImport('analytics/js/google').track.event('Refresh case management', 'Button Clicked');
                         }">
         <i class="fa fa-refresh"></i>
     </button>

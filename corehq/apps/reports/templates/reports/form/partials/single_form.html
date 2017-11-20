@@ -41,7 +41,7 @@ requires imports/proptable.html to be included in the main template
             {% if context_case_id %}
             label = 'case';
             {% endif %}
-            analytics.usage('Edit Data', action, label, '', extra, callback);
+            hqImport('analytics/js/google').track.event('Edit Data', action, label, '', extra, callback);
         }
 
         $('.hq-help-template').each(function () {
