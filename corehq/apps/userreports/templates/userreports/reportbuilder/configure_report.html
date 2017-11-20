@@ -21,6 +21,10 @@
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
 
+{% block modals %}{{ block.super }}
+{% include 'userreports/partials/enum_modal.html' %}
+{% endblock modals %}
+
 {% block has_report_builder_access %}
   <div class="spacer"></div>
   {{ block.super }}

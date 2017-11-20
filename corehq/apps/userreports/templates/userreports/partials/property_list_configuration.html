@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 {% comment %}
 It might not be imediately obvious where this snippet is used because it is
 injected into a template through crispy forms. It's "parent" html is found
@@ -22,6 +23,7 @@ TODO:
         <col>
         <!--/ko-->
         <!--ko if: $data.hasCalculationCol -->
+        <col>
         <col>
         <!--/ko-->
         <!--ko if: $data.hasFilterValueCol -->
@@ -73,6 +75,7 @@ TODO:
                 "></span>
                 <!--/ko-->
             </th>
+            <th></th>
             <!--/ko-->
             <!--ko if: $data.hasFilterValueCol -->
             <th class="table-editprops-filterval">
@@ -174,6 +177,14 @@ TODO:
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
         </td>
+        <td>
+            <!-- ko if: $data.inputBoundCalculation() === 'Count per Choice' -->
+            <button class="btn btn-sm"
+                     data-bind="click: openEnumModal">
+                <i class="fa fa-gear"></i>
+            </button>
+            <!--/ko-->
+        </td>
         <!--/ko-->
 
         <!--ko if: $parent.hasFilterValueCol -->
@@ -229,4 +240,5 @@ TODO:
     <label class="help-block" data-bind="text: requireColumnsText">
     </label>
 </div>
+
 

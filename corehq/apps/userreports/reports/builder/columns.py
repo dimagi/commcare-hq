@@ -21,6 +21,7 @@ class ColumnOption(object):
         self._data_types = data_types
 
         self._default_display = default_display
+        self._choice_mapping = []
 
     def get_default_display(self):
         return self._default_display
@@ -35,7 +36,8 @@ class ColumnOption(object):
         return {
             "id": self._property,
             "display": self._default_display,
-            "aggregation_options": self.aggregation_options
+            "aggregation_options": self.aggregation_options,
+            "choice_mapping": self._choice_mapping
         }
 
     @property
@@ -95,6 +97,10 @@ class ColumnOption(object):
             "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
         }]
 
+    def choice_mapping(self):
+        return self._choice_mapping
+
+
 
 class QuestionColumnOption(ColumnOption):
     """
@@ -104,6 +110,13 @@ class QuestionColumnOption(ColumnOption):
     def __init__(self, property, data_types, default_display, question_source):
         super(QuestionColumnOption, self).__init__(property, data_types, default_display)
         self._question_source = question_source
+
+        # set the default choice options
+        if self._question_source.get('options'):
+            self._choice_mapping = [{
+                "value": choice['value'],
+                "label": choice['label']
+            } for choice in self._question_source['options']]
 
     def to_view_model(self):
         ret = super(QuestionColumnOption, self).to_view_model()

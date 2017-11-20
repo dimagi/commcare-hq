@@ -708,7 +708,7 @@ _shared_properties = ['exists_in_current_version', 'display_text', 'property', '
 UserFilterViewModel = namedtuple("UserFilterViewModel", _shared_properties + ['format'])
 DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",
                                     _shared_properties + ['format', 'pre_value', 'pre_operator'])
-ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
+ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation', 'choice_mapping'] )
 
 
 class ConfigureNewReportBase(forms.Form):
@@ -1281,7 +1281,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                             if exists else None
                         ),
                         data_source_field=indicator_id if not exists else None,
-                        calculation=reverse_agg_map.get(agg, COUNT_PER_CHOICE)
+                        calculation=reverse_agg_map.get(agg, COUNT_PER_CHOICE),
+                        choice_mapping = [],
                     )
                 )
             return cols
@@ -1304,7 +1305,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 self.data_source_properties['name']
                     .to_report_column_option()
                     .get_indicator(COUNT_PER_CHOICE)['column_id']),
-            calculation=COUNT_PER_CHOICE
+            calculation=COUNT_PER_CHOICE,
+            choice_mapping=[],
         ))
         cols.append(ColumnViewModel(
             display_text="Owner",
@@ -1314,7 +1316,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID]
                     .to_report_column_option()
                     .get_indicator(COUNT_PER_CHOICE)['column_id']),
-            calculation=COUNT_PER_CHOICE
+            calculation=COUNT_PER_CHOICE,
+            choice_mapping=[],
         ))
         case_props_found = 0
 
@@ -1328,6 +1331,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     property=prop.get_id(),
                     data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
                     calculation=COUNT_PER_CHOICE,
+                    choice_mapping=[],
                 ))
                 if case_props_found == 3:
                     break
@@ -1341,7 +1345,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             exists_in_current_version=True,
             property=prop.get_id(),
             data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
-            calculation=COUNT_PER_CHOICE
+            calculation=COUNT_PER_CHOICE,
+            choice_mapping=[],
         ))
         questions = [p for p in self.data_source_properties.values()
                      if p.get_type() == PROPERTY_TYPE_QUESTION]
@@ -1354,6 +1359,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 property=q.get_id(),
                 data_source_field=q.get_id(),
                 calculation=COUNT_PER_CHOICE,
+                choice_mapping=[],
             ))
         return cols
 

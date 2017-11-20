@@ -10,6 +10,11 @@ hqDefine('userreports/js/builder_view_models', function () {
         }
     };
 
+    var ChoiceMappingItem = function(key, value) {
+        var self = this;
+        self.key = ko.observable(key);
+        self.value = ko.observable(value);
+    }
 
     /**
      * Knockout view model representing a row in the filter property list
@@ -84,6 +89,7 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.format = ko.observable("");
 
         var constants = hqImport('userreports/js/constants');
+
         self.calculationOptions = ko.pureComputed(function() {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
@@ -104,6 +110,8 @@ hqDefine('userreports/js/builder_view_models', function () {
         // the PropertyListItem represents columns in a non-aggregated report
         // or a filter
         this.calculation = ko.observable(this.getDefaultCalculation());
+
+        this.choiceMapping = ko.observableArray([]);
 
         // A proxy for calculation that will let us know when calculation has been modified by the user.
         // This is useful because sometimes the calculation is changed programatically.
@@ -135,6 +143,36 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.isValid = ko.computed(function(){
             return Boolean(self.property() && self.existsInCurrentVersion() && self.displayTextIsValid());
         });
+
+        self.removeChoice = function (item) {
+            self.choiceMapping.remove(item);
+        };
+        self.addChoice = function () {
+            var item = new ChoiceMappingItem('', '');
+            self.choiceMapping.push(item);
+        };
+        self.setChoices = function (items) {
+            self.choiceMapping(_(items).map(function (item, i) {
+                return new ChoiceMappingItem(item.key, item.value);
+            }));
+        };
+
+        self.openEnumModal = function() {
+            var $modalDiv = $(document.createElement("div"));
+            $modalDiv.attr("data-bind", "template: 'enum_mapping_modal'");
+            $modalDiv.koApplyBindings({
+                self: self
+            });
+            var $modal = $modalDiv.find('.modal');
+            $modal.appendTo('body');
+            $modal.modal({
+                show: true,
+                backdrop: 'static',
+            });
+            $modal.on('hidden', function () {
+                $modal.remove();
+            });
+        }
     };
     /**
      * Return a "plain" javascript object representing this view model
@@ -142,6 +180,9 @@ hqDefine('userreports/js/builder_view_models', function () {
      */
     PropertyListItem.prototype.toJS = function () {
         var self = this;
+        var choices = _(self.choiceMapping()).map(function (item, i) {
+            return {'key': item.key(), 'value': item.value()};
+        });
         return {
             property: self.property(),
             display_text: self.displayText(),
@@ -149,6 +190,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             calculation: self.calculation(),
             pre_value: self.filterValue(),
             pre_operator: self.filterOperator(),
+            choice_mapping: choices,
         };
     };
     /**
@@ -179,6 +221,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             i.format(item.format);
             i.filterValue(item.pre_value);
             i.filterOperator(item.pre_operator);
+            i.setChoices(item.choice_mapping);
             return i;
         };
 
