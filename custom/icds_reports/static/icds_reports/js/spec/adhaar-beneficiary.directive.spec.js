@@ -188,16 +188,16 @@ describe('AdhaarBeneficiaryDirective', function () {
     });
 
     it('tests disable locations for user', function () {
-        controller.location = {name: 'name4', location_id: null};
+        controller.userLocationId = 'test_id4';
+        controller.location = {name: 'name4', location_id: 'test_id4'};
         controller.selectedLocations.push(
             {name: 'name1', location_id: 'test_id1'},
             {name: 'name2', location_id: 'test_id2'},
             {name: 'name3', location_id: 'test_id3'},
-            {name: 'name4', location_id: null},
+            {name: 'name4', location_id: 'test_id4'},
             {name: 'name5', location_id: 'test_id5'},
             {name: 'name6', location_id: 'test_id6'}
         );
-
         var index = controller.getDisableIndex();
         assert.equal(index, 3);
     });

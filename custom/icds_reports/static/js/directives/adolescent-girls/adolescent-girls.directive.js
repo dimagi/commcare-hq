@@ -9,7 +9,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     } else {
         storageService.setKey('search', $location.search());
     }
-
+    vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
 
     vm.filtersData = $location.search();
@@ -111,7 +111,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     };
 
     vm.init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;

@@ -9,6 +9,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
     vm.label = "Percent Aadhaar-seeded Beneficiaries";
     vm.step = $routeParams.step;
@@ -105,7 +106,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
 
     vm.init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -127,7 +128,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });

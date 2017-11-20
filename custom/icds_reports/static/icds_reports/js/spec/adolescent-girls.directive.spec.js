@@ -12,11 +12,11 @@ describe('AdolescentGirlsDirective', function () {
     pageData.registerUrl('adolescent_girls', 'adolescent_girls');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
-    beforeEach(module('icdsApp', function($provide) {
+    beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
     }));
 
-    beforeEach(inject(function($rootScope, $compile, _$httpBackend_, _$location_) {
+    beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
@@ -32,13 +32,13 @@ describe('AdolescentGirlsDirective', function () {
         controller.step = 'map';
     }));
 
-    it('tests initial state', function() {
+    it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
         assert.equal(controller.steps['map'].label, 'Map View: National');
         assert.deepEqual(controller.filtersData, {});
     });
 
-    it('tests supervisor location', function() {
+    it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
