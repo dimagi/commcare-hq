@@ -78,6 +78,7 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, json_request
 from toggle.shortcuts import set_toggle
+import six
 
 
 @no_conflict_require_POST
@@ -425,7 +426,7 @@ def export_gzip(req, domain, app_id):
     response['Content-Length'] = os.path.getsize(fpath)
     app = Application.get(app_id)
     set_file_download(response, '{domain}-{app_name}-{app_version}.zip'.format(
-        app_name=slugify(app.name), app_version=slugify(unicode(app.version)), domain=domain
+        app_name=slugify(app.name), app_version=slugify(six.text_type(app.version)), domain=domain
     ))
     return response
 
@@ -541,7 +542,7 @@ def rename_language(request, domain, form_unique_id):
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
     except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}), status=409)
+        response = HttpResponse(json.dumps({'status': 'error', 'message': six.text_type(e)}), status=409)
         return response
 
 

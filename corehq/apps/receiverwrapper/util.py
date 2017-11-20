@@ -13,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
 import couchforms
 from django.http import Http404
+import six
 
 
 def get_submit_url(domain, app_id=None):
@@ -45,7 +46,7 @@ def get_meta_appversion_text(form_metadata):
         return None
 
     # just make sure this is a longish string and not something like '2.0'
-    if isinstance(text, (str, unicode)) and len(text) > 5:
+    if isinstance(text, (str, six.text_type)) and len(text) > 5:
         return text
     else:
         return None

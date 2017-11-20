@@ -2430,7 +2430,7 @@ class RowNumberColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
-            [".".join([unicode(i) for i in row_index])]
+            [".".join([six.text_type(i) for i in row_index])]
             + (list(row_index) if len(row_index) > 1 else [])
         )
 

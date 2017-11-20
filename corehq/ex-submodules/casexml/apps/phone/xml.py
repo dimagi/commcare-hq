@@ -6,6 +6,7 @@ from casexml.apps.case import const
 from casexml.apps.case.xml import check_version, V1
 from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
     safe_element, CaseDBXMLGenerator
+import six
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
@@ -17,7 +18,7 @@ def escape(o):
     if o is None:
         return ""
     else:
-        return saxutils.escape(unicode(o))
+        return saxutils.escape(six.text_type(o))
 
 
 def tostring(element):

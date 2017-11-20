@@ -34,6 +34,7 @@ from couchforms import const
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
+import six
 
 
 def doc_types():
@@ -272,7 +273,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def _xml_string_to_element(self, xml_string):
 
         def _to_xml_element(payload):
-            if isinstance(payload, unicode):
+            if isinstance(payload, six.text_type):
                 payload = payload.encode('utf-8', errors='replace')
             return etree.fromstring(payload)
 
@@ -473,7 +474,7 @@ class UnfinishedSubmissionStub(models.Model):
     attempts = models.IntegerField(default=0)
 
     def __unicode__(self):
-        return unicode(
+        return six.text_type(
             "UnfinishedSubmissionStub("
             "xform_id={s.xform_id},"
             "timestamp={s.timestamp},"

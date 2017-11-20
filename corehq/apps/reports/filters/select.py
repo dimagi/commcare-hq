@@ -18,6 +18,7 @@ from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,
     RECORD_PENDING_STATE,
 )
+import six
 
 
 class GroupFilterMixin(object):
@@ -46,7 +47,7 @@ class YearFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         start_year = getattr(settings, 'START_YEAR', 2008)
-        years = [(unicode(y), y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
+        years = [(six.text_type(y), y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
         years.reverse()
         return years
 

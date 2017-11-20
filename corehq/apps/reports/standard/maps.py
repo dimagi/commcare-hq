@@ -13,6 +13,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseListRepo
 from corehq.apps.hqwebapp.decorators import use_maps_async
 from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
+import six
 from six.moves import zip
 
 
@@ -134,12 +135,12 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
         def _headers(e, root=[]):
             if hasattr(e, '__iter__'):
                 if hasattr(e, 'html'):
-                    root = list(root) + [unicode(e.html)]
+                    root = list(root) + [six.text_type(e.html)]
                 for sub in e:
                     for k in _headers(sub, root):
                         yield k
             else:
-                yield root + [unicode(e.html)]
+                yield root + [six.text_type(e.html)]
         headers = ['::'.join(k) for k in _headers(report.headers)]
 
         for row in report.rows:

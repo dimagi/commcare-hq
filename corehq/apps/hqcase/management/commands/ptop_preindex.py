@@ -82,7 +82,7 @@ class Command(BaseCommand):
             return
 
         print("Reindexing:\n\t", end=' ')
-        print('\n\t'.join(map(unicode, indices_needing_reindex)))
+        print('\n\t'.join(map(six.text_type, indices_needing_reindex)))
 
         preindex_message = """
         Heads up!
@@ -93,7 +93,7 @@ class Command(BaseCommand):
         This may take a while, so don't deploy until all these have reported finishing.
             """ % (
                 settings.EMAIL_SUBJECT_PREFIX,
-                '\n\t'.join(map(unicode, indices_needing_reindex))
+                '\n\t'.join(map(six.text_type, indices_needing_reindex))
             )
 
         mail_admins("Pillow preindexing starting", preindex_message)
@@ -128,7 +128,7 @@ class Command(BaseCommand):
                 mail_admins(
                     "Pillow preindexing completed",
                     "Reindexing %s took %s seconds" % (
-                        ', '.join(map(unicode, indices_needing_reindex)),
+                        ', '.join(map(six.text_type, indices_needing_reindex)),
                         (datetime.utcnow() - start).seconds
                     )
                 )

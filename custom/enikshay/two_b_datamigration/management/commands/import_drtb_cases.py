@@ -2232,7 +2232,7 @@ class Command(BaseCommand):
                         extra_cols = ["original import row number", "error message"]
                     else:
                         extra_cols = [None, None]
-                    bad_rows_file_writer.writerow(extra_cols + [unicode(c.value).encode('utf-8') for c in row])
+                    bad_rows_file_writer.writerow(extra_cols + [six.text_type(c.value).encode('utf-8') for c in row])
                     continue
 
                 row_contains_data = any(cell.value for cell in row)
@@ -2259,7 +2259,7 @@ class Command(BaseCommand):
                         exception_as_string = traceback.format_exc()
                     import_log_writer.writerow([i, "", exception_as_string])
                     bad_rows_file_writer.writerow([i, exception_as_string] +
-                                                  [unicode(c.value).encode('utf-8') for c in row])
+                                                  [six.text_type(c.value).encode('utf-8') for c in row])
 
         print("{} rows with unknown exceptions".format(rows_with_unknown_exceptions))
 

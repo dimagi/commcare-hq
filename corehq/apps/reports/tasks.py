@@ -56,6 +56,7 @@ from .models import (
     UnsupportedScheduledReportError,
 )
 from .scheduled import get_scheduled_report_ids
+import six
 
 
 logging = get_task_logger(__name__)
@@ -436,14 +437,14 @@ def _extract_form_attachment_info(form, properties):
         if content_type == 'text/xml':
             continue
         try:
-            question_id = unicode(
+            question_id = six.text_type(
                 u'-'.join(find_question_id(form.form_data, attachment_name)))
         except TypeError:
-            question_id = u'unknown' + unicode(unknown_number)
+            question_id = u'unknown' + six.text_type(unknown_number)
             unknown_number += 1
 
         if not properties or question_id in properties:
-            extension = unicode(os.path.splitext(attachment_name)[1])
+            extension = six.text_type(os.path.splitext(attachment_name)[1])
             if hasattr(attachment, 'content_length'):
                 # FormAttachmentSQL or BlobMeta
                 size = attachment.content_length

@@ -256,7 +256,7 @@ def create_or_update_groups(domain, group_specs, log):
     group_names = set()
     for row in group_specs:
         group_id = row.get('id')
-        group_name = unicode(row.get('name') or '')
+        group_name = six.text_type(row.get('name') or '')
         case_sharing = row.get('case-sharing')
         reporting = row.get('reporting')
         data = row.get('data')
@@ -327,7 +327,7 @@ def users_with_duplicate_passwords(rows):
 
     for row in rows:
         username = row.get('username')
-        password = unicode(row.get('password'))
+        password = six.text_type(row.get('password'))
         if not is_password(password):
             continue
 
@@ -380,7 +380,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
             data = row.get('data')
             email = row.get('email')
-            group_names = map(unicode, row.get('group') or [])
+            group_names = map(six.text_type, row.get('group') or [])
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -396,7 +396,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             role = row.get('role', '')
 
             if password:
-                password = unicode(password)
+                password = six.text_type(password)
             try:
                 username = normalize_username(str(username), domain)
             except TypeError:
@@ -485,7 +485,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     if phone_number:
                         user.add_phone_number(_fmt_phone(phone_number), default=True)
                     if name:
-                        user.set_full_name(unicode(name))
+                        user.set_full_name(six.text_type(name))
                     if data:
                         error = custom_data_validator(data)
                         if error:
@@ -554,7 +554,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
                 except (UserUploadError, CouchUser.Inconsistent) as e:
-                    status_row['flag'] = unicode(e)
+                    status_row['flag'] = six.text_type(e)
 
             ret["rows"].append(status_row)
     finally:

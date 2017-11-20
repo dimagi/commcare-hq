@@ -49,6 +49,7 @@ from .const import (
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
+import six
 
 
 logger = get_task_logger(__name__)
@@ -773,8 +774,8 @@ def _get_relevent_case(cases):
 def get_updated_fields(existing_properties, new_properties):
     updated_fields = {}
     for prop, value in new_properties.items():
-        existing_value = unicode(existing_properties.get(prop, '--'))
-        new_value = unicode(value) if value is not None else u""
+        existing_value = six.text_type(existing_properties.get(prop, '--'))
+        new_value = six.text_type(value) if value is not None else u""
         if existing_value != new_value:
             updated_fields[prop] = value
     return updated_fields

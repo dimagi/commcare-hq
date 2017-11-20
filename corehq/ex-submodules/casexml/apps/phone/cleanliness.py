@@ -54,7 +54,7 @@ def set_cleanliness_flags_for_all_domains(force_full=False):
         try:
             set_cleanliness_flags_for_domain(domain, force_full=force_full)
         except InvalidDomainError as e:
-            notify_exception(None, unicode(e))
+            notify_exception(None, six.text_type(e))
 
 
 def set_cleanliness_flags_for_domain(domain, force_full=False, raise_soft_assertions=True):
@@ -67,7 +67,7 @@ def set_cleanliness_flags_for_domain(domain, force_full=False, raise_soft_assert
                 set_cleanliness_flags(domain, owner_id, force_full=force_full,
                                       raise_soft_assertions=raise_soft_assertions)
             except InvalidOwnerIdError as e:
-                notify_exception(None, unicode(e))
+                notify_exception(None, six.text_type(e))
 
 
 def _is_web_user(owner_id):

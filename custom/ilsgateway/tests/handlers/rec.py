@@ -6,6 +6,7 @@ from custom.ilsgateway.tanzania.reminders import REC_HELP, REC_CONFIRMATION, REC
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN
 from custom.zipline.api import ProductQuantity
 from custom.zipline.models import EmergencyOrder, update_product_quantity_json_field, EmergencyOrderStatusUpdate
+import six
 
 
 class ReceiptTest(ILSTestScript):
@@ -38,14 +39,14 @@ class ReceiptTest(ILSTestScript):
         script = """
             5551234 > rec
             5551234 < {}
-        """.format(unicode(REC_HELP))
+        """.format(six.text_type(REC_HELP))
         self.run_script(script)
 
     def test_valid_message(self):
         script = """
             5551234 > rec dp 100 fs 50
             5551234 < {}
-        """.format(unicode(REC_CONFIRMATION))
+        """.format(six.text_type(REC_CONFIRMATION))
         self.run_script(script)
 
         order = EmergencyOrder.objects.get(pk=self.order.pk)
@@ -58,19 +59,19 @@ class ReceiptTest(ILSTestScript):
         script = """
             5551234 > rec dp quantity fs 50
             5551234 < {}
-        """.format(unicode(REC_ERROR))
+        """.format(six.text_type(REC_ERROR))
         self.run_script(script)
 
     def test_incomplete_message(self):
         script = """
             5551234 > rec dp fs 50
             5551234 < {}
-        """.format(unicode(REC_ERROR))
+        """.format(six.text_type(REC_ERROR))
         self.run_script(script)
 
     def test_invalid_product_code(self):
         script = """
             5551234 > rec invalid_code 40 fs 50
             5551234 < {}
-        """.format(unicode(INVALID_PRODUCT_CODE % {'product_code': 'invalid_code'}))
+        """.format(six.text_type(INVALID_PRODUCT_CODE % {'product_code': 'invalid_code'}))
         self.run_script(script)

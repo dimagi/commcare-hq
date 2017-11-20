@@ -39,11 +39,11 @@ def get_unicode_dicts(iterable):
 
     """
     def none_or_unicode(val):
-        return unicode(val) if val is not None else val
+        return six.text_type(val) if val is not None else val
 
     rows = []
     for row in iterable:
-        rows.append({unicode(k): none_or_unicode(v) for k, v in row.iteritems()})
+        rows.append({six.text_type(k): none_or_unicode(v) for k, v in row.iteritems()})
     return rows
 
 

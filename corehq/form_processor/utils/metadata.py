@@ -126,5 +126,5 @@ def _get_text_attribute(node):
         value = node
 
     if not isinstance(value, six.string_types):
-        value = unicode(value)
+        value = six.text_type(value)
     return value

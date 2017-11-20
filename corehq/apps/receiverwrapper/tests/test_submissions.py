@@ -14,6 +14,7 @@ import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
+import six
 
 
 class SubmissionTest(TestCase):
@@ -54,7 +55,7 @@ class SubmissionTest(TestCase):
             expected = json.load(f)
 
         expected['_id'] = form_id
-        expected['xmlns'] = unicode(xmlns)
+        expected['xmlns'] = six.text_type(xmlns)
 
         return expected
 

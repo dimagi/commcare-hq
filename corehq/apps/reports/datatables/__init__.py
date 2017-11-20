@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from django.template.loader import render_to_string
 from . import DTSortDirection, DTSortType
+import six
 
 
 class DataTablesColumn(object):
@@ -185,7 +186,7 @@ class DataTablesHeader(object):
             # HACK ideally we would not have to guess at the encoding of `h`
             # (when it is not unicode). Hopefully all byte strings that come
             # through here are encoded as UTF-8. If not, .decode() may blow up.
-            return h if isinstance(h, unicode) else h.decode("utf-8")
+            return h if isinstance(h, six.text_type) else h.decode("utf-8")
         head = map(unicodify, head)
         if use_groups:
             return [groups, head]

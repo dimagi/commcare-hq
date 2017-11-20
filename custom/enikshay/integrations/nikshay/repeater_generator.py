@@ -148,7 +148,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
                 external_id=nikshay_id,
             )
         except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+            _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
         if response.status_code == 409:  # Conflict
@@ -161,11 +161,11 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
                 },
             )
         else:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+            _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()))
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": six.text_type(exception)})
 
 
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
@@ -196,12 +196,12 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
         })
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
 
@@ -245,12 +245,12 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
 
@@ -374,12 +374,12 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "followup_nikshay_registered", "followup_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "followup_nikshay_registered", "followup_nikshay_error")
 
 
@@ -465,7 +465,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             response,
             verify=repeat_record.repeater.verify,
         )
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(message),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(message),
                             "private_nikshay_registered", "private_nikshay_error"
                             )
 
@@ -475,7 +475,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
                 repeat_record.domain,
                 repeat_record.payload_id,
                 {
-                    "private_nikshay_error": unicode(exception)
+                    "private_nikshay_error": six.text_type(exception)
                 }
             )
 
@@ -657,7 +657,7 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
         case_id,
         {
             reg_field: "false",
-            error_field: unicode(error),
+            error_field: six.text_type(error),
         },
     )
 
