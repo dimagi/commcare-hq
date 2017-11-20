@@ -33,6 +33,20 @@ class ElasticProcessor(PillowProcessor):
             self._delete_doc_if_exists(change.id)
             return
 
+        doc = self._doc_to_save(change)
+        if doc:
+            # send it across
+            send_to_elasticsearch(
+                index=self.index_info.index,
+                doc_type=self.index_info.type,
+                doc_id=change.id,
+                es_getter=self.es_getter,
+                name=pillow_instance.get_name(),
+                data=doc,
+                update=self._doc_exists(change.id),
+            )
+
+    def _doc_to_save(self, change):
         doc = change.get_document()
 
         ensure_document_exists(change)
@@ -42,17 +56,7 @@ class ElasticProcessor(PillowProcessor):
             return
 
         # prepare doc for es
-        doc_ready_to_save = self.doc_transform_fn(doc)
-        # send it across
-        send_to_elasticsearch(
-            index=self.index_info.index,
-            doc_type=self.index_info.type,
-            doc_id=change.id,
-            es_getter=self.es_getter,
-            name=pillow_instance.get_name(),
-            data=doc_ready_to_save,
-            update=self._doc_exists(change.id),
-        )
+        return self.doc_transform_fn(doc)
 
     def _doc_exists(self, doc_id):
         return self.elasticsearch.exists(self.index_info.index, self.index_info.type, doc_id)
