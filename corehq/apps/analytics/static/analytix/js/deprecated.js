@@ -1,8 +1,7 @@
 /* globals _, _kmq */
 
 // Deprecated analytics globals
-var kmqPushSafe, // eslint-disable-line no-unused-vars
-    analytics; // eslint-disable-line no-unused-vars
+var analytics; // eslint-disable-line no-unused-vars
 
 window.analytics = {};
 
@@ -38,11 +37,6 @@ hqDefine('analytics/js/deprecated', function () {
     };
 
     if (_global('isEnabled')) {
-        kmqPushSafe = _makeLegacyFn(_kissmetrics, 'kmqPushSafe', function (args, timeout) {
-            var lastArg = _.last(args);
-            args[args.length - 1] = _utils.createSafeCallback(lastArg, timeout);
-            _kmq.push(args);
-        });
 
         window.analytics.workflow = _makeLegacyFn(_kissmetrics, 'window.analytics.workflow', _kissmetrics.track.event);
         window.analytics.track = window.analytics.workflow;
