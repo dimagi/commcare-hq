@@ -181,20 +181,21 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY,
-            start_offset=0, start_day_of_week=ANY_DAY):
+            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None):
         schedule = cls(domain=domain)
         schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations,
-            start_offset=start_offset, start_day_of_week=start_day_of_week)
+            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options)
         return schedule
 
     def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0,
-            start_day_of_week=ANY_DAY):
+            start_day_of_week=ANY_DAY, extra_options=None):
         with transaction.atomic():
             self.start_offset = start_offset
             self.start_day_of_week = start_day_of_week
             self.schedule_length = 1
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_DAILY
+            self.set_extra_scheduling_options(extra_options)
             self.save()
 
             self.delete_related_events()
@@ -217,14 +218,14 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_simple_weekly_schedule(cls, domain, time, content, days_of_week, start_day_of_week,
-            total_iterations=REPEAT_INDEFINITELY):
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
         schedule = cls(domain=domain)
         schedule.set_simple_weekly_schedule(time, content, days_of_week, start_day_of_week,
-            total_iterations=total_iterations)
+            total_iterations=total_iterations, extra_options=extra_options)
         return schedule
 
     def set_simple_weekly_schedule(self, time, content, days_of_week, start_day_of_week,
-            total_iterations=REPEAT_INDEFINITELY):
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
         """
         Sets this TimedSchedule to be a simple weekly schedule where you can choose
         the days of the week on which to send.
@@ -245,6 +246,7 @@ class TimedSchedule(Schedule):
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_WEEKLY
             self.start_offset = 0
+            self.set_extra_scheduling_options(extra_options)
             self.save()
 
             self.delete_related_events()
@@ -276,17 +278,21 @@ class TimedSchedule(Schedule):
                 order += 1
 
     @classmethod
-    def create_simple_monthly_schedule(cls, domain, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+    def create_simple_monthly_schedule(cls, domain, time, days, content, total_iterations=REPEAT_INDEFINITELY,
+            extra_options=None):
         schedule = cls(domain=domain)
-        schedule.set_simple_monthly_schedule(time, days, content, total_iterations=total_iterations)
+        schedule.set_simple_monthly_schedule(time, days, content, total_iterations=total_iterations,
+            extra_options=extra_options)
         return schedule
 
-    def set_simple_monthly_schedule(self, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+    def set_simple_monthly_schedule(self, time, days, content, total_iterations=REPEAT_INDEFINITELY,
+            extra_options=None):
         with transaction.atomic():
             self.schedule_length = self.MONTHLY
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_MONTHLY
             self.start_offset = 0
+            self.set_extra_scheduling_options(extra_options)
             self.save()
 
             self.delete_related_events()

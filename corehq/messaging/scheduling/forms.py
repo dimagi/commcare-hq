@@ -153,6 +153,10 @@ class ScheduleForm(Form):
         required=False,
         label=_("User Organization Recipient(s)"),
     )
+    include_descendant_locations = BooleanField(
+        required=False,
+        label=_("Also send to users at child locations"),
+    )
     case_group_recipients = RecipientField(
         required=False,
         label=_("Case Group Recipient(s)"),
@@ -339,6 +343,7 @@ class ScheduleForm(Form):
                     data_bind='value: user_organization_recipients.value',
                     placeholder=_("Select user organization(s)")
                 ),
+                crispy.Field('include_descendant_locations'),
                 data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
             ),
             crispy.Div(
