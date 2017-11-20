@@ -226,8 +226,3 @@ def IntraHealthFormFluffPillow(delete_filtered=False):
         kafka_topic=FORM_SQL if settings.SERVER_ENVIRONMENT == 'pna' else FORM,
         delete_filtered=delete_filtered
     )
-
-
-# Remove these once they are out of the pillow retry queue
-CouvertureFluffPillow = CouvertureFluff.pillow()
-IntraHealthFluffPillow = IntraHealthFluff.pillow()
