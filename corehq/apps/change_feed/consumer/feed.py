@@ -184,7 +184,7 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
 class BulkKafkaCheckpointEventHandler(KafkaCheckpointEventHandler):
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
-            context.pillow.processor.save_docs()
+            context.pillow.commit_changes()
             updated_to = self.change_feed.get_current_checkpoint_offsets()
             self.update_checkpoint(updated_to)
             return True

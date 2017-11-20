@@ -10,3 +10,7 @@ class PillowProcessor(six.with_metaclass(ABCMeta, object)):
 
     def checkpoint_updated(self):
         pass
+
+    def commit_changes(self):
+        # used for bulk processors
+        pass
