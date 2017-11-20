@@ -34,7 +34,8 @@ class PillowRuntimeContext(object):
     so that other functions can use it without maintaining global state on the class.
     """
 
-    def __init__(self, changes_seen=0):
+    def __init__(self, pillow, changes_seen=0):
+        self.pillow = pillow
         self.changes_seen = changes_seen
 
 
@@ -102,7 +103,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         """
         Process changes from the changes stream.
         """
-        context = PillowRuntimeContext(changes_seen=0)
+        context = PillowRuntimeContext(self)
         try:
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 if change:
