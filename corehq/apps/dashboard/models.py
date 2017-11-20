@@ -43,7 +43,7 @@ class Tile(object):
     @property
     @memoized
     def context_processor(self):
-        return self.tile_config.context_processor_class(self.tile_config, self.request)
+        return self.tile_config.context_processor_class(self.request)
 
 
 class TileConfiguration(object):
@@ -98,14 +98,8 @@ class BasePaginatedTileContextProcessor(object):
     To use, subclass this and override :total: and :paginated_items: properties.
     """
 
-    def __init__(self, tile_config, request):
-        """
-        :param tile_config: An instance of TileConfiguration
-        :param request: An instance of HttpRequest
-        Remote Method Invocation
-        """
+    def __init__(self, request):
         self.request = request
-        self.tile_config = tile_config
 
     @staticmethod
     def _fmt_item(name,
@@ -221,9 +215,9 @@ class DataPaginatedContext(BasePaginatedTileContextProcessor, ExportsPermissions
     """Generates the Paginated context for the Data Tile."""
     domain = None
 
-    def __init__(self, tile_config, request):
+    def __init__(self, request):
         self.domain = request.domain
-        super(DataPaginatedContext, self).__init__(tile_config, request)
+        super(DataPaginatedContext, self).__init__(request)
 
     @property
     def total(self):
