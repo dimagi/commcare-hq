@@ -406,7 +406,7 @@ var CustomExportView = {
             }
 
             if (!self.custom_export._id || !self.custom_export._id()) {
-                analytics.workflow("Clicked 'Create' in export edit page");
+                hqImport('analytics/js/kissmetrics').track.event("Clicked 'Create' in export edit page");
             }
             self.save(false);
         };

@@ -38,8 +38,7 @@ hqDefine('analytics/js/deprecated', function () {
 
     if (_global('isEnabled')) {
 
-        window.analytics.workflow = _makeLegacyFn(_kissmetrics, 'window.analytics.workflow', _kissmetrics.track.event);
-        window.analytics.track = window.analytics.workflow;
+        window.analytics.track = _makeLegacyFn(_kissmetrics, 'window.analytics.track', _kissmetrics.track.event);
 
         window.analytics.trackWorkflowLink = _makeLegacyFn(_kissmetrics, ' window.analytics.trackWorkflowLink', function(element, event, properties) {
             _utils.trackClickHelper(element, function (cb) {

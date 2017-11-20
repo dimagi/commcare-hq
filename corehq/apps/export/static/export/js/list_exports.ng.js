@@ -109,7 +109,7 @@
             $scope.updateBulkStatus();
         };
         $scope.sendExportAnalytics = function() {
-            window.analytics.workflow("Clicked Export button");
+            hqImport('analytics/js/kissmetrics').track.event("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');

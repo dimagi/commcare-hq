@@ -14,11 +14,6 @@
 {% endblock %}
 
 {% block mocha_tests %}
-<script>
-    var analytics = {
-        workflow: sinon.stub()
-    };
-</script>
 <script src="{% static 'export/spec/utils/list_exports.utils.mo.js' %}"></script>
 <script src="{% static 'export/spec/ListExportsController.spec.mo.js' %}"></script>
 <script src="{% static 'export/spec/utils/download_export.utils.mo.js' %}"></script>

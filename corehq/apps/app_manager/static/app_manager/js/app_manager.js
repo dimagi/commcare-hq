@@ -226,10 +226,10 @@ hqDefine('app_manager/js/app_manager', function () {
                             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
                             if (dataType === "case") {
                                 hqImport('analytics/js/google').track.event("Added Case List Menu");
-                                window.analytics.workflow("Added Case List Menu");
+                                hqImport('analytics/js/kissmetrics').track.event("Added Case List Menu");
                             } else if (dataType === "survey") {
                                 hqImport('analytics/js/google').track.event("Added Surveys Menu");
-                                window.analytics.workflow("Added Surveys Menu");
+                                hqImport('analytics/js/kissmetrics').track.event("Added Surveys Menu");
                             }
                             $form.submit();
                         }
