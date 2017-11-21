@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
-from corehq.apps.users.models import CouchUser, LastBuild
+from corehq.apps.users.models import CouchUser, LastBuild, LastSync
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -147,3 +147,30 @@ def filter_by_app(data_list, app_id):
     else:
         last_item = None
     return last_item
+
+
+def update_last_sync(app_id, sync_date, user, version):
+    last_sync = filter_by_app(user.reporting_metadata.last_syncs, app_id)
+    if _last_sync_needs_update(last_sync, sync_date):
+        if last_sync is None:
+            last_sync = LastSync()
+            user.reporting_metadata.last_syncs.append(last_sync)
+        last_sync.sync_date = sync_date
+        last_sync.build_version = version
+        last_sync.app_id = app_id
+
+        if _last_sync_needs_update(user.reporting_metadata.last_sync_for_user, sync_date):
+            user.reporting_metadata.last_sync_for_user = last_sync
+
+        if version:
+            update_latest_builds(user, app_id, sync_date, version)
+
+        user.save()
+
+
+def _last_sync_needs_update(last_sync, sync_datetime):
+    if not (last_sync and last_sync.sync_date):
+        return True
+    if sync_datetime > last_sync.sync_date:
+        return True
+    return False

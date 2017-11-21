@@ -6,8 +6,11 @@ from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequ
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
+from iso8601 import iso8601
 
 from casexml.apps.phone.exceptions import InvalidSyncLogException
+from corehq.form_processor.utils.xform import adjust_text_to_datetime
+from corehq.pillows.utils import update_latest_builds, update_last_sync
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from dimagi.utils.logging import notify_exception
@@ -279,6 +282,16 @@ def heartbeat(request, domain, app_build_id):
         app = get_app(domain, app_build_id)
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
+    else:
+        try:
+            last_sync = adjust_text_to_datetime(last_sync_time)
+        except iso8601.ParseError:
+            pass
+        else:
+            update_last_sync(app_id, last_sync, request.couch_user, app_version)
+
+        update_latest_builds(request.couch_user, app_id, datetime.utcnow(), app_version)
+        update_device_id(request.couch_user, device_id)
 
     return JsonResponse(info)
 
