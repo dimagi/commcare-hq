@@ -93,7 +93,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     ]
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+# @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     last = datetime(*config['month']) - relativedelta(days=30)
