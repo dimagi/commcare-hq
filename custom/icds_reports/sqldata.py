@@ -23,6 +23,7 @@ from couchexport.shortcuts import export_response
 
 from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -138,7 +139,7 @@ class ExportableMixin(object):
         if not self.show_test:
             filters.append(NOT(IN('state_id', infilter_params)))
 
-        for key, value in self.config.iteritems():
+        for key, value in six.iteritems(self.config):
             if key == 'domain' or key in infilter_params or 'age' in key:
                 continue
             filters.append(EQ(key, key))
@@ -1852,7 +1853,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     @property
     def filters(self):
         filters = []
-        for key, value in self.config.iteritems():
+        for key, value in six.iteritems(self.config):
             if key == 'domain':
                 continue
             filters.append(EQ(key, key))
@@ -2485,7 +2486,7 @@ class FactSheetsReport(object):
                     }
                 else:
                     sections_by_slug[slug]['rows_config'].extend(section['rows_config'])
-        return sorted(sections_by_slug.values(), key=lambda x: x['order'])
+        return sorted(list(sections_by_slug.values()), key=lambda x: x['order'])
 
     def _get_needed_data_sources(self, config):
         needed_data_sources = set()
@@ -2528,7 +2529,7 @@ class FactSheetsReport(object):
 
         data_sources = [
             data_source.get_data()
-            for k, data_source in self.data_sources.iteritems()
+            for k, data_source in six.iteritems(self.data_sources)
             if k in needed_data_sources
         ]
 

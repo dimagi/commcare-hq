@@ -61,10 +61,6 @@ hqDefine('analytics/js/kissmetrics', function () {
             testName = _.last(testName.split('.'));
             if (_.isObject(ab) && ab.version) {
                 test[ab.name || testName] = ab.version;
-            } else if (!_.isEmpty(ab)) {
-                test[testName] = ab;
-            }
-            if (!_.isEmpty(test)) {
                 logger.debug.log(test, ["AB Test", "New Test: " + testName]);
                 _kmqPushCommand('set', test);
                 _.extend(_allAbTests, test);

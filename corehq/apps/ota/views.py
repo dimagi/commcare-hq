@@ -226,26 +226,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         async=async_restore_enabled,
         case_sync=case_sync,
     )
-    _log_time_since_last_sync(restore_config)
     return restore_config.get_response(), restore_config.timing_context
-
-
-def _log_time_since_last_sync(restore_config):
-    try:
-        last_sync = restore_config.restore_state.last_sync_log
-    except InvalidSyncLogException:
-        return
-
-    if not last_sync or not last_sync.date:
-        bucket = 'initial'
-    else:
-        time_since = datetime.utcnow() - last_sync.date
-        days_since = time_since.total_seconds() / 86400.0
-        bucket = bucket_value(days_since, buckets=(2, 7, 14, 28), unit='d')
-
-    datadog_counter('commcare.restore.sync_interval', tags=[
-        'days_since_last:%s' % bucket
-    ])
 
 
 @login_or_digest_or_basic_or_apikey()

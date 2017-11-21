@@ -75,6 +75,9 @@ STATIC_CASE_PROPS = [
     "user_id",
 ]
 
+# PostgreSQL limit = 1600. Sane limit = 500?
+MAX_COLUMNS = 500
+
 
 class FilterField(JsonField):
     """
@@ -396,44 +399,31 @@ class DataSourceBuilder(object):
             Each object has a "property" and "aggregation" key
         :param filters: A list of filter configuration objects
         """
-        indicators = []
+
+        def get_key(i):
+            return i['column_id'], i['type']
+
+        indicators = OrderedDict()
         for column in columns:
             column_option = self.report_column_options[column['property']]
-            indicators.extend(column_option.get_indicators(column['aggregation'], is_multiselect_chart_report))
+            for indicator in column_option.get_indicators(column['aggregation'], is_multiselect_chart_report):
+                indicators.setdefault(get_key(indicator), indicator)
 
-        for filter in filters:
-            property = self.data_source_properties[filter['property']]
-            indicator = property.to_report_filter_indicator(filter)
-            indicators.append(indicator)
+        for filter_ in filters:
+            property_ = self.data_source_properties[filter_['property']]
+            indicator = property_.to_report_filter_indicator(filter_)
+            indicators.setdefault(get_key(indicator), indicator)
 
-        # remove duplicates
-        # There can be duplicates because filters and columns could be based on the same property
-        indicators_without_dups = []
-        seen_indicator_ids = set()
-        for i in indicators:
-            if (i['column_id'], i['type']) not in seen_indicator_ids:
-                indicators_without_dups.append(i)
-                seen_indicator_ids.add((i['column_id'], i['type']))
-        indicators = indicators_without_dups
-
-        return indicators
+        return list(indicators.values())
 
     def all_possible_indicators(self):
-        indicators = []
+        indicators = OrderedDict()
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
-                indicators.extend(column_option.get_indicators(agg))
+                for indicator in column_option.get_indicators(agg):
+                    indicators.setdefault(str(indicator), indicator)
 
-        # Remove duplicates
-        return_list = []
-        return_list_set = set()
-        for indicator in indicators:
-            as_hashable = str(indicator)
-            if as_hashable not in return_list_set:
-                return_list.append(indicator)
-                return_list_set.add(as_hashable)
-
-        return return_list
+        return list(indicators.values())[:MAX_COLUMNS]
 
     @property
     @memoized
@@ -690,7 +680,7 @@ class DataSourceForm(forms.Form):
         cleaned_data = super(DataSourceForm, self).clean()
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
-        builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
+        builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
         if has_report_builder_access(self.domain) and len(builder_reports) >= self.max_allowed_reports:
             # Don't show the warning when domain does not have report buidler access, because this is just a
             # preview and the report will not be saved.

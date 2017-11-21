@@ -142,7 +142,7 @@ def _translate_name(names, language):
     try:
         return names[language]
     except KeyError:
-        first_name = names.iteritems().next()
+        first_name = next(names.iteritems())
         return u"{} [{}]".format(first_name[1], first_name[0])
 
 
