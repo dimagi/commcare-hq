@@ -43,14 +43,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 cursor.execute(sql_to_execute)
             celery_task_logger.info("Ended icds reports create_functions")
 
-            path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates',
-                                'create_datasource_views.sql')
-            celery_task_logger.info("Starting icds reports create_datasource_views")
-            with open(path, "r") as sql_file:
-                sql_to_execute = sql_file.read()
-                cursor.execute(sql_to_execute)
-            celery_task_logger.info("Ended icds reports create_datasource_views")
-
             path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
             celery_task_logger.info("Starting icds reports update_location_tables")
             with open(path, "r") as sql_file:
