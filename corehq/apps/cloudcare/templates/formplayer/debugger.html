@@ -91,7 +91,7 @@
     <!--/ko-->
     <!--ko if: xPathQuery.isSuccessTruncated() && options.showInFull-->
     <div>
-        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/>{% trans " lines..." %}</em>
+        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
         <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullSuccessResult()">
             {% trans "Copy Full Evaluation to Clipboard" %}
         </a>
@@ -104,7 +104,7 @@
     <!--/ko-->
     <!--ko if: xPathQuery.isTraceTruncated() && options.showInFull-->
     <div>
-        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/>{% trans " lines..." %}</em>
+        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
         <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullTraceResult()">
             {% trans "Copy Full Trace to Clipboard" %}
         </a>
