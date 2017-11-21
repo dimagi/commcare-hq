@@ -27,7 +27,7 @@ from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 import six
 
 
-def _es_hosts():
+def es_hosts():
     es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
     if not es_hosts:
         es_hosts = [settings.ELASTICSEARCH_HOST]
@@ -48,7 +48,7 @@ def get_es_new():
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    hosts = _es_hosts()
+    hosts = es_hosts()
     return Elasticsearch(hosts)
 
 
@@ -58,7 +58,7 @@ def get_es_export():
     Get a handle to the configured elastic search DB with settings geared towards exports.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    hosts = _es_hosts()
+    hosts = es_hosts()
     return Elasticsearch(
         hosts,
         retry_on_timeout=True,
@@ -189,14 +189,29 @@ class ESError(Exception):
 
 
 def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
-    # the debug_host parameter allows you to query another env for testing purposes
+    """
+    :param index_name: The name of the index to query.
+    :param q: The query dict.
+    :param debug_host: allows you to query an individual node or another env for testing purposes.
+                       For querying another env debug_host must be a string matching a key in
+                       the ``ELASTICSEARCH_DEBUG_HOSTS`` settings variable.
+                       To query an individual host it must be one of the config dicts in the list
+                       returned by ``es_hosts()``.
+    :param es_instance_alias: Alias of the ES instance to use. See ``ES_INSTANCES`` for options.
+    :return:
+    """
     if debug_host:
-        if not settings.DEBUG:
-            raise Exception("You can only specify an ES env in DEBUG mode")
-        es_host = settings.ELASTICSEARCH_DEBUG_HOSTS[debug_host]
-        es_instance = Elasticsearch([{'host': es_host,
-                                      'port': settings.ELASTICSEARCH_PORT}],
-                                    timeout=3, max_retries=0)
+        if isinstance(debug_host, dict):
+            if debug_host not in es_hosts():
+                raise Exception('debug_host not in known hosts')
+            es_instance = Elasticsearch([debug_host])
+        else:
+            if not settings.DEBUG:
+                raise Exception("You can only specify an ES env in DEBUG mode")
+            es_host = settings.ELASTICSEARCH_DEBUG_HOSTS[debug_host]
+            es_instance = Elasticsearch([{'host': es_host,
+                                          'port': settings.ELASTICSEARCH_PORT}],
+                                        timeout=3, max_retries=0)
     else:
         es_instance = get_es_instance(es_instance_alias)
 

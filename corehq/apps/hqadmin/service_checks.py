@@ -26,7 +26,7 @@ from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
 from corehq.blobs.util import random_url_id
-from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
+from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index, es_hosts
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
@@ -100,11 +100,15 @@ def check_elasticsearch():
            'date': datetime.datetime.now().isoformat()}
     send_to_elasticsearch('groups', doc)
     refresh_elasticsearch_index('groups')
-    hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
+    bad_hosts = []
+    for host_config in es_hosts():
+        hits = GroupES(debug_host=host_config).remove_default_filters().doc_id(doc['_id']).run().hits
+        if doc not in hits:
+            bad_hosts.append(host_config['host'])
     send_to_elasticsearch('groups', doc, delete=True)  # clean up
-    if doc in hits:
-        return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
-    return ServiceStatus(False, "Something went wrong sending a doc to ES")
+    if bad_hosts:
+        return ServiceStatus(False, "Test doc missing from ES check result for hosts '%s'" % ','.join(bad_hosts))
+    return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
 
 
 def check_blobdb():
