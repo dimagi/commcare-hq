@@ -10,7 +10,7 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
 
-TEST_DATA_SOURCE = 'test_2b_v3.json'
+TEST_DATA_SOURCE = 'test_2b_v4.json'
 
 
 class TestTestCase2B(SimpleTestCase):
@@ -58,6 +58,7 @@ class TestTestCase2B(SimpleTestCase):
             'domain': 'enikshay-test',
             'episode_case_id': 'episode_case_id',
             'rft_general': 'follow_up_dstb',
+            'rft_dstb_follow_up_treatment_month': '3',
             'date_reported': '2017-10-01'
         }
 
@@ -105,4 +106,58 @@ class TestTestCase2B(SimpleTestCase):
             context=FactoryContext(self.named_expressions, {})
         )
 
-        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), '3')
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), '6')
+
+    def test_key_populations(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': None,
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ],
+            'key_populations': 'test test2 test3'
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id'
+        }
+
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'episode_case_id': 'episode_case_id',
+            'rft_general': 'follow_up_dstb',
+            'date_reported': '2017-10-01',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case,
+            'test_case_id': test_case
+        }
+
+        column = self._get_column('key_populations')
+        self.assertEqual(column['datatype'], 'string')
+        expression = ExpressionFactory.from_spec(
+            column['expression'],
+            context=FactoryContext(self.named_expressions, {})
+        )
+
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 'test, test2, test3')

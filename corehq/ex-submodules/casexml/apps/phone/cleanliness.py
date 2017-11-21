@@ -14,6 +14,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
+import six
 
 
 FootprintInfo = namedtuple('FootprintInfo', ['base_ids', 'all_ids', 'extension_ids'])
@@ -53,7 +54,7 @@ def set_cleanliness_flags_for_all_domains(force_full=False):
         try:
             set_cleanliness_flags_for_domain(domain, force_full=force_full)
         except InvalidDomainError as e:
-            notify_exception(None, unicode(e))
+            notify_exception(None, six.text_type(e))
 
 
 def set_cleanliness_flags_for_domain(domain, force_full=False, raise_soft_assertions=True):
@@ -66,7 +67,7 @@ def set_cleanliness_flags_for_domain(domain, force_full=False, raise_soft_assert
                 set_cleanliness_flags(domain, owner_id, force_full=force_full,
                                       raise_soft_assertions=raise_soft_assertions)
             except InvalidOwnerIdError as e:
-                notify_exception(None, unicode(e))
+                notify_exception(None, six.text_type(e))
 
 
 def _is_web_user(owner_id):
@@ -215,7 +216,7 @@ def get_dependent_case_info(domain, case_ids):
      2. any extensions of the passed in cases
      3. (1) and (2) above, for any dependencies that are pulled in
     """
-    assert not isinstance(case_ids, basestring)
+    assert not isinstance(case_ids, six.string_types)
     all_dependencies = set()
     direct_dependencies = _get_direct_dependencies(domain, case_ids)
     new_case_ids = direct_dependencies.all
@@ -229,7 +230,7 @@ def get_dependent_case_info(domain, case_ids):
 
 
 def _get_direct_dependencies(domain, case_ids):
-    assert not isinstance(case_ids, basestring)
+    assert not isinstance(case_ids, six.string_types)
     case_accessor = CaseAccessors(domain)
     extension_cases = set(case_accessor.get_extension_case_ids(case_ids))
     indexed_cases = set(case_accessor.get_indexed_case_ids(case_ids))

@@ -99,6 +99,7 @@ from corehq.apps.export.utils import (
     domain_has_daily_saved_export_access,
     domain_has_excel_dashboard_access,
 )
+import six
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -2246,7 +2247,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
         if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return value
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return [None] * len(self.user_defined_options) + [value]
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
@@ -2329,7 +2330,7 @@ class SplitGPSExportColumn(ExportColumn):
 
         values = [EMPTY_VALUE] * 4
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return values
 
         for index, coordinate in enumerate(value.split(' ')):
@@ -2379,7 +2380,7 @@ class SplitExportColumn(ExportColumn):
                 value.append(MISSING_VALUE)
             return value
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             unspecified_options = [] if self.ignore_unspecified_options else [value]
             return [EMPTY_VALUE] * len(self.item.options) + unspecified_options
 
@@ -2429,7 +2430,7 @@ class RowNumberColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
-            [".".join([unicode(i) for i in row_index])]
+            [".".join([six.text_type(i) for i in row_index])]
             + (list(row_index) if len(row_index) > 1 else [])
         )
 

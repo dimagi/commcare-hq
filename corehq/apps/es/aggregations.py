@@ -42,6 +42,7 @@ from collections import namedtuple, defaultdict
 import datetime
 
 from corehq.elastic import SIZE_LIMIT
+import six
 
 MISSING_KEY = None
 
@@ -435,8 +436,8 @@ class AggregationRange(namedtuple('AggregationRange', 'start end key')):
             if value:
                 if isinstance(value, datetime.date):
                     value = value.isoformat()
-                elif not isinstance(value, basestring):
-                    value = unicode(value)
+                elif not isinstance(value, six.string_types):
+                    value = six.text_type(value)
                 range_[key] = value
         return range_
 

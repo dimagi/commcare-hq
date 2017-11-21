@@ -10,6 +10,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+from six.moves import zip
 
 
 class ContextDecorator(object):

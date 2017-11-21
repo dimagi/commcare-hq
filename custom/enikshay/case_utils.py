@@ -18,6 +18,7 @@ from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
     ENikshayException)
 from corehq.form_processor.exceptions import CaseNotFound
+import six
 
 CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
@@ -38,7 +39,7 @@ CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
 def get_all_parents_of_case(domain, case_id):
     case_accessor = CaseAccessors(domain)
     try:
-        if not isinstance(case_id, basestring):
+        if not isinstance(case_id, six.string_types):
             case_id = case_id.case_id
 
         child_case = case_accessor.get_case(case_id)

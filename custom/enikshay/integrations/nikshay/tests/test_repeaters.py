@@ -51,6 +51,7 @@ from casexml.apps.case.mock import CaseStructure
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from casexml.apps.case.tests.util import delete_all_cases
+import six
 
 DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"
 
@@ -455,7 +456,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         )
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'false')
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', six.text_type(message))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

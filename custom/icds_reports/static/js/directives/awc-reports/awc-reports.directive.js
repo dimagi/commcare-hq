@@ -2057,8 +2057,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    var tooltip_data = _.find(vm.lineChartTwoData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Height: <strong>" + tooltip_data.y + "</strong> cm</p>";
                     } else {
                         html = "<p>Height: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2109,8 +2111,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var tooltip_data = _.find(vm.lineChartOneData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2162,8 +2166,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var tooltip_data = _.find(vm.lineChartThreeData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2233,15 +2239,19 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             color: 'red',
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartOneData,
-                            color: 'black',
-                            strokeWidth: 2,
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartOneData.length > 0) {
+                        vm.beneficiaryChartOneData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartOneData,
+                                color: 'black',
+                                strokeWidth: 2,
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     vm.beneficiaryChartTwoData = [
                         {
                             key: 'green',
@@ -2264,14 +2274,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             color: 'red',
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartTwoData,
-                            color: 'black',
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartTwoData.length > 0) {
+                        vm.beneficiaryChartTwoData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartTwoData,
+                                color: 'black',
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     vm.beneficiaryChartThreeData = [
                         {
                             key: 'green',
@@ -2297,14 +2311,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             yAxis: 1,
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartThreeData,
-                            color: 'black',
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartThreeData.length > 0) {
+                        vm.beneficiaryChartThreeData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartThreeData,
+                                color: 'black',
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     $scope.$apply();
                 }, 500);
 
@@ -2380,7 +2398,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var hasClass = [].some.call(mutation.addedNodes, function(el) {
                     return el.classList.contains('fixedHeader-floating');
                 });
-                if (hasClass && !vm.showBeneficiary) {
+                if (hasClass && vm.beneficiary === null) {
                     var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
                     mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
                 }

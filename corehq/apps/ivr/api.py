@@ -14,6 +14,7 @@ from dimagi.utils.web import get_url_base
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.util import form_requires_input
+import six
 
 
 IVR_EVENT_NEW_CALL = "NEW_CALL"
@@ -58,7 +59,7 @@ def validate_answer(answer, question):
     else:
         try:
             assert answer is not None
-            if isinstance(answer, basestring):
+            if isinstance(answer, six.string_types):
                 assert len(answer.strip()) > 0
             return True
         except AssertionError:

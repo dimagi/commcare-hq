@@ -15,6 +15,7 @@ from dimagi.utils.modules import to_function
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
+import six
 
 
 def _get_pillow_instance(full_class_str):
@@ -87,7 +88,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
-    if isinstance(pillow_config_string_or_dict, basestring):
+    if isinstance(pillow_config_string_or_dict, six.string_types):
         return PillowConfig(
             section,
             pillow_config_string_or_dict.rsplit('.', 1)[1],
@@ -126,7 +127,7 @@ def force_seq_int(seq):
     elif isinstance(seq, dict):
         # multi-topic checkpoints don't support a single sequence id
         return None
-    elif isinstance(seq, basestring):
+    elif isinstance(seq, six.string_types):
         return int(seq.split('-')[0])
     else:
         assert isinstance(seq, int)

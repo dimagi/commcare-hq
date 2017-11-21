@@ -20,6 +20,7 @@ from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
 from couchforms.models import XFormInstance
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
+from six.moves import zip
 
 REBUILD_TEST_DOMAIN = 'rebuild-test'
 

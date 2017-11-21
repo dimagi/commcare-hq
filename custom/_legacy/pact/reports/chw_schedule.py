@@ -13,6 +13,7 @@ from pact.enums import PACT_DOMAIN
 from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache, get_report_script_field
 import logging
+from six.moves import zip
 
 cached_schedules = {}
 
@@ -36,7 +37,7 @@ class CHWPatientSchedule(object):
         Returns: array of pact_ids
         """
         day_of_week = date_val.isoweekday() % 7
-        if not self.intervals.has_key(day_of_week):
+        if day_of_week not in self.intervals:
             return []
         else:
             pass
@@ -74,7 +75,7 @@ class CHWPatientSchedule(object):
 
         for single_sched in cached_arr:
             day_of_week = int(single_sched['day_of_week'])
-            if day_intervaltree.has_key(day_of_week):
+            if day_of_week in day_intervaltree:
                 daytree = day_intervaltree[day_of_week]
             else:
                 #if there's no day of week indication for this, then it's just a null interval node.  To start this node, we make it REALLY old.
@@ -87,7 +88,7 @@ class CHWPatientSchedule(object):
 
             startdate = iso_string_to_datetime(single_sched['active_date'])
             case_id = single_sched['case_id']
-            if single_sched.has_key('error'):
+            if 'error' in single_sched:
                 #this is a non-showstopping issue due to quirks with older submissions
                 logging.error("Error, no pactid: %s" % single_sched['error'])
 
@@ -198,7 +199,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
                     total_visited += 1
                 else:
                     visited.append(None)
-        ret.append((visit_date, zip(dereferenced_patient_info, visited)))
+        ret.append((visit_date, list(zip(dereferenced_patient_info, visited))))
     return ret, patient_case_ids, total_scheduled, total_visited
 
 

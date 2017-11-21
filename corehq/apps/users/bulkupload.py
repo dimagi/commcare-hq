@@ -148,7 +148,7 @@ class GroupMemoizer(object):
         self.groups.add(new_group)
 
     def by_name(self, group_name):
-        if not self.groups_by_name.has_key(group_name):
+        if group_name not in self.groups_by_name:
             group = Group.by_name(self.domain, group_name)
             if not group:
                 self.groups_by_name[group_name] = None
@@ -157,7 +157,7 @@ class GroupMemoizer(object):
         return self.groups_by_name[group_name]
 
     def get(self, group_id):
-        if not self.groups_by_id.has_key(group_id):
+        if group_id not in self.groups_by_id:
             group = Group.get(group_id)
             if group.domain != self.domain:
                 raise ResourceNotFound()
@@ -184,7 +184,7 @@ class GroupMemoizer(object):
 
 
 def _fmt_phone(phone_number):
-    if phone_number and not isinstance(phone_number, basestring):
+    if phone_number and not isinstance(phone_number, six.string_types):
         phone_number = str(int(phone_number))
     return phone_number.lstrip("+")
 
@@ -256,7 +256,7 @@ def create_or_update_groups(domain, group_specs, log):
     group_names = set()
     for row in group_specs:
         group_id = row.get('id')
-        group_name = unicode(row.get('name') or '')
+        group_name = six.text_type(row.get('name') or '')
         case_sharing = row.get('case-sharing')
         reporting = row.get('reporting')
         data = row.get('data')
@@ -294,7 +294,7 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def get_location_from_site_code(site_code, location_cache):
-    if isinstance(site_code, basestring):
+    if isinstance(site_code, six.string_types):
         site_code = site_code.lower()
     elif isinstance(site_code, six.integer_types):
         site_code = str(site_code)
@@ -327,7 +327,7 @@ def users_with_duplicate_passwords(rows):
 
     for row in rows:
         username = row.get('username')
-        password = unicode(row.get('password'))
+        password = six.text_type(row.get('password'))
         if not is_password(password):
             continue
 
@@ -380,7 +380,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
             data = row.get('data')
             email = row.get('email')
-            group_names = map(unicode, row.get('group') or [])
+            group_names = map(six.text_type, row.get('group') or [])
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -396,7 +396,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             role = row.get('role', '')
 
             if password:
-                password = unicode(password)
+                password = six.text_type(password)
             try:
                 username = normalize_username(str(username), domain)
             except TypeError:
@@ -414,7 +414,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             }
 
             is_active = row.get('is_active')
-            if isinstance(is_active, basestring):
+            if isinstance(is_active, six.string_types):
                 try:
                     is_active = string_to_boolean(is_active) if is_active else None
                 except ValueError:
@@ -485,7 +485,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     if phone_number:
                         user.add_phone_number(_fmt_phone(phone_number), default=True)
                     if name:
-                        user.set_full_name(unicode(name))
+                        user.set_full_name(six.text_type(name))
                     if data:
                         error = custom_data_validator(data)
                         if error:
@@ -554,7 +554,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
                 except (UserUploadError, CouchUser.Inconsistent) as e:
-                    status_row['flag'] = unicode(e)
+                    status_row['flag'] = six.text_type(e)
 
             ret["rows"].append(status_row)
     finally:

@@ -20,6 +20,7 @@ from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
+import six
 
 
 OPERATORS = {
@@ -161,7 +162,7 @@ class ICDSMixin(object):
                     op = column['condition']['operator']
 
                     def check_condition(v):
-                        if isinstance(v, basestring):
+                        if isinstance(v, six.string_types):
                             fil_v = str(value)
                         elif isinstance(v, int):
                             fil_v = int(value)
