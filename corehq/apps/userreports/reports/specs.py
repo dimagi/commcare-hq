@@ -217,7 +217,7 @@ class FieldColumn(ReportColumn):
             aggregation = aggregation.order('_term', order=order)
         else:
             aggregation = ES_AGG_MAP[self.aggregation](self.column_id, self.field)
-        return filter(None, [aggregation])
+        return [aggregation] if aggregation else []
 
     def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
         if not from_aggregation:

@@ -680,7 +680,7 @@ class DataSourceForm(forms.Form):
         cleaned_data = super(DataSourceForm, self).clean()
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
-        builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
+        builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
         if has_report_builder_access(self.domain) and len(builder_reports) >= self.max_allowed_reports:
             # Don't show the warning when domain does not have report buidler access, because this is just a
             # preview and the report will not be saved.
