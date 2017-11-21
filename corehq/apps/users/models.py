@@ -802,6 +802,7 @@ class EulaMixin(DocumentSchema):
 class DeviceIdLastUsed(DocumentSchema):
     device_id = StringProperty()
     last_used = DateTimeProperty()
+    commcare_version = StringProperty()
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
@@ -2116,7 +2117,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = self.get_usercase()
         return case.case_id if case else None
 
-    def update_device_id_last_used(self, device_id, when=None):
+    def update_device_id_last_used(self, device_id, when=None, commcare_version=None):
         """
         Sets the last_used date for the device to be the current time
         Does NOT save the user object.
@@ -2129,13 +2130,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             if user_device_id_last_used.device_id == device_id:
                 if when.date() > user_device_id_last_used.last_used.date():
                     user_device_id_last_used.last_used = when
+                    if commcare_version:
+                        user_device_id_last_used.commcare_version = commcare_version
                     return True
                 else:
                     return False
         else:
             self.devices.append(DeviceIdLastUsed(
                 device_id=device_id,
-                last_used=when
+                last_used=when,
+                commcare_version=commcare_version
             ))
             return True
 

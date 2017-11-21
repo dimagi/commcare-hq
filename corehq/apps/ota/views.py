@@ -291,7 +291,7 @@ def heartbeat(request, domain, app_build_id):
             update_last_sync(app_id, last_sync, request.couch_user, app_version)
 
         update_latest_builds(request.couch_user, app_id, datetime.utcnow(), app_version)
-        update_device_id(request.couch_user, device_id)
+        update_device_id(request.couch_user, device_id, commcare_version=commcare_version)
 
     return JsonResponse(info)
 
