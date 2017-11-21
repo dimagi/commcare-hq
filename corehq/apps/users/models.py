@@ -816,19 +816,19 @@ class DeviceAppMeta(DocumentSchema):
     app_id = StringProperty()
     build_id = StringProperty()
     build_version = IntegerProperty()
+    last_request = DateTimeProperty()
     last_submission = DateTimeProperty()
     last_sync = DateTimeProperty()
     last_heartbeat = DateTimeProperty()
     num_unsent_forms = IntegerProperty()
     num_quarantined_forms = IntegerProperty()
 
-    @property
-    def latest_request(self):
+    def _update_latest_request(self):
         dates = filter(None, (self.last_submission, self.last_heartbeat, self.last_sync))
-        return max(dates) if dates else None
+        self.last_request = max(dates) if dates else None
 
     def merge(self, other):
-        if other.latest_request <= self.latest_request:
+        if other.latest_request <= self.last_request:
             return
 
         for key, prop in self.properties().items():
