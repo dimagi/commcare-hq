@@ -164,17 +164,21 @@ class ShardAccessor(object):
         return databases
 
     @staticmethod
-    def get_database_for_doc(doc_id):
-        """
-        :return: Django DB alias in which the doc should be stored
-        """
+    def get_shard_id_and_database_for_doc(doc_id):
         assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
         consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         hash_ = ShardAccessor.hash_doc_id_python(doc_id)
         shard_id = hash_ & part_mask
-        return shard_map[shard_id].django_dbname
+        return shard_id, shard_map[shard_id].django_dbname
+
+    @staticmethod
+    def get_database_for_doc(doc_id):
+        """
+        :return: Django DB alias in which the doc should be stored
+        """
+        return ShardAccessor.get_shard_id_and_database_for_doc(doc_id)[1]
 
 
 class ReindexAccessor(six.with_metaclass(ABCMeta)):

@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
         with open(filename) as f:
             reader = csv.reader(f)
-            headers = reader.next()
+            headers = next(reader)
             missing_headers = set(self.voucher_update_properties) - set(headers)
             if missing_headers:
                 print("Missing the following headers:")

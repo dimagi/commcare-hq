@@ -129,7 +129,7 @@ class SqlSMSPillowTest(TestCase):
 
         # publish the change and confirm it gets to kafka
         self.sms.publish_change()
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(self.sms.couch_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)

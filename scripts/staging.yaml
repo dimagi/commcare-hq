@@ -47,14 +47,12 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
-  - nh/new_rb  # Norman 11/22
   - br/kill-old-cloucare  # Danny 7/21
   - jls/fixtures-require-js-2017-qa # Jenny 9/18
   - mk-search-under-location # Manish 4-Oct
   - es/loc-safe-reports  # Ethan 11/1
-  - np/tb/counts  # NP 11/10
   - ce/latest-saved-profile # Jenny Nov 15
-  - jls/kill-report-builder-v1 # Jenny Nov 17
+  - jls/ko-dashboard # Jenny Nov 20
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -69,5 +67,6 @@ submodules:
   deployment/commcare-hq-deploy:
     branches:
       - jls/r-js # Jenny 10/2
+      - np/github2  # NP 11/20
   submodules/commcare-translations:
     branches: []

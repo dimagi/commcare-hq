@@ -179,7 +179,7 @@ class ENikshay2BMigrator(object):
                               CASE_TYPE_TEST: 'tests',
                               CASE_TYPE_TRAIL: 'trails'}
             episodes_to_person = {}
-            for case in self.accessor.get_reverse_indexed_cases(referrals_and_occurrences_to_person.keys()):
+            for case in self.accessor.get_reverse_indexed_cases(list(referrals_and_occurrences_to_person)):
                 bucket = type_to_bucket.get(case.type, None)
                 if bucket:
                     for index in case.indices:
@@ -190,7 +190,7 @@ class ENikshay2BMigrator(object):
                                 episodes_to_person[case.case_id] = person_id
                             break
 
-            for case in self.accessor.get_reverse_indexed_cases(episodes_to_person.keys()):
+            for case in self.accessor.get_reverse_indexed_cases(list(episodes_to_person)):
                 if case.type == CASE_TYPE_DRTB_HIV_REFERRAL:
                     for index in case.indices:
                         person_id = episodes_to_person.get(index.referenced_id)

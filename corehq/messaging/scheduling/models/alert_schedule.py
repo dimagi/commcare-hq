@@ -44,10 +44,11 @@ class AlertSchedule(Schedule):
             instance.active = False
 
     @classmethod
-    def create_simple_alert(cls, domain, content):
+    def create_simple_alert(cls, domain, content, extra_options=None):
         with transaction.atomic():
             schedule = cls(domain=domain)
             schedule.ui_type = Schedule.UI_TYPE_IMMEDIATE
+            schedule.set_extra_scheduling_options(extra_options)
             schedule.save()
 
             if content.pk is None:

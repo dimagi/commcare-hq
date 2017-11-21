@@ -2,28 +2,6 @@ The "Report Builder" feature allows users to configure User Configurable Reports
 the JSON configuration "by hand."
 
 
-# Release Plan
-
-The "New Report Builder", or v2 of the report builder resides under a feature flag at the time of writing this
-document. [This](http://manage.dimagi.com/default.asp?251977) fogbugz case tracks remaining QA problems that need
-fixing before v2 can be released.
-
-When we are ready to transition all projects to the new report builder, follow these steps:
-- Remove the REPORT_BUILDER_V2 flag and references to it
-- Remove v1 report builder files
-    - `corehq/apps/userreports/v1/`
-    - `corehq/apps/userreports/reports/builder/v1/`
-    - `corehq/apps/userreports/static/userreports/v1/`
-    - `corehq/apps/userreports/static/userreports/js/v1/`
-    - `corehq/apps/userreports/templates/userreports/v1/`
-    - `corehq/apps/userreports/templates/userreports/partials/v1/`
-    - `corehq/apps/userreports/templates/userreports/reportbuilder/v1/`
-- Remove v1 urls
-- Remove v1/v2 diff tests (`test_report_builder_v2_diffs.py`) and the diff files
-  (`corehq/apps/userreports/tests/data/report_builder_v2_diffs`)
-- Remove `build_report_builder_v2_diffs` management command
-
-
 # Design overview
 
 ## Populating the front end
