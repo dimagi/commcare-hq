@@ -318,7 +318,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         return interval_id, lab_serial_number, result_grade, dmc_code
 
     def get_result_grade(self, test_result_grade, bacilli_count):
-        if test_result_grade in smear_result_grade.keys():
+        if test_result_grade in smear_result_grade:
             return smear_result_grade.get(test_result_grade)
         elif test_result_grade == 'scanty':
             return smear_result_grade.get("SC-{b_count}".format(b_count=bacilli_count), None)

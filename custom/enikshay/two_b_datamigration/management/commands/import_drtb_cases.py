@@ -771,7 +771,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None, c
     if not case_id:
         case_id = uuid.uuid4().hex
     owner_id = properties.pop("owner_id")
-    props = {k: v for k, v in properties.iteritems() if v is not None}
+    props = {k: v for k, v in six.iteritems(properties) if v is not None}
     props['created_by_migration'] = migration_identifier
     props['migration_data_source'] = "excel_document"
     props['migration_type'] = "pmdt_excel"
@@ -1076,7 +1076,7 @@ def get_key_populations(column_mapping, row):
 
 def get_disease_site_properties_for_person(column_mapping, row):
     props = get_disease_site_properties(column_mapping, row)
-    return {"current_{}".format(k): v for k, v in props.iteritems()}
+    return {"current_{}".format(k): v for k, v in six.iteritems(props)}
 
 
 def get_prev_person_case_properties(property_list, case_properties):
@@ -1530,7 +1530,7 @@ def get_drug_resistance_case_properties(column_mapping, row, test_cases):
                 continue
             dr_cases[drug_id]['sensitivity'] = convert_sensitivity(value)
 
-    return dr_cases.values()
+    return list(dr_cases.values())
 
 
 def convert_sensitivity(sensitivity_value):
