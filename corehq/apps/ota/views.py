@@ -250,25 +250,25 @@ def _log_time_since_last_sync(restore_config):
 
 @login_or_digest_or_basic_or_apikey()
 @require_GET
-def heartbeat(request, domain, hq_app_id):
+def heartbeat(request, domain, app_build_id):
     """
     An endpoint for CommCare mobile to get latest CommCare APK and app version
         info. (Should serve from cache as it's going to be busy view)
 
-    'hq_app_id' (that comes from URL) can be id of any version of the app
+    'app_build_id' (that comes from URL) can be id of any version of the app
     'app_id' (urlparam) is usually id of an app that is not a copy
         mobile simply needs it to be resent back in the JSON, and doesn't
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
-    url_param_app_id = request.GET.get('app_id', '')
-    info = {"app_id": url_param_app_id}
+    app_id = request.GET.get('app_id', '')
+    info = {"app_id": app_id}
     try:
         # mobile will send brief_app_id
-        info.update(LatestAppInfo(url_param_app_id, domain).get_info())
+        info.update(LatestAppInfo(app_id, domain).get_info())
     except (Http404, AssertionError):
         # If it's not a valid 'brief' app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
-        app = get_app(domain, hq_app_id)
+        app = get_app(domain, app_build_id)
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
