@@ -27,19 +27,8 @@ def clear_local_domain_sql_backend_override(domain):
     _thread_local.use_sql_backend = use_sql_backend_dict
 
 
-def _short_circuit_sql_backend_check(domain_object_or_name):
-    if settings.ENTERPRISE_MODE:
-        # assume all enterprise setups are using SQL backend
-        return True
-
-    from corehq.apps.domain.models import Domain
-    is_domain_object = isinstance(domain_object_or_name, Domain)
-    domain_name = domain_object_or_name.name if is_domain_object else domain_object_or_name
-    return domain_name == 'enikshay'
-
-
 def should_use_sql_backend(domain_object_or_name):
-    if _short_circuit_sql_backend_check(domain_object_or_name):
+    if settings.ENTERPRISE_MODE:
         return True
     domain_name, domain_object = _get_domain_name_and_object(domain_object_or_name)
     local_override = get_local_domain_sql_backend_override(domain_name)
