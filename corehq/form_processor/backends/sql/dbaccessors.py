@@ -228,7 +228,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
     @abstractproperty
     def id_field(self):
         """
-        :return: The name of the model field to return if 'id_only' is set. Return a string
+        :return: The name of the model field to return when calling ``get_doc_ids``. Return a string
                  or a dict mapping an alias to a SQL expression
         """
         raise NotImplementedError
@@ -286,7 +286,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         :param from_db: The DB alias to query
         :param last_doc_pk: The primary key of the last doc from the previous batch
         :param limit: Desired batch size
-        :return: List of documents or document IDs
+        :return: List of documents
         """
         query = self.query(from_db, last_doc_pk)
         return query.order_by(self.primary_key_field_name)[:limit]
