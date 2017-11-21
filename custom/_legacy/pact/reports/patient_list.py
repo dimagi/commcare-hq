@@ -11,7 +11,7 @@ from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE
 from pact.reports import PactElasticTabularReportMixin
 from pact.reports.dot import PactDOTReport
 from pact.reports.patient import PactPatientInfoReport
-from pact.utils import query_per_case_submissions_facet
+from pact.utils import case_script_field
 
 
 class PactPrimaryHPField(BaseSingleOptionFilter):
@@ -99,11 +99,30 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         return headers
 
     def case_submits_facet_dict(self, limit):
-        query = query_per_case_submissions_facet(self.request.domain, limit=limit)
+        query = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "term": {
+                            "domain.exact": self.request.domain
+                        }
+                    }
+                }
+            },
+            "aggs": {
+                "case_submissions": {
+                    "terms": {
+                        "script_field": case_script_field()['script_case_id']['script'],
+                        "size": limit
+                    }
+                }
+            },
+            "size": 0
+        }
         results = self.xform_es.run_query(query)
         case_id_count_map = {}
-        for f in results['aggs']['agg_filters']['case_submissions']['terms']:
-            case_id_count_map[f['term']] = f['count']
+        for f in results['aggregations']['case_submissions']['buckets']:
+            case_id_count_map[f['doc_count']] = f['count']
         return case_id_count_map
 
     @property
