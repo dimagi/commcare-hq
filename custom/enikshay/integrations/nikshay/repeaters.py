@@ -160,7 +160,7 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
                 valid_nikshay_patient_registration(episode_case_properties)
             ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
-            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
+            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome and
             is_valid_archived_submission(episode_case)
         )
 

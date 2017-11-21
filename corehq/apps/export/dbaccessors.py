@@ -103,6 +103,12 @@ def get_form_exports_by_domain(domain, has_deid_permissions):
     return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
 
 
+def get_export_count_by_domain(domain):
+    exports = get_form_exports_by_domain(domain, True)
+    exports += get_case_exports_by_domain(domain, True)
+    return len(exports)
+
+
 def _get_export_instance(cls, key):
     results = cls.get_db().view(
         'export_instances_by_domain/view',

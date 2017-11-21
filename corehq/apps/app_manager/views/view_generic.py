@@ -123,9 +123,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
-        # don't fail hard.
+        # redirect to "main" app rather than specific build
         return HttpResponseRedirect(reverse(
-            "view_app", args=[domain, app.copy_of] # TODO - is this right?
+            "view_app", args=[domain, app.copy_of]
         ))
 
     # grandfather in people who set commcare sense earlier

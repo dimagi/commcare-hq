@@ -13,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -168,7 +169,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['percent']
     )
 
@@ -180,7 +181,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['peach'].iteritems()
+                    } for key, value in six.iteritems(data['peach'])
                 ],
                 "key": "% Normal",
                 "strokeWidth": 2,
@@ -193,7 +194,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['orange'].iteritems()
+                    } for key, value in six.iteritems(data['orange'])
                 ],
                 "key": "% Moderately Underweight (-2 SD)",
                 "strokeWidth": 2,
@@ -206,7 +207,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['red'].iteritems()
+                    } for key, value in six.iteritems(data['red'])
                 ],
                 "key": "% Severely Underweight (-3 SD) ",
                 "strokeWidth": 2,

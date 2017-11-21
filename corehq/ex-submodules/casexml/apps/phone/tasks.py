@@ -73,7 +73,7 @@ def update_celery_state(sender=None, body=None, **kwargs):
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def prune_synclogs():
-    prune_date = date.today() - timedelta(days=60)
+    prune_date = date.today() - timedelta(days=30)
     num_deleted = delete_sync_logs(prune_date)
     while num_deleted != 0:
         num_deleted = delete_sync_logs(prune_date)

@@ -12,6 +12,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -72,8 +73,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), map_data.values()))
-    total = sum(map(lambda x: (x[prop] or 0), map_data.values()))
+    total_awcs = sum(map(lambda x: (x['awcs'] or 0), six.itervalues(map_data)))
+    total = sum(map(lambda x: (x[prop] or 0), six.itervalues(map_data)))
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -157,10 +158,10 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
             'districts': districts,
             'states': states,
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += (value or 0)
 
-    for name, value_dict in tooltips_data.iteritems():
+    for name, value_dict in six.iteritems(tooltips_data):
         chart_data['blue'].append([name, value_dict['awcs']])
 
     for sql_location in loc_children:
@@ -180,8 +181,8 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), tooltips_data.values()))
-    total = sum(map(lambda x: (x[prop] or 0), tooltips_data.values()))
+    total_awcs = sum(map(lambda x: (x['awcs'] or 0), six.itervalues(tooltips_data)))
+    total = sum(map(lambda x: (x[prop] or 0), six.itervalues(tooltips_data)))
 
     info = _(
         "Total AWCs that have launched ICDS CAS <br />" +
@@ -257,7 +258,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
         data['pink'][date_in_miliseconds]['y'] += awcs
 
     top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['value'],
         reverse=True
     )
@@ -270,7 +271,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['pink'].iteritems()
+                    } for key, value in six.iteritems(data['pink'])
                 ],
                 "key": "Number of AWCs Launched",
                 "strokeWidth": 2,
