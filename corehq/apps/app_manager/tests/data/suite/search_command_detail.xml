@@ -175,4 +175,45 @@
       </template>
     </field>
   </detail>
+  <detail id="m2_case_short"/>
+  <detail id="m2_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m2.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m3_case_short"/>
+  <detail id="m3_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m3.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+
 </partial>

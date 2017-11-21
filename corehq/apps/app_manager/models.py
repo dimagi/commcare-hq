@@ -2573,7 +2573,7 @@ class ModuleDetailsMixin():
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
         ]
-        if module_offers_search(self):
+        if module_offers_search(self) and not self.case_details.short.custom_xml:
             details.append(('search_short', self.search_detail, True))
         return tuple(details)
 
@@ -3523,7 +3523,7 @@ class AdvancedModule(ModuleBase):
             ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         ]
-        if module_offers_search(self):
+        if module_offers_search(self) and not self.case_details.short.custom_xml:
             details.append(('search_short', self.search_detail, True))
         return details
 
