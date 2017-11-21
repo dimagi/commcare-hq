@@ -1,13 +1,13 @@
 from __future__ import absolute_import
-import json
+import math
 import traceback
 from datetime import datetime, timedelta
-from dateutil.parser import parse
 from django.conf import settings
-import math
+
 from django.db import models
 from django.db.models.aggregates import Count
 from jsonfield.fields import JSONField
+import six
 
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import ChangeMeta
@@ -59,9 +59,12 @@ class PillowError(models.Model):
         self.current_attempt += 1
         self.total_attempts += 1
         self.date_last_attempt = date or datetime.utcnow()
-        self.error_type = path_from_object(exception)
-
-        self.error_traceback = "{}\n\n{}".format(exception.message, "".join(traceback.format_tb(traceb)))
+        if isinstance(exception, six.string_types):
+            self.error_type = "bulk insert to ES"
+            self.error_traceback = exception
+        else:
+            self.error_type = path_from_object(exception)
+            self.error_traceback = "{}\n\n{}".format(exception.message, "".join(traceback.format_tb(traceb)))
 
         if self.current_attempt <= settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS:
             time_till_next = settings.PILLOW_RETRY_REPROCESS_INTERVAL * math.pow(self.current_attempt, settings.PILLOW_RETRY_BACKOFF_FACTOR)
