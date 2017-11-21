@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from collections import namedtuple
 from datetime import datetime
 import math
 import time
@@ -69,18 +70,30 @@ class ElasticProcessor(PillowProcessor):
             self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
 
 
+DocAndChange = namedtuple('DocAndChange', ['doc', 'change'])
+
+
 class BulkElasticProcessor(ElasticProcessor):
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
         super(BulkElasticProcessor, self).__init__(elasticsearch, index_info, doc_prep_fn, doc_filter_fn)
-        self.changes = {}
+        self.docs_and_changes = {}
 
     def process_change(self, pillow_instance, change):
-        self.changes[change.id] = change
+        if not change.id:
+            return
+
+        if change.deleted:
+            self.docs_and_changes[change.id] = DocAndChange(doc=None, change=change)
+
+        doc = self._doc_to_save(change)
+        if doc:
+            self.docs_and_changes[change.id] = DocAndChange(doc=doc, change=change)
 
     def commit_changes(self):
         # pretty similar to build_bulk_payload, but that uses changes and doesn't ensure revisions
         payload = []
-        for change in six.itervalues(self.changes):
+        for doc_and_change in six.itervalues(self.docs_and_changes):
+            change = doc_and_change.change
             doc_id = change.id
             if change.deleted and change.id:
                 payload.append({
@@ -94,7 +107,7 @@ class BulkElasticProcessor(ElasticProcessor):
 
             errors = dict()
             try:
-                doc = self._doc_to_save(change)
+                doc = doc_and_change.doc
                 if doc:
                     payload.append({
                         "index": {
@@ -105,7 +118,7 @@ class BulkElasticProcessor(ElasticProcessor):
                     })
                     payload.append(doc)
             except Exception as e:
-                errors[doc_id] = (self.changes[doc_id], e)
+                errors[doc_id] = (self.docs_and_changes[doc_id].change, e)
 
         payloads = prepare_bulk_payloads(payload, 10 ** 7)
 
@@ -137,7 +150,7 @@ class BulkElasticProcessor(ElasticProcessor):
                 pillow_logging.exception("\tException sending payload to ES")
             else:
                 return {
-                    value['_id']: (self.changes[value['_id']], value['error'])
+                    value['_id']: (self.docs_and_changes[value['_id']].change, value['error'])
                     for doc_result in res['items']
                     for value in doc_result.values()
                     if value.get('error')

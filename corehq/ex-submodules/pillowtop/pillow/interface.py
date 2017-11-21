@@ -270,9 +270,12 @@ class ConstructedPillow(PillowBase):
     def commit_changes(self):
         errors = {}
         for processor in self.processors:
-            errors.update(processor.commit_changes())
+            errors = processor.commit_changes()
+            if errors:
+                errors.update(errors)
 
-        handle_bulk_pillow_error(self, errors)
+        if errors:
+            handle_bulk_pillow_error(self, errors)
 
 
 def handle_bulk_pillow_error(pillow, errors):
