@@ -61,6 +61,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
         expected_json.update({
             'domain': self.domain,
             'received_on': actual_json['received_on'],
+            'server_modified_on': actual_json['server_modified_on'],
             '_rev': actual_json['_rev'],
             'initial_processing_complete': True,
             '#export_tag': actual_json['#export_tag'],
