@@ -291,7 +291,20 @@ def heartbeat(request, domain, app_build_id):
             update_last_sync(app_id, last_sync, request.couch_user, app_version)
 
         update_latest_builds(request.couch_user, app_id, datetime.utcnow(), app_version)
-        update_device_meta(request.couch_user, device_id, commcare_version=commcare_version)
+
+        def _safe_int(val):
+            try:
+                return int(val)
+            except:
+                pass
+
+        update_device_meta(
+            request.couch_user,
+            device_id,
+            commcare_version=commcare_version,
+            unsent_forms=_safe_int(num_unsent_forms),
+            quarantined_forms=_safe_int(num_quarantined_forms)
+        )
 
     return JsonResponse(info)
 

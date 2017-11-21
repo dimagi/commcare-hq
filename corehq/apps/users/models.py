@@ -803,6 +803,8 @@ class DeviceIdLastUsed(DocumentSchema):
     device_id = StringProperty()
     last_used = DateTimeProperty()
     commcare_version = StringProperty()
+    num_unsent_forms = IntegerProperty()
+    num_quarantined_forms = IntegerProperty()
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
@@ -2117,7 +2119,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = self.get_usercase()
         return case.case_id if case else None
 
-    def update_device_id_last_used(self, device_id, when=None, commcare_version=None):
+    def update_device_id_last_used(self, device_id, when=None, commcare_version=None,
+                                   unsent_forms=None, quarantined_forms=None):
         """
         Sets the last_used date for the device to be the current time
         Does NOT save the user object.
@@ -2132,6 +2135,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                     user_device_id_last_used.last_used = when
                     if commcare_version:
                         user_device_id_last_used.commcare_version = commcare_version
+                    if unsent_forms:
+                        user_device_id_last_used.num_unsent_forms = unsent_forms
+                    if quarantined_forms:
+                        user_device_id_last_used.num_quarantined_forms = quarantined_forms
                     return True
                 else:
                     return False
