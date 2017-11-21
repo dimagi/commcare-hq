@@ -200,8 +200,7 @@ def handle_401_response(f):
     return _inner
 
 
-def update_device_meta(user, device_id, commcare_version=None,
-                       unsent_forms=None, quarantined_forms=None, save=True):
+def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
     updated = False
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
@@ -209,8 +208,7 @@ def update_device_meta(user, device_id, commcare_version=None,
             updated = user.update_device_id_last_used(
                 device_id,
                 commcare_version=commcare_version,
-                unsent_forms=unsent_forms,
-                quarantined_forms=quarantined_forms,
+                device_app_meta=device_app_meta,
             )
             if toggles.ENIKSHAY.enabled(user.domain):
                 updated = set_enikshay_device_id(user, device_id) or updated

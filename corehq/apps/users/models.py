@@ -799,20 +799,55 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class DeviceAppMeta(DocumentSchema):
+    """Metadata for an app on a device"""
+    app_id = StringProperty()
+    build_id = StringProperty()
+    build_version = IntegerProperty()
+    last_submission = DateTimeProperty()
+    last_sync = DateTimeProperty()
+    last_heartbeat = DateTimeProperty()
+    num_unsent_forms = IntegerProperty()
+    num_quarantined_forms = IntegerProperty()
+
+
 class DeviceIdLastUsed(DocumentSchema):
     device_id = StringProperty()
     last_used = DateTimeProperty()
     commcare_version = StringProperty()
-    num_unsent_forms = IntegerProperty()
-    num_quarantined_forms = IntegerProperty()
+    app_meta = SchemaListProperty(DeviceAppMeta)
+
+    def update_meta(self, commcare_version=None, app_meta=None):
+        if commcare_version:
+            self.commcare_version = commcare_version
+        if app_meta:
+            self._merge_app_meta(app_meta)
+
+    def _merge_app_meta(self, app_meta):
+        current_meta = self.get_meta_for_app(app_meta.app_id)
+        if not current_meta:
+            self.app_meta.append(app_meta)
+        else:
+            for prop in self.properties():
+                new_val = getattr(app_meta, prop)
+                if new_val and getattr(self, prop) != new_val:
+                    setattr(self, prop, new_val)
+
+    def get_meta_for_app(self, app_id):
+        matches = [
+            meta for meta in self.app_meta
+            if meta.app_id == app_id
+        ]
+        return matches[0] if matches else None
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
 
 class LastSubmission(DocumentSchema):
-    submission_date = DateTimeProperty()
+    """Metadata for form sumbissions. This data is keyed by app_id"""
     app_id = StringProperty()
+    submission_date = DateTimeProperty()
     build_id = StringProperty()
     device_id = StringProperty()
     build_version = IntegerProperty()
@@ -820,9 +855,10 @@ class LastSubmission(DocumentSchema):
 
 
 class LastSync(DocumentSchema):
+    """Metadata for syncs and restores. This data is keyed by app_id"""
+    app_id = StringProperty()
     sync_date = DateTimeProperty()
     build_version = IntegerProperty()
-    app_id = StringProperty()
 
 
 class LastBuild(DocumentSchema):
@@ -830,9 +866,9 @@ class LastBuild(DocumentSchema):
     Build info for the app on the user's phone
     when they last synced or submitted
     """
+    app_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
-    app_id = StringProperty()
 
 
 class ReportingMetadata(DocumentSchema):
@@ -2119,8 +2155,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = self.get_usercase()
         return case.case_id if case else None
 
-    def update_device_id_last_used(self, device_id, when=None, commcare_version=None,
-                                   unsent_forms=None, quarantined_forms=None):
+    def update_device_id_last_used(self, device_id, when=None, commcare_version=None, device_app_meta=None):
         """
         Sets the last_used date for the device to be the current time
         Does NOT save the user object.
@@ -2133,12 +2168,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             if user_device_id_last_used.device_id == device_id:
                 if when.date() > user_device_id_last_used.last_used.date():
                     user_device_id_last_used.last_used = when
-                    if commcare_version:
-                        user_device_id_last_used.commcare_version = commcare_version
-                    if unsent_forms:
-                        user_device_id_last_used.num_unsent_forms = unsent_forms
-                    if quarantined_forms:
-                        user_device_id_last_used.num_quarantined_forms = quarantined_forms
+                    user_device_id_last_used.update_meta(commcare_version, device_app_meta)
                     return True
                 else:
                     return False

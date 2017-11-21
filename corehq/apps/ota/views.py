@@ -31,7 +31,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -196,14 +196,21 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse(message, status=401), None
 
     couch_restore_user = as_user_obj if uses_login_as else couch_user
-    update_device_meta(couch_restore_user, device_id)
+    app = app_meta = None
+    if app_id:
+        app = get_app(domain, app_id)
+        app_meta = DeviceAppMeta(
+            app_id=app.master_id,
+            build_id=app_id if app.copy_of else None,
+            last_sync=datetime.utcnow(),
+        )
+    update_device_meta(couch_restore_user, device_id, device_app_meta=app_meta)
 
     restore_user = get_restore_user(domain, couch_user, as_user_obj)
     if not restore_user:
         return HttpResponse('Could not find user', status=404), None
 
     project = Domain.get_by_name(domain)
-    app = get_app(domain, app_id) if app_id else None
     async_restore_enabled = (
         toggles.ASYNC_RESTORE.enabled(domain)
         and openrosa_version
@@ -298,12 +305,19 @@ def heartbeat(request, domain, app_build_id):
             except:
                 pass
 
+        app_meta = DeviceAppMeta(
+            app_id=app_id,
+            build_id=app_build_id,
+            build_version=app_version,
+            last_heartbeat=datetime.utcnow(),
+            num_unsent_forms=num_unsent_forms,
+            num_quarantined_forms=num_quarantined_forms
+        )
         save_user |= update_device_meta(
             couch_user,
             device_id,
             commcare_version=commcare_version,
-            unsent_forms=_safe_int(num_unsent_forms),
-            quarantined_forms=_safe_int(num_quarantined_forms),
+            device_app_meta=app_meta,
             save=False
         )
 
