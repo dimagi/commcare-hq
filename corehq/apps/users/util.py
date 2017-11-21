@@ -6,7 +6,8 @@ from django.contrib.auth.models import User
 from django.utils import html, safestring
 
 from couchdbkit.resource import ResourceNotFound
-from corehq import privileges
+from corehq import privileges, toggles
+from corehq.apps.users.models import CommCareUser, LastBuild, LastSync
 from corehq.util.quickcache import quickcache
 
 from django.core.cache import cache
@@ -15,6 +16,8 @@ from django_prbac.utils import has_privilege
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, ARCHIVED_CASE_OWNER_ID
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
+from custom.enikshay.user_setup import set_enikshay_device_id
+
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
 JAVA_ADMIN_USERNAME = 'admin'
@@ -197,3 +200,105 @@ def user_display_string(username, first_name="", last_name=""):
 def user_location_data(location_ids):
     # Spec for 'commcare_location_ids' custom data field
     return ' '.join(location_ids)
+
+
+def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
+    updated = False
+    if device_id and isinstance(user, CommCareUser):
+        if not user.is_demo_user:
+            # this only updates once per day for each device
+            updated = user.update_device_id_last_used(
+                device_id,
+                commcare_version=commcare_version,
+                device_app_meta=device_app_meta,
+            )
+            if toggles.ENIKSHAY.enabled(user.domain):
+                updated = set_enikshay_device_id(user, device_id) or updated
+            if save and updated:
+                user.save(fire_signals=False)
+    return updated
+
+
+def _last_build_needs_update(last_build, build_date):
+    if not (last_build and last_build.build_version_date):
+        return True
+    if build_date > last_build.build_version_date:
+        return True
+    return False
+
+
+def update_latest_builds(user, app_id, date, version):
+    """
+    determines whether to update the last build attributes in a user's reporting metadata
+    """
+    last_builds = filter(
+        lambda build: build.app_id == app_id,
+        user.reporting_metadata.last_builds,
+    )
+    if last_builds:
+        assert len(last_builds) == 1, 'Must only have one last build per app'
+        last_build = last_builds[0]
+    else:
+        last_build = None
+
+    changed = False
+    if _last_build_needs_update(last_build, date):
+        if last_build is None:
+            last_build = LastBuild()
+            user.reporting_metadata.last_builds.append(last_build)
+        last_build.build_version = version
+        last_build.app_id = app_id
+        last_build.build_version_date = date
+        changed = True
+
+    if _last_build_needs_update(user.reporting_metadata.last_build_for_user, date):
+        user.reporting_metadata.last_build_for_user = last_build
+        changed = True
+
+    return changed
+
+
+def filter_by_app(data_list, app_id):
+    """
+    returns the last sync, submission, or build for the given app id
+    :param data_list: list from user's reporting metadata (last syncs, last submissions, or last builds)
+    """
+    last_items = filter(
+        lambda sync: sync.app_id == app_id,
+        data_list,
+    )
+    if last_items:
+        assert len(last_items) == 1, 'Must only have one {} per app'.format(last_items[0].__class__)
+        last_item = last_items[0]
+    else:
+        last_item = None
+    return last_item
+
+
+def update_last_sync(user, app_id, sync_date, version):
+    """
+    This function does not save the user.
+    :return: True if user updated
+    """
+    last_sync = filter_by_app(user.reporting_metadata.last_syncs, app_id)
+    if _last_sync_needs_update(last_sync, sync_date):
+        if last_sync is None:
+            last_sync = LastSync()
+            user.reporting_metadata.last_syncs.append(last_sync)
+        last_sync.sync_date = sync_date
+        last_sync.build_version = version
+        last_sync.app_id = app_id
+
+        if _last_sync_needs_update(user.reporting_metadata.last_sync_for_user, sync_date):
+            user.reporting_metadata.last_sync_for_user = last_sync
+
+        return True
+    return False
+
+
+def _last_sync_needs_update(last_sync, sync_datetime):
+    if not (last_sync and last_sync.sync_date):
+        return True
+    if sync_datetime > last_sync.sync_date:
+        return True
+    return False

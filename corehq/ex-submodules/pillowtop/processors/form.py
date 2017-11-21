@@ -2,12 +2,12 @@ from __future__ import absolute_import
 from datetime import timedelta
 from django.http import Http404
 
-from corehq.apps.ota.utils import update_device_meta
+from corehq.apps.users.util import update_device_meta, update_latest_builds, filter_by_app
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.users.models import CouchUser, LastSubmission, DeviceAppMeta
-from corehq.pillows.utils import format_form_meta_for_es, update_latest_builds, filter_by_app
+from corehq.pillows.utils import format_form_meta_for_es
 from corehq.util.quickcache import quickcache
 from corehq.apps.receiverwrapper.util import get_app_version_info
 

@@ -10,7 +10,6 @@ from iso8601 import iso8601
 
 from casexml.apps.phone.exceptions import InvalidSyncLogException
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
-from corehq.pillows.utils import update_latest_builds, update_last_sync
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from dimagi.utils.logging import notify_exception
@@ -39,7 +38,8 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from .models import SerialIdBucket
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
-    handle_401_response, update_device_meta)
+    handle_401_response)
+from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
 
 
 @location_safe

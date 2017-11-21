@@ -9,11 +9,10 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import LocationFieldsView
-from corehq.apps.ota.utils import update_device_meta
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE, UserFieldsView
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, update_device_meta
 from .utils import setup_enikshay_locations
 from ..const import (
     DEFAULT_MOBILE_WORKER_ROLE,
