@@ -198,7 +198,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
 
         self.hasBadXML = function(key) {
             if (self.values_are_icons() || self.values_are_conditions()) {
-                // Expresion can contain whatever
+                // Expressions can contain whatever
                 return false;
             }
 
