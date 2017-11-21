@@ -287,14 +287,14 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             if (!output) {
                 return ['',''];
             }
-            var first = self.formatResult(output);
-            var numLines = (first.match(/\r?\n/g) || '').length + 1;
-            var second = '';
+            var inlineBody = self.formatResult(output);
+            var numLines = (inlineBody.match(/\r?\n/g) || '').length + 1;
+            var fullBody = '';
             if(numLines > self.maxLines) {
-                second = first;
-                first = self.truncateResult(second, self.maxLines, false);
+                fullBody = inlineBody;
+                inlineBody = self.truncateResult(fullBody, self.maxLines, false);
             }
-            return [first, second];
+            return [inlineBody, fullBody];
         };
 
         self.formatResult = function (output) {
