@@ -6,6 +6,20 @@ function DownloadController($location, locationHierarchy, locationsService, user
     vm.months = [];
     vm.years = [];
 
+    vm.filterOptions = [
+        {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
+        {label: 'Data not Entered for height (Unmeasured)', id: 'umeasured'},
+        {label: 'Severely Underweight', id: 'severely_underweight'},
+        {label: 'Moderately Underweight', id: 'moderately_underweight'},
+        {label: 'Normal (weight-for-age)', id: 'normal_wfa'},
+        {label: 'Severely Stunted', id: 'severely_stunted'},
+        {label: 'Moderately Stunted', id: 'moderately_stunted'},
+        {label: 'Normal (height-for-age)', id: 'normal_hfa'},
+        {label: 'Severely Wasted', id: 'severely_wasted'},
+        {label: 'Moderately Wasted', id: 'moderately_wasted'},
+        {label: 'Normal (weight-for-height)', id: 'normal_wfh'},
+    ];
+
     vm.userLocationId = userLocationId;
 
     window.angular.forEach(moment.months(), function(key, value) {
@@ -147,7 +161,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.getPlaceholder = function(locationTypes) {
         return _.map(locationTypes, function(locationType) {
-            if (locationType.name === 'state') return 'National';
+            if (locationType.name === 'state') {
+                if (vm.isChildBeneficiaryListSelected()) {
+                    return 'Select State';
+                } else {
+                    return NATIONAL_OPTION.name;
+                }
+            }
             return locationType.name;
         }).join(', ');
     };
@@ -158,6 +178,9 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.getLocationsForLevel = function(level) {
         if (level === 0) {
+            if (vm.isChildBeneficiaryListSelected()) {
+                return locationsCache.root.slice(1);
+            }
             return locationsCache.root;
         } else {
             var selectedLocation = vm.selectedLocations[level - 1];
@@ -213,8 +236,43 @@ function DownloadController($location, locationHierarchy, locationsService, user
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
     };
 
+    vm.getFormats = function() {
+        if (vm.isChildBeneficiaryListSelected()) {
+            return [vm.formats[0]];
+        } else {
+            return vm.formats;
+        }
+    };
+
+    vm.onIndicatorSelect = function() {
+        if (vm.isChildBeneficiaryListSelected() && vm.isNationalSelected()) {
+            init();
+            vm.selectedFormat = vm.formats[0].id;
+        } else {
+            vm.selectedFormat = 'xls';
+        }
+    };
+
+    vm.hasErrors = function() {
+        return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || vm.isNationalSelected());
+    };
+
     vm.isVisible = function(level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all');
+    };
+
+    vm.selectedFilterOptions = function() {
+        return vm.filterOptions.filter(function(el) {
+            return el.selected;
+        });
+    };
+
+    vm.isChildBeneficiaryListSelected = function() {
+        return vm.selectedIndicator === 6;
+    };
+
+    vm.isNationalSelected = function() {
+        return !vm.selectedLocations[0] || vm.selectedLocations[0] === ALL_OPTION.location_id;
     };
 }
 

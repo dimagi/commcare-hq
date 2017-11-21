@@ -554,7 +554,7 @@ class ExportIndicatorView(View):
             'aggregation_level': aggregation_level,
             'domain': self.kwargs['domain']
         }
-        beneficiary_config = {'domain': self.kwargs['domain']}
+        beneficiary_config = {'domain': self.kwargs['domain'], 'filters': request.POST.getlist('filter[]')}
 
         if month and year:
             beneficiary_config['month'] = date(year, month, 1)
@@ -615,7 +615,7 @@ class ExportIndicatorView(View):
                 config=beneficiary_config,
                 loc_level=aggregation_level,
                 show_test=include_test
-            ).to_export(export_format, location)
+            ).to_export('csv', location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
