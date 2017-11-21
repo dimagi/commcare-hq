@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, DeviceAppMeta
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
@@ -109,3 +109,28 @@ class UserDeviceTest(SimpleTestCase):
         self.assertTrue(user.update_device_id_last_used(device, when))
         self.assertFalse(user.update_device_id_last_used(device, later))
         self.assertTrue(user.update_device_id_last_used(device, day_later))
+
+    def test_merge_device_app_meta(self):
+        m1 = DeviceAppMeta(
+            build_id='build1',
+            build_version=1,
+            last_submission=datetime.utcnow(),
+            num_unsent_forms=1
+        )
+        m2 = DeviceAppMeta(
+            build_id='build2',
+            build_version=2,
+            last_submission=datetime.utcnow(),
+        )
+
+        m2.merge(m1)
+        self.assertNotEqual(m2.build_id, m1.build_id)
+        self.assertNotEqual(m2.build_version, m1.build_version)
+        self.assertNotEqual(m2.last_submission, m1.last_submission)
+        self.assertIsNone(m2.num_unsent_forms)
+
+        m1.merge(m2)
+        self.assertEqual(m1.build_id, m2.build_id)
+        self.assertEqual(m1.build_version, m2.build_version)
+        self.assertEqual(m1.last_submission, m2.last_submission)
+        self.assertEqual(m1.num_unsent_forms, 1)

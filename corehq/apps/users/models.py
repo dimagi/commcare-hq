@@ -810,6 +810,25 @@ class DeviceAppMeta(DocumentSchema):
     num_unsent_forms = IntegerProperty()
     num_quarantined_forms = IntegerProperty()
 
+    @property
+    def latest_request(self):
+        dates = filter(None, (self.last_submission, self.last_heartbeat, self.last_sync))
+        return max(dates) if dates else None
+
+    def merge(self, other):
+        if other.latest_request <= self.latest_request:
+            return
+
+        for key, prop in self.properties().items():
+            new_val = getattr(other, key)
+            if new_val:
+                old_val = getattr(self, key)
+                prop_is_date = isinstance(prop, DateTimeProperty)
+                if prop_is_date and new_val > old_val:
+                    setattr(self, key, new_val)
+                elif not prop_is_date and old_val != new_val:
+                    setattr(self, key, new_val)
+
 
 class DeviceIdLastUsed(DocumentSchema):
     device_id = StringProperty()
@@ -828,10 +847,7 @@ class DeviceIdLastUsed(DocumentSchema):
         if not current_meta:
             self.app_meta.append(app_meta)
         else:
-            for prop in self.properties():
-                new_val = getattr(app_meta, prop)
-                if new_val and getattr(self, prop) != new_val:
-                    setattr(self, prop, new_val)
+            current_meta.merge(app_meta)
 
     def get_meta_for_app(self, app_id):
         matches = [
