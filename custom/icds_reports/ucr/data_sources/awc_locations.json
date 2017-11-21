@@ -409,6 +409,78 @@
             "name": "state_id"
           }
         }
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "block_map_location_name",
+        "expression": {
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "metadata",
+              "map_location_name"
+            ]
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "block_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "district_map_location_name",
+        "expression": {
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "metadata",
+              "map_location_name"
+            ]
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "district_id"
+          }
+        }
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "state_map_location_name",
+        "expression": {
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "metadata",
+              "map_location_name"
+            ]
+          },
+          "type": "related_doc",
+          "related_doc_type": "Location",
+          "doc_id_expression": {
+            "type": "named",
+            "name": "state_id"
+          }
+        }
       }
     ],
     "description": "",
