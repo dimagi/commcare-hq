@@ -7,7 +7,6 @@ from django.utils import html, safestring
 
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges, toggles
-from corehq.apps.users.models import CommCareUser, LastBuild, LastSync
 from corehq.util.quickcache import quickcache
 
 from django.core.cache import cache
@@ -16,8 +15,6 @@ from django_prbac.utils import has_privilege
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, ARCHIVED_CASE_OWNER_ID
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
-from custom.enikshay.user_setup import set_enikshay_device_id
-
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
 JAVA_ADMIN_USERNAME = 'admin'
@@ -203,6 +200,9 @@ def user_location_data(location_ids):
 
 
 def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
+    from corehq.apps.users.models import CommCareUser
+    from custom.enikshay.user_setup import set_enikshay_device_id
+
     updated = False
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
@@ -231,6 +231,7 @@ def update_latest_builds(user, app_id, date, version):
     """
     determines whether to update the last build attributes in a user's reporting metadata
     """
+    from corehq.apps.users.models import LastBuild
     last_builds = filter(
         lambda build: build.app_id == app_id,
         user.reporting_metadata.last_builds,
@@ -258,15 +259,15 @@ def update_latest_builds(user, app_id, date, version):
     return changed
 
 
-def filter_by_app(data_list, app_id):
+def filter_by_app(obj_list, app_id):
     """
-    returns the last sync, submission, or build for the given app id
-    :param data_list: list from user's reporting metadata (last syncs, last submissions, or last builds)
+    :param obj_list: list from objects with ``app_id`` property
+    :returns: The object with matching app_id
     """
-    last_items = filter(
+    last_items = list(filter(
         lambda sync: sync.app_id == app_id,
-        data_list,
-    )
+        obj_list,
+    ))
     if last_items:
         assert len(last_items) == 1, 'Must only have one {} per app'.format(last_items[0].__class__)
         last_item = last_items[0]
@@ -280,6 +281,7 @@ def update_last_sync(user, app_id, sync_date, version):
     This function does not save the user.
     :return: True if user updated
     """
+    from corehq.apps.users.models import LastSync
     last_sync = filter_by_app(user.reporting_metadata.last_syncs, app_id)
     if _last_sync_needs_update(last_sync, sync_date):
         if last_sync is None:

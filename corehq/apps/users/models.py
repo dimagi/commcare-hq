@@ -16,7 +16,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
-from corehq.apps.users.util import format_username
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -59,6 +58,8 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
+    format_username,
+    filter_by_app
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted, \
@@ -862,11 +863,7 @@ class DeviceIdLastUsed(DocumentSchema):
             current_meta.merge(app_meta)
 
     def get_meta_for_app(self, app_id):
-        matches = [
-            meta for meta in self.app_meta
-            if meta.app_id == app_id
-        ]
-        return matches[0] if matches else None
+        return filter_by_app(self.app_meta, app_id)
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
