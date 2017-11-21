@@ -261,6 +261,14 @@ def heartbeat(request, domain, app_build_id):
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
     app_id = request.GET.get('app_id', '')
+
+    app_version = request.GET.get('app_version', '')
+    device_id = request.GET.get('device_id', '')
+    last_sync_time = request.GET.get('last_sync_time', '')
+    num_unsent_forms = request.GET.get('num_unsent_forms', '')
+    num_quarantined_forms = request.GET.get('num_quarantined_forms', '')
+    commcare_version = request.GET.get('cc_version', '')
+
     info = {"app_id": app_id}
     try:
         # mobile will send brief_app_id
