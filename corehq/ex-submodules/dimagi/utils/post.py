@@ -118,7 +118,7 @@ def post_data(data, url, curl_command="curl", use_curl=False,
 
             params.append(url)
             p = subprocess.Popen(params,
-                                 stdout=PIPE,stderr=PIPE,shell=False)
+                                 stdout=PIPE, stderr=PIPE, shell=False)
             errors = p.stderr.read()
             results = p.stdout.read()
         else:

@@ -124,7 +124,7 @@ def monthly_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def saved_exports():
     for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
         export_for_group_async.delay(group_config_id)

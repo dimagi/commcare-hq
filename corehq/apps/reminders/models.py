@@ -122,7 +122,7 @@ CASE_CRITERIA = "CASE_CRITERIA"
 ON_DATETIME = "ON_DATETIME"
 START_CONDITION_TYPES = [CASE_CRITERIA, ON_DATETIME]
 
-SURVEY_METHOD_LIST = ["SMS","CATI"]
+SURVEY_METHOD_LIST = ["SMS", "CATI"]
 
 UI_FREQUENCY_ADVANCED = "ADVANCED"
 UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
@@ -890,7 +890,7 @@ class CaseReminderHandler(Document):
             user_id=user_id,
             method=self.method,
             active=True,
-            start_date=date(now.year, now.month, now.day) if (now.hour == 0 and now.minute == 0 and now.second == 0 and now.microsecond == 0) else date(local_now.year,local_now.month,local_now.day),
+            start_date=date(now.year, now.month, now.day) if (now.hour == 0 and now.minute == 0 and now.second == 0 and now.microsecond == 0) else date(local_now.year, local_now.month, local_now.day),
             schedule_iteration_num=1,
             current_event_sequence_num=0,
             callback_try_count=0,

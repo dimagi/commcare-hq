@@ -184,7 +184,7 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     case_nsmap = {'n1': 'http://commcarehq.org/case/transaction/v2'}
 
     def make_update(update_elem, updates):
-        for k,v in updates.items():
+        for k, v in updates.items():
             if v is not None:
                 sub_element(update_elem, '{%(ns)s}%(tag)s' % {'ns': case_nsmap['n1'], 'tag': k}, v)
 

@@ -10,7 +10,7 @@ class RegimenPropertiesTests(TestCase):
 
     def testStringToDictRegimensNum(self):
         #assure that all frequencies line up ok
-        for freq in range(1,5):
+        for freq in range(1, 5):
             regimens = PACT_REGIMEN_CHOICES[freq][1]
             for drug_type in art_nonart:
                 for regimen_tuple in regimens:

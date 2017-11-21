@@ -37,6 +37,6 @@ class PactMigrateCommand(BaseCommand):
         except urllib2.HTTPError as e:
             print("\t\t\tError: %s: %s" % (url, e))
             if retry < RETRY_LIMIT:
-                print("Retry %d/%d" % (retry,RETRY_LIMIT))
+                print("Retry %d/%d" % (retry, RETRY_LIMIT))
                 return self.get_url(url, retry=retry+1)
             return None

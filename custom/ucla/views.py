@@ -87,7 +87,7 @@ def _ucla_form_modifier(form, question_ids):
                 xform.data_node.append(element)
 
                 # Add bind
-                xform.itext_node.addprevious(_make_elem("bind",{
+                xform.itext_node.addprevious(_make_elem("bind", {
                     "nodeset": xform.resolve_path(hidden_value_path),
                     "calculate": '"'+hidden_value_text+'"'
                 }))

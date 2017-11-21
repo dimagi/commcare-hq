@@ -17,7 +17,7 @@ DESIGN_SK = "_design"
 DESIGN_EK = "_design0"
 
 POOL_SIZE=12
-REPEAT_INTERVAL = getattr(settings,'PRIME_VIEWS_INTERVAL', 3600)
+REPEAT_INTERVAL = getattr(settings, 'PRIME_VIEWS_INTERVAL', 3600)
 
 
 def get_unique_dbs():
@@ -48,7 +48,7 @@ def do_prime(app_label, design_doc_name, view_name, verbose=False):
             sys.stdout.flush()
     except ResourceNotFound:
         if verbose:
-            sys.stdout.write('!=>%s/%s/%s' % (app_label,design_doc_name, view_name))
+            sys.stdout.write('!=>%s/%s/%s' % (app_label, design_doc_name, view_name))
             sys.stdout.flush()
 
 

@@ -56,7 +56,7 @@ def username_from_name(name):
 
 
 def random_phonenumber(numdigits=11):
-    return "+" + "".join(str(random.randint(0,9)) for i in range(numdigits))
+    return "+" + "".join(str(random.randint(0, 9)) for i in range(numdigits))
 
 
 def instantiate(generator_or_value):

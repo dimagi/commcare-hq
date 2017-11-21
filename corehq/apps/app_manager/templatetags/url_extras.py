@@ -55,7 +55,7 @@ class URLEncodeNode(template.Node):
             params[key] = [v.encode('utf-8') if isinstance(v, six.text_type) else v
                            for v in val]
 
-        for key,val in self.extra_params.items():
+        for key, val in self.extra_params.items():
             key = template.Variable(key).resolve(context)
             val = template.Variable(val).resolve(context)
             params[key] = val

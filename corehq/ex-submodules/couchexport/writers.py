@@ -407,7 +407,7 @@ class Excel2003ExportWriter(ExportWriter):
         sheet = self.tables[sheet_index]
         # have to deal with primary ids
         for i, val in enumerate(row):
-            sheet.write(row_index,i,six.text_type(val))
+            sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 
     def _close(self):

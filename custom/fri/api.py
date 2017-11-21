@@ -132,8 +132,8 @@ def get_message_bank(domain, risk_profile=None, for_comparing=False):
         result = []
         for message in messages:
             result.append({
-                "message" : message,
-                "compare_string" : letters_only(message.message),
+                "message": message,
+                "compare_string": letters_only(message.message),
             })
         return result
     else:
