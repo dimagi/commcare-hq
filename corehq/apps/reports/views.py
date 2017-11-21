@@ -17,6 +17,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.util.timezones.conversions import ServerTime
 import langcodes
 import os
 import pytz
@@ -1315,9 +1316,7 @@ def form_to_json(domain, form, timezone=None):
     if timezone is None:
         received_on = json_format_datetime(form.received_on)
     else:
-        offset = timezone.utcoffset(datetime.utcnow())
-        local_received_on = form.received_on + offset
-        received_on = local_received_on.strftime("%Y-%m-%d %H:%M")
+        received_on = ServerTime(form.received_on).user_time(timezone).done().strftime("%Y-%m-%d %H:%M")
 
     return {
         'id': form.form_id,
