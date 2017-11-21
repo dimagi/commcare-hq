@@ -68,15 +68,15 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_syncs.sync_date',
                              alt_prop_name='reporting_metadata.last_sync_for_user.sync_date'),
             DataTablesColumn(_("Application"),
-                             help_text=_("Displays application of last submitted form"),
+                             help_text=_("The name of the application that "
+                                         "the most recent request for this user came from"),
                              sortable=False),
             DataTablesColumn(_("Application Version"),
-                             help_text=_("Displays application version of the user's last sync."),
+                             help_text=_("The application version from the user's last request."),
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version'),
             DataTablesColumn(_("CommCare Version"),
-                             help_text=_("""Displays CommCare version the user last submitted with;
-                                         The currently deployed version may be different."""),
+                             help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version'),
         )
