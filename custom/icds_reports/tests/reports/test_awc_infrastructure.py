@@ -25,7 +25,9 @@ class TestAWCInfrastructure(TestCase):
                             "all": 20,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "help_text": "Percentage of AWCs that reported having a source of clean drinking water",
+                            "help_text": (
+                                "Percentage of AWCs that reported having a source of clean drinking water"
+                            ),
                             "percent": 272.85714285714283,
                             "value": 29,
                             "label": "AWCs Reported Clean Drinking Water"
@@ -58,7 +60,9 @@ class TestAWCInfrastructure(TestCase):
                             "all": 20,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "help_text": "Percentage of AWCs that reported having a weighing scale for mother and child",
+                            "help_text": (
+                                "Percentage of AWCs that reported having a weighing scale for mother and child"
+                            ),
                             "percent": 440.0000000000001,
                             "value": 9,
                             "label": "AWCs Reported Weighing Scale: Mother and Child"

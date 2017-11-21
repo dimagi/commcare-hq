@@ -64,10 +64,10 @@ class TestMedicineKit(TestCase):
                     {
                         "loc_name": "st1",
                         "percent": 100.0
-                    }, 
+                    },
                     {
-                       "loc_name": "st2",
-                       "percent": 100.0
+                        "loc_name": "st2",
+                        "percent": 100.0
                     }
                 ],
                 "top_five": [
