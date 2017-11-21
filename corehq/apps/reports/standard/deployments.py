@@ -1,14 +1,17 @@
 # coding=utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, division
+from collections import namedtuple
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
 from casexml.apps.phone.analytics import get_sync_logs_for_user
-from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
+from casexml.apps.phone.models import SyncLogAssertionError
 from couchdbkit import ResourceNotFound
+from corehq.apps.es.aggregations import DateHistogram
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from couchexport.export import SCALAR_NEVER_WAS
 
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
@@ -21,8 +24,6 @@ from phonelog.models import UserErrorEntry
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
 from corehq.apps.es import UserES
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info, \
-    get_version_from_build_id, AppVersionInfo
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
@@ -533,3 +534,167 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
                 error.version_number,
                 str(error.date),
             ]
+
+
+@location_safe
+class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
+    slug = 'aggregate_user_status'
+
+    report_template_path = "reports/async/aggregate_user_status.html"
+    name = ugettext_lazy("Aggregate User Status")
+    description = ugettext_lazy("See the last activity of your project's users in aggregate.")
+
+    fields = [
+        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+    ]
+    exportable = False
+    emailable = False
+    js_scripts = ['reports/js/aggregate_user_status.js']
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return domain and toggles.AGGREGATE_USER_STATUS_REPORT.enabled(domain)
+
+    @use_nvd3
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(AggregateAppStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+
+    @memoized
+    def user_query(self):
+        # partially inspired by ApplicationStatusReport.user_query
+        mobile_user_and_group_slugs = set(
+            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+        )
+        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+        )
+        user_query = user_query.size(0)
+        user_query = user_query.aggregations([
+            DateHistogram('last_submission', 'reporting_metadata.last_submission_for_user.submission_date', '1d'),
+            DateHistogram('last_sync', 'reporting_metadata.last_sync_for_user.sync_date', '1d')
+        ])
+        return user_query
+
+    @property
+    def template_context(self):
+
+        class BucketSeries(namedtuple('Bucket', 'data_series total_series total')):
+            @property
+            @memoized
+            def percent_series(self):
+                def _pct(val, total):
+                    return (100. * float(val) / float(total)) if total else 0
+
+                return [
+                    {
+                        'series': 0,
+                        'x': row['x'],
+                        'y': _pct(row['y'], self.total)
+                    }
+                    for row in self.total_series
+                ]
+
+            def get_summary_data(self):
+                def _readable_pct_from_total(total_series, index):
+                    return '{0:.0f}%'.format(total_series[index - 1]['y'])
+
+                return [
+                    [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
+                    [_readable_pct_from_total(self.percent_series, 7), _('in the last week')],
+                    [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
+                    [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
+                ]
+
+        query = self.user_query().run()
+        aggregations = query.aggregations
+        last_submission_buckets = aggregations[0].raw_buckets
+        last_sync_buckets = aggregations[1].raw_buckets
+        total_users = query.total
+
+        def _buckets_to_series(buckets):
+            # start with N days of empty data
+            # add bucket info to the data series
+            # add last bucket
+            days_of_history = 60
+            vals = {
+                i: 0 for i in range(days_of_history)
+            }
+            extra = total = running_total = 0
+            today = datetime.today().date()
+            for bucket_val in buckets:
+                bucket_date = datetime.fromtimestamp(bucket_val['key'] / 1000.0).date()
+                delta_days = (today - bucket_date).days
+                val = bucket_val['doc_count']
+                if delta_days in vals:
+                    vals[delta_days] += val
+                else:
+                    extra += val
+                total += val
+
+            daily_series = []
+            running_total_series = []
+
+            for i in range(days_of_history):
+                running_total += vals[i]
+                daily_series.append(
+                    {
+                        'series': 0,
+                        'x': '{}'.format(today - timedelta(days=i)),
+                        'y': vals[i]
+                    }
+                )
+                running_total_series.append(
+                    {
+                        'series': 0,
+                        'x': '{}'.format(today - timedelta(days=i)),
+                        'y': running_total
+                    }
+                )
+
+            # catchall / last row
+            daily_series.append(
+                {
+                    'series': 0,
+                    'x': 'more than {} days ago'.format(days_of_history),
+                    'y': extra,
+                }
+            )
+            running_total_series.append(
+                {
+                    'series': 0,
+                    'x': 'more than {} days ago'.format(days_of_history),
+                    'y': running_total + extra,
+                }
+            )
+            return BucketSeries(daily_series, running_total_series, total)
+
+        submission_series = _buckets_to_series(last_submission_buckets)
+        sync_series = _buckets_to_series(last_sync_buckets)
+        return {
+            'last_submission_data': {
+                'key': _('Count of Users'),
+                'values': submission_series.data_series,
+                'color': '#004abf',
+            },
+            'last_submission_totals': {
+                'key': _('Percent of Users'),
+                'values': submission_series.percent_series,
+                'color': '#004abf',
+            },
+            'last_sync_data': {
+                'key': _('Count of Users'),
+                'values': sync_series.data_series,
+                'color': '#f58220',
+            },
+            'last_sync_totals': {
+                'key': _('Percent of Users'),
+                'values': sync_series.percent_series,
+                'color': '#f58220',
+            },
+            'total_users': total_users,
+            'ever_submitted': submission_series.total,
+            'ever_synced': sync_series.total,
+            'submission_summary': submission_series.get_summary_data(),
+            'sync_summary': sync_series.get_summary_data(),
+        }
