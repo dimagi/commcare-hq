@@ -373,6 +373,11 @@ class TopHitsAggregation(Aggregation):
 
 class FilterResult(AggregationResult):
 
+    def __getattr__(self, attr):
+        sub_aggregation = list(filter(lambda a: a.name == attr, self._aggregations))[0]
+        if sub_aggregation:
+            return sub_aggregation.parse_result(self.result)
+
     @property
     def doc_count(self):
         return self.result['doc_count']
