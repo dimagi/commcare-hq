@@ -4,6 +4,7 @@ import re
 import weakref
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
+from collections import defaultdict
 
 from couchdbkit.exceptions import BulkSaveError
 
@@ -13,6 +14,8 @@ from casexml.apps.phone.exceptions import CouldNotPruneSyncLogs
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from casexml.apps.stock.mock import Balance
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -242,6 +245,17 @@ class SyncResult(object):
         """Dict of cases, keyed by case ID, from the sync body"""
         return {case.case_id: case for case in (CaseBlock.from_xml(node)
                 for node in self.xml.findall("{%s}case" % V2_NAMESPACE))}
+
+    @property
+    @memoized
+    def ledgers(self):
+        """Dict of ledgers, keyed by entity ID, from the sync body"""
+        ledgers = defaultdict(list)
+        balance_nodes = self.xml.findall("{%s}balance" % COMMTRACK_REPORT_XMLNS)
+        for balance_node in balance_nodes:
+            balance_obj = Balance.from_xml(balance_node)
+            ledgers[balance_obj.entity_id].append(balance_obj)
+        return dict(ledgers)
 
     def has_cached_payload(self, version):
         """Check if a cached payload exists for this sync result"""
