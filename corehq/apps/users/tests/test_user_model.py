@@ -110,6 +110,20 @@ class UserDeviceTest(SimpleTestCase):
         self.assertFalse(user.update_device_id_last_used(device, later))
         self.assertTrue(user.update_device_id_last_used(device, day_later))
 
+    def test_update_app_metadata(self):
+        user = CommCareUser()
+        app_meta = DeviceAppMeta(
+            app_id='123',
+            build_id='build1',
+            build_version=1,
+            last_submission=datetime.utcnow(),
+            num_unsent_forms=1
+        )
+        user.update_device_id_last_used('device', device_app_meta=app_meta)
+        device = user.get_device('device')
+        app_meta = device.get_meta_for_app('123')
+        self.assertIsNotNone(app_meta)
+
     def test_merge_device_app_meta(self):
         m1 = DeviceAppMeta(
             build_id='build1',
