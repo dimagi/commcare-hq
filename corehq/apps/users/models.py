@@ -2180,14 +2180,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         when = when or datetime.utcnow()
 
-        for user_device_id_last_used in self.devices:
-            if user_device_id_last_used.device_id == device_id:
-                if when.date() > user_device_id_last_used.last_used.date():
-                    user_device_id_last_used.last_used = when
-                    user_device_id_last_used.update_meta(commcare_version, device_app_meta)
-                    return True
-                else:
-                    return False
+        device = self.get_device(device_id)
+        if device:
+            if when.date() > device.last_used.date():
+                device.last_used = when
+                device.update_meta(commcare_version, device_app_meta)
+                return True
+            else:
+                return False
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
             device.update_meta(commcare_version, device_app_meta)
@@ -2199,6 +2199,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return None
 
         return sorted(self.devices, key=lambda dev: dev.last_used)[-1]
+
+    def get_device(self, device_id):
+        matches = [
+            device for device in self.devices
+            if device.device_id == device_id
+        ]
+        return matches[0] if matches else None
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
