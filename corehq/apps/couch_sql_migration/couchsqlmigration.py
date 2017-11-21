@@ -314,6 +314,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
 
     sql_form.openrosa_headers = couch_form.openrosa_headers
     sql_form.last_sync_token = couch_form.last_sync_token
+    sql_form.server_modified_on = couch_form.server_modified_on
     sql_form.received_on = couch_form.received_on
     sql_form.date_header = couch_form.date_header
     sql_form.app_id = couch_form.app_id
