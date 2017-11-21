@@ -7,7 +7,7 @@ from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, domain_admin_required
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload, bump_expiry
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
-from corehq.apps.ota.utils import update_device_id
+from corehq.apps.ota.utils import update_device_meta
 from corehq.toggles import ENIKSHAY
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.parsing import string_to_datetime
@@ -70,7 +70,7 @@ def fetch_key_records(request, domain):
         last_issued = string_to_datetime(last_issued).replace(tzinfo=None)
     user_id = request.couch_user.user_id
     payload = FetchKeyRecords(domain, user_id, last_issued).get_payload()
-    update_device_id(request.couch_user, request.GET.get('device_id'))
+    update_device_meta(request.couch_user, request.GET.get('device_id'))
     return HttpResponse(payload)
 
 

@@ -200,7 +200,7 @@ def handle_401_response(f):
     return _inner
 
 
-def update_device_id(user, device_id, commcare_version=None):
+def update_device_meta(user, device_id, commcare_version=None):
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
             # this only updates once per day for each device

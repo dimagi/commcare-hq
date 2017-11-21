@@ -39,7 +39,7 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from .models import SerialIdBucket
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
-    handle_401_response, update_device_id)
+    handle_401_response, update_device_meta)
 
 
 @location_safe
@@ -196,7 +196,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse(message, status=401), None
 
     couch_restore_user = as_user_obj if uses_login_as else couch_user
-    update_device_id(couch_restore_user, device_id)
+    update_device_meta(couch_restore_user, device_id)
 
     restore_user = get_restore_user(domain, couch_user, as_user_obj)
     if not restore_user:
@@ -291,7 +291,7 @@ def heartbeat(request, domain, app_build_id):
             update_last_sync(app_id, last_sync, request.couch_user, app_version)
 
         update_latest_builds(request.couch_user, app_id, datetime.utcnow(), app_version)
-        update_device_id(request.couch_user, device_id, commcare_version=commcare_version)
+        update_device_meta(request.couch_user, device_id, commcare_version=commcare_version)
 
     return JsonResponse(info)
 
