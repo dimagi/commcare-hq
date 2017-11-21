@@ -14,6 +14,7 @@ from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
 import six
+from django.db.models import Case, When, Q, IntegerField
 
 
 RED = '#de2d26'
@@ -34,7 +35,13 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
             '%s_name' % loc_level
         ).annotate(
             in_month=Sum('infra_infant_weighing_scale'),
-            all=Sum('num_awcs'),
+            all=Sum(
+                Case(
+                    When(Q(infra_last_update_date=None), then=1),
+                    default=0,
+                    output_field=IntegerField()
+                )
+            ),
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -76,12 +83,12 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
     return [
         {
             "slug": "infants_weight_scale",
-            "label": "Percent AWCs with Weighing Scale: Infants",
+            "label": "Percentage of AWCs that reported having a weighing scale for infants",
             "fills": fills,
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
-                    "Percentage of AWCs with weighing scale for infants"
+                    "Percentage of AWCs that reported having a weighing scale for infants"
                 ))
             },
             "data": map_data,
@@ -103,7 +110,13 @@ def get_infants_weight_scale_data_chart(domain, config, loc_level, show_test=Fal
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
-        all=Sum('num_awcs'),
+        all=Sum(
+            Case(
+                When(Q(infra_last_update_date=None), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ),
     ).order_by('month')
 
     if not show_test:
@@ -158,7 +171,7 @@ def get_infants_weight_scale_data_chart(domain, config, loc_level, show_test=Fal
                         'in_month': value['in_month']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "% of AWCs with a weighing scale for infants.",
+                "key": "Percentage of AWCs that reported having a weighing scale for infants",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -182,7 +195,13 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
         *group_by
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
-        all=Sum('num_awcs'),
+        all=Sum(
+            Case(
+                When(Q(infra_last_update_date=None), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -228,7 +247,7 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs with weighing scale for infants"
+            "Percentage of AWCs that reported having a weighing scale for infants"
         )),
         "chart_data": [
             {

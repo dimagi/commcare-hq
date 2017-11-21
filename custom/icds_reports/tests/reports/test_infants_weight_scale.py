@@ -16,14 +16,14 @@ class TestInfantsWeightScale(TestCase):
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
-                    'aggregation_level': 1
+                    'aggregation_level': 5
                 },
                 loc_level='state'
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs with weighing scale for infants",
-                    "average": 48.0
+                    "info": "Percentage of AWCs that reported having a weighing scale for infants",
+                    "average": 120.0
                 },
                 "fills": {
                     "0%-25%": "#de2d26",
@@ -34,17 +34,17 @@ class TestInfantsWeightScale(TestCase):
                 "data": {
                     "st1": {
                         "in_month": 13,
-                        "all": 26,
-                        "fillKey": "25%-75%"
+                        "all": 9,
+                        "fillKey": "75%-100%"
                     },
                     "st2": {
                         "in_month": 11,
-                        "all": 24,
-                        "fillKey": "25%-75%"
+                        "all": 11,
+                        "fillKey": "75%-100%"
                     }
                 },
                 "slug": "infants_weight_scale",
-                "label": "Percent AWCs with Weighing Scale: Infants"
+                "label": "Percentage of AWCs that reported having a weighing scale for infants"
             }
         )
 
@@ -54,7 +54,7 @@ class TestInfantsWeightScale(TestCase):
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
-                    'aggregation_level': 1
+                    'aggregation_level': 5
                 },
                 loc_level='state'
             ),
@@ -63,21 +63,21 @@ class TestInfantsWeightScale(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 144.44444444444446
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 100.0
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 144.44444444444446
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 100.0
                     }
                 ],
                 "chart_data": [
@@ -97,27 +97,27 @@ class TestInfantsWeightScale(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.2,
+                                "y": 0.2777777777777778,
                                 "x": 1491004800000,
                                 "in_month": 10
                             },
                             {
-                                "y": 0.48,
+                                "y": 1.2,
                                 "x": 1493596800000,
                                 "in_month": 24
                             }
                         ],
-                        "key": "% of AWCs with a weighing scale for infants."
+                        "key": "Percentage of AWCs that reported having a weighing scale for infants"
                     }
                 ],
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 144.44444444444446
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 100.0
                     }
                 ]
             }
@@ -132,21 +132,21 @@ class TestInfantsWeightScale(TestCase):
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b1',
-                    'aggregation_level': 4
+                    'aggregation_level': 5
                 },
                 location_id='b1',
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs with weighing scale for infants",
+                "info": "Percentage of AWCs that reported having a weighing scale for infants",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 3,
-                        "all": 7
+                        "all": 4
                     },
                     "s1": {
                         "in_month": 4,
-                        "all": 7
+                        "all": 2
                     }
                 },
                 "chart_data": [
@@ -157,11 +157,11 @@ class TestInfantsWeightScale(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.5714285714285714
+                                2.0
                             ],
                             [
                                 "s2",
-                                0.42857142857142855
+                                0.75
                             ]
                         ],
                         "key": ""

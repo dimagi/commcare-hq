@@ -10,7 +10,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-    vm.label = "AWCs with Medicine Kit";
+    vm.label = "AWCs Reported Medicine Kit";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/medicine_kit/map', label: 'Map View'},
@@ -26,7 +26,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs with a Medicine Kit',
+        info: 'Percentage of AWCs that reported having a Medicine Kit',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -54,8 +54,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs with a Medicine Kit: <strong>' + in_month + '</strong></div>' +
-            '<div>% of AWCs with a Medicine Kit: <strong>' + percent + '</strong></div>';
+            '<div>Total number of AWCs that reported having a Medicine Kit: <strong>' + in_month + '</strong></div>' +
+            '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -188,8 +188,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
                     var data_in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of AWCs with a Medicine Kit: <strong>" + $filter('indiaNumbers')(data_in_month.in_month) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs with a Medicine Kit: <strong>" + d3.format('.2%')(data_in_month.y) + "</strong></p>";
+                    tooltip_content += "<p>Number of AWCs that reported having a Medicine Kit: <strong>" + $filter('indiaNumbers')(data_in_month.in_month) + "</strong></p>";
+                    tooltip_content += "<p>Percentage of AWCs that reported having a Medicine Kit: <strong>" + d3.format('.2%')(data_in_month.y) + "</strong></p>";
 
                     return tooltip_content;
                 });
@@ -198,7 +198,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs with a Medicine Kit',
+            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a Medicine Kit',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
