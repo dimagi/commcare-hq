@@ -2189,11 +2189,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 else:
                     return False
         else:
-            self.devices.append(DeviceIdLastUsed(
-                device_id=device_id,
-                last_used=when,
-                commcare_version=commcare_version
-            ))
+            device = DeviceIdLastUsed(device_id=device_id, last_used=when)
+            device.update_meta(commcare_version, device_app_meta)
+            self.devices.append(device)
             return True
 
     def get_last_used_device(self):
