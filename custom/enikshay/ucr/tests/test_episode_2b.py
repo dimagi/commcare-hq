@@ -15,7 +15,7 @@ class TestEpisode2B(TestDataSourceExpressions):
     data_source_name = EPISODE_DATA_SOURCE
 
     def _get_expression(self, column_id, column_type):
-        column = self._get_column(column_id)
+        column = self.get_column(column_id)
         self.assertEqual(column['datatype'], column_type)
         return ExpressionFactory.from_spec(
             column['expression'],
@@ -96,7 +96,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        column = self._get_column('key_populations')
+        column = self.get_column('key_populations')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -800,7 +800,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        not_microbiological = self._get_column('not_microbiological_result')
+        not_microbiological = self.get_column('not_microbiological_result')
         self.assertEqual(not_microbiological['datatype'], 'string')
         not_microbiological_result_expression = ExpressionFactory.from_spec(
             not_microbiological['expression'],
@@ -1587,7 +1587,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -1631,7 +1631,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -1675,7 +1675,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],

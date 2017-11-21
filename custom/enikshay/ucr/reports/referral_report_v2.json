@@ -228,16 +228,6 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "calculate_total": false
-            },
-            {
-                "display": "Dosage Frequency",
-                "type": "field",
-                "field": "adherence_schedule_id",
-                "aggregation": "simple",
-                "sortable": false,
-                "description": null,
-                "format": "default",
                 "calculate_total": false,
                 "transform": {
                     "type": "translation",
