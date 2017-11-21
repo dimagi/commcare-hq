@@ -7,6 +7,7 @@ from corehq.util.quickcache import quickcache
 from django.db import models
 from jsonfield.fields import JSONField
 from django.contrib.postgres.fields import ArrayField
+import six
 
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
@@ -142,7 +143,7 @@ def replace_custom_query_variables(query_addition, criteria, ignore_patterns):
     """
     replaceable_criteria = {
         re.sub(SEARCH_QUERY_CUSTOM_VALUE, '', k): v
-        for k, v in criteria.iteritems() if k.startswith(SEARCH_QUERY_CUSTOM_VALUE)
+        for k, v in six.iteritems(criteria) if k.startswith(SEARCH_QUERY_CUSTOM_VALUE)
     }
 
     # Only include this custom query if the replaceable parts are present
@@ -154,7 +155,7 @@ def replace_custom_query_variables(query_addition, criteria, ignore_patterns):
         del query_addition['include_if']
 
     query_addition = json.dumps(query_addition)
-    for key, value in replaceable_criteria.iteritems():
+    for key, value in six.iteritems(replaceable_criteria):
         if ignore_patterns:
             remove_char_regexs = ignore_patterns.filter(
                 case_property=re.sub('^__', '', key)

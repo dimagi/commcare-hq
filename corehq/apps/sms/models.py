@@ -2096,7 +2096,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         the rest untouched.
         """
         result = self.get_extra_fields()
-        for k, v in kwargs.iteritems():
+        for k, v in six.iteritems(kwargs):
             if k not in self.get_available_extra_fields():
                 raise Exception("Field %s is not an available extra field for %s"
                     % (k, self.__class__.__name__))

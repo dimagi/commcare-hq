@@ -33,6 +33,7 @@ from couchforms.models import XFormInstance, doc_types as form_doc_types, all_kn
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
+import six
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -354,7 +355,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
 def _migrate_form_attachments(sql_form, couch_form):
     """Copy over attachement meta - includes form.xml"""
     attachments = []
-    for name, blob in couch_form.blobs.iteritems():
+    for name, blob in six.iteritems(couch_form.blobs):
         attachments.append(XFormAttachmentSQL(
             name=name,
             form=sql_form,

@@ -147,6 +147,7 @@ from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+import six
 
 
 PAYMENT_ERROR_MESSAGES = {
@@ -2160,7 +2161,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         enable = request_json.get('enable')
         fuzzies_by_casetype = request_json.get('fuzzy_properties')
         updated_fuzzies = []
-        for case_type, properties in fuzzies_by_casetype.iteritems():
+        for case_type, properties in six.iteritems(fuzzies_by_casetype):
             fp, created = FuzzyProperties.objects.get_or_create(
                 domain=self.domain,
                 case_type=case_type

@@ -1095,7 +1095,7 @@ class CaseReminderHandler(Document):
             if not isinstance(recipient, CouchUser):
                 return False
 
-            for key, value in self.user_data_filter.iteritems():
+            for key, value in six.iteritems(self.user_data_filter):
                 if key not in recipient.user_data:
                     return False
 

@@ -743,7 +743,7 @@ class LocationTreeValidator(object):
             try:
                 location.db_object.full_clean(exclude=exclude_fields)
             except ValidationError as e:
-                for field, issues in e.message_dict.iteritems():
+                for field, issues in six.iteritems(e.message_dict):
                     for issue in issues:
                         errors.append(_(
                             u"Error with location in sheet '{}', at row {}. {}: {}").format(

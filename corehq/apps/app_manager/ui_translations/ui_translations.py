@@ -10,6 +10,7 @@ from corehq.apps.app_manager.ui_translations.commcare_versioning import \
 from corehq.apps.translations import system_text_sources
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from couchexport.export import export_raw_to_writer
+import six
 
 
 def process_ui_translation_upload(app, trans_file):
@@ -54,7 +55,7 @@ def build_ui_translation_download_file(app):
     for i, lang in enumerate(app.langs):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
-        for prop, trans in trans_dict.iteritems():
+        for prop, trans in six.iteritems(trans_dict):
             if prop not in row_dict:
                 row_dict[prop] = [prop]
             num_to_fill = index - len(row_dict[prop])
