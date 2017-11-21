@@ -5,7 +5,6 @@ import logging
 import re
 from uuid import uuid4
 
-from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -22,7 +21,20 @@ from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    StringProperty,
+    IntegerProperty,
+    DateTimeProperty,
+    SchemaListProperty,
+    DocumentSchema,
+    BooleanProperty,
+    StringListProperty,
+    ListProperty,
+    SchemaProperty,
+    DictProperty,
+    Document,
+    DateProperty
+)
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
