@@ -486,7 +486,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 };
                 options.value = ko.unwrap(valueAccessor());
                 var editor = CodeMirror.fromTextArea(element, options);
-                editor.setSize(null, 'auto');  // hard-coded right now;
+                editor.setSize(null, 'auto');
                 element.editor = editor;
             },
             update: function(element, valueAccessor) {
@@ -498,7 +498,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         };
         ko.bindingHandlers.clipboardButton = {
             init: function(element, valueAccessor) {
-                new Clipboard('.clickable',
+                new Clipboard(element,
                     {
                         text: function() {
                             return ko.unwrap(valueAccessor());

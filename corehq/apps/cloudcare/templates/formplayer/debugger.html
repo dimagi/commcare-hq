@@ -84,16 +84,16 @@
 
 <script type="text/html" id="debugger-evaluate-result-template">
     <!--ko if: xPathQuery.successResult() === ''-->
-    <div><i>{% trans "Empty String" %}</i></div>
+    <div><em>{% trans "Empty String" %}</em></div>
     <!--/ko-->
     <!--ko if: xPathQuery.errorResult()-->
     <div data-bind="text: xPathQuery.errorResult(), css: 'text-danger'"></div>
     <!--/ko-->
     <!--ko if: xPathQuery.isSuccessTruncated() && options.showInFull-->
     <div>
-        <i>Showing the first </i><i data-bind="text: xPathQuery.getMaxLines()"/><i> lines...</i>
+        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/>{% trans " lines..." %}</em>
         <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullSuccessResult()">
-            Copy Full Evaluation to Clipboard
+            {% trans "Copy Full Evaluation to Clipboard" %}
         </a>
     </div>
     <!--/ko-->
@@ -104,9 +104,9 @@
     <!--/ko-->
     <!--ko if: xPathQuery.isTraceTruncated() && options.showInFull-->
     <div>
-        <i>Showing the first </i><i data-bind="text: xPathQuery.getMaxLines()"/><i> lines...</i>
+        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/>{% trans " lines..." %}</em>
         <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullTraceResult()">
-            Copy Full Trace to Clipboard
+            {% trans "Copy Full Trace to Clipboard" %}
         </a>
     </div>
     <!--/ko-->
