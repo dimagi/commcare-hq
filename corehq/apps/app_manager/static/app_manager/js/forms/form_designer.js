@@ -77,10 +77,23 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         define("jquery.bootstrap", ["jquery"], function () {});
         define("underscore", [], function () { return window._; });
         define("moment", [], function () { return window.moment; });
-        define("hqAnalytics", [], function () {
+        define("vellum/hqAnalytics", [], function () {
+            function workflow(message) {
+                hqImport('analytics/js/kissmetrics').track.event(message);
+            }
+
+            function usage(label, group, message) {
+                hqImport('analytics/js/google').track.event(label, group, message);
+            }
+
+            function fbUsage(group, message) {
+                usage("Form Builder", group, message);
+            }
+
             return {
-                google: hqImport('analytics/js/google'),
-                kissmetrics: hqImport('analytics/js/kissmetrics'),
+                fbUsage: fbUsage,
+                usage: usage,
+                workflow: workflow,
             };
         });
 
