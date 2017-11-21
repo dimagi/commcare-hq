@@ -290,7 +290,7 @@ def heartbeat(request, domain, app_build_id):
         except iso8601.ParseError:
             pass
         else:
-            save_user |= update_last_sync(app_id, last_sync, couch_user, app_version)
+            save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
 
         def _safe_int(val):
             try:

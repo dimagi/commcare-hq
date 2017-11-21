@@ -59,7 +59,7 @@ class UserSyncHistoryProcessor(PillowProcessor):
 
         if user_id:
             user = CouchUser.get_by_user_id(user_id)
-            save = update_last_sync(app_id, sync_date, user, version)
+            save = update_last_sync(user, app_id, sync_date, version)
             if version:
                 save |= update_latest_builds(user, app_id, sync_date, version)
             if save:

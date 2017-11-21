@@ -154,7 +154,7 @@ def filter_by_app(data_list, app_id):
     return last_item
 
 
-def update_last_sync(app_id, sync_date, user, version):
+def update_last_sync(user, app_id, sync_date, version):
     """
     This function does not save the user.
     :return: True if user updated
