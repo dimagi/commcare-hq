@@ -94,7 +94,7 @@ class DomainStatsReport(GenericTabularReport):
                 ]
 
 
-def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None, show_stats=True):
+def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=None, sort=None, fields=None):
     if params is None:
         params = {}
     terms = ['search']
@@ -119,18 +119,18 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
         q['query'] = {
             "bool": {
                 "must": {
-                    "match" : {
-                        "_all" : {
-                            "query" : search_query,
-                            "operator" : "and", }}}}}
+                    "match": {
+                        "_all": {
+                            "query": search_query,
+                            "operator": "and", }}}}}
 
     q["facets"] = {}
-    if show_stats:
-        stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users',
-                 "cp_n_users_submitted_form", 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
-        for prop in stats:
-            q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
 
-    q["sort"] = sort if sort else [{"name" : {"order": "asc"}},]
+    stats = ['cp_n_active_cases', 'cp_n_inactive_cases', 'cp_n_active_cc_users', 'cp_n_cc_users',
+             "cp_n_users_submitted_form", 'cp_n_60_day_cases', 'cp_n_web_users', 'cp_n_forms', 'cp_n_cases']
+    for prop in stats:
+        q["facets"].update({"%s-STATS" % prop: {"statistical": {"field": prop}}})
+
+    q["sort"] = sort if sort else [{"name": {"order": "asc"}}]
 
     return es_query(params, facets, terms, q, 'domains', start_at, size, fields=fields)
