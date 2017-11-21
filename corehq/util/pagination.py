@@ -196,7 +196,7 @@ class ResumableFunctionIterator(object):
 
         retried = {}
         while self.state.retry != retried:
-            for item_id, retries in list(six.iteritems(self.state.retry)):
+            for item_id, retries in six.iteritems(self.state.retry):
                 if retries == retried.get(item_id):
                     continue  # skip already retried (successfully)
                 retried[item_id] = retries
