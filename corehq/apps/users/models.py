@@ -2143,6 +2143,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             ))
             return True
 
+    def get_last_used_device(self):
+        if not self.devices:
+            return None
+
+        return sorted(self.devices, key=lambda dev: dev.last_used)[-1]
+
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
