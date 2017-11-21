@@ -210,7 +210,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
             return self.isItemDuplicated(key) || self.hasBadXML(key);
         };
 
-        self.hasError = function(a, b, c) {
+        self.hasError = function() {
             return self.duplicatedItems().length > 0
                 || _.find(self.items(), function(i) { return self.hasBadXML(i.key()); });
         };
