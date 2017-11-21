@@ -10,6 +10,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -117,7 +118,7 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
                         'x': key,
                         'y': value,
                         'all': all
-                    } for key, value in chart.iteritems()
+                    } for key, value in six.iteritems(chart)
                 ],
                 "key": "Children (0-6 years) who are enrolled",
                 "strokeWidth": 2,
@@ -165,7 +166,7 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
             'valid': valid or 0,
         }
 
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([
