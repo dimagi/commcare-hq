@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import re
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
@@ -17,10 +18,12 @@ from django.forms.forms import Form
 from django.forms.widgets import Textarea, CheckboxSelectMultiple
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _, ugettext
-
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
+from couchdbkit.resource import ResourceNotFound
 import six
 
 
@@ -67,6 +70,11 @@ class ScheduleForm(Form):
 
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
+
+    RECIPIENT_TYPE_USER = 'USER'
+    RECIPIENT_TYPE_USER_GROUP = 'USER_GROUP'
+    RECIPIENT_TYPE_LOCATION = 'LOCATION'
+    RECIPIENT_TYPE_CASE_GROUP = 'CASE_GROUP'
 
     schedule_name = CharField(
         required=True,
@@ -124,9 +132,35 @@ class ScheduleForm(Form):
         min_value=1,
         label='',
     )
-    recipients = RecipientField(
-        label=_("Recipient(s)"),
-        help_text=_("Type a username, group name or location"),
+    recipient_types = MultipleChoiceField(
+        required=True,
+        label=_('Recipient(s)'),
+        choices=(
+            (RECIPIENT_TYPE_USER, _("Users")),
+            (RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
+            (RECIPIENT_TYPE_LOCATION, _("User Organizations")),
+            (RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
+        )
+    )
+    user_recipients = RecipientField(
+        required=False,
+        label=_("User Recipient(s)"),
+    )
+    user_group_recipients = RecipientField(
+        required=False,
+        label=_("User Group Recipient(s)"),
+    )
+    user_organization_recipients = RecipientField(
+        required=False,
+        label=_("User Organization Recipient(s)"),
+    )
+    include_descendant_locations = BooleanField(
+        required=False,
+        label=_("Also send to users at child locations"),
+    )
+    case_group_recipients = RecipientField(
+        required=False,
+        label=_("Case Group Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
@@ -281,10 +315,45 @@ class ScheduleForm(Form):
 
     def get_recipients_layout_fields(self):
         return [
-            crispy.Field(
-                'recipients',
-                data_bind='value: message_recipients.value',
-                placeholder=_("Select some recipients")
+            hqcrispy.B3MultiField(
+                ugettext("Recipient(s)"),
+                crispy.Field(
+                    'recipient_types',
+                    template='scheduling/partial/recipient_types_picker.html',
+                ),
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_recipients',
+                    data_bind='value: user_recipients.value',
+                    placeholder=_("Select mobile worker(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER,
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_group_recipients',
+                    data_bind='value: user_group_recipients.value',
+                    placeholder=_("Select user group(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER_GROUP,
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_organization_recipients',
+                    data_bind='value: user_organization_recipients.value',
+                    placeholder=_("Select user organization(s)")
+                ),
+                crispy.Field('include_descendant_locations'),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'case_group_recipients',
+                    data_bind='value: case_group_recipients.value',
+                    placeholder=_("Select case group(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_CASE_GROUP,
             ),
         ]
 
@@ -326,13 +395,164 @@ class ScheduleForm(Form):
             values[field_name] = self[field_name].value()
         return values
 
-    def clean_recipients(self):
-        data = self.cleaned_data['recipients']
-        # TODO Will need to add more than user ids
-        # TODO batch id verification
+    @property
+    def current_select2_user_recipients(self):
+        value = self['user_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for user_id in value.strip().split(','):
+            user_id = user_id.strip()
+            user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
+            result.append({"id": user_id, "text": user.raw_username})
+
+        return result
+
+    @property
+    def current_select2_user_group_recipients(self):
+        value = self['user_group_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for group_id in value.strip().split(','):
+            group_id = group_id.strip()
+            group = Group.get(group_id)
+            if group.domain != self.domain:
+                continue
+            result.append({"id": group_id, "text": group.name})
+
+        return result
+
+    @property
+    def current_select2_user_organization_recipients(self):
+        value = self['user_organization_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for location_id in value.strip().split(','):
+            location_id = location_id.strip()
+            try:
+                location = SQLLocation.objects.get(domain=self.domain, location_id=location_id)
+            except SQLLocation.DoesNotExist:
+                continue
+
+            result.append({"id": location_id, "text": location.name})
+
+        return result
+
+    @property
+    def current_select2_case_group_recipients(self):
+        value = self['case_group_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for case_group_id in value.strip().split(','):
+            case_group_id = case_group_id.strip()
+            case_group = CommCareCaseGroup.get(case_group_id)
+            if case_group.domain != self.domain:
+                continue
+
+            result.append({"id": case_group_id, "text": case_group.name})
+
+        return result
+
+    def clean_user_recipients(self):
+        if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_recipients']
+
+        if not data:
+            raise ValidationError(_("Please specify the user(s) or deselect users as recipients"))
+
         for user_id in data:
-            user = CommCareUser.get_db().get(user_id)
-            assert user['domain'] == self.domain, "User must be in the same domain"
+            user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
+            if not user:
+                raise ValidationError(
+                    _("One or more users were unexpectedly not found. Please select user(s) again.")
+                )
+
+        return data
+
+    def clean_user_group_recipients(self):
+        if self.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_group_recipients']
+
+        if not data:
+            raise ValidationError(_("Please specify the groups(s) or deselect user groups as recipients"))
+
+        not_found_error = ValidationError(
+            _("One or more user groups were unexpectedly not found. Please select group(s) again.")
+        )
+
+        for group_id in data:
+            try:
+                group = Group.get(group_id)
+            except ResourceNotFound:
+                raise not_found_error
+
+            if group.doc_type != 'Group':
+                raise not_found_error
+
+            if group.domain != self.domain:
+                raise not_found_error
+
+        return data
+
+    def clean_user_organization_recipients(self):
+        if self.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_organization_recipients']
+
+        if not data:
+            raise ValidationError(
+                _("Please specify the organization(s) or deselect user organizations as recipients")
+            )
+
+        for location_id in data:
+            try:
+                SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
+            except SQLLocation.DoesNotExist:
+                raise ValidationError(
+                    _("One or more user organizations were unexpectedly not found. "
+                      "Please select organization(s) again.")
+                )
+
+        return data
+
+    def clean_case_group_recipients(self):
+        if self.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['case_group_recipients']
+
+        if not data:
+            raise ValidationError(
+                _("Please specify the case groups(s) or deselect case groups as recipients")
+            )
+
+        not_found_error = ValidationError(
+            _("One or more case groups were unexpectedly not found. Please select group(s) again.")
+        )
+
+        for case_group_id in data:
+            try:
+                case_group = CommCareCaseGroup.get(case_group_id)
+            except ResourceNotFound:
+                raise not_found_error
+
+            if case_group.doc_type != 'CommCareCaseGroup':
+                raise not_found_error
+
+            if case_group.domain != self.domain:
+                raise not_found_error
 
         return data
 
