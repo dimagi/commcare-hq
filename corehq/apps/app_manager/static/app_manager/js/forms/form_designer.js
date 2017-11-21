@@ -77,6 +77,12 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         define("jquery.bootstrap", ["jquery"], function () {});
         define("underscore", [], function () { return window._; });
         define("moment", [], function () { return window.moment; });
+        define("hqAnalytics", [], function () {
+            return {
+                google: hqImport('analytics/js/google'),
+                kissmetrics: hqImport('analytics/js/kissmetrics'),
+            };
+        });
 
         require.config({
             /* to use non-built files in HQ:
