@@ -283,14 +283,14 @@ def heartbeat(request, domain, app_build_id):
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
     else:
+        couch_user = request.couch_user
+        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
         try:
             last_sync = adjust_text_to_datetime(last_sync_time)
         except iso8601.ParseError:
             pass
         else:
-            update_last_sync(app_id, last_sync, request.couch_user, app_version)
-
-        update_latest_builds(request.couch_user, app_id, datetime.utcnow(), app_version)
+            save_user |= update_last_sync(app_id, last_sync, couch_user, app_version)
 
         def _safe_int(val):
             try:
@@ -298,13 +298,17 @@ def heartbeat(request, domain, app_build_id):
             except:
                 pass
 
-        update_device_meta(
-            request.couch_user,
+        save_user |= update_device_meta(
+            couch_user,
             device_id,
             commcare_version=commcare_version,
             unsent_forms=_safe_int(num_unsent_forms),
-            quarantined_forms=_safe_int(num_quarantined_forms)
+            quarantined_forms=_safe_int(num_quarantined_forms),
+            save=False
         )
+
+        if save_user:
+            couch_user.save()
 
     return JsonResponse(info)
 

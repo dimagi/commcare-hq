@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-from corehq.pillows.utils import update_last_sync
+from corehq.pillows.utils import update_last_sync, update_latest_builds
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
@@ -59,7 +59,11 @@ class UserSyncHistoryProcessor(PillowProcessor):
 
         if user_id:
             user = CouchUser.get_by_user_id(user_id)
-            update_last_sync(app_id, sync_date, user, version)
+            save = update_last_sync(app_id, sync_date, user, version)
+            if version:
+                save |= update_latest_builds(user, app_id, sync_date, version)
+            if save:
+                user.save()
 
 
 class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
