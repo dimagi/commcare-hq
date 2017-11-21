@@ -331,7 +331,10 @@ class Command(BaseCommand):
                 return bytes
 
         rows = sorted([
-            (datasource.display_name, _get_count(datasource), datasource.referenced_doc_type, _get_table_size(datasource))
+            (
+                datasource.display_name, _get_count(datasource),
+                datasource.referenced_doc_type, _get_table_size(datasource)
+            )
             for datasource in static_datasources + dynamic_datasources
         ], key=lambda r: r[-1])
 
