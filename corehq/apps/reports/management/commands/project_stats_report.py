@@ -102,7 +102,7 @@ class Command(BaseCommand):
             ]
 
         headers = ['Month', 'Active Users', 'Average forms per user', 'Std Dev']
-        print('All user stats')
+        self.stdout.write('All user stats')
         self._print_table(
             headers,
             _format_rows(
@@ -113,7 +113,7 @@ class Command(BaseCommand):
             )
         )
 
-        print('System user stats')
+        self.stdout.write('System user stats')
         self._print_table(
             headers,
             _format_rows(user_stat_from_malt.filter(username='system'))
@@ -157,11 +157,12 @@ class Command(BaseCommand):
             )
 
         SimpleTableWriter(self.stdout, row_formatter).write_table(headers, rows)
-        print('')
+        self.stdout.write('')
 
     def _print_value(self, name, *values):
         separator = ',' if self.csv else ': '
-        print('\n%s%s%s\n' % (name, separator, separator.join(values)))
+        values = [str(val) for val in values]
+        self.stdout.write('\n%s%s%s\n' % (name, separator, separator.join(values)))
 
     def _cases_updated_per_user_per_month(self):
         results = (
@@ -205,7 +206,7 @@ class Command(BaseCommand):
             ledger_counts.append(ledger_count)
 
         if not case_ids:
-            print("Domain has no ledgers")
+            self.stdout.write("Domain has no ledgers")
             return
 
         avg_ledgers_per_case = sum(ledger_counts) / len(case_ids)
@@ -216,7 +217,7 @@ class Command(BaseCommand):
 
         case_types = case_types_result.aggregations.types.keys
 
-        print('\nCase Types with Ledgers')
+        self.stdout.write('\nCase Types with Ledgers')
         for type_ in case_types:
             self._print_value('case_type', type_, CaseES().domain(self.domain).case_type(type_).count())
             if should_use_sql_backend(self.domain):
@@ -264,7 +265,7 @@ class Command(BaseCommand):
 
     def _case_to_case_index_ratio(self):
         if not should_use_sql_backend(self.domain):
-            print('\nUnable to get case to index ratio of Couch domain\n')
+            self.stdout.write('\nUnable to get case to index ratio of Couch domain\n')
             return
 
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
@@ -278,7 +279,7 @@ class Command(BaseCommand):
 
     def _attachment_sizes(self):
         if not should_use_sql_backend(self.domain):
-            print('\nAttachment stats only available for SQL domains\n')
+            self.stdout.write('\nAttachment stats only available for SQL domains\n')
             return
 
         db_name = get_db_aliases_for_partitioned_query()[0]  # just query one shard DB
