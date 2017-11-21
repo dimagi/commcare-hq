@@ -141,7 +141,7 @@ class Command(BaseCommand):
 
         final_stats = []
         for month, case_count_list in sorted(stats.items(), key=lambda r: r[0]):
-            final_stats.append((month, sum(case_count_list) / len(case_count_list)))
+            final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
         suffix = ''
         if case_type:
@@ -186,7 +186,7 @@ class Command(BaseCommand):
 
         final_stats = []
         for month, case_count_list in sorted(stats.items(), key=lambda r: r[0]):
-            final_stats.append((month, sum(case_count_list) / len(case_count_list)))
+            final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
         self._print_table(['Month', 'Cases updated per user'], final_stats)
 
@@ -209,7 +209,7 @@ class Command(BaseCommand):
             self.stdout.write("Domain has no ledgers")
             return
 
-        avg_ledgers_per_case = sum(ledger_counts) / len(case_ids)
+        avg_ledgers_per_case = sum(ledger_counts) // len(case_ids)
         case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)\
             .domain(self.domain).case_ids(case_ids)\
             .aggregation(TermsAggregation('types', 'type'))\
@@ -259,7 +259,7 @@ class Command(BaseCommand):
 
         final_stats = []
         for month, transaction_count_list in sorted(stats.items(), key=lambda r: r[0]):
-            final_stats.append((month.isoformat(), sum(transaction_count_list) / len(transaction_count_list)))
+            final_stats.append((month.isoformat(), sum(transaction_count_list) // len(transaction_count_list)))
 
         self._print_table(['Month', 'Ledgers updated per case'], final_stats)
 
@@ -275,7 +275,7 @@ class Command(BaseCommand):
         case_index_count = _get_count_from_explain(
             db_name, CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
         )
-        self._print_value('Ratio of cases to case indices', case_count / float(case_index_count))
+        self._print_value('Ratio of cases to case indices', case_count // float(case_index_count))
 
     def _attachment_sizes(self):
         if not should_use_sql_backend(self.domain):
