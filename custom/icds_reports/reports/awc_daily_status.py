@@ -178,7 +178,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                         'all': value['all']
                     } for key, value in six.iteritems(data['open_in_day'])
                 ],
-                "key": "Total AWCs open yesterday",
+                "key": "Total AWCs open",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
