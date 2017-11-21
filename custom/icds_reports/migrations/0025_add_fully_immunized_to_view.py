@@ -15,6 +15,4 @@ class Migration(migrations.Migration):
          '0024_fix_aadhaar_beneficiary_indicator'),
     ]
 
-    operations = [
-        migrator.get_migration('create_datasource_views.sql'),
-    ]
+    operations = []
