@@ -1,14 +1,23 @@
-/* globals _, _kmq */
+/* globals _kmq */
 
-var _kmq = window._kmq = _kmq || [];
+var _kmq = window._kmq = _kmq || [];        // TODO: test this in particular
 
-hqDefine('analytix/js/kissmetrics', function () {
+hqDefine('analytix/js/kissmetrics', [
+    'underscore',
+    'analytix/js/initial',
+    'analytix/js/logging',
+    'analytix/js/utils',
+], function (
+    _,
+    initialAnalytics,
+    logging,
+    utils
+) {
     'use strict';
-    var _get = hqImport('analytix/js/initial').getFn('kissmetrics'),
-        _global = hqImport('analytix/js/initial').getFn('global'),
-        _abTests = hqImport('analytix/js/initial').getAbTests('kissmetrics'),
-        logger = hqImport('analytix/js/logging').getLoggerForApi('Kissmetrics'),
-        _utils = hqImport('analytix/js/utils'),
+    var _get = initialAnalytics.getFn('kissmetrics'),
+        _global = initialAnalytics.getFn('global'),
+        _abTests = initialAnalytics.getAbTests('kissmetrics'),
+        logger = logging.getLoggerForApi('Kissmetrics'),
         _allAbTests = {},
         _init = {};
 
@@ -42,7 +51,7 @@ hqDefine('analytix/js/kissmetrics', function () {
      * @private
      */
     var _addKissmetricsScript = function (srcUrl) {
-        _utils.insertScript(srcUrl, logger.debug.log);
+        utils.insertScript(srcUrl, logger.debug.log);
     };
 
     var __init__ = function () {
@@ -93,7 +102,7 @@ hqDefine('analytix/js/kissmetrics', function () {
     var identifyTraits = function (traits, callbackFn, timeout) {
         if (_global('isEnabled')) {
             logger.debug.log(logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
-            callbackFn = _utils.createSafeCallback(callbackFn, timeout);
+            callbackFn = utils.createSafeCallback(callbackFn, timeout);
             _kmqPushCommand('set', traits, callbackFn);
         }
     };
@@ -108,7 +117,7 @@ hqDefine('analytix/js/kissmetrics', function () {
     var trackEvent = function (name, properties, callbackFn, timeout) {
         if (_global('isEnabled')) {
             logger.debug.log(arguments, 'RECORD EVENT');
-            callbackFn = _utils.createSafeCallback(callbackFn, timeout);
+            callbackFn = utils.createSafeCallback(callbackFn, timeout);
             _kmqPushCommand('record', properties, callbackFn, name);
         }
     };

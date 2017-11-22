@@ -1,4 +1,11 @@
-hqDefine("reports/js/config.dataTables.bootstrap", ['jquery', 'datatables.bootstrap'], function($) {
+hqDefine("reports/js/config.dataTables.bootstrap", [
+    'jquery',
+    'analytix/js/google',
+    'datatables.bootstrap',
+], function(
+    $,
+    googleAnalytics
+) {
     var HQReportDataTables = function(options) {
         var self = this;
         self.dataTableElem = options.dataTableElem || '.datatable';
@@ -266,7 +273,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", ['jquery', 'datatables.bootst
                     $selectField.addClass('form-control');
                     $selectField.on("change", function(){
                         var selected_value = $selectField.find('option:selected').val();
-                        hqImport('analytix/js/google').track.event("Reports", "Changed number of items shown", selected_value);
+                        googleAnalytics.track.event("Reports", "Changed number of items shown", selected_value);
                     });
                 }
                 $(".dataTables_length select").change(function () {

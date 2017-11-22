@@ -1,4 +1,14 @@
-hqDefine("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], function($, ko, _) {
+hqDefine("hqwebapp/js/hq.helpers", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'analytix/js/google',
+], function(
+    $,
+    ko,
+    _,
+    googleAnalytics
+) {
     var clearAnnouncement = function (announcementID) {
         $.ajax({
             url: '/announcements/clear/' + announcementID
@@ -92,7 +102,7 @@ hqDefine("hqwebapp/js/hq.helpers", ['jquery', 'knockout', 'underscore'], functio
 
             // Prevent jumping to the top of the page when link is clicked
             $helpElem.find('a').click(function(event) {
-                hqImport('analytix/js/google').track.event("Clicked Help Bubble", $(this).data('title'), '-');
+                googleAnalytics.track.event("Clicked Help Bubble", $(this).data('title'), '-');
                 event.preventDefault();
             });
         });
