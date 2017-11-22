@@ -37,6 +37,9 @@ LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its 
 
 
 def parse_params(params, location=None):
+    """
+    Inserts date and OpenMRS location UUID into report params
+    """
     today = datetime.today().strftime('%Y-%m-%d')
     location_uuid = location.metadata[LOCATION_OPENMRS] if location else None
 
@@ -50,6 +53,9 @@ def parse_params(params, location=None):
 
 
 def get_openmrs_patients(requests, importer, location=None):
+    """
+    Send request to OpenMRS Reporting API and return results
+    """
     endpoint = '/ws/rest/v1/reportingrest/reportdata/' + importer.report_uuid
     params = parse_params(importer.report_params, location)
     response = requests.get(endpoint, params=params)
