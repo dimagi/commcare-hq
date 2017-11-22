@@ -113,8 +113,8 @@
         <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script src="{% static 'underscore/underscore.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
         {% compress js %}
@@ -158,6 +158,8 @@
 
         {# javascript #}
         {% include "hqwebapp/includes/ko.html" %}
+        {% include 'formplayer/dependencies.html' %}
+        {% include 'formplayer/query_view.html' %}
 
         {% include 'analytics/initial/all.html' %}
         <div class="initial-analytics-data hide">
@@ -174,9 +176,6 @@
         {% include 'analytics/analytics_js.html' %}
 
         <script type="text/javascript" src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
-
-        {% include 'formplayer/dependencies.html' %}
-        {% include 'formplayer/query_view.html' %}
 
         {% block js %}{% endblock %}
         {% block js-inline %}{% endblock %}
