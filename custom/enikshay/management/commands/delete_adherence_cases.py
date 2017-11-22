@@ -6,7 +6,10 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 
 
-from custom.enikshay.case_utils import get_all_episode_confirmed_tb_cases_from_person, get_adherence_cases_from_episode
+from custom.enikshay.case_utils import (
+    get_all_episode_confirmed_tb_cases_from_person,
+    get_adherence_cases_from_episode,
+)
 
 
 class Command(BaseCommand):
