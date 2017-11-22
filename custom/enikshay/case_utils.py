@@ -628,7 +628,7 @@ def iter_all_active_person_episode_cases(domain, case_ids):
         yield person_case, episode_case
 
 
-def person_has_any_nikshay_notifiable_episode(person_case):
+def person_has_any_legacy_nikshay_notifiable_episode(person_case):
     domain = person_case.domain
     from custom.enikshay.integrations.utils import is_valid_person_submission
     from custom.enikshay.integrations.nikshay.repeaters import valid_nikshay_patient_registration

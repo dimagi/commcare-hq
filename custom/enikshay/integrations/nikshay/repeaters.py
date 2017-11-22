@@ -20,7 +20,7 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
-    person_has_any_nikshay_notifiable_episode,
+    person_has_any_legacy_nikshay_notifiable_episode,
     get_person_case_from_occurrence)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
@@ -168,7 +168,7 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
                     person_hiv_status_changed(person_case)
                 ) and
                 is_valid_person_submission(person_case) and
-                person_has_any_nikshay_notifiable_episode(person_case)
+                person_has_any_legacy_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
@@ -243,7 +243,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
                 not is_valid_test_submission(test_case) and
-                person_has_any_nikshay_notifiable_episode(person_case)
+                person_has_any_legacy_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
