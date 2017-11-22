@@ -101,19 +101,7 @@ def get_commcare_users_by_location(domain_name, location_id):
             yield user
 
 
-def import_patients_to_location(requests, importer, domain_name, location):
-    try:
-        if location is None:
-            owner = CommCareUser.get(importer.owner_id)
-        else:
-            # Don't assign cases to the location itself (until we have a project that needs to)
-            owner = next(get_commcare_users_by_location(domain_name, location.location_id))
-    except (ResourceNotFound, StopIteration):
-        # Location has no users
-        logger.error('Project space "{domain}" location "{location}" has no user to own imported cases'.format(
-            domain=domain_name, location=location.name))
-        return
-
+def import_patients_of_owner(requests, importer, domain_name, owner, location=None):
     openmrs_patients = get_openmrs_patients(requests, importer, location)
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
@@ -164,9 +152,18 @@ def import_patients_to_domain(domain_name, force=False):
                 continue
             locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type).all()
             for location in locations:
-                import_patients_to_location(requests, importer, domain_name, location)
+                # Assign cases to the first user in the location, not to the location itself
+                owner = next(get_commcare_users_by_location(domain_name, location.location_id))
+                import_patients_of_owner(requests, importer, domain_name, owner, location)
+        elif importer.owner_id:
+            owner = CommCareUser.get(importer.owner_id)
+            import_patients_of_owner(requests, importer, domain_name, owner)
         else:
-            import_patients_to_location(requests, importer, domain_name, None)
+            logger.error(
+                'Error importing patients from OpenMRS for domain "{}": Unable to determine the owner of '
+                'imported cases without either owner_id or location_type_name'.format(domain_name)
+            )
+            continue
 
 
 @periodic_task(
