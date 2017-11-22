@@ -2210,11 +2210,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         return max(self.devices, key=lambda dev: dev.last_used)
 
     def get_device(self, device_id):
-        matches = [
-            device for device in self.devices
-            if device.device_id == device_id
-        ]
-        return matches[0] if matches else None
+        for device in self.devices:
+            if device.device_id == device_id:
+                return device
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
