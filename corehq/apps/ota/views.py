@@ -270,13 +270,19 @@ def heartbeat(request, domain, app_build_id):
         mobile simply needs it to be resent back in the JSON, and doesn't
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
+    def _safe_int(val):
+        try:
+            return int(val)
+        except:
+            pass
+
     app_id = request.GET.get('app_id', '')
 
-    app_version = request.GET.get('app_version', '')
+    app_version = _safe_int(request.GET.get('app_version', ''))
     device_id = request.GET.get('device_id', '')
     last_sync_time = request.GET.get('last_sync_time', '')
-    num_unsent_forms = request.GET.get('num_unsent_forms', '')
-    num_quarantined_forms = request.GET.get('num_quarantined_forms', '')
+    num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
+    num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
     commcare_version = request.GET.get('cc_version', '')
 
     info = {"app_id": app_id}
@@ -295,21 +301,16 @@ def heartbeat(request, domain, app_build_id):
         try:
             last_sync = adjust_text_to_datetime(last_sync_time)
         except iso8601.ParseError:
-            pass
+            last_sync = None
         else:
             save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
-
-        def _safe_int(val):
-            try:
-                return int(val)
-            except:
-                pass
 
         app_meta = DeviceAppMeta(
             app_id=app_id,
             build_id=app_build_id,
             build_version=app_version,
             last_heartbeat=datetime.utcnow(),
+            last_sync=last_sync,
             num_unsent_forms=num_unsent_forms,
             num_quarantined_forms=num_quarantined_forms
         )

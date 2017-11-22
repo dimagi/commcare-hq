@@ -842,6 +842,8 @@ class DeviceAppMeta(DocumentSchema):
                 elif not prop_is_date and old_val != new_val:
                     setattr(self, key, new_val)
 
+        self._update_latest_request()
+
 
 class DeviceIdLastUsed(DocumentSchema):
     device_id = StringProperty()
@@ -858,6 +860,7 @@ class DeviceIdLastUsed(DocumentSchema):
     def _merge_app_meta(self, app_meta):
         current_meta = self.get_meta_for_app(app_meta.app_id)
         if not current_meta:
+            app_meta._update_latest_request()
             self.app_meta.append(app_meta)
         else:
             current_meta.merge(app_meta)
