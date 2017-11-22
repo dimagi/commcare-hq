@@ -59,6 +59,8 @@ class OpenmrsImporter(Document):
     # the first mobile worker assigned to that location.
     location_type_name = StringProperty()
 
+    # external_id should always be the OpenMRS UUID of the patient (and not, for example, a national ID number)
+    # because it is immutable. external_id_column is the column that contains the UUID
     external_id_column = StringProperty()
 
     # Space-separated column(s) to be concatenated to create the case name (e.g. "givenName familyName")

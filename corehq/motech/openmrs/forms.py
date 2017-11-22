@@ -74,7 +74,7 @@ class OpenmrsImporterForm(forms.Form):
                                          help_text=_('The Organization Level whose mobile worker will own new '
                                                      'cases'))
     external_id_column = forms.CharField(label=_('External ID Column'), required=True,
-                                         help_text=_("The column that stores the case's external ID"))
+                                         help_text=_("The column that contains the OpenMRS UUID of the patient"))
     name_columns = forms.CharField(label=_('Name Columns'), required=True,
                                    help_text=_('Space-separated column(s) to be concatenated to create the case '
                                                'name (e.g. "givenName familyName")'))
