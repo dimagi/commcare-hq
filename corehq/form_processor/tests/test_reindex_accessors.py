@@ -144,19 +144,19 @@ class BaseShardedAccessorMixin(object):
             with db_cursor as cursor:
                 cursor.execute('ANALYSE')  # the doc count query relies on this
 
-    def _get_docs(self, start, last_doc_pk=None, limit=500):
+    def _get_docs(self, last_doc_pk=None, limit=500):
         accessor = self.accessor_class()
-        return self._get_docs_from_accessor(accessor, start, last_doc_pk, limit)
+        return self._get_docs_from_accessor(accessor, last_doc_pk, limit)
 
-    def _get_docs_from_accessor(self, accessor, start, last_doc_pk=None, limit=500):
+    def _get_docs_from_accessor(self, accessor, last_doc_pk=None, limit=500):
         all_docs = []
         for from_db in partition_config.get_form_processing_dbs():
-            all_docs.extend(accessor.get_docs(from_db, start))
+            all_docs.extend(accessor.get_docs(from_db, last_doc_pk=last_doc_pk, limit=limit))
         return all_docs
 
-    def _get_docs_for_domain(self, domain, start, last_doc_pk=None, limit=500):
+    def _get_docs_for_domain(self, domain, last_doc_pk=None, limit=500):
         accessor = self.accessor_class(domain=domain)
-        return self._get_docs_from_accessor(accessor, start, last_doc_pk, limit)
+        return self._get_docs_from_accessor(accessor, last_doc_pk, limit)
 
     def test_get_doc_count(self):
         doc_count = sum(
