@@ -153,10 +153,26 @@ def import_patients_to_domain(domain_name, force=False):
             locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type).all()
             for location in locations:
                 # Assign cases to the first user in the location, not to the location itself
-                owner = next(get_commcare_users_by_location(domain_name, location.location_id))
+                try:
+                    owner = next(get_commcare_users_by_location(domain_name, location.location_id))
+                except StopIteration:
+                    logger.error(
+                        'Project space "{domain}" at location "{location}" has no user to own cases imported from '
+                        'OpenMRS Importer "{importer}"'.format(
+                            domain=domain_name, location=location.name, importer=importer)
+                    )
+                    continue
                 import_patients_of_owner(requests, importer, domain_name, owner, location)
         elif importer.owner_id:
-            owner = CommCareUser.get(importer.owner_id)
+            try:
+                owner = CommCareUser.get(importer.owner_id)
+            except ResourceNotFound:
+                logger.error(
+                    'Project space "{domain}" has no user to own cases imported from OpenMRS Importer '
+                    '"{importer}"'.format(
+                        domain=domain_name, importer=importer)
+                )
+                continue
             import_patients_of_owner(requests, importer, domain_name, owner)
         else:
             logger.error(

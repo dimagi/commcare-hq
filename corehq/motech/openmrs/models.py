@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from django.utils.encoding import python_2_unicode_compatible
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_CHOICES, IMPORT_FREQUENCY_MONTHLY
 from dimagi.ext.couchdbkit import (
     Document,
@@ -24,6 +25,7 @@ class ColumnMapping(DocumentSchema):
     data_type = StringProperty(choices=DATA_TYPES, required=False)
 
 
+@python_2_unicode_compatible
 class OpenmrsImporter(Document):
     """
     Import cases from an OpenMRS instance using a report
@@ -63,3 +65,6 @@ class OpenmrsImporter(Document):
     name_columns = StringProperty()
 
     column_map = ListProperty(ColumnMapping)
+
+    def __str__(self):
+        return self.server_url
