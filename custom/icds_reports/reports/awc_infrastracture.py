@@ -7,13 +7,11 @@ from django.utils.translation import ugettext as _
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value
-from django.db.models import Case, When, Q, IntegerField
 
 
 @quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_awc_infrastructure_data(domain, config, show_test=False):
     def get_data_for(month, filters):
-        filters['aggregation_level'] = 5
         queryset = AggAwcMonthly.objects.filter(
             month=month, **filters
         ).values(
@@ -24,13 +22,7 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
             medicine_kits=Sum('infra_medicine_kits'),
             infant_scale=Sum('infra_infant_weighing_scale'),
             adult_scale=Sum('infra_adult_weighing_scale'),
-            sum_last_update=Sum(
-                Case(
-                    When(Q(infra_last_update_date=None), then=1),
-                    default=0,
-                    output_field=IntegerField()
-                )
-            )
+            awcs=Sum('num_awcs')
         )
 
         if not show_test:
@@ -49,43 +41,43 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
         'records': [
             [
                 {
-                    'label': _('AWCs Reported Clean Drinking Water'),
-                    'help_text': _('Percentage of AWCs that reported having a source of clean drinking water'),
+                    'label': _('AWCs with Clean Drinking Water'),
+                    'help_text': _('Percentage of AWCs with a source of clean drinking water'),
                     'percent': percent_diff(
                         'clean_water',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ),
                     'color': 'green' if percent_diff(
                         'clean_water',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ) > 0 else 'red',
                     'value': get_value(this_month_data, 'clean_water'),
-                    'all': get_value(this_month_data, 'sum_last_update'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'clean_water'
                 },
                 {
-                    'label': _("AWCs Reported Functional Toilet"),
-                    'help_text': _('Percentage of AWCs that reported having a functional toilet'),
+                    'label': _("AWCs with Functional Toilet"),
+                    'help_text': _('AWCs with functional toilet'),
                     'percent': percent_diff(
                         'functional_toilet',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ),
                     'color': 'green' if percent_diff(
                         'functional_toilet',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ) > 0 else 'red',
                     'value': get_value(this_month_data, 'functional_toilet'),
-                    'all': get_value(this_month_data, 'sum_last_update'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'functional_toilet'
@@ -102,45 +94,43 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
                 #     'frequency': 'month'
                 # },
                 {
-                    'label': _('AWCs Reported Weighing Scale: Infants'),
-                    'help_text': _('Percentage of AWCs that reported having a weighing scale for infants'),
+                    'label': _('AWCs with Weighing Scale: Infants'),
+                    'help_text': _('Percentage of AWCs with weighing scale for infants'),
                     'percent': percent_diff(
                         'infant_scale',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ),
                     'color': 'green' if percent_diff(
                         'infant_scale',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ) > 0 else 'red',
                     'value': get_value(this_month_data, 'infant_scale'),
-                    'all': get_value(this_month_data, 'sum_last_update'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'infants_weight_scale'
                 },
                 {
-                    'label': _('AWCs Reported Weighing Scale: Mother and Child'),
-                    'help_text': _(
-                        'Percentage of AWCs that reported having a weighing scale for mother and child'
-                    ),
+                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'help_text': _('Percentage of AWCs with weighing scale for mother and child'),
                     'percent': percent_diff(
                         'adult_scale',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ),
                     'color': 'green' if percent_diff(
                         'adult_scale',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ) > 0 else 'red',
                     'value': get_value(this_month_data, 'adult_scale'),
-                    'all': get_value(this_month_data, 'sum_last_update'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'adult_weight_scale'
@@ -148,22 +138,22 @@ def get_awc_infrastructure_data(domain, config, show_test=False):
             ],
             [
                 {
-                    'label': _('AWCs Reported Medicine Kit'),
-                    'help_text': _('Percentage of AWCs that reported having a Medicine Kit'),
+                    'label': _('AWCs with Medicine Kit'),
+                    'help_text': _('Percentage of AWCs with a Medicine Kit'),
                     'percent': percent_diff(
                         'medicine_kits',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ),
                     'color': 'green' if percent_diff(
                         'medicine_kits',
                         this_month_data,
                         prev_month_data,
-                        'sum_last_update'
+                        'awcs'
                     ) > 0 else 'red',
                     'value': get_value(this_month_data, 'medicine_kits'),
-                    'all': get_value(this_month_data, 'sum_last_update'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'medicine_kit'

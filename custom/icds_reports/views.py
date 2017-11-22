@@ -1261,13 +1261,13 @@ class CleanWaterView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
-        config['aggregation_level'] = 5
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_clean_water_sector_data(domain, config, loc_level, location, include_test)
@@ -1295,13 +1295,13 @@ class FunctionalToiletView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
-        config['aggregation_level'] = 5
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_functional_toilet_sector_data(domain, config, loc_level, location, include_test)
@@ -1329,13 +1329,13 @@ class MedicineKitView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
-        config['aggregation_level'] = 5
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_medicine_kit_sector_data(domain, config, loc_level, location, include_test)
@@ -1363,13 +1363,13 @@ class InfantsWeightScaleView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
-        config['aggregation_level'] = 5
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_infants_weight_scale_sector_data(domain, config, loc_level, location, include_test)
@@ -1397,13 +1397,13 @@ class AdultWeightScaleView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = []
-        config['aggregation_level'] = 5
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_adult_weight_scale_sector_data(domain, config, loc_level, location, include_test)

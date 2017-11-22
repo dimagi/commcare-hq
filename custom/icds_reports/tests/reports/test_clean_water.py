@@ -16,14 +16,14 @@ class TestCleanWater(TestCase):
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
-                    'aggregation_level': 5
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a source of clean drinking water",
-                    "average": 145.0
+                    "info": "Percentage of AWCs with a source of clean drinking water",
+                    "average": 58.0
                 },
                 "fills": {
                     "0%-25%": "#de2d26",
@@ -34,17 +34,17 @@ class TestCleanWater(TestCase):
                 "data": {
                     "st1": {
                         "in_month": 17,
-                        "all": 9,
-                        "fillKey": "75%-100%"
+                        "all": 26,
+                        "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 12,
-                        "all": 11,
-                        "fillKey": "75%-100%"
+                        "all": 24,
+                        "fillKey": "25%-75%"
                     }
                 },
                 "slug": "clean_water",
-                "label": "Percentage of AWCs that reported having a source of clean drinking water"
+                "label": "Percent AWCs with Clean Drinking Water"
             }
         )
 
@@ -54,7 +54,7 @@ class TestCleanWater(TestCase):
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
-                    'aggregation_level': 5
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             ),
@@ -63,21 +63,21 @@ class TestCleanWater(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 188.88888888888889
+                        "percent": 65.38461538461539
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 109.0909090909091
+                        "percent": 50.0
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 188.88888888888889
+                        "percent": 65.38461538461539
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 109.0909090909091
+                        "percent": 50.0
                     }
                 ],
                 "chart_data": [
@@ -97,27 +97,27 @@ class TestCleanWater(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.3888888888888889,
+                                "y": 0.28,
                                 "x": 1491004800000,
                                 "in_month": 14
                             },
                             {
-                                "y": 1.45,
+                                "y": 0.58,
                                 "x": 1493596800000,
                                 "in_month": 29
                             }
                         ],
-                        "key": "Percentage of AWCs that reported having a source of clean drinking water"
+                        "key": "% of AWCs with a source of clean drinking water"
                     }
                 ],
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 188.88888888888889
+                        "percent": 65.38461538461539
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 109.0909090909091
+                        "percent": 50.0
                     }
                 ]
             }
@@ -132,21 +132,21 @@ class TestCleanWater(TestCase):
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b1',
-                    'aggregation_level': 5
+                    'aggregation_level': 4
                 },
                 location_id='b1',
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a source of clean drinking water",
+                "info": "Percentage of AWCs with a source of clean drinking water",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 3,
-                        "all": 4
+                        "all": 7
                     },
                     "s1": {
                         "in_month": 5,
-                        "all": 2
+                        "all": 7
                     }
                 },
                 "chart_data": [
@@ -157,11 +157,11 @@ class TestCleanWater(TestCase):
                         "values": [
                             [
                                 "s1",
-                                2.5
+                                0.7142857142857143
                             ],
                             [
                                 "s2",
-                                0.75
+                                0.42857142857142855
                             ]
                         ],
                         "key": ""

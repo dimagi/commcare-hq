@@ -16,14 +16,14 @@ class TestAdultWeightScale(TestCase):
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
-                    'aggregation_level': 5
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a weighing scale for mother and child",
-                    "average": 45.0
+                    "info": "Percentage of AWCs with weighing scale for mother and child",
+                    "average": 18.0
                 },
                 "fills": {
                     "0%-25%": "#de2d26",
@@ -34,17 +34,17 @@ class TestAdultWeightScale(TestCase):
                 "data": {
                     "st1": {
                         "in_month": 5,
-                        "all": 9.0,
-                        "fillKey": "25%-75%"
+                        "all": 26.0,
+                        "fillKey": "0%-25%"
                     },
                     "st2": {
                         "in_month": 4,
-                        "all": 11.0,
-                        "fillKey": "25%-75%"
+                        "all": 24.0,
+                        "fillKey": "0%-25%"
                     }
                 },
                 "slug": "adult_weight_scale",
-                "label": "Percentage of AWCs that reported having a weighing scale for mother and child"
+                "label": "Percent AWCs with Weighing Scale: Mother and Child"
             }
         )
 
@@ -54,7 +54,7 @@ class TestAdultWeightScale(TestCase):
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
-                    'aggregation_level': 5
+                    'aggregation_level': 1
                 },
                 loc_level='state'
             ),
@@ -63,21 +63,21 @@ class TestAdultWeightScale(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 55.55555555555556
+                        "percent": 19.23076923076923
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 36.36363636363637
+                        "percent": 16.666666666666668
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 55.55555555555556
+                        "percent": 19.23076923076923
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 36.36363636363637
+                        "percent": 16.666666666666668
                     }
                 ],
                 "chart_data": [
@@ -97,27 +97,27 @@ class TestAdultWeightScale(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.08333333333333333,
+                                "y": 0.06,
                                 "x": 1491004800000,
                                 "in_month": 3
                             },
                             {
-                                "y": 0.45,
+                                "y": 0.18,
                                 "x": 1493596800000,
                                 "in_month": 9
                             }
                         ],
-                        "key": "Percentage of AWCs that reported having a weighing scale for mother and child"
+                        "key": "% of AWCs with a weighing scale for mother and child"
                     }
                 ],
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 55.55555555555556
+                        "percent": 19.23076923076923
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 36.36363636363637
+                        "percent": 16.666666666666668
                     }
                 ]
             }
@@ -132,21 +132,21 @@ class TestAdultWeightScale(TestCase):
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b1',
-                    'aggregation_level': 5
+                    'aggregation_level': 4
                 },
                 loc_level='supervisor',
                 location_id='b1',
             ),
             {
-                "info": "Percentage of AWCs that reported having a weighing scale for mother and child",
+                "info": "Percentage of AWCs with weighing scale for mother and child",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 1,
-                        "all": 4
+                        "all": 7
                     },
                     "s1": {
                         "in_month": 1,
-                        "all": 2
+                        "all": 7
                     }
                 },
                 "chart_data": [
@@ -157,11 +157,11 @@ class TestAdultWeightScale(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.5
+                                0.14285714285714285
                             ],
                             [
                                 "s2",
-                                0.25
+                                0.14285714285714285
                             ]
                         ],
                         "key": ""
