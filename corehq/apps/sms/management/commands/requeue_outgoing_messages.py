@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from builtins import input
 from corehq.apps.sms.models import SMS, OUTGOING
 from corehq.util.argparse_types import utc_timestamp
 from django.core.management.base import BaseCommand
+from six.moves import input
 
 
 class Command(BaseCommand):
