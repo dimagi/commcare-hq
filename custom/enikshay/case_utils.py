@@ -400,6 +400,7 @@ def _get_public_locations(person_case, episode_case):
             dto=district_location.metadata['nikshay_code'],
             tu=tu_location.metadata['nikshay_code'],
             phi=phi_location.metadata['nikshay_code'],
+            phi_name=phi_location.name,
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))

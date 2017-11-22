@@ -718,6 +718,7 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
             'reg_dto_code': person_locations.dto,
             'reg_tbu_code': person_locations.tu,
             'reg_phi_code': person_locations.phi,
+            'reg_phi_name': person_locations.phi_name,
         }
     )
 
