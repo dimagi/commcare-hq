@@ -176,8 +176,9 @@ def import_patients_to_domain(domain_name, force=False):
             import_patients_of_owner(requests, importer, domain_name, owner)
         else:
             logger.error(
-                'Error importing patients from OpenMRS for domain "{}": Unable to determine the owner of '
-                'imported cases without either owner_id or location_type_name'.format(domain_name)
+                'Error importing patients for project space "{domain}" from OpenMRS Importer "{importer}": Unable '
+                'to determine the owner of imported cases without either owner_id or location_type_name'.format(
+                    domain=domain_name, importer=importer)
             )
             continue
 
