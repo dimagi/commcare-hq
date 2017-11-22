@@ -10,6 +10,7 @@ hqDefine('analytics/js/google', function () {
         logger = hqImport('analytics/js/logging').getLoggerForApi('Google Analytics'),
         _utils = hqImport('analytics/js/utils'),
         _data = {},
+        module = {},
         _gtag = function () {};
 
     var __init__ = function () {
@@ -111,6 +112,15 @@ hqDefine('analytics/js/google', function () {
         }
     };
 
+
+    module = {
+        logger: logger,
+        track: {
+            event: trackEvent,
+            click: trackClick,
+        },
+    };
+
     /**
      * Helper function that pre-fills the eventCategory field for all the
      * tracking helper functions. Useful if you want to track a lot of items
@@ -129,7 +139,7 @@ hqDefine('analytics/js/google', function () {
              * @param {function} eventCallback - (optional) Event callback fn
              */
             event: function (eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-                trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
+                module.track.event(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
             },
             /**
              * @param {(object|string)} element - The element (or a selector) whose clicks you want to track.
@@ -139,17 +149,13 @@ hqDefine('analytics/js/google', function () {
              * @param {object} eventParameters - (optional) Extra event parameters
              */
             click: function (element, eventAction, eventLabel, eventValue, eventParameters) {
-                trackClick(element, eventCategory, eventLabel, eventValue, eventParameters);
+                // directly reference what the module returns instead of the private function,
+                // as some mocha tests will want to replace the module's returned functions
+                module.track.click(element, eventCategory, eventLabel, eventValue, eventParameters);
             },
         };
     };
 
-    return {
-        logger: logger,
-        track: {
-            event: trackEvent,
-            click: trackClick,
-        },
-        trackCategory: trackCategory,
-    };
+    module.trackCategory = trackCategory;
+    return module;
 });

@@ -267,15 +267,13 @@ hqDefine("hqwebapp/js/main", function() {
         $(document).on('click', '.track-usage-link', function(e) {
             var $link = $(e.currentTarget),
                 data = $link.data();
-            window.analytics.trackUsageLink($link, data.category, data.action, data.label, data.value);
+            hqImport('analytics/js/google').track.click($link, data.category, data.action, data.label, data.value);
         });
 
         $(document).on('click', '.mainmenu-tab a', function(e) {
-            if (typeof(ga) !== 'undefined') {
-                var data = $(e.currentTarget).closest(".mainmenu-tab").data();
-                if (data.category && data.action) {
-                    ga('send', 'event', data.category, data.action, data.label);
-                }
+            var data = $(e.currentTarget).closest(".mainmenu-tab").data();
+            if (data.category && data.action) {
+                hqImport('analytics/js/google').track.event(data.category, data.action, data.label);
             }
         });
 

@@ -227,11 +227,11 @@
                 if (!eventTrackingSet && !_.isEmpty(currentVal)) {
                     eventTrackingSet = true;
                     if (!_.isEmpty(currentVal.usage_label)) {
-                        gaTrackLink(element, analyticsConfig.category, analyticsConfig.action, currentVal.usage_label);
+                        hqImport('analytics/js/google').track.click(element, analyticsConfig.category, analyticsConfig.action, currentVal.usage_label);
                     }
                     for (var i in currentVal.workflow_labels) {
                         var label = currentVal.workflow_labels[i];
-                        window.analytics.trackWorkflowLink(element, label);
+                        hqImport('analytics/js/kissmetrics').track.internalClick(element, label);
                     }
                 }
             });
