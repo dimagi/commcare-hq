@@ -3,12 +3,14 @@ define([
     "knockout",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
+    "analytix/js/google",
     "hqwebapp/js/knockout_bindings.ko",
 ], function(
     $,
     ko,
     initialPageData,
-    hqMain
+    hqMain,
+    googleAnalytics
 ) {
     var CaseType = function (name) {
         var self = this;
@@ -196,7 +198,7 @@ define([
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function() {
-            hqImport('analytix/js/google').track.event('Data Dictionary', 'downloaded data dictionary');
+            googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
         });
     });
 });

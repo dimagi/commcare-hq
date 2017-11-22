@@ -10,13 +10,15 @@ hqDefine('notifications/js/notifications_service', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'jquery.rmi/jquery.rmi',
+    'analytix/js/google',
     'hqwebapp/js/hq.helpers',
 ], function (
     $,
     ko,
     _,
     initialPageData,
-    RMI
+    RMI,
+    googleAnalytics
 ) {
     'use strict';
 
@@ -160,9 +162,9 @@ hqDefine('notifications/js/notifications_service', [
         module.initUINotify('.alert-ui-notify');
 
         $(document).on('click', '.notification-link', function() {
-            hqImport('analytix/js/google').track.event('Notification', 'Opened Message', this.href);
+            googleAnalytics.track.event('Notification', 'Opened Message', this.href);
         });
-        hqImport('analytix/js/google').track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
+        googleAnalytics.track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     });
 
     return module;

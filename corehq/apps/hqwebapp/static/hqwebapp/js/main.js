@@ -2,11 +2,13 @@ hqDefine('hqwebapp/js/main', [
     "jquery",
     "underscore",
     "hqwebapp/js/alert_user",
+    "analytix/js/google",
     "hqwebapp/js/hq_extensions.jquery",
 ], function(
     $,
     _,
-    alertUser
+    alertUser,
+    googleAnalytics
 ) {
     var eventize = function (that) {
         'use strict';
@@ -275,13 +277,13 @@ hqDefine('hqwebapp/js/main', [
         $(document).on('click', '.track-usage-link', function(e) {
             var $link = $(e.currentTarget),
                 data = $link.data();
-            hqImport('analytix/js/google').track.click($link, data.category, data.action, data.label, data.value);
+            googleAnalytics.track.click($link, data.category, data.action, data.label, data.value);
         });
 
         $(document).on('click', '.mainmenu-tab a', function(e) {
             var data = $(e.currentTarget).closest(".mainmenu-tab").data();
             if (data.category && data.action) {
-                hqImport('analytix/js/google').track.event(data.category, data.action, data.label);
+                googleAnalytics.track.event(data.category, data.action, data.label);
             }
         });
 
