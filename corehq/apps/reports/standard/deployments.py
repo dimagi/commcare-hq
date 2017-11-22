@@ -68,8 +68,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_syncs.sync_date',
                              alt_prop_name='reporting_metadata.last_sync_for_user.sync_date'),
             DataTablesColumn(_("Application"),
-                             help_text=_("The name of the application that "
-                                         "the most recent request for this user came from"),
+                             help_text=_("The name of the application from the user's last request."),
                              sortable=False),
             DataTablesColumn(_("Application Version"),
                              help_text=_("The application version from the user's last request."),
