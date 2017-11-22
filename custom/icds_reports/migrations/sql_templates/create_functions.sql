@@ -47,7 +47,10 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'5 FROM ' || quote_ident(_ucr_location_table) || ')';
+		'5, ' ||
+		'block_map_location_name, ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM ' || quote_ident(_ucr_location_table) || ')';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -1614,11 +1617,15 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'4 FROM awc_location GROUP BY ' ||
+		'4, ' ||
+		'block_map_location_name, ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
 		'supervisor_id, supervisor_name, supervisor_site_code, ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
-		'state_id, state_name, state_site_code' ||
+		'state_id, state_name, state_site_code, ' ||
+		'block_map_location_name, district_map_location_name, state_map_location_name ' ||
 		')';
 
 	EXECUTE 'INSERT INTO awc_location (SELECT ' ||
@@ -1637,10 +1644,14 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'3 FROM awc_location GROUP BY ' ||
+		'3, ' ||
+		'block_map_location_name, ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
-		'state_id, state_name, state_site_code' ||
+		'state_id, state_name, state_site_code, ' ||
+		'block_map_location_name, district_map_location_name, state_map_location_name ' ||
 		')';
 
 	EXECUTE 'INSERT INTO awc_location (SELECT ' ||
@@ -1659,9 +1670,13 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'2 FROM awc_location GROUP BY ' ||
+		'2, ' ||
+		quote_nullable(null_value) || ', ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
 		'district_id, district_name, district_site_code,' ||
-		'state_id, state_name, state_site_code' ||
+		'state_id, state_name, state_site_code, ' ||
+		'district_map_location_name, state_map_location_name ' ||
 		')';
 
 	EXECUTE 'INSERT INTO awc_location (SELECT ' ||
@@ -1680,8 +1695,11 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'1 FROM awc_location GROUP BY ' ||
-		'state_id, state_name, state_site_code' ||
+		'1, ' ||
+		quote_nullable(null_value) || ', ' ||
+		quote_nullable(null_value) || ', ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
+		'state_id, state_name, state_site_code, state_map_location_name ' ||
 		')';
 END;
 $BODY$

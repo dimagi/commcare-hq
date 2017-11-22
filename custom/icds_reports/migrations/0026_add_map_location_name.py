@@ -12,9 +12,10 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('icds_reports',
-         '0023_fix_view'),
+         '0025_add_fully_immunized_to_view'),
     ]
 
     operations = [
-        migrator.get_migration('update_tables10.sql'),
+        migrator.get_migration('update_tables11.sql'),
+        migrator.get_migration('create_datasource_views.sql'),
     ]
