@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 import logging
 from collections import namedtuple
 from django.conf import settings
@@ -53,7 +53,7 @@ def get_task_progress(task):
         else:
             current = info.get('current')
             total = info.get('total')
-            percent = current * 100 / total if total and current is not None else 0
+            percent = current * 100 // total if total and current is not None else 0
     return TaskProgress(
         current=current,
         total=total,
