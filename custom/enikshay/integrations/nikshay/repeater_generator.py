@@ -209,6 +209,7 @@ class NikshayRegisterPatientPayloadGeneratorV2(BaseNikshayPayloadGenerator):
                 payload_doc.case_id,
                 {
                     "nikshay_registered": "true",
+                    "v2_notified": "true",
                     "nikshay_id": nikshay_id,
                     "nikshay_error": "",
                 },
