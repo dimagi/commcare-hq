@@ -1899,6 +1899,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'follow_up_notification_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'hiv_status_notification_2b.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'episode_for_summary_of_patients.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),

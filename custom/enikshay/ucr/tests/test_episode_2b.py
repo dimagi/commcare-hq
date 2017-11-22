@@ -14,14 +14,6 @@ class TestEpisode2B(TestDataSourceExpressions):
 
     data_source_name = EPISODE_DATA_SOURCE
 
-    def _get_expression(self, column_id, column_type):
-        column = self.get_column(column_id)
-        self.assertEqual(column['datatype'], column_type)
-        return ExpressionFactory.from_spec(
-            column['expression'],
-            context=FactoryContext(self.named_expressions, {})
-        )
-
     def test_treating_phi_property_when_clause_true(self):
         episode_case = {
             '_id': 'episode_case_id',
@@ -884,10 +876,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('microscopy_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('microscopy_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('microscopy_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('microscopy_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('microscopy_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('microscopy_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'microscopy_test_result_summary_display',
             'string'
         )
@@ -981,10 +973,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('microscopy_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('microscopy_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('microscopy_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('microscopy_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('microscopy_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('microscopy_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'microscopy_test_result_summary_display',
             'string'
         )
@@ -1097,10 +1089,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1195,10 +1187,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1312,10 +1304,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1429,10 +1421,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1526,10 +1518,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1698,7 +1690,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'test_regimen'
@@ -1717,7 +1709,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'New'
@@ -1737,7 +1729,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'Outside RNTCP'
@@ -1757,7 +1749,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'Previously Treated'
