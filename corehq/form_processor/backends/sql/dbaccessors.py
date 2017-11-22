@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+import functools
 import itertools
 import logging
 import struct
@@ -253,7 +255,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         if last_doc_pk is not None:
             filters.append(Q(**{self.primary_key_field_name + "__gt": last_doc_pk}))
         filters.extend(self.extra_filters(for_count=for_count))
-        return reduce(operator.and_, filters) if filters else None
+        return functools.reduce(operator.and_, filters) if filters else None
 
     def query(self, from_db, last_doc_pk=None, for_count=False):
         filters = self.filters(last_doc_pk, for_count)
