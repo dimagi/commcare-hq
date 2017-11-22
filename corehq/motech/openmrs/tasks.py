@@ -70,11 +70,10 @@ def get_openmrs_patients(requests, importer, location=None):
     #      {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3}]
 
 
-def get_caseblock(patient, importer, owner_id):
+def get_case_properties(patient, importer):
     cast = {
         POSIX_MILLISECONDS: lambda x: datetime(*time.gmtime(x / 1000.0)[:6]).isoformat() + 'Z',
     }
-    case_id = uuid.uuid4().hex
     name_columns = importer.name_columns.split(' ')
     case_name = ' '.join([patient[column] for column in name_columns])
     fields_to_update = {
@@ -83,6 +82,15 @@ def get_caseblock(patient, importer, owner_id):
                            patient[mapping.column])
         for mapping in importer.column_map
     }
+    return case_name, fields_to_update
+
+
+def get_addpatient_caseblock(patient, importer, owner_id):
+    """
+    Creates a new case with imported patient details.
+    """
+    case_id = uuid.uuid4().hex
+    case_name, fields_to_update = get_case_properties(patient, importer)
     return CaseBlock(
         create=True,
         case_id=case_id,
@@ -91,6 +99,19 @@ def get_caseblock(patient, importer, owner_id):
         case_type=importer.case_type,
         case_name=case_name,
         external_id=patient[importer.external_id_column],
+        update=fields_to_update,
+    )
+
+
+def get_updatepatient_caseblock(case, patient, importer):
+    """
+    Updates a case with imported patient details. Does not change owner.
+    """
+    case_name, fields_to_update = get_case_properties(patient, importer)
+    return CaseBlock(
+        create=False,
+        case_id=case.get_id,
+        case_name=case_name,
         update=fields_to_update,
     )
 
@@ -111,8 +132,11 @@ def import_patients_of_owner(requests, importer, domain_name, owner, location=No
             domain_name,
             importer.case_type
         )
-        if error == LookupErrors.NotFound:
-            case_block = get_caseblock(patient, importer, owner.user_id)
+        if error is None:
+            case_block = get_updatepatient_caseblock(case, patient, importer)
+            case_blocks.append(RowAndCase(i, case_block))
+        elif error == LookupErrors.NotFound:
+            case_block = get_addpatient_caseblock(patient, importer, owner.user_id)
             case_blocks.append(RowAndCase(i, case_block))
 
     submit_case_blocks(
