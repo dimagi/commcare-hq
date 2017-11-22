@@ -19,6 +19,7 @@ from custom.enikshay.exceptions import (
     ENikshayException)
 from custom.enikshay.integrations.nikshay.utils import (
     forward_via_legacy_api,
+    forward_via_v2_api,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 
@@ -370,7 +371,10 @@ def _get_public_locations(person_case, episode_case):
     try:
         phi_location_id = None
         if episode_case:
-            phi_location_id = episode_case.dynamic_case_properties().get('treatment_initiating_facility_id')
+            if forward_via_v2_api(episode_case):
+                phi_location_id = episode_case.dynamic_case_properties().get('diagnosing_facility_id')
+            else:
+                phi_location_id = episode_case.dynamic_case_properties().get('treatment_initiating_facility_id')
         # fallback to person_case.owner_id in case treatment_initiating_facility_id not set on episode
         # or if no episode case was passed
         if not phi_location_id:
