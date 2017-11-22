@@ -33,7 +33,7 @@ class Command(BaseCommand):
             print("No messages available to requeue.")
             return
 
-        if input("%s unprocessed outgoing messages found. Requeue them? y/n: ").strip().lower() != 'y':
+        if input("%s unprocessed outgoing messages found. Requeue them? y/n: " % count).strip().lower() != 'y':
             print("Aborted.")
             return
 
