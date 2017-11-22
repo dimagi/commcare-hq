@@ -7,7 +7,7 @@ var reportBuilder = function () {  // eslint-disable-line
     var constants = hqImport('userreports/js/constants');
 
     var _kmq_track_click = function (action) {
-        hqImport('analytics/js/kissmetrics').track.event("RBv2 - " + action);
+        hqImport('analytix/js/kissmetrics').track.event("RBv2 - " + action);
     };
 
     var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {

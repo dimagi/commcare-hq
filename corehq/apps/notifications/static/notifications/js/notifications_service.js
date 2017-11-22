@@ -146,9 +146,9 @@ hqDefine('notifications/js/notifications_service', function () {
         notifications.initUINotify('.alert-ui-notify');
 
         $(document).on('click', '.notification-link', function() {
-            hqImport('analytics/js/google').track.event('Notification', 'Opened Message', this.href);
+            hqImport('analytix/js/google').track.event('Notification', 'Opened Message', this.href);
         });
-        hqImport('analytics/js/google').track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
+        hqImport('analytix/js/google').track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     });
 
     return module;

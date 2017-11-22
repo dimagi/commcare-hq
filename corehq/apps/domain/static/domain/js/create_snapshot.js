@@ -34,7 +34,7 @@ hqDefine("domain/js/create_snapshot", function() {
         });
     
         $('#publish-now-button').on('click', function() {
-            hqImport('analytics/js/google').track.event('Exchange', 'Publish Now', '?', "", {}, function() {
+            hqImport('analytix/js/google').track.event('Exchange', 'Publish Now', '?', "", {}, function() {
                 $('#snapshot-form').submit();
             });
         });

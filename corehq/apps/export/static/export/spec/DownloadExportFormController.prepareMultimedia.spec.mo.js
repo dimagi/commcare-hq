@@ -27,10 +27,10 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
             assert.isFalse(DnldExpData.currentScope.preparingExport);
             assert.isFalse(DnldExpData.currentScope.preparingMultimediaExport);
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
-            var lastCallNum = hqImport('analytics/js/google').track.event.callCount - 1;
-            var userTypeCall = hqImport('analytics/js/google').track.event.getCall(lastCallNum - 1);
+            var lastCallNum = hqImport('analytix/js/google').track.event.callCount - 1;
+            var userTypeCall = hqImport('analytix/js/google').track.event.getCall(lastCallNum - 1);
             assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', "mobile"));
-            assert.isTrue(hqImport('analytics/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
+            assert.isTrue(hqImport('analytix/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
         });
 
         it('start exportDownloadService with isMultimediaDownload == true', function () {

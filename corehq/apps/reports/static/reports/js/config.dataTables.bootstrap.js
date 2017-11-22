@@ -267,7 +267,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", function() {
                     $selectField.addClass('form-control');
                     $selectField.on("change", function(){
                         var selected_value = $selectField.find('option:selected').val();
-                        hqImport('analytics/js/google').track.event("Reports", "Changed number of items shown", selected_value);
+                        hqImport('analytix/js/google').track.event("Reports", "Changed number of items shown", selected_value);
                     });
                 }
                 $(".dataTables_length select").change(function () {

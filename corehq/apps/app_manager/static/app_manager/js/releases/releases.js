@@ -40,7 +40,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.track_deploy_type = function(type) {
-            hqImport('analytics/js/google').track.event('App Manager', 'Deploy Type', type);
+            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Type', type);
         };
 
         self.changeAppCode = function () {
@@ -119,8 +119,8 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.click_app_code = function() {
             self.get_app_code();
-            hqImport('analytics/js/google').track.event('App Manager', 'Initiate Install', 'Get App Code');
-            hqImport('analytics/js/kissmetrics').track.event('Initiate Installation Method');
+            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Get App Code');
+            hqImport('analytix/js/kissmetrics').track.event('Initiate Installation Method');
         };
         
         self.get_app_code = function() {
@@ -168,8 +168,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.clickDeploy = function () {
-            hqImport('analytics/js/google').track.event('App Manager', 'Deploy Button', self.id());
-            hqImport('analytics/js/kissmetrics').track.event('Clicked Deploy');
+            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
+            hqImport('analytix/js/kissmetrics').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
             self.get_short_odk_url();
         };
@@ -191,8 +191,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.trackScan = function() {
-            hqImport('analytics/js/google').track.event('App Manager', 'Initiate Install', 'Show Bar Code');
-            hqImport('analytics/js/kissmetrics').track.event('Initiate Installation Method');
+            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Show Bar Code');
+            hqImport('analytix/js/kissmetrics').track.event('Initiate Installation Method');
         };
 
         self.reveal_java_download = function(){

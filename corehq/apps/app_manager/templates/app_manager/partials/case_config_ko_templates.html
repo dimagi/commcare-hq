@@ -53,7 +53,7 @@
         event: { change: function(view, e) {
             if (e.target.closest('#case-config-ko')) {
                 var action = e.target.closest('.case-preload') ? 'Load' : 'Save';
-                hqImport('analytics/js/google').track.event('Case Management', 'Form Level', action + ' Property (add/edit)');
+                hqImport('analytix/js/google').track.event('Case Management', 'Form Level', action + ' Property (add/edit)');
             }
         } }
     "/>
@@ -202,7 +202,7 @@
             type="button"
              data-bind="click: function(data, event){
                         refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{form.unique_id}}', event);
-                        hqImport('analytics/js/google').track.event('Refresh case management', 'Button Clicked');
+                        hqImport('analytix/js/google').track.event('Refresh case management', 'Button Clicked');
                         }">
         <i class="fa fa-refresh"></i>
     </button>

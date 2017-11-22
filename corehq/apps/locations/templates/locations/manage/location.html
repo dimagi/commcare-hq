@@ -87,13 +87,13 @@
                   $('#reparenting').modal();
               }
               if (this.name === 'update-loc') {
-                  hqImport('analytics/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
+                  hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
               } else {
-                  hqImport('analytics/js/google').track.event('Organization Structure', 'Edit', 'Create Child Location');
+                  hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Create Child Location');
               }
           });
 
-          hqImport('analytics/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
+          hqImport('analytix/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
 
           $('#move_confirm').click(function(e) {
               e.preventDefault();
