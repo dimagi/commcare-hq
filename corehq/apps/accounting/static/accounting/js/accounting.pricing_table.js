@@ -41,7 +41,7 @@ hqDefine('accounting/js/accounting.pricing_table', function () {
             $button.disableButton();
             $.ajax({
                 method: "POST",
-                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_plan_change'),
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_on_downgrade'),
                 data: {
                     old_plan: self.currentEdition,
                     new_plan: self.selected_edition(),
