@@ -17,7 +17,7 @@ class ExportSchemaTest(TestCase, DocTestMixin):
     def testSaveAndLoad(self):
         index = ["foo", 2]
         schema = ExportSchema(index=index, timestamp=datetime.utcnow())
-        inner = {"dict": {"bar": 1, "baz": [2,3]},
+        inner = {"dict": {"bar": 1, "baz": [2, 3]},
                  "list": ["foo", "bar"],
                  "dictlist": [{"bip": 1, "bop": "blah"},
                               {"bip": 2, "bop": "blah2"}],

@@ -5798,7 +5798,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return
         if new_lang in self.langs:
             raise AppEditingError("Language %s already exists!" % new_lang)
-        for i,lang in enumerate(self.langs):
+        for i, lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
         for profile in self.build_profiles:

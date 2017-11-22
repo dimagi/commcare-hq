@@ -459,7 +459,7 @@ def generate_sortables_from_facets(results, params=None):
 
     def generate_facet_dict(f_name, ft):
         if isinstance(ft['term'], six.text_type): #hack to get around unicode encoding issues. However it breaks this specific facet
-            ft['term'] = ft['term'].encode('ascii','replace')
+            ft['term'] = ft['term'].encode('ascii', 'replace')
 
         return {'name': ft["term"],
                 'count': ft["count"],

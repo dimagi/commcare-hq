@@ -71,8 +71,8 @@ class MessageBankForm(Form):
                 raise ValidationError(_("Message at row %(row_num)s is longer than 160 characters.") % {"row_num" : row_num})
 
             messages.append({
-                "msg_id" : msg_id,
-                "text" : text,
+                "msg_id": msg_id,
+                "text": text,
             })
             message_ids[msg_id] = True
             row_num += 1

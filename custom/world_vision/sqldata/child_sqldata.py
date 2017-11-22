@@ -424,7 +424,7 @@ class NutritionFeedingDetails(BaseSqlData):
     def rows(self):
         from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         result = []
-        for i in range(0,4):
+        for i in range(0, 4):
             result.append([{'sort_key': self.columns[2*i].header, 'html': self.columns[2*i].header,
                             'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['nutrition_details'], self.columns[2*i].slug)},
                            {'sort_key': self.data[self.columns[2*i].slug], 'html': self.data[self.columns[2*i].slug]},
