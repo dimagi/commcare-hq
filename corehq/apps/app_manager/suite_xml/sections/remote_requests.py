@@ -103,12 +103,17 @@ class RemoteRequestFactory(object):
 
     def _build_remote_request_datums(self):
         details_helper = DetailsHelper(self.app)
+        if self.module.case_details.short.custom_xml:
+            short_detail_id = 'case_short'
+        else:
+            short_detail_id = 'search_short'
+
         return [SessionDatum(
             id='case_id',
             nodeset=(CaseTypeXpath(self.module.case_type)
                      .case(instance_name=RESULTS_INSTANCE)),
             value='./@case_id',
-            detail_select=details_helper.get_detail_id_safe(self.module, 'search_short'),
+            detail_select=details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),
         )]
 
