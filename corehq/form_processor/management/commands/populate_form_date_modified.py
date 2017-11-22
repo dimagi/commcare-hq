@@ -42,7 +42,7 @@ class Command(BaseCommand):
 
 def _update_forms_in_db(db_name, online=True):
     reindex_accessor = FormReindexAccessor(limit_db_aliases=[db_name])
-    doc_count = reindex_accessor.get_doc_count(db_name)
+    doc_count = reindex_accessor.get_approximate_doc_count(db_name)
     doc_iterator = iter_all_ids(reindex_accessor)
     with_progress = with_progress_bar(doc_iterator, length=doc_count, oneline=online)
     for form_ids in chunked(with_progress, 1000):

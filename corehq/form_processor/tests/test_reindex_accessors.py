@@ -123,10 +123,10 @@ class BaseUnshardedAccessorMixin(object):
         self.assertEqual(self._get_doc_ids(docs), self.second_batch_global[1:3])
 
     def test_get_doc_count(self):
-        self.assertEqual(16, self.accessor_class().get_doc_count('default'))
+        self.assertEqual(16, self.accessor_class().get_approximate_doc_count('default'))
 
     def test_get_doc_count_domain(self):
-        self.assertEqual(8, self.accessor_class(domain=self.domain).get_doc_count('default'))
+        self.assertEqual(8, self.accessor_class(domain=self.domain).get_approximate_doc_count('default'))
 
 
 class BaseShardedAccessorMixin(object):
@@ -160,7 +160,7 @@ class BaseShardedAccessorMixin(object):
 
     def test_get_doc_count(self):
         doc_count = sum(
-            self.accessor_class().get_doc_count(from_db)
+            self.accessor_class().get_approximate_doc_count(from_db)
             for from_db in partition_config.get_form_processing_dbs()
         )
         self.assertEqual(len(self.all_doc_ids), doc_count)

@@ -302,8 +302,8 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         return []
 
-    def get_doc_count(self, from_db):
-        """Get the doc count from the given DB
+    def get_approximate_doc_count(self, from_db):
+        """Get the approximate doc count from the given DB
         :param from_db: The DB alias to query
         """
         query = self.query(from_db, for_count=True)
