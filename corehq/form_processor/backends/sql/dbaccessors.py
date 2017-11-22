@@ -6,6 +6,7 @@ import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
+from collections import namedtuple
 from datetime import datetime
 from itertools import groupby
 from uuid import UUID
@@ -92,9 +93,9 @@ def iter_all_ids(reindex_accessor):
         docs = reindex_accessor.get_doc_ids(db_alias)
         while docs:
             for doc in docs:
-                yield doc['doc_id']
+                yield doc.doc_id
 
-            last_id = doc['primary_key']
+            last_id = doc.primary_key
             docs = reindex_accessor.get_doc_ids(db_alias, last_doc_pk=last_id)
 
 
@@ -196,6 +197,9 @@ class ShardAccessor(object):
         return ShardAccessor.get_shard_id_and_database_for_doc(doc_id)[1]
 
 
+DocIds = namedtuple('DocIds', 'doc_id primary_key')
+
+
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
     primary_key_field_name = 'id'
 
@@ -269,7 +273,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         :param from_db: The DB alias to query
         :param last_doc_pk: The primary key of the last doc from the previous batch
         :param limit: Desired batch size
-        :return: List of dict(doc_id=<document ID>, primary_key=<doc primary key>)
+        :return: Generator of DocIds namedtuple
         """
         query = self.query(from_db, last_doc_pk)
         field = self.id_field
@@ -278,10 +282,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
             field = field.keys()[0]
         query = query.values(self.primary_key_field_name, field)
         for row in query.order_by(self.primary_key_field_name)[:limit]:
-            yield {
-                'doc_id': row[field],
-                'primary_key': row[self.primary_key_field_name]
-            }
+            yield DocIds(row[field], row[self.primary_key_field_name])
 
     def get_docs(self, from_db, last_doc_pk=None, limit=500):
         """Get a batch of
