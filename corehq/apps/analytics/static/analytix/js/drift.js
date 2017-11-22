@@ -11,7 +11,7 @@ hqDefine('analytix/js/drift', [
     'analytix/js/hubspot',
 ], function (
     _,
-    initialAnaltyics,
+    initialAnalytics,
     logging,
     utils,
     hubspot
