@@ -1788,6 +1788,26 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
+def email_plan_change(request, domain):
+    message = '\n'.join([
+        '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}.',
+        '',
+        'Note from user: {note}',
+    ]).format(
+        user=request.couch_user.username,
+        domain=domain,
+        old_plan=request.POST.get('old_plan', 'unknown'),
+        new_plan=request.POST.get('new_plan', 'unknown'),
+        note=request.POST.get('note', 'none'),
+    )
+
+    send_mail_async.delay(
+        'Subscription downgrade for {}'.format(request.domain),
+        message, settings.DEFAULT_FROM_EMAIL, [settings.PRODUCT_TEAM_EMAIL]
+    )
+    return json_response({'success': True})
+
+
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     template_name = 'domain/snapshot_settings.html'
     urlname = 'domain_snapshot_settings'

@@ -28,6 +28,7 @@
 {% initial_page_data 'editions' editions %}
 {% initial_page_data 'current_edition' current_edition %}
 {% initial_page_data 'is_renewal' is_renewal|BOOL %}
+{% registerurl 'email_plan_change' domain %}
 <p class="lead">
     {{ lead_text|safe }}
 </p>
@@ -59,7 +60,7 @@
 
             <div class="form-actions" data-bind="visible: isSubmitVisible">
                 <div class="col-xs-offset-2">
-                    <button type="submit" class="btn btn-primary btn-lg">{% trans 'Next' %}</button>
+                    <button type="submit" class="btn btn-primary btn-lg" data-bind="click: openDowngradeModal">{% trans 'Next' %}</button>
                 </div>
             </div>
         </form>
@@ -100,5 +101,32 @@
     <!-- ko foreach: pt.editions -->
     <td data-bind="attr: {class: col_css, 'data-edition': slug}"></td>
     <!-- /ko -->
+</script>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+<div class="modal fade" id="modal-downgrade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">{% trans "Close" %}</span>
+                </button>
+                <h4 class="modal-title">Downgrading?</h4>
+            </div>
+            <div class="modal-body">
+                {% blocktrans %}
+                    We'd love to make CommCare work better for you.
+                    Let us know what we can do to improve, or why you're downgrading.
+                {% endblocktrans %}
+                <br><br>
+                <textarea class="form-control"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bind="click: submitDowngrade">{% trans "OK" %}</button>
+            </div>
+        </div>
+    </div>
 </script>
 {% endblock %}

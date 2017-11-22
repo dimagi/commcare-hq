@@ -20,6 +20,38 @@ hqDefine('accounting/js/accounting.pricing_table', function () {
             self.selected_edition(self.currentEdition);
         };
 
+        self.form = undefined;
+        self.openDowngradeModal = function(pricingTable, e) {
+            var editionSlugs = _.map(self.editions(), function(e) { return e.slug(); });
+            if (editionSlugs.indexOf(self.selected_edition()) < editionSlugs.indexOf(self.currentEdition)) {
+                var $modal = $("#modal-downgrade");
+                $modal.modal('show');
+                self.form = $(e.currentTarget).closest("form");
+            }
+        };
+
+        self.submitDowngrade = function(pricingTable, e) {
+            var finish = function() {
+                if (self.form) {
+                    self.form.submit();
+                }
+            };
+
+            var $button = $(e.currentTarget);
+            $button.disableButton();
+            $.ajax({
+                method: "POST",
+                url: hqImport('hqwebapp/js/initial_page_data').reverse('email_plan_change'),
+                data: {
+                    old_plan: self.currentEdition,
+                    new_plan: self.selected_edition(),
+                    note: $button.closest(".modal").find("textarea").val(),
+                },
+                success: finish,
+                error: finish,
+            })
+        };
+
         self.init = function () {
             $('.col-edition').click(function () {
                 self.selected_edition($(this).data('edition'));
@@ -66,6 +98,7 @@ hqDefine('accounting/js/accounting.pricing_table', function () {
                 initial_page_data('is_renewal')
             );
         $('#pricing-table').koApplyBindings(pricingTable);
+        $('#modal-downgrade').koApplyBindings(pricingTable);
         pricingTable.init();
     }());
 });
