@@ -174,7 +174,11 @@ def import_patients_to_domain(domain_name, force=False):
                         location_type=importer.location_type_name, domain=domain_name)
                 )
                 continue
-            locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type).all()
+            if importer.location_id:
+                location = SQLLocation.objects.filter(domain=domain_name).get(importer.location_id)
+                locations = location.get_descendants.filter(location_type=location_type)
+            else:
+                locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type)
             for location in locations:
                 # Assign cases to the first user in the location, not to the location itself
                 try:
