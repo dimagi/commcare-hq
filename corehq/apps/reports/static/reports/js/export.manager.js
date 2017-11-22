@@ -123,14 +123,14 @@ var ExportManager = function (o) {
 
             if (params.isMultimedia) {
                 var action = self.is_custom ? "Download Custom Form Multimedia" : "Download Form Multimedia";
-                hqImport('analytics/js/google').track.click(downloadButton, "Form Exports", action, params.exportName);
+                hqImport('analytix/js/google').track.click(downloadButton, "Form Exports", action, params.exportName);
                 return;
             }
 
             // Device reports event
             // (This is a bit of a special case due to its unique "action" and "label"
             if (params.xmlns == "http://code.javarosa.org/devicereport") {
-                hqImport('analytics/js/google').track.click(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
+                hqImport('analytix/js/google').track.click(downloadButton, "Form Exports", "Download Mobile Device Log", "Export Mobile Device Log");
             }
 
             var label;
@@ -138,7 +138,7 @@ var ExportManager = function (o) {
 
                 if (params.isBulkDownload){
                     label = $('#include-closed-select').val() == "true" ? "all" : "all open";
-                    hqImport('analytics/js/google').track.click(downloadButton, "Download Case Export", "Download Raw Case Export", label);
+                    hqImport('analytix/js/google').track.click(downloadButton, "Download Case Export", "Download Raw Case Export", label);
                 }
 
             } else if (self.export_type == "form"){
@@ -155,7 +155,7 @@ var ExportManager = function (o) {
                     label = params.isBulkDownload ? label : params.exportName;
                 }
 
-                hqImport('analytics/js/google').track.click(downloadButton, category, action, label);
+                hqImport('analytix/js/google').track.click(downloadButton, category, action, label);
 
             }
         }

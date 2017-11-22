@@ -2,12 +2,12 @@
 /**
  * Instatiates the Hubspot analytics platform.
  */
-hqDefine('analytics/js/hubspot', function () {
+hqDefine('analytix/js/hubspot', function () {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('hubspot'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Hubspot'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = hqImport('analytix/js/initial').getFn('hubspot'),
+        _global = hqImport('analytix/js/initial').getFn('global'),
+        logger = hqImport('analytix/js/logging').getLoggerForApi('Hubspot'),
+        _utils = hqImport('analytix/js/utils'),
         _data = {};
 
     var _hsq = window._hsq = window._hsq || [];

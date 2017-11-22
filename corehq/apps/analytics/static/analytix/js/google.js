@@ -3,12 +3,12 @@
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).
  */
-hqDefine('analytics/js/google', function () {
+hqDefine('analytix/js/google', function () {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('google'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Google Analytics'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = hqImport('analytix/js/initial').getFn('google'),
+        _global = hqImport('analytix/js/initial').getFn('global'),
+        logger = hqImport('analytix/js/logging').getLoggerForApi('Google Analytics'),
+        _utils = hqImport('analytix/js/utils'),
         _data = {},
         module = {},
         _gtag = function () {};

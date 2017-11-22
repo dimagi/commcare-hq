@@ -47,7 +47,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 app_manager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
                 if (initial_page_data("days_since_created")) {
-                    hqImport('analytics/js/kissmetrics').track.event('Saved the Form Builder within first 24 hours');
+                    hqImport('analytix/js/kissmetrics').track.event('Saved the Form Builder within first 24 hours');
                 }
             },
             onReady: function() {
@@ -65,7 +65,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
                 if (initial_page_data('days_since_created') === 0) {
                     $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
-                        hqImport('analytics/js/kissmetrics').track.event('Added question in Form Builder within first 24 hours');
+                        hqImport('analytix/js/kissmetrics').track.event('Added question in Form Builder within first 24 hours');
                     });
                 }
             },
@@ -79,11 +79,11 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         define("moment", [], function () { return window.moment; });
         define("vellum/hqAnalytics", [], function () {
             function workflow(message) {
-                hqImport('analytics/js/kissmetrics').track.event(message);
+                hqImport('analytix/js/kissmetrics').track.event(message);
             }
 
             function usage(label, group, message) {
-                hqImport('analytics/js/google').track.event(label, group, message);
+                hqImport('analytix/js/google').track.event(label, group, message);
             }
 
             function fbUsage(group, message) {
@@ -131,7 +131,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
             });
         });
-        hqImport('analytics/js/kissmetrics').track.event('Entered the Form Builder');
+        hqImport('analytix/js/kissmetrics').track.event('Entered the Form Builder');
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
 
@@ -178,7 +178,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         });
         $('#edit-form-name-modal').koApplyBindings(editDetails);
         $("#edit-form-name-modal button[type='submit']").click(function() {
-            hqImport('analytics/js/kissmetrics').track.event("Renamed form from form builder");
+            hqImport('analytix/js/kissmetrics').track.event("Renamed form from form builder");
         });
     });
 });

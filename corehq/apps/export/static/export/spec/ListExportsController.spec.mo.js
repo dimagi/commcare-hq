@@ -178,7 +178,7 @@ describe('ListExportsController Unit Tests', function() {
             });
 
             it('analytics ok', function() {
-                assert.isTrue(hqImport('analytics/js/google').track.event.calledWith("Form Exports", "Update Saved Export", "Saved"));
+                assert.isTrue(hqImport('analytix/js/google').track.event.calledWith("Form Exports", "Update Saved Export", "Saved"));
                 $httpBackend.flush();
             });
         });
@@ -209,7 +209,7 @@ describe('ListExportsController Unit Tests', function() {
             });
 
             it('analytics ok', function() {
-                assert.isTrue(hqImport('analytics/js/google').track.event.calledWith("Form Exports", "Disable Saved Export", "Saved"));
+                assert.isTrue(hqImport('analytix/js/google').track.event.calledWith("Form Exports", "Disable Saved Export", "Saved"));
                 $httpBackend.flush();
             });
         });

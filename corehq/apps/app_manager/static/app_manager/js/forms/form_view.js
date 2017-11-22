@@ -65,7 +65,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
 
         // Analytics for renaming form
         $(".appmanager-edit-title").on('click', '.btn-success', function() {
-            hqImport('analytics/js/kissmetrics').track.event("Renamed form from form settings page");
+            hqImport('analytix/js/kissmetrics').track.event("Renamed form from form settings page");
         });
 
         // Settings > Logic

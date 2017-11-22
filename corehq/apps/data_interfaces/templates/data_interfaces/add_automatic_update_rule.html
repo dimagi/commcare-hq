@@ -65,11 +65,11 @@
 
         $scope.addCondition = function() {
             $scope.conditions_objs.push({});
-            hqImport('analytics/js/google').track.event('Automatic Case Closure', 'Rules', 'Add Filter');
+            hqImport('analytix/js/google').track.event('Automatic Case Closure', 'Rules', 'Add Filter');
         };
         $scope.removeCondition = function(index) {
             $scope.conditions_objs.splice(index, 1);
-            hqImport('analytics/js/google').track.event('Automatic Case Closure', 'Rules', 'Remove');
+            hqImport('analytix/js/google').track.event('Automatic Case Closure', 'Rules', 'Remove');
         };
         $scope.matchesDaysSince = function(condition) {
             return condition.property_match_type === 'DAYS' || condition.property_match_type === 'DAYS_BEFORE';

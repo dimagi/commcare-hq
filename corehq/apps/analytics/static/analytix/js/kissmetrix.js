@@ -2,13 +2,13 @@
 
 var _kmq = window._kmq = _kmq || [];
 
-hqDefine('analytics/js/kissmetrics', function () {
+hqDefine('analytix/js/kissmetrics', function () {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('kissmetrics'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        _abTests = hqImport('analytics/js/initial').getAbTests('kissmetrics'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Kissmetrics'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = hqImport('analytix/js/initial').getFn('kissmetrics'),
+        _global = hqImport('analytix/js/initial').getFn('global'),
+        _abTests = hqImport('analytix/js/initial').getAbTests('kissmetrics'),
+        logger = hqImport('analytix/js/logging').getLoggerForApi('Kissmetrics'),
+        _utils = hqImport('analytix/js/utils'),
         _allAbTests = {},
         _init = {};
 

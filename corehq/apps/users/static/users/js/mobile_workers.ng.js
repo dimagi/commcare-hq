@@ -225,7 +225,7 @@
                 last_name: 'User',
                 is_anonymous: true,
             });
-            hqImport('analytics/js/google').track.event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
         };
 
         $scope.initializeMobileWorker = function (mobileWorker) {
@@ -246,7 +246,7 @@
                     generateStrongPasswords: generateStrongPasswords,
                 });
             }
-            hqImport('analytics/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         $scope.submitNewMobileWorker = function () {
