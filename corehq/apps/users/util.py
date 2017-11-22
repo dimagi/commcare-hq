@@ -232,10 +232,9 @@ def update_latest_builds(user, app_id, date, version):
     determines whether to update the last build attributes in a user's reporting metadata
     """
     from corehq.apps.users.models import LastBuild
-    last_builds = filter(
-        lambda build: build.app_id == app_id,
-        user.reporting_metadata.last_builds,
-    )
+    last_builds = [
+        build for build in user.reporting_metadata.last_builds if build.app_id == app_id
+    ]
     if last_builds:
         assert len(last_builds) == 1, 'Must only have one last build per app'
         last_build = last_builds[0]
