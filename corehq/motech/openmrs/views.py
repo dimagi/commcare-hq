@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 import json
+
+from django.forms import formset_factory
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseProjectSettingsView
@@ -15,7 +18,7 @@ from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
-from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
+from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm, OpenmrsImporterFormSetHelper
 from corehq.motech.openmrs.repeater_helpers import (
     Requests,
     get_patient_identifier_types,
@@ -144,9 +147,9 @@ class OpenmrsImporterView(BaseProjectSettingsView):
     template_name = 'openmrs/importers.html'
 
     def post(self, request, *args, **kwargs):
-        form = self.openmrs_importer_form
-        if form.is_valid():
-            form.save(self.domain)
+        formset = self.openmrs_importer_formset
+        if formset.is_valid():
+            formset.save(self.domain)
             get_openmrs_importers_by_domain.clear(request.domain)
             return HttpResponseRedirect(self.page_url)
         context = self.get_context_data(**kwargs)
@@ -154,18 +157,22 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 
     @property
     @memoized
-    def openmrs_importer_form(self):
+    def openmrs_importer_formset(self):
+        OpenmrsImporterFormSet = formset_factory(OpenmrsImporterForm, can_delete=True)
         importers = get_openmrs_importers_by_domain(self.request.domain)
-        if importers:
-            initial = dict(importers[0])  # TODO: Support multiple
-            initial['column_map'] = [{k: v for k, v in dict(m).items() if k != 'doc_type'}  # Just for the pretty
-                                     for m in initial['column_map']]
-        else:
-            initial = {}
+        initial = []
+        for importer in importers:
+            initial.append(dict(importer, column_map=[
+                {k: v for k, v in dict(m).items() if k != 'doc_type'}  # Just for the pretty
+                for m in importer.column_map
+            ]))
         if self.request.method == 'POST':
-            return OpenmrsImporterForm(self.request.POST, initial=initial)
-        return OpenmrsImporterForm(initial=initial)
+            return OpenmrsImporterFormSet(self.request.POST, initial=initial)
+        return OpenmrsImporterFormSet(initial=initial)
 
     @property
     def page_context(self):
-        return {'openmrs_importer_form': self.openmrs_importer_form}
+        return {
+            'formset': self.openmrs_importer_formset,
+            'helper': OpenmrsImporterFormSetHelper(),
+        }

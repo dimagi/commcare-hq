@@ -18,5 +18,14 @@
 {% endblock %}
 
 {% block page_content %}
-    {% crispy openmrs_importer_form %}
+    <form class="form-horizontal" method="post">
+        {% crispy formset helper %}
+
+        <div class="form-actions">
+            <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+                <button class="btn btn-primary" type="submit">Update OpenMRS Importers</button>
+                <button class="btn btn-default" id="btn-import-now" type="button">Import Now</button>
+            </div>
+        </div>
+    </form>
 {% endblock %}
