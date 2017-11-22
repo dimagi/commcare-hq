@@ -367,7 +367,7 @@ def get_person_locations(person_case, episode_case=None):
 
 
 def _get_public_locations(person_case, episode_case):
-    PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
+    PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi phi_name')
     try:
         phi_location_id = None
         if episode_case:
