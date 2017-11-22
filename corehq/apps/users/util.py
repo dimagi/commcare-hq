@@ -263,10 +263,9 @@ def filter_by_app(obj_list, app_id):
     :param obj_list: list from objects with ``app_id`` property
     :returns: The object with matching app_id
     """
-    last_items = list(filter(
-        lambda sync: sync.app_id == app_id,
-        obj_list,
-    ))
+    last_items = [
+        obj for obj in obj_list if obj.app_id == app_id
+    ]
     if last_items:
         assert len(last_items) == 1, 'Must only have one {} per app'.format(last_items[0].__class__)
         last_item = last_items[0]

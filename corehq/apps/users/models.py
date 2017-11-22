@@ -825,7 +825,7 @@ class DeviceAppMeta(DocumentSchema):
     num_quarantined_forms = IntegerProperty()
 
     def _update_latest_request(self):
-        dates = filter(None, (self.last_submission, self.last_heartbeat, self.last_sync))
+        dates = [date for date in (self.last_submission, self.last_heartbeat, self.last_sync) if date]
         self.last_request = max(dates) if dates else None
 
     def merge(self, other):
