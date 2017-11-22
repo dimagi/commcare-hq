@@ -95,7 +95,7 @@ def iter_all_ids(reindex_accessor):
                 yield doc['doc_id']
 
             last_id = doc['primary_key']
-            docs = reindex_accessor.get_docs(db_alias, last_doc_pk=last_id)
+            docs = reindex_accessor.get_doc_ids(db_alias, last_doc_pk=last_id)
 
 
 class ShardAccessor(object):
