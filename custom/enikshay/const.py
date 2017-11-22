@@ -1,3 +1,5 @@
+from datetime import date
+
 # Case property names used in integrations
 PRIMARY_PHONE_NUMBER = 'phone_number'
 BACKUP_PHONE_NUMBER = 'secondary_contact_phone_number'
@@ -213,3 +215,5 @@ USERTYPE_DISPLAYS = {
 
 FDC_PRESCRIPTION_DAYS_THRESHOLD = 168
 NON_FDC_PRESCRIPTION_DAYS_THRESHOLD = 180
+
+NIKSHAY_NEW_TOG_API_FROM_DATE = date(2017, 10, 1)

@@ -17,6 +17,9 @@ from custom.enikshay.exceptions import (
     NikshayCodeNotFound,
     NikshayLocationNotFound,
     ENikshayException)
+from custom.enikshay.integrations.nikshay.utils import (
+    forward_via_legacy_api,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 
 CASE_TYPE_ADHERENCE = "adherence"
@@ -634,5 +637,9 @@ def person_has_any_nikshay_notifiable_episode(person_case):
         return False
 
     episode_cases = get_all_episode_confirmed_tb_cases_from_person(domain, person_case.case_id)
-    return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
-               for episode_case in episode_cases)
+    return any(
+        (
+            valid_nikshay_patient_registration(episode_case.dynamic_case_properties()) and
+            forward_via_legacy_api(episode_case)
+        )
+        for episode_case in episode_cases)

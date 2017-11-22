@@ -48,7 +48,10 @@ from custom.enikshay.integrations.utils import (
     is_valid_test_submission,
     is_valid_archived_submission,
 )
-
+from custom.enikshay.integrations.nikshay.utils import (
+    forward_via_v2_api,
+    forward_via_legacy_api,
+)
 
 from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
@@ -92,6 +95,7 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
                 valid_nikshay_patient_registration(episode_case_properties) and
+                forward_via_legacy_api(episode_case) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 is_valid_person_submission(person_case)
             )
@@ -126,6 +130,7 @@ class NikshayRegisterPatientRepeaterV2(BaseNikshayRepeater):
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
                 case_properties_changed(episode_case, [EPISODE_TYPE_CASE_PROPERTY]) and
+                forward_via_v2_api(episode_case) and
                 episode_case.get_case_property(EPISODE_TYPE_CASE_PROPERTY) == DSTB_EPISODE_TYPE and
                 is_valid_person_submission(person_case)
             )
@@ -195,6 +200,7 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
                 valid_nikshay_patient_registration(episode_case_properties)
             ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
+            forward_via_legacy_api(episode_case) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
             is_valid_archived_submission(episode_case)
         )
