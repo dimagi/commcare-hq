@@ -11,7 +11,14 @@ from django.db import models
 
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import PreconditionFailed
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    DocumentSchema,
+    DateTimeProperty,
+    StringProperty,
+    DictProperty,
+    SchemaListProperty,
+    BooleanProperty,
+    SafeSaveDocument)
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.safe_index import safe_index
@@ -24,8 +31,6 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.utils import clean_metadata
