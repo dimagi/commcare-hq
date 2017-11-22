@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.userreports.specs import EvaluationContext
 from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 
@@ -348,4 +349,3 @@ class TestEpisodeForSummaryOfPatients(TestDataSourceExpressions):
             weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
             1
         )
-
