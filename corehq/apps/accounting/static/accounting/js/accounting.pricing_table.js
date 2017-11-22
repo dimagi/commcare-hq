@@ -97,8 +97,12 @@ hqDefine('accounting/js/accounting.pricing_table', function () {
                 initial_page_data('current_edition'),
                 initial_page_data('is_renewal')
             );
+
+        // Applying bindings is a bit weird here, because we need logic in the modal,
+        // but the only HTML ancestor the modal shares with the pricing table is <body>.
         $('#pricing-table').koApplyBindings(pricingTable);
         $('#modal-downgrade').koApplyBindings(pricingTable);
+
         pricingTable.init();
     }());
 });
