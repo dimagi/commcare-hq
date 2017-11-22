@@ -2207,7 +2207,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not self.devices:
             return None
 
-        return sorted(self.devices, key=lambda dev: dev.last_used)[-1]
+        return max(self.devices, key=lambda dev: dev.last_used)
 
     def get_device(self, device_id):
         matches = [
