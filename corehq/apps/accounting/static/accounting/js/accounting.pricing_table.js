@@ -49,7 +49,7 @@ hqDefine('accounting/js/accounting.pricing_table', function () {
                 },
                 success: finish,
                 error: finish,
-            })
+            });
         };
 
         self.init = function () {
