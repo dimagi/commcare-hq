@@ -7,7 +7,7 @@ from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
 from corehq.apps.userreports.expressions.factory import SubcasesExpressionSpec
 from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 
-EPISODE_DATA_SOURCE = 'episode_2b_v4.json'
+EPISODE_DATA_SOURCE = 'episode_2b_v5.json'
 
 
 class TestEpisode2B(TestDataSourceExpressions):
@@ -891,6 +891,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             'microscopy_test_result_summary_display',
             'string'
         )
+        test_type_expression = self._get_expression('microscopy_test_type', 'string')
 
         with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
             self.assertEqual(
@@ -908,6 +909,10 @@ class TestEpisode2B(TestDataSourceExpressions):
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
                 'tb_detected, result_grade'
+            )
+            self.assertEqual(
+                test_type_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'microscopy-zn'
             )
 
     def test_microscopy_tb_not_detected_expressions(self):

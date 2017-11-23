@@ -908,6 +908,28 @@
             {
                 "comment": null,
                 "create_index": false,
+                "display_name": "microscopy_test_type",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "earliest_microscopy_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "test_type_value"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "microscopy_test_type"
+            },
+            {
+                "comment": null,
+                "create_index": false,
                 "display_name": "microscopy_test_testing_facility_name",
                 "datatype": "string",
                 "expression": {
