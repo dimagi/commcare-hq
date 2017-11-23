@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import mock
 
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
 from corehq.apps.userreports.expressions.factory import SubcasesExpressionSpec
 from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
@@ -16,11 +17,17 @@ class TestEpisode2B(TestDataSourceExpressions):
 
     def _get_expression(self, column_id, column_type):
         column = self.get_column(column_id)
-        self.assertEqual(column['datatype'], column_type)
-        return ExpressionFactory.from_spec(
-            column['expression'],
-            context=FactoryContext(self.named_expressions, {})
-        )
+        if column['type'] == 'boolean':
+            return FilterFactory.from_spec(
+                column['filter'],
+                context=FactoryContext(self.named_expressions, {})
+            )
+        else:
+            self.assertEqual(column['datatype'], column_type)
+            return ExpressionFactory.from_spec(
+                column['expression'],
+                context=FactoryContext(self.named_expressions, {})
+            )
 
     def test_treating_phi_property_when_clause_true(self):
         episode_case = {
@@ -1766,4 +1773,293 @@ class TestEpisode2B(TestDataSourceExpressions):
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'Previously Treated'
+        )
+
+    def test_confirmed_tb(self):
+        episode_case_tb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb'
+        }
+        episode_case_drtb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb'
+        }
+
+        confirmed_tb = self._get_expression('confirmed_tb', 'integer')
+
+        self.assertEqual(
+            confirmed_tb(episode_case_tb, EvaluationContext(episode_case_tb, 0)),
+            1
+        )
+        self.assertEqual(
+            confirmed_tb(episode_case_drtb, EvaluationContext(episode_case_drtb, 0)),
+            0
+        )
+
+    def test_confirmed_drtb(self):
+        episode_case_tb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb'
+        }
+        episode_case_drtb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb'
+        }
+
+        confirmed_tb = self._get_expression('confirmed_drtb', 'integer')
+
+        self.assertEqual(
+            confirmed_tb(episode_case_tb, EvaluationContext(episode_case_tb, 0)),
+            0
+        )
+        self.assertEqual(
+            confirmed_tb(episode_case_drtb, EvaluationContext(episode_case_drtb, 0)),
+            1
+        )
+
+    def test_drtb_patients_on_treatment(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-10-01',
+            'treatment_outcome': ''
+        }
+
+        drtb_patients_on_treatment = self._get_expression('drtb_patients_on_treatment', 'integer')
+
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['episode_type'] = 'confirmed_tb'
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['episode_type'] = 'confirmed_drtb'
+        episode_case['treatment_initiation_date'] = ''
+        episode_case['treatment_outcome'] = 'yes'
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['episode_type'] = 'confirmed_tb'
+        episode_case['treatment_initiation_date'] = None
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_patients_on_ip(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'no',
+            'treatment_outcome': ''
+        }
+
+        patients_on_ip = self._get_expression('patients_on_ip', 'integer')
+
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'no'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': None,
+            'cp_initiated': 'yes',
+            'treatment_outcome': 'yes'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'yes'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_patients_on_cp(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'cp_initiated': 'yes',
+            'treatment_outcome': ''
+        }
+
+        patients_on_cp = self._get_expression('patients_on_cp', 'integer')
+
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['treatment_outcome'] = 'yes'
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['cp_initiated'] = 'no'
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_treatment_outcome(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_outcome': 'test_value'
+        }
+
+        treatment_outcome = self._get_expression('treatment_outcome_for_sum', 'integer')
+
+        self.assertEqual(
+            treatment_outcome(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['treatment_outcome'] = ''
+        self.assertEqual(
+            treatment_outcome(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_weight_band(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'weight_band': ''
+        }
+
+        weight_band_adult = self._get_expression('weight_band_adult_25_39', 'integer')
+
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_25-39'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self._get_expression('weight_band_adult_40_54', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_40-54'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self._get_expression('weight_band_adult_55_69', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_55-69'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self._get_expression('weight_band_adult_gt_70', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_greater_than_70'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self._get_expression('weight_band_11_17', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '11-17'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self._get_expression('weight_band_18_25', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '18-25'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self._get_expression('weight_band_26_30', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '26-30'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self._get_expression('weight_band_31_60', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '31-60'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
         )
