@@ -1957,7 +1957,8 @@ class TestEpisode2B(TestDataSourceExpressions):
         episode_case = {
             '_id': 'episode_case_id',
             'domain': 'enikshay-test',
-            'weight_band': ''
+            'weight_band': '',
+            'treatment_outcome': 'yes'
         }
 
         weight_band_adult = self._get_expression('weight_band_adult_25_39', 'integer')
@@ -1968,6 +1969,12 @@ class TestEpisode2B(TestDataSourceExpressions):
         )
 
         episode_case['weight_band'] = 'adult_25-39'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['treatment_outcome'] = ''
         self.assertEqual(
             weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
             1

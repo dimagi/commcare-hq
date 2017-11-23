@@ -3162,117 +3162,243 @@
                 "type": "boolean",
                 "column_id": "weight_band_adult_25_39",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "adult_25-39"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "adult_25-39"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_adult_40_54",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "adult_40-54"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "adult_40-54"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_adult_55_69",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "adult_55-69"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "adult_55-69"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_adult_gt_70",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "adult_greater_than_70"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "adult_greater_than_70"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_6_10",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "6-10"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "6-10"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_11_17",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "11-17"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "11-17"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_18_25",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "18-25"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "18-25"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_26_30",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "26-30"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "26-30"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "weight_band_31_60",
                 "filter": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "weight_band"
-                    },
-                    "operator": "eq",
-                    "property_value": "31-60"
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "31-60"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
                 }
             }
         ],
