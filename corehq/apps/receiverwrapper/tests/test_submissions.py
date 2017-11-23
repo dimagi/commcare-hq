@@ -65,7 +65,7 @@ class SubmissionTest(TestCase):
         foo = FormAccessors(self.domain.name).get_form(xform_id).to_json()
         self.assertTrue(foo['received_on'])
 
-        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id']:
+        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id', 'server_modified_on']:
             if key in foo:
                 del foo[key]
 
