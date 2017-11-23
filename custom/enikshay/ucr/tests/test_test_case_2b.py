@@ -1,48 +1,14 @@
 from __future__ import absolute_import
-import json
-import os
-
-from django.test.testcases import SimpleTestCase
-from fakecouch import FakeCouchDb
-
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
+from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 
-TEST_DATA_SOURCE = 'test_2b_v4.json'
+TEST_DATA_SOURCE = 'test_2b_v5.json'
 
 
-class TestTestCase2B(SimpleTestCase):
+class TestTestCase2B(TestDataSourceExpressions):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestTestCase2B, cls).setUpClass()
-
-        test_data_source_file = os.path.join(
-            os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-            'data_sources',
-            TEST_DATA_SOURCE
-        )
-
-        with open(test_data_source_file) as f:
-            cls.test_data_source = DataSourceConfiguration.wrap(json.loads(f.read())['config'])
-            cls.named_expressions = cls.test_data_source.named_expression_objects
-
-    def setUp(self):
-        self.orig_db = CommCareCase.get_db()
-        self.database = FakeCouchDb()
-        CommCareCase.set_db(self.database)
-
-    def tearDown(self):
-        CommCareCase.set_db(self.orig_db)
-
-    def _get_column(self, column_id):
-        return [
-            ind
-            for ind in self.test_data_source.configured_indicators
-            if ind['column_id'] == column_id
-        ][0]
+    data_source_name = TEST_DATA_SOURCE
 
     def test_follow_up_treatment_initiation_date_month_follow_up_dstb(self):
         episode_case = {
@@ -67,12 +33,7 @@ class TestTestCase2B(SimpleTestCase):
             'test_case_id': test_case
         }
 
-        column = self._get_column('follow_up_treatment_initiation_date_month')
-        self.assertEqual(column['datatype'], 'string')
-        expression = ExpressionFactory.from_spec(
-            column['expression'],
-            context=FactoryContext(self.named_expressions, {})
-        )
+        expression = self.get_expression('follow_up_treatment_initiation_date_month', 'string')
 
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), '3')
 
@@ -99,12 +60,7 @@ class TestTestCase2B(SimpleTestCase):
             'test_case_id': test_case
         }
 
-        column = self._get_column('follow_up_treatment_initiation_date_month')
-        self.assertEqual(column['datatype'], 'string')
-        expression = ExpressionFactory.from_spec(
-            column['expression'],
-            context=FactoryContext(self.named_expressions, {})
-        )
+        expression = self.get_expression('follow_up_treatment_initiation_date_month', 'string')
 
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), '6')
 
@@ -153,11 +109,166 @@ class TestTestCase2B(SimpleTestCase):
             'test_case_id': test_case
         }
 
-        column = self._get_column('key_populations')
-        self.assertEqual(column['datatype'], 'string')
-        expression = ExpressionFactory.from_spec(
-            column['expression'],
-            context=FactoryContext(self.named_expressions, {})
-        )
+        expression = self.get_expression('key_populations', 'string')
 
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 'test, test2, test3')
+
+    def test_dmc_referring_facility_id(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'referring_facility_id': 'facility_id',
+        }
+
+        expression = self.get_expression('dmc_referring_facility_id', 'string')
+
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 'facility_id')
+
+    def test_presumptives_examined_for_diagnosis(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'episode_type_at_request': 'presumptive_tb',
+            'rft_general': 'diagnosis_dstb'
+        }
+
+        expression = self.get_expression('presumptives_examined_for_diagnosis', 'integer')
+
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['rft_general'] = 'diagnosis_drtb'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['episode_type_at_request'] = 'other type'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+    def test_presumptives_found_positive(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'episode_type_at_request': 'presumptive_tb',
+            'rft_general': 'diagnosis_dstb',
+            'result': 'tb_detected'
+        }
+
+        expression = self.get_expression('presumptives_found_positive', 'integer')
+
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['rft_general'] = 'diagnosis_drtb'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['result'] = 'other'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+        test_case['episode_type_at_request'] = 'other type'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+    def test_follow_up_patients_examined(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'episode_type_at_request': 'confirmed_tb',
+            'rft_general': 'follow_up_dstb'
+        }
+
+        expression = self.get_expression('follow_up_patients_examined', 'integer')
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['episode_type_at_request'] = 'confirmed_drtb'
+        test_case['rft_general'] = 'follow_up_drtb'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['rft_general'] = 'diagnosis_drtb'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+        test_case['episode_type_at_request'] = 'other type'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+    def test_patients_positive_on_follow_up(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'episode_type_at_request': 'confirmed_tb',
+            'rft_general': 'follow_up_dstb',
+            'result': 'tb_detected'
+        }
+
+        expression = self.get_expression('patients_positive_on_follow_up', 'integer')
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['episode_type_at_request'] = 'confirmed_drtb'
+        test_case['rft_general'] = 'follow_up_drtb'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['result'] = 'other resault'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+        test_case['episode_type_at_request'] = 'other type'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+    def test_slides_examined(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'microscopy_sample_a_result': 'scanty',
+            'microscopy_sample_b_result': 'negative_not_seen',
+        }
+
+        expression = self.get_expression('slides_examined', 'integer')
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 2)
+
+        test_case['microscopy_sample_a_result'] = ''
+        test_case['microscopy_sample_b_result'] = 'negative_not_seen'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['microscopy_sample_a_result'] = 'scanty'
+        test_case['microscopy_sample_b_result'] = ''
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['microscopy_sample_a_result'] = ''
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+    def test_positive_slides(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'microscopy_sample_a_result': 'scanty',
+            'microscopy_sample_b_result': '1plus',
+        }
+
+        expression = self.get_expression('positive_slides', 'integer')
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 2)
+
+        test_case['microscopy_sample_a_result'] = 'negative_not_seen'
+        test_case['microscopy_sample_b_result'] = '1plus'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['microscopy_sample_a_result'] = 'scanty'
+        test_case['microscopy_sample_b_result'] = ''
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['microscopy_sample_a_result'] = ''
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+    def test_negative_slides(self):
+        test_case = {
+            '_id': 'test_case_id',
+            'domain': 'enikshay-test',
+            'microscopy_sample_a_result': 'scanty',
+            'microscopy_sample_b_result': '1plus',
+        }
+
+        expression = self.get_expression('negative_slides', 'integer')
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
+
+        test_case['microscopy_sample_a_result'] = 'negative_not_seen'
+        test_case['microscopy_sample_b_result'] = '1plus'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['microscopy_sample_a_result'] = 'scanty'
+        test_case['microscopy_sample_b_result'] = 'negative_not_seen'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
+
+        test_case['microscopy_sample_a_result'] = 'negative_not_seen'
+        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 2)

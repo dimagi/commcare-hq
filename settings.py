@@ -1975,6 +1975,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
