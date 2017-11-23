@@ -14,8 +14,7 @@ See render_case() in casexml for an example of the display definition format.
 from __future__ import absolute_import
 import collections
 import datetime
-import itertools
-import types
+
 from corehq.util.dates import iso_string_to_datetime
 
 from dimagi.ext.jsonobject import DateProperty
@@ -34,6 +33,7 @@ from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from dimagi.utils.dates import safe_strftime
 import six
+from six.moves import zip_longest
 
 register = template.Library()
 
@@ -223,7 +223,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
 def get_tables_as_columns(*args, **kwargs):
     sections = get_tables_as_rows(*args, **kwargs)
     for section in sections:
-        section['columns'] = list(itertools.izip_longest(*section['rows']))
+        section['columns'] = list(zip_longest(*section['rows']))
         del section['rows']
 
     return sections

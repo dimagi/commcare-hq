@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from collections import namedtuple, defaultdict
-from itertools import izip_longest
+from six.moves import zip_longest
+
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 
@@ -791,7 +792,7 @@ class EntriesHelper(object):
             datum_ids = {d.datum.id: d for d in datums}
             index = 0
             changed_ids_by_case_tag = defaultdict(list)
-            for this_datum_meta, parent_datum_meta in list(izip_longest(datums, parent_datums)):
+            for this_datum_meta, parent_datum_meta in list(zip_longest(datums, parent_datums)):
                 if this_datum_meta:
                     update_refs(this_datum_meta, changed_ids_by_case_tag)
                 if not parent_datum_meta:
