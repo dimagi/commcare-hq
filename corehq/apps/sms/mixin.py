@@ -62,7 +62,7 @@ def apply_leniency(contact_phone_number):
     """
     from corehq.apps.sms.util import strip_plus
     # Decimal preserves trailing zeroes, so it's ok 
-    if isinstance(contact_phone_number, (int, long, Decimal)):
+    if isinstance(contact_phone_number, six.integer_types + (Decimal,)):
         contact_phone_number = str(contact_phone_number)
     if isinstance(contact_phone_number, six.string_types):
         chars = re.compile(r"[()\s\-.]+")

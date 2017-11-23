@@ -366,7 +366,7 @@ class Excel2007ExportWriter(ExportWriter):
         )
 
         def get_write_value(value):
-            if isinstance(value, (int, long, float)):
+            if isinstance(value, six.integer_types + (float,)):
                 return value
             if isinstance(value, str):
                 value = six.text_type(value, encoding="utf-8")
