@@ -232,15 +232,7 @@ def update_latest_builds(user, app_id, date, version):
     determines whether to update the last build attributes in a user's reporting metadata
     """
     from corehq.apps.users.models import LastBuild
-    last_builds = [
-        build for build in user.reporting_metadata.last_builds if build.app_id == app_id
-    ]
-    if last_builds:
-        assert len(last_builds) == 1, 'Must only have one last build per app'
-        last_build = last_builds[0]
-    else:
-        last_build = None
-
+    last_build = filter_by_app(user.reporting_metadata.last_builds, app_id)
     changed = False
     if _last_build_needs_update(last_build, date):
         if last_build is None:
@@ -261,17 +253,11 @@ def update_latest_builds(user, app_id, date, version):
 def filter_by_app(obj_list, app_id):
     """
     :param obj_list: list from objects with ``app_id`` property
-    :returns: The object with matching app_id
+    :returns: The first object with matching app_id
     """
-    last_items = [
-        obj for obj in obj_list if obj.app_id == app_id
-    ]
-    if last_items:
-        assert len(last_items) == 1, 'Must only have one {} per app'.format(last_items[0].__class__)
-        last_item = last_items[0]
-    else:
-        last_item = None
-    return last_item
+    for item in obj_list:
+        if item.app_id == app_id:
+            return item
 
 
 def update_last_sync(user, app_id, sync_date, version):
