@@ -829,7 +829,11 @@ class DeviceAppMeta(DocumentSchema):
         self.last_request = max(dates) if dates else None
 
     def merge(self, other):
-        if other.latest_request <= self.last_request:
+        # ensure that last_request is updated
+        self.last_request is None and self._update_latest_request()
+        other.last_request is None and other._update_latest_request()
+
+        if other.last_request <= self.last_request:
             return
 
         for key, prop in self.properties().items():
