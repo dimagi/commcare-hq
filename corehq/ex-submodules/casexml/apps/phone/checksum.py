@@ -3,6 +3,7 @@ import hashlib
 import binascii
 from copy import copy
 from six.moves import zip
+from functools import reduce
 
 
 EMPTY_HASH = ""

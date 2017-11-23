@@ -7,6 +7,7 @@ from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.util import format_datatables_data
 import six
+from functools import reduce
 
 __all__ = ['Column', 'BasicTabularReport']
 

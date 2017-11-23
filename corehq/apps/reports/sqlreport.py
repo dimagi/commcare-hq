@@ -20,6 +20,7 @@ from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 import six
 from six.moves import zip
+from functools import reduce
 
 
 class SqlReportException(Exception):
