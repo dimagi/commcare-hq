@@ -13,8 +13,8 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "episode_2b_v4",
-        "display_name": "Episode (2b) V4",
+        "table_id": "episode_2b_v5",
+        "display_name": "Episode (2b) V5",
         "configured_filter": {
             "operator": "eq",
             "expression": {
