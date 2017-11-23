@@ -19,16 +19,17 @@ class TestDataSourceExpressions(SimpleTestCase):
 
     def get_expression(self, column_id, column_type):
         column = self.get_column(column_id)
-        self.assertEqual(column['datatype'], column_type)
         if column['type'] == 'boolean':
             return FilterFactory.from_spec(
                 column['filter'],
                 context=FactoryContext(self.named_expressions, {})
             )
-        return ExpressionFactory.from_spec(
-            column['expression'],
-            context=FactoryContext(self.named_expressions, {})
-        )
+        else:
+            self.assertEqual(column['datatype'], column_type)
+            return ExpressionFactory.from_spec(
+                column['expression'],
+                context=FactoryContext(self.named_expressions, {})
+            )
 
     @classmethod
     def setUpClass(cls):

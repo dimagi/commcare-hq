@@ -47,13 +47,13 @@
                     "property_value": ["confirmed_tb", "confirmed_drtb"]
                 },
                 {
-                    "operator": "eq",
+                    "operator": "not_eq",
                     "expression": {
                         "type": "property_name",
                         "property_name": "dstb_to_drtb_transition_no_initiation"
                     },
                     "type": "boolean_expression",
-                    "property_value": "NOT"
+                    "property_value": "yes"
                 },
                 {
                     "type": "not",
@@ -138,7 +138,6 @@
             {
                 "type": "boolean",
                 "column_id": "confirmed_tb",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -152,7 +151,6 @@
             {
                 "type": "boolean",
                 "column_id": "confirmed_drtb",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -166,7 +164,6 @@
             {
                 "type": "boolean",
                 "column_id": "drtb_patients_on_treatment",
-                "datatype": "integer",
                 "filter": {
                     "type": "and",
                     "filters": [
@@ -197,7 +194,6 @@
             {
                 "type": "boolean",
                 "column_id": "patients_on_ip",
-                "datatype": "integer",
                 "filter": {
                     "type": "and",
                     "filters": [
@@ -237,7 +233,6 @@
             {
                 "type": "boolean",
                 "column_id": "patients_on_cp",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -251,7 +246,6 @@
             {
                 "type": "boolean",
                 "column_id": "treatment_outcome",
-                "datatype": "integer",
                 "filter": {
                     "type": "not",
                     "filter": {
@@ -268,7 +262,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_adult_25_39",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -282,7 +275,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_adult_40_54",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -296,7 +288,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_adult_55_69",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -310,7 +301,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_adult_gt_70",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -324,7 +314,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_6_10",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -338,7 +327,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_11_17",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -352,7 +340,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_18_25",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -366,7 +353,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_26_30",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
@@ -380,7 +366,6 @@
             {
                 "type": "boolean",
                 "column_id": "weight_band_31_60",
-                "datatype": "integer",
                 "filter": {
                     "type": "boolean_expression",
                     "expression": {
