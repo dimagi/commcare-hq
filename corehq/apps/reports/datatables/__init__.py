@@ -123,8 +123,7 @@ class DataTablesColumnGroup(object):
     def __bool__(self):
         return True
 
-    def __nonzero__(self):
-        return self.__bool__()
+    __nonzero__ = __bool__
 
 
 class DataTablesHeader(object):
@@ -236,5 +235,4 @@ class DataTablesHeader(object):
     def __bool__(self):
         return True
 
-    def __nonzero__(self):
-        return self.__bool__()
+    __nonzero__ = __bool__
