@@ -20,7 +20,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     }
 
     $("#onboarding-video").click(function() {
-        hqImport('analytix/js/kissmetrics').track.event('Clicked onboarding video link');
+        hqImport('analytix/js/kissmetrix').track.event('Clicked onboarding video link');
     });
 
     // View changes / app diff
@@ -48,7 +48,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     }
 
     $(function() {
-        hqImport('analytix/js/kissmetrics').track.event('Visited the Release Manager');
+        hqImport('analytix/js/kissmetrix').track.event('Visited the Release Manager');
         if (initial_page_data('confirm')) {
             hqImport('analytix/js/google').track.event('User actions', 'User created login', window.location.pathname);
             hqImport('analytix/js/google').track.event('User actions', 'Forms', 'Name Your First Project');
