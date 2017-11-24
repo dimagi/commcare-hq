@@ -4,12 +4,12 @@
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AdhaarBeneficiaryDirective', function () {
+describe('AdultWeightScaleDirective', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
-    pageData.registerUrl('adhaar', 'adhaar');
+    pageData.registerUrl('adult_weight_scale', 'adult_weight_scale');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
 
@@ -23,15 +23,15 @@ describe('AdhaarBeneficiaryDirective', function () {
         $location = _$location_;
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
-        $httpBackend.expectGET('adhaar').respond(200, {
+        $httpBackend.expectGET('adult_weight_scale').respond(200, {
             report_data: ['report_test_data'],
         });
-        var element = window.angular.element("<adhaar-beneficiary data='test'></adhaar-beneficiary>");
+        var element = window.angular.element("<adult-weight-scale data='test'></adult-weight-scale>");
         var compiled = $compile(element)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
-        controller = compiled.controller('adhaarBeneficiary');
+        controller = compiled.controller('adultWeightScale');
         controller.step = 'map';
     }));
 
@@ -46,7 +46,7 @@ describe('AdhaarBeneficiaryDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
-        $httpBackend.expectGET('adhaar?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('adult_weight_scale?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -60,7 +60,7 @@ describe('AdhaarBeneficiaryDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
-        $httpBackend.expectGET('adhaar?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('adult_weight_scale?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -73,9 +73,9 @@ describe('AdhaarBeneficiaryDirective', function () {
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 5, all: 10});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>test</p>' +
-            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>5</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>50.00%</strong></div>');
+            '<p>test</p>'
+            + '<div>Total number of AWCs with a weighing scale for mother and child: <strong>5</strong></div>'
+            + '<div>% of AWCs with a weighing scale for mother and child: <strong>50.00%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -88,7 +88,7 @@ describe('AdhaarBeneficiaryDirective', function () {
             {name: 'name5', location_id: 'test_id5'},
             {name: 'name6', location_id: 'test_id6'}
         );
-        $httpBackend.expectGET('adhaar').respond(200, {
+        $httpBackend.expectGET('adult_weight_scale').respond(200, {
             report_data: ['report_test_data'],
         });
         $scope.$digest();
@@ -170,19 +170,19 @@ describe('AdhaarBeneficiaryDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage number of ICDS beneficiaries whose Aadhaar identification has been captured'
+            'Percentage of AWCs with weighing scale for mother and child'
         );
     });
 
     it('tests chart tooltip content', function () {
-        var day = {y: 0.24561403508771928, all: 171, series: 0};
-        var val = {value: "Jul 2017", series: []};
+        var data = {y: 0.24561403508771928, all: 171, in_month: 42};
+        var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/><p>'
-            + 'Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></p>'
-            + '<p>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></p>';
+            + 'Number of AWCs with a weighing scale for mother and child: <strong>42</strong></p>'
+            + '<p>% of AWCs with a weighing scale for mother and child: <strong>24.56%</strong></p>';
 
-        var result = controller.getTooltipContent(val, day);
+        var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 
