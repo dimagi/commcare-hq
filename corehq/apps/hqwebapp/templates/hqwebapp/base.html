@@ -446,7 +446,10 @@
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
                     'notifications/js/notifications_service',
-                    // TODO: add drift / google / kiss / hubspot here?
+                    'analytix/js/drift',
+                    'analytix/js/google',
+                    'analytix/js/hubspot',
+                    'analytix/js/kissmetrix',
                 ], function () {
                     requirejs(['{{ requirejs_main }}']);
                 });
@@ -455,25 +458,23 @@
 
         {# HQ Specific Libraries #}
         {% if not requirejs_main %}
-        <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+            <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
-        {# Core dependencies for analytics & HQ's libraries #}
-        {% compress js %}
-        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        {% endcompress %}
+            {# Core dependencies for analytics & HQ's libraries #}
+            {% compress js %}
+                <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+            {% endcompress %}
 
-        {% if not requirejs_main %}
-        {% include 'analytics/analytics_js.html' %}
-        {% endif %}
+            {% include 'analytics/analytics_js.html' %}
 
-        {% compress js %}
-        <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-        {% endcompress %}
+            {% compress js %}
+                <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+            {% endcompress %}
         {% endif %}
 
         {# JavaScript Display Logic Libaries #}
