@@ -1,22 +1,22 @@
 from __future__ import absolute_import
+from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from django.utils.translation import ugettext as _
 
+from dimagi.utils.decorators.memoized import memoized
+
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.dbaccessors import user_ids_at_locations_and_descendants
-from corehq.apps.reports.util import namedtupledict
+from corehq.apps.locations.permissions import user_can_access_other_user
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.util import remove_dups, flatten_list
-from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
 
 from .. import util
-from ..models import HQUserType, HQUserToggle
+from ..models import HQUserType
 from ..analytics.esaccessors import get_user_stubs, get_group_stubs
 from .base import (
     BaseMultipleOptionFilter,
@@ -196,15 +196,6 @@ class UsersUtils(EmwfUtils):
         return (uid, name)
 
 
-_UserData = namedtupledict('_UserData', (
-    'users',
-    'admin_and_demo_users',
-    'groups',
-    'users_by_group',
-    'combined_users',
-))
-
-
 class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     To get raw filter results:
@@ -261,7 +252,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     def show_all_mobile_workers(mobile_user_and_group_slugs):
         return 't__0' in mobile_user_and_group_slugs
 
+    def _get_assigned_locations_default(self):
+        user_locations = self.request.couch_user.get_sql_locations(self.domain)
+        return list(map(self.utils.location_tuple, user_locations))
+
     def get_default_selections(self):
+        if not self.request.can_access_all_locations:
+            return self._get_assigned_locations_default()
+
         defaults = [('t__0', _("[All mobile workers]"))]
         if self.request.project.commtrack_enabled:
             defaults.append(self.utils.user_type_tuple(HQUserType.COMMTRACK))
@@ -313,8 +311,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = self.selected_location_ids(mobile_user_and_group_slugs)
         if not location_ids:
             return []
-        return map(self.utils.location_tuple,
-                   SQLLocation.objects.filter(location_id__in=location_ids))
+        return list(map(self.utils.location_tuple,
+                        SQLLocation.objects.filter(location_id__in=location_ids)))
 
     @property
     def filter_context(self):
@@ -326,7 +324,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         return context
 
     @classmethod
-    def user_es_query(cls, domain, mobile_user_and_group_slugs):
+    def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
+        # The queryset returned by this method is location-safe
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
@@ -342,7 +341,16 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             user_type_filters.append(user_es.demo_users())
 
         q = user_es.UserES().domain(domain)
-        if HQUserType.REGISTERED in user_types:
+        if not request_user.has_permission(domain, 'access_all_locations'):
+            cls._verify_users_are_accessible(domain, request_user, user_ids)
+            return q.OR(
+                filters.term("_id", user_ids),
+                user_es.location(list(SQLLocation.active_objects
+                                      .get_locations_and_children(location_ids)
+                                      .accessible_to_user(domain, request_user)
+                                      .location_ids())),
+            )
+        elif HQUserType.REGISTERED in user_types:
             # return all users with selected user_types
             user_type_filters.append(user_es.mobile_users())
             return q.OR(*user_type_filters)
@@ -364,60 +372,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             else:
                 return q.filter(id_filter)
 
-    @classmethod
-    def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs,
-                              include_inactive=False, limit_user_ids=None):
-        user_ids = set(cls.selected_user_ids(mobile_user_and_group_slugs))
-        user_types = cls.selected_user_types(mobile_user_and_group_slugs)
-        group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
-        location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
-        users = []
-
-        if location_ids:
-            user_ids |= set(user_ids_at_locations_and_descendants(location_ids))
-
-        if limit_user_ids:
-            user_ids = set(limit_user_ids).intersection(user_ids)
-
-        if user_ids or HQUserType.REGISTERED in user_types:
-            users = util.get_all_users_by_domain(
-                domain=domain,
-                user_ids=user_ids,
-                simplified=True,
-                CommCareUser=CommCareUser,
-            )
-        user_filter = tuple([HQUserToggle(id, id in user_types) for id in range(4)])
-        other_users = util.get_all_users_by_domain(
-            domain=domain,
-            user_filter=user_filter,
-            simplified=True,
-            CommCareUser=CommCareUser,
-            include_inactive=include_inactive
-        )
-        groups = [Group.get(g) for g in group_ids]
-        all_users = users + other_users
-
-        user_dict = {}
-        for group in groups:
-            users_in_group = util.get_all_users_by_domain(
-                group=group,
-                simplified=True
-            )
-            if limit_user_ids:
-                users_in_group = filter(lambda user: user['user_id'] in limit_user_ids, users_in_group)
-            user_dict["%s|%s" % (group.name, group._id)] = users_in_group
-
-        users_in_groups = flatten_list(user_dict.values())
-        users_by_group = user_dict
-        combined_users = remove_dups(all_users + users_in_groups, "user_id")
-
-        return _UserData(
-            users=all_users,
-            admin_and_demo_users=other_users,
-            groups=groups,
-            users_by_group=users_by_group,
-            combined_users=combined_users,
-        )
+    @staticmethod
+    def _verify_users_are_accessible(domain, request_user, user_ids):
+        # This function would be very slow if called with many user ids
+        for user_id in user_ids:
+            other_user = CommCareUser.get(user_id)
+            if not user_can_access_other_user(domain, request_user, other_user):
+                raise PermissionDenied("One or more users are not accessible")
 
     @property
     def options(self):
@@ -435,22 +396,6 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             cls.slug: 'g__%s' % group_id
         }
 
-    def _get_assigned_locations_default(self):
-        user_assigned_locations = self.request.couch_user.get_sql_locations(
-            self.request.domain
-        )
-        return map(self.utils.location_tuple, user_assigned_locations)
-
-
-class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
-    slug = 'location_restricted_mobile_worker'
-    options_url = 'new_emwf_options'
-
-    def get_default_selections(self):
-        if self.request.can_access_all_locations:
-            return super(LocationRestrictedMobileWorkerFilter, self).get_default_selections()
-        else:
-            return self._get_assigned_locations_default()
 
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None

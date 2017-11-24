@@ -54,7 +54,8 @@
 
         $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
-        $scope.formData['location_restricted_mobile_worker'] = hqImport('reports/js/reports.util').urlSerialize($('form[name="exportFiltersForm"]'));
+        $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
+            $('form[name="exportFiltersForm"]'));
         if (formElement.user_type()) formElement.user_type().select2('val', ['mobile']);
 
         if (!_.isNull(defaultDateRange)) {
@@ -135,7 +136,8 @@
         };
 
         $scope.prepareExport = function () {
-            $scope.formData['location_restricted_mobile_worker'] = hqImport('reports/js/reports.util').urlSerialize($('form[name="exportFiltersForm"]'));
+            $scope.formData['emw'] = hqImport('reports/js/reports.util').urlSerialize(
+                $('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
             hqImport('analytix/js/kissmetrics').track.event("Clicked Prepare Export");
