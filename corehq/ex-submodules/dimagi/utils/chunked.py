@@ -1,4 +1,5 @@
 
+from builtins import range
 def chunked(it, n):
     """
     >>> for nums in chunked(range(10), 4):
@@ -11,7 +12,7 @@ def chunked(it, n):
     while True:
         buffer = []
         try:
-            for i in xrange(n):
+            for i in range(n):
                 buffer.append(next(it))
             yield tuple(buffer)
         except StopIteration:

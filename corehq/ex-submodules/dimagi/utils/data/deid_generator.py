@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import hashlib
 from datetime import datetime
 from functools import reduce
@@ -48,4 +49,4 @@ class DeidGenerator(object):
 
     def random_number(self, low, high):
         """Generate a 'random' number such that low <= n < high"""
-        return self.digest(range(low, high))[-1]
+        return self.digest(list(range(low, high)))[-1]

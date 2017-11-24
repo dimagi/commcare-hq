@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import uuid
 from django.test import TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration

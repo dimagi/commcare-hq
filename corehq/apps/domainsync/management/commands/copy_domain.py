@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from builtins import range
 from multiprocessing import Process, Queue
 import sys
 import os
@@ -326,14 +327,14 @@ def copy_doc(doc, count, sourcedb, target_couch, exclude_types, total, simulate,
               (doc["doc_type"], count, total, doc["doc_type"], doc["_id"]))
     else:
         if not simulate:
-            for i in reversed(range(5)):
+            for i in reversed(list(range(5))):
                 try:
                     dt = DocumentTransform(doc, sourcedb, exclude_attachments)
                     break
                 except RequestError:
                     if i == 0:
                         raise
-            for i in reversed(range(5)):
+            for i in reversed(list(range(5))):
                 try:
                     save(dt, target_couch)
                     break

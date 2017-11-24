@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from django.utils.translation import ugettext
 from corehq.apps.hqwebapp.crispy import FormActions, B3MultiField
 import langcodes

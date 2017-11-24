@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from builtins import range
 from django.utils.translation import ugettext_noop
 
 
 class LookupErrors:
-    NotFound, MultipleResults = range(2)
+    NotFound, MultipleResults = list(range(2))
 
 
 class ImportErrors:

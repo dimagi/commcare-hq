@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from builtins import range
 from datetime import datetime
 from django.core.management.base import BaseCommand
 from casexml.apps.case.mock import CaseFactory

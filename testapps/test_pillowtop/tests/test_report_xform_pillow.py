@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from django.test import TestCase, override_settings
 from elasticsearch.exceptions import ConnectionError
 

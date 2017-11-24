@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from datetime import datetime
 import pytz
 from six.moves import zip
@@ -12,5 +13,5 @@ for tz in pytz.common_timezones:
     ofs = now.strftime("%z")
     PRETTY_TIMEZONE_CHOICES.append((int(ofs), tz, "(GMT%s) %s" % (ofs, tz)))
 PRETTY_TIMEZONE_CHOICES.sort()
-for i in xrange(len(PRETTY_TIMEZONE_CHOICES)):
+for i in range(len(PRETTY_TIMEZONE_CHOICES)):
     PRETTY_TIMEZONE_CHOICES[i] = PRETTY_TIMEZONE_CHOICES[i][1:]

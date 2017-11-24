@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from collections import defaultdict
 from unittest import skipUnless, SkipTest
 from uuid import uuid4, UUID

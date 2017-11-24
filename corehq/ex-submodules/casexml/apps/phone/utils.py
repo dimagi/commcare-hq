@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from builtins import range
 import re
 import weakref
 from uuid import uuid4

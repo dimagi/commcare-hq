@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from django.test import TestCase
 from corehq.apps.groups.models import Group
 from corehq.apps.users.cases import get_wrapped_owner, get_owning_users

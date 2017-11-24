@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import re
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy

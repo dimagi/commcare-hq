@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import uuid
 
 from couchdbkit import ResourceConflict, ResourceNotFound
@@ -383,7 +384,7 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
             {"endkey": [doc_type, {}], "group_level": 1, "reduce": True, "startkey": [doc_type]},
             [{"key": doc_type, "value": total}]
         )]
-        for chunk in chunked(range(total), chuck_size):
+        for chunk in chunked(list(range(total)), chuck_size):
             chunk_rows = [self._get_row(ident, doc_type=doc_type) for ident in chunk]
             if chunk[0] == 0:
                 results.append((
@@ -451,18 +452,18 @@ class TestCouchDocProcessor(BaseCouchDocProcessorTest):
         )
 
     def test_single_run_no_filtering(self):
-        self._test_processor(4, range(4))
+        self._test_processor(4, list(range(4)))
 
     def test_filtering(self):
         self._test_processor(3, [0, 2, 3], ['bar-1'])
 
     def test_multiple_runs_no_skip(self):
-        self._test_processor(4, range(4))
+        self._test_processor(4, list(range(4)))
         self._test_processor(0, [])
 
     def test_multiple_runs_with_skip(self):
         with self.assertRaises(TooManyRetries):
-            self._test_processor(3, range(3), skip_docs=['bar-3'])
+            self._test_processor(3, list(range(3)), skip_docs=['bar-3'])
 
         self._test_processor(1, [3])
 

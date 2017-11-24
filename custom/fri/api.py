@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import random
 import re
 from dateutil.parser import parse

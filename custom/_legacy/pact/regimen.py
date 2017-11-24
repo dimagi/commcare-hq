@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from pact.enums import DAY_SLOTS_BY_TIME, DAY_SLOTS_BY_IDX, DOT_ART, DOT_NONART, \
     CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
 

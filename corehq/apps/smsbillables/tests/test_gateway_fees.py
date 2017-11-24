@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from mock import patch
 from random import choice, randint
 

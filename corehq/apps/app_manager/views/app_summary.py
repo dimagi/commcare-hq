@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from copy import copy
 from StringIO import StringIO
 from collections import namedtuple
