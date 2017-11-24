@@ -1,4 +1,4 @@
-/* global d3, module, inject, _ */
+/* global module, inject, _ */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -186,7 +186,7 @@ describe('EnrolledChildrenDirective', function () {
 
     it('tests chart tooltip content', function () {
         var data = {y: 0.5, all: 2};
-        var x = 'test age'
+        var x = 'test age';
         var expected = "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>2</strong></p>"
             + "<p>% of children test age: <strong>25.00%</strong></p>";
 
