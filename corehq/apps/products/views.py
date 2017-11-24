@@ -33,6 +33,7 @@ from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
 )
+import six
 
 
 @require_POST
@@ -360,7 +361,7 @@ def download_products(request, domain):
         model_data = {}
         uncategorized_data = {}
 
-        for prop, val in product.product_data.iteritems():
+        for prop, val in six.iteritems(product.product_data):
             if prop in product_data_fields:
                 model_data['data: ' + prop] = encode_if_needed(val)
             else:

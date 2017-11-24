@@ -40,8 +40,8 @@ hqDefine('app_manager/js/preview_app', function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
 
         if (triggerAnalytics) {
-            window.analytics.workflow("[app-preview] Clicked Show App Preview");
-            window.analytics.usage("[app-preview] Clicked Show App Preview");
+            hqImport('analytix/js/kissmetrics').track.event("[app-preview] Clicked Show App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Show App Preview");
         }
 
         var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $(module.SELECTORS.APP_MANAGER_BODY);
@@ -58,8 +58,8 @@ hqDefine('app_manager/js/preview_app', function() {
         if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.removeClass('offset-for-tablet');
 
         if (triggerAnalytics) {
-            window.analytics.workflow("[app-preview] Clicked Hide App Preview");
-            window.analytics.usage("[app-preview] Clicked Hide App Preview");
+            hqImport('analytix/js/kissmetrics').track.event("[app-preview] Clicked Hide App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Hide App Preview");
         }
     };
 
@@ -70,7 +70,7 @@ hqDefine('app_manager/js/preview_app', function() {
         _private.triggerPreviewEvent('tablet-view');
 
         if (triggerAnalytics) {
-            window.analytics.workflow('[app-preview] User turned on tablet mode');
+            hqImport('analytix/js/kissmetrics').track.event('[app-preview] User turned on tablet mode');
         }
     };
 
@@ -81,7 +81,7 @@ hqDefine('app_manager/js/preview_app', function() {
         _private.triggerPreviewEvent('phone-view');
 
         if (triggerAnalytics) {
-            window.analytics.workflow('[app-preview] User turned off tablet mode');
+            hqImport('analytix/js/kissmetrics').track.event('[app-preview] User turned off tablet mode');
         }
     };
 
@@ -206,8 +206,8 @@ hqDefine('app_manager/js/preview_app', function() {
         $('.js-preview-refresh').click(function() {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
             _private.triggerPreviewEvent('refresh');
-            window.analytics.workflow("[app-preview] Clicked Refresh App Preview");
-            window.analytics.usage("[app-preview] Clicked Refresh App Preview");
+            hqImport('analytix/js/kissmetrics').track.event("[app-preview] Clicked Refresh App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Refresh App Preview");
         });
         $(document).ajaxComplete(function(e, xhr, options) {
             if (/edit_form_attr/.test(options.url) ||

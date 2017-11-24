@@ -195,10 +195,9 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                     var total = findValue(vm.chartData[0].values, d.value);
                     var value = findValue(vm.chartData[1].values, d.value);
 
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of AWCs that were open yesterday: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
+                    var tooltip_content = "<p>Total number of AWCs that were open on <strong>" + d.value + "</strong>: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
                     tooltip_content += "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs open yesterday: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+                    tooltip_content += "<p>% of AWCs open on <strong>" + d.value + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
 
                     return tooltip_content;
                 });

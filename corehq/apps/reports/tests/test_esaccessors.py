@@ -58,6 +58,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
+import six
 
 
 class BaseESAccessorsTest(SimpleTestCase):
@@ -110,7 +111,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         form_pair = make_es_ready_form(metadata)
         if attachment_dict:
             form_pair.wrapped_form.external_blobs = {name: BlobMeta(**meta)
-                for name, meta in attachment_dict.iteritems()}
+                for name, meta in six.iteritems(attachment_dict)}
             form_pair.json_form['external_blobs'] = attachment_dict
 
         es_form = transform_xform_for_elasticsearch(form_pair.json_form)

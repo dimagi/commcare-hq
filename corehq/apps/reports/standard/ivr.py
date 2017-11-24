@@ -116,7 +116,7 @@ class CallReport(BaseCommConnectLogReport):
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(call.couch_recipient, doc_info),
                 self._fmt(phone_number),
-                self._fmt(direction_map.get(call.direction,"-")),
+                self._fmt(direction_map.get(call.direction, "-")),
                 self._fmt(form_name),
                 self._fmt("-"),
                 self._fmt(answered),
@@ -190,9 +190,9 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
         result = []
         
         status_descriptions = {
-            CALLBACK_PENDING : _("Pending"),
-            CALLBACK_RECEIVED : _("Received"),
-            CALLBACK_MISSED : _("Missed"),
+            CALLBACK_PENDING: _("Pending"),
+            CALLBACK_RECEIVED: _("Received"),
+            CALLBACK_MISSED: _("Missed"),
         }
         
         # Store the results of lookups for faster loading

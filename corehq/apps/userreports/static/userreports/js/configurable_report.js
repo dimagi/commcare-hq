@@ -1,4 +1,4 @@
-/* globals HQReport, kmqPushSafe */
+/* globals HQReport */
 hqDefine("userreports/js/configurable_report", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -15,16 +15,16 @@ hqDefine("userreports/js/configurable_report", function() {
                 report_type = initial_page_data("type");
             $applyFiltersButton.click(function () {
                 var label = hqImport('hqwebapp/js/main').capitalize(builder_type) + '-' + hqImport('hqwebapp/js/main').capitalize(report_type);
-                window.analytics.usage("Report Builder v2", "View Report Builder Report", label);
+                hqImport('userreports/js/report_analytics').track.event("View Report Builder Report", label);
             });
-            window.analytics.usage("Report Builder v2", "Loaded Report Builder Report");
+            hqImport('userreports/js/report_analytics').track.event("Loaded Report Builder Report");
             $editReportButton.click(function () {
-                kmqPushSafe(["trackClick", "rbv2_click_edit_report", "RBv2 - Click Edit Report"]);
+                hqImport('analytix/js/kissmetrics').track.event("RBv2 - Click Edit Report");
             });
         }
 
         _.each(initial_page_data("report_builder_events"), function(e) {
-            window.analytics.usage.apply(this, e);
+            hqImport('userreports/js/report_analytics').track.event.apply(this, e);
         });
 
         // Poll the status of the data source
@@ -116,8 +116,7 @@ hqDefine("userreports/js/configurable_report", function() {
         });
 
         if (initial_page_data("created_by_builder")) {
-            window.analytics.usage(
-                    'Report Builder',
+            hqImport('userreports/js/report_analytics').track.event(
                     initial_page_data("builder_report_type"),
                     'Load a report that was built in report builder'
             );

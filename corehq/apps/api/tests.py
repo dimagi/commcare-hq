@@ -1194,13 +1194,13 @@ class TestToManyDictField(TestCase):
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
         self.assertTrue('other_models' in dehydrated_bundle.data)
-        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'foo')
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'], 'foo')
         self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'bar')
 
         bundle = source_resource.build_bundle(obj=source_objs[1])
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
-        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'bar')
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'], 'bar')
         self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'baz')
 
 

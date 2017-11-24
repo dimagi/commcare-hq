@@ -676,16 +676,9 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-    position: relative;
-    top: 20%;
-    left: 50%;
-    width: 100%;
+    left: 80%;
+    width: 40%;
     height: 40px;
-    margin-left: -50%;
-    margin-top: -25px;
-    padding-top: 20px;
-    text-align: center;
-    font-size: 1.2em;
 }
 
 #beneficiariesTable {

@@ -11,6 +11,7 @@
     <script src="{% static 'chai/chai.js' %}"></script>
     <script src="{% static 'sinon/index.js' %}"></script>
     <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     <script>
         mocha.setup('bdd')
         window.assert = chai.assert
@@ -31,8 +32,16 @@
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}
 
+    {% include 'analytics/analytics_js.html' %}
+    <script>
+        hqImport('analytix/js/google').track.event = sinon.spy();
+        hqImport('analytix/js/google').track.click = sinon.spy();
+        hqImport('analytix/js/kissmetrics').track.event = sinon.spy();
+    </script>
   </head>
   <body>
+      <div class="initial-analytics-data hide"></div>
+      <div class="analytics-ab-tests hide"></div>
       <!-- HTML Fixtures -->
       <div id="mocha"></div>
       <div id="mocha-fixtures" style="display:none">

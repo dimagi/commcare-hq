@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
-        <div ng-show="$ctrl.data">
+        <div ng-if="$ctrl.data">
             <div class="row" ng-if="$ctrl.step === 'pse'">
                 <div class="row no-margin">
                     <kpi data="$ctrl.data.kpi"></kpi>
@@ -70,7 +70,7 @@
                 </div>
             </div>
             <div class="row black" ng-if="$ctrl.step === 'beneficiary'">
-            <div ng-show="$ctrl.showTable" ng-if="$ctrl.data.months" class="col-md-12">
+            <div ng-if="$ctrl.data.months && $ctrl.showTable" class="col-md-12">
                 <table id="beneficiariesTable" datatable="" dt-options="$ctrl.dtOptions" dt-columns="$ctrl.dtColumns" class="table table-striped table-bordered">
                 </table>
             </div>

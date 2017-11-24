@@ -22,7 +22,7 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties
+from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES
@@ -715,6 +715,7 @@ class ConfigureReport(ReportBuilderView):
                     })
                     return self.get(request, domain, *args, **kwargs)
             self._delete_temp_data_source(report_data)
+            send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
                 'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,

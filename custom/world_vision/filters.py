@@ -37,7 +37,7 @@ class LocationFilter(BaseDrilldownOptionFilter):
         return hierarchy
 
     def get_labels(self):
-        return [(v['name'], v['prop']) for k,v in sorted(LOCATION_HIERARCHY.iteritems())]
+        return [(v['name'], v['prop']) for k, v in sorted(LOCATION_HIERARCHY.iteritems())]
 
     @property
     def filter_context(self):

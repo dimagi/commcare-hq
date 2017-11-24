@@ -13,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -108,7 +109,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         row_values = {
             'valid': valid or 0,
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([
@@ -186,7 +187,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
         data['blue'][date_in_miliseconds]['y'] += valid
 
     top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['value'],
         reverse=True
     )
@@ -199,7 +200,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "Total number of adolescent girls who are enrolled for ICDS services",
                 "strokeWidth": 2,

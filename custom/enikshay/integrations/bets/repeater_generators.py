@@ -28,6 +28,7 @@ from custom.enikshay.const import (
     USERTYPE_DISPLAYS,
     FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
+    VOUCHER_ID,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.utils import string_to_date_or_None
@@ -289,6 +290,7 @@ class IncentivePayload(BETSPayload):
 class VoucherPayload(BETSPayload):
 
     VoucherID = jsonobject.StringProperty(required=False)
+    ReadableVoucherID = jsonobject.StringProperty(required=False)
     Amount = jsonobject.StringProperty(required=False)
 
     @classmethod
@@ -325,6 +327,7 @@ class VoucherPayload(BETSPayload):
             EventOccurDate=string_to_date_or_None(
                 voucher_case_properties.get(DATE_FULFILLED)),
             VoucherID=voucher_case.case_id,
+            ReadableVoucherID=voucher_case.get_case_property(VOUCHER_ID),
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,

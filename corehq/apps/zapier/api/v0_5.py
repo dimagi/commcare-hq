@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import Application
 
 from tastypie.resources import Resource
 from tastypie import fields
+import six
 
 
 class ZapierXFormInstanceResource(XFormInstanceResource):
@@ -170,7 +171,7 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
                     label=self._build_label(prop)
                 )
             ))
-        for case_prop, case_prop_zapier_name in CASE_PROPERTIES.iteritems():
+        for case_prop, case_prop_zapier_name in six.iteritems(CASE_PROPERTIES):
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',

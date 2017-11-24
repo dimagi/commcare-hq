@@ -173,13 +173,11 @@ describe('ExportInstance model', function() {
             server = sinon.fakeServer.create();
 
             sinon.stub(instance, 'recordSaveAnalytics', recordSaveAnalyticsSpy);
-            window.ga_track_event = sinon.spy();
         });
 
         afterEach(function() {
             server.restore();
             instance.recordSaveAnalytics.restore();
-            window.ga_track_event = undefined;
         });
 
         it('Should save a model', function() {

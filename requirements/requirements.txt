@@ -87,6 +87,7 @@ boto3==1.4.4
 simpleeval==0.9.5
 laboratory==0.2.0
 ConcurrentLogHandler==0.9.1
+github3.py==1.0.0a4
 PyGithub==1.35
 django-bulk-update==1.1.10
 csiphash==0.0.5

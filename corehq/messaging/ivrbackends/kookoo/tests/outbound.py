@@ -57,14 +57,14 @@ class KooKooTestCase(TouchformsTestCase):
             .set_schedule_manually(EVENT_AS_SCHEDULE, 1, [
                 CaseReminderEvent(
                     day_num=0,
-                    fire_time=time(12,0),
+                    fire_time=time(12, 0),
                     fire_time_type=FIRE_TIME_DEFAULT,
                     callback_timeout_intervals=[30],
                     form_unique_id=self.apps[0].modules[0].forms[0].unique_id,
                 ),
                 CaseReminderEvent(
                     day_num=0,
-                    fire_time=time(13,0),
+                    fire_time=time(13, 0),
                     fire_time_type=FIRE_TIME_DEFAULT,
                     callback_timeout_intervals=[30],
                     form_unique_id=self.apps[0].modules[0].forms[1].unique_id,

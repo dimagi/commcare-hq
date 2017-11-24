@@ -16,20 +16,20 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.blobs import get_blob_db
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
-
+from corehq.form_processor.utils import get_simple_form_xml
 
 DOMAIN = 'fundamentals'
 
 
-class FundamentalCaseTests(TestCase):
-
+class FundamentalBaseTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(FundamentalCaseTests, cls).setUpClass()
+        super(FundamentalBaseTests, cls).setUpClass()
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
 
@@ -37,13 +37,68 @@ class FundamentalCaseTests(TestCase):
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases(DOMAIN)
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
-        super(FundamentalCaseTests, cls).tearDownClass()
+        super(FundamentalBaseTests, cls).tearDownClass()
 
     def setUp(self):
-        super(FundamentalCaseTests, self).setUp()
+        super(FundamentalBaseTests, self).setUp()
         self.interface = FormProcessorInterface()
-        self.casedb = CaseAccessors()
+        self.casedb = CaseAccessors(DOMAIN)
+        self.formdb = FormAccessors(DOMAIN)
 
+
+class FundamentalFormTestsCouch(FundamentalBaseTests):
+    def test_modified_on(self):
+        form_id = uuid.uuid4().hex
+        before = datetime.utcnow()
+        xml = get_simple_form_xml(form_id)
+        submit_form_locally(xml, DOMAIN)
+        form = self.formdb.get_form(form_id)
+        self.assertIsNotNone(form.server_modified_on)
+        self.assertGreater(form.server_modified_on, before)
+
+    def test_modified_on_archive(self):
+        form_id = uuid.uuid4().hex
+        submit_form_locally(get_simple_form_xml(form_id), DOMAIN)
+
+        before = datetime.utcnow()
+        form = self.formdb.get_form(form_id)
+        form.archive()
+        form = self.formdb.get_form(form_id)
+
+        self.assertGreater(form.server_modified_on, before)
+
+        before = datetime.utcnow()
+        form.unarchive()
+        form = self.formdb.get_form(form_id)
+        self.assertGreater(form.server_modified_on, before)
+
+    def test_modified_on_delete(self):
+        form_id = uuid.uuid4().hex
+        submit_form_locally(get_simple_form_xml(form_id), DOMAIN)
+
+        before = datetime.utcnow()
+        form = self.formdb.get_form(form_id)
+        form.soft_delete()
+        form = self.formdb.get_form(form_id)
+
+        self.assertTrue(form.is_deleted)
+        self.assertGreater(form.server_modified_on, before)
+
+        before = form.server_modified_on
+
+        self.formdb.soft_undelete_forms([form_id])
+        form = self.formdb.get_form(form_id)
+
+        self.assertFalse(form.is_deleted)
+        self.assertGreater(form.server_modified_on, before)
+
+
+@use_sql_backend
+class FundamentalFormTestsSQL(FundamentalFormTestsCouch):
+    pass
+
+
+class FundamentalCaseTests(FundamentalBaseTests):
     def test_create_case(self):
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()

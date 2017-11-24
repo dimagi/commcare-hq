@@ -1,5 +1,5 @@
 /* globals _, JSON */
-hqDefine('analytics/js/utils', function () {
+hqDefine('analytix/js/utils', function () {
     'use strict';
 
     /**
@@ -61,20 +61,36 @@ hqDefine('analytics/js/utils', function () {
     };
 
     /**
-     * Inserts a <script async src="srcUrl" type="text/javascript"></script>
+     * Inserts a <script src="srcUrl" type="text/javascript"></script>
      * tag into the DOM.
-     * @param {string} srcUrl
+     * @param {string} scriptSrc
+     * @param {function} loggingFn - logs on success or failure of script
+     * @param {object} options - (optional) options added on to the script
      */
-    var insertAsyncScript = function (srcUrl) {
+    var insertScript = function (scriptSrc, loggingFn, options) {
         setTimeout(function(){
-            var d = document,
-                f = d.getElementsByTagName('script')[0],
-                s = d.createElement('script');
-            s.type = 'text/javascript';
-            s.async = true;
-            s.src = srcUrl;
-            f.parentNode.insertBefore(s, f);
+            var doc = document,
+                firstScriptTag = doc.getElementsByTagName('script')[0],
+                script = doc.createElement('script');
+            script.type = 'text/javascript';
+            script.async = true;
+            script.src = scriptSrc;
+            _.each(options || {}, function(val, key) {
+                script[key] = val;
+            });
+            script.addEventListener('error', function () {
+                loggingFn(scriptSrc, "Failed to Load Script - Check Adblocker");
+            });
+            script.addEventListener('load', function () {
+                loggingFn(scriptSrc, "Loaded Script");
+            });
+            firstScriptTag.parentNode.insertBefore(script, firstScriptTag);
         }, 1);
+    };
+
+    var getDateHash = function () {
+        var e = 3e5;
+        return Math.ceil(new Date() / e) * e;
     };
 
     /**
@@ -94,7 +110,8 @@ hqDefine('analytics/js/utils', function () {
 
     return {
         trackClickHelper: trackClickHelper,
-        insertAsyncScript: insertAsyncScript,
+        insertScript: insertScript,
         createSafeCallback: createSafeCallback,
+        getDateHash: getDateHash,
     };
 });

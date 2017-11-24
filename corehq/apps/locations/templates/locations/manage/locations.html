@@ -70,7 +70,7 @@
                 }
             });
             $(archive_location_modal).modal('hide');
-            ga_track_event('Organization Structure', 'Archive')
+            hqImport('analytix/js/google').track.event('Organization Structure', 'Archive')
         }
 
         var modal_context = {
@@ -123,7 +123,7 @@
                     }
                 });
                 $(delete_location_modal).modal('hide');
-                ga_track_event('Organization Structure', 'Delete')
+                hqImport('analytix/js/google').track.event('Organization Structure', 'Delete')
             }
         }
 

@@ -1,53 +1,21 @@
 from __future__ import absolute_import
-import json
-import os
 
 import mock
-from django.test.testcases import SimpleTestCase
-from fakecouch import FakeCouchDb
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
 from corehq.apps.userreports.expressions.factory import SubcasesExpressionSpec
+from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 
 EPISODE_DATA_SOURCE = 'episode_2b_v4.json'
 
 
-class TestEpisode2B(SimpleTestCase):
+class TestEpisode2B(TestDataSourceExpressions):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestEpisode2B, cls).setUpClass()
-
-        episode_file = os.path.join(
-            os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-            'data_sources',
-            EPISODE_DATA_SOURCE
-        )
-
-        with open(episode_file) as f:
-            cls.episode = DataSourceConfiguration.wrap(json.loads(f.read())['config'])
-            cls.named_expressions = cls.episode.named_expression_objects
-
-    def setUp(self):
-        self.orig_db = CommCareCase.get_db()
-        self.database = FakeCouchDb()
-        CommCareCase.set_db(self.database)
-
-    def tearDown(self):
-        CommCareCase.set_db(self.orig_db)
-
-    def _get_column(self, column_id):
-        return [
-            ind
-            for ind in self.episode.configured_indicators
-            if ind['column_id'] == column_id
-        ][0]
+    data_source_name = EPISODE_DATA_SOURCE
 
     def _get_expression(self, column_id, column_type):
-        column = self._get_column(column_id)
+        column = self.get_column(column_id)
         self.assertEqual(column['datatype'], column_type)
         return ExpressionFactory.from_spec(
             column['expression'],
@@ -86,7 +54,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -128,7 +96,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('key_populations')
+        column = self.get_column('key_populations')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -169,7 +137,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -210,7 +178,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -251,7 +219,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -292,7 +260,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('tu_name')
+        column = self.get_column('tu_name')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -334,7 +302,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -376,7 +344,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -418,7 +386,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -485,14 +453,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('endofip_test_requested_date')
+        column = self.get_column('endofip_test_requested_date')
         self.assertEqual(column['datatype'], 'date')
         expression = ExpressionFactory.from_spec(
             column['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        column2 = self._get_column('endofcp_test_requested_date')
+        column2 = self.get_column('endofcp_test_requested_date')
         self.assertEqual(column2['datatype'], 'date')
         expression2 = ExpressionFactory.from_spec(
             column2['expression'],
@@ -560,14 +528,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        endofip_test_requested_date = self._get_column('endofip_test_requested_date')
+        endofip_test_requested_date = self.get_column('endofip_test_requested_date')
         self.assertEqual(endofip_test_requested_date['datatype'], 'date')
         endofip_test_requested_date_expression = ExpressionFactory.from_spec(
             endofip_test_requested_date['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        endofcp_test_requested_date = self._get_column('endofcp_test_requested_date')
+        endofcp_test_requested_date = self.get_column('endofcp_test_requested_date')
         self.assertEqual(endofcp_test_requested_date['datatype'], 'date')
         endofcp_test_requested_date_expression = ExpressionFactory.from_spec(
             endofcp_test_requested_date['expression'],
@@ -644,14 +612,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        endofip_test_requested_date = self._get_column('endofip_test_requested_date')
+        endofip_test_requested_date = self.get_column('endofip_test_requested_date')
         self.assertEqual(endofip_test_requested_date['datatype'], 'date')
         endofip_test_requested_date_expression = ExpressionFactory.from_spec(
             endofip_test_requested_date['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        endofcp_test_requested_date = self._get_column('endofcp_test_requested_date')
+        endofcp_test_requested_date = self.get_column('endofcp_test_requested_date')
         self.assertEqual(endofcp_test_requested_date['datatype'], 'date')
         endofcp_test_requested_date_expression = ExpressionFactory.from_spec(
             endofcp_test_requested_date['expression'],
@@ -735,14 +703,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        endofip_result = self._get_column('endofip_result')
+        endofip_result = self.get_column('endofip_result')
         self.assertEqual(endofip_result['datatype'], 'string')
         endofip_result_expression = ExpressionFactory.from_spec(
             endofip_result['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        endofcp_result = self._get_column('endofcp_result')
+        endofcp_result = self.get_column('endofcp_result')
         self.assertEqual(endofcp_result['datatype'], 'string')
         endofcp_result_expression = ExpressionFactory.from_spec(
             endofcp_result['expression'],
@@ -832,7 +800,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        not_microbiological = self._get_column('not_microbiological_result')
+        not_microbiological = self.get_column('not_microbiological_result')
         self.assertEqual(not_microbiological['datatype'], 'string')
         not_microbiological_result_expression = ExpressionFactory.from_spec(
             not_microbiological['expression'],
@@ -1619,7 +1587,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -1663,7 +1631,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -1707,7 +1675,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],

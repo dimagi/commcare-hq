@@ -68,8 +68,8 @@ def validate_answer(answer, question):
 
 def format_ivr_response(text, app):
     return {
-        "text_to_say" : text,
-        "audio_file_url" : convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
+        "text_to_say": text,
+        "audio_file_url": convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
     }
 
 

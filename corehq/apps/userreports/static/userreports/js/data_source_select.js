@@ -1,4 +1,3 @@
-/* globals kmqPushSafe */
 
 hqDefine("userreports/js/data_source_select", function() {
     $(function () {
@@ -10,8 +9,8 @@ hqDefine("userreports/js/data_source_select", function() {
         };
         $("#report-builder-form").koApplyBindings(dataSourceSelector);
         $('#js-next-data-source').click(function () {
-            window.analytics.usage('Report Builder v2', 'Data Source Next', hqImport('hqwebapp/js/main').capitalize(dataSourceSelector.sourceType()));
-            kmqPushSafe(["trackClick", "rbv2_data_source", "RBv2 - Data Source"]);
+            hqImport('userreports/js/report_analytics').track.event('Data Source Next', hqImport('hqwebapp/js/main').capitalize(dataSourceSelector.sourceType()));
+            hqImport('analytix/js/kissmetrics').track.event("RBv2 - Data Source");
         });
     });
 });

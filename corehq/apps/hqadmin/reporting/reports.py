@@ -988,8 +988,8 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
             else:
                 histo_data[domain][tstamp] += 1
 
-    for k, v in histo_data.iteritems():
-        for l, w in v.iteritems():
+    for k, v in six.iteritems(histo_data):
+        for l, w in six.iteritems(v):
             ret[k].append({'count': w, 'time': l})
 
     return init_ret, ret

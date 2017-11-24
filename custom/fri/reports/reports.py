@@ -68,7 +68,7 @@ class MessageBankReport(FRIReport):
     @property
     def template_context(self):
         result = {
-            "is_previewer" : self.request.couch_user.is_previewer(),
+            "is_previewer": self.request.couch_user.is_previewer(),
         }
         return result
 
@@ -166,7 +166,7 @@ class MessageReport(FRIReport, DatespanMixin):
             DataTablesColumn(_("Message ID")),
             DataTablesColumn(_("Direction")),
         )
-        header.custom_sort = [[1, "asc"],[0, "asc"],[3, "asc"]]
+        header.custom_sort = [[1, "asc"], [0, "asc"], [3, "asc"]]
         return header
 
     def _case_name(self, contact, reverse=False):
@@ -266,7 +266,7 @@ class MessageReport(FRIReport, DatespanMixin):
                 self._fmt_timestamp(timestamp),
                 self._fmt(message.text),
                 self._fmt(message.fri_id or "-"),
-                self._fmt(direction_map.get(message.direction,"-")),
+                self._fmt(direction_map.get(message.direction, "-")),
             ])
         return result
 
@@ -292,8 +292,8 @@ class PHEDashboardReport(FRIReport):
     @property
     def template_context(self):
         result = {
-            "fri_message_bank_url" : reverse(CustomProjectReportDispatcher.name(), args=[self.domain, MessageBankReport.slug]),
-            "fri_chat_actions" : [self._open_chat_action(case._id) for case in self.interactive_participants],
+            "fri_message_bank_url": reverse(CustomProjectReportDispatcher.name(), args=[self.domain, MessageBankReport.slug]),
+            "fri_chat_actions": [self._open_chat_action(case._id) for case in self.interactive_participants],
         }
         return result
 
