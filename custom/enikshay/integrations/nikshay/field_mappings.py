@@ -164,3 +164,18 @@ marital_status = {
     'widowed': 'W',
     'separated': 'Se'
 }
+
+key_population = {
+    'known_patient_contact': 1,  # Contact of Known TB Patients
+    # 'no mapping': 2,  # Diabetes
+    # 'no mapping': 3,  # Tobacco
+    'prison_inmate': 4,  # Prison
+    'miner': 5,  # Miner
+    'migrant': 6,  # Migrant
+    'refugee': 7,  # Refugee
+    'slum_dweller': 8,  # Urban Slum
+    'health_care_worker': 9,  # Health Care Worker
+    'tribal_population': 10,  # Other
+    'other': 10,  # Other
+    # 'no mapping': 11,  # Not Applicable
+}

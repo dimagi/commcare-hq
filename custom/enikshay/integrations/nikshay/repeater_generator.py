@@ -55,6 +55,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     health_establishment_type,
     health_establishment_sector,
     marital_status,
+    key_population,
 )
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
@@ -180,10 +181,8 @@ class NikshayRegisterPatientPayloadGeneratorV2(BaseNikshayPayloadGenerator):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
-        occurence_case = None
         use_2b_app_structure = self.use_2b_app_structure(person_case)
-        if use_2b_app_structure:
-            occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
+        occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
         properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
             "dotcenter": "NA",
@@ -744,6 +743,16 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
         episode_site_choice = episode_case_properties.get('site_choice')
         patient_occupation = episode_case_properties.get('occupation')
         episode_disease_classification = episode_case_properties.get('disease_classification', '')
+
+    if v2:
+        occurrence_key_population = occurence_case.get_case_property('key_populations')
+        if occurrence_key_population:
+            episode_properties['key_population'] = key_population.get(
+                occurrence_key_population,
+                key_population.get('other')
+            )
+        else:
+            episode_properties['key_population'] = '11'  # Not Applicable
 
     if episode_site_choice:
         site_detail = episode_site.get(episode_site_choice, 'others')
