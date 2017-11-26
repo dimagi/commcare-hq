@@ -1441,7 +1441,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         return "LedgerValue(" \
                "case_id={s.case_id}, " \
                "section_id={s.section_id}, " \
-               "entry_id={s.entry_id}," \
+               "entry_id={s.entry_id}, " \
                "balance={s.balance}".format(s=self)
 
     class Meta:
