@@ -774,6 +774,7 @@ class ChangeSubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source'],
             internal_change=True,
         )
 
