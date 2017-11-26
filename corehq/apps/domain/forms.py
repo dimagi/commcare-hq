@@ -1557,6 +1557,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         skip_auto_downgrade=False,
+                        do_not_invoice=False,
+                        no_invoice_reason='',
                     )
                 else:
                     Subscription.new_domain_subscription(
