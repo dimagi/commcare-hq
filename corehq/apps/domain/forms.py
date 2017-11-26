@@ -1556,6 +1556,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
+                        skip_auto_downgrade=False,
                     )
                 else:
                     Subscription.new_domain_subscription(
@@ -1564,7 +1565,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
-                        funding_source=FundingSource.CLIENT
+                        funding_source=FundingSource.CLIENT,
+                        skip_auto_downgrade=False,
                     )
                 return True
         except Exception as e:
@@ -1826,6 +1828,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     def subscription_default_fields(self):
         return {
             'internal_change': True,
+            'skip_auto_downgrade': False,
             'web_user': self.web_user,
         }
 
