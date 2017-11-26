@@ -151,6 +151,19 @@ class AdherenceCaseFactory(object):
             )
         ])
 
+    def update_episode_adherence_properties(self):
+        try:
+            updater = EpisodeUpdater(self.domain)
+            updater.update_single_case(self._episode_case)
+        except Exception as e:
+            raise AdherenceException(
+                "Error calculating episode updates for beneficiary: {}, episode case_id({}): {}".format(
+                    self._person_case.case_id,
+                    self._episode_case.case_id,
+                    e
+                )
+            )
+
 
 def create_adherence_cases(domain, person_id, adherence_points):
     return AdherenceCaseFactory(domain, person_id).create_adherence_cases(adherence_points)
@@ -162,20 +175,3 @@ def update_adherence_confidence_level(domain, person_id, start_date, end_date, n
 
 def update_default_confidence_level(domain, person_id, new_confidence):
     return AdherenceCaseFactory(domain, person_id).update_default_confidence_level(new_confidence)
-
-
-def update_episode_adherence_properties(domain, person_id):
-    try:
-        episode_case = get_open_episode_case_from_person(domain, person_id)
-    except ENikshayCaseNotFound as e:
-        raise AdherenceException(e.message)
-    try:
-        updater = EpisodeUpdater(domain)
-        updater.update_single_case(episode_case)
-    except Exception as e:
-        raise AdherenceException(
-            "Error calculating updates for episode case_id({}): {}".format(
-                episode_case.case_id,
-                e
-            )
-        )
