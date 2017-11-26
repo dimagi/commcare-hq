@@ -1559,6 +1559,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         skip_auto_downgrade=False,
                         do_not_invoice=False,
                         no_invoice_reason='',
+                        date_delay_invoicing=None,
                     )
                 else:
                     Subscription.new_domain_subscription(
