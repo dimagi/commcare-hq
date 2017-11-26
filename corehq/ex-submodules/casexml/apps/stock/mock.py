@@ -21,6 +21,9 @@ class LedgerXML(XmlObject):
     def from_xml(cls, node):
         return load_xmlobject_from_string(ElementTree.tostring(node), cls)
 
+    def as_string(self):
+        return self.serialize()
+
 
 class Value(LedgerXML):
     ROOT_NAME = 'value'
