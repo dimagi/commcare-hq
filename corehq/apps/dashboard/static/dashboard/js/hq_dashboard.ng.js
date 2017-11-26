@@ -231,7 +231,7 @@
                     }
                     for (var i in currentVal.workflow_labels) {
                         var label = currentVal.workflow_labels[i];
-                        hqImport('analytix/js/kissmetrics').track.internalClick(element, label);
+                        hqImport('analytix/js/kissmetrix').track.internalClick(element, label);
                     }
                 }
             });

@@ -109,7 +109,7 @@
             $scope.updateBulkStatus();
         };
         $scope.sendExportAnalytics = function() {
-            hqImport('analytix/js/kissmetrics').track.event("Clicked Export button");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');

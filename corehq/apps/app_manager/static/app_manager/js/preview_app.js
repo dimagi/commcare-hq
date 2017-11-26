@@ -40,7 +40,7 @@ hqDefine('app_manager/js/preview_app', function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
 
         if (triggerAnalytics) {
-            hqImport('analytix/js/kissmetrics').track.event("[app-preview] Clicked Show App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Show App Preview");
             hqImport('analytix/js/google').track.event("App Preview", "Clicked Show App Preview");
         }
 
@@ -58,7 +58,7 @@ hqDefine('app_manager/js/preview_app', function() {
         if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.removeClass('offset-for-tablet');
 
         if (triggerAnalytics) {
-            hqImport('analytix/js/kissmetrics').track.event("[app-preview] Clicked Hide App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Hide App Preview");
             hqImport('analytix/js/google').track.event("App Preview", "Clicked Hide App Preview");
         }
     };
@@ -70,7 +70,7 @@ hqDefine('app_manager/js/preview_app', function() {
         _private.triggerPreviewEvent('tablet-view');
 
         if (triggerAnalytics) {
-            hqImport('analytix/js/kissmetrics').track.event('[app-preview] User turned on tablet mode');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User turned on tablet mode');
         }
     };
 
@@ -81,7 +81,7 @@ hqDefine('app_manager/js/preview_app', function() {
         _private.triggerPreviewEvent('phone-view');
 
         if (triggerAnalytics) {
-            hqImport('analytix/js/kissmetrics').track.event('[app-preview] User turned off tablet mode');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User turned off tablet mode');
         }
     };
 
@@ -206,7 +206,7 @@ hqDefine('app_manager/js/preview_app', function() {
         $('.js-preview-refresh').click(function() {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
             _private.triggerPreviewEvent('refresh');
-            hqImport('analytix/js/kissmetrics').track.event("[app-preview] Clicked Refresh App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Refresh App Preview");
             hqImport('analytix/js/google').track.event("App Preview", "Clicked Refresh App Preview");
         });
         $(document).ajaxComplete(function(e, xhr, options) {

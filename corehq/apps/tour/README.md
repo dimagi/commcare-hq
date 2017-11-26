@@ -39,7 +39,7 @@ Ideally, you should *avoid* heavily subclassing `StaticGuidedTour`, as that will
                     onShown: function () {
                         // this is a good callback to do fancy things like add analytics.
                         // other useful callbacks are `onHide`. 
-                        hqImport('analytix/js/kissmetrics').track.event('comment');
+                        hqImport('analytix/js/kissmetrix').track.event('comment');
                     }
                 },
                 // below is a good example if you wanted to add/remove classes to highlight the 

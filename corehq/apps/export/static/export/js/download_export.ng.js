@@ -138,7 +138,7 @@
             $scope.formData['location_restricted_mobile_worker'] = hqImport('reports/js/reports.util').urlSerialize($('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
-            hqImport('analytix/js/kissmetrics').track.event("Clicked Prepare Export");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -282,7 +282,7 @@
             hqImport('analytix/js/google').track.event(
                 "Download Export",
                             hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
-            hqImport('analytix/js/kissmetrics').track.event("Clicked Download button");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Download button");
         };
     };
     download_export.controller(exportsControllers);
