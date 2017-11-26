@@ -138,7 +138,7 @@ class BaseCCTests(TestCase):
             self.fail('Mismatching indicators:\n{}'.format('\t\n'.join(sorted(mismatches))))
 
         if user_data:
-            self.fail('Additional indicators:\n{}'.format('\t\n'.join(user_data.keys())))
+            self.fail('Additional indicators:\n{}'.format('\t\n'.join(list(user_data))))
 
 
 @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
@@ -181,7 +181,7 @@ class CallCenterTests(BaseCCTests):
             custom_cache=locmem_cache
         )
         self.assertEqual(
-            set(indicator_set.user_to_case_map.keys()),
+            set(indicator_set.user_to_case_map),
             set([self.cc_user.get_id, self.cc_user_no_data.get_id])
         )
         self.assertEqual(
@@ -303,7 +303,7 @@ class CallCenterTests(BaseCCTests):
             custom_cache=locmem_cache,
             override_cases=[CallCenterCase.from_case(user_case)]
         )
-        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.cc_user.get_id])
+        self.assertEqual(list(indicator_set.user_to_case_map), [self.cc_user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.cc_user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.cc_user.get_id]))
         self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
@@ -395,7 +395,7 @@ class CallCenterTests(BaseCCTests):
         locmem_cache.set(cache_key(self.cc_user.get_id, indicator_set.reference_date), cached_data.to_json())
 
         self.assertEqual(
-            set(indicator_set.user_to_case_map.keys()),
+            set(indicator_set.user_to_case_map),
             set([self.cc_user.get_id, self.cc_user_no_data.get_id])
         )
         self.assertEquals(indicator_set.users_needing_data, set([self.cc_user_no_data.get_id]))
@@ -413,7 +413,7 @@ class CallCenterTests(BaseCCTests):
             self.cc_user_no_data,
             custom_cache=locmem_cache
         )
-        self.assertEqual(indicator_set.user_to_case_map.keys(), [])
+        self.assertEqual(list(indicator_set.user_to_case_map), [])
         self.assertEqual(indicator_set.users_needing_data, set())
         self.assertEqual(indicator_set.owners_needing_data, set())
         self.assertEqual(indicator_set.get_data(), {})
@@ -471,7 +471,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
             self.supervisor,
             custom_cache=locmem_cache
         )
-        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
+        self.assertEqual(list(indicator_set.user_to_case_map), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id]))
         self._test_indicators(self.user, indicator_set.get_data(), expected_standard_indicators())
@@ -526,7 +526,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
             self.supervisor,
             custom_cache=locmem_cache
         )
-        self.assertEqual(indicator_set.user_to_case_map.keys(), [self.user.get_id])
+        self.assertEqual(list(indicator_set.user_to_case_map), [self.user.get_id])
         self.assertEqual(indicator_set.users_needing_data, set([self.user.get_id]))
         self.assertEqual(indicator_set.owners_needing_data, set([self.user.get_id, self.group.get_id]))
         expected = expected_standard_indicators()

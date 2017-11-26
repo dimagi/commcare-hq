@@ -85,7 +85,7 @@ def _load_commcare_settings_layout(doc_type, user):
             "CommCare settings layout should mention "
             "all the available settings. "
             "The following settings went unmentioned: %s" % (
-                ', '.join(settings.keys())
+                ', '.join(settings)
             )
         )
     return layout

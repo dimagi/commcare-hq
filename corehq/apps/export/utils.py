@@ -385,7 +385,7 @@ def _reorder_columns(new_table, columns):
 
 
 def _strip_deid_transform(transform):
-    return None if transform in DEID_TRANSFORM_FUNCTIONS.keys() else transform
+    return None if transform in DEID_TRANSFORM_FUNCTIONS else transform
 
 
 def _convert_transform(serializable_transform):

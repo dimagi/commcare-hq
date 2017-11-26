@@ -90,7 +90,7 @@ class _UserCaseHelper(object):
         self._user_case_changed(fields)
 
     def _user_case_changed(self, fields):
-        field_names = fields.keys()
+        field_names = list(fields)
         if _domain_has_new_fields(self.domain.name, field_names):
             add_inferred_export_properties.delay(
                 'UserSave',

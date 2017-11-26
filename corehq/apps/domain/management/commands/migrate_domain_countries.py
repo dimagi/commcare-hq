@@ -39,7 +39,7 @@ class Command(BaseCommand):
                     abbr = []
                     for country in countries:
                         country = country.strip().lower()
-                        if country in country_lookup.keys():
+                        if country in country_lookup:
                             abbr.append(country_lookup[country])
 
                     domain.deployment.countries = abbr
