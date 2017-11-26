@@ -200,5 +200,5 @@ class ExplodeExtensionsDBTest(BaseSyncTest):
 
         explode_cases(self.project.name, self.user_id, 5)
         case_ids = self.accessor.get_case_ids_in_domain()
-        cases_back = list(self.accessor.iter_cases(case_ids))
-        self.assertEqual(20, len(cases_back))
+        self.assertEqual(20, len(case_ids))
+
