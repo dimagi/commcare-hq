@@ -321,17 +321,14 @@
                 "transform": {
                     "type": "translation",
                     "translations": {
-                        "type": "translation",
-                        "translations": {
-                            "dto": "PPIA Admin",
-                            "pcp": "MBBS",
-                            "ppia-do": "PPIA Admin",
-                            "pac": "Ayush",
-                            "plc": "Lab",
-                            "ps-fieldstaff": "Field Staff",
-                            "pcc-chemist": "Chemist",
-                            "fo": "Field Officer"
-                        }
+                        "dto": "PPIA Admin",
+                        "pcp": "MBBS",
+                        "ppia-do": "PPIA Admin",
+                        "pac": "Ayush",
+                        "plc": "Lab",
+                        "ps-fieldstaff": "Field Staff",
+                        "pcc-chemist": "Chemist",
+                        "fo": "Field Officer"
                     }
                 },
                 "aggregation": "simple",
