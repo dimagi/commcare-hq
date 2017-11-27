@@ -191,14 +191,6 @@ class EpisodeUpdater(object):
 
         return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
 
-    def update_single_case(self, episode_case):
-        # updates a single episode_case.
-        assert episode_case.domain == self.domain
-        update_json = EpisodeAdherenceUpdate(self.domain, episode_case).update_json()
-        if update_json:
-            update_case(self.domain, episode_case.case_id, update_json,
-                        device_id="%s.%s" % (__name__, type(self).__name__))
-
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
         episode_cases = case_accessor.iter_cases(case_ids)
@@ -779,3 +771,11 @@ def get_updated_fields(existing_properties, new_properties):
         if existing_value != new_value:
             updated_fields[prop] = value
     return updated_fields
+
+
+@task
+def update_single_episode(domain, episode_case):
+    update_json = EpisodeAdherenceUpdate(domain, episode_case).update_json()
+    if update_json:
+        update_case(domain, episode_case.case_id, update_json,
+                    device_id="%s.%s" % (__name__, 'update_single_episode'))

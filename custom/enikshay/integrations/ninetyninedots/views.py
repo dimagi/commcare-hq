@@ -67,7 +67,7 @@ def update_patient_adherence(request, domain):
         return json_response({"error": six.text_type(e)}, status_code=400)
 
     try:
-        factory.update_episode_adherence_properties(domain, beneficiary_id)
+        factory.update_episode_adherence_properties()
     except AdherenceException as e:
         notify_exception(
             request,

@@ -17,7 +17,7 @@ from custom.enikshay.case_utils import (
     get_adherence_cases_between_dates,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-from custom.enikshay.tasks import EpisodeUpdater
+from custom.enikshay.tasks import update_single_episode
 
 
 class AdherenceCaseFactory(object):
@@ -152,17 +152,8 @@ class AdherenceCaseFactory(object):
         ])
 
     def update_episode_adherence_properties(self):
-        try:
-            updater = EpisodeUpdater(self.domain)
-            updater.update_single_case(self._episode_case)
-        except Exception as e:
-            raise AdherenceException(
-                "Error calculating episode updates for beneficiary: {}, episode case_id({}): {}".format(
-                    self._person_case.case_id,
-                    self._episode_case.case_id,
-                    e
-                )
-            )
+        # update episode 10 minutes later to give the adherence datasource time to catch up
+        update_single_episode.apply_async(args=[self.domain, self._episode_case], countdown=600)
 
 
 def create_adherence_cases(domain, person_id, adherence_points):
