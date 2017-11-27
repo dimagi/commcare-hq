@@ -312,18 +312,7 @@
                 "field": "registered_by",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Registered by Provider Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "registered_by_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Registered by Provider ID"
+                "display": "Registered by Provider Name - ID"
             },
             {
                 "sortable": false,
@@ -332,12 +321,14 @@
                 "transform": {
                     "type": "translation",
                     "translations": {
+                        "dto": "PPIA Admin",
                         "pcp": "MBBS",
-                        "pcc-chemist": "Chemist",
+                        "ppia-do": "PPIA Admin",
                         "pac": "Ayush",
                         "plc": "Lab",
                         "ps-fieldstaff": "Field Staff",
-                        "ppia-do": "PPIA Admin"
+                        "pcc-chemist": "Chemist",
+                        "fo": "Field Officer"
                     }
                 },
                 "aggregation": "simple",
