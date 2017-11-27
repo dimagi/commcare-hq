@@ -104,7 +104,7 @@
                         optstr: [{value: 'open', label: '{{ registers_case|escapejs }}'},
                                  {value: 'update', label: '{{ updates_case|escapejs }}'}],
                         value: actionType,
-                        event: { change: function() { ga_track_event('Case Management', 'Form Level', 'Case Action'); } }
+                        event: { change: function() { hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Case Action'); } }
                     "></select>
               </div>
             </div>

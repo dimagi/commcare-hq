@@ -121,7 +121,7 @@ def single_model_history(request, model_name, *args, **kwargs):
     # it's for a particular model
     context=RequestContext(request)
     db = AccessAudit.get_db()
-    vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name,u''], endkey=[model_name,u'z']).all()
+    vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name, u''], endkey=[model_name, u'z']).all()
     model_dict= dict((x['key'][1], x['value']) for x in vals)
     context['instances_dict']=model_dict
     context['model'] = model_name

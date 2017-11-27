@@ -79,7 +79,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 self.updating(true);
                 self.onUpdate();
             }
-            window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User toggled CloudCare debugger');
         };
         self.collapseNavbar = function() {
             $('.navbar-collapse').collapse('hide');
@@ -362,7 +362,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     self.recentXPathQueries.slice(0, 6)
                 );
             });
-            window.analytics.workflow('[app-preview] User evaluated XPath');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User evaluated XPath');
         };
 
         self.onMouseUp = function() {

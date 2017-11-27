@@ -105,7 +105,7 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
     if domains is not None:
         q["query"] = {
             "in" : {
-                "name" : domains,
+                "name": domains,
             }
         }
 
@@ -121,8 +121,8 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
                 "must": {
                     "match" : {
                         "_all" : {
-                            "query" : search_query,
-                            "operator" : "and", }}}}}
+                            "query": search_query,
+                            "operator": "and", }}}}}
 
     q["facets"] = {}
     if show_stats:

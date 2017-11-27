@@ -3,12 +3,12 @@
 /**
  * Instantiates the Drift analytics and customer support messaging platform.
  */
-hqDefine('analytics/js/drift', function () {
+hqDefine('analytix/js/drift', function () {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('drift'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Drift'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = hqImport('analytix/js/initial').getFn('drift'),
+        _global = hqImport('analytix/js/initial').getFn('global'),
+        logger = hqImport('analytix/js/logging').getLoggerForApi('Drift'),
+        _utils = hqImport('analytix/js/utils'),
         _data = {},
         _drift = {};
 
@@ -40,8 +40,8 @@ hqDefine('analytics/js/drift', function () {
             });
         }
         _drift.on('emailCapture',function(e){
-            hqImport('analytics/js/hubspot').identify({email: e.data.email});
-            hqImport('analytics/js/hubspot').trackEvent('Identified via Drift');
+            hqImport('analytix/js/hubspot').identify({email: e.data.email});
+            hqImport('analytix/js/hubspot').trackEvent('Identified via Drift');
         });
     };
     if (_global('isEnabled')) {

@@ -179,11 +179,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # When a form is deprecated, the new form gets a reference to the deprecated form
     deprecated_form_id = models.CharField(max_length=255, null=True)
 
-    # Stores the datetime of when a form was deprecated
-    edited_on = models.DateTimeField(null=True)
+    server_modified_on = models.DateTimeField(db_index=True, auto_now=True, null=True)
 
     # The time at which the server has received the form
     received_on = models.DateTimeField(db_index=True)
+
+    # Stores the datetime of when a form was deprecated
+    edited_on = models.DateTimeField(null=True)
+
+    deleted_on = models.DateTimeField(null=True)
+    deletion_id = models.CharField(max_length=255, null=True)
 
     auth_context = JSONField(default=dict)
     openrosa_headers = JSONField(default=dict)
@@ -194,24 +199,17 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
     problem = models.TextField(null=True)
-    # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
-    # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
-
-    deleted_on = models.DateTimeField(null=True)
-    deletion_id = models.CharField(max_length=255, null=True)
 
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
-    # keep track to avoid refetching to check whether value is updated
-    __original_form_id = None
-
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
+        # keep track to avoid refetching to check whether value is updated
         self.__original_form_id = self.form_id
 
     def form_id_updated(self):
@@ -287,6 +285,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @property
     def doc_type(self):
+        """Comparability with couch forms"""
         from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
@@ -310,6 +309,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     @memoized
     def form_data(self):
+        """Returns the JSON representation of the form XML"""
         from couchforms import XMLSyntaxError
         from .utils import convert_xform_to_json, adjust_datetimes
         from corehq.form_processor.utils.metadata import scrub_form_meta
@@ -327,6 +327,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @property
     def history(self):
+        """:returns: List of XFormOperationSQL objects"""
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
         operations += self.get_tracked_models_to_create(XFormOperationSQL)
@@ -1440,7 +1441,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         return "LedgerValue(" \
                "case_id={s.case_id}, " \
                "section_id={s.section_id}, " \
-               "entry_id={s.entry_id}," \
+               "entry_id={s.entry_id}, " \
                "balance={s.balance}".format(s=self)
 
     class Meta:

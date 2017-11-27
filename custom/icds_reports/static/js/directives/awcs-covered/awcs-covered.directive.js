@@ -9,6 +9,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
     vm.label = "AWC Covered";
     vm.step = $routeParams.step;
@@ -22,6 +23,8 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
@@ -101,8 +104,8 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -115,7 +118,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -124,7 +127,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -193,10 +196,8 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                         return d3.format(",")(day['y']);
                     };
 
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of AWCs Launched: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var tooltipContent = vm.tooltipContent(d.value, findValue(vm.chartData[0].values, d.value));
+                    return tooltipContent;
                 });
                 return chart;
             },
@@ -210,6 +211,11 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                 'width': '900px',
             },
         },
+    };
+
+    vm.tooltipContent = function(monthName, value) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Number of AWCs Launched: <strong>" + value + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

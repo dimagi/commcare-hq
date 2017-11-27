@@ -4,7 +4,7 @@
     <form class="form-horizontal hq-enum-editor" action="">
         <fieldset data-bind="sortable: items">
             <div class="form-group hq-input-map container-fluid well well-sm"
-                 data-bind="css: {'has-error': $parent.isItemDuplicated(ko.utils.unwrapObservable(key))},
+                 data-bind="css: {'has-error': $parent.keyHasError(ko.utils.unwrapObservable(key))},
                             attr: {'data-order': _sortableOrder}">
                 <div class="row">
                     <div class="col-sm-1">
@@ -16,9 +16,9 @@
                                    class="enum-key form-control"
                                    data-bind="value: key, attr: {placeholder: $parent.labels().placeholder}"/>
                             <div class="help-block" data-bind='visible: $parent.isItemDuplicated(ko.utils.unwrapObservable(key)),
-                            text: $parent.labels().duplicated'>
-                                Key is duplicated.
-                            </div>
+                                                               text: $parent.labels().duplicated'></div>
+                            <div class="help-block" data-bind='visible: $parent.hasBadXML(ko.utils.unwrapObservable(key)),
+                                                               text: $parent.labels().badXML'></div>
                         </div>
 
                     <div class="col-sm-1 text-center" style="width: 3px">
@@ -83,8 +83,8 @@
                 <div class="modal-footer">
                     <button class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button class="btn btn-primary" data-dismiss="modal"
-                            data-bind="disable: ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0,
-                            text: (ko.utils.unwrapObservable($data.mapList.duplicatedItems).length > 0) ? 'Fix errors' : 'OK',
+                            data-bind="disable: $data.mapList.hasError(),
+                            text: $data.mapList.hasError() ? 'Fix errors' : 'OK',
                             click: save"></button>
                 </div>
             </div>

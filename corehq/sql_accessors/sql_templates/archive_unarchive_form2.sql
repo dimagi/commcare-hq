@@ -16,6 +16,8 @@ BEGIN
 
     INSERT INTO form_processor_xformoperationsql (form_id, user_id, operation, date)
             VALUES (p_form_id, archiving_user_id, operation, curtime);
-    UPDATE form_processor_xforminstancesql SET state=new_state WHERE form_processor_xforminstancesql.form_id = p_form_id;
+    UPDATE form_processor_xforminstancesql
+      SET state=new_state, server_modified_on = curtime
+      WHERE form_processor_xforminstancesql.form_id = p_form_id;
 END;
 $$ LANGUAGE plpgsql;

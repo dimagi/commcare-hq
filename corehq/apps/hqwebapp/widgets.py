@@ -48,7 +48,7 @@ class BootstrapAddressField(MultiValueField):
     def __init__(self,num_lines=3,*args,**kwargs):
         fields = tuple([CharField(widget=TextInput(attrs={'class':'input-xxlarge'})) for _ in range(0, num_lines)])
         self.widget = BootstrapAddressFieldWidget(widgets=[field.widget for field in fields])
-        super(BootstrapAddressField,self).__init__(fields=fields,*args,**kwargs)
+        super(BootstrapAddressField, self).__init__(fields=fields,*args,**kwargs)
 
     def compress(self, data_list):
         return data_list

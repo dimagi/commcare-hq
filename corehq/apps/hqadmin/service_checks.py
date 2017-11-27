@@ -77,6 +77,9 @@ def check_kafka():
 
 
 def check_touchforms():
+    if not getattr(settings, 'XFORMS_PLAYER_URL', None):
+        return
+
     try:
         res = requests.post(settings.XFORMS_PLAYER_URL,
                             data='{"action": "heartbeat"}',

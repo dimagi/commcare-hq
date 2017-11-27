@@ -467,8 +467,9 @@ def sql_blob_helper(id_attr, bucket):
 
 
 class PkReindexAccessor(ReindexAccessor):
-    startkey_min_value = -1
-    startkey_attribute_name = 'id'
+    @property
+    def id_field(self):
+        return 'id'
 
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
@@ -476,14 +477,6 @@ class PkReindexAccessor(ReindexAccessor):
 
     def doc_to_json(self, obj):
         return {"_id": obj.id, "_obj_not_json": obj}
-
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        params = {self.startkey_attribute_name + "__gt":
-            startkey or self.startkey_min_value}
-        return (self.model_class.objects
-            .using(from_db)
-            .filter(**params)
-            .order_by(self.startkey_attribute_name)[:limit])
 
 
 class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):

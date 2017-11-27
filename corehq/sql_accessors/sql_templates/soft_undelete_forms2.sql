@@ -5,12 +5,15 @@ CREATE FUNCTION soft_undelete_forms(
     form_ids TEXT[],
     p_reason TEXT,
     affected_count OUT INTEGER) AS $$
+DECLARE
+    curtime TIMESTAMP := clock_timestamp();
 BEGIN
     UPDATE form_processor_xforminstancesql SET
         state = state & ~{{ FORM_STATE_DELETED }},
         problem = p_reason,
         deletion_id = NULL,
-        deleted_on = NULL
+        deleted_on = NULL,
+        server_modified_on = curtime
     WHERE
         domain = p_domain
         AND form_id = ANY(form_ids);

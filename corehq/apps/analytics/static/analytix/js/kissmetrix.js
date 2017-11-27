@@ -2,13 +2,14 @@
 
 var _kmq = window._kmq = _kmq || [];
 
-hqDefine('analytics/js/kissmetrics', function () {
+hqDefine('analytix/js/kissmetrix', function () {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('kissmetrics'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        _abTests = hqImport('analytics/js/initial').getAbTests('kissmetrics'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Kissmetrics'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = hqImport('analytix/js/initial').getFn('kissmetrics'),
+        _global = hqImport('analytix/js/initial').getFn('global'),
+        _abTests = hqImport('analytix/js/initial').getAbTests('kissmetrics'),
+        logger = hqImport('analytix/js/logging').getLoggerForApi('Kissmetrics'),
+        _utils = hqImport('analytix/js/utils'),
+        _allAbTests = {},
         _init = {};
 
     window.dataLayer = window.dataLayer || [];
@@ -60,11 +61,10 @@ hqDefine('analytics/js/kissmetrics', function () {
             testName = _.last(testName.split('.'));
             if (_.isObject(ab) && ab.version) {
                 test[ab.name || testName] = ab.version;
-            } else {
-                test[testName] = ab;
+                logger.debug.log(test, ["AB Test", "New Test: " + testName]);
+                _kmqPushCommand('set', test);
+                _.extend(_allAbTests, test);
             }
-            logger.debug.log(test, ["AB Test", "New Test: " + testName]);
-            _kmqPushCommand('set', test);
         });
     };
 
@@ -139,6 +139,15 @@ hqDefine('analytics/js/kissmetrics', function () {
         }
     };
 
+    /**
+     * Fetches value for a given AB Test.
+     * @param testSlug
+     * @returns {*|{}}
+     */
+    var getAbTest = function (testSlug) {
+        return _allAbTests[testSlug];
+    };
+
     return {
         logger: logger,
         identify: identify,
@@ -148,5 +157,6 @@ hqDefine('analytics/js/kissmetrics', function () {
             internalClick: internalClick,
             outboundLink: trackOutboundLink,
         },
+        getAbTest: getAbTest,
     };
 });

@@ -398,7 +398,7 @@ def get_day_of_month(year, month, count):
     just creating the date object is to support negative numbers
     e.g. pass in -1 for "last"
     """
-    r = rrule(MONTHLY, dtstart=datetime.datetime(year,month, 1),
+    r = rrule(MONTHLY, dtstart=datetime.datetime(year, month, 1),
               byweekday=(MO, TU, WE, TH, FR, SA, SU),
               bysetpos=count)
     res = r[0]
@@ -412,7 +412,7 @@ def get_business_day_of_month(year, month, count):
     Count can also be negative, e.g. pass in -1 for "last"
     """
     r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year,month, 1),
+              dtstart=datetime.datetime(year, month, 1),
               bysetpos=count)
     res = r[0]
     if (res == None or res.month != month or res.year != year):
@@ -436,7 +436,7 @@ def get_business_day_of_month_before(year, month, day):
             except ValueError:
                 adate = datetime.datetime(year, month, 28)
     r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year,month,1))
+              dtstart=datetime.datetime(year, month, 1))
     res = r.before(adate, inc=True)
     if (res == None or res.month != month or res.year != year):
         raise ValueError("No dates found in range. is there a flaw in your logic?")

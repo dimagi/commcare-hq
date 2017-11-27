@@ -304,7 +304,7 @@ class ScheduleForm(Form):
                 data_bind='visible: showStopInput',
             ),
             hqcrispy.B3MultiField(
-                ugettext(""),
+                "",
                 crispy.HTML(
                     '<span>%s</span> <span data-bind="text: computedEndDate"></span>'
                     % ugettext("Date of final occurrence:"),

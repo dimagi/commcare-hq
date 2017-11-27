@@ -117,7 +117,7 @@ datespan_default = datespan_in_request(
 
 def get_rabbitmq_management_url():
     if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         return "http://%s" % mq_management_url.split('@')[-1]
     else:

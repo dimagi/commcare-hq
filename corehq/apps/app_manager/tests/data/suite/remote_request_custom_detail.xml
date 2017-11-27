@@ -1,0 +1,54 @@
+<partial>
+  <remote-request>
+    <post url="https://www.example.com/a/test_domain/phone/claim-case/"
+          relevant="instance('groups')/groups/group and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
+      <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
+    </post>
+    <command id="search_command.m0">
+      <display>
+        <text>
+          <locale id="case_search.m0"/>
+        </text>
+      </display>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="groups" src="jr://fixture/user-groups"/>
+    <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
+    <instance id="locations" src="jr://fixture/locations"/>
+    <session>
+      <query url="https://www.example.com/a/test_domain/phone/search/"
+             storage-instance="results"
+             template="case">
+        <data key="case_type" ref="'case'"/>
+        <data key="include_closed" ref="'False'"/>
+        <data key="&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;" ref="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;"/>
+        <data key="name" ref="instance('locations')/locations/location[@id=123]/@type"/>
+        <prompt key="name">
+          <display>
+            <text>
+              <locale id="search_property.m0.name"/>
+            </text>
+          </display>
+        </prompt>
+        <prompt key="dob">
+          <display>
+            <text>
+              <locale id="search_property.m0.dob"/>
+            </text>
+          </display>
+        </prompt>
+      </query>
+      <datum id="case_id"
+             nodeset="instance('results')/results/case[@case_type='case']"
+             value="./@case_id"
+             detail-confirm="m0_case_long"
+             detail-select="m0_case_short"/>
+    </session>
+    <stack>
+      <push>
+        <rewind value="instance('commcaresession')/session/data/case_id"/>
+      </push>
+    </stack>
+  </remote-request>
+</partial>

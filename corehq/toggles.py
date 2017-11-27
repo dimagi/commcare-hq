@@ -1359,13 +1359,6 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     [NAMESPACE_USER]
 )
 
-ANALYTICS_NEW = StaticToggle(
-    'analytics_new',
-    "Use refactored analytics across all of HQ (for QA purposes).",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
 ANALYTICS_DEBUG = StaticToggle(
     'analytics_debug',
     "Turn on DEBUG level output for debugging analytics.",

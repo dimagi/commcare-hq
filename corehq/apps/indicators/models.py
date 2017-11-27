@@ -214,7 +214,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             descending=True,
             **couch_key
         ).all()
-        return [item.get('key',[])[-1] for item in data]
+        return [item.get('key', [])[-1] for item in data]
 
     @classmethod
     @memoized

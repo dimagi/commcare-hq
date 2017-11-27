@@ -18,7 +18,6 @@ module.exports = {
         "$": false,
         "ko": false,
         "_": false,
-        "ga_track_event": false,
         "L": true,
         "it": false,
         "describe": false,

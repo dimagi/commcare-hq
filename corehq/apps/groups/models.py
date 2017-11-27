@@ -151,7 +151,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
                 group_id
             ))
         index = 0
-        for i in range(0,len(self.path)):
+        for i in range(0, len(self.path)):
             if self.path[i] == group_id:
                 index = i
                 break
