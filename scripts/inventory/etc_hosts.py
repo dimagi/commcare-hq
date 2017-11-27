@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -21,11 +22,28 @@ def get_inventory(inventory_path):
     return Inventory(loader=DataLoader(), variable_manager=VariableManager(), host_list=inventory_path)
 
 
+def _available_environments():
+    inventory_root = os.path.join(ROOT, 'fab', 'inventory')
+    return [
+        file for file in os.listdir(inventory_root)
+        if os.path.isfile(os.path.join(inventory_root, file))
+    ]
+
+
 def main():
-    parser = ArgumentParser("ETC Hosts")
-    parser.add_argument("environment",
-                        help="Environment: production, staging, ...")
-    parser.add_argument("-s", "--suffix")
+    parser = ArgumentParser(
+        "ETC Hosts",
+        description="Generate lines for /etc/hosts from Ansible inventory file."
+    )
+    parser.add_argument(
+        "environment",
+        choices=_available_environments(),
+        help="Environment to process."
+    )
+    parser.add_argument(
+        "-s", "--suffix",
+        help="Optional suffix to append to the hostname e.g. internal-va.commcarehq.org"
+    )
 
     args = parser.parse_args()
     env = args.environment
