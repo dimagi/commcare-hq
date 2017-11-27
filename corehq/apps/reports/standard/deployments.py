@@ -550,7 +550,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     description = ugettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
     ]
     exportable = False
     emailable = False
@@ -568,11 +568,12 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
-        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
+            self.request.couch_user,
         )
         user_query = user_query.size(0)
         user_query = user_query.aggregations([
