@@ -676,16 +676,9 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-    position: relative;
-    top: 20%;
-    left: 50%;
-    width: 100%;
+    left: 80%;
+    width: 40%;
     height: 40px;
-    margin-left: -50%;
-    margin-top: -25px;
-    padding-top: 20px;
-    text-align: center;
-    font-size: 1.2em;
 }
 
 #beneficiariesTable {
@@ -699,4 +692,36 @@ table.no-footer {
 .chart-dot {
     stroke-opacity: 1 !important;
     fill-opacity: 1 !important;
+}
+
+
+table.dataTable.fixedHeader-floating,
+table.dataTable.fixedHeader-locked {
+    background-color: white;
+    top: 110px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+table.dataTable.fixedHeader-floating {
+    position: fixed !important;
+    width: 80.3% !important;
+}
+
+table.dataTable.fixedHeader-locked {
+    position: absolute !important;
+}
+
+@media print {
+  table.fixedHeader-floating {
+    display: none;
+  }
+}
+
+.medium-col {
+    width: 12% !important;
+}
+
+.big-col {
+    width: 16% !important;
 }

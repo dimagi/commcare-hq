@@ -70,13 +70,15 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
-        var sever = row ? d3.format(".0%")(row.severe / (row.total || 1)) : 'N/A';
-        var moderate = row ? d3.format(".0%")(row.moderate / (row.total || 1)) : 'N/A';
-        var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
+        var sever = row ? d3.format(".2%")(row.severe / (row.total || 1)) : 'N/A';
+        var moderate = row ? d3.format(".2%")(row.moderate / (row.total || 1)) : 'N/A';
+        var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
+        var unmeasured = row ? d3.format(".2%")((row.total - (row.normal + row.severe + row.moderate)) / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
             '<div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div>' +
+            '<div>% Unmeasured: <strong>' + unmeasured + '</strong></div>' +
             '<div>% Severely Acute Malnutrition: <strong>' + sever + '</strong></div>' +
             '<div>% Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div>' +
             '<div>% Normal: <strong>' + normal + '</strong></div></ul>';
@@ -191,13 +193,18 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(".2%")(day['y']);
+                        return day['y'];
                     };
 
+                    var normal = findValue(vm.chartData[0].values, d.value);
+                    var moderate = findValue(vm.chartData[1].values, d.value);
+                    var severe = findValue(vm.chartData[2].values, d.value);
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children with Normal Acute Malnutrition: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children with Moderate Acute Malnutrition (MAM): <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children with Normal Acute Malnutrition: <strong>" + d3.format(".2%")(normal) + "</strong></p>";
+                    tooltip_content += "<p>% children with Moderate Acute Malnutrition (MAM): <strong>" + d3.format(".2%")(moderate) + "</strong></p>";
+                    tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM): <strong>" + d3.format(".2%")(severe) + "</strong></p>";
+                    tooltip_content += "<p>% Unmeasured: <strong>" + d3.format(".2%")((1 - (normal + moderate + severe))) + "</strong></p>";
 
                     return tooltip_content;
                 });

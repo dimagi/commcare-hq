@@ -13,7 +13,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
-from corehq.form_processor.tests.test_basic_cases import _submit_case_block
+from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
 DOMAIN = 'test-case-accessor'
@@ -561,7 +561,7 @@ class CaseAccessorTestsSQL(TestCase):
         case1 = _create_case()
         _create_case_transactions(case1)
         self.assertTrue(
-            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 01, 30))
+            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 1, 30))
         )
         self.assertFalse(
             CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())

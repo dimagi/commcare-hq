@@ -19,6 +19,7 @@ from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 
 from auditcare import utils
+import six
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class AuditEvent(Document):
         try:
             ct = ContentType.objects.get(model=self.doc_type.lower())
             return ct.model_class().objects.get(id=self.id).summary
-        except Exception, e:
+        except Exception:
             return ""
 
     class Meta:
@@ -279,7 +280,7 @@ class ModelActionAudit(AuditEvent):
     @classmethod
     def audit_django_save(cls, model_class, instance, instance_json, user):
         audit = cls.create_audit(cls, user)
-        instance_id = unicode(instance.id)
+        instance_id = six.text_type(instance.id)
         revision_id = None
         cls._save_model_audit(audit, instance_id, instance_json, revision_id, model_class.__name__, is_django=True)
 
@@ -337,7 +338,7 @@ class NavigationEventAudit(AuditEvent):
                 audit.request_path = request.path
             audit.ip_address = utils.get_ip(request)
             audit.user_agent = request.META.get('HTTP_USER_AGENT', '<unknown>')
-            audit.view = "%s.%s" % (view_func.__module__, view_func.func_name)
+            audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
             for k in STANDARD_HEADER_KEYS:
                 header_item = request.META.get(k, None)
                 if header_item is not None:
@@ -348,7 +349,7 @@ class NavigationEventAudit(AuditEvent):
             audit.view_kwargs = view_kwargs
             audit.save()
             return audit
-        except Exception, ex:
+        except Exception as ex:
             log.error("NavigationEventAudit.audit_view error: %s", ex)
 
 setattr(AuditEvent, 'audit_view', NavigationEventAudit.audit_view)

@@ -301,7 +301,7 @@ def get_inverse(val):
         return datetime.datetime.max - val
     elif isinstance(val, numbers.Number):
         return 10 ** 20
-    elif isinstance(val, (types.NoneType, bool)):
+    elif val is None or isinstance(val, bool):
         return not val
     else:
         raise Exception("%r has uninversable type: %s" % (val, type(val)))

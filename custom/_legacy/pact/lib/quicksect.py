@@ -114,7 +114,7 @@ def main():
     test = None
     intlist = []
     for x in range(20000):
-        start = random.randint(0,1000000)
+        start = random.randint(0, 1000000)
         end = start + random.randint(1, 1000)
         if test: test = test.insert( start, end )
         else: test = IntervalNode( start, end )

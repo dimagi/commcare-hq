@@ -15,23 +15,24 @@
               href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
-
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/css/angular-datatables.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
         <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.js' %}"></script>
         <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
+        <script type="text/javascript" src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
         <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datatables/dist/angular-datatables.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/fixedcolumns/angular-datatables.fixedcolumns.js' %}"></script>
+        <script type="text/javascript" src="{% static 'angular-datatables/dist/plugins/fixedheader/angular-datatables.fixedheader.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-route/angular-route.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
@@ -207,7 +208,6 @@
                 <div class="row no-margin">
                     {% registerurl 'icds-ng-template' domain '---' %}
                     {% registerurl 'program_summary' domain '---' %}
-                    {% registerurl 'awc_opened' domain '---' %}
                     {% registerurl 'awc_reports' domain '---' %}
                     {% registerurl 'underweight_children' domain '---' %}
                     {% registerurl 'prevalence_of_severe' domain '---' %}
@@ -252,6 +252,11 @@
     </script>
     {% include 'hqwebapp/includes/modal_report_issue.html' %}
     <script type="text/javascript" src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+    <script>
+        var $modal = $('#modalReportIssue');
+        $modal.find('.modal-title').text('Report an Issue with ICDS-CAS Dashboard');
+        $modal.find('form').attr('action', '{% url 'icds_bug_report' domain %}');
+    </script>
 </div>
 
 <div class="commcarehq-urls" class="hide">

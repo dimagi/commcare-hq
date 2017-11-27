@@ -93,7 +93,7 @@ $.fn.hqHelp = function () {
 
         // Prevent jumping to the top of the page when link is clicked
         $helpElem.find('a').click(function(event) {
-            ga_track_event("Clicked Help Bubble", $(this).data('title'), '-');
+            hqImport('analytix/js/google').track.event("Clicked Help Bubble", $(this).data('title'), '-');
             event.preventDefault();
         });
     });
@@ -149,3 +149,14 @@ $.fn.koApplyBindings = function (context) {
     ko.applyBindings(context, this.get(0));
     this.removeClass('ko-template');
 };
+
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        // Don't pass csrftoken cross domain
+        // Ignore HTTP methods that do not require CSRF protection
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type) && !this.crossDomain) {
+            var $csrf_token = $("#csrfTokenContainer").val();
+            xhr.setRequestHeader("X-CSRFToken", $csrf_token);
+        }
+    },
+});

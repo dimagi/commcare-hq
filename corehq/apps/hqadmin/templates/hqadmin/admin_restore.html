@@ -30,9 +30,49 @@
                     <div>
                         Number of cases in this restore: <strong>{{num_cases}}</strong>
                     </div>
+                    {% if case_type_counts %}
+                        <div>
+                            Number of cases by case type
+                        </div>
+                        <div>
+                            <ul>
+                                {% for case_type, count in case_type_counts.items %}
+                                    <li>{{case_type}}: {{count}}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
                     <div>
                         Number of locations in this restore: <strong>{{num_locations}}</strong>
                     </div>
+                    {% if location_type_counts %}
+                        <div>
+                            Number of locations by location type
+                        </div>
+                        <div>
+                            <ul>
+                                {% for location_type, count in location_type_counts.items %}
+                                    <li>{{location_type}}: {{count}}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    <div>
+                        Number of reports in this restore: <strong>{{num_reports}}</strong>
+                    </div>
+                    {% if report_row_counts %}
+                        <div>
+                            Number of rows by report
+                        </div>
+                        <div>
+                            <ul>
+                                {% for report_id, row_count in report_row_counts.items %}
+                                    <li>{{report_id}}: {{row_count}}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
                     <div>
                         <ul class="nav nav-tabs" role="tablist">
                             <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
@@ -41,7 +81,11 @@
 
                         <div class="tab-content">
                             <div role="tabpanel" class="tab-pane active" id="payload-tab">
-                                <pre id="payload">{{ payload }}</pre>
+                                {% if not hide_xml %}
+                                    <pre id="payload">{{ payload }}</pre>
+                                {% else %}
+                                    XML is hidden
+                                {% endif %}
                             </div>
                             <div role="tabpanel" class="tab-pane" id="timing-tab">
                                 <table id="timingTable" class="table">

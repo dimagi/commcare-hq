@@ -36,6 +36,7 @@ from dimagi.utils.couch import (
     CouchDocLockableMixIn,
     LooselyEqualDocumentSchema,
 )
+import six
 
 CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
@@ -191,7 +192,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         _STRING_ATTRS = ('external_id', 'user_id', 'owner_id', 'opened_by',
                          'closed_by', 'type', 'name')
         if key in _STRING_ATTRS:
-            value = unicode(value or '')
+            value = six.text_type(value or '')
         super(CommCareCase, self).__setattr__(key, value)
 
     def __get_case_id(self):

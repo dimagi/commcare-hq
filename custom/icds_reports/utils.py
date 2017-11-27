@@ -20,6 +20,7 @@ from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
+import six
 
 
 OPERATORS = {
@@ -161,7 +162,7 @@ class ICDSMixin(object):
                     op = column['condition']['operator']
 
                     def check_condition(v):
-                        if isinstance(v, basestring):
+                        if isinstance(v, six.string_types):
                             fil_v = str(value)
                         elif isinstance(v, int):
                             fil_v = int(value)
@@ -325,6 +326,11 @@ def current_age(dob, selected_date):
         age_format += "%s year%s " % (age.years, '' if age.years == 1 else 's')
     if age.months:
         age_format += "%s month%s " % (age.months, '' if age.months == 1 else 's')
+    if not age.years and not age.months:
+        if age.days > 0:
+            age_format = "%s day%s" % (age.days, '' if age.days == 1 else 's')
+        else:
+            age_format = "0 days"
     return age_format
 
 

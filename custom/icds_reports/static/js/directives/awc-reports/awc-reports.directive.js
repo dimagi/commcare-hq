@@ -1707,8 +1707,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.filters = ['gender', 'age'];
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
-        .withOption('scrollX', '100%')
-        .withOption('scrollCollapse', true)
         .withOption('ajax', {
             url:  url('awc_reports', vm.step),
             data: $location.search(),
@@ -1719,20 +1717,23 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('serverSide', true)
         .withOption('createdRow', compile)
         .withPaginationType('full_numbers')
+        .withFixedHeader({
+            bottom: true,
+        })
         .withOption('oLanguage', {
             "sProcessing": "Loading. Please wait...",
         })
         .withDOM('ltipr');
 
     vm.dtColumns = [
-        DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName),
-        DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth),
-        DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge),
-        DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate),
-        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status').renderWith(renderWeightForAgeStatus),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status').renderWith(renderWeightForHeightStatus),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status').renderWith(renderHeightForAgeStatus),
-        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended),
+        DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName).withClass('big-col'),
+        DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
+        DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
+        DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
     ];
 
     function compile(row) {
@@ -1740,7 +1741,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     }
 
     function renderPersonName(data, type, full) {
-        return '<span class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(\''
+        return '<span class="pointer link" ng-click="$ctrl.goToBeneficiaryDetails(\''
             + full.case_id + '\')">' + full.person_name || 'Data not Entered' + '</span>';
     }
 
@@ -1800,7 +1801,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.message = true;
     vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
+    var caseId = $location.search().case_id;
+
     vm.getDataForStep = function(step) {
+
+        if (step === 'beneficiary_details') {
+            vm.showBeneficiaryDetails(caseId);
+            vm.data = [];
+            return;
+        } else if (step === 'beneficiary') {
+            vm.showBeneficiaryTable();
+        }
+
         var get_url = url('awc_reports', step);
         if (parseInt(vm.selectedLocationLevel) === 4) {
             vm.myPromise = $http({
@@ -2036,6 +2048,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2055,8 +2068,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Height: <strong>" + d.series[3].value + "</strong> cm</p>";
+                    var tooltip_data = _.find(vm.lineChartTwoData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Height: <strong>" + tooltip_data.y + "</strong> cm</p>";
                     } else {
                         html = "<p>Height: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2087,6 +2102,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showControls: false,
             duration: 100,
             useInteractiveGuideline: true,
+            forceX: [0],
             xAxis: {
                 axisLabel: 'Age (Months)',
                 showMaxMin: true,
@@ -2106,8 +2122,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var tooltip_data = _.find(vm.lineChartOneData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2159,8 +2177,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var html = "";
-                    if (d.series[3].value !== null) {
-                        html = "<p>Weight: <strong>" + d.series[3].value + "</strong> kg</p>";
+                    var tooltip_data = _.find(vm.lineChartThreeData, function(x) { return  x.x === d.value; });
+
+                    if (tooltip_data) {
+                        html = "<p>Weight: <strong>" + tooltip_data.y + "</strong> kg</p>";
                     } else {
                         html = "<p>Weight: <strong>Data Not Recorded</strong></p>";
                     }
@@ -2183,10 +2203,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.lineChartTwoData = [];
     vm.lineChartthreeData = [];
 
-    vm.showBeneficiaryDetails = function(case_id){
-        var get_url = url('awc_reports', 'beneficiary_details');
+    vm.goToBeneficiaryDetails = function(case_id) {
         var params = $location.search();
-        params['case_id'] = case_id;
+        params.case_id = case_id;
+        $location.path('/awc_reports/beneficiary_details');
+    };
+
+    vm.showBeneficiaryDetails = function() {
+        var params = $location.search();
+        var get_url = url('awc_reports', 'beneficiary_details');
         var highest_age = 0;
 
         vm.filters.push('month');
@@ -2203,7 +2228,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 vm.lineChartTwoData = vm.beneficiary.height;
                 vm.lineChartThreeData = vm.beneficiary.wfl;
 
-                vm.steps[vm.step].label = "Beneficiary Details";
                 vm.showBeneficiary = true;
                 vm.showTable = false;
 
@@ -2230,15 +2254,19 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             color: 'red',
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartOneData,
-                            color: 'black',
-                            strokeWidth: 2,
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartOneData.length > 0) {
+                        vm.beneficiaryChartOneData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartOneData,
+                                color: 'black',
+                                strokeWidth: 2,
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     vm.beneficiaryChartTwoData = [
                         {
                             key: 'green',
@@ -2261,14 +2289,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             color: 'red',
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartTwoData,
-                            color: 'black',
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartTwoData.length > 0) {
+                        vm.beneficiaryChartTwoData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartTwoData,
+                                color: 'black',
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     vm.beneficiaryChartThreeData = [
                         {
                             key: 'green',
@@ -2294,14 +2326,18 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             yAxis: 1,
                             area: true,
                         },
-                        {
-                            key: 'line',
-                            type: 'line',
-                            values: vm.lineChartThreeData,
-                            color: 'black',
-                            yAxis: 1,
-                        },
                     ];
+                    if (vm.lineChartThreeData.length > 0) {
+                        vm.beneficiaryChartThreeData.push(
+                            {
+                                key: 'line',
+                                type: 'line',
+                                values: vm.lineChartThreeData,
+                                color: 'black',
+                                yAxis: 1,
+                            }
+                        );
+                    }
                     $scope.$apply();
                 }, 500);
 
@@ -2312,10 +2348,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         );
     };
 
+    vm.goToBeneficiaryTable = function() {
+        $location.path(vm.steps.beneficiary.listRoute);
+    };
+
     vm.showBeneficiaryTable = function(){
         vm.filters.pop();
         vm.beneficiary = null;
-        vm.steps[vm.step].label = "Beneficiary List";
         vm.showBeneficiary = false;
         vm.showTable = true;
     };
@@ -2328,6 +2367,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         awc_infrastructure: { route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
         beneficiary: { route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
     };
+
+    if (vm.step === 'beneficiary_details') {
+        vm.steps.beneficiary = {
+            route: '/awc_reports/beneficiary_details',
+            label: 'Beneficiary Details',
+            listRoute: '/awc_reports/beneficiary',
+        };
+    }
 
     vm.getDisableIndex = function () {
         var i = -1;
@@ -2368,6 +2415,30 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
         },
     };
+
+    // hack to have the same width between origin table and fixture headers,
+    // without this fixture headers are bigger and not align to original columns
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                var hasClass = [].some.call(mutation.addedNodes, function(el) {
+                    return el.classList.contains('fixedHeader-floating');
+                });
+                if (hasClass && $scope.$ctrl.beneficiary === null) {
+                    var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
+                    mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
+                }
+            }
+        });
+    });
+
+    var config = {
+        attributes: true,
+        childList: true,
+        characterData: true,
+    };
+
+    observer.observe(document.body, config);
 
     vm.getDataForStep(vm.step);
 }

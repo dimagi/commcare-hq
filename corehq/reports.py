@@ -89,6 +89,7 @@ def REPORTS(project):
     )
     deployments_reports = (
         deployments.ApplicationStatusReport,
+        deployments.AggregateAppStatusReport,
         receiverwrapper.SubmissionErrorReport,
         phonelog.DeviceLogDetailsReport,
         deployments.SyncHistoryReport,
@@ -186,7 +187,7 @@ def _make_dynamic_report(report_config, keyprefix):
 
     try:
         metaclass = to_function(report_config.report, failhard=True)
-    except StandardError:
+    except Exception:
         logging.error('dynamic report config for [%s] is invalid' % report_config.report)
         return None
 
@@ -288,6 +289,13 @@ def _get_report_builder_reports(project):
             [_make_report_class(config, show_in_dropdown=not config.title.startswith(TEMP_REPORT_PREFIX))
              for config in report_builder_reports]
         )
+
+
+def get_report_builder_count(domain):
+    configs = _safely_get_report_configs(domain)
+    report_builder_reports = [c for c in configs if c.report_meta.created_by_builder]
+    return len(report_builder_reports)
+
 
 DATA_INTERFACES = (
     (ugettext_lazy("Export Data"), (

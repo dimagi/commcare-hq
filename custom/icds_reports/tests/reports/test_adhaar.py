@@ -22,7 +22,7 @@ class TestAdhaar(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
-                            "whose Adhaar identification has been captured",
+                            "whose Aadhaar identification has been captured",
                     "average": 26.2
                 },
                 "fills": {
@@ -44,7 +44,7 @@ class TestAdhaar(TestCase):
                     }
                 },
                 "slug": "adhaar",
-                "label": "Percent Adhaar-seeded Beneficiaries"
+                "label": "Percent Aadhaar-seeded Beneficiaries"
             }
         )
 
@@ -107,7 +107,7 @@ class TestAdhaar(TestCase):
                                 "all": 500
                             }
                         ],
-                        "key": "Percentage of beneficiaries with Adhaar numbers"
+                        "key": "Percentage of beneficiaries with Aadhaar numbers"
                     }
                 ],
                 "all_locations": [
@@ -139,7 +139,7 @@ class TestAdhaar(TestCase):
             ),
             {
                 "info": "Percentage of individuals registered using "
-                        "CAS whose Adhaar identification has been captured",
+                        "CAS whose Aadhaar identification has been captured",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 21,

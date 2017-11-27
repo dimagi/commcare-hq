@@ -25,6 +25,7 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.web import json_response
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
+import six
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
@@ -263,7 +264,7 @@ def download_file(request, domain, app_id, path):
                 payload = request.app.fetch_attachment(full_path)
             else:
                 raise
-        if type(payload) is unicode:
+        if type(payload) is six.text_type:
             payload = payload.encode('utf-8')
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
@@ -296,9 +297,6 @@ def download_file(request, domain, app_id, path):
                     resolve_path(path)
                 except Resolver404:
                     # ok this was just a url that doesn't exist
-                    # todo: log since it likely exposes a mobile bug
-                    # logging was removed because such a mobile bug existed
-                    # and was spamming our emails
                     pass
                 else:
                     # this resource should exist but doesn't

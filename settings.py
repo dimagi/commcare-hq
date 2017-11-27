@@ -293,6 +293,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.icds_nic',
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
+    'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -368,6 +369,7 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'corehq.motech.openmrs',
+    'custom.champ',
 )
 
 ENIKSHAY_APPS = (
@@ -882,8 +884,6 @@ ENTERPRISE_MODE = False
 CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
-ONBOARDING_DOMAIN_TEST_DATE = ()
 
 HQ_INSTANCE = 'development'
 
@@ -1520,6 +1520,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
+    'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
 ]
 
 IVR_LOADED_SQL_BACKENDS = [
@@ -1736,8 +1737,6 @@ PILLOWTOPS = {
     ],
     'fluff': [
         'custom.m4change.models.M4ChangeFormFluffPillow',
-        'custom.intrahealth.models.CouvertureFluffPillow',
-        'custom.intrahealth.models.IntraHealthFluffPillow',
         'custom.intrahealth.models.IntraHealthFormFluffPillow',
         'custom.intrahealth.models.RecouvrementFluffPillow',
         'custom.care_pathways.models.GeographyFluffPillow',
@@ -1896,6 +1895,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'follow_up_notification_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'hiv_status_notification_2b.json'),
@@ -1967,6 +1967,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
@@ -1974,6 +1975,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
@@ -1981,6 +1983,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
@@ -1988,7 +1991,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
+    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2164,7 +2169,8 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi'
+    'pnlppgi': 'custom.pnlppgi',
+    'champ-cameroon': 'custom.champ'
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

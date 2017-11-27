@@ -198,7 +198,7 @@ class CaseReferencesTest(SimpleTestCase):
         case_refs = CaseReferences(load={}, save={
             'p1': CaseSaveReference(properties=['p1', 'p2'])
         })
-        save_ref = case_refs.get_save_references().next()
+        save_ref = next(case_refs.get_save_references())
         save_ref.properties.append('p3')
         self.assertEqual(['p1', 'p2', 'p3'], save_ref.properties)
         self.assertEqual(['p1', 'p2'], case_refs.save['p1'].properties)

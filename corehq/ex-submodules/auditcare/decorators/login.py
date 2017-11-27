@@ -59,11 +59,11 @@ def get_user_attempt(request):
     if USE_USER_AGENT:
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
 
-        attempts = AccessAudit.view('auditcare/login_events', key=['ip_ua',ip, ua], include_docs=True, limit=25).all()
+        attempts = AccessAudit.view('auditcare/login_events', key=['ip_ua', ip, ua], include_docs=True, limit=25).all()
 
         #attempts = AccessAttempt.objects.filter( user_agent=ua, ip_address=ip )
     else:
-        attempts = AccessAudit.view('auditcare/login_events',key=['ip', ip], include_docs=True, limit=25).all()
+        attempts = AccessAudit.view('auditcare/login_events', key=['ip', ip], include_docs=True, limit=25).all()
         #attempts = AccessAttempt.objects.filter( ip_address=ip )
 
     attempts = sorted(attempts, key=lambda x: x.event_date, reverse=True)

@@ -45,6 +45,7 @@ from .const import (
 )
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
+import six
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -617,7 +618,7 @@ class RepeatRecord(Document):
         return RepeatRecordAttempt(
             cancelled=True,
             datetime=now,
-            failure_reason=unicode(exception),
+            failure_reason=six.text_type(exception),
             success_response=None,
             next_check=None,
             succeeded=False,
@@ -672,7 +673,7 @@ class RepeatRecord(Document):
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        return self._make_failure_attempt(unicode(exception), None)
+        return self._make_failure_attempt(six.text_type(exception), None)
 
     def _make_failure_attempt(self, reason, response):
         log_repeater_error_in_datadog(self.domain, response.status_code if response else None,

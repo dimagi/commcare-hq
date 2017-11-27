@@ -13,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import apply_exclude
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -148,7 +149,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
             dict(
                 loc_name=key,
                 value=value['in_day']
-            ) for key, value in best_worst.iteritems()
+            ) for key, value in six.iteritems(best_worst)
         ],
         key=lambda x: x['value'],
         reverse=True
@@ -162,7 +163,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['launched'].iteritems()
+                    } for key, value in six.iteritems(data['launched'])
                 ],
                 "key": "Number of AWCs launched",
                 "strokeWidth": 2,
@@ -175,9 +176,9 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['open_in_day'].iteritems()
+                    } for key, value in six.iteritems(data['open_in_day'])
                 ],
-                "key": "Total AWCs open yesterday",
+                "key": "Total AWCs open",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -230,7 +231,7 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
             'in_day': in_day or 0,
             'all': valid or 0
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = (in_day or 0) / float(valid or 1)

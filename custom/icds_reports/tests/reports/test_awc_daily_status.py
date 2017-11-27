@@ -386,7 +386,7 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             }
                         ],
-                        "key": "Total AWCs open yesterday"
+                        "key": "Total AWCs open"
                     }
                 ],
                 "top_five": [

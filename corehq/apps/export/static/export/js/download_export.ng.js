@@ -1,4 +1,3 @@
-/* global analytics */
 (function (angular, undefined) {
     'use strict';
     // module: hq.download_export
@@ -116,14 +115,14 @@
 
         self.sendAnalytics = function () {
             _.each($scope.formData.user_types, function (user_type) {
-                analytics.usage("Download Export", 'Select "user type"', user_type);
+                hqImport('analytix/js/google').track.event("Download Export", 'Select "user type"', user_type);
             });
             var action = ($scope.exportList.length > 1) ? "Bulk" : "Regular";
-            analytics.usage("Download Export", self.exportType, action);
+            hqImport('analytix/js/google').track.event("Download Export", self.exportType, action);
             if (self.has_case_history_table) {
                 _.each($scope.exportList, function (export_) {
                     if (export_.has_case_history_table) {
-                        analytics.usage("Download Case History Export", export_.domain, export_.export_id);
+                        hqImport('analytix/js/google').track.event("Download Case History Export", export_.domain, export_.export_id);
                     }
                 });
             }
@@ -141,7 +140,7 @@
                 $('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
-            analytics.workflow("Clicked Prepare Export");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Prepare Export");
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
@@ -282,9 +281,10 @@
         });
 
         $scope.sendAnalytics = function () {
-            analytics.usage("Download Export",
+            hqImport('analytix/js/google').track.event(
+                "Download Export",
                             hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
-            analytics.workflow("Clicked Download button");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Download button");
         };
     };
     download_export.controller(exportsControllers);

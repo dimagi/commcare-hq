@@ -153,17 +153,17 @@ class TestAWCSCovered(TestCase):
                 ),
                 "tooltips_data": {
                     "s2": {
-                        "districts": 1, 
-                        "states": 1, 
-                        "supervisors": 1, 
-                        "blocks": 1, 
+                        "districts": 1,
+                        "states": 1,
+                        "supervisors": 1,
+                        "blocks": 1,
                         "awcs": 1
                     }, 
                     "s1": {
-                        "districts": 1, 
-                        "states": 1, 
-                        "supervisors": 1, 
-                        "blocks": 1, 
+                        "districts": 1,
+                        "states": 1,
+                        "supervisors": 1,
+                        "blocks": 1,
                         "awcs": 2
                     }
                 },

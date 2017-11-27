@@ -14,6 +14,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -139,7 +140,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
         data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -153,7 +154,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "% children exclusively breastfed",
                 "strokeWidth": 2,
@@ -209,7 +210,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
             'all': valid or 0
         }
 
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         in_month = row['in_month']

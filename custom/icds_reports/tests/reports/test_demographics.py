@@ -37,10 +37,10 @@ class TestDemographics(TestCase):
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of ICDS beneficiaries whose"
-                                         " Adhaar identification has been captured",
+                                         " Aadhaar identification has been captured",
                             "percent": 4.800000000000011,
                             "value": 131,
-                            "label": "Percent Adhaar-seeded Beneficiaries",
+                            "label": "Percent Aadhaar-seeded Beneficiaries",
                             'redirect': 'adhaar'
                         }
                     ],

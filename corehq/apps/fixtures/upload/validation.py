@@ -39,7 +39,7 @@ def _validate_fixture_upload(workbook):
             continue
 
         try:
-            data_item = iter(data_items).next()
+            data_item = next(iter(data_items))
         except StopIteration:
             continue
         else:

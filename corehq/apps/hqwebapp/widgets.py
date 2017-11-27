@@ -15,6 +15,7 @@ from django.utils.safestring import mark_safe
 import json
 from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
+import six
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -47,7 +48,7 @@ class BootstrapAddressField(MultiValueField):
     def __init__(self,num_lines=3,*args,**kwargs):
         fields = tuple([CharField(widget=TextInput(attrs={'class':'input-xxlarge'})) for _ in range(0, num_lines)])
         self.widget = BootstrapAddressFieldWidget(widgets=[field.widget for field in fields])
-        super(BootstrapAddressField,self).__init__(fields=fields,*args,**kwargs)
+        super(BootstrapAddressField, self).__init__(fields=fields,*args,**kwargs)
 
     def compress(self, data_list):
         return data_list
@@ -176,7 +177,7 @@ class Select2Ajax(forms.TextInput):
         self._initial = val
 
     def _clean_initial(self, val):
-        if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+        if isinstance(val, collections.Sequence) and not isinstance(val, (str, six.text_type)):
             # if its a tuple or list
             return {"id": val[0], "text": val[1]}
         elif val is None:

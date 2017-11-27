@@ -20,6 +20,7 @@ from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+import six
 
 TEST_DOMAIN = "test-cloudcare-domain"
 
@@ -171,7 +172,7 @@ class CaseAPITestMixin(object):
                                   ids_only=True)
         self.assertEqual(self.expectedAll, len(list))
         self.assertListMatches(list, lambda c: c._couch_doc is None)
-        self.assertListMatches(list, lambda c: isinstance(c.to_json(), basestring))
+        self.assertListMatches(list, lambda c: isinstance(c.to_json(), six.string_types))
 
     def testFiltersOnAll(self):
         list = get_filtered_cases(self.domain, status=CASE_STATUS_ALL,

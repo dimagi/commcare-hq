@@ -56,6 +56,7 @@ from .models import (
     UnsupportedScheduledReportError,
 )
 from .scheduled import get_scheduled_report_ids
+import six
 
 
 logging = get_task_logger(__name__)
@@ -123,7 +124,7 @@ def monthly_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def saved_exports():
     for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
         export_for_group_async.delay(group_config_id)
@@ -399,7 +400,7 @@ def _extract_form_attachment_info(form, properties):
     attachments
     """
     def find_question_id(form, value):
-        for k, v in form.iteritems():
+        for k, v in six.iteritems(form):
             if isinstance(v, dict):
                 ret = find_question_id(v, value)
                 if ret:
@@ -428,7 +429,7 @@ def _extract_form_attachment_info(form, properties):
     # TODO make form.attachments always return objects that conform to a
     # uniform interface. XFormInstance attachment values are dicts, and
     # XFormInstanceSQL attachment values are XFormAttachmentSQL objects.
-    for attachment_name, attachment in form.attachments.iteritems():
+    for attachment_name, attachment in six.iteritems(form.attachments):
         if hasattr(attachment, 'content_type'):
             content_type = attachment.content_type
         else:
@@ -436,14 +437,14 @@ def _extract_form_attachment_info(form, properties):
         if content_type == 'text/xml':
             continue
         try:
-            question_id = unicode(
+            question_id = six.text_type(
                 u'-'.join(find_question_id(form.form_data, attachment_name)))
         except TypeError:
-            question_id = u'unknown' + unicode(unknown_number)
+            question_id = u'unknown' + six.text_type(unknown_number)
             unknown_number += 1
 
         if not properties or question_id in properties:
-            extension = unicode(os.path.splitext(attachment_name)[1])
+            extension = six.text_type(os.path.splitext(attachment_name)[1])
             if hasattr(attachment, 'content_length'):
                 # FormAttachmentSQL or BlobMeta
                 size = attachment.content_length

@@ -29,7 +29,7 @@
              nodeset="instance('results')/results/case[@case_type='case']"
              value="./@case_id"
              detail-confirm="m0_case_long"
-             detail-select="m0_case_short"/>
+             detail-select="m0_search_short"/>
     </session>
     <stack>
       <push>

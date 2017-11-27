@@ -11,6 +11,7 @@ from lxml import etree
 import commcare_translations
 from corehq.util.test_utils import TestFileMixin, unit_testing_only
 from corehq.apps.app_manager.models import Application
+import six
 
 
 class TestXmlMixin(TestFileMixin):
@@ -89,7 +90,7 @@ def normalize_attributes(xml):
     """Sort XML attributes to make it easier to find differences"""
     for node in xml.iterfind(".//*"):
         if node.attrib:
-            attrs = sorted(node.attrib.iteritems())
+            attrs = sorted(six.iteritems(node.attrib))
             node.attrib.clear()
             node.attrib.update(attrs)
     return xml

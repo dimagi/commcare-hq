@@ -7,7 +7,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 from pact.enums import PACT_DOMAIN
 
-DAYS_OF_WEEK = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
 
 def make_uuid():

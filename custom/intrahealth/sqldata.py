@@ -291,7 +291,7 @@ class TauxDeRuptures(BaseSqlData):
             return x["sort_key"] if isinstance(x, dict) else x
 
         for row in rows:
-            value = 1L if any(get_value(x) for x in row[1:]) else 0L
+            value = 1 if any(get_value(x) for x in row[1:]) else 0
             row.append({'sort_key': value, 'html': value})
 
         total_row = list(calculate_total_row(rows))
@@ -390,7 +390,7 @@ class PPSAvecDonnees(BaseSqlData):
             location_id=self.config['district_id']
         ).get_children().exclude(is_archived=True).values_list('name', flat=True)
         locations_not_included = set(all_locations) - set(locations_included)
-        return rows + [[location, {'sort_key': 0L, 'html': 0L}] for location in locations_not_included]
+        return rows + [[location, {'sort_key': 0, 'html': 0}] for location in locations_not_included]
 
 
 class DateSource(BaseSqlData):

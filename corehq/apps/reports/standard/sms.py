@@ -53,6 +53,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from django.core.exceptions import ObjectDoesNotExist
+import six
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -658,7 +659,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     @memoized
     def phone_number_filter(self):
         value = PhoneNumberFilter.get_value(self.request, self.domain)
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return value.strip()
 
         return None
@@ -1120,7 +1121,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     @memoized
     def phone_number_filter(self):
         value = self._filter['phone_number_filter']
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return apply_leniency(value.strip())
 
         return None

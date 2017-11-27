@@ -16,12 +16,13 @@ from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import Permissions, UserRole
-from custom.icds_reports.const import LocationTypes, BHD_ROLE
+from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -34,7 +35,6 @@ from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scal
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_chart,\
     get_awc_daily_status_data_map, get_awc_daily_status_sector_data
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
-from custom.icds_reports.reports.awc_opened import get_awc_opened_data
 from custom.icds_reports.reports.awc_reports import get_awc_report_beneficiary, get_awc_report_demographics,\
     get_awc_reports_maternal_child, get_awc_reports_pse, get_awc_reports_system_usage, get_beneficiary_details, \
     get_awc_report_infrastructure
@@ -311,42 +311,6 @@ class ProgramSummaryView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AwcOpenedView(View):
-
-    def get(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-
-        data = {}
-
-        now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        day = int(self.request.GET.get('day', now.day))
-
-        include_test = request.GET.get('include_test', False)
-
-        domain = self.kwargs['domain']
-
-        test_date = datetime(year, month, day)
-
-        yesterday = (test_date - relativedelta(days=1)).date()
-        two_days_ago = (test_date - relativedelta(days=2)).date()
-        month = datetime(year, month, 1)
-        prev_month = month - relativedelta(months=1)
-
-        config = {
-            'yesterday': tuple(yesterday.timetuple())[:3],
-            'two_days_ago': tuple(two_days_ago.timetuple())[:3],
-            'month': tuple(month.timetuple())[:3],
-            'prev_month': tuple(prev_month.timetuple())[:3]
-        }
-
-        if step == "map":
-            data = get_awc_opened_data(domain, config, include_test)
-        return JsonResponse(data=data)
-
-
-@method_decorator([login_and_domain_required], name='dispatch')
 class PrevalenceOfUndernutritionView(View):
 
     def get(self, request, *args, **kwargs):
@@ -424,6 +388,7 @@ class LocationView(View):
         if name:
             locations = locations.filter(name__iexact=name)
 
+        locations = locations.order_by('name')
         return JsonResponse(data={
             'locations': [
                 {
@@ -452,7 +417,7 @@ class LocationAncestorsView(View):
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
-        ).select_related('parent').distinct()
+        ).select_related('parent').distinct().order_by('name')
         return JsonResponse(data={
             'locations': [
                 {
@@ -570,8 +535,7 @@ class AwcReportsView(View):
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id'),
-                tuple(month.timetuple())[:3]
+                self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
 
@@ -788,7 +752,7 @@ class NewbornsWithLowBirthWeightView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
 
         gender = self.request.GET.get('gender', None)
@@ -1014,7 +978,7 @@ class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
-        now = datetime.utcnow() - relativedelta(day=1)
+        now = datetime.utcnow() - relativedelta(days=1)
 
         domain = self.kwargs['domain']
 
@@ -1484,3 +1448,10 @@ class AggregationScriptPage(BaseDomainView):
         move_ucr_data_into_aggregation_tables.delay(date)
         messages.success(request, 'Aggregation task is running. Data should appear soon.')
         return redirect(self.urlname, domain=self.domain)
+
+
+class ICDSBugReportView(BugReportView):
+
+    @property
+    def recipients(self):
+        return [ICDS_SUPPORT_EMAIL]

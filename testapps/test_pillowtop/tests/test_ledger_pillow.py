@@ -66,7 +66,7 @@ class LedgerPillowTest(TestCase):
 
         ref = UniqueLedgerReference(case.case_id, 'stock', self.product_id)
         # confirm change made it to kafka
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         if should_use_sql_backend(self.domain):
             self.assertEqual(ref.as_id(), change_meta.document_id)

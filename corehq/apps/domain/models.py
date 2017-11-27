@@ -1069,19 +1069,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
                 and (self.commtrack_enabled
                      or LocationType.objects.filter(domain=self.name).exists()))
 
-    @property
-    def is_onboarding_domain(self):
-        # flag used for case management onboarding analytics
-        if not settings.ONBOARDING_DOMAIN_TEST_DATE:
-            return False
-        onboarding_date = datetime(
-            settings.ONBOARDING_DOMAIN_TEST_DATE[0],
-            settings.ONBOARDING_DOMAIN_TEST_DATE[1],
-            settings.ONBOARDING_DOMAIN_TEST_DATE[2],
-        )
-        return self.first_domain_for_user and self.date_created > onboarding_date
-
-
     def convert_to_commtrack(self):
         """
         One-stop-shop to make a domain CommTrack

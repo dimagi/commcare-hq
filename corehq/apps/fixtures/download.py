@@ -266,7 +266,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             group_vals = ([group.name for group in item_row.groups]
                           + empty_padding_list(max_groups - len(item_row.groups)))
             location_vals = ([loc.site_code for loc in item_row.locations]
-                             + empty_padding_list(max_groups - len(item_row.locations)))
+                             + empty_padding_list(max_locations - len(item_row.locations)))
             field_vals = []
             item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
             for field in data_type.fields:

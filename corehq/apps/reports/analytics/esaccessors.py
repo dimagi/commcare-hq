@@ -23,6 +23,7 @@ from corehq.apps.es.cases import (
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
+import six
 
 PagedResult = namedtuple('PagedResult', 'total hits')
 
@@ -53,7 +54,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan):
 
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
-    for user_id, bucket in buckets_dict.iteritems():
+    for user_id, bucket in six.iteritems(buckets_dict):
         result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
 
     return result
@@ -207,7 +208,7 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None)
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in buckets_dict.iteritems():
+    for user_id, bucket in six.iteritems(buckets_dict):
         result[user_id] = bucket.top_hits_last_form_submissions.hits
 
     return result
@@ -238,7 +239,7 @@ def get_last_forms_by_app(user_id):
 
     buckets_dict = aggregations.app_id.buckets_dict
     result = []
-    for app_id, bucket in buckets_dict.iteritems():
+    for app_id, bucket in six.iteritems(buckets_dict):
         result.append(bucket.top_hits_last_form_submissions.hits[0])
 
     return result
@@ -453,7 +454,7 @@ def get_form_duration_stats_by_user(
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.duration_stats.result
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in buckets_dict.iteritems():
+    for user_id, bucket in six.iteritems(buckets_dict):
         result[user_id] = bucket.duration_stats.result
     return result
 

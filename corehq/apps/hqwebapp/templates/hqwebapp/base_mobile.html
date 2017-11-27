@@ -52,6 +52,7 @@
     {% include "hqwebapp/includes/jquery.html" %}
     {% compress js %}
     {% include "hqwebapp/includes/core_libraries.html" %}
+    <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
     {% endcompress %}
 
     <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />

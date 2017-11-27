@@ -110,11 +110,10 @@
         {% endif %}
 
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
         <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
+        <script type="text/javascript" src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
         {% compress js %}
@@ -157,7 +156,22 @@
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
         {% include "hqwebapp/includes/ko.html" %}
-        {% include 'hqwebapp/includes/analytics_all.html' %}
+
+        {% include 'analytics/initial/all.html' %}
+        <div class="initial-analytics-data hide">
+        {% block initial_analytics_data %}
+            {# do not override this block, use initial_analytics_data template tag to populate #}
+        {% endblock %}
+        </div>
+        <div class="analytics-ab-tests hide">
+        {% block analytics_ab_test %}
+            {# do not override this block, use analytics_ab_test template tag to populate #}
+        {% endblock %}
+        </div>
+
+        {% include 'analytics/analytics_js.html' %}
+
+        <script type="text/javascript" src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
 
         {% block js %}{% endblock %}
         {% block js-inline %}{% endblock %}

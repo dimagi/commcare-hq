@@ -5,6 +5,7 @@ from mock import patch
 
 from corehq.apps.app_manager.const import CLAIM_DEFAULT_RELEVANT_CONDITION
 from corehq.apps.app_manager.models import (
+    AdvancedModule,
     Application,
     Module,
     CaseSearch,
@@ -67,6 +68,15 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('remote_request'), suite, "./remote-request[1]")
 
+    def test_remote_request_custom_detail(self):
+        """Remote requests for modules with custom details point to the custom detail
+        """
+        self.module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
+
     def test_duplicate_remote_request(self):
         """
         Adding a second search config should not affect the initial one.
@@ -81,10 +91,26 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_case_search_action(self):
         """
-        Case search action should be added to case list
+        Case search action should be added to case list and a new search detail should be created
         """
+        # Regular and advanced modules should get the search detail
+        search_config = CaseSearch(
+            command_label={'en': 'Advanced Search'},
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})]
+        )
+        advanced_module = self.app.add_module(AdvancedModule.new_module("advanced", None))
+        advanced_module.search_config = search_config
+
+        # Modules with custom xml should not get the search detail
+        module_custom = self.app.add_module(Module.new_module("custom_xml", None))
+        module_custom.search_config = search_config
+        module_custom.case_details.short.custom_xml = "<detail id='m2_case_short'></detail>"
+        advanced_module_custom = self.app.add_module(AdvancedModule.new_module("advanced with custom_xml", None))
+        advanced_module_custom.search_config = search_config
+        advanced_module_custom.case_details.short.custom_xml = "<detail id='m3_case_short'></detail>"
+
         suite = self.app.create_suite()
-        self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail[1]")
+        self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
     def test_case_search_action_relevant_condition(self):
         condition = "'foo' = 'bar'"

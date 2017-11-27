@@ -28,6 +28,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext_lazy
+import six
 
 
 INCOMING = "I"
@@ -267,6 +268,27 @@ class SMS(SMSBase):
     def publish_change(self):
         from corehq.apps.sms.tasks import publish_sms_change
         publish_sms_change.delay(self)
+
+    def requeue(self):
+        if self.processed or self.direction != OUTGOING:
+            raise ValueError("Should only requeue outgoing messages that haven't yet been proccessed")
+
+        with transaction.atomic():
+            queued_sms = QueuedSMS()
+            for field in self._meta.fields:
+                if field.name != 'id':
+                    setattr(queued_sms, field.name, getattr(self, field.name))
+
+            queued_sms.processed = False
+            queued_sms.error = False
+            queued_sms.system_error_message = None
+            queued_sms.num_processing_attempts = 0
+            queued_sms.date = datetime.utcnow()
+            queued_sms.datetime_to_process = datetime.utcnow()
+            queued_sms.queued_timestamp = datetime.utcnow()
+            queued_sms.processed_timestamp = None
+            self.delete()
+            queued_sms.save()
 
 
 class QueuedSMS(SMSBase):
@@ -543,7 +565,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
@@ -2095,7 +2117,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         the rest untouched.
         """
         result = self.get_extra_fields()
-        for k, v in kwargs.iteritems():
+        for k, v in six.iteritems(kwargs):
             if k not in self.get_available_extra_fields():
                 raise Exception("Field %s is not an available extra field for %s"
                     % (k, self.__class__.__name__))

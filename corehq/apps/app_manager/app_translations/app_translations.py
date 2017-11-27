@@ -1,6 +1,8 @@
 # coding=utf-8
 from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
+
+import itertools
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
@@ -21,6 +23,8 @@ from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
+import six
+from six.moves import zip
 
 
 def get_unicode_dicts(iterable):
@@ -35,11 +39,11 @@ def get_unicode_dicts(iterable):
 
     """
     def none_or_unicode(val):
-        return unicode(val) if val is not None else val
+        return six.text_type(val) if val is not None else val
 
     rows = []
     for row in iterable:
-        rows.append({unicode(k): none_or_unicode(v) for k, v in row.iteritems()})
+        rows.append({six.text_type(k): none_or_unicode(v) for k, v in six.iteritems(row)})
     return rows
 
 
@@ -192,7 +196,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     assert isinstance(languages, list)
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
-    assert isinstance(unique_id, basestring)
+    assert isinstance(unique_id, six.string_types)
 
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages
@@ -317,7 +321,7 @@ def expected_bulk_app_sheet_rows(app):
 
                     # Add rows for graph configuration
                     if detail.format == "graph":
-                        for key, val in detail.graph_configuration.locale_specific_config.iteritems():
+                        for key, val in six.iteritems(detail.graph_configuration.locale_specific_config):
                             rows[module_string].append(
                                 (
                                     key + " (graph config)",
@@ -325,7 +329,7 @@ def expected_bulk_app_sheet_rows(app):
                                 ) + tuple(val.get(lang, "") for lang in app.langs)
                             )
                         for i, series in enumerate(detail.graph_configuration.series):
-                            for key, val in series.locale_specific_config.iteritems():
+                            for key, val in six.iteritems(series.locale_specific_config):
                                 rows[module_string].append(
                                     (
                                         "{} {} (graph series config)".format(key, i),
@@ -390,7 +394,7 @@ def expected_bulk_app_sheet_rows(app):
                                     value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
                             itext_items[text_id][(lang, value_form)] = value
 
-                for text_id, values in itext_items.iteritems():
+                for text_id, values in six.iteritems(itext_items):
                     row = [text_id]
                     for value_form in ["default", "audio", "image", "video"]:
                         # Get the fallback value for this form
@@ -829,7 +833,7 @@ def _update_case_list_translations(sheet, rows, app):
             ))
 
     for row, detail in \
-            zip(list_rows, short_details) + zip(detail_rows, long_details):
+            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
 
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.

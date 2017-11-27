@@ -5,15 +5,15 @@ from abc import ABCMeta, abstractmethod
 
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import ArgumentError
+import six
 
 SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 NOT_SET = object()
 
 
-class AbstractBlobDB(object):
+class AbstractBlobDB(six.with_metaclass(ABCMeta, object)):
     """Storage interface for large binary data objects
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):

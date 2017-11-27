@@ -22,6 +22,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
 from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
+import six
 
 
 class LocationExcelSheetError(Exception):
@@ -135,7 +136,7 @@ class LocationStub(object):
         self.do_delete = do_delete
         self.external_id = str(external_id) if isinstance(external_id, int) else external_id
         self.index = index
-        self.custom_data = {key: unicode(value) for key, value in custom_data.items()} \
+        self.custom_data = {key: six.text_type(value) for key, value in custom_data.items()} \
                            if custom_data != self.NOT_PROVIDED else {}
         self.uncategorized_data = uncategorized_data or {}
         if not self.location_id and not self.site_code:
@@ -742,7 +743,7 @@ class LocationTreeValidator(object):
             try:
                 location.db_object.full_clean(exclude=exclude_fields)
             except ValidationError as e:
-                for field, issues in e.message_dict.iteritems():
+                for field, issues in six.iteritems(e.message_dict):
                     for issue in issues:
                         errors.append(_(
                             u"Error with location in sheet '{}', at row {}. {}: {}").format(

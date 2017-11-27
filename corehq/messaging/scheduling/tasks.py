@@ -22,6 +22,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
+import six
 
 
 @task(ignore_result=True)
@@ -82,7 +83,7 @@ def refresh_timed_schedule_instances(schedule, recipients, start_date=None):
             )
             save_timed_schedule_instance(instance)
 
-    for key, schedule_instance in existing_instances.iteritems():
+    for key, schedule_instance in six.iteritems(existing_instances):
         if key not in new_recipients:
             delete_timed_schedule_instance(schedule_instance)
         elif (
@@ -174,7 +175,7 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
             )
             save_case_schedule_instance(instance)
 
-    for key, schedule_instance in existing_instances.iteritems():
+    for key, schedule_instance in six.iteritems(existing_instances):
         if key not in new_recipients:
             delete_case_schedule_instance(schedule_instance)
         else:

@@ -20,6 +20,7 @@ from dimagi.utils.couch.database import iter_docs
 
 # move these too
 from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
+import six
 
 
 class Product(Document):
@@ -170,8 +171,8 @@ class Product(Document):
     @classmethod
     def _export_attrs(cls):
         return [
-            ('name', unicode),
-            ('unit', unicode),
+            ('name', six.text_type),
+            ('unit', six.text_type),
             'description',
             'category',
             ('program_id', str),
@@ -197,7 +198,7 @@ class Product(Document):
         from corehq.apps.commtrack.util import encode_if_needed
         property_dict = {}
 
-        for prop, val in self.product_data.iteritems():
+        for prop, val in six.iteritems(self.product_data):
             property_dict['data: ' + prop] = encode_if_needed(val)
 
         return property_dict

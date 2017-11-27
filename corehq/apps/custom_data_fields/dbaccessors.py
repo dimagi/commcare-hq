@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+
 def get_by_domain_and_type(domain, field_type):
     from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 
@@ -10,6 +12,5 @@ def get_by_domain_and_type(domain, field_type):
         # if there's more than one,
         # it's probably because a few were created at the same time
         # due to a race condition
-        # todo: a better solution might be to use locking in this code
         limit=1,
     ).one()

@@ -62,13 +62,3 @@ APP_BUILDER_VIDEO = ABTestConfig(
     'app_builder_video_aug2017',
     (APP_BUILDER_VIDEO_ON, APP_BUILDER_VIDEO_OFF)
 )
-
-NEW_USER_PERSONA_OPTION_SHOW = 'show_persona'
-NEW_USER_PERSONA_OPTION_HIDE = 'hide_persona'
-
-
-NEW_USER_PERSONA_FIELD = ABTestConfig(
-    'New User Persona Field',
-    'new_user_persona_field_nov2017',
-    (NEW_USER_PERSONA_OPTION_SHOW, NEW_USER_PERSONA_OPTION_HIDE)
-)

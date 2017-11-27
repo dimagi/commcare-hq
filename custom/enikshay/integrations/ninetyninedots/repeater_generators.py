@@ -41,6 +41,7 @@ from custom.enikshay.const import (
     MERM_RT_HOURS,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+import six
 
 
 class MermParams(jsonobject.JsonObject):
@@ -150,7 +151,7 @@ class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
-                "dots_99_error": u"RequestConnectionError: {}".format(unicode(exception))
+                "dots_99_error": u"RequestConnectionError: {}".format(six.text_type(exception))
             })
 
 

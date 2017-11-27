@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from datetime import datetime
 from openpyxl import Workbook
 import csv
@@ -85,7 +86,7 @@ class Command(BaseCommand):
                 episode_case = get_open_episode_case_from_person(DOMAIN, person_id)
                 self.episode_ids.append(episode_case.get_id)
             except ENikshayCaseNotFound:
-                print("Could not find episode for person with enikshay ID:", person_id)
+                print(("Could not find episode for person with enikshay ID:", person_id))
 
     def _load_episode_ids_from_file(self, file_path):
         with open(file_path, 'rU') as csvfile:

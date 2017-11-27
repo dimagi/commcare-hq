@@ -19,7 +19,8 @@ from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models import (
@@ -60,6 +61,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
@@ -133,6 +135,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -202,7 +205,12 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     def distill_recipients(self):
         form_data = self.schedule_form.cleaned_data
-        return [('CommCareUser', r_id) for r_id in form_data['recipients']]
+        return (
+            [('CommCareUser', user_id) for user_id in form_data['user_recipients']] +
+            [('Group', group_id) for group_id in form_data['user_group_recipients']] +
+            [('Location', location_id) for location_id in form_data['user_organization_recipients']] +
+            [('CommCareCaseGroup', case_group_id) for case_group_id in form_data['case_group_recipients']]
+        )
 
     def distill_total_iterations(self):
         form_data = self.schedule_form.cleaned_data
@@ -211,10 +219,11 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         return form_data['occurrences']
 
-    def process_immediate_schedule(self, content, recipients):
+    def process_immediate_schedule(self, content, recipients, extra_scheduling_options):
         form_data = self.schedule_form.cleaned_data
         with transaction.atomic():
-            schedule = AlertSchedule.create_simple_alert(self.domain, content)
+            schedule = AlertSchedule.create_simple_alert(self.domain, content,
+                extra_options=extra_scheduling_options)
             broadcast = ImmediateBroadcast(
                 domain=self.domain,
                 name=form_data['schedule_name'],
@@ -224,7 +233,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             broadcast.save()
         refresh_alert_schedule_instances.delay(schedule, recipients)
 
-    def process_daily_schedule(self, content, recipients):
+    def process_daily_schedule(self, content, recipients, extra_scheduling_options):
         form_data = self.schedule_form.cleaned_data
         with transaction.atomic():
             total_iterations = self.distill_total_iterations()
@@ -235,14 +244,16 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                 schedule.set_simple_daily_schedule(
                     form_data['send_time'],
                     content,
-                    total_iterations=total_iterations
+                    total_iterations=total_iterations,
+                    extra_options=extra_scheduling_options,
                 )
             else:
                 schedule = TimedSchedule.create_simple_daily_schedule(
                     self.domain,
                     form_data['send_time'],
                     content,
-                    total_iterations=total_iterations
+                    total_iterations=total_iterations,
+                    extra_options=extra_scheduling_options,
                 )
                 broadcast = ScheduledBroadcast(
                     domain=self.domain,
@@ -255,7 +266,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             broadcast.save()
         refresh_timed_schedule_instances.delay(schedule, recipients, start_date=form_data['start_date'])
 
-    def process_weekly_schedule(self, content, recipients):
+    def process_weekly_schedule(self, content, recipients, extra_scheduling_options):
         form_data = self.schedule_form.cleaned_data
         with transaction.atomic():
             total_iterations = self.distill_total_iterations()
@@ -269,6 +280,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                     form_data['weekdays'],
                     form_data['start_date'].weekday(),
                     total_iterations=total_iterations,
+                    extra_options=extra_scheduling_options,
                 )
             else:
                 schedule = TimedSchedule.create_simple_weekly_schedule(
@@ -278,6 +290,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                     form_data['weekdays'],
                     form_data['start_date'].weekday(),
                     total_iterations=total_iterations,
+                    extra_options=extra_scheduling_options,
                 )
                 broadcast = ScheduledBroadcast(
                     domain=self.domain,
@@ -290,7 +303,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             broadcast.save()
         refresh_timed_schedule_instances.delay(schedule, recipients, start_date=form_data['start_date'])
 
-    def process_monthly_schedule(self, content, recipients):
+    def process_monthly_schedule(self, content, recipients, extra_scheduling_options):
         form_data = self.schedule_form.cleaned_data
         with transaction.atomic():
             total_iterations = self.distill_total_iterations()
@@ -306,7 +319,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                     form_data['send_time'],
                     sorted_days_of_month,
                     content,
-                    total_iterations=total_iterations
+                    total_iterations=total_iterations,
+                    extra_options=extra_scheduling_options,
                 )
             else:
                 schedule = TimedSchedule.create_simple_monthly_schedule(
@@ -314,7 +328,8 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
                     form_data['send_time'],
                     sorted_days_of_month,
                     content,
-                    total_iterations=total_iterations
+                    total_iterations=total_iterations,
+                    extra_options=extra_scheduling_options,
                 )
                 broadcast = ScheduledBroadcast(
                     domain=self.domain,
@@ -336,15 +351,21 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             self.enforce_edit_restriction(form_data['send_frequency'])
             content = self.distill_content()
             recipients = self.distill_recipients()
+            extra_scheduling_options = {
+                'include_descendant_locations': (
+                    ScheduleForm.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
+                    form_data['include_descendant_locations']
+                ),
+            }
 
             if form_data['send_frequency'] == ScheduleForm.SEND_IMMEDIATELY:
-                self.process_immediate_schedule(content, recipients)
+                self.process_immediate_schedule(content, recipients, extra_scheduling_options)
             elif form_data['send_frequency'] == ScheduleForm.SEND_DAILY:
-                self.process_daily_schedule(content, recipients)
+                self.process_daily_schedule(content, recipients, extra_scheduling_options)
             elif form_data['send_frequency'] == ScheduleForm.SEND_WEEKLY:
-                self.process_weekly_schedule(content, recipients)
+                self.process_weekly_schedule(content, recipients, extra_scheduling_options)
             elif form_data['send_frequency'] == ScheduleForm.SEND_MONTHLY:
-                self.process_monthly_schedule(content, recipients)
+                self.process_monthly_schedule(content, recipients, extra_scheduling_options)
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
@@ -408,7 +429,7 @@ class EditScheduleView(CreateScheduleView):
             schedule = broadcast.schedule
             if schedule.ui_type == Schedule.UI_TYPE_DAILY:
                 result['send_frequency'] = ScheduleForm.SEND_DAILY
-            if schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+            elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
                 weekdays = [(schedule.start_day_of_week + e.day) % 7 for e in schedule.memoized_events]
                 result['send_frequency'] = ScheduleForm.SEND_WEEKLY
                 result['weekdays'] = [str(day) for day in weekdays]
@@ -437,13 +458,34 @@ class EditScheduleView(CreateScheduleView):
 
         broadcast = self.broadcast
         schedule = broadcast.schedule
-        recipients = []
+
+        recipient_types = set()
+        user_recipients = []
+        user_group_recipients = []
+        user_organization_recipients = []
+        case_group_recipients = []
         for doc_type, doc_id in broadcast.recipients:
-            user = CommCareUser.get_by_user_id(doc_id, domain=self.domain)
-            recipients.append({"id": doc_id, "text": user.raw_username})
+            if doc_type == 'CommCareUser':
+                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_USER)
+                user_recipients.append(doc_id)
+            elif doc_type == 'Group':
+                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_USER_GROUP)
+                user_group_recipients.append(doc_id)
+            elif doc_type == 'Location':
+                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_LOCATION)
+                user_organization_recipients.append(doc_id)
+            elif doc_type == 'CommCareCaseGroup':
+                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_CASE_GROUP)
+                case_group_recipients.append(doc_id)
+
         initial = {
             'schedule_name': broadcast.name,
-            'recipients': recipients,
+            'recipient_types': list(recipient_types),
+            'user_recipients': ','.join(user_recipients),
+            'user_group_recipients': ','.join(user_group_recipients),
+            'user_organization_recipients': ','.join(user_organization_recipients),
+            'case_group_recipients': ','.join(case_group_recipients),
+            'include_descendant_locations': broadcast.schedule.include_descendant_locations,
             'content': 'sms',
             # only works for SMS
             'message': schedule.memoized_events[0].content.message,

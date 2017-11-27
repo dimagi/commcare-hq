@@ -11,6 +11,7 @@ from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import DuplicateError, MissingXMLNSError
 from dimagi.utils.couch import LockManager, ReleaseOnError
+import six
 
 
 class MultiLockManager(list):
@@ -129,9 +130,9 @@ def _get_submission_error(domain, instance, error):
     :returns: xform error instance with raw xml as attachment
     """
     try:
-        message = unicode(error)
+        message = six.text_type(error)
     except UnicodeDecodeError:
-        message = unicode(str(error), encoding='utf-8')
+        message = six.text_type(str(error), encoding='utf-8')
 
     xform = FormProcessorInterface(domain).submission_error_form_instance(instance, message)
     return FormProcessingResult(xform)

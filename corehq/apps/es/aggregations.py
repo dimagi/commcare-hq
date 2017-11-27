@@ -42,6 +42,7 @@ from collections import namedtuple, defaultdict
 import datetime
 
 from corehq.elastic import SIZE_LIMIT
+import six
 
 MISSING_KEY = None
 
@@ -372,6 +373,11 @@ class TopHitsAggregation(Aggregation):
 
 class FilterResult(AggregationResult):
 
+    def __getattr__(self, attr):
+        sub_aggregation = list(filter(lambda a: a.name == attr, self._aggregations))[0]
+        if sub_aggregation:
+            return sub_aggregation.parse_result(self.result)
+
     @property
     def doc_count(self):
         return self.result['doc_count']
@@ -435,8 +441,8 @@ class AggregationRange(namedtuple('AggregationRange', 'start end key')):
             if value:
                 if isinstance(value, datetime.date):
                     value = value.isoformat()
-                elif not isinstance(value, basestring):
-                    value = unicode(value)
+                elif not isinstance(value, six.string_types):
+                    value = six.text_type(value)
                 range_[key] = value
         return range_
 

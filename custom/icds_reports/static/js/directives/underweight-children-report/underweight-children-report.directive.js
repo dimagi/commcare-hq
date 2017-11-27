@@ -67,10 +67,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
-        var underweight = row ? d3.format(".0%")((row.total - (row.severely_underweight + row.moderately_underweight + row.normal)) / (row.total || 1)) : "N/A";
-        var severely_underweight = row ? d3.format(".0%")(row.severely_underweight / (row.total || 1)) : 'N/A';
-        var moderately_underweight = row ? d3.format(".0%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
-        var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
+        var underweight = row ? d3.format(".2%")((row.total - (row.severely_underweight + row.moderately_underweight + row.normal)) / (row.total || 1)) : "N/A";
+        var severely_underweight = row ? d3.format(".2%")(row.severely_underweight / (row.total || 1)) : 'N/A';
+        var moderately_underweight = row ? d3.format(".2%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
+        var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
