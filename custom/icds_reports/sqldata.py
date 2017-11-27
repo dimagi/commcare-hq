@@ -1840,6 +1840,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         self.config = config
         self.loc_level = loc_level
         self.show_test = show_test
+        self.awcs_id = config['awcs_id']
+        clean_IN_filter_value(self.config, 'awcs_id')
 
     @property
     def group_by(self):
@@ -1866,6 +1868,8 @@ class BeneficiaryExport(ExportableMixin, SqlData):
         }[filter_name]
 
     def _build_additional_filters(self, filters):
+        if len(filters) == 1:
+            return self._map_filter_name_to_sql_filter(filters[0])
         return ORFilter([
             self._map_filter_name_to_sql_filter(filter_name)
             for filter_name in filters
@@ -1874,8 +1878,10 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     @property
     def filters(self):
         filters = []
+        infilter_params = get_INFilter_bindparams('awcs_id', self.awcs_id)
+        filters.append(IN('awc_id', infilter_params))
         for key, value in six.iteritems(self.config):
-            if key == 'domain':
+            if key == 'domain' or key.startswith('awcs_id'):
                 continue
             elif key == 'filters':
                 filters.append(self._build_additional_filters(value))
@@ -1977,6 +1983,12 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     @property
     def columns(self):
         return self.get_columns_by_loc_level
+
+    def get_data(self, start=None, limit=None):
+        if not self.awcs_id:
+            return []
+        else:
+            return super(BeneficiaryExport, self).get_data(start, limit)
 
 
 class FactSheetsReport(object):

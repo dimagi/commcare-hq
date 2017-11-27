@@ -12,7 +12,7 @@
             <strong>Please fix following errors before you can export:</strong>
             <ul>
                 <li ng-if="$ctrl.selectedFilterOptions().length === 0">You must choose at least one filter</li>
-                <li ng-if="$ctrl.isNationalSelected()">You have to select location</li>
+                <li ng-if="!$ctrl.isDistrictOrBelowSelected()">You have to select at least district</li>
             </ul>
         </div>
         <div class="form-horizontal black">

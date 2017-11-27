@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
@@ -564,6 +564,8 @@ class ExportIndicatorView(View):
 
         location = request.POST.get('location', '')
 
+        sql_location = None
+
         if location:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
@@ -573,10 +575,6 @@ class ExportIndicatorView(View):
                     config.update({
                         location_key: loc.location_id,
                     })
-                    if location_key == 'awc_id':
-                        beneficiary_config.update({
-                            location_key: loc.location_id
-                        })
             except SQLLocation.DoesNotExist:
                 pass
 
@@ -611,6 +609,11 @@ class ExportIndicatorView(View):
                 show_test=include_test
             ).to_export(export_format, location)
         elif indicator == 6:
+            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
+                return HttpResponseBadRequest()
+            beneficiary_config['awcs_id'] = list(sql_location.get_descendants(
+                include_self=True
+            ).filter(location_type__code=LocationTypes.AWC).values_list('location_id', flat=True))
             return BeneficiaryExport(
                 config=beneficiary_config,
                 loc_level=aggregation_level,

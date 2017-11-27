@@ -245,7 +245,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     };
 
     vm.onIndicatorSelect = function() {
-        if (vm.isChildBeneficiaryListSelected() && vm.isNationalSelected()) {
+        if (vm.isChildBeneficiaryListSelected() && !vm.isDistrictOrBelowSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
@@ -254,7 +254,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     };
 
     vm.hasErrors = function() {
-        return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || vm.isNationalSelected());
+        return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
     };
 
     vm.isVisible = function(level) {
@@ -271,8 +271,8 @@ function DownloadController($location, locationHierarchy, locationsService, user
         return vm.selectedIndicator === 6;
     };
 
-    vm.isNationalSelected = function() {
-        return !vm.selectedLocations[0] || vm.selectedLocations[0] === ALL_OPTION.location_id;
+    vm.isDistrictOrBelowSelected = function() {
+        return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
     };
 }
 
