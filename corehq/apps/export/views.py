@@ -88,6 +88,8 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
     get_properly_wrapped_export_instance,
+    get_case_exports_by_domain,
+    get_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports, stale_get_export_count
@@ -146,36 +148,6 @@ def user_can_view_deid_exports(domain, couch_user):
                 get_permission_name(Permissions.view_report),
                 data=DEID_EXPORT_PERMISSION
             ))
-
-
-def _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter):
-    exports = old_exports_getter(domain)
-    new_exports = new_exports_getter(domain)
-    if use_new_exports(domain):
-        exports += new_exports
-    else:
-        exports += revert_new_exports(new_exports)
-    if not has_deid_permissions:
-        exports = filter(lambda x: not x.is_safe, exports)
-    return sorted(exports, key=lambda x: x.name)
-
-
-def _get_case_exports_by_domain(domain, has_deid_permissions):
-    old_exports_getter = CaseExportSchema.get_stale_exports
-    new_exports_getter = get_case_export_instances
-    return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
-
-
-def _get_form_exports_by_domain(domain, has_deid_permissions):
-    old_exports_getter = FormExportSchema.get_stale_exports
-    new_exports_getter = get_form_export_instances
-    return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
-
-
-def get_export_count_by_domain(domain):
-    exports = _get_form_exports_by_domain(domain, True)
-    exports += _get_case_exports_by_domain(domain, True)
-    return len(exports)
 
 
 class ExportsPermissionsMixin(object):
@@ -1381,9 +1353,9 @@ class DailySavedExportListView(BaseExportListView):
     def get_saved_exports(self):
         combined_exports = []
         if self.has_form_export_permissions:
-            combined_exports.extend(_get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
+            combined_exports.extend(get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
         if self.has_case_export_permissions:
-            combined_exports.extend(_get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
+            combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return filter(lambda x: x.is_daily_saved_export and not x.export_format == "html", combined_exports)
 
@@ -1546,9 +1518,9 @@ class DashboardFeedListView(DailySavedExportListView):
     def get_saved_exports(self):
         combined_exports = []
         if self.has_form_export_permissions:
-            combined_exports.extend(_get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
+            combined_exports.extend(get_form_exports_by_domain(self.domain, self.has_deid_view_permissions))
         if self.has_case_export_permissions:
-            combined_exports.extend(_get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
+            combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
 
@@ -1661,7 +1633,7 @@ class FormExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        exports = get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_daily_saved_exports_ui(self.domain):
             # New exports display daily saved exports in their own view
             exports = filter(lambda x: not x.is_daily_saved_export, exports)
@@ -1817,7 +1789,7 @@ class CaseExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        exports = get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_daily_saved_exports_ui(self.domain):
             exports = filter(lambda x: not x.is_daily_saved_export, exports)
         return exports
