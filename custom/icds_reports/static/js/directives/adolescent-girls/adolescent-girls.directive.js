@@ -189,10 +189,8 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var value = findValue(vm.chartData[0].values, d.value);
+                    return vm.tooltipContent(d.value, value);
                 });
                 return chart;
             },
@@ -206,6 +204,11 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
                 'width': '900px',
             },
         },
+    };
+
+    vm.tooltipContent = function (monthName, value) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>" + value + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

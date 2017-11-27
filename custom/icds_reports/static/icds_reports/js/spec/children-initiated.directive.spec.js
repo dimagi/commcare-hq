@@ -211,4 +211,11 @@ describe('ChildrenInitiatedDirective', function () {
         var index = controller.getDisableIndex();
         assert.equal(index, 3);
     });
+
+    it('tests reset additional filters', function () {
+        controller.filtersData.gender = 'test';
+        controller.resetAdditionalFilter();
+
+        assert.equal(controller.filtersData.gender, null);
+    });
 });
