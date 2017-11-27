@@ -14,6 +14,7 @@ from casexml.apps.phone.xml import get_registration_element
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timer import TimingContext
 from corehq.util import reverse
 
@@ -47,6 +48,14 @@ class MigrationView(BaseMigrationView, FormView):
         return HttpResponseRedirect(self.page_url)
 
 
+def get_related_case_ids(domain, case_id):
+    from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
+    case = CaseAccessors(domain).get_case(case_id)
+    child_cases = {c.case_id for c in get_case_hierarchy(case, {})['case_list']}
+    indexed_cases = {index_info.referenced_id for index_info in case.indices}
+    return child_cases | indexed_cases
+
+
 def migration_restore(request, domain, case_id):
     domain_obj = Domain.get_by_name(domain)
     restore_user = request.couch_user
@@ -54,10 +63,11 @@ def migration_restore(request, domain, case_id):
     restore_state = RestoreState(domain_obj, restore_user.to_ota_restore_user(domain), restore_params)
     restore_state.start_sync()
     timing_context = TimingContext('migration-restore-{}-{}'.format(domain, restore_user.username))
+    case_ids = get_related_case_ids(domain, case_id)
     with RestoreContent(restore_user.username) as content:
         content.append(get_registration_element(restore_user))
 
-        sync_payload = CleanOwnerSyncPayload(timing_context, {case_id}, restore_state)
+        sync_payload = CleanOwnerSyncPayload(timing_context, case_ids, restore_state)
         sync_payload.extend_response(content)
 
         payload = content.get_fileobj()
