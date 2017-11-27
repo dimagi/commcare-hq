@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from datetime import datetime
-from itertools import imap
 import time
 import uuid
+from six.moves import map
 
 from couchdbkit import PreconditionFailed
 
@@ -636,7 +636,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         if not include_docs:
             return domains
         else:
-            return imap(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
+            return map(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
     def get_all_names(cls):
