@@ -207,18 +207,10 @@ class HistoricalAdherenceReport(EnikshayReport):
                 date = sunday + datetime.timedelta(days=i)
                 if date >= first_date and date <= last_date:
                     cases_for_date = adherence_cases_dict.get(date, [])
-                    count_99dots_cases_for_date = int(
-                        any(case.get_case_property('adherence_source') == '99DOTS' for case in cases_for_date)
-                    )
-                    count_non_99dots_cases_for_case = sum(
-                        case.get_case_property('adherence_source') != '99DOTS'
-                        for case in cases_for_date
-                    )
                     days.append(Day(
                         date,
                         self.get_adherence_image_key(cases_for_date, date),
                         self.show_unexpected_image(cases_for_date, date),
-                        count_99dots_cases_for_date + count_non_99dots_cases_for_case > 1,
                         self.is_treatment_start_date(date),
                         force_month_label=date == first_date,
                     ))
@@ -331,12 +323,11 @@ class Week(object):
 
 class Day(object):
 
-    def __init__(self, date, adherence_image_key, show_unexpected_image, show_conflicting_data,
+    def __init__(self, date, adherence_image_key, show_unexpected_image,
                  show_treatment_start_date, force_month_label=False):
         self.date = date
         self.month_string = self.date.strftime("%b") if self.date.day == 1 or force_month_label else ""
         self.day_string = self.date.day
         self.adherence_image_key = adherence_image_key
         self.show_unexpected_image = show_unexpected_image
-        self.show_conflicting_data = show_conflicting_data
         self.show_treatment_start_date = show_treatment_start_date

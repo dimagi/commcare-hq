@@ -109,21 +109,8 @@
                                     {% endif %}
 
                                     <div class="bottom-right" >
-                                        {% if day.show_conflicting_data %}
-                                            <div class="middle-icon">
-                                                <img class="icon" src="{% static "enikshay/images/conflicting_data.png" %}">
-                                            </div>
-                                        {% endif %}
                                         {% if day.show_unexpected_image %}
                                             <img class="icon" src="{% static "enikshay/images/dose_unexpected_flag.png" %}">
-                                        {% elif day.show_conflicting_data %}
-                                            {% comment %}
-                                                Add a spacer div that will keep the "conflicting data" icon at the
-                                                same height even if the "unexpected dose" icon is not present.
-                                            {% endcomment %}
-                                            <div class="icon">
-                                                <div></div>
-                                            </div>
                                         {% endif %}
                                     </div>
 
