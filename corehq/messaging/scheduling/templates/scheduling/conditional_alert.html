@@ -7,3 +7,32 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
 {% endblock %}
+
+{% block page_content %}
+<div class="row">
+    <div class="col-sm-12">
+        <ul class="nav nav-tabs">
+            <li class="active">
+                <a href="#rule" data-toggle="tab">{% trans "Rule Criteria" %}</a>
+            </li>
+            <li>
+                <a href="#schedule" data-toggle="tab">{% trans "Schedule" %}</a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane active" id="rule">
+                <div class="row">
+                    <div class="col-sm-12">
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="schedule">
+                <div class="row">
+                    <div class="col-sm-12">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
