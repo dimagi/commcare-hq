@@ -50,10 +50,11 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     endpoint = 'dataValueSets'
     for dataset_map in dataset_maps:
         if send_now or dataset_map.should_send_on_date(send_date):
+            domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
             try:
                 dataset = dataset_map.get_dataset(send_date)
+                response = api.post(endpoint, dataset)
             except Exception as err:
-                domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
                 log_level = logging.ERROR
                 if log_level >= domain_log_level:
                     JsonApiLog.log(
@@ -66,7 +67,17 @@ def send_datasets(domain_name, send_now=False, send_date=None):
                         request_url=api.get_request_url(endpoint),
                     )
             else:
-                api.post(endpoint, dataset)
+                log_level = logging.INFO
+                if log_level >= domain_log_level:
+                    JsonApiLog.log(
+                        log_level,
+                        api,
+                        None,
+                        response_status=response.status_code,
+                        response_body=response.content,
+                        method_func=api.post,
+                        request_url=api.get_request_url(endpoint),
+                    )
 
 
 @periodic_task(
