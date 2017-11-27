@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import uuid
 from django.test import SimpleTestCase
 from pillowtop.dao.mock import MockDocumentStore
@@ -103,7 +104,7 @@ class TestMockChangeFeed(SimpleTestCase):
         self.assertEqual(0, len(list(feed.iter_changes(10))))
 
     def test_results(self):
-        feed = MockChangeFeed(range(5))
+        feed = MockChangeFeed(list(range(5)))
         changes = feed.iter_changes(0)
         for seq, change in enumerate(changes):
             self.assertEqual(seq, change)

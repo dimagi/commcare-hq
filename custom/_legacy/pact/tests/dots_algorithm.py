@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from datetime import datetime, timedelta
 import random
 from django.test import TestCase

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.http import Http404
@@ -114,7 +115,7 @@ class IterDBSimpleTest(SimpleTestCase):
     def test_number_of_calls(self):
         db = TestLoggingDB()
         with IterDB(db, chunksize=50) as iter_db:
-            all_docs = range(105)
+            all_docs = list(range(105))
             for doc in all_docs:
                 iter_db.save(doc)
 

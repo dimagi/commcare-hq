@@ -12,6 +12,7 @@ http://bitbucket.org/james_taylor/bx-python/src/14b6a6c95da6/lib/bx/intervals/op
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from builtins import range
 import time
 import random
 

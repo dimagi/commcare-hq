@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedForm,

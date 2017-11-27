@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import json
 import logging
 import os
@@ -888,7 +889,7 @@ class CRUDPaginatedViewMixin(object):
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total,
-                'limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+                'limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
                 'column_names': self.column_names,
                 'num_columns': len(self.column_names),
                 'text': {

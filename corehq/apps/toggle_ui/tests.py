@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import uuid
 from django.test import TestCase
 from corehq.apps.toggle_ui.migration_helpers import move_toggles

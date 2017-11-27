@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _

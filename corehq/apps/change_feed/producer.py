@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
+from builtins import range
 import json
 import time
 from django.conf import settings

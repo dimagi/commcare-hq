@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from datetime import date, timedelta
 import re
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay

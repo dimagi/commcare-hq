@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import json
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
@@ -122,7 +123,7 @@ class ProductListView(BaseCommTrackManageView):
                 it later."
             ),
             'show_inactive': self.show_only_inactive,
-            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'pagination_limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
             'program_product_options': {
                 'total': self.total,
                 'start_page': self.page,

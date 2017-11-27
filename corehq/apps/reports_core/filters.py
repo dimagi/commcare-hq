@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.locations.models import SQLLocation

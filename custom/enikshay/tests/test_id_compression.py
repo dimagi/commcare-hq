@@ -1,3 +1,4 @@
+from builtins import range
 from ..user_setup import compress_id
 
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import datetime
 import io
 import logging
@@ -1219,7 +1220,7 @@ def _get_uppercase_unicode_regexp():
     # rather than add another dependency (regex library)
     # http://stackoverflow.com/a/17065040/10840
     uppers = [u'[']
-    for i in xrange(sys.maxunicode):
+    for i in range(sys.maxunicode):
         c = unichr(i)
         if c.isupper():
             uppers.append(c)

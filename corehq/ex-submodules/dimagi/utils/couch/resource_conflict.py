@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from couchdbkit.exceptions import ResourceConflict
 from django.utils.functional import wraps
 

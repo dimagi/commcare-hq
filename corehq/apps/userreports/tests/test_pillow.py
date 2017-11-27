@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import decimal
 import uuid
 from django.test import TestCase, SimpleTestCase, override_settings

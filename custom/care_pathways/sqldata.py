@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SimpleColumn

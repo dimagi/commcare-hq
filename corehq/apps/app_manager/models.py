@@ -24,6 +24,7 @@ published on the exchange, but those are quite infrequent.
 """
 from __future__ import absolute_import
 
+from builtins import range
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain

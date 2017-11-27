@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from custom.enikshay.nikshay_datamigration.management.commands.base_cleanup_command import BaseCleanupCommand
 
 # before any changes

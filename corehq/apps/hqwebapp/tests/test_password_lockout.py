@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain

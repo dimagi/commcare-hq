@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext as _, ugettext_lazy

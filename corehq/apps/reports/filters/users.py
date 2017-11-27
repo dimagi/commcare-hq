@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext_lazy

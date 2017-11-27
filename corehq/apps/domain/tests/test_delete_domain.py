@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import random
 import uuid
 from datetime import date, datetime
@@ -130,7 +131,7 @@ class TestDeleteDomain(TestCase):
             domain='test2',
             name='facility2',
         )
-        for i in xrange(2):
+        for i in range(2):
             self._create_data('test', i)
             self._create_data('test2', i)
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from datetime import datetime
 import random
 import uuid
@@ -159,9 +160,9 @@ def _arbitrary_session_properties(**kwargs):
 
     def arbitrary_date():
         return datetime(
-            random.choice(range(2010, 2015)),
-            random.choice(range(1, 13)),
-            random.choice(range(1, 28)),
+            random.choice(list(range(2010, 2015))),
+            random.choice(list(range(1, 13))),
+            random.choice(list(range(1, 28))),
         )
 
     def arbitrary_bool():

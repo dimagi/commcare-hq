@@ -1,5 +1,6 @@
 # http://rosettacode.org/wiki/LZW_compression#Python
 from __future__ import absolute_import
+from builtins import range
 from cStringIO import StringIO
 
 
@@ -8,7 +9,7 @@ def decompress(compressed):
 
     # Build the dictionary.
     dict_size = 0x10000
-    dictionary = dict((unichr(i), unichr(i)) for i in xrange(dict_size))
+    dictionary = dict((unichr(i), unichr(i)) for i in range(dict_size))
     # in Python 3: dictionary = {chr(i): chr(i) for i in range(dict_size)}
 
     result = StringIO()

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from couchdbkit import ResourceNotFound
 
 from dimagi.utils.decorators.memoized import memoized

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import re
 import uuid
 from corehq.apps.locations.models import SQLLocation

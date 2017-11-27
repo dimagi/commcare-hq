@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import itertools
 
 from django.test.testcases import SimpleTestCase

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 import pytz

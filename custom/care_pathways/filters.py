@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 import datetime
 from django.utils.translation import ugettext_noop
 

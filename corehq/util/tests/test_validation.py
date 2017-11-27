@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from random import sample
 
 from corehq.util.validation import is_url_or_host_banned
@@ -8,7 +9,7 @@ from django.test import TestCase
 def sample_range(start, stop):
     yield start
     num_samples = min(8, stop - start)
-    for middle in sample(xrange(start + 1, stop), num_samples):
+    for middle in sample(range(start + 1, stop), num_samples):
         yield middle
     yield stop
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from collections import Counter
 
 from django.test import override_settings

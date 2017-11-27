@@ -1,4 +1,5 @@
 from __future__ import unicode_literals, absolute_import, print_function
+from builtins import range
 import calendar
 from decimal import Decimal
 import random

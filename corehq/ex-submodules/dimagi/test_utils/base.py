@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from builtins import range
 from django.conf import settings
 
 if not settings.configured:
@@ -88,7 +89,7 @@ class DimagiUtilsTestCase(TestCase):
         self.assertEquals(calls['get_full_name'], 2)
 
     def test_chunked(self):
-        self.assertEquals(list(chunked(range(10), 4)), [
+        self.assertEquals(list(chunked(list(range(10)), 4)), [
             (0, 1, 2, 3),
             (4, 5, 6, 7),
             (8, 9)

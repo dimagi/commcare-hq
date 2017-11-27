@@ -5,6 +5,7 @@ domain and HQ admins are excepted, in case we ever need to violate the
 assumptions laid out here.
 """
 from __future__ import absolute_import
+from builtins import range
 import math
 import re
 import uuid
@@ -124,7 +125,7 @@ def get_site_code(name, nikshay_code, type_code, parent):
         return slugify(re.sub(r'\s+', '_', word))
 
     nikshay_code = code_ify(nikshay_code)
-    if nikshay_code in map(str, range(0, 10)):
+    if nikshay_code in map(str, list(range(0, 10))):
         nikshay_code = "0{}".format(nikshay_code)
 
     parent_site_code = parent.site_code

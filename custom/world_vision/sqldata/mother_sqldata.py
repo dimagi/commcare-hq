@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from sqlagg import CountUniqueColumn, AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN

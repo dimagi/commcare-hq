@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from builtins import range
 from collections import defaultdict
 import uuid
 from django.test import SimpleTestCase

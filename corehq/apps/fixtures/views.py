@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import range
 from contextlib import contextmanager
 import json
 from tempfile import NamedTemporaryFile
