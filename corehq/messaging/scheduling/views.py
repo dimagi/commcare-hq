@@ -492,3 +492,50 @@ class EditScheduleView(CreateScheduleView):
         }
         initial.update(self.get_scheduling_fields_initial(broadcast))
         return ScheduleForm(initial=initial, **self.form_kwargs)
+
+
+class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
+    template_name = 'scheduling/conditional_alert_list.html'
+    urlname = 'conditional_alert_list'
+    page_title = _('Schedule a Conditional Message')
+
+    @method_decorator(_requires_new_reminder_framework())
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
+    @use_datatables
+    def dispatch(self, *args, **kwargs):
+        return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
+
+
+class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
+    urlname = 'create_conditional_alert'
+    page_title = _('New Conditional Message')
+    template_name = 'scheduling/conditional_alert.html'
+    async_handlers = [MessagingRecipientHandler]
+
+    @method_decorator(_requires_new_reminder_framework())
+    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
+    @use_jquery_ui
+    @use_timepicker
+    @use_select2
+    def dispatch(self, *args, **kwargs):
+        return super(CreateConditionalAlertView, self).dispatch(*args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': ConditionalAlertListView.page_title,
+                'url': reverse(ConditionalAlertListView.urlname, args=[self.domain]),
+            },
+        ]
+
+    @property
+    def page_context(self):
+        return {}
+
+
+class EditConditionalAlertView(CreateConditionalAlertView):
+    urlname = 'edit_conditional_alert'
+    page_title = _('Edit Conditional Message')
