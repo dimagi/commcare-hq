@@ -3002,7 +3002,8 @@
                 "is_nullable": true,
                 "type": "expression",
                 "column_id": "external_id"
-            },{
+            },
+            {
                 "type": "boolean",
                 "column_id": "confirmed_tb",
                 "filter": {
