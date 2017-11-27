@@ -77,7 +77,7 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         else:
             header.add_column(columns[0].data_tables_column)
 
-        self.groups = SQLProduct.objects.filter(domain=self.domain, is_archived=False)
+        self.groups = SQLProduct.objects.filter(domain=self.domain, is_archived=False).order_by('code')
         for group in self.groups:
             if self.model.have_groups:
                 header.add_column(DataTablesColumnGroup(group.name,
