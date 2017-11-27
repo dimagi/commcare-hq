@@ -29,7 +29,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             var userTypeCall = hqImport('analytix/js/google').track.event.getCall(lastCallNum - 1);
             assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', "mobile"));
             assert.isTrue(hqImport('analytix/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
-            assert.isTrue(hqImport('analytix/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('user type analytics', function () {
@@ -46,7 +46,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
                 var userTypeCall = hqImport('analytix/js/google').track.event.getCall(lastCallNum - i);
                 assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', testUserTypes[testUserTypes.length - i]));
             }
-            assert.isTrue(hqImport('analytix/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('bulk form analytics', function () {
@@ -57,7 +57,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
             assert.isTrue(hqImport('analytix/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Bulk"));
-            assert.isTrue(hqImport('analytix/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('start exportDownloadService', function () {
@@ -72,7 +72,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
             assert.isFalse(DnldExpData.exportDownloadService.isMultimediaDownload);
             assert.equal(DnldExpData.exportDownloadService.downloadId, downloadId);
-            assert.isTrue(hqImport('analytix/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('poll download progress', function () {

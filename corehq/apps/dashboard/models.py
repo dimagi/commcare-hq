@@ -1,9 +1,10 @@
 from __future__ import absolute_import
-from corehq.apps.export.views import ExportsPermissionsMixin
 from django.urls import reverse, resolve, Resolver404
 from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.reports.models import ReportConfig, FormExportSchema, CaseExportSchema
+from corehq.apps.export.models.new import FormExportInstance, CaseExportInstance
+from corehq.apps.export.views import ExportsPermissionsMixin, user_can_view_deid_exports
+from corehq.apps.reports.models import ReportConfig, CaseExportSchema, FormExportSchema
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -192,14 +193,20 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
 
     @property
     def total(self):
-        return len(self.form_exports) + len(self.case_exports)
+        return len(self.case_exports) + len(self.form_exports)
+
+    @property
+    @memoized
+    def has_deid_view_permissions(self):
+        return user_can_view_deid_exports(self.domain, self.request.couch_user)
 
     @property
     @memoized
     def form_exports(self):
         exports = []
         if self.has_edit_permissions:
-            exports = FormExportSchema.get_stale_exports(self.request.domain)
+            from corehq.apps.export.dbaccessors import get_form_exports_by_domain
+            exports = get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
         return exports
 
     @property
@@ -207,14 +214,24 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
     def case_exports(self):
         exports = []
         if self.has_edit_permissions:
-            exports = CaseExportSchema.get_stale_exports(self.request.domain)
+            from corehq.apps.export.dbaccessors import get_case_exports_by_domain
+            exports = get_case_exports_by_domain(self.request.domain, self.has_deid_view_permissions)
         return exports
 
     def _paginated_items(self, items_per_page, skip):
         exports = (self.form_exports + self.case_exports)[skip:skip + items_per_page]
         for export in exports:
-            urlname = 'export_download_forms' if isinstance(export, FormExportSchema) else 'export_download_cases'
-            yield self._fmt_item(
-                export.name,
-                reverse(urlname, args=(self.request.domain, export.get_id))
-            )
+            urlname = ''
+            if isinstance(export, CaseExportInstance):
+                urlname = 'new_export_download_cases'
+            elif isinstance(export, FormExportInstance):
+                urlname = 'new_export_download_forms'
+            elif isinstance(export, CaseExportSchema):
+                urlname = 'export_download_cases'
+            elif isinstance(export, FormExportSchema):
+                urlname = 'export_download_forms'
+            if urlname:
+                yield self._fmt_item(
+                    export.name,
+                    reverse(urlname, args=(self.request.domain, export.get_id))
+                )

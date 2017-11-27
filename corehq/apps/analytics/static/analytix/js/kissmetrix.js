@@ -2,7 +2,7 @@
 
 var _kmq = window._kmq = _kmq || [];
 
-hqDefine('analytix/js/kissmetrics', function () {
+hqDefine('analytix/js/kissmetrix', function () {
     'use strict';
     var _get = hqImport('analytix/js/initial').getFn('kissmetrics'),
         _global = hqImport('analytix/js/initial').getFn('global'),

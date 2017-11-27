@@ -135,7 +135,7 @@ describe('DownloadProgressController', function() {
                     DnldExpData.exportDownloadService.exportType = 'form';
                     DnldExpData.currentScope.sendAnalytics();
                     assert.isTrue(hqImport('analytix/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Saved"));
-                    assert.isTrue(hqImport('analytix/js/kissmetrics').track.event.lastCall.calledWith("Clicked Download button"));
+                    assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Download button"));
                 });
             });
         });
