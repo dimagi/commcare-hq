@@ -1,20 +1,27 @@
-/* global d3, module, inject */
+/* global module, inject, _ */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AdhaarBeneficiaryDirective', function () {
+describe('ChildrenInitiatedDirective', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
-    pageData.registerUrl('adhaar', 'adhaar');
+    pageData.registerUrl('children_initiated', 'children_initiated');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
 
     beforeEach(module('icdsApp', function ($provide) {
+        $provide.constant("genders", [
+            {id: '', name: 'All'},
+            {id: 'M', name: 'Male'},
+            {id: 'F', name: 'Female'},
+        ]);
+
         $provide.constant("userLocationId", null);
+
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -23,15 +30,15 @@ describe('AdhaarBeneficiaryDirective', function () {
         $location = _$location_;
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
-        $httpBackend.expectGET('adhaar').respond(200, {
+        $httpBackend.expectGET('children_initiated').respond(200, {
             report_data: ['report_test_data'],
         });
-        var element = window.angular.element("<adhaar-beneficiary data='test'></adhaar-beneficiary>");
+        var element = window.angular.element("<children-initiated data='test'></children-initiated>");
         var compiled = $compile(element)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
-        controller = compiled.controller('adhaarBeneficiary');
+        controller = compiled.controller('childrenInitiated');
         controller.step = 'map';
     }));
 
@@ -46,7 +53,7 @@ describe('AdhaarBeneficiaryDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
-        $httpBackend.expectGET('adhaar?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('children_initiated?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -60,7 +67,7 @@ describe('AdhaarBeneficiaryDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
-        $httpBackend.expectGET('adhaar?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('children_initiated?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -71,11 +78,12 @@ describe('AdhaarBeneficiaryDirective', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 5, all: 10});
+        var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>test</p>' +
-            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>5</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>50.00%</strong></div>');
+            '<p>test</p>'
+            + '<div>Total number of children between age 6 - 8 months: <strong>10</strong></div>'
+            + '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></div>'
+            + '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>50.00%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -88,7 +96,7 @@ describe('AdhaarBeneficiaryDirective', function () {
             {name: 'name5', location_id: 'test_id5'},
             {name: 'name6', location_id: 'test_id6'}
         );
-        $httpBackend.expectGET('adhaar').respond(200, {
+        $httpBackend.expectGET('children_initiated').respond(200, {
             report_data: ['report_test_data'],
         });
         $scope.$digest();
@@ -170,19 +178,22 @@ describe('AdhaarBeneficiaryDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage number of ICDS beneficiaries whose Aadhaar identification has been captured'
+            'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food. \n' +
+            '\n' +
+            'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition'
         );
     });
 
     it('tests chart tooltip content', function () {
-        var day = {y: 0.24561403508771928, all: 171, series: 0};
-        var val = {value: "Jul 2017", series: []};
+        var data = {y: 0.2434, in_month: 5, all: 171};
+        var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>'
-            + 'Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></p>'
-            + '<p>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>'
+            + '<p>Total number of children between age 6 - 8 months: <strong>171</strong></p>'
+            + '<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></p>'
+            + '<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>24.34%</strong></p>';
 
-        var result = controller.getTooltipContent(val, day);
+        var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 
