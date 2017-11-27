@@ -15,6 +15,7 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import WEBAPPS_CASE_MIGRATION
 from corehq.util.timer import TimingContext
 from corehq.util import reverse
 
@@ -23,6 +24,7 @@ from .migration import perform_migration
 
 
 @method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(WEBAPPS_CASE_MIGRATION.required_decorator(), name='dispatch')
 class BaseMigrationView(BaseDomainView):
     section_name = "Case Migrations"
 
@@ -31,7 +33,6 @@ class BaseMigrationView(BaseDomainView):
         return reverse(MigrationView.urlname, args=(self.domain,))
 
 
-# TODO feature flag
 class MigrationView(BaseMigrationView, FormView):
     urlname = 'case_migration'
     template_name = 'case_migrations/migration.html'
@@ -56,6 +57,8 @@ def get_related_case_ids(domain, case_id):
     return child_cases | indexed_cases
 
 
+@domain_admin_required
+@WEBAPPS_CASE_MIGRATION.required_decorator()
 def migration_restore(request, domain, case_id):
     domain_obj = Domain.get_by_name(domain)
     restore_user = request.couch_user

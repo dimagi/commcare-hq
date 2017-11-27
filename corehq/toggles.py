@@ -756,6 +756,13 @@ CUSTOM_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+WEBAPPS_CASE_MIGRATION = StaticToggle(
+    'webapps_case_migration',
+    "Work-in-progress to support user-written migrations",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
