@@ -207,11 +207,18 @@ class HistoricalAdherenceReport(EnikshayReport):
                 date = sunday + datetime.timedelta(days=i)
                 if date >= first_date and date <= last_date:
                     cases_for_date = adherence_cases_dict.get(date, [])
+                    count_99dots_cases_for_date = int(
+                        any(case.get_case_property('adherence_source') == '99DOTS' for case in cases_for_date)
+                    )
+                    count_non_99dots_cases_for_case = sum(
+                        case.get_case_property('adherence_source') != '99DOTS'
+                        for case in cases_for_date
+                    )
                     days.append(Day(
                         date,
                         self.get_adherence_image_key(cases_for_date, date),
                         self.show_unexpected_image(cases_for_date, date),
-                        len(cases_for_date) > 1,
+                        count_99dots_cases_for_date + count_non_99dots_cases_for_case > 1,
                         self.is_treatment_start_date(date),
                         force_month_label=date == first_date,
                     ))
