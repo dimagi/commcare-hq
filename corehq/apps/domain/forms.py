@@ -1556,6 +1556,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
+                        skip_auto_downgrade=False,
+                        do_not_invoice=False,
+                        no_invoice_reason='',
+                        date_delay_invoicing=None,
                     )
                 else:
                     Subscription.new_domain_subscription(
@@ -1564,7 +1568,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
-                        funding_source=FundingSource.CLIENT
+                        funding_source=FundingSource.CLIENT,
+                        skip_auto_downgrade=False,
                     )
                 return True
         except Exception as e:
@@ -1826,6 +1831,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     def subscription_default_fields(self):
         return {
             'internal_change': True,
+            'skip_auto_downgrade': False,
             'web_user': self.web_user,
         }
 
@@ -1892,6 +1898,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
         fields.update({
             'do_not_invoice': True,
+            'no_invoice_reason': '',
             'service_type': SubscriptionType.INTERNAL,
         })
         return fields
@@ -1983,6 +1990,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
+            'no_invoice_reason': '',
             'service_type': SubscriptionType.EXTENDED_TRIAL
         })
         return fields
@@ -2190,6 +2198,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'auto_generate_credits': True,
             'date_end': self.cleaned_data['end_date'],
             'do_not_invoice': False,
+            'no_invoice_reason': '',
             'service_type': SubscriptionType.IMPLEMENTATION,
         })
         return fields
