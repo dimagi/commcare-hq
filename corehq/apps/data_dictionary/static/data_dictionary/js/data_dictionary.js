@@ -1,6 +1,7 @@
 define([
     "jquery",
     "knockout",
+    "underscore",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
     "analytix/js/google",
@@ -8,6 +9,7 @@ define([
 ], function(
     $,
     ko,
+    _,
     initialPageData,
     hqMain,
     googleAnalytics
