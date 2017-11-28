@@ -753,7 +753,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         if case_list_lookup is not None:
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
-    if int is not None:
+    if long_ is not None:
         detail.long.columns = map(DetailColumn.from_json, long_)
         if tabs is not None:
             detail.long.tabs = map(DetailTab.wrap, tabs)
