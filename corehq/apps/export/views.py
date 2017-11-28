@@ -1211,7 +1211,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         This form is what will interact with the DrilldownToFormController in
         hq.app_data_drilldown.ng.js
         """
-        return CreateExportTagForm(self.has_form_export_permissions, self.has_case_export_permissions)
+        if self.has_case_export_permissions or self.has_form_export_permissions:
+            return CreateExportTagForm(self.has_form_export_permissions, self.has_case_export_permissions)
 
     @allow_remote_invocation
     def get_app_data_drilldown_values(self, in_data):
