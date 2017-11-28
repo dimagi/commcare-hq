@@ -1806,6 +1806,82 @@ class TestEpisode2B(TestDataSourceExpressions):
             1
         )
 
+    def test_drtb_patients_on_ip(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'no',
+            'treatment_outcome': ''
+        }
+
+        patients_on_ip = self.get_expression('drtb_patients_on_ip', 'integer')
+
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_tb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'no'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_tb',
+            'treatment_initiation_date': None,
+            'cp_initiated': 'yes',
+            'treatment_outcome': 'yes'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_tb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'yes'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_drtb_patients_on_cp(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb',
+            'cp_initiated': 'yes',
+            'treatment_outcome': ''
+        }
+
+        patients_on_cp = self.get_expression('drtb_patients_on_cp', 'integer')
+
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['treatment_outcome'] = 'yes'
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['cp_initiated'] = 'no'
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
     def test_drtb_patients_on_treatment(self):
         episode_case = {
             '_id': 'episode_case_id',
@@ -1843,7 +1919,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             0
         )
 
-    def test_patients_on_ip(self):
+    def test_dstb_patients_on_ip(self):
         episode_case = {
             '_id': 'episode_case_id',
             'domain': 'enikshay-test',
@@ -1853,7 +1929,7 @@ class TestEpisode2B(TestDataSourceExpressions):
             'treatment_outcome': ''
         }
 
-        patients_on_ip = self.get_expression('patients_on_ip', 'integer')
+        patients_on_ip = self.get_expression('dstb_patients_on_ip', 'integer')
 
         self.assertEqual(
             patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
@@ -1891,15 +1967,16 @@ class TestEpisode2B(TestDataSourceExpressions):
             0
         )
 
-    def test_patients_on_cp(self):
+    def test_dstb_patients_on_cp(self):
         episode_case = {
             '_id': 'episode_case_id',
             'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb',
             'cp_initiated': 'yes',
             'treatment_outcome': ''
         }
 
-        patients_on_cp = self.get_expression('patients_on_cp', 'integer')
+        patients_on_cp = self.get_expression('dstb_patients_on_cp', 'integer')
 
         self.assertEqual(
             patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
@@ -1915,6 +1992,43 @@ class TestEpisode2B(TestDataSourceExpressions):
         episode_case['cp_initiated'] = 'no'
         self.assertEqual(
             patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_dstb_patients_on_treatment(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb',
+            'treatment_initiation_date': '2017-10-01',
+            'treatment_outcome': ''
+        }
+
+        drtb_patients_on_treatment = self.get_expression('dstb_patients_on_treatment', 'integer')
+
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['episode_type'] = 'confirmed_drtb'
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['episode_type'] = 'confirmed_tb'
+        episode_case['treatment_initiation_date'] = ''
+        episode_case['treatment_outcome'] = 'yes'
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['episode_type'] = 'confirmed_drtb'
+        episode_case['treatment_initiation_date'] = None
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
             0
         )
 
@@ -2051,6 +2165,19 @@ class TestEpisode2B(TestDataSourceExpressions):
         )
 
         episode_case['weight_band'] = '31-60'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_above_60', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'above_60'
         self.assertEqual(
             weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
             1
