@@ -30,11 +30,19 @@
         <div class="col-xs-3">
             <select class="select form-control" data-bind="value: selected_case_filter_id">
                 <option value="select-one">{% trans "(Select one and click Add filter)" %}</option>
+                {% if form.allow_case_modified_filter %}
                 <option value="case-modified-filter">{% trans "Case not modified since" %}</option>
+                {% endif %}
+                {% if form.allow_case_property_filter %}
                 <option value="case-property-filter">{% trans "Case property" %}</option>
+                {% endif %}
+                {% if form.allow_date_case_property_filter %}
                 <option value="date-case-property-filter">{% trans "Date case property" %}</option>
                 <option value="advanced-date-case-property-filter">{% trans "Date case property (advanced)" %}</option>
+                {% endif %}
+                {% if form.allow_parent_case_references %}
                 <option value="parent-closed-filter">{% trans "Parent case is closed" %}</option>
+                {% endif %}
                 {% if form.is_system_admin %}
                 <option value="custom-filter">{% trans "Custom filter" %}</option>
                 {% endif %}

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import re
+from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
@@ -17,6 +18,7 @@ from django.forms.fields import (
 from django.forms.forms import Form
 from django.forms.widgets import Textarea, CheckboxSelectMultiple
 from django.utils.functional import cached_property
+from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -617,3 +619,57 @@ class ScheduleForm(Form):
             raise error
 
         return occurrences
+
+
+class ConditionalAlertForm(Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "conditional-alert-"
+    prefix = "conditional-alert"
+
+    name = TrimmedCharField(
+        label=_("Name"),
+        required=True,
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        super(ConditionalAlertForm, self).__init__(*args, **kwargs)
+
+        self.domain = domain
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.helper.field_class = 'col-xs-2'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "",
+                crispy.Field('name'),
+            ),
+        )
+
+
+class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
+
+    @property
+    def show_fieldset_title(self):
+        return False
+
+    @property
+    def fieldset_help_text(self):
+        return _("An instance of the schedule will be created for each case matching all filter criteria below.")
+
+    @property
+    def allow_parent_case_references(self):
+        return False
+
+    @property
+    def allow_case_modified_filter(self):
+        return False
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return False

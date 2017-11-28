@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -22,7 +23,7 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
-from corehq.messaging.scheduling.forms import ScheduleForm
+from corehq.messaging.scheduling.forms import ScheduleForm, ConditionalAlertForm, ConditionalAlertCriteriaForm
 from corehq.messaging.scheduling.models import (
     Schedule,
     AlertSchedule,
@@ -533,7 +534,76 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def page_context(self):
-        return {}
+        return {
+            'basic_info_form': self.basic_info_form,
+            'criteria_form': self.criteria_form,
+        }
+
+    @property
+    def initial_rule(self):
+        return None
+
+    @cached_property
+    def read_only_mode(self):
+        return (
+            not self.is_system_admin and
+            self.criteria_form.requires_system_admin_to_edit
+        )
+
+    @cached_property
+    def is_system_admin(self):
+        return self.request.couch_user.is_superuser
+
+    @cached_property
+    def basic_info_form(self):
+        if self.request.method == 'POST':
+            return ConditionalAlertForm(self.domain, self.request.POST)
+
+        return ConditionalAlertForm(self.domain)
+
+    @cached_property
+    def criteria_form(self):
+        kwargs = {
+            'rule': self.initial_rule,
+            'is_system_admin': self.is_system_admin,
+        }
+
+        if self.request.method == 'POST':
+            return ConditionalAlertCriteriaForm(self.domain, self.request.POST, **kwargs)
+
+        return ConditionalAlertCriteriaForm(self.domain, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        basic_info_form_valid = self.basic_info_form.is_valid()
+        criteria_form_valid = self.criteria_form.is_valid()
+
+        if self.read_only_mode:
+            # Don't allow making changes to rules that have custom
+            # criteria/actions unless the user has permission to
+            return HttpResponseBadRequest()
+
+        if basic_info_form_valid and criteria_form_valid:
+            if not self.is_system_admin and self.criteria_form.requires_system_admin_to_save:
+                # Don't allow adding custom criteria/actions to rules
+                # unless the user has permission to
+                return HttpResponseBadRequest()
+
+            with transaction.atomic():
+                if self.initial_rule:
+                    rule = self.initial_rule
+                else:
+                    rule = AutomaticUpdateRule(
+                        domain=self.domain,
+                        active=True,
+                        migrated=True,
+                        workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    )
+
+                rule.name = self.basic_info_form.cleaned_data['name']
+                self.criteria_form.save_criteria(rule)
+            return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
+
+        return self.get(request, *args, **kwargs)
 
 
 class EditConditionalAlertView(CreateConditionalAlertView):
