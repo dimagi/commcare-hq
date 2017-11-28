@@ -2,7 +2,7 @@
 /**
  *  Fetches all the initialization data needed for the different analytics platforms.
  */
-hqDefine('analytics/js/initial', function () {
+hqDefine('analytix/js/initial', function () {
     'use strict';
     var _selector = '.initial-analytics-data',
         _gather =  hqImport('hqwebapp/js/initial_page_data').gather,

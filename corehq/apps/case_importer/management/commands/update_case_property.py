@@ -27,7 +27,7 @@ class Command(BaseCommand):
         self.case_accessor = CaseAccessors(self.domain)
         with open(infile, 'r') as f, open(logfile, 'w') as log:
             reader = csv.reader(f)
-            _, case_prop_name = reader.next()
+            _, case_prop_name = next(reader)
             log.write('--------Successful Form Ids----------\n')
             failed_updates = []
             for rows in chunked(reader, 100):

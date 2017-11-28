@@ -43,6 +43,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     CustomIcon)
 from django_prbac.utils import has_privilege
+import six
 
 
 @retry_resource(3)
@@ -240,7 +241,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'multimedia': {
                 "object_map": app.get_object_map(),
                 'upload_managers': uploaders,
-                'upload_managers_js': {type: u.js_options for type, u in uploaders.iteritems()},
+                'upload_managers_js': {type: u.js_options for type, u in six.iteritems(uploaders)},
             }
         })
         context['module_icon'] = None

@@ -8,7 +8,7 @@
  * WARNING, DEPRECATED: ANALYTICS_DEPRECATED
  *
  */
-hqDefine('analytics/js/logging', function () {
+hqDefine('analytix/js/logging', function () {
     'use strict';
 
     var _makeLevel = function (name, style) {
@@ -129,7 +129,7 @@ hqDefine('analytics/js/logging', function () {
     };
 
     var Level = function (_levelSlug, _levelPrefix, _logger) {
-        var _get = hqImport('analytics/js/initial').getFn('logging'),
+        var _get = hqImport('analytix/js/initial').getFn('logging'),
             _levelData = {
                 slug: _levelSlug,
                 prefix: _levelPrefix,

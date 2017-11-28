@@ -59,6 +59,8 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.translation import ugettext_noop
+import six
+from functools import reduce
 
 
 TOO_MUCH_DATA = ugettext_noop(
@@ -1612,10 +1614,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         rows = []
         active_users_by_group = {
             g: len(filter(lambda u: report_data.submissions_by_user.get(u['user_id']), users))
-            for g, users in self.users_by_group.iteritems()
+            for g, users in six.iteritems(self.users_by_group)
         }
 
-        for group, users in self.users_by_group.iteritems():
+        for group, users in six.iteritems(self.users_by_group):
             group_name, group_id = tuple(group.split('|'))
             if group_name == 'no_group':
                 continue

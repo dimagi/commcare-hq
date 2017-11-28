@@ -1,5 +1,5 @@
 /* globals _, JSON */
-hqDefine('analytics/js/utils', function () {
+hqDefine('analytix/js/utils', function () {
     'use strict';
 
     /**

@@ -1,10 +1,6 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
-{% block dependencies %}
-<script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-{% endblock %}
-
 {% block mocha_tests %}
 <script src="{% static 'hqwebapp/spec/urllib_spec.js' %}"></script>
 {% endblock %}

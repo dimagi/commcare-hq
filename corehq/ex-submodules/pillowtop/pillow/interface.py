@@ -172,7 +172,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             'pillow_name:{}'.format(self.get_name()),
         ])
         checkpoint_sequence = self._normalize_checkpoint_sequence()
-        for topic, value in checkpoint_sequence.iteritems():
+        for topic, value in six.iteritems(checkpoint_sequence):
             datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(topic),

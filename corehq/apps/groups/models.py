@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from itertools import imap
+from six.moves import map
 
 from django.conf import settings
 
@@ -151,7 +151,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
                 group_id
             ))
         index = 0
-        for i in range(0,len(self.path)):
+        for i in range(0, len(self.path)):
             if self.path[i] == group_id:
                 index = i
                 break
@@ -171,7 +171,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             if is_active and not user.is_active:
                 return False
             return True
-        users = imap(CouchUser.wrap_correctly, iter_docs(self.get_db(), self.users))
+        users = map(CouchUser.wrap_correctly, iter_docs(self.get_db(), self.users))
         return filter(is_relevant_user, users)
 
     @memoized

@@ -17,6 +17,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.util.timezones.conversions import ServerTime
 import langcodes
 import os
 import pytz
@@ -61,6 +62,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
+from casexml.apps.case.util import get_all_changes_to_case_property
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
@@ -1298,11 +1300,35 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.urlname, args=[self.domain, case_id]),
                 "show_transaction_export": toggles.COMMTRACK.enabled(
                     self.request.user.username),
+                "property_details_enabled": toggles.SUPPORT.enabled(self.request.user.username),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": self.request.couch_user.can_edit_data,
             'is_usercase': self.case_instance.type == USERCASE_TYPE,
         }
+
+
+def form_to_json(domain, form, timezone=None):
+    form_name = xmlns_to_name(
+        domain,
+        form.xmlns,
+        app_id=form.app_id,
+        lang=get_language(),
+    )
+    if timezone is None:
+        received_on = json_format_datetime(form.received_on)
+    else:
+        received_on = ServerTime(form.received_on).user_time(timezone).done().strftime("%Y-%m-%d %H:%M")
+
+    return {
+        'id': form.form_id,
+        'received_on': received_on,
+        'user': {
+            "id": form.user_id or '',
+            "username": form.metadata.username if form.metadata else '',
+        },
+        'readable_name': form_name,
+    }
 
 
 @location_safe
@@ -1320,28 +1346,35 @@ def case_forms(request, domain, case_id):
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
-    def form_to_json(form):
-        form_name = xmlns_to_name(
-            domain,
-            form.xmlns,
-            app_id=form.app_id,
-            lang=get_language(),
-        )
-        return {
-            'id': form.form_id,
-            'received_on': json_format_datetime(form.received_on),
-            'user': {
-                "id": form.user_id or '',
-                "username": form.metadata.username if form.metadata else '',
-            },
-            'readable_name': form_name,
-        }
-
     slice = list(reversed(case.xform_ids))[start_range:end_range]
     forms = FormAccessors(domain).get_forms(slice, ordered=True)
     return json_response([
-        form_to_json(form) for form in forms
+        form_to_json(domain, form) for form in forms
     ])
+
+
+@location_safe
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_property_changes(request, domain, case_id, case_property_name):
+    """Returns all changes to a case property
+    """
+    case = _get_case_or_404(domain, case_id)
+    changes = []
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    for change in reversed(get_all_changes_to_case_property(case, case_property_name)):
+        change_json = form_to_json(domain, change.transaction.form, timezone=timezone)
+        change_json['new_value'] = change.new_value
+        changes.append(change_json)
+
+    context = {
+        'domain': domain,
+        'timezone': timezone.localize(datetime.utcnow()).tzname(),
+        'property_name': case_property_name,
+        'changes': changes,
+    }
+    return render(request, "case/partials/case_property_modal.html", context)
 
 
 @location_safe

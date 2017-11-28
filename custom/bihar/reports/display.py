@@ -150,7 +150,7 @@ class MCHMotherDisplay(MCHDisplay):
                 elif children_count > 1 and "child_info" in form_dict:
                     child_list = form_dict["child_info"]
 
-                for idx,child in enumerate(child_list):
+                for idx, child in enumerate(child_list):
                     case_child = {}
                     if "case" in child:
                         case_child = CommCareCase.get(child["case"]["@case_id"])
@@ -484,7 +484,7 @@ class MCHChildDisplay(MCHDisplay):
 
                 parent_json = parent_case.case_properties()
 
-                setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json,"husband_name"), get_property(parent_json, "mother_name")))
+                setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json, "husband_name"), get_property(parent_json, "mother_name")))
                 setattr(self, "_full_mcts_id", get_property(parent_json, "full_mcts_id"))
                 setattr(self, "_ward_number", get_property(parent_json, "ward_number"))
                 setattr(self, "_mobile_number", get_property(parent_case, 'mobile_number'))

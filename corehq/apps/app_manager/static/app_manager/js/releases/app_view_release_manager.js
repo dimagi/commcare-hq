@@ -1,4 +1,4 @@
-/* globals hqDefine hqImport django analytics */
+/* globals hqDefine hqImport django */
 hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -20,7 +20,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     }
 
     $("#onboarding-video").click(function() {
-        analytics.workflow('Clicked onboarding video link');
+        hqImport('analytix/js/kissmetrix').track.event('Clicked onboarding video link');
     });
 
     // View changes / app diff
@@ -48,17 +48,10 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     }
 
     $(function() {
-        analytics.workflow('Visited the Release Manager');
+        hqImport('analytix/js/kissmetrix').track.event('Visited the Release Manager');
         if (initial_page_data('confirm')) {
-            analytics.usage('User actions', 'User created login', window.location.pathname);
-            analytics.usage('User actions', 'Forms', 'Name Your First Project');
-        }
-
-        var ab_test = initial_page_data('ab_test');
-        if (ab_test) {
-            var options = {};
-            options[ab_test.name] = ab_test.version;
-            analytics.identify(options);
+            hqImport('analytix/js/google').track.event('User actions', 'User created login', window.location.pathname);
+            hqImport('analytix/js/google').track.event('User actions', 'Forms', 'Name Your First Project');
         }
     });
 });

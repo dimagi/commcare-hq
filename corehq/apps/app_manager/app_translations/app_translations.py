@@ -43,7 +43,7 @@ def get_unicode_dicts(iterable):
 
     rows = []
     for row in iterable:
-        rows.append({six.text_type(k): none_or_unicode(v) for k, v in row.iteritems()})
+        rows.append({six.text_type(k): none_or_unicode(v) for k, v in six.iteritems(row)})
     return rows
 
 
@@ -321,7 +321,7 @@ def expected_bulk_app_sheet_rows(app):
 
                     # Add rows for graph configuration
                     if detail.format == "graph":
-                        for key, val in detail.graph_configuration.locale_specific_config.iteritems():
+                        for key, val in six.iteritems(detail.graph_configuration.locale_specific_config):
                             rows[module_string].append(
                                 (
                                     key + " (graph config)",
@@ -329,7 +329,7 @@ def expected_bulk_app_sheet_rows(app):
                                 ) + tuple(val.get(lang, "") for lang in app.langs)
                             )
                         for i, series in enumerate(detail.graph_configuration.series):
-                            for key, val in series.locale_specific_config.iteritems():
+                            for key, val in six.iteritems(series.locale_specific_config):
                                 rows[module_string].append(
                                     (
                                         "{} {} (graph series config)".format(key, i),
@@ -394,7 +394,7 @@ def expected_bulk_app_sheet_rows(app):
                                     value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
                             itext_items[text_id][(lang, value_form)] = value
 
-                for text_id, values in itext_items.iteritems():
+                for text_id, values in six.iteritems(itext_items):
                     row = [text_id]
                     for value_form in ["default", "audio", "image", "video"]:
                         # Get the fallback value for this form

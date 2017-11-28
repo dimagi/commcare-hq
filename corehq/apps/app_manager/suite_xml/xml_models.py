@@ -6,6 +6,7 @@ from eulxml.xmlmap import (
 )
 from lxml import etree
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
+import six
 
 
 class XPathField(StringField):
@@ -553,10 +554,10 @@ class GraphTemplate(Template):
                                     #       figure out why their unquoted colors
                                     #       aren't working.
                                     ConfigurationItem(id=k, xpath_function=v)
-                                    for k, v in s.config.iteritems()
+                                    for k, v in six.iteritems(s.config)
                                 ] + [
                                     ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
-                                    for k, v in s.locale_specific_config.iteritems()
+                                    for k, v in six.iteritems(s.locale_specific_config)
                                 ]
                             )
                         )
@@ -567,11 +568,11 @@ class GraphTemplate(Template):
                         [
                             ConfigurationItem(id=k, xpath_function=v)
                             for k, v
-                            in graph.config.iteritems()
+                            in six.iteritems(graph.config)
                         ] + [
                             ConfigurationItem(id=k, locale_id=locale_config(k))
                             for k, v
-                            in graph.locale_specific_config.iteritems()
+                            in six.iteritems(graph.locale_specific_config)
                         ]
                     )
                 ),

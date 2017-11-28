@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import mock
 import datetime
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
@@ -26,7 +26,6 @@ from custom.enikshay.tasks import (
     calculate_dose_status_by_day,
     get_datastore,
 )
-from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
@@ -36,6 +35,7 @@ from custom.enikshay.tests.utils import (
 import six
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestAdherenceUpdater(TestCase):
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
@@ -766,7 +766,8 @@ class TestAdherenceUpdater(TestCase):
             'schedule1',
             []
         )
-        update_episode_adherence_properties(self.domain, self.person_id)
+        updater = EpisodeUpdater(self.domain)
+        updater.update_single_case(episode)
 
         episode = CaseAccessors(self.domain).get_case(episode.case_id)
         self.assertDictEqual(

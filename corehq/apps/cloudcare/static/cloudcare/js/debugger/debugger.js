@@ -1,4 +1,4 @@
-/* globals CodeMirror, gettext */
+/* globals CodeMirror, gettext, Clipboard */
 hqDefine('cloudcare/js/debugger/debugger', function () {
 
     /**
@@ -79,7 +79,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 self.updating(true);
                 self.onUpdate();
             }
-            window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User toggled CloudCare debugger');
         };
         self.collapseNavbar = function() {
             $('.navbar-collapse').collapse('hide');
@@ -209,29 +209,63 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
         self.selectedDebugOption = ko.observable('basic');
+
+        self.maxLines = 50;
+
+        self.fullResult = null;
+
         self.$xpath = null;
         self.newXPathQuery = function (data) {
             return {
+                processedOutput: self.getBody(data.output),
+                maxLines: self.maxLines,
                 status: data.status,
-                output: data.output,
-                trace: data.trace,
+                trace: self.getBody(data.trace),
                 xpath: data.xpath,
+
                 successResult: function () {
                     if (this.success()) {
-                        return self.formatResult(data.output);
+                        return this.processedOutput[0];
                     }
+                },
+                getTruncatedSuccess: function () {
+                    if (this.success()) {
+                        return self.truncateResult(this.processedOutput[0], 5, true);
+                    }
+                },
+                getFullSuccessResult: function () {
+                    if (this.success()) {
+                        return this.processedOutput[1];
+                    }
+                },
+                isSuccessTruncated: function() {
+                    return this.success() && this.processedOutput[1];
+                },
+                getMaxLines: function() {
+                    return this.maxLines;
                 },
                 traceResult: function () {
                     if (this.success()) {
-                        return self.formatResult(data.trace);
+                        return this.trace[0];
+                    }
+                },
+                isTraceTruncated: function() {
+                    return this.hasTrace() && this.trace[1];
+                },
+                getFullTraceResult: function () {
+                    if (this.hasTrace()) {
+                        return this.trace[1];
                     }
                 },
                 hasTrace: function () {
-                    return this.trace;
+                    return this.trace[0];
                 },
                 errorResult: function () {
                     if (!this.success()) {
-                        return data.output || gettext('Error evaluating expression.');
+                        if(this.processedOutput) {
+                            return this.processedOutput[0];
+                        }
+                        return gettext('Error evaluating expression.');
                     }
                 },
                 success: function () {
@@ -249,8 +283,34 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result>\n*([\\s\\S]*?)\\s*</result>\\s*|' +
             '^<[?]xml version="1.0" encoding="UTF-8"[?]>\\s*<result/>()\\s*$');
 
+        self.getBody = function(output) {
+            if (!output) {
+                return ['',''];
+            }
+            var inlineBody = self.formatResult(output);
+            var numLines = (inlineBody.match(/\r?\n/g) || '').length + 1;
+            var fullBody = '';
+            if(numLines > self.maxLines) {
+                fullBody = inlineBody;
+                inlineBody = self.truncateResult(fullBody, self.maxLines, false);
+            }
+            return [inlineBody, fullBody];
+        };
+
         self.formatResult = function (output) {
             return output.replace(resultRegex, "$1");
+        };
+
+        self.truncateResult = function(output, maxLines, addElipsis) {
+            var items = output.split(RegExp("\r?\n")); // eslint-disable-line no-control-regex
+            if(items.length > maxLines) {
+                var toReturn= items.slice(0, maxLines).join("\n");
+                if(addElipsis) {
+                    return toReturn + "\n" + "...";
+                }
+                return toReturn;
+            }
+            return output;
         };
 
         self.onSubmitXPath = function() {
@@ -302,7 +362,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     self.recentXPathQueries.slice(0, 6)
                 );
             });
-            window.analytics.workflow('[app-preview] User evaluated XPath');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User evaluated XPath');
         };
 
         self.onMouseUp = function() {
@@ -426,7 +486,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 };
                 options.value = ko.unwrap(valueAccessor());
                 var editor = CodeMirror.fromTextArea(element, options);
-                editor.setSize(null, 200);  // hard-coded right now;
+                editor.setSize(null, 'auto');
                 element.editor = editor;
             },
             update: function(element, valueAccessor) {
@@ -436,6 +496,17 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                 }
             },
         };
+        ko.bindingHandlers.clipboardButton = {
+            init: function(element, valueAccessor) {
+                new Clipboard(element,
+                    {
+                        text: function() {
+                            return ko.unwrap(valueAccessor());
+                        },
+                    });
+            },
+        };
+
     });
 
     return {

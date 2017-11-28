@@ -809,6 +809,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+AGGREGATE_USER_STATUS_REPORT = StaticToggle(
+    'aggregate_user_status_report',
+    'Show Aggregate User Status',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENCLINICA = StaticToggle(
     'openclinica',
     'KEMRI: Offer OpenClinica settings and CDISC ODM export',
@@ -1348,13 +1355,6 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_NEW = StaticToggle(
-    'analytics_new',
-    "Use refactored analytics across all of HQ (for QA purposes).",
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )

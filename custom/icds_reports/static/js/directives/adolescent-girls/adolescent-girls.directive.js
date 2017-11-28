@@ -10,8 +10,6 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         storageService.setKey('search', $location.search());
     }
     vm.userLocationId = userLocationId;
-    vm.selectedLocations = [];
-
     vm.filtersData = $location.search();
     vm.label = "Adolescent Girls (11-18 years)";
     vm.step = $routeParams.step;

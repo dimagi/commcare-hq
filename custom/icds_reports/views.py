@@ -981,7 +981,7 @@ class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
-        now = datetime.utcnow() - relativedelta(day=1)
+        now = datetime.utcnow() - relativedelta(days=1)
 
         domain = self.kwargs['domain']
 

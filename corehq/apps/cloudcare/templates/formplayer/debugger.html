@@ -84,23 +84,39 @@
 
 <script type="text/html" id="debugger-evaluate-result-template">
     <!--ko if: xPathQuery.successResult() === ''-->
-    <div><i>{% trans "Empty String" %}</i></div>
+    <div><em>{% trans "Empty String" %}</em></div>
     <!--/ko-->
     <!--ko if: xPathQuery.errorResult()-->
     <div data-bind="text: xPathQuery.errorResult(), css: 'text-danger'"></div>
     <!--/ko-->
-    <!--ko if: options.useCodeMirror && xPathQuery.successResult()-->
+    <!--ko if: xPathQuery.isSuccessTruncated() && options.showInFull-->
+    <div>
+        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
+        <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullSuccessResult()">
+            {% trans "Copy Full Evaluation to Clipboard" %}
+        </a>
+    </div>
+    <!--/ko-->
+    <!--ko if: options.showInFull && xPathQuery.successResult()-->
     <textarea type="text" data-bind="
         codeMirror: xPathQuery.successResult()
     "></textarea>
     <!--/ko-->
-    <!--ko if: options.useCodeMirror && xPathQuery.hasTrace()-->
+    <!--ko if: xPathQuery.isTraceTruncated() && options.showInFull-->
+    <div>
+        <em>{% trans "Showing the first" %} <span data-bind="text: xPathQuery.getMaxLines()"/> {% trans "lines..." %}</em>
+        <a class="clickable pull-right" data-clipboard-action="copy" data-bind="clipboardButton: xPathQuery.getFullTraceResult()">
+            {% trans "Copy Full Trace to Clipboard" %}
+        </a>
+    </div>
+    <!--/ko-->
+    <!--ko if: options.showInFull && xPathQuery.hasTrace()-->
     <textarea type="text" data-bind="
         codeMirror: xPathQuery.traceResult()
     "></textarea>
     <!--/ko-->
-    <!--ko if: !options.useCodeMirror && xPathQuery.successResult()-->
-        <pre data-bind="text: xPathQuery.successResult()"></pre>
+    <!--ko if: !options.showInFull && xPathQuery.successResult()-->
+        <pre data-bind="text: xPathQuery.getTruncatedSuccess()"></pre>
     <!--/ko-->
 </script>
 
@@ -134,7 +150,7 @@
         </div>
         <div class="col-sm-12" data-bind="template: {
             name: 'debugger-evaluate-result-template',
-            data: {xPathQuery: xPathQuery(), options: {useCodeMirror: true}},
+            data: {xPathQuery: xPathQuery(), options: {showInFull: true}},
             if: xPathQuery()
         }">
         </div>
@@ -164,7 +180,7 @@
                     </td>
                     <td class="col-sm-3" data-bind="template: {
                         name: 'debugger-evaluate-result-template',
-                        data: {xPathQuery: $data, options: {useCodeMirror: false}}
+                        data: {xPathQuery: $data, options: {showInFull: false}}
                     }"></td>
                 </tr>
             </tbody>
