@@ -67,7 +67,7 @@ def _update_forms(db_name, form_ids):
                 select form_id, max(date) as modified_on from form_processor_xformoperationsql group by form_id
                 ) as d group by form_id
         )
-        UPDATE form_processor_xforminstancesql SET modified_on = max_dates.modified_on
+        UPDATE form_processor_xforminstancesql SET server_modified_on = max_dates.modified_on
         FROM max_dates
         WHERE form_processor_xforminstancesql.form_id = max_dates.form_id
           AND form_processor_xforminstancesql.form_id in %s
