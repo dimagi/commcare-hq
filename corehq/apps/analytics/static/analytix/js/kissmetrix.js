@@ -33,6 +33,8 @@ hqDefine('analytix/js/kissmetrix', function () {
             if (properties) data.km_property = properties;
             window.dataLayer.push(data);
             logger.verbose.log(command, ['window._kmq.push', 'window.dataLayer.push', '_kmqPushCommand', commandName]);
+        } else if (callbackFn) {
+            callbackFn();
         }
     };
 
@@ -91,11 +93,9 @@ hqDefine('analytix/js/kissmetrix', function () {
      * @param {integer} timeout - (optional) timeout in milliseconds
      */
     var identifyTraits = function (traits, callbackFn, timeout) {
-        if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
-            callbackFn = _utils.createSafeCallback(callbackFn, timeout);
-            _kmqPushCommand('set', traits, callbackFn);
-        }
+        logger.debug.log(logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
+        callbackFn = _utils.createSafeCallback(callbackFn, timeout);
+        _kmqPushCommand('set', traits, callbackFn);
     };
 
     /**
@@ -106,11 +106,9 @@ hqDefine('analytix/js/kissmetrix', function () {
      * @param {integer} timeout - (optional) Timeout for safe callback
      */
     var trackEvent = function (name, properties, callbackFn, timeout) {
-        if (_global('isEnabled')) {
-            logger.debug.log(arguments, 'RECORD EVENT');
-            callbackFn = _utils.createSafeCallback(callbackFn, timeout);
-            _kmqPushCommand('record', properties, callbackFn, name);
-        }
+        logger.debug.log(arguments, 'RECORD EVENT');
+        callbackFn = _utils.createSafeCallback(callbackFn, timeout);
+        _kmqPushCommand('record', properties, callbackFn, name);
     };
 
     /**
@@ -120,10 +118,8 @@ hqDefine('analytix/js/kissmetrix', function () {
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var internalClick = function (selector, name, properties) {
-        if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
-            _kmqPushCommand('trackClick', properties, undefined, name);
-        }
+        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
+        _kmqPushCommand('trackClick', properties, undefined, name);
     };
 
     /**
@@ -133,10 +129,8 @@ hqDefine('analytix/js/kissmetrix', function () {
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var trackOutboundLink = function (selector, name, properties) {
-        if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
-            _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
-        }
+        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
+        _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
     };
 
     /**
