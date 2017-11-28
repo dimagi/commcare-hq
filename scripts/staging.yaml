@@ -68,5 +68,6 @@ submodules:
   deployment/commcare-hq-deploy:
     branches:
       - jls/r-js # Jenny 10/2
+      - revert-447-sk/fix-inventory # Jenny 11/28
   submodules/commcare-translations:
     branches: []
