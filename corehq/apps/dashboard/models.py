@@ -198,7 +198,7 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
     @property
     @memoized
     def has_deid_view_permissions(self):
-        return user_can_view_deid_exports(self.domain, self.request.couch_user)
+        return user_can_view_deid_exports(self.request.domain, self.request.couch_user)
 
     @property
     @memoized
@@ -206,7 +206,7 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
         exports = []
         if self.has_edit_permissions:
             from corehq.apps.export.dbaccessors import get_form_exports_by_domain
-            exports = get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
+            exports = get_form_exports_by_domain(self.request.domain, self.has_deid_view_permissions)
         return exports
 
     @property
