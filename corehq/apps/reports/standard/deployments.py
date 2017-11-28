@@ -211,9 +211,11 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_sub and last_sub.get('commcare_version'):
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             else:
-                device = user.get_last_used_device()
-                if device and device.commcare_version:
-                    commcare_version = _get_commcare_version(device.commcare_version)
+                devices = user.get('devices', None)
+                if devices:
+                    device = max(devices, key=lambda dev: dev['last_used'])
+                    if device.get('commcare_version', None):
+                        commcare_version = _get_commcare_version(device.commcare_version)
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):

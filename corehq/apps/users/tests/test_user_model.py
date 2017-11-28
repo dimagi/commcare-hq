@@ -148,3 +148,14 @@ class UserDeviceTest(SimpleTestCase):
         self.assertEqual(m1.build_version, m2.build_version)
         self.assertEqual(m1.last_submission, m2.last_submission)
         self.assertEqual(m1.num_unsent_forms, 1)
+
+    def test_merge_device_app_meta_last_is_none(self):
+        m1 = DeviceAppMeta(
+            last_submission=datetime.utcnow(),
+        )
+        m2 = DeviceAppMeta(
+            last_sync=datetime.utcnow(),
+        )
+
+        m1.merge(m2)
+        self.assertEqual(m1.last_sync, m2.last_sync)
