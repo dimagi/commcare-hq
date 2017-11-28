@@ -95,7 +95,7 @@ json-delta==2.0
 email_validator==1.0.2
 dnspython==1.15.0
 raven==6.1.0
-quickcache==0.0.1
+quickcache==0.1.0
 zeep==1.6.0
 ethiopian_date==0.1.1
 architect==0.5.6
