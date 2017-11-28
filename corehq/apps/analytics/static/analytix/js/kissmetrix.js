@@ -1,6 +1,6 @@
 /* globals _kmq */
 
-var _kmq = window._kmq = _kmq || [];        // TODO: test this in particular
+var _kmq = window._kmq = _kmq || [];
 
 hqDefine('analytix/js/kissmetrix', [
     'underscore',
@@ -103,7 +103,7 @@ hqDefine('analytix/js/kissmetrix', [
      */
     var identifyTraits = function (traits, callbackFn, timeout) {
         logger.debug.log(logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
-        callbackFn = _utils.createSafeCallback(callbackFn, timeout);
+        callbackFn = utils.createSafeCallback(callbackFn, timeout);
         _kmqPushCommand('set', traits, callbackFn);
     };
 
@@ -116,7 +116,7 @@ hqDefine('analytix/js/kissmetrix', [
      */
     var trackEvent = function (name, properties, callbackFn, timeout) {
         logger.debug.log(arguments, 'RECORD EVENT');
-        callbackFn = _utils.createSafeCallback(callbackFn, timeout);
+        callbackFn = utils.createSafeCallback(callbackFn, timeout);
         _kmqPushCommand('record', properties, callbackFn, name);
     };
 
