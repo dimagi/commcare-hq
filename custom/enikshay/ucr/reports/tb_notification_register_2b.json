@@ -411,6 +411,23 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "microscopy-zn": "Microscopy-ZN",
+                        "microscopy-fluorescent": "Microscopy-Fluorescent"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "microscopy_test_type",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Microbiological Confirmation SM - Test Type"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "microscopy_test_result_date",
