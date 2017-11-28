@@ -1,13 +1,22 @@
-/* globals _, window */
+/* globals window */
 /**
  * Instatiates the Hubspot analytics platform.
  */
-hqDefine('analytix/js/hubspot', function () {
+hqDefine('analytix/js/hubspot', [
+    'underscore',
+    'analytix/js/initial',
+    'analytix/js/logging',
+    'analytix/js/utils',
+], function (
+    _,
+    initialAnalytics,
+    logging,
+    utils
+) {
     'use strict';
-    var _get = hqImport('analytix/js/initial').getFn('hubspot'),
-        _global = hqImport('analytix/js/initial').getFn('global'),
-        logger = hqImport('analytix/js/logging').getLoggerForApi('Hubspot'),
-        _utils = hqImport('analytix/js/utils'),
+    var _get = initialAnalytics.getFn('hubspot'),
+        _global = initialAnalytics.getFn('global'),
+        logger = logging.getLoggerForApi('Hubspot'),
         _data = {};
 
     var _hsq = window._hsq = window._hsq || [];
@@ -15,8 +24,8 @@ hqDefine('analytix/js/hubspot', function () {
     var __init__ = function () {
         _data.apiId = _get('apiId');
         if (_data.apiId) {
-            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + _utils.getDateHash() + '/' + _data.apiId;
-            _utils.insertScript(_data.scriptSrc, logger.debug.log, {
+            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId;
+            utils.insertScript(_data.scriptSrc, logger.debug.log, {
                 id: 'hs-analytics',
             });
         }
