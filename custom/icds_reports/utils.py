@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import json
 import os
 
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 import operator
