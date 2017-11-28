@@ -6,6 +6,9 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.label = "Program Summary";
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
+    vm.userLocationId = userLocationId;
+    vm.selectedLocations = [];
+
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -58,7 +61,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
