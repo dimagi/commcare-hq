@@ -54,7 +54,6 @@ branches:
   - ce/latest-saved-profile # Jenny Nov 15
   - jls/ko-dashboard # Jenny Nov 20
   - jls/modal-on-downgrade # Jenny Nov 22
-  - jls/older-ansible # Jenny Nov 28
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -69,6 +68,5 @@ submodules:
   deployment/commcare-hq-deploy:
     branches:
       - jls/r-js # Jenny 10/2
-      - revert-447-sk/fix-inventory # Jenny 11/28
   submodules/commcare-translations:
     branches: []
