@@ -39,6 +39,7 @@ from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
 import six
+from six.moves import range
 
 
 class UserUploadError(Exception):
@@ -668,11 +669,11 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
         header_prefix='uncategorized_data'
     ))
     user_headers.extend(json_to_headers(
-        {'group': range(1, user_groups_length + 1)}
+        {'group': list(range(1, user_groups_length + 1))}
     ))
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.extend(json_to_headers(
-            {'location_code': range(1, max_location_length + 1)}
+            {'location_code': list(range(1, max_location_length + 1))}
         ))
 
     def _user_rows():

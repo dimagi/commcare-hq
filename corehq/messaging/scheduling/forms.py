@@ -25,6 +25,7 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from couchdbkit.resource import ResourceNotFound
 import six
+from six.moves import range
 
 
 def validate_time(value):

@@ -1998,7 +1998,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 share_reminders = True
 
             copy_by_id = set()
-            for k in request.POST.keys():
+            for k in request.POST:
                 if k.endswith("-publish"):
                     copy_by_id.add(k[:-len("-publish")])
 
@@ -2171,7 +2171,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             updated_fuzzies.append(fp)
 
         unneeded_fuzzies = FuzzyProperties.objects.filter(domain=self.domain).exclude(
-            case_type__in=fuzzies_by_casetype.keys()
+            case_type__in=list(fuzzies_by_casetype)
         )
         unneeded_fuzzies.delete()
 
@@ -2526,7 +2526,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, get_all_repeater_types().keys()
+                    self.repeater_type, list(get_all_repeater_types())
                 )
             )
 
@@ -2776,7 +2776,7 @@ def calculated_properties(request, domain):
     extra_arg = calc_tag[1] if len(calc_tag) > 1 else ''
     calc_tag = calc_tag[0]
 
-    if not calc_tag or calc_tag not in CALC_FNS.keys():
+    if not calc_tag or calc_tag not in list(CALC_FNS):
         data = {"error": 'This tag does not exist'}
     else:
         data = {"value": dom_calc(calc_tag, domain, extra_arg)}

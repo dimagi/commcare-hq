@@ -9,6 +9,7 @@ from corehq.util.dates import iso_string_to_datetime
 from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY, REGISTRATION, PNC
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser, CouchUser
+from six.moves import range
 
 EMPTY_FIELD = "---"
 

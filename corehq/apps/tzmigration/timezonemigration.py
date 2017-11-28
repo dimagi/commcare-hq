@@ -21,6 +21,7 @@ from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 import six
+from six.moves import range
 
 
 def run_timezone_migration_for_domain(domain):

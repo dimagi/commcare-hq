@@ -26,6 +26,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
+from six.moves import range
 
 
 class TestDeleteDomain(TestCase):
@@ -130,7 +131,7 @@ class TestDeleteDomain(TestCase):
             domain='test2',
             name='facility2',
         )
-        for i in xrange(2):
+        for i in range(2):
             self._create_data('test', i)
             self._create_data('test2', i)
 

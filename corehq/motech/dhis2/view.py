@@ -16,6 +16,7 @@ from corehq.motech.dhis2.tasks import send_datasets
 from corehq.apps.domain.views import BaseProjectSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from six.moves import range
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')

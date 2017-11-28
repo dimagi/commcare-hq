@@ -124,7 +124,7 @@ class CustomDataEditor(object):
                 for field_name, field in fields.items()
             ]
         else:
-            field_names = fields.keys()
+            field_names = list(fields)
 
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()

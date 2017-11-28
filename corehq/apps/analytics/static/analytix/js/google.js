@@ -96,6 +96,8 @@ hqDefine('analytix/js/google', [
             }
             logger.debug.log(logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
             _gtag('event', eventAction, params);
+        } else if (eventCallback) {
+            eventCallback();
         }
     };
 

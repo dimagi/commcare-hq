@@ -8,6 +8,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.util.translation import localize
 from django.utils.translation import ugettext as _
+from six.moves import range
 
 
 class LocationFilter(AsyncLocationFilter):

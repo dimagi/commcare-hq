@@ -15,6 +15,7 @@ from pact.enums import (
 )
 
 from pact.models import CObservation
+from six.moves import range
 
 
 class DOTDayDose(object):

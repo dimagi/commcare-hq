@@ -14,6 +14,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import time
 import random
+from six.moves import range
 
 
 class IntervalNode( object ):

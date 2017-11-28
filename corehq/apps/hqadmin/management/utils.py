@@ -2,14 +2,16 @@ from __future__ import print_function
 from __future__ import absolute_import
 import re
 from collections import defaultdict
-from github import Github
+from github3 import GitHub
 from django.template.loader import render_to_string
 import requests
 from gevent.pool import Pool
 
 LABELS_TO_EXPAND = [
+    "product/all-users-all-environments",
+    "product/prod-india-all-users",
+    "product/feature-flag",
     "product/all-users",
-    "product/feature-flag"
 ]
 
 
@@ -39,8 +41,8 @@ def get_deploy_email_message_body(environment, user, compare_url):
 
 
 def _get_pr_numbers(last_deploy, current_deploy):
-    repo = Github().get_organization('dimagi').get_repo('commcare-hq')
-    comparison = repo.compare(last_deploy, current_deploy)
+    repo = GitHub().repository('dimagi', 'commcare-hq')
+    comparison = repo.compare_commits(last_deploy, current_deploy)
 
     pr_numbers = map(
         lambda repo_commit: int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1)),

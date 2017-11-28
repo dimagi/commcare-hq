@@ -16,7 +16,7 @@ def serialize(value):
         return value.isoformat()
     elif isinstance(value, datetime.time):
         return value.strftime('%H:%M:%S')
-    elif isinstance(value, (int, Decimal, float, long)):
+    elif isinstance(value, six.integer_types + (Decimal, float)):
         return six.text_type(value)
     else:
         return value if value is not None else ""

@@ -16,6 +16,7 @@ import json
 from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
 import six
+from six.moves import range
 
 
 class BootstrapCheckboxInput(CheckboxInput):

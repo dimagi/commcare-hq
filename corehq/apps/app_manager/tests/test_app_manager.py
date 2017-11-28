@@ -19,6 +19,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 from six.moves import zip
+from six.moves import range
 
 
 class AppManagerTest(TestCase):

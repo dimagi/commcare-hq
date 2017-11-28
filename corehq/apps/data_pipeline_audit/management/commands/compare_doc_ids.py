@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from itertools import izip_longest
+from six.moves import zip_longest
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -45,7 +45,7 @@ class Command(BaseCommand):
         writer = SimpleTableWriter(self.stdout, row_formatter)
         writer.write_table(
             ['Only in Primary', 'Only in ES'],
-            izip_longest(primary_only, es_only, fillvalue='')
+            zip_longest(primary_only, es_only, fillvalue='')
         )
 
 

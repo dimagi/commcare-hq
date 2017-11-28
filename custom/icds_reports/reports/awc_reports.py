@@ -207,17 +207,17 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 
     for map_row in map_image_data:
         lat = map_row['form_location_lat']
-        long = map_row['form_location_long']
+        longitude = map_row['form_location_long']
         awc_name = map_row['awc_name']
         image_name = map_row['image_name']
         doc_id = map_row['doc_id']
         pse_date = map_row['pse_date']
-        if lat and long:
+        if lat and longitude:
             key = doc_id.replace('-', '')
             map_data.update({
                 key: {
                     'lat': float(lat),
-                    'lng': float(long),
+                    'lng': float(longitude),
                     'focus': 'true',
                     'message': awc_name,
                 }

@@ -14,7 +14,7 @@ from corehq.apps.es.aggregations import DateHistogram
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from couchexport.export import SCALAR_NEVER_WAS
 
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.es import filters
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
@@ -36,6 +36,7 @@ from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, Pa
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from corehq.util.quickcache import quickcache
+from six.moves import range
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -53,7 +54,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     exportable_all = True
     ajax_pagination = True
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
@@ -166,12 +167,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @memoized
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug) +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)  # Cater for old ReportConfigs
+            # Cater for old ReportConfigs
+            self.request.GET.getlist('location_restricted_mobile_worker') +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
-        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
+            self.request.couch_user,
         )
         user_query = (user_query
                       .set_sorting_block(self.get_sorting_block()))
@@ -211,9 +214,11 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_sub and last_sub.get('commcare_version'):
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             else:
-                device = user.get_last_used_device()
-                if device and device.commcare_version:
-                    commcare_version = _get_commcare_version(device.commcare_version)
+                devices = user.get('devices', None)
+                if devices:
+                    device = max(devices, key=lambda dev: dev['last_used'])
+                    if device.get('commcare_version', None):
+                        commcare_version = _get_commcare_version(device.commcare_version)
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -548,7 +553,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     description = ugettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
     ]
     exportable = False
     emailable = False
@@ -566,11 +571,12 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
-        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
+            self.request.couch_user,
         )
         user_query = user_query.size(0)
         user_query = user_query.aggregations([

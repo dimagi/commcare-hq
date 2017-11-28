@@ -16,6 +16,7 @@ from pact.models import PactPatientCase
 from pact.regimen import regimen_dict_from_choice
 from pact.tests.utils import get_all_forms_in_all_domains
 from pact.utils import submit_xform
+from six.moves import range
 
 NO_PILLBOX_ID = "83bfe01c-9f96-4e25-a1ad-f8164defa5d1"
 START_DATE = datetime.strptime("2012-11-17", "%Y-%m-%d")

@@ -18,6 +18,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
+from six.moves import range
 
 celery_task_logger = logging.getLogger('celery.task')
 

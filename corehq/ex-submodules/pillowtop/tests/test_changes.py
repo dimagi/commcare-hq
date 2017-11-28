@@ -5,6 +5,7 @@ from pillowtop.dao.mock import MockDocumentStore
 from pillowtop.feed.couch import change_from_couch_row
 from pillowtop.feed.interface import Change
 from pillowtop.feed.mock import RandomChangeFeed, MockChangeFeed
+from six.moves import range
 
 
 class TestCouchChange(SimpleTestCase):
@@ -103,7 +104,7 @@ class TestMockChangeFeed(SimpleTestCase):
         self.assertEqual(0, len(list(feed.iter_changes(10))))
 
     def test_results(self):
-        feed = MockChangeFeed(range(5))
+        feed = MockChangeFeed(list(range(5)))
         changes = feed.iter_changes(0)
         for seq, change in enumerate(changes):
             self.assertEqual(seq, change)

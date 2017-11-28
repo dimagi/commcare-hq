@@ -50,7 +50,7 @@ class MALTTableGenerator(object):
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
         malt_row_dicts = []
-        for users in chunked(all_users_by_id.keys(), 1000):
+        for users in chunked(list(all_users_by_id), 1000):
             apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan, users)
             for app_row in apps_submitted_for:
                 app_id = app_row.app_id

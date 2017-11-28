@@ -13,6 +13,7 @@ from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.programs.models import Program
 from corehq.apps.programs.forms import ProgramForm
+from six.moves import range
 
 
 @require_POST
@@ -125,7 +126,7 @@ class EditProgramView(NewProgramView):
         return {
             'program': self.program,
             'has_data_list': True,
-            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'pagination_limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
             'form': self.new_program_form,
             'program_product_options': {
                 'total': self.program.get_products_count(),

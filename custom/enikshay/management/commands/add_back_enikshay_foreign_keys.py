@@ -3,6 +3,7 @@ from datetime import datetime
 from django.db import connections
 from django.core.management.base import BaseCommand
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from six.moves import range
 
 
 def foreign_key_exists(db_alias, table_name, foreign_column_key_name):

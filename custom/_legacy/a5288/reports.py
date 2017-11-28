@@ -10,6 +10,7 @@ from corehq.apps.sms.models import ExpectedCallback, CALLBACK_PENDING, CALLBACK_
 from datetime import datetime, timedelta, time
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.parsing import json_format_date
+from six.moves import range
 
 
 class MissedCallbackReport(CustomProjectReport, GenericTabularReport):

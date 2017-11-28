@@ -64,10 +64,10 @@ def update_patient_adherence(request, domain):
         validate_adherence_values(adherence_values)
         factory.create_adherence_cases(adherence_values)
     except AdherenceException as e:
-        return json_response({"error": e}, status_code=400)
+        return json_response({"error": six.text_type(e)}, status_code=400)
 
     try:
-        factory.update_episode_adherence_properties(domain, beneficiary_id)
+        factory.update_episode_adherence_properties()
     except AdherenceException as e:
         notify_exception(
             request,

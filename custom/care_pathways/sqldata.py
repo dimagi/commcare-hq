@@ -17,6 +17,7 @@ import urllib
 import re
 from django.utils import html
 from custom.utils.utils import clean_IN_filter_value
+from six.moves import range
 
 
 def _get_grouping(prop_dict):

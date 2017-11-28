@@ -698,7 +698,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
-    long = params.get('long', None)
+    long_ = params.get('long', None)
     tabs = params.get('tabs', None)
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
@@ -753,8 +753,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         if case_list_lookup is not None:
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
-    if long is not None:
-        detail.long.columns = map(DetailColumn.from_json, long)
+    if long_ is not None:
+        detail.long.columns = map(DetailColumn.from_json, long_)
         if tabs is not None:
             detail.long.tabs = map(DetailTab.wrap, tabs)
         if print_template is not None:

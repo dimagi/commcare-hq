@@ -26,6 +26,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import get_location, SQLLocation
+from six.moves import range
 
 
 class StockLevelsLegend(EWSData):

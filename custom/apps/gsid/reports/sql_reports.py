@@ -20,6 +20,7 @@ from .util import get_unique_combinations, capitalize_fn
 
 from datetime import timedelta
 from six.moves import zip
+from six.moves import range
 
 
 class StaticColumn(AliasColumn):

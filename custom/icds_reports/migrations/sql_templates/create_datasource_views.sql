@@ -533,6 +533,10 @@ CREATE VIEW child_health_monthly_view AS
     SELECT
         "child_list".case_id,
         "child_list".awc_id,
+        "child_list".supervisor_id,
+        "child_list".block_id,
+        "child_list".district_id,
+        "child_list".state_id,
         "awc_location".awc_site_code,
         "child_list".name AS person_name,
         "child_list".mother_name,

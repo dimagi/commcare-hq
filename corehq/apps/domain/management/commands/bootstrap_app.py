@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.util.view_utils import reverse
 
 from couchdbkit import ResourceNotFound
+from six.moves import range
 
 
 class Command(BaseCommand):

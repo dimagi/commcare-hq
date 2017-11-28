@@ -8,6 +8,7 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails
+from six.moves import range
 
 
 class MotherRegistrationDetails(BaseSqlData):

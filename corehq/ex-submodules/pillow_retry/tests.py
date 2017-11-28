@@ -17,6 +17,7 @@ from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.processors import PillowProcessor
 from pillowtop.tests.utils import make_fake_constructed_pillow, FakeConstructedPillow
+from six.moves import range
 
 
 def get_ex_tb(message, ex_class=None):

@@ -3,6 +3,7 @@ from calendar import monthrange
 from datetime import datetime
 from corehq.apps.reports.models import ReportNotification
 from corehq.util.soft_assert import soft_assert
+from six.moves import range
 
 
 _soft_assert = soft_assert(exponential_backoff=True)

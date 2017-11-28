@@ -19,6 +19,7 @@ from pact.enums import (
 )
 from pact.regimen import regimen_string_from_doc
 import six
+from six.moves import range
 
 
 def make_uuid():

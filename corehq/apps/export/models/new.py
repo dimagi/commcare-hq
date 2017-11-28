@@ -100,6 +100,7 @@ from corehq.apps.export.utils import (
     domain_has_excel_dashboard_access,
 )
 import six
+from six.moves import range
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -156,7 +157,7 @@ class ExportItem(DocumentSchema):
     label = StringProperty()
     tag = StringProperty()
     last_occurrences = DictProperty()
-    transform = StringProperty(choices=TRANSFORM_FUNCTIONS.keys())
+    transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
@@ -239,7 +240,7 @@ class ExportColumn(DocumentSchema):
     help_text = StringProperty()
 
     # A transforms that deidentifies the value
-    deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
+    deid_transform = StringProperty(choices=list(DEID_TRANSFORM_FUNCTIONS))
 
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
@@ -2016,7 +2017,7 @@ class CaseExportDataSchema(ExportDataSchema):
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case.
         """
-        assert len(case_property_mapping.keys()) == 1
+        assert len(list(case_property_mapping)) == 1
         schema = cls()
 
         group_schema = ExportGroupSchema(
@@ -2056,14 +2057,14 @@ class CaseExportDataSchema(ExportDataSchema):
     @classmethod
     def _generate_schema_for_case_history(cls, case_property_mapping, app_id, app_version):
         """Generates the schema for the Case History tab on the export page"""
-        assert len(case_property_mapping.keys()) == 1
+        assert len(list(case_property_mapping)) == 1
         schema = cls()
 
         group_schema = ExportGroupSchema(
             path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
-        unknown_case_properties = set(case_property_mapping[case_property_mapping.keys()[0]])
+        unknown_case_properties = set(case_property_mapping[list(case_property_mapping)[0]])
         unknown_case_properties -= set(KNOWN_CASE_PROPERTIES)
 
         def _add_to_group_schema(group_schema, path_start, prop, app_id, app_version):
@@ -2254,7 +2255,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
         row = []
         for option in self.user_defined_options:
             row.append(selected.pop(option, None))
-        row.append(" ".join(selected.keys()))
+        row.append(" ".join(selected))
         return row
 
     def get_headers(self, **kwargs):
@@ -2389,7 +2390,7 @@ class SplitExportColumn(ExportColumn):
         for option in self.item.options:
             row.append(selected.pop(option.value, EMPTY_VALUE))
         if not self.ignore_unspecified_options:
-            row.append(" ".join(selected.keys()))
+            row.append(" ".join(selected))
         return row
 
     def get_headers(self, split_column=False):
