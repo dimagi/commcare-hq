@@ -840,6 +840,10 @@ class DeviceAppMeta(DocumentSchema):
             new_val = getattr(other, key)
             if new_val:
                 old_val = getattr(self, key)
+                if not old_val:
+                    setattr(self, key, new_val)
+                    continue
+
                 prop_is_date = isinstance(prop, DateTimeProperty)
                 if prop_is_date and new_val > old_val:
                     setattr(self, key, new_val)
