@@ -30,12 +30,12 @@ def read_inventory_file(filename):
     to lists of hosts (ip addresses)
 
     """
-    from ansible.inventory import Inventory
+    from ansible.inventory.manager import InventoryManager
     from ansible.parsing.dataloader import DataLoader
-    from ansible.vars import VariableManager
 
-    inventory = Inventory(loader=DataLoader(), variable_manager=VariableManager(), host_list=filename)
-    return inventory.get_group_dict()
+    loader = DataLoader()
+    inventory = InventoryManager(loader=loader, sources=filename)
+    return inventory.get_groups_dict()
 
 
 def get_instance_group(instance, group):
