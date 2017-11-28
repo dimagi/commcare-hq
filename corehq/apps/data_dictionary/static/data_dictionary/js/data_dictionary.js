@@ -1,12 +1,14 @@
 define([
     "jquery",
     "knockout",
+    "underscore",
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
     "hqwebapp/js/knockout_bindings.ko",
 ], function(
     $,
     ko,
+    _,
     initialPageData,
     hqMain
 ) {
