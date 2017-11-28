@@ -164,6 +164,16 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertFalse(filter({'foo': 'ab cd'}))
         self.assertFalse(filter({'foo': 'd e f'}))
 
+    def test_any_in_multi(self):
+        filter = self.get_filter('any_in_multi', ['a', 'b'])
+        self.assertTrue(filter({'foo': 'a'}))
+        self.assertTrue(filter({'foo': 'a b c'}))
+        self.assertTrue(filter({'foo': 'b c a'}))
+        self.assertTrue(filter({'foo': 'b'}))
+        self.assertFalse(filter({'foo': 'abc'}))
+        self.assertFalse(filter({'foo': 'ab cd'}))
+        self.assertFalse(filter({'foo': 'd e f'}))
+
     def test_less_than(self):
         filter = self.get_filter('lt', 3)
         for match in (-10, 0, 2):
