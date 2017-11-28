@@ -1179,7 +1179,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
     always_enabled={
         "icds-dashboard-qa",
         "icds-sql",
