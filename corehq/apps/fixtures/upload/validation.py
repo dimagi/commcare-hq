@@ -44,7 +44,7 @@ def _validate_fixture_upload(workbook):
             continue
         else:
             # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-            item_fields_list = data_item['field'].keys() if 'field' in data_item else []
+            item_fields_list = list(data_item['field']) if 'field' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_fields_list, get_fields_without_attributes(fields))
             for missing_field in not_in_sheet:
                 error_messages.append(
@@ -56,7 +56,7 @@ def _validate_fixture_upload(workbook):
                     .format(tag=tag, field=missing_field))
 
             # check that this item has all the properties listed in its 'types' definition
-            item_attributes_list = data_item['property'].keys() if 'property' in data_item else []
+            item_attributes_list = list(data_item['property']) if 'property' in data_item else []
             not_in_sheet, not_in_types = _diff_lists(item_attributes_list, item_attributes)
             for missing_field in not_in_sheet:
                 error_messages.append(
@@ -76,7 +76,7 @@ def _validate_fixture_upload(workbook):
                             _(FAILURE_MESSAGES["invalid_field_syntax"])
                             .format(tag=tag, field=field.field_name))
                         continue
-                    sheet_props_list = sheet_props.keys()
+                    sheet_props_list = list(sheet_props)
                     type_props = field.properties
                     not_in_sheet, not_in_types = _diff_lists(sheet_props_list, type_props)
                     for missing_property in not_in_sheet:
