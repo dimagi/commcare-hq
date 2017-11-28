@@ -575,6 +575,9 @@ class ExportIndicatorView(View):
                     config.update({
                         location_key: loc.location_id,
                     })
+                    beneficiary_config.update({
+                        location_key: loc.location_id
+                    })
             except SQLLocation.DoesNotExist:
                 pass
 
@@ -611,9 +614,6 @@ class ExportIndicatorView(View):
         elif indicator == 6:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
-            beneficiary_config['awcs_id'] = list(sql_location.get_descendants(
-                include_self=True
-            ).filter(location_type__code=LocationTypes.AWC).values_list('location_id', flat=True))
             return BeneficiaryExport(
                 config=beneficiary_config,
                 loc_level=aggregation_level,
