@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
+from datetime import datetime
 from mock.mock import MagicMock
 
 from custom.intrahealth.reports.fiche_consommation_report import FicheConsommationReport
 from custom.intrahealth.tests.reports.util import ReportTestCase
+from dimagi.utils.dates import DateSpan
 
 
 class TestFicheConsommation(ReportTestCase):
@@ -16,6 +18,7 @@ class TestFicheConsommation(ReportTestCase):
             'startdate': '2017-11-01',
             'enddate': '2017-11-30'
         }
+        mock.datespan = DateSpan(datetime(2017, 11, 1), datetime(2017, 11, 30))
 
         fiche_report = FicheConsommationReport(request=mock, domain='test-domain')
         header = fiche_report.headers
