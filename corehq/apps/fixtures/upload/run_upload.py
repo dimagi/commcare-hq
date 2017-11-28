@@ -15,6 +15,7 @@ from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.bulk import CouchTransaction
 from soil import DownloadBase
 import six
+from six.moves import range
 
 
 def upload_fixture_file(domain, filename, replace, task=None):

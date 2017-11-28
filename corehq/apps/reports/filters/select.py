@@ -19,6 +19,7 @@ from corehq.motech.repeaters.const import (
     RECORD_PENDING_STATE,
 )
 import six
+from six.moves import range
 
 
 class GroupFilterMixin(object):

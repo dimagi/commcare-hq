@@ -21,6 +21,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.util.quickcache import quickcache
 import six
+from six.moves import range
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 

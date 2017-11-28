@@ -28,6 +28,7 @@ from datetime import datetime
 from corehq.apps.sms.util import register_sms_contact, strip_plus
 from corehq import toggles
 import six
+from six.moves import range
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.

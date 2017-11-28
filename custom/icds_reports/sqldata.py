@@ -24,6 +24,7 @@ from couchexport.shortcuts import export_response
 from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 

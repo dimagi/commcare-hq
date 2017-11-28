@@ -36,6 +36,7 @@ from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, Pa
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from corehq.util.quickcache import quickcache
+from six.moves import range
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):

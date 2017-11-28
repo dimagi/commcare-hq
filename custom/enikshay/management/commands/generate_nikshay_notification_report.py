@@ -18,6 +18,7 @@ from custom.enikshay.case_utils import get_person_case_from_episode, get_open_ep
 from custom.enikshay.const import DSTB_EPISODE_TYPE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.integrations.utils import is_valid_person_submission
+from six.moves import range
 
 DOMAIN = "enikshay"
 

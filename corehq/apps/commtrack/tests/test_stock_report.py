@@ -19,6 +19,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
+from six.moves import range
 
 DOMAIN_MAX_LENGTH = 25
 

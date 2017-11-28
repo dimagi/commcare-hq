@@ -90,6 +90,7 @@ from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -1219,7 +1220,7 @@ def _get_uppercase_unicode_regexp():
     # rather than add another dependency (regex library)
     # http://stackoverflow.com/a/17065040/10840
     uppers = [u'[']
-    for i in xrange(sys.maxunicode):
+    for i in range(sys.maxunicode):
         c = unichr(i)
         if c.isupper():
             uppers.append(c)

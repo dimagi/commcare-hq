@@ -19,6 +19,7 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
 from dimagi.utils.parsing import json_format_date
+from six.moves import range
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
@@ -326,14 +327,14 @@ def copy_doc(doc, count, sourcedb, target_couch, exclude_types, total, simulate,
               (doc["doc_type"], count, total, doc["doc_type"], doc["_id"]))
     else:
         if not simulate:
-            for i in reversed(range(5)):
+            for i in reversed(list(range(5))):
                 try:
                     dt = DocumentTransform(doc, sourcedb, exclude_attachments)
                     break
                 except RequestError:
                     if i == 0:
                         raise
-            for i in reversed(range(5)):
+            for i in reversed(list(range(5))):
                 try:
                     save(dt, target_couch)
                     break

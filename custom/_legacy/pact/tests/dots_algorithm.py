@@ -5,6 +5,7 @@ from django.test import TestCase
 from pact.dot_data import cmp_observation, sort_observations
 from pact.enums import DOT_ADHERENCE_EMPTY, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED
 from pact.models import CObservation
+from six.moves import range
 
 
 def _observationGenerator(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):

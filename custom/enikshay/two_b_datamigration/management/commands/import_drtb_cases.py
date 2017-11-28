@@ -122,6 +122,7 @@ from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
 from custom.enikshay.user_setup import compress_nikshay_id
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 logger = logging.getLogger('two_b_datamigration')
 

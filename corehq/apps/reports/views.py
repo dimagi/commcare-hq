@@ -177,6 +177,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
 )
 import six
+from six.moves import range
 
 
 datespan_default = datespan_in_request(

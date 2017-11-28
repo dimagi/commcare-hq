@@ -16,6 +16,7 @@ from corehq.apps.app_manager.commcare_settings import (
 from corehq.apps.app_manager.static_strings import STATICALLY_ANALYZABLE_TRANSLATIONS
 from corehq.apps.app_manager.models import Application
 import six
+from six.moves import range
 
 
 class CommCareSettingsTest(SimpleTestCase):

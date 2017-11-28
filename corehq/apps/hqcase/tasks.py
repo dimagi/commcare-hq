@@ -19,6 +19,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from soil import DownloadBase
+from six.moves import range
 
 
 @task

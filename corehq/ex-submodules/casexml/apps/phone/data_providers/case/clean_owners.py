@@ -16,6 +16,7 @@ from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.apps.users.cases import get_owner_id
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 
 PotentialSyncElement = namedtuple("PotentialSyncElement", ['case_stub', 'sync_xml_items'])

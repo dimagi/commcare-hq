@@ -28,6 +28,7 @@ from custom.enikshay.tasks import EpisodeAdherenceUpdate, calculate_dose_status_
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 Schedule = namedtuple("Schedule", ['days_dose_expected', 'mark_expected', 'title'])
 india_timezone = pytz.timezone(ENIKSHAY_TIMEZONE)

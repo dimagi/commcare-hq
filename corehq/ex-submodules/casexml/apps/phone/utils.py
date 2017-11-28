@@ -17,6 +17,7 @@ from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.mock import Balance
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import range
 
 
 def delete_sync_logs(before_date, limit=1000, num_tries=10):

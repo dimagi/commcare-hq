@@ -15,6 +15,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from couchforms.models import XFormInstance
 from django.conf import settings
 from dimagi.utils.logging import notify_error
+from six.moves import range
 
 
 def check_es_cluster_health():

@@ -24,6 +24,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
 import six
+from six.moves import range
 
 # (time, length in minutes), indexed by day, where Monday=0, Sunday=6
 WINDOWS = (

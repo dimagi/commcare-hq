@@ -35,6 +35,7 @@ from phonelog.reports import BaseDeviceLogReport
 from phonelog.models import DeviceReportEntry
 from corehq.apps.es.domains import DomainES
 import six
+from six.moves import range
 
 INDICATOR_DATA = {
     "active_domain_count": {

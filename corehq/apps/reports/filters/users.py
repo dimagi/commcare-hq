@@ -23,6 +23,7 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
+from six.moves import range
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):

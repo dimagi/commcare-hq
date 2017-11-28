@@ -15,6 +15,7 @@ from .models import (
     ReportConfig,
     ReportNotification,
 )
+from six.moves import range
 
 
 class LanguageSelect(forms.Select):
