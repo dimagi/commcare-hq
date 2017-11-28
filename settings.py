@@ -493,6 +493,7 @@ INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
+PRODUCT_TEAM_EMAIL = 'product-team@example.com'
 CONTACT_EMAIL = 'info@example.com'
 BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
