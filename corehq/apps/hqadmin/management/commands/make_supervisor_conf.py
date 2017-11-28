@@ -46,7 +46,7 @@ class SupervisorConfCommand(BaseCommand):
         self.params = options['params'] or {}
         if self.params:
             self.params = self.extend_params(json.loads(self.params))
-        self.environment = options.get('environment', settings.SERVER_ENVIRONMENT)
+        self.environment = self.params.get('environment', settings.SERVER_ENVIRONMENT)
 
         service_dir = settings.SERVICE_DIR
 
