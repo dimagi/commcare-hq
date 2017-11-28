@@ -13,7 +13,6 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from six.moves import range
 
 
@@ -140,7 +139,7 @@ class TestExpandedMobileWorkerFilter(TestCase):
 
 class TestLocationRestrictedMobileWorkerFilter(TestCase):
     def setUp(self):
-        self.subject = LocationRestrictedMobileWorkerFilter
+        self.subject = ExpandedMobileWorkerFilter
         self.domain = Domain(name='test', is_active=True)
         self.domain.save()
         self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
@@ -151,14 +150,11 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
 
-    def test_attributes(self):
-        self.assertEqual(self.subject.options_url, 'new_emwf_options')
-
     @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_full_access(self, assigned_locations_patch):
         self.request.can_access_all_locations = True
         self.request.project = self.domain
-        emwf = LocationRestrictedMobileWorkerFilter(self.request)
+        emwf = ExpandedMobileWorkerFilter(self.request)
         emwf.get_default_selections()
         assert not assigned_locations_patch.called
 
@@ -166,7 +162,7 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
     def test_default_selections_for_restricted_access(self, assigned_locations_patch):
         self.request.can_access_all_locations = False
         self.request.project = self.domain
-        emwf = LocationRestrictedMobileWorkerFilter(self.request)
+        emwf = ExpandedMobileWorkerFilter(self.request)
         emwf.get_default_selections()
         assert assigned_locations_patch.called
 

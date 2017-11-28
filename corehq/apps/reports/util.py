@@ -491,12 +491,13 @@ def validate_xform_for_edit(xform):
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
-def is_query_too_big(domain, mobile_user_and_group_slugs):
+def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
     user_es_query = ExpandedMobileWorkerFilter.user_es_query(
         domain,
         mobile_user_and_group_slugs,
+        request_user,
     )
     return user_es_query.count() > USER_QUERY_LIMIT
 
