@@ -237,25 +237,15 @@ def get_open_episode_case_from_person(domain, person_case_id):
 def get_referral_cases_from_person(domain, person_case_id, closed_cases=False):
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    if closed_cases:
-        referral_cases = [case for case in reverse_indexed_cases
-                          if case.closed and case.type == CASE_TYPE_REFERRAL]
-        occurrence_cases = [case.case_id for case in reverse_indexed_cases if case.type == CASE_TYPE_OCCURRENCE]
-        reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
-        referral_cases.extend(
-            case for case in reversed_indexed_occurrence
-            if case.closed and case.type == CASE_TYPE_REFERRAL
-        )
-    else:
-        referral_cases = [case for case in reverse_indexed_cases
-                          if not case.closed and case.type == CASE_TYPE_REFERRAL]
-        occurrence_cases = [case.case_id for case in reverse_indexed_cases
-                            if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
-        reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
-        referral_cases.extend(
-            case for case in reversed_indexed_occurrence
-            if not case.closed and case.type == CASE_TYPE_REFERRAL
-        )
+    referral_cases = [case for case in reverse_indexed_cases
+                      if case.closed == closed_cases and case.type == CASE_TYPE_REFERRAL]
+    occurrence_cases = [case.case_id for case in reverse_indexed_cases
+                        if case.type == CASE_TYPE_OCCURRENCE]
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    referral_cases.extend(
+        case for case in reversed_indexed_occurrence
+        if case.closed == closed_cases and case.type == CASE_TYPE_REFERRAL
+    )
     return referral_cases
 
 
