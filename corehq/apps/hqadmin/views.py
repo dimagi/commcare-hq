@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import HTMLParser
+import six.moves.html_parser
 import json
 import socket
 import uuid
@@ -101,6 +101,7 @@ from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
+import six
 
 
 @require_superuser
@@ -116,7 +117,7 @@ datespan_default = datespan_in_request(
 
 def get_rabbitmq_management_url():
     if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         return "http://%s" % mq_management_url.split('@')[-1]
     else:
@@ -628,7 +629,7 @@ def stats_data(request):
     datefield = request.GET.get("datefield")
     get_request_params_json = request.GET.get("get_request_params", None)
     get_request_params = (
-        json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
+        json.loads(six.moves.html_parser.HTMLParser().unescape(get_request_params_json))
         if get_request_params_json is not None else {}
     )
 
@@ -977,7 +978,7 @@ def doc_in_es(request):
 
 @require_superuser
 def raw_couch(request):
-    get_params = dict(request.GET.iteritems())
+    get_params = dict(six.iteritems(request.GET))
     return HttpResponseRedirect(reverse("raw_doc", params=get_params))
 
 

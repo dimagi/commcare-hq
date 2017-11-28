@@ -24,6 +24,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.workbook_reading import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
+import six
 
 
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change
@@ -110,14 +111,14 @@ class WorksheetWrapper(object):
     def get_header_columns(self):
         if self.max_row > 0:
             # remove None columns the library sometimes returns
-            return filter(None, self.iter_rows().next())
+            return filter(None, next(self.iter_rows()))
         else:
             return []
 
     def _get_column_values(self, column_index):
         rows = self.iter_rows()
         # skip first row (header row)
-        rows.next()
+        next(rows)
         for row in rows:
             yield row[column_index]
 
@@ -226,7 +227,7 @@ class ImportErrorDetail(object):
 
 def convert_field_value(value):
     # coerce to string unless it's a unicode string then we want that
-    if isinstance(value, unicode):
+    if isinstance(value, six.text_type):
         return value
     else:
         return str(value)
@@ -308,7 +309,7 @@ def populate_updated_fields(config, columns, row):
         if update_field_name in RESERVED_FIELDS:
             raise InvalidCustomFieldNameException(_('Field name "{}" is reserved').format(update_field_name))
 
-        if isinstance(update_value, basestring) and update_value.strip() == SCALAR_NEVER_WAS:
+        if isinstance(update_value, six.string_types) and update_value.strip() == SCALAR_NEVER_WAS:
             # If we find any instances of blanks ('---'), convert them to an
             # actual blank value without performing any data type validation.
             # This is to be consistent with how the case export works.

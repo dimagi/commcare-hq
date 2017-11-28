@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import json
 import logging
 
@@ -64,7 +65,7 @@ class Command(BaseCommand):
                     try:
                         rec = json.loads(line)
                     except ValueError:
-                        print("Ignore {}", line)
+                        print(("Ignore {}", line))
                         continue
                     if rec.get("error") != "not found":
                         print("Ignore {}".format(json.dumps(rec)))

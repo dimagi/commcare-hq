@@ -42,10 +42,10 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     if not dhis2_conn or not dataset_maps:
         return  # Nothing to do
     api = JsonApiRequest(
+        domain_name,
         dhis2_conn.server_url,
         dhis2_conn.username,
         bz2.decompress(b64decode(dhis2_conn.password)),
-        domain_name=domain_name,
     )
     endpoint = 'dataValueSets'
     for dataset_map in dataset_maps:

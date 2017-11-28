@@ -12,6 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
+import six
 
 
 class DateFormat(object):
@@ -49,7 +50,7 @@ def get_date_format(human_readable_format):
 
 
 def strip_plus(phone_number):
-    if (isinstance(phone_number, basestring) and len(phone_number) > 0
+    if (isinstance(phone_number, six.string_types) and len(phone_number) > 0
             and phone_number[0] == "+"):
         return phone_number[1:]
     else:
@@ -68,7 +69,7 @@ def clean_phone_number(text):
 
 def validate_phone_number(phone_number, error_message=None):
     if (
-        not isinstance(phone_number, basestring) or
+        not isinstance(phone_number, six.string_types) or
         not phone_number_plus_re.match(phone_number)
     ):
         error_message = error_message or _("Invalid phone number format.")

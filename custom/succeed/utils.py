@@ -6,6 +6,7 @@ from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.domain.models import Domain
 from datetime import timedelta
 from pytz import timezone
+import six
 
 EMPTY_FIELD = "---"
 SUCCEED_DOMAIN = 'succeed'
@@ -79,7 +80,7 @@ def format_date(date_string, OUTPUT_FORMAT, localize=None):
             or isinstance(date_string, (int, float)):
         return ''
 
-    if isinstance(date_string, basestring):
+    if isinstance(date_string, six.string_types):
         try:
             date_string = dateutil.parser.parse(date_string)
         except (AttributeError, ValueError):

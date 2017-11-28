@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import hashlib
 from datetime import datetime
 from functools import reduce
+import six
 
 def to_number(bytes):
     return reduce(lambda a, b: a*256 + b, bytes)
@@ -34,7 +35,7 @@ class DeidGenerator(object):
     def digest(self, alphabet="0123456789"):
         b = len(alphabet)
         answer = [alphabet[i] for i in to_base(self.number, b)]
-        if isinstance(alphabet, basestring):
+        if isinstance(alphabet, six.string_types):
             answer = ''.join(answer)
         return answer
 

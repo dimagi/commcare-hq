@@ -353,7 +353,7 @@ class HOPECase(CommCareCase):
 
     @property
     def _HOPE_mother_all_anc_doses_given(self):
-        anc_dose_dates = [self.get_case_property('anc_%d_date' % (n+1)) for n in range(0,4)]
+        anc_dose_dates = [self.get_case_property('anc_%d_date' % (n+1)) for n in range(0, 4)]
         return self.bool_to_yesno(len([date for date in anc_dose_dates if bool(date)]) >= 4)
 
     @property

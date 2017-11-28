@@ -5,6 +5,7 @@ from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+import six
 
 
 class OldExportsEnabledException(Exception):
@@ -16,7 +17,7 @@ def generate_data_dictionary(domain):
         raise OldExportsEnabledException()
     properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, properties)
-    CaseType.objects.filter(domain=domain, name__in=properties.keys()).update(fully_generated=True)
+    CaseType.objects.filter(domain=domain, name__in=list(properties)).update(fully_generated=True)
     return True
 
 
@@ -133,5 +134,5 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     try:
         prop.full_clean()
     except ValidationError as e:
-        return unicode(e)
+        return six.text_type(e)
     prop.save()

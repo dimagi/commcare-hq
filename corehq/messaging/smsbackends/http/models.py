@@ -34,8 +34,8 @@ class HttpBackendForm(BackendForm):
     method = ChoiceField(
         label=ugettext_noop("HTTP Request Method"),
         choices=(
-            ("GET","GET"),
-            ("POST","POST")
+            ("GET", "GET"),
+            ("POST", "POST")
         ),
     )
     additional_params = RecordListField(

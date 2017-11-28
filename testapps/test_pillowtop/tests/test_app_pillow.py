@@ -52,7 +52,7 @@ class AppPillowTest(TestCase):
         app_db_pillow.process_changes(couch_seq, forever=False)
 
         # confirm change made it to kafka
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(app._id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)

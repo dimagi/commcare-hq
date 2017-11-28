@@ -11,7 +11,14 @@ from django.db import models
 
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import PreconditionFailed
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    DocumentSchema,
+    DateTimeProperty,
+    StringProperty,
+    DictProperty,
+    SchemaListProperty,
+    BooleanProperty,
+    SafeSaveDocument)
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.safe_index import safe_index
@@ -24,8 +31,6 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.utils import clean_metadata
@@ -34,6 +39,7 @@ from couchforms import const
 from couchforms.const import ATTACHMENT_NAME
 from couchforms.jsonobject_extensions import GeoPointProperty
 from couchforms.signals import xform_archived, xform_unarchived
+import six
 
 
 def doc_types():
@@ -116,6 +122,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     xmlns = StringProperty()
     form = DictProperty()
     received_on = DateTimeProperty()
+    server_modified_on = DateTimeProperty()
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
     partial_submission = BooleanProperty(default=False)
@@ -225,8 +232,9 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
         RETRIES = 10
-        SLEEP = 0.5 # seconds
+        SLEEP = 0.5  # seconds
         tries = 0
+        self.server_modified_on = datetime.datetime.utcnow()
         while True:
             try:
                 return super(XFormInstance, self).save(**kwargs)
@@ -272,7 +280,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     def _xml_string_to_element(self, xml_string):
 
         def _to_xml_element(payload):
-            if isinstance(payload, unicode):
+            if isinstance(payload, six.text_type):
                 payload = payload.encode('utf-8', errors='replace')
             return etree.fromstring(payload)
 
@@ -306,7 +314,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
             return meta_json
 
         return {name: _meta_to_json(meta)
-            for name, meta in self.blobs.iteritems()
+            for name, meta in six.iteritems(self.blobs)
             if name != ATTACHMENT_NAME}
 
     def xml_md5(self):
@@ -473,7 +481,7 @@ class UnfinishedSubmissionStub(models.Model):
     attempts = models.IntegerField(default=0)
 
     def __unicode__(self):
-        return unicode(
+        return six.text_type(
             "UnfinishedSubmissionStub("
             "xform_id={s.xform_id},"
             "timestamp={s.timestamp},"

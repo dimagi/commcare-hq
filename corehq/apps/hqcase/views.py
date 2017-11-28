@@ -1,16 +1,17 @@
 from __future__ import absolute_import
 
 from django.contrib import messages
+from django.http.response import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.tasks import explode_case_task, delete_exploded_case_task
+from corehq.apps.es.case_search import CasePropertyAggregation, CaseSearchES
+from corehq.apps.hqcase.tasks import delete_exploded_case_task, explode_case_task
 from corehq.apps.hqwebapp.decorators import use_select2
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.es.case_search import CaseSearchES, CasePropertyAggregation
+from corehq.form_processor.utils import should_use_sql_backend
 from soil import DownloadBase
 
 
@@ -24,11 +25,15 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
     def dispatch(self, *args, **kwargs):
         return super(ExplodeCasesView, self).dispatch(*args, **kwargs)
 
+    def get(self, request, domain):
+        if not should_use_sql_backend(domain):
+            raise Http404("Domain: {} is not a SQL domain".format(domain))
+        return super(ExplodeCasesView, self).get(request, domain)
+
     def get_context_data(self, **kwargs):
         context = super(ExplodeCasesView, self).get_context_data(**kwargs)
         context.update({
             'domain': self.domain,
-            'users': CommCareUser.by_domain(self.domain),
             'previous_explosions': self._get_previous_explosions()
         })
         return context

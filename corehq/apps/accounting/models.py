@@ -427,9 +427,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     @classmethod
     def _get_account_by_created_by_domain(cls, domain):
         try:
-            return cls.objects.exclude(
-                account_type=BillingAccountType.TRIAL
-            ).get(created_by_domain=domain)
+            return cls.objects.get(created_by_domain=domain)
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
@@ -438,9 +436,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
                 "latest one was served, but you should reconcile very soon."
                 % domain
             )
-            return cls.objects.exclude(
-                account_type=BillingAccountType.TRIAL
-            ).filter(created_by_domain=domain).latest('date_created')
+            return cls.objects.filter(created_by_domain=domain).latest('date_created')
+        return None
 
     @property
     def autopay_card(self):
@@ -1252,10 +1249,10 @@ class Subscription(models.Model):
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=today,
             date_end=date_end,
-            date_delay_invoicing=self.date_delay_invoicing,
+            date_delay_invoicing=kwargs['date_delay_invoicing'] if 'date_delay_invoicing' in kwargs else self.date_delay_invoicing,
             is_active=True,
-            do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
-            no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
+            do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
+            no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),

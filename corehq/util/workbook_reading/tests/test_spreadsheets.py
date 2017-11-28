@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from datetime import datetime, date, time
-from itertools import izip_longest
 from django.test import SimpleTestCase
 from corehq.util.workbook_reading import (
     Workbook,
@@ -9,6 +8,7 @@ from corehq.util.workbook_reading import (
 )
 from corehq.util.workbook_reading.tests.utils import get_file, run_on_all_adapters
 from corehq.util.test_utils import make_make_path
+from six.moves import zip_longest
 
 
 _make_path = make_make_path(__file__)
@@ -21,7 +21,7 @@ class SpreadsheetCellTypeTest(SimpleTestCase):
 
         self.assertEqual(workbook1._replace(worksheets=None),
                          workbook2._replace(worksheets=None))
-        for worksheet1, worksheet2 in izip_longest(
+        for worksheet1, worksheet2 in zip_longest(
                 workbook1.worksheets, workbook2.worksheets, fillvalue=fillvalue):
             self._assert_worksheets_equal(worksheet1, worksheet2)
 
@@ -31,7 +31,7 @@ class SpreadsheetCellTypeTest(SimpleTestCase):
         self.assertIsInstance(worksheet2, Worksheet)
         self.assertEqual(worksheet1._replace(iter_rows=None),
                          worksheet2._replace(iter_rows=None))
-        for self_row, other_row in izip_longest(
+        for self_row, other_row in zip_longest(
                 worksheet1.iter_rows(), worksheet2.iter_rows(), fillvalue=fillvalue):
             self.assertEqual(self_row, other_row)
 

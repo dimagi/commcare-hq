@@ -16,6 +16,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress
 from corehq.blobs import DEFAULT_BUCKET, get_blob_db
+import six
 
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
@@ -88,7 +89,7 @@ class DownloadBase(object):
         Sometimes filenames have characters in them which aren't allowed in
         headers and causes the download to fail.
         """
-        if isinstance(content_disposition, basestring):
+        if isinstance(content_disposition, six.string_types):
             return re.compile('[\r\n]').sub('', content_disposition)
 
         return content_disposition
@@ -99,7 +100,7 @@ class DownloadBase(object):
         if self.transfer_encoding is not None:
             response['Transfer-Encoding'] = self.transfer_encoding
         response['Content-Disposition'] = self.content_disposition
-        for k,v in self.extras.items():
+        for k, v in self.extras.items():
             response[k] = v
         return response
 

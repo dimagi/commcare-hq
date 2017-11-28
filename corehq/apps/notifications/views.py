@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import Notification, LastSeenNotification, \
     IllegalModelStateException, DismissedUINotify
+import six
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -92,7 +93,7 @@ class ManageNotificationView(BasePageView):
                 'content': alert.content,
                 'url': alert.url,
                 'type': alert.get_type_display(),
-                'activated': unicode(alert.activated),
+                'activated': six.text_type(alert.activated),
                 'isActive': alert.is_active,
                 'id': alert.id,
             } for alert in Notification.objects.order_by('-created').all()],

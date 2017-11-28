@@ -34,6 +34,7 @@ from corehq.util.datadog.utils import (
 )
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 
@@ -58,6 +59,7 @@ HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
 HUBSPOT_CREATED_EXPORT_FORM_ID = "f8a1ab5e-3fb5-4f68-948f-3355d09cf611"
 HUBSPOT_DOWNLOADED_EXPORT_FORM_ID = "7db9de47-2dd1-44d0-a4ec-bb67d8052a9e"
 HUBSPOT_SAVED_APP_FORM_ID = "8494a26a-8576-4241-97de-a28dc8bf927c"
+HUBSPOT_SAVED_UCR_FORM_ID = "a0d64c4a-2e37-4f48-9700-b9831acdd1d9"
 HUBSPOT_COOKIE = 'hubspotutk'
 HUBSPOT_THRESHOLD = 300
 
@@ -378,6 +380,20 @@ def identify(email, properties):
         _raise_for_urllib3_response(res)
 
 
+@memoized
+def _get_export_count(domain):
+    from corehq.apps.export.dbaccessors import get_export_count_by_domain
+
+    return get_export_count_by_domain(domain)
+
+
+@memoized
+def _get_report_count(domain):
+    from corehq.reports import get_report_builder_count
+
+    return get_report_builder_count(domain)
+
+
 @periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
 def track_periodic_data():
     """
@@ -419,12 +435,18 @@ def track_periodic_data():
         date_created = user.get('date_joined')
         max_forms = 0
         max_workers = 0
+        max_export = 0
+        max_report = 0
 
         for domain in user['domains']:
             if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
                 max_forms = domains_to_forms[domain]
             if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
                 max_workers = domains_to_mobile_users[domain]
+            if _get_export_count(domain) > max_export:
+                max_export = _get_export_count(domain)
+            if _get_report_count(domain) > max_report:
+                max_report = _get_report_count(domain)
 
         project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
@@ -450,6 +472,14 @@ def track_periodic_data():
                 {
                     'property': '{}date_created'.format(env),
                     'value': date_created
+                },
+                {
+                    'property': '{}max_exports_in_a_domain'.format(env),
+                    'value': max_export
+                },
+                {
+                    'property': '{}max_custom_reports_in_a_domain'.format(env),
+                    'value': max_report
                 }
             ]
         }

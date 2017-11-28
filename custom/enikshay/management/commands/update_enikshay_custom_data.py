@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.views import LocationFieldsView
@@ -14,7 +15,7 @@ class Command(BaseCommand):
 
     def show(self, definition):
         for field in definition.fields:
-            print " ", field.slug
+            print(" ", field.slug)
 
     def confirm(self):
         return input("Continue?\n(y/n)") == 'y'
@@ -25,18 +26,18 @@ class Command(BaseCommand):
         self.location_data = CustomDataFieldsDefinition.get_or_create(
             domain, LocationFieldsView.field_type)
 
-        print "\nOLD:"
+        print("\nOLD:")
         self.show(self.user_data)
         self.update_definition(self.user_data, AGENCY_USER_FIELDS)
-        print "\nNEW:"
+        print("\nNEW:")
         self.show(self.user_data)
         if self.confirm():
             self.user_data.save()
 
-        print "\nOLD:"
+        print("\nOLD:")
         self.show(self.location_data)
         self.update_definition(self.location_data, AGENCY_LOCATION_FIELDS)
-        print "\nNEW:"
+        print("\nNEW:")
         self.show(self.location_data)
         if self.confirm():
             self.location_data.save()

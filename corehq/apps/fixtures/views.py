@@ -42,6 +42,7 @@ from copy import deepcopy
 from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
+import six
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -232,7 +233,7 @@ def data_table(request, domain):
     try:
         sheets = prepare_fixture_html(table_ids, domain)
     except FixtureDownloadError as e:
-        messages.info(request, unicode(e))
+        messages.info(request, six.text_type(e))
         raise Http404()
     sheets.pop("types")
     if not sheets:
@@ -390,7 +391,7 @@ class UploadFixtureAPIResponse(object):
 
     def __init__(self, status, message):
         assert status in self.response_codes, \
-            'status must be in {!r}: {}'.format(self.status.keys(), status)
+            'status must be in {!r}: {}'.format(list(self.response_codes), status)
         self.status = status
         self.message = message
 

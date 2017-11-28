@@ -19,7 +19,6 @@ describe('NotificationsService Unit Tests', function() {
             };
         };
 
-    window.analytics = {trackUsageLink: sinon.stub()};
     var fakePromise = new FakePromise({});
     sinon.stub(jQuery, 'ajax', fakePromise.mock);
 

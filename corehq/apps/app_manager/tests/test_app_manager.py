@@ -18,6 +18,7 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
+from six.moves import zip
 
 
 class AppManagerTest(TestCase):
@@ -53,7 +54,7 @@ class AppManagerTest(TestCase):
         for i in range(3):
             module = self.app.add_module(Module.new_module("Module%d" % i, "en"))
             for j in range(3):
-                self.app.new_form(module.id, name="Form%s-%s" % (i,j), attachment=self.xform_str, lang="en")
+                self.app.new_form(module.id, name="Form%s-%s" % (i, j), attachment=self.xform_str, lang="en")
             module = self.app.get_module(i)
             detail = module.ref_details.short
             detail.columns.append(
@@ -111,7 +112,7 @@ class AppManagerTest(TestCase):
         self.app.delete_form(self.app.modules[0].unique_id,
                              self.app.modules[0].forms[0].unique_id)
         self.assertEqual(len(self.app.modules), 3)
-        for module, i in zip(self.app.get_modules(), [2,3,3]):
+        for module, i in zip(self.app.get_modules(), [2, 3, 3]):
             self.assertEqual(len(module.forms), i)
 
     def testDeleteModule(self):
@@ -121,7 +122,7 @@ class AppManagerTest(TestCase):
     def testSwapModules(self):
         m0 = self.app.modules[0].name['en']
         m1 = self.app.modules[1].name['en']
-        self.app.rearrange_modules(0,1)
+        self.app.rearrange_modules(0, 1)
         self.assertEqual(self.app.modules[0].name['en'], m1)
         self.assertEqual(self.app.modules[1].name['en'], m0)
 

@@ -5,7 +5,6 @@ import logging
 import re
 from uuid import uuid4
 
-from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -17,12 +16,24 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
-from corehq.apps.users.util import format_username
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    StringProperty,
+    IntegerProperty,
+    DateTimeProperty,
+    SchemaListProperty,
+    DocumentSchema,
+    BooleanProperty,
+    StringListProperty,
+    ListProperty,
+    SchemaProperty,
+    DictProperty,
+    Document,
+    DateProperty
+)
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
@@ -47,6 +58,8 @@ from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
     username_to_user_id,
+    format_username,
+    filter_by_app
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted, \
@@ -61,6 +74,7 @@ from xml.etree import cElementTree as ElementTree
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 from dimagi.utils.web import get_site_domain
+import six
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -352,7 +366,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
-        matches = {k for k, v in PERMISSIONS_PRESETS.iteritems() if v['name'] == name}
+        matches = {k for k, v in six.iteritems(PERMISSIONS_PRESETS) if v['name'] == name}
         return matches.pop() if matches else None
 
     @classmethod
@@ -361,7 +375,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def preset_permissions_names(cls):
-        return {details['name'] for role, details in PERMISSIONS_PRESETS.iteritems()}
+        return {details['name'] for role, details in six.iteritems(PERMISSIONS_PRESETS)}
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor',
@@ -798,17 +812,78 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class DeviceAppMeta(DocumentSchema):
+    """Metadata for an app on a device"""
+    app_id = StringProperty()
+    build_id = StringProperty()
+    build_version = IntegerProperty()
+    last_request = DateTimeProperty()
+    last_submission = DateTimeProperty()
+    last_sync = DateTimeProperty()
+    last_heartbeat = DateTimeProperty()
+    num_unsent_forms = IntegerProperty()
+    num_quarantined_forms = IntegerProperty()
+
+    def _update_latest_request(self):
+        dates = [date for date in (self.last_submission, self.last_heartbeat, self.last_sync) if date]
+        self.last_request = max(dates) if dates else None
+
+    def merge(self, other):
+        # ensure that last_request is updated
+        self.last_request is None and self._update_latest_request()
+        other.last_request is None and other._update_latest_request()
+
+        if other.last_request <= self.last_request:
+            return
+
+        for key, prop in self.properties().items():
+            new_val = getattr(other, key)
+            if new_val:
+                old_val = getattr(self, key)
+                if not old_val:
+                    setattr(self, key, new_val)
+                    continue
+
+                prop_is_date = isinstance(prop, DateTimeProperty)
+                if prop_is_date and new_val > old_val:
+                    setattr(self, key, new_val)
+                elif not prop_is_date and old_val != new_val:
+                    setattr(self, key, new_val)
+
+        self._update_latest_request()
+
+
 class DeviceIdLastUsed(DocumentSchema):
     device_id = StringProperty()
     last_used = DateTimeProperty()
+    commcare_version = StringProperty()
+    app_meta = SchemaListProperty(DeviceAppMeta)
+
+    def update_meta(self, commcare_version=None, app_meta=None):
+        if commcare_version:
+            self.commcare_version = commcare_version
+        if app_meta:
+            self._merge_app_meta(app_meta)
+
+    def _merge_app_meta(self, app_meta):
+        current_meta = self.get_meta_for_app(app_meta.app_id)
+        if not current_meta:
+            app_meta._update_latest_request()
+            self.app_meta.append(app_meta)
+        else:
+            current_meta.merge(app_meta)
+
+    def get_meta_for_app(self, app_id):
+        return filter_by_app(self.app_meta, app_id)
 
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
 
 class LastSubmission(DocumentSchema):
-    submission_date = DateTimeProperty()
+    """Metadata for form sumbissions. This data is keyed by app_id"""
     app_id = StringProperty()
+    submission_date = DateTimeProperty()
     build_id = StringProperty()
     device_id = StringProperty()
     build_version = IntegerProperty()
@@ -816,9 +891,10 @@ class LastSubmission(DocumentSchema):
 
 
 class LastSync(DocumentSchema):
+    """Metadata for syncs and restores. This data is keyed by app_id"""
+    app_id = StringProperty()
     sync_date = DateTimeProperty()
     build_version = IntegerProperty()
-    app_id = StringProperty()
 
 
 class LastBuild(DocumentSchema):
@@ -826,9 +902,9 @@ class LastBuild(DocumentSchema):
     Build info for the app on the user's phone
     when they last synced or submitted
     """
+    app_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
-    app_id = StringProperty()
 
 
 class ReportingMetadata(DocumentSchema):
@@ -879,7 +955,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def wrap(cls, data, should_save=False):
-        if data.has_key("organizations"):
+        if "organizations" in data:
             del data["organizations"]
             should_save = True
 
@@ -1046,7 +1122,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
 
     def delete_phone_number(self, phone_number):
-        for i in range(0,len(self.phone_numbers)):
+        for i in range(0, len(self.phone_numbers)):
             if self.phone_numbers[i] == phone_number:
                 del self.phone_numbers[i]
                 break
@@ -1058,7 +1134,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
         """ Don't add phone numbers if they already exist """
-        if not isinstance(phone_number, basestring):
+        if not isinstance(phone_number, six.string_types):
             phone_number = str(phone_number)
         self.phone_numbers = _add_to_list(self.phone_numbers, phone_number, default)
 
@@ -2115,7 +2191,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = self.get_usercase()
         return case.case_id if case else None
 
-    def update_device_id_last_used(self, device_id, when=None):
+    def update_device_id_last_used(self, device_id, when=None, commcare_version=None, device_app_meta=None):
         """
         Sets the last_used date for the device to be the current time
         Does NOT save the user object.
@@ -2124,19 +2200,30 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         when = when or datetime.utcnow()
 
-        for user_device_id_last_used in self.devices:
-            if user_device_id_last_used.device_id == device_id:
-                if when.date() > user_device_id_last_used.last_used.date():
-                    user_device_id_last_used.last_used = when
-                    return True
-                else:
-                    return False
+        device = self.get_device(device_id)
+        if device:
+            if when.date() > device.last_used.date():
+                device.last_used = when
+                device.update_meta(commcare_version, device_app_meta)
+                return True
+            else:
+                return False
         else:
-            self.devices.append(DeviceIdLastUsed(
-                device_id=device_id,
-                last_used=when
-            ))
+            device = DeviceIdLastUsed(device_id=device_id, last_used=when)
+            device.update_meta(commcare_version, device_app_meta)
+            self.devices.append(device)
             return True
+
+    def get_last_used_device(self):
+        if not self.devices:
+            return None
+
+        return max(self.devices, key=lambda dev: dev.last_used)
+
+    def get_device(self, device_id):
+        for device in self.devices:
+            if device.device_id == device_id:
+                return device
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -2246,7 +2333,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def set_location(self, domain, location_object_or_id):
         # set the primary location for user's domain_membership
-        if isinstance(location_object_or_id, basestring):
+        if isinstance(location_object_or_id, six.string_types):
             location_id = location_object_or_id
         else:
             location_id = location_object_or_id.location_id

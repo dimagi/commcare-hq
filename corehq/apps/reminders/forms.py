@@ -77,6 +77,7 @@ from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
 from langcodes import get_name as get_language_name
+import six
 
 ONE_MINUTE_OFFSET = time(0, 1)
 
@@ -154,7 +155,7 @@ def validate_integer(value, error_msg, nonnegative=False):
 
 def validate_date(value):
     date_regex = re.compile('^\d\d\d\d-\d\d-\d\d$')
-    if not isinstance(value, basestring) or date_regex.match(value) is None:
+    if not isinstance(value, six.string_types) or date_regex.match(value) is None:
         raise ValidationError(_('Dates must be in YYYY-MM-DD format.'))
     try:
         return parse(value).date()
@@ -167,7 +168,7 @@ def validate_time(value):
         return value
     error_msg = _("Please enter a valid time from 00:00 to 23:59.")
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
-    if not isinstance(value, basestring) or time_regex.match(value) is None:
+    if not isinstance(value, six.string_types) or time_regex.match(value) is None:
         raise ValidationError(error_msg)
     try:
         return parse(value).time()
@@ -1917,7 +1918,7 @@ class RecordListWidget(Widget):
         data_dict = DotExpandedDict(raw)
         data_list = []
         if len(data_dict) > 0:
-            for key in sorted(data_dict[input_name].iterkeys()):
+            for key in sorted(six.iterkeys(data_dict[input_name])):
                 data_list.append(data_dict[input_name][key])
         
         return data_list
@@ -2714,7 +2715,7 @@ class BroadcastForm(Form):
             return []
 
         value = self.cleaned_data.get('location_ids')
-        if not isinstance(value, basestring) or value.strip() == '':
+        if not isinstance(value, six.string_types) or value.strip() == '':
             raise ValidationError(_('Please choose at least one location'))
 
         location_ids = [location_id.strip() for location_id in value.split(',')]

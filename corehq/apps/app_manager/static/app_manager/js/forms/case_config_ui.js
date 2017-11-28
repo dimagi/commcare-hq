@@ -335,7 +335,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             };
 
             self.removeProperty = function (property) {
-                ga_track_event('Case Management', 'Form Level', 'Save Properties (remove)');
+                hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Save Properties (remove)');
                 self.case_properties.remove(property);
                 self.caseConfig.saveButton.fire('change');
             };
@@ -364,7 +364,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 };
 
                 self.removePreload = function (property) {
-                    ga_track_event('Case Management', 'Form Level', 'Load Properties (remove)');
+                    hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Load Properties (remove)');
                     self.case_preload.remove(property);
                     self.caseConfig.saveButton.fire('change');
                 };
@@ -521,7 +521,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }, self);
 
                 self.case_properties.push(property);
-                ga_track_event('Case Management', 'User Case Management', 'Save Properties');
+                hqImport('analytix/js/google').track.event('Case Management', 'User Case Management', 'Save Properties');
             };
 
             self.removeProperty = function (property) {
@@ -550,7 +550,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     }, self);
 
                     self.case_preload.push(property);
-                    ga_track_event('Case Management', 'User Case Management', 'Load Properties');
+                    hqImport('analytix/js/google').track.event('Case Management', 'User Case Management', 'Load Properties');
                 };
 
                 self.removePreload = function (property) {

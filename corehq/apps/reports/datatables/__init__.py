@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from django.template.loader import render_to_string
 from . import DTSortDirection, DTSortType
+import six
 
 
 class DataTablesColumn(object):
@@ -119,8 +120,10 @@ class DataTablesColumnGroup(object):
             length += 1
         return length
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
+
+    __nonzero__ = __bool__
 
 
 class DataTablesHeader(object):
@@ -182,7 +185,7 @@ class DataTablesHeader(object):
             # HACK ideally we would not have to guess at the encoding of `h`
             # (when it is not unicode). Hopefully all byte strings that come
             # through here are encoded as UTF-8. If not, .decode() may blow up.
-            return h if isinstance(h, unicode) else h.decode("utf-8")
+            return h if isinstance(h, six.text_type) else h.decode("utf-8")
         head = map(unicodify, head)
         if use_groups:
             return [groups, head]
@@ -229,5 +232,7 @@ class DataTablesHeader(object):
             length += len(col) if isinstance(col, DataTablesColumnGroup) else 1
         return length
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
+
+    __nonzero__ = __bool__

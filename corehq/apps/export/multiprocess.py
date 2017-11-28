@@ -27,7 +27,7 @@ import os
 import tempfile
 import time
 import zipfile
-from Queue import Empty
+from six.moves.queue import Empty
 from collections import namedtuple
 from datetime import timedelta
 

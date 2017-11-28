@@ -1,58 +1,18 @@
 from __future__ import absolute_import
-import json
-import os
 
 import mock
-from django.test.testcases import SimpleTestCase
-from fakecouch import FakeCouchDb
 
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
 from corehq.apps.userreports.expressions.factory import SubcasesExpressionSpec
+from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 
-EPISODE_DATA_SOURCE = 'episode_2b_v4.json'
+EPISODE_DATA_SOURCE = 'episode_2b_v5.json'
 
 
-class TestEpisode2B(SimpleTestCase):
+class TestEpisode2B(TestDataSourceExpressions):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestEpisode2B, cls).setUpClass()
-
-        episode_file = os.path.join(
-            os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)),
-            'data_sources',
-            EPISODE_DATA_SOURCE
-        )
-
-        with open(episode_file) as f:
-            cls.episode = DataSourceConfiguration.wrap(json.loads(f.read())['config'])
-            cls.named_expressions = cls.episode.named_expression_objects
-
-    def setUp(self):
-        self.orig_db = CommCareCase.get_db()
-        self.database = FakeCouchDb()
-        CommCareCase.set_db(self.database)
-
-    def tearDown(self):
-        CommCareCase.set_db(self.orig_db)
-
-    def _get_column(self, column_id):
-        return [
-            ind
-            for ind in self.episode.configured_indicators
-            if ind['column_id'] == column_id
-        ][0]
-
-    def _get_expression(self, column_id, column_type):
-        column = self._get_column(column_id)
-        self.assertEqual(column['datatype'], column_type)
-        return ExpressionFactory.from_spec(
-            column['expression'],
-            context=FactoryContext(self.named_expressions, {})
-        )
+    data_source_name = EPISODE_DATA_SOURCE
 
     def test_treating_phi_property_when_clause_true(self):
         episode_case = {
@@ -86,7 +46,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -128,7 +88,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('key_populations')
+        column = self.get_column('key_populations')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -169,7 +129,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -210,7 +170,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -251,7 +211,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -292,7 +252,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('tu_name')
+        column = self.get_column('tu_name')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -334,7 +294,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -376,7 +336,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -418,7 +378,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('treating_phi')
+        column = self.get_column('treating_phi')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -485,14 +445,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('endofip_test_requested_date')
+        column = self.get_column('endofip_test_requested_date')
         self.assertEqual(column['datatype'], 'date')
         expression = ExpressionFactory.from_spec(
             column['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        column2 = self._get_column('endofcp_test_requested_date')
+        column2 = self.get_column('endofcp_test_requested_date')
         self.assertEqual(column2['datatype'], 'date')
         expression2 = ExpressionFactory.from_spec(
             column2['expression'],
@@ -560,14 +520,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        endofip_test_requested_date = self._get_column('endofip_test_requested_date')
+        endofip_test_requested_date = self.get_column('endofip_test_requested_date')
         self.assertEqual(endofip_test_requested_date['datatype'], 'date')
         endofip_test_requested_date_expression = ExpressionFactory.from_spec(
             endofip_test_requested_date['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        endofcp_test_requested_date = self._get_column('endofcp_test_requested_date')
+        endofcp_test_requested_date = self.get_column('endofcp_test_requested_date')
         self.assertEqual(endofcp_test_requested_date['datatype'], 'date')
         endofcp_test_requested_date_expression = ExpressionFactory.from_spec(
             endofcp_test_requested_date['expression'],
@@ -644,14 +604,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        endofip_test_requested_date = self._get_column('endofip_test_requested_date')
+        endofip_test_requested_date = self.get_column('endofip_test_requested_date')
         self.assertEqual(endofip_test_requested_date['datatype'], 'date')
         endofip_test_requested_date_expression = ExpressionFactory.from_spec(
             endofip_test_requested_date['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        endofcp_test_requested_date = self._get_column('endofcp_test_requested_date')
+        endofcp_test_requested_date = self.get_column('endofcp_test_requested_date')
         self.assertEqual(endofcp_test_requested_date['datatype'], 'date')
         endofcp_test_requested_date_expression = ExpressionFactory.from_spec(
             endofcp_test_requested_date['expression'],
@@ -735,14 +695,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        endofip_result = self._get_column('endofip_result')
+        endofip_result = self.get_column('endofip_result')
         self.assertEqual(endofip_result['datatype'], 'string')
         endofip_result_expression = ExpressionFactory.from_spec(
             endofip_result['expression'],
             context=FactoryContext(self.named_expressions, {})
         )
 
-        endofcp_result = self._get_column('endofcp_result')
+        endofcp_result = self.get_column('endofcp_result')
         self.assertEqual(endofcp_result['datatype'], 'string')
         endofcp_result_expression = ExpressionFactory.from_spec(
             endofcp_result['expression'],
@@ -832,7 +792,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        not_microbiological = self._get_column('not_microbiological_result')
+        not_microbiological = self.get_column('not_microbiological_result')
         self.assertEqual(not_microbiological['datatype'], 'string')
         not_microbiological_result_expression = ExpressionFactory.from_spec(
             not_microbiological['expression'],
@@ -916,13 +876,14 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('microscopy_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('microscopy_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('microscopy_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('microscopy_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('microscopy_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('microscopy_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'microscopy_test_result_summary_display',
             'string'
         )
+        test_type_expression = self.get_expression('microscopy_test_type', 'string')
 
         with mock.patch.object(SubcasesExpressionSpec, '__call__', lambda *args: subcases):
             self.assertEqual(
@@ -940,6 +901,10 @@ class TestEpisode2B(SimpleTestCase):
             self.assertEqual(
                 result_summary_display_expression(episode_case, EvaluationContext(episode_case, 0)),
                 'tb_detected, result_grade'
+            )
+            self.assertEqual(
+                test_type_expression(episode_case, EvaluationContext(episode_case, 0)),
+                'microscopy-zn'
             )
 
     def test_microscopy_tb_not_detected_expressions(self):
@@ -1013,10 +978,10 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('microscopy_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('microscopy_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('microscopy_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('microscopy_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('microscopy_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('microscopy_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'microscopy_test_result_summary_display',
             'string'
         )
@@ -1129,10 +1094,10 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1227,10 +1192,10 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1344,10 +1309,10 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1461,10 +1426,10 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1558,10 +1523,10 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        date_reported_expression = self._get_expression('cbnaat_test_result_date', 'date')
-        testing_facility_name_expression = self._get_expression('cbnaat_test_testing_facility_name', 'string')
-        lab_serial_number_expression = self._get_expression('cbnaat_test_lab_serial_number', 'string')
-        result_summary_display_expression = self._get_expression(
+        date_reported_expression = self.get_expression('cbnaat_test_result_date', 'date')
+        testing_facility_name_expression = self.get_expression('cbnaat_test_testing_facility_name', 'string')
+        lab_serial_number_expression = self.get_expression('cbnaat_test_lab_serial_number', 'string')
+        result_summary_display_expression = self.get_expression(
             'cbnaat_test_result_summary_display',
             'string'
         )
@@ -1619,7 +1584,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -1663,7 +1628,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -1707,7 +1672,7 @@ class TestEpisode2B(SimpleTestCase):
             'person_case_id': person_case
         }
 
-        column = self._get_column('disease_classification')
+        column = self.get_column('disease_classification')
         self.assertEqual(column['datatype'], 'string')
         expression = ExpressionFactory.from_spec(
             column['expression'],
@@ -1730,7 +1695,7 @@ class TestEpisode2B(SimpleTestCase):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'test_regimen'
@@ -1749,7 +1714,7 @@ class TestEpisode2B(SimpleTestCase):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'New'
@@ -1769,7 +1734,7 @@ class TestEpisode2B(SimpleTestCase):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'Outside RNTCP'
@@ -1789,8 +1754,304 @@ class TestEpisode2B(SimpleTestCase):
             ]
         }
 
-        expression = self._get_expression('type_of_regimen', 'string')
+        expression = self.get_expression('type_of_regimen', 'string')
         self.assertEqual(
             expression(episode_case, EvaluationContext(episode_case, 0)),
             'Previously Treated'
+        )
+
+    def test_confirmed_tb(self):
+        episode_case_tb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb'
+        }
+        episode_case_drtb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb'
+        }
+
+        confirmed_tb = self.get_expression('confirmed_tb', 'integer')
+
+        self.assertEqual(
+            confirmed_tb(episode_case_tb, EvaluationContext(episode_case_tb, 0)),
+            1
+        )
+        self.assertEqual(
+            confirmed_tb(episode_case_drtb, EvaluationContext(episode_case_drtb, 0)),
+            0
+        )
+
+    def test_confirmed_drtb(self):
+        episode_case_tb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb'
+        }
+        episode_case_drtb = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb'
+        }
+
+        confirmed_tb = self.get_expression('confirmed_drtb', 'integer')
+
+        self.assertEqual(
+            confirmed_tb(episode_case_tb, EvaluationContext(episode_case_tb, 0)),
+            0
+        )
+        self.assertEqual(
+            confirmed_tb(episode_case_drtb, EvaluationContext(episode_case_drtb, 0)),
+            1
+        )
+
+    def test_drtb_patients_on_treatment(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-10-01',
+            'treatment_outcome': ''
+        }
+
+        drtb_patients_on_treatment = self.get_expression('drtb_patients_on_treatment', 'integer')
+
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['episode_type'] = 'confirmed_tb'
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['episode_type'] = 'confirmed_drtb'
+        episode_case['treatment_initiation_date'] = ''
+        episode_case['treatment_outcome'] = 'yes'
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['episode_type'] = 'confirmed_tb'
+        episode_case['treatment_initiation_date'] = None
+        self.assertEqual(
+            drtb_patients_on_treatment(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_patients_on_ip(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'episode_type': 'confirmed_tb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'no',
+            'treatment_outcome': ''
+        }
+
+        patients_on_ip = self.get_expression('patients_on_ip', 'integer')
+
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'no'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': None,
+            'cp_initiated': 'yes',
+            'treatment_outcome': 'yes'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case.update({
+            'episode_type': 'confirmed_drtb',
+            'treatment_initiation_date': '2017-10-01',
+            'cp_initiated': 'yes'
+        })
+        self.assertEqual(
+            patients_on_ip(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_patients_on_cp(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'cp_initiated': 'yes',
+            'treatment_outcome': ''
+        }
+
+        patients_on_cp = self.get_expression('patients_on_cp', 'integer')
+
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['treatment_outcome'] = 'yes'
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['cp_initiated'] = 'no'
+        self.assertEqual(
+            patients_on_cp(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_treatment_outcome(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_outcome': 'test_value'
+        }
+
+        treatment_outcome = self.get_expression('treatment_outcome_for_sum', 'integer')
+
+        self.assertEqual(
+            treatment_outcome(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        episode_case['treatment_outcome'] = ''
+        self.assertEqual(
+            treatment_outcome(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+    def test_weight_band(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'weight_band': '',
+            'treatment_outcome': 'yes'
+        }
+
+        weight_band_adult = self.get_expression('weight_band_adult_25_39', 'integer')
+
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_25-39'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['treatment_outcome'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_adult_40_54', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_40-54'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_adult_55_69', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_55-69'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_adult_gt_70', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = 'adult_greater_than_70'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_11_17', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '11-17'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_18_25', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '18-25'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_26_30', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '26-30'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
+        )
+
+        weight_band_adult = self.get_expression('weight_band_31_60', 'integer')
+        episode_case['weight_band'] = ''
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            0
+        )
+
+        episode_case['weight_band'] = '31-60'
+        self.assertEqual(
+            weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
+            1
         )

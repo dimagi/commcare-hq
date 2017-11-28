@@ -10,6 +10,7 @@ from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
 from dimagi.utils.parsing import string_to_utc_datetime
+import six
 
 
 XMLNS_ATTR = "@xmlns"
@@ -187,7 +188,7 @@ class CaseAttachmentAction(CaseActionBase):
             return cls(block, attachments)
 
         for id, data in block.items():
-            if isinstance(data, basestring):
+            if isinstance(data, six.string_types):
                 attachment_from = None
                 attachment_src = None
                 attachment_name = None

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from itertools import imap
+from six.moves import map
 
 from django.conf import settings
 
@@ -20,6 +20,7 @@ from corehq.apps.groups.dbaccessors import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.util.quickcache import quickcache
+import six
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
@@ -87,7 +88,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         self.ids_by_domain.clear(self.__class__, self.domain)
 
     def add_user(self, couch_user_id, save=True):
-        if not isinstance(couch_user_id, basestring):
+        if not isinstance(couch_user_id, six.string_types):
             couch_user_id = couch_user_id.user_id
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
@@ -100,7 +101,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         '''
         Returns True if it removed a user, False otherwise
         '''
-        if not isinstance(couch_user_id, basestring):
+        if not isinstance(couch_user_id, six.string_types):
             couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
             for i in range(0, len(self.users)):
@@ -150,7 +151,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
                 group_id
             ))
         index = 0
-        for i in range(0,len(self.path)):
+        for i in range(0, len(self.path)):
             if self.path[i] == group_id:
                 index = i
                 break
@@ -170,7 +171,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             if is_active and not user.is_active:
                 return False
             return True
-        users = imap(CouchUser.wrap_correctly, iter_docs(self.get_db(), self.users))
+        users = map(CouchUser.wrap_correctly, iter_docs(self.get_db(), self.users))
         return filter(is_relevant_user, users)
 
     @memoized

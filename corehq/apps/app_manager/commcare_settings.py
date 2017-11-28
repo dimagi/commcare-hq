@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_noop, ugettext
 from corehq.apps.app_manager import static_strings
 import os
 import yaml
+import six
 
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
@@ -24,7 +25,7 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 
 def _translate_setting(setting, prop):
     value = setting[prop]
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         return [ugettext(v) for v in value]
     else:
         return ugettext(value)
@@ -84,7 +85,7 @@ def _load_commcare_settings_layout(doc_type, user):
             "CommCare settings layout should mention "
             "all the available settings. "
             "The following settings went unmentioned: %s" % (
-                ', '.join(settings.keys())
+                ', '.join(settings)
             )
         )
     return layout

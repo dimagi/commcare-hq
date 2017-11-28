@@ -312,11 +312,11 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         newcase = submit_form_locally(xml_data, domain=self.project.name).case
 
         self.assertTrue(isinstance(newcase.adate, dict))
-        self.assertEqual(date(2012, 02, 01), newcase.adate["#text"])
+        self.assertEqual(date(2012, 2, 1), newcase.adate["#text"])
         self.assertEqual("i am an attribute", newcase.adate["@someattr"])
         self.assertTrue(isinstance(newcase.dateattr, dict))
         self.assertEqual("this shouldn't break", newcase.dateattr["#text"])
-        self.assertEqual(date(2012, 01, 01), newcase.dateattr["@somedate"])
+        self.assertEqual(date(2012, 1, 1), newcase.dateattr["@somedate"])
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])

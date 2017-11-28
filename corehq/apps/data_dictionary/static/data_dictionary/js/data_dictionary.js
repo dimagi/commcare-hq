@@ -187,7 +187,7 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function() {
-            window.analytics.usage('Data Dictionary', 'downloaded data dictionary');
+            hqImport('analytix/js/google').track.event('Data Dictionary', 'downloaded data dictionary');
         });
     });
 });

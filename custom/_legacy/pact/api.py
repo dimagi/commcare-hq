@@ -184,7 +184,7 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     case_nsmap = {'n1': 'http://commcarehq.org/case/transaction/v2'}
 
     def make_update(update_elem, updates):
-        for k,v in updates.items():
+        for k, v in updates.items():
             if v is not None:
                 sub_element(update_elem, '{%(ns)s}%(tag)s' % {'ns': case_nsmap['n1'], 'tag': k}, v)
 
@@ -341,7 +341,7 @@ class PactAPI(DomainAPI):
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
         resp = HttpResponse()
         if self.method == "rm_schedule":
-            if self.request.POST.has_key('rm_schedule'):
+            if 'rm_schedule' in self.request.POST:
                 #hacky remove schedule method
                 pdoc.rm_last_schedule()
                 pdoc.save()

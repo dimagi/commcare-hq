@@ -9,6 +9,7 @@ from couchexport.util import SerializableFunction
 from dimagi.utils.couch.database import get_safe_write_kwargs
 import json
 from couchexport.models import Format
+from six.moves import zip
 
 
 class ExportSchemaTest(TestCase, DocTestMixin):
@@ -16,7 +17,7 @@ class ExportSchemaTest(TestCase, DocTestMixin):
     def testSaveAndLoad(self):
         index = ["foo", 2]
         schema = ExportSchema(index=index, timestamp=datetime.utcnow())
-        inner = {"dict": {"bar": 1, "baz": [2,3]},
+        inner = {"dict": {"bar": 1, "baz": [2, 3]},
                  "list": ["foo", "bar"],
                  "dictlist": [{"bip": 1, "bop": "blah"},
                               {"bip": 2, "bop": "blah2"}],

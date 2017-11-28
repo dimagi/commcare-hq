@@ -33,7 +33,7 @@ class Command(BaseCommand):
             else:
                 for hit in res['hits']['hits']:
                     doc_id = hit['_id']
-                    if self.seen_doc_ids.has_key(doc_id):
+                    if doc_id in self.seen_doc_ids:
                         continue
                     else:
                         self.seen_doc_ids[doc_id ] =1

@@ -13,6 +13,7 @@ from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
 from mock import patch
+import six
 
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
@@ -88,7 +89,7 @@ class SqlSMSPillowTest(TestCase):
             processed=True,
             num_processing_attempts=1,
             queued_timestamp=datetime(2016, 1, 1, 11, 58),
-            processed_timestamp=datetime(2016, 1, 1, 12, 01),
+            processed_timestamp=datetime(2016, 1, 1, 12, 1),
             domain_scope=self.domain,
             ignore_opt_out=False,
             backend_message_id='fake-backend-message-id',
@@ -106,7 +107,7 @@ class SqlSMSPillowTest(TestCase):
 
     def _to_json(self, sms_dict, sms):
         result = {'_id': sms.couch_id, 'id': sms.pk}
-        for k, v in sms_dict.iteritems():
+        for k, v in six.iteritems(sms_dict):
             value = json_format_datetime(v) if isinstance(v, datetime) else v
             result[k] = value
 
@@ -128,7 +129,7 @@ class SqlSMSPillowTest(TestCase):
 
         # publish the change and confirm it gets to kafka
         self.sms.publish_change()
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(self.sms.couch_id, change_meta.document_id)
         self.assertEqual(self.domain, change_meta.domain)

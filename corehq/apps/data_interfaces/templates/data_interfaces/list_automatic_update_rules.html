@@ -77,7 +77,7 @@
             });
         },
         trackNewRule: function () {
-            ga_track_event('Automatic Case Closure', 'Rules', 'Set Rule');
+            hqImport('analytix/js/google').track.event('Automatic Case Closure', 'Rules', 'Set Rule');
         },
     });
 }(window.angular));

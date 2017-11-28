@@ -24,6 +24,7 @@ import re
 import uuid
 from lxml import etree
 from lxml.builder import E
+import six
 
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
@@ -131,9 +132,9 @@ class XFormBuilder(object):
         """
         if data_type is not None and data_type not in ODK_TYPES + GROUP_TYPES:
             raise TypeError('Unknown question data type "{}"'.format(data_type))
-        if group is not None and not isinstance(group, basestring) and not hasattr(group, '__iter__'):
+        if group is not None and not isinstance(group, six.string_types) and not hasattr(group, '__iter__'):
             raise TypeError('group parameter needs to be a string or iterable')
-        groups = [group] if isinstance(group, basestring) else group
+        groups = [group] if isinstance(group, six.string_types) else group
         self._append_to_data(name, groups)
         self._append_to_model(name, data_type, groups, **params)
         if data_type is not None:
@@ -356,7 +357,7 @@ class XFormBuilder(object):
                 node_.append(
                     E.item(
                         E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, choice_name))}),
-                        E.value(choice_name if isinstance(choice_name, basestring) else str(choice_name))
+                        E.value(choice_name if isinstance(choice_name, six.string_types) else str(choice_name))
                     )
                 )
             return node_

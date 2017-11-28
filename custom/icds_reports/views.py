@@ -535,8 +535,7 @@ class AwcReportsView(View):
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id'),
-                tuple(month.timetuple())[:3]
+                self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
 
@@ -753,7 +752,7 @@ class NewbornsWithLowBirthWeightView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
 
         gender = self.request.GET.get('gender', None)
@@ -979,7 +978,7 @@ class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
-        now = datetime.utcnow() - relativedelta(day=1)
+        now = datetime.utcnow() - relativedelta(days=1)
 
         domain = self.kwargs['domain']
 

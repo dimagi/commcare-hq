@@ -214,7 +214,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
                   {'sort_key': 'n/a', 'html': 'n/a'},
                   {'sort_key': 'n/a', 'html': 'n/a'}]]
-        for i in range(1,15):
+        for i in range(1, 15):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
@@ -458,7 +458,7 @@ class PostnatalCareOverview(BaseSqlData):
     def rows(self):
         from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
-        for i in range(0,4):
+        for i in range(0, 4):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['postnatal_care_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},

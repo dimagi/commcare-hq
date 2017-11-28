@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import json
 
@@ -6,6 +7,7 @@ from django.core.management.base import BaseCommand
 
 from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
+import six
 
 
 class Command(BaseCommand):
@@ -58,7 +60,7 @@ class Command(BaseCommand):
                 try:
                     payload = json.loads(record.get_payload())['incentive_details'][0]
                 except Exception as e:
-                    errors.append([record.payload_id, record._id, unicode(e)])
+                    errors.append([record.payload_id, record._id, six.text_type(e)])
                     continue
                 payload['Succeeded'] = record.succeeded
                 incentive_episode_pair = (payload.get('EpisodeID'), payload.get('EventID'),)
@@ -70,7 +72,7 @@ class Command(BaseCommand):
 
                 writer.writerow(row)
 
-        print "{} duplicates found".format(len(duplicate_incentive_ids))
+        print("{} duplicates found".format(len(duplicate_incentive_ids)))
         if duplicate_incentive_ids:
             with open('duplicates_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)
@@ -78,7 +80,7 @@ class Command(BaseCommand):
                 for duplicate_id in duplicate_incentive_ids:
                     writer.writerow(duplicate_id)
 
-        print "{} errors".format(len(errors))
+        print("{} errors".format(len(errors)))
         if errors:
             with open('errors_{}'.format(filename), 'w') as f:
                 writer = csv.writer(f)

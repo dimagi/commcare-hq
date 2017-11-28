@@ -18,6 +18,7 @@ from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
 import six
+from functools import reduce
 
 PRODUCT_NAMES = {
     u'diu': [u"diu"],
@@ -82,7 +83,7 @@ class BaseSqlData(SqlData):
             num_cols = len(rows[0])
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long, float))]
+                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:
@@ -291,7 +292,7 @@ class TauxDeRuptures(BaseSqlData):
             return x["sort_key"] if isinstance(x, dict) else x
 
         for row in rows:
-            value = 1L if any(get_value(x) for x in row[1:]) else 0L
+            value = 1 if any(get_value(x) for x in row[1:]) else 0
             row.append({'sort_key': value, 'html': value})
 
         total_row = list(calculate_total_row(rows))
@@ -375,7 +376,7 @@ class PPSAvecDonnees(BaseSqlData):
 
         columns.append(DatabaseColumn(_(u"PPS Avec Données Soumises"),
                                       CountUniqueAndSumCustomColumn('location_id'),
-                                      format_fn=lambda x: {'sort_key': long(x), 'html': long(x)})
+                                      format_fn=lambda x: {'sort_key': int(x), 'html': int(x)})
         )
         return columns
 
@@ -390,7 +391,7 @@ class PPSAvecDonnees(BaseSqlData):
             location_id=self.config['district_id']
         ).get_children().exclude(is_archived=True).values_list('name', flat=True)
         locations_not_included = set(all_locations) - set(locations_included)
-        return rows + [[location, {'sort_key': 0L, 'html': 0L}] for location in locations_not_included]
+        return rows + [[location, {'sort_key': 0, 'html': 0}] for location in locations_not_included]
 
 
 class DateSource(BaseSqlData):
@@ -641,7 +642,7 @@ class NombreData(BaseSqlData):
                     total_row.append("%0.3f" % (float(cp[0]) / (float(cp[1]) or 1.0)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long, float))]
+                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:

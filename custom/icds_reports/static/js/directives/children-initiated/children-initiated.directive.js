@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -10,8 +10,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-
-    var genderIndex = genders.findIndex(function (x) {
+    vm.userLocationId = userLocationId;
+    var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
@@ -30,6 +30,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age'];
@@ -112,8 +114,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -126,7 +128,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -135,7 +137,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -199,15 +201,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
                     var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + day.all + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + day.in_month + "</strong></p>";
-                    tooltip_content += "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    return vm.tooltipContent(d.value, day);
                 });
                 return chart;
             },
@@ -223,6 +218,13 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of children between age 6 - 8 months: <strong>" + dataInMonth.all + "</strong></p>"
+            + "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + dataInMonth.in_month + "</strong></p>"
+            + "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

@@ -14,10 +14,16 @@ from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
-    ModuleNotFoundException, FormNotFoundException
+    ModuleNotFoundException, FormNotFoundException, RemoteRequestError, AppLinkError, ActionNotPermitted, \
+    RemoteAuthError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
 
 from corehq.apps.app_manager.util import update_form_unique_ids
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.util import get_static_report_mapping
+from corehq.util.couch import DocumentNotFound
+import six
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -117,7 +123,7 @@ def bail(request, domain, app_id, not_found=""):
 
 
 def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, unicode) else s
+    return s.encode('utf-8') if isinstance(s, six.text_type) else s
 
 
 def validate_langs(request, existing_langs):
@@ -153,7 +159,7 @@ def overwrite_app(app, master_build, report_map=None):
     app_json = app.to_json()
     id_map = _get_form_id_map(app_json)  # do this before we change the source
 
-    for key, value in master_json.iteritems():
+    for key, value in six.iteritems(master_json):
         if key not in excluded_fields:
             app_json[key] = value
     app_json['version'] = master_json['version']
@@ -242,7 +248,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
     apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
     for app in apps:
         unset_user(app)
-        for _, profile in app.build_profiles.iteritems():
+        for _, profile in six.iteritems(app.build_profiles):
             unset_user(profile)
         app.save()
 
@@ -273,3 +279,52 @@ def handle_custom_icon_edits(request, form_or_module, lang):
         # if there is a request to unset custom icon
         if not icon_form and form_or_module.custom_icon:
             form_or_module.custom_icons = []
+
+
+def update_linked_app(app):
+    try:
+        master_version = app.get_master_version()
+    except RemoteRequestError:
+        raise AppLinkError(_(
+            'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+        ))
+
+    if master_version > app.version:
+        try:
+            latest_master_build = app.get_latest_master_release()
+        except ActionNotPermitted:
+            raise AppLinkError(_(
+                'This project is not authorized to update from the master application. '
+                'Please contact the maintainer of the master app if you believe this is a mistake. '
+            ))
+        except RemoteAuthError:
+            raise AppLinkError(_(
+                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
+                'Please verify your authentication details for the remote link are correct.'
+            ))
+        except RemoteRequestError:
+            raise AppLinkError(_(
+                'Unable to pull latest master from remote CommCare HQ. Please try again later.'
+            ))
+
+        try:
+            report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
+        except (BadSpecError, DocumentNotFound) as e:
+            raise AppLinkError(_('This linked application uses mobile UCRs '
+                                 'which are available in this domain: %(message)s') % {'message': e})
+
+        try:
+            app = overwrite_app(app, latest_master_build, report_map)
+        except AppEditingError:
+            raise AppLinkError(_('This linked application uses dynamic mobile UCRs '
+                                 'which are currently not supported. For this application '
+                                 'to function correctly, you will need to remove those modules '
+                                 'or revert to a previous version that did not include them.'))
+
+    if app.master_is_remote:
+        try:
+            pull_missing_multimedia_from_remote(app)
+        except RemoteRequestError:
+            raise AppLinkError(_(
+                'Error fetching multimedia from remote server. Please try again later.'
+            ))

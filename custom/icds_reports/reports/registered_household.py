@@ -12,6 +12,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -106,10 +107,10 @@ def get_registered_household_sector_data(domain, config, loc_level, location_id,
         row_values = {
             'household': household
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
-    for name, value_dict in tooltips_data.iteritems():
+    for name, value_dict in six.iteritems(tooltips_data):
         chart_data['blue'].append([name, value_dict['household'] or 0])
 
     for sql_location in loc_children:
@@ -180,7 +181,7 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
         data['blue'][date_in_miliseconds]['y'] += household
 
     top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['value'],
         reverse=True
     )
@@ -193,7 +194,7 @@ def get_registered_household_data_chart(domain, config, loc_level, show_test=Fal
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "Registered Households",
                 "strokeWidth": 2,

@@ -1,13 +1,13 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
+import six
 
 
-class DocumentStore(object):
+class DocumentStore(six.with_metaclass(ABCMeta, object)):
     """
     Very basic implementation of a document store.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def get_document(self, doc_id):

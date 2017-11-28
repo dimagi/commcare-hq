@@ -151,6 +151,30 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                            },
                                        },
                                        'type': 'object'},
+                'devices': {
+                    'dynamic': False,
+                    'type': 'nested',
+                    'properties': {
+                        'device_id': {'type': 'string', 'index': 'not_analyzed'},
+                        'last_used': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                        'commcare_version': {'type': 'string'},
+                        'app_meta': {
+                            'dynamic': False,
+                            'type': 'nested',
+                            'properties': {
+                                'app_id': {'type': 'string', 'index': 'not_analyzed'},
+                                'build_id': {'type': 'string', 'index': 'not_analyzed'},
+                                'build_version': {'type': 'integer'},
+                                'last_request': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'last_submission': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'last_sync': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'last_heartbeat': {'type': 'date', 'format': DATE_FORMATS_STRING},
+                                'num_unsent_forms': {'type': 'integer'},
+                                'num_quarantined_forms': {'type': 'integer'},
+                            }
+                        },
+                    }
+                },
                 'status': {'type': 'string'},
                 'user_data': {'type': 'object', 'enabled': False},
                 'user_data_es': {

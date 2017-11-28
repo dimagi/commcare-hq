@@ -99,6 +99,7 @@ from corehq.apps.export.utils import (
     domain_has_daily_saved_export_access,
     domain_has_excel_dashboard_access,
 )
+import six
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -155,7 +156,7 @@ class ExportItem(DocumentSchema):
     label = StringProperty()
     tag = StringProperty()
     last_occurrences = DictProperty()
-    transform = StringProperty(choices=TRANSFORM_FUNCTIONS.keys())
+    transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
@@ -238,7 +239,7 @@ class ExportColumn(DocumentSchema):
     help_text = StringProperty()
 
     # A transforms that deidentifies the value
-    deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
+    deid_transform = StringProperty(choices=list(DEID_TRANSFORM_FUNCTIONS))
 
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
@@ -1784,7 +1785,7 @@ class FormExportDataSchema(ExportDataSchema):
             _add_to_group_schema(path, case_attribute)
 
         # Add case updates
-        for case_property, case_path in case_properties.iteritems():
+        for case_property, case_path in six.iteritems(case_properties):
             if repeat_context:
                 # This removes the repeat part of the path. For example, if inside
                 # a repeat group that has the following path:
@@ -2015,7 +2016,7 @@ class CaseExportDataSchema(ExportDataSchema):
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case.
         """
-        assert len(case_property_mapping.keys()) == 1
+        assert len(list(case_property_mapping)) == 1
         schema = cls()
 
         group_schema = ExportGroupSchema(
@@ -2023,7 +2024,7 @@ class CaseExportDataSchema(ExportDataSchema):
             last_occurrences={app_id: app_version},
         )
 
-        for case_type, case_properties in case_property_mapping.iteritems():
+        for case_type, case_properties in six.iteritems(case_property_mapping):
 
             for prop in case_properties:
                 group_schema.items.append(ScalarItem(
@@ -2055,14 +2056,14 @@ class CaseExportDataSchema(ExportDataSchema):
     @classmethod
     def _generate_schema_for_case_history(cls, case_property_mapping, app_id, app_version):
         """Generates the schema for the Case History tab on the export page"""
-        assert len(case_property_mapping.keys()) == 1
+        assert len(list(case_property_mapping)) == 1
         schema = cls()
 
         group_schema = ExportGroupSchema(
             path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
-        unknown_case_properties = set(case_property_mapping[case_property_mapping.keys()[0]])
+        unknown_case_properties = set(case_property_mapping[list(case_property_mapping)[0]])
         unknown_case_properties -= set(KNOWN_CASE_PROPERTIES)
 
         def _add_to_group_schema(group_schema, path_start, prop, app_id, app_version):
@@ -2246,14 +2247,14 @@ class SplitUserDefinedExportColumn(ExportColumn):
         if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return value
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return [None] * len(self.user_defined_options) + [value]
 
         selected = OrderedDict((x, 1) for x in value.split(" "))
         row = []
         for option in self.user_defined_options:
             row.append(selected.pop(option, None))
-        row.append(" ".join(selected.keys()))
+        row.append(" ".join(selected))
         return row
 
     def get_headers(self, **kwargs):
@@ -2329,7 +2330,7 @@ class SplitGPSExportColumn(ExportColumn):
 
         values = [EMPTY_VALUE] * 4
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return values
 
         for index, coordinate in enumerate(value.split(' ')):
@@ -2379,7 +2380,7 @@ class SplitExportColumn(ExportColumn):
                 value.append(MISSING_VALUE)
             return value
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             unspecified_options = [] if self.ignore_unspecified_options else [value]
             return [EMPTY_VALUE] * len(self.item.options) + unspecified_options
 
@@ -2388,7 +2389,7 @@ class SplitExportColumn(ExportColumn):
         for option in self.item.options:
             row.append(selected.pop(option.value, EMPTY_VALUE))
         if not self.ignore_unspecified_options:
-            row.append(" ".join(selected.keys()))
+            row.append(" ".join(selected))
         return row
 
     def get_headers(self, split_column=False):
@@ -2429,7 +2430,7 @@ class RowNumberColumn(ExportColumn):
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, **kwargs):
         assert row_index, 'There must be a row_index for number column'
         return (
-            [".".join([unicode(i) for i in row_index])]
+            [".".join([six.text_type(i) for i in row_index])]
             + (list(row_index) if len(row_index) > 1 else [])
         )
 

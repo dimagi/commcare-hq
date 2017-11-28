@@ -151,7 +151,6 @@ class TestReportXFormProcessing(SimpleTestCase):
         del(restored['form']['meta']['app_build_version'])
         del(restored['form']['meta']['commcare_version'])
         del(restored['form']['meta']['geo_point'])
-        del(restored['server_modified_on'])
 
         self.assertNotEqual(for_indexing, orig)
         self.assertNotEqual(for_indexing, restored)

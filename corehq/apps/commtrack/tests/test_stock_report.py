@@ -168,7 +168,7 @@ class StockReportDomainTest(TestCase):
     @run_with_all_backends
     def test_get_current_ledger_state(self):
         def test_transactions(expected):
-            state = LedgerAccessors(self.domain).get_current_ledger_state(self.case_ids.keys())
+            state = LedgerAccessors(self.domain).get_current_ledger_state(list(self.case_ids))
             for case_id, sections in state.items():
                 self._validate_case_data(sections, expected[case_id])
 

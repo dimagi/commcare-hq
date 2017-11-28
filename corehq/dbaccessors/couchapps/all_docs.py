@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from corehq.preindex import get_preindex_plugin
 from corehq.util.couch_helpers import paginate_view
 from dimagi.utils.chunked import chunked
+import six
 
 
 def _get_all_docs_dbs():
@@ -53,7 +54,7 @@ def get_all_docs_with_doc_types(db, doc_types):
 
     returns doc JSON (not wrapped)
     """
-    if isinstance(doc_types, basestring):
+    if isinstance(doc_types, six.string_types):
         raise TypeError('get_all_docs_with_doc_types requires doc_types '
                         'to be a sequence of strings, not {!r}'.format(doc_types))
     for doc_type in doc_types:

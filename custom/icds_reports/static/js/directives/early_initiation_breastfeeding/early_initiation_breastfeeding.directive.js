@@ -1,4 +1,4 @@
-/* global d3*/
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -10,8 +10,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-
-    var genderIndex = genders.findIndex(function (x) {
+    vm.userLocationId = userLocationId;
+    var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
@@ -30,6 +30,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age'];
@@ -114,8 +116,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
@@ -128,7 +130,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -177,13 +179,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 tooltip.contentGenerator(function (d) {
 
                     var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total Number of Children born in the given month:<strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
-                    tooltip_content += "<p>Total Number of Children who were put to the breast within one hour of birth:  <strong>" + $filter('indiaNumbers')(day.birth) + "</strong></p>";
-                    tooltip_content += "<p>% children who were put to the breast within one hour of birth: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    return vm.tooltipContent(d.value, day);
                 });
                 return chart;
             },
@@ -199,6 +195,13 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total Number of Children born in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
+            + "<p>Total Number of Children who were put to the breast within one hour of birth: <strong>" + $filter('indiaNumbers')(dataInMonth.birth) + "</strong></p>"
+            + "<p>% children who were put to the breast within one hour of birth: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
     };
 
     vm.moveToLocation = function(loc, index) {

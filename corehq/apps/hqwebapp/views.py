@@ -77,6 +77,7 @@ from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.view_utils import reverse
+import six
 
 
 def is_deploy_in_progress():
@@ -96,7 +97,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return u'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
-        unicode(exc)
+        six.text_type(exc)
     )
 
 
@@ -1143,7 +1144,7 @@ def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
 
     return render(request, template, {
         'alerts': [{
-            'created': unicode(alert.created),
+            'created': six.text_type(alert.created),
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,
@@ -1165,7 +1166,7 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': unicode(alert.created),
+            'created': six.text_type(alert.created),
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,

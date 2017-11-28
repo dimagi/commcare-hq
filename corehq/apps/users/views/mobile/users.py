@@ -90,6 +90,7 @@ from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     InvalidExcelFileException
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
+import six
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -765,7 +766,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             form_data = self._construct_form_data(in_data, fields)
         except InvalidMobileWorkerRequest as e:
             return {
-                'error': unicode(e)
+                'error': six.text_type(e)
             }
 
         self.request.POST = form_data
