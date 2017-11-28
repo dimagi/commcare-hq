@@ -391,7 +391,7 @@ class UploadFixtureAPIResponse(object):
 
     def __init__(self, status, message):
         assert status in self.response_codes, \
-            'status must be in {!r}: {}'.format(self.status.keys(), status)
+            'status must be in {!r}: {}'.format(list(self.response_codes), status)
         self.status = status
         self.message = message
 
