@@ -1806,7 +1806,7 @@ class EmailOnDowngradeView(View):
 
         send_mail_async.delay(
             'Subscription downgrade for {}'.format(request.domain),
-            message, settings.DEFAULT_FROM_EMAIL, [settings.PRODUCT_TEAM_EMAIL]
+            message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
         )
         return json_response({'success': True})
 
