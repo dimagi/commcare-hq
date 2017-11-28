@@ -87,7 +87,7 @@ if (typeof define === 'undefined') {
 }
 
 function hqImport(path) {
-    if (typeof COMMCAREHQ_MODULES[path] === 'undefined') {
+    if (COMMCAREHQ_MODULES[path] === undefined) {
         throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
             'Did you include <script src="' + path + '"></script> on your html page?');
     }
