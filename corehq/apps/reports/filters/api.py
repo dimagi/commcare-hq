@@ -26,6 +26,7 @@ from phonelog.models import DeviceReportEntry
 logger = logging.getLogger(__name__)
 
 
+@location_safe
 class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
     """
     Paginated options for the ExpandedMobileWorkerFilter
@@ -62,14 +63,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             'total': 0,
         })
 
-    def custom_locations_search(self):
-        """
-        When the query is specifically searching for just locations and not any other entity like user, group.
-        For ex: enter "Bihar"/patn would match child locations under locations named Bihar, having name like
-        patn.
-        """
-        return self.q.startswith('"')
-
     @staticmethod
     def _get_location_specific_custom_filters(query):
         query_sections = query.split("/")
@@ -86,7 +79,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return parent_name, search_query
 
     def get_locations_query(self, query):
-        if self.custom_locations_search():
+        if self.q.startswith('"'):
             parent_name, search_query = self._get_location_specific_custom_filters(query)
             if search_query is None:
                 # autocomplete parent names while user is looking for just the parent name
@@ -104,7 +97,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                     return SQLLocation.active_objects.none()
         else:
             locations = SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
-        return locations
+        return locations.accessible_to_user(self.domain, self.request.couch_user)
 
     def get_locations(self, query, start, size):
         """
@@ -119,16 +112,18 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     @property
     def data_sources(self):
-        # data sources for options for selection in filter
-        # when searcing for custom locations search limit to just locations
-        if self.custom_locations_search():
-            return [(self.get_locations_size, self.get_locations)]
-        return [
-            (self.get_static_options_size, self.get_static_options),
-            (self.get_groups_size, self.get_groups),
-            (self.get_locations_size, self.get_locations),
-            (self.get_users_size, self.get_users),
-        ]
+        if self.request.can_access_all_locations:
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_locations_size, self.get_locations),
+                (self.get_users_size, self.get_users),
+            ]
+        else:
+            return [
+                (self.get_locations_size, self.get_locations),
+                (self.get_users_size, self.get_users),
+            ]
 
     def get_options(self):
         page = int(self.request.GET.get('page', 1))
@@ -167,6 +162,10 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                  .start(start)
                  .size(size)
                  .sort("username.exact"))
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain, self.request.couch_user)
+            users = users.location(accessible_location_ids)
         return [self.utils.user_tuple(u) for u in users.run().hits]
 
     def get_groups_size(self, query):
@@ -193,49 +192,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                   .size(size)
                   .sort("name.exact"))
         return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
-
-
-class LocationRestrictedEmwfOptionsMixin(object):
-    def extra_data_sources(self):
-        # extra data sources to be included for filtering
-        raise NotImplementedError('Not implemented yet')
-
-    def get_locations_query(self, query):
-        locations = super(LocationRestrictedEmwfOptionsMixin, self).get_locations_query(query)
-        return locations.accessible_to_user(self.request.domain, self.request.couch_user)
-
-    def get_users(self, query, start, size):
-        """
-        :return: tuples for accessible users filtered with query
-        """
-        users = (self.user_es_query(query)
-                 .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
-                 .start(start)
-                 .size(size)
-                 .sort("username.exact"))
-        if not self.request.can_access_all_locations:
-            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(self.request.domain,
-                                                                                         self.request.couch_user)
-            users = users.location(accessible_location_ids)
-        return [self.utils.user_tuple(u) for u in users.run().hits]
-
-    @property
-    def data_sources(self):
-        # data sources for options for selection in filter
-        # when searcing for custom locations search limit to just locations
-        if self.custom_locations_search():
-            return [(self.get_locations_size, self.get_locations)]
-        sources = []
-        if self.request.can_access_all_locations:
-            sources.append((self.get_static_options_size, self.get_static_options))
-            sources.append((self.get_groups_size, self.get_groups))
-            sources.extend(self.extra_data_sources())
-
-        sources.append((self.get_locations_size, self.get_locations))
-        # appending this in the end to avoid long list of users delaying
-        # locations, groups etc in the list on pagination
-        sources.append((self.get_users_size, self.get_users))
-        return sources
 
 
 class MobileWorkersOptionsView(EmwfOptionsView):
@@ -298,21 +254,28 @@ class MobileWorkersOptionsView(EmwfOptionsView):
 
 
 @location_safe
-class LocationRestrictedEmwfOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView):
-    def extra_data_sources(self):
-        return []
-
-
-@location_safe
-class CaseListFilterOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView):
+class CaseListFilterOptions(EmwfOptionsView):
 
     @property
     @memoized
     def utils(self):
         return CaseListFilterUtils(self.domain)
 
-    def extra_data_sources(self):
-        return [(self.get_sharing_groups_size, self.get_sharing_groups)]
+    @property
+    def data_sources(self):
+        if self.request.can_access_all_locations:
+            return [
+                (self.get_static_options_size, self.get_static_options),
+                (self.get_groups_size, self.get_groups),
+                (self.get_sharing_groups_size, self.get_sharing_groups),
+                (self.get_locations_size, self.get_locations),
+                (self.get_users_size, self.get_users),
+            ]
+        else:
+            return [
+                (self.get_locations_size, self.get_locations),
+                (self.get_users_size, self.get_users),
+            ]
 
     def get_sharing_groups_size(self, query):
         return self.group_es_query(query, group_type="case_sharing").count()

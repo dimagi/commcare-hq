@@ -82,9 +82,8 @@ def get_supervisor_location_ids(domain):
     return get_location_ids_with_location_type(domain, SUPERVISOR_LOCATION_TYPE_CODE)
 
 
-def is_first_week_of_month():
-    day = ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().day
-    return day >= 1 and day <= 7
+def get_current_date():
+    return ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().date()
 
 
 def get_user_ids_under_location(domain, site_code):
@@ -106,16 +105,24 @@ def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
 
 
 @periodic_task(
-    run_every=crontab(hour=9, minute=0, day_of_week='mon'),
+    run_every=crontab(hour=9, minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
-def run_weekly_indicators(phased_rollout=True):
+def run_user_indicators(phased_rollout=True):
     """
-    Runs the weekly SMS indicators Monday at 9am IST.
-    If it's the first week of the month, also run the monthly indicators.
+    Runs the weekly / monthly user SMS indicators at 9am IST.
+    This task is run every day and the following logic is applied:
+        - if it's Monday, the weekly indicators are sent
+        - if it's the first of the month, the monthly indicators are sent
+        - if it's neither, nothing happens
     """
-    first_week_of_month_result = is_first_week_of_month()
+    current_date = get_current_date()
+    is_first_of_month = current_date.day == 1
+    is_monday = current_date.weekday() == 0
+
+    if not (is_first_of_month or is_monday):
+        return
 
     for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
         telugu_user_ids = get_user_ids_under_location(domain, ANDHRA_PRADESH_SITE_CODE)
@@ -134,10 +141,11 @@ def run_weekly_indicators(phased_rollout=True):
                 continue
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
 
-            if first_week_of_month_result:
+            if is_first_of_month:
                 run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator, language_code)
 
-            run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator, language_code)
+            if is_monday:
+                run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator, language_code)
 
         for user_id in generate_user_ids_from_primary_location_ids_from_couch(domain,
                 get_supervisor_location_ids(domain)):
@@ -145,8 +153,9 @@ def run_weekly_indicators(phased_rollout=True):
                 continue
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
 
-            if first_week_of_month_result:
+            if is_first_of_month:
                 run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator, language_code)
 
-            run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator, language_code)
-            run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator, language_code)
+            if is_monday:
+                run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator, language_code)
+                run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator, language_code)

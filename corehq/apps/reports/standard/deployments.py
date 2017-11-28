@@ -14,7 +14,7 @@ from corehq.apps.es.aggregations import DateHistogram
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from couchexport.export import SCALAR_NEVER_WAS
 
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.es import filters
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
@@ -53,7 +53,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     exportable_all = True
     ajax_pagination = True
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
@@ -166,12 +166,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @memoized
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug) +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)  # Cater for old ReportConfigs
+            # Cater for old ReportConfigs
+            self.request.GET.getlist('location_restricted_mobile_worker') +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
-        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
+            self.request.couch_user,
         )
         user_query = (user_query
                       .set_sorting_block(self.get_sorting_block()))
@@ -550,7 +552,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     description = ugettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
     ]
     exportable = False
     emailable = False
@@ -568,11 +570,12 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
     def user_query(self):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
-        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
+            self.request.couch_user,
         )
         user_query = user_query.size(0)
         user_query = user_query.aggregations([
