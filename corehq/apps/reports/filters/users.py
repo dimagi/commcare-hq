@@ -23,6 +23,7 @@ from .base import (
     BaseReportFilter,
     BaseSingleOptionFilter,
 )
+from six.moves import map
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
@@ -313,8 +314,8 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = self.selected_location_ids(mobile_user_and_group_slugs)
         if not location_ids:
             return []
-        return map(self.utils.location_tuple,
-                   SQLLocation.objects.filter(location_id__in=location_ids))
+        return list(map(self.utils.location_tuple,
+                   SQLLocation.objects.filter(location_id__in=location_ids)))
 
     @property
     def filter_context(self):
@@ -439,7 +440,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_assigned_locations = self.request.couch_user.get_sql_locations(
             self.request.domain
         )
-        return map(self.utils.location_tuple, user_assigned_locations)
+        return list(map(self.utils.location_tuple, user_assigned_locations))
 
 
 class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):

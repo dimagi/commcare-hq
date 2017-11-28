@@ -34,6 +34,7 @@ from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from dimagi.utils.dates import safe_strftime
 import six
 from six.moves import zip_longest
+from six.moves import map
 
 register = template.Library()
 
@@ -205,7 +206,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
             for row in section['layout']
         ]
 
-        max_row_len = max(map(len, rows)) if rows else 0
+        max_row_len = max(list(map(len, rows))) if rows else 0
         for row in rows:
             if len(row) < max_row_len:
                 row.append({

@@ -42,13 +42,10 @@ def _get_pr_numbers(last_deploy, current_deploy):
     repo = GitHub().repository('dimagi', 'commcare-hq')
     comparison = repo.compare_commits(last_deploy, current_deploy)
 
-    pr_numbers = map(
-        lambda repo_commit: int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1)),
-        filter(
+    pr_numbers = [int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1)) for repo_commit in filter(
             lambda repo_commit: repo_commit.commit.message.startswith('Merge pull request'),
             comparison.commits
-        )
-    )
+        )]
     return pr_numbers
 
 

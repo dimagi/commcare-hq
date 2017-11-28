@@ -61,6 +61,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.translation import ugettext_noop
 import six
 from functools import reduce
+from six.moves import map
 
 
 TOO_MUCH_DATA = ugettext_noop(
@@ -395,12 +396,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         self.total_row = self._total_row
         if len(rows) <= self.pagination.count:
-            return map(self._format_row, rows)
+            return list(map(self._format_row, rows))
         else:
             start = self.pagination.start
             end = start + self.pagination.count
             paginated_rows = rows[start:end]
-            return map(self._format_row, paginated_rows)
+            return list(map(self._format_row, paginated_rows))
 
     @property
     def get_all_rows(self):
@@ -416,7 +417,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         rows.extend(self._unmatched_buckets(buckets, self.user_ids))
 
         self.total_row = self._total_row
-        return map(self._format_row, rows)
+        return list(map(self._format_row, rows))
 
     def _unmatched_buckets(self, buckets, user_ids):
         # ES doesn't return buckets that don't have any docs matching docs
@@ -873,10 +874,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         if order == "asc":
             users_with_forms.sort()
             sorted_users = users_without_forms
-            sorted_users += map(lambda u: u[1], users_with_forms)
+            sorted_users += [u[1] for u in users_with_forms]
         else:
             users_with_forms.sort(reverse=True)
-            sorted_users = map(lambda u: u[1], users_with_forms)
+            sorted_users = [u[1] for u in users_with_forms]
             sorted_users += users_without_forms
 
         return self.paginate_list(sorted_users)
@@ -918,7 +919,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         Assemble a row for a given user.
         If no user is passed, assemble a totals row.
         """
-        user_ids = map(lambda user: user.user_id, [user] if user else self.all_users)
+        user_ids = [user.user_id for user in [user] if user else self.all_users]
 
         if self.is_submission_time:
             get_counts_by_date = get_submission_counts_by_date
@@ -1245,9 +1246,9 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
             self.domain,
             mobile_user_and_group_slugs,
         )
-        user_ids = map(lambda user: user.user_id, users_data.combined_users)
-        xmlnss = map(lambda form: form['xmlns'], self.all_relevant_forms.values())
-        app_ids = map(lambda form: form['app_id'], self.all_relevant_forms.values())
+        user_ids = [user.user_id for user in users_data.combined_users]
+        xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
+        app_ids = [form['app_id'] for form in self.all_relevant_forms.values()]
 
         paged_result = get_forms(
             self.domain,

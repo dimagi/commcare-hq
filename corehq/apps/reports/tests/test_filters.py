@@ -14,6 +14,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
+from six.moves import map
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -134,7 +135,7 @@ class TestExpandedMobileWorkerFilter(TestCase):
         assigned_locations_patch.return_value = self.user_assigned_locations
         emwf = ExpandedMobileWorkerFilter(self.request)
         loc_defaults = emwf._get_assigned_locations_default()
-        self.assertEqual(loc_defaults, map(emwf.utils.location_tuple, self.user_assigned_locations))
+        self.assertEqual(loc_defaults, list(map(emwf.utils.location_tuple, self.user_assigned_locations)))
 
 
 class TestLocationRestrictedMobileWorkerFilter(TestCase):

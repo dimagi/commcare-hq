@@ -189,7 +189,7 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
         n = 0
 
         def extra_info():
-            return "\n%s\n%s" % (case_block.to_string(), map(lambda b: b.to_string(), blocks_from_restore))
+            return "\n%s\n%s" % (case_block.to_string(), [b.to_string() for b in blocks_from_restore])
 
         match = None
         for block in blocks_from_restore:

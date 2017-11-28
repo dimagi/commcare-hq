@@ -129,6 +129,7 @@ from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 from soil.progress import get_task_status
+from six.moves import map
 
 
 def _get_timezone(domain, couch_user):
@@ -616,10 +617,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         if not exports:
             raise Http404()
 
-        exports = map(
-            lambda e: self.download_export_form.format_export_data(e),
-            exports
-        )
+        exports = [self.download_export_form.format_export_data(e) for e in exports]
         return exports
 
     def _get_export(self, domain, export_id):
@@ -649,10 +647,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             'groups': [<..list of groups..>],
         }
         """
-        groups = map(
-            lambda g: {'id': g._id, 'text': g.name},
-            Group.get_reporting_groups(self.domain)
-        )
+        groups = [{'id': g._id, 'text': g.name} for g in Group.get_reporting_groups(self.domain)]
         return format_angular_success({
             'groups': groups,
         })
@@ -1186,7 +1181,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             saved_exports = self.get_saved_exports()
             if self.is_deid:
                 saved_exports = filter(lambda x: x.is_safe, saved_exports)
-            saved_exports = map(self.fmt_export_data, saved_exports)
+            saved_exports = list(map(self.fmt_export_data, saved_exports))
         except Exception as e:
             return format_angular_error(
                 _("Issue fetching list of exports: {}").format(e),
@@ -1253,7 +1248,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
         group_id = in_data['component']['groupId']
         relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
-        indexes = map(lambda x: x[0].index, relevant_group.all_exports)
+        indexes = [x[0].index for x in relevant_group.all_exports]
         place_index = indexes.index(in_data['component']['index'])
         rebuild_export_task.delay(group_id, place_index)
         return format_angular_success({})

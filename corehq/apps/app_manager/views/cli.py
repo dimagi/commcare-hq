@@ -22,6 +22,7 @@ from ..dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
+from six.moves import map
 
 
 @json_error
@@ -38,7 +39,7 @@ def list_apps(request, domain):
     applications = Domain.get_by_name(domain).applications()
     return json_response({
         'status': 'success',
-        'applications': map(app_to_json, applications),
+        'applications': list(map(app_to_json, applications)),
     })
 
 

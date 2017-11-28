@@ -112,7 +112,7 @@ $(function() {
         tags: %s
     });
 });
-</script>\n""" % (attrs['id'], json.dumps(map(lambda c: {'text': c, 'id': c}, self.choices))))
+</script>\n""" % (attrs['id'], json.dumps([{'text': c, 'id': c} for c in self.choices])))
 
         else:
             output = mark_safe("")

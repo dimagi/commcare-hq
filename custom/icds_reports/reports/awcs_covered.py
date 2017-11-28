@@ -73,8 +73,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), six.itervalues(map_data)))
-    total = sum(map(lambda x: (x[prop] or 0), six.itervalues(map_data)))
+    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(map_data)])
+    total = sum([(x[prop] or 0) for x in six.itervalues(map_data)])
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -181,8 +181,8 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), six.itervalues(tooltips_data)))
-    total = sum(map(lambda x: (x[prop] or 0), six.itervalues(tooltips_data)))
+    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(tooltips_data)])
+    total = sum([(x[prop] or 0) for x in six.itervalues(tooltips_data)])
 
     info = _(
         "Total AWCs that have launched ICDS CAS <br />" +

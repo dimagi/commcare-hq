@@ -294,10 +294,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
-        self.fields['group'].choices = [("", "")] + map(
-            lambda g: (g._id, g.name),
-            Group.get_reporting_groups(self.domain_object.name)
-        )
+        self.fields['group'].choices = [("", "")] + [(g._id, g.name) for g in Group.get_reporting_groups(self.domain_object.name)]
 
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain

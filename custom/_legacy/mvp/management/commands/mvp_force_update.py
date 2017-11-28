@@ -8,6 +8,7 @@ import time
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 import sys
 from restkit.session import set_session
+from six.moves import map
 set_session("gevent")
 from gevent.pool import Pool
 
@@ -181,10 +182,10 @@ class Command(BaseCommand):
             print("\n\nUpdating %s %d to %d of %d\n" % (
                 document_type, skip, min(total_docs, skip + limit), total_docs))
 
-            matching_docs = map(
+            matching_docs = list(map(
                 document_class.wrap,
                 iter_docs(document_class.get_db(), islice(doc_ids, limit))
-            )
+            ))
             self.update_indicators(indicators, matching_docs, domain)
             print("Pausing...")
             time.sleep(3)

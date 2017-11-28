@@ -16,6 +16,7 @@ import xlwt
 from couchexport.models import Format
 import six
 from six.moves import zip
+from six.moves import map
 
 
 def _encode_if_needed(val):
@@ -270,7 +271,7 @@ class OnDiskExportWriter(ExportWriter):
             else:
                 return val
 
-        row = map(_transform, row)
+        row = list(map(_transform, row))
         self.tables[sheet_index].write_row(row)
 
     def _close(self):
@@ -379,7 +380,7 @@ class Excel2007ExportWriter(ExportWriter):
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
         # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
-        sheet.append(map(get_write_value, row))
+        sheet.append(list(map(get_write_value, row)))
 
     def _close(self):
         """

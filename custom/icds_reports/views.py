@@ -412,7 +412,7 @@ class LocationAncestorsView(View):
         parents = list(SQLLocation.objects.get_queryset_ancestors(
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
         ).distinct()) + list(selected_location.get_ancestors())
-        parent_ids = map(lambda x: x.pk, parents)
+        parent_ids = [x.pk for x in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(

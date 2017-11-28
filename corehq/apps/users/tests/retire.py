@@ -69,14 +69,14 @@ class RetireUserTestCase(TestCase):
 
         self.commcare_user.retire()
         cases = CaseAccessors(self.domain).get_cases(case_ids)
-        self.assertTrue(all(map(lambda c: c.is_deleted, cases)))
+        self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertTrue(form.is_deleted)
 
         self.commcare_user.unretire()
         cases = CaseAccessors(self.domain).get_cases(case_ids)
-        self.assertFalse(all(map(lambda c: c.is_deleted, cases)))
+        self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertFalse(form.is_deleted)

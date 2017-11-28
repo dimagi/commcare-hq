@@ -75,6 +75,7 @@ from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 from dimagi.utils.web import get_site_domain
 import six
+from six.moves import map
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -1056,7 +1057,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def projects(self):
-        return map(Domain.get_by_name, self.get_domains())
+        return list(map(Domain.get_by_name, self.get_domains()))
 
     @property
     def full_name(self):

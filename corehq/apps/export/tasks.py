@@ -72,7 +72,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
 
     assert domain, 'Must have domain'
     assert case_type, 'Must have case type'
-    assert all(map(lambda prop: '.' not in prop, properties)), 'Properties should not have periods'
+    assert all(['.' not in prop for prop in properties]), 'Properties should not have periods'
     inferred_schema = get_case_inferred_schema(domain, case_type)
     if not inferred_schema:
         inferred_schema = CaseInferredSchema(

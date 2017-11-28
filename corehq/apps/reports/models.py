@@ -68,6 +68,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six
+from six.moves import map
 
 
 class HQUserType(object):
@@ -1024,7 +1025,7 @@ def _apply_mapping(export_tables, mapping_dict):
         def _clean_tablename(tablename):
             return mapping_dict.get(tablename, tablename)
         return (_clean_tablename(tabledata[0]), tabledata[1])
-    return map(_clean, export_tables)
+    return list(map(_clean, export_tables))
 
 
 def _apply_removal(export_tables, removal_list):

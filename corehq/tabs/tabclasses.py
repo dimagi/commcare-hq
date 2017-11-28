@@ -43,6 +43,7 @@ from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
+from six.moves import map
 
 
 class ProjectReportsTab(UITab):
@@ -175,7 +176,7 @@ class ProjectReportsTab(UITab):
             page['show_in_dropdown'] = True
             return page
         return sidebar_to_dropdown([
-            (header, map(show, pages))
+            (header, list(map(show, pages)))
             for header, pages in self.sidebar_items
         ])
 

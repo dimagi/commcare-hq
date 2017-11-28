@@ -8,6 +8,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.reports.sqlreport import DataFormatter
 import six
+from six.moves import map
 
 
 @quickcache(['domain'], timeout=5 * 60)
@@ -213,7 +214,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
         for prop in row:
             if prop.get('sort_key') == 'N/A':
                 continue
-            values = map(int, re.findall(r'\d+', remove_tags(prop['html'])))
+            values = list(map(int, re.findall(r'\d+', remove_tags(prop['html']))))
             num_practices += values[0]
             total_practices += values[1]
 

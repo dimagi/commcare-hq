@@ -19,6 +19,7 @@ from corehq.motech.repeaters.const import (
     RECORD_PENDING_STATE,
 )
 import six
+from six.moves import map
 
 
 class GroupFilterMixin(object):
@@ -128,13 +129,13 @@ class RepeaterFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         repeaters = self._get_repeaters()
-        return map(
+        return list(map(
             lambda repeater: (repeater.get_id, u'{}: {}'.format(
                 repeater.doc_type,
                 repeater.url,
             )),
             repeaters,
-        )
+        ))
 
     def _get_repeaters(self):
         return get_repeaters_by_domain(self.domain)

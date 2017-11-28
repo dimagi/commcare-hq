@@ -128,8 +128,8 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = map(lambda e: _("\"%s\" cannot include special characters or "
-                                            "begin with \"xml\" or a number.") % e, validation_errors)
+        validation_errors = [_("\"%s\" cannot include special characters or "
+                                            "begin with \"xml\" or a number.") % e for e in validation_errors]
         if len(data_tag) > 31:
             validation_errors.append(_("Table ID can not be longer than 31 characters."))
 
