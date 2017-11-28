@@ -646,7 +646,11 @@ class DashboardFeedFilterForm(forms.Form):
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else EmwfUtils
-            emwf_data = [emwf_utils_class(domain).id_to_choice_tuple(str(x)) for x in selected_items]
+            emwf_data = []
+            for x in selected_items:
+                choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(x))
+                if choice_tuple:
+                    emwf_data.append(choice_tuple)
             emwf_data = [{"id": x[0], "text": x[1]} for x in emwf_data]
 
             return {
