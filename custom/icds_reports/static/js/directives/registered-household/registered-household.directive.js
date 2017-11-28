@@ -12,6 +12,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.filtersData = $location.search();
     vm.label = "Registered Household";
     vm.step = $routeParams.step;
+    vm.userLocationId = userLocationId;
     vm.steps = {
         'map': {route: '/registered_household/map', label: 'Map View'},
         'chart': {route: '/registered_household/chart', label: 'Chart View'},
@@ -22,6 +23,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
@@ -100,8 +103,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -114,7 +117,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -123,7 +126,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -190,11 +193,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of household registered: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var value = findValue(vm.chartData[0].values, d.value);
+                    return vm.tooltipContent(d.value, value);
                 });
                 return chart;
             },
@@ -208,6 +208,11 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 'width': '900px',
             },
         },
+    };
+
+    vm.tooltipContent = function (monthName, value) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of household registered: <strong>" + value + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

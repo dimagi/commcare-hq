@@ -1,4 +1,4 @@
-/* global d3*/
+/* global d3, _ */
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
@@ -11,15 +11,16 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+    vm.userLocationId = userLocationId;
 
-    var ageIndex = ages.findIndex(function (x) {
+    var ageIndex = _.findIndex(ages, function (x) {
         return x.id === vm.filtersData.age;
     });
     if (ageIndex !== -1) {
         vm.ageLabel = ages[ageIndex].name;
     }
 
-    var genderIndex = genders.findIndex(function (x) {
+    var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
@@ -38,6 +39,8 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = [];
@@ -128,8 +131,8 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
@@ -142,7 +145,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         });
     };
 
-    init();
+    vm.init();
 
 
     $scope.$on('filtersChange', function() {
@@ -199,14 +202,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
                     var normal = findValue(vm.chartData[0].values, d.value);
                     var moderate = findValue(vm.chartData[1].values, d.value);
                     var severe = findValue(vm.chartData[2].values, d.value);
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children with normal stunted growth: <strong>" + d3.format(".2%")(normal) + "</strong></p>";
-                    tooltip_content += "<p>% children with moderate stunted growth: <strong>" + d3.format(".2%")(moderate) + "</strong></p>";
-                    tooltip_content += "<p>% children with severely stunted growth: <strong>" + d3.format(".2%")(severe) + "</strong></p>";
-                    tooltip_content += "<p>% Unmeasured: <strong>" + d3.format(".2%")((1 - (normal + moderate + severe))) + "</strong></p>";
-
-                    return tooltip_content;
+                    return vm.tooltipContent(d.value, normal, moderate, severe);
                 });
                 return chart;
             },
@@ -224,10 +220,18 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         },
     };
 
+    vm.tooltipContent = function (monthName, normal, moderate, severe) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>% children with normal stunted growth: <strong>" + d3.format(".2%")(normal) + "</strong></p>"
+            + "<p>% children with moderate stunted growth: <strong>" + d3.format(".2%")(moderate) + "</strong></p>"
+            + "<p>% children with severely stunted growth: <strong>" + d3.format(".2%")(severe) + "</strong></p>"
+            + "<p>% Unmeasured: <strong>" + d3.format(".2%")((1 - (normal + moderate + severe))) + "</strong></p>";
+    };
+
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });

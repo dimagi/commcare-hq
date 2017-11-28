@@ -1,18 +1,33 @@
-/* global module, inject */
+/* global module, inject, _ */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AdolescentGirlsDirective', function () {
+describe('UnderweightChildrenDirective', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
-    pageData.registerUrl('adolescent_girls', 'adolescent_girls');
+    pageData.registerUrl('underweight_children', 'underweight_children');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
+        $provide.constant("genders", [
+            {id: '', name: 'All'},
+            {id: 'M', name: 'Male'},
+            {id: 'F', name: 'Female'},
+        ]);
+        $provide.constant('ages', [
+            {id: '', name: 'All'},
+            {id: '6', name: '0-6 months'},
+            {id: '12', name: '6-12 months'},
+            {id: '24', name: '12-24 months'},
+            {id: '36', name: '24-36 months'},
+            {id: '48', name: '36-48 months'},
+            {id: '60', name: '48-60 months'},
+            {id: '72', name: '60-72 months'},
+        ]);
         $provide.constant("userLocationId", null);
     }));
 
@@ -20,17 +35,20 @@ describe('AdolescentGirlsDirective', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+
         $httpBackend.expectGET('template').respond(200, '<div></div>');
-        $httpBackend.expectGET('adolescent_girls').respond(200, {
+        $httpBackend.expectGET('underweight_children').respond(200, {
             report_data: ['report_test_data'],
         });
-        var element = window.angular.element("<adolescent-girls data='test'></adolescent-girls>");
+        var element = window.angular.element("<underweight-children-report data='test'></underweight-children-report>");
         var compiled = $compile(element)($scope);
+
         $httpBackend.flush();
         $scope.$digest();
-        controller = compiled.controller('adolescentGirls');
+        controller = compiled.controller('underweightChildrenReport');
         controller.step = 'map';
     }));
+
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -42,7 +60,7 @@ describe('AdolescentGirlsDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
-        $httpBackend.expectGET('adolescent_girls?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('underweight_children?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -56,7 +74,7 @@ describe('AdolescentGirlsDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
-        $httpBackend.expectGET('adolescent_girls?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('underweight_children?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -66,27 +84,35 @@ describe('AdolescentGirlsDirective', function () {
         assert.deepEqual(controller.data.mapData, ['report_test_data']);
     });
 
+    it('tests template popup', function () {
+        var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5});
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
+            + '<p>test</p>'
+            + '<div>Total Children weighed in given month: <strong>20</strong></div>'
+            + '<div>% Unweighed: <strong>25.00%</strong></div>'
+            + '<div>% Severely Underweight: <strong>25.00%</strong></div>'
+            + '<div>% Moderately Underweight: <strong>25.00%</strong></div>'
+            + '<div>% Normal: <strong>25.00%</strong></div>');
+    });
+
     it('tests location change', function () {
         controller.init();
         controller.selectedLocations.push(
-            {location_id: 'test_id'},
-            {location_id: 'test_id2'},
-            {location_id: 'test_id3'},
-            {location_id: 'test_id4'},
-            {location_id: 'test_id5'},
-            {location_id: 'test_id6'}
+            {name: 'name1', location_id: 'test_id1'},
+            {name: 'name2', location_id: 'test_id2'},
+            {name: 'name3', location_id: 'test_id3'},
+            {name: 'name4', location_id: 'test_id4'},
+            {name: 'name5', location_id: 'test_id5'},
+            {name: 'name6', location_id: 'test_id6'}
         );
-        $httpBackend.expectGET('adolescent_girls').respond(200, {
+        $httpBackend.expectGET('underweight_children').respond(200, {
             report_data: ['report_test_data'],
         });
         $scope.$digest();
         $httpBackend.flush();
         assert.equal($location.search().location_id, 'test_id4');
-    });
-
-    it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 14});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p><div>Total number of adolescent girls who are enrolled for ICDS services: <strong>14</strong></div>');
+        assert.equal($location.search().selectedLocationLevel, 3);
+        assert.equal($location.search().location_name, 'name4');
     });
 
     it('tests moveToLocation national', function () {
@@ -147,7 +173,6 @@ describe('AdolescentGirlsDirective', function () {
             left: 80,
         });
         assert.equal(controller.chartOptions.chart.clipVoronoi, false);
-        assert.equal(controller.chartOptions.chart.tooltips, true);
         assert.equal(controller.chartOptions.chart.xAxis.axisLabel, '');
         assert.equal(controller.chartOptions.chart.xAxis.showMaxMin, true);
         assert.equal(controller.chartOptions.chart.xAxis.axisLabelDistance, -100);
@@ -161,7 +186,8 @@ describe('AdolescentGirlsDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of adolescent girls who are enrolled for ICDS services'
+            'Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+            + 'Children who are moderately or severely underweight have a higher risk of mortality.'
         );
     });
 
@@ -169,9 +195,44 @@ describe('AdolescentGirlsDirective', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>60</strong></p>';
+            + '<p>% children normal: <strong>10.00%</strong></p>'
+            + '<p>% children moderately underweight: <strong>15.00%</strong></p>'
+            + '<p>% children severely underweight: <strong>20.00%</strong></p>'
+            + '<p>% unweighed: <strong>55.00%</strong></p>';
 
-        var result = controller.tooltipContent(month.value, 60);
+        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2);
         assert.equal(expected, result);
+    });
+
+    it('tests disable locations for user', function () {
+        controller.userLocationId = 'test_id4';
+        controller.location = {name: 'name4', location_id: 'test_id4'};
+        controller.selectedLocations.push(
+            {name: 'name1', location_id: 'test_id1'},
+            {name: 'name2', location_id: 'test_id2'},
+            {name: 'name3', location_id: 'test_id3'},
+            {name: 'name4', location_id: 'test_id4'},
+            {name: 'name5', location_id: 'test_id5'},
+            {name: 'name6', location_id: 'test_id6'}
+        );
+        var index = controller.getDisableIndex();
+        assert.equal(index, 3);
+    });
+
+    it('tests reset additional filters', function () {
+        controller.filtersData.gender = 'test';
+        controller.filtersData.age = 'test';
+        controller.resetAdditionalFilter();
+
+        assert.equal(controller.filtersData.gender, null);
+        assert.equal(controller.filtersData.age, null);
+    });
+
+    it('tests reset only age additional filters', function () {
+        controller.filtersData.gender = 'test';
+
+        controller.resetOnlyAgeAdditionalFilter();
+        assert.equal(controller.filtersData.gender, 'test');
+        assert.equal(controller.filtersData.age, null);
     });
 });

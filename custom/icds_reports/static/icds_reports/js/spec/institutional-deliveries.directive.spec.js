@@ -4,12 +4,12 @@
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AdolescentGirlsDirective', function () {
+describe('InstitutionalDeliveriesDirective', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
-    pageData.registerUrl('adolescent_girls', 'adolescent_girls');
+    pageData.registerUrl('institutional_deliveries', 'institutional_deliveries');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
@@ -20,17 +20,20 @@ describe('AdolescentGirlsDirective', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+
         $httpBackend.expectGET('template').respond(200, '<div></div>');
-        $httpBackend.expectGET('adolescent_girls').respond(200, {
+        $httpBackend.expectGET('institutional_deliveries').respond(200, {
             report_data: ['report_test_data'],
         });
-        var element = window.angular.element("<adolescent-girls data='test'></adolescent-girls>");
+        var element = window.angular.element("<institutional_deliveries data='test'></institutional_deliveries>");
         var compiled = $compile(element)($scope);
+
         $httpBackend.flush();
         $scope.$digest();
-        controller = compiled.controller('adolescentGirls');
+        controller = compiled.controller('institutionalDeliveries');
         controller.step = 'map';
     }));
+
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -42,7 +45,7 @@ describe('AdolescentGirlsDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
-        $httpBackend.expectGET('adolescent_girls?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('institutional_deliveries?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -56,7 +59,7 @@ describe('AdolescentGirlsDirective', function () {
         controller.filtersData.location_id = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
-        $httpBackend.expectGET('adolescent_girls?location_id=test-id').respond(200, {
+        $httpBackend.expectGET('institutional_deliveries?location_id=test-id').respond(200, {
             report_data: ['report_test_data'],
         });
         controller.init();
@@ -66,27 +69,33 @@ describe('AdolescentGirlsDirective', function () {
         assert.deepEqual(controller.data.mapData, ['report_test_data']);
     });
 
+    it('tests template popup', function () {
+        var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>test</p>'
+            + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
+            + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
+            + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>50.00%</strong></div>');
+    });
+
     it('tests location change', function () {
         controller.init();
         controller.selectedLocations.push(
-            {location_id: 'test_id'},
-            {location_id: 'test_id2'},
-            {location_id: 'test_id3'},
-            {location_id: 'test_id4'},
-            {location_id: 'test_id5'},
-            {location_id: 'test_id6'}
+            {name: 'name1', location_id: 'test_id1'},
+            {name: 'name2', location_id: 'test_id2'},
+            {name: 'name3', location_id: 'test_id3'},
+            {name: 'name4', location_id: 'test_id4'},
+            {name: 'name5', location_id: 'test_id5'},
+            {name: 'name6', location_id: 'test_id6'}
         );
-        $httpBackend.expectGET('adolescent_girls').respond(200, {
+        $httpBackend.expectGET('institutional_deliveries').respond(200, {
             report_data: ['report_test_data'],
         });
         $scope.$digest();
         $httpBackend.flush();
         assert.equal($location.search().location_id, 'test_id4');
-    });
-
-    it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 14});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p><div>Total number of adolescent girls who are enrolled for ICDS services: <strong>14</strong></div>');
+        assert.equal($location.search().selectedLocationLevel, 3);
+        assert.equal($location.search().location_name, 'name4');
     });
 
     it('tests moveToLocation national', function () {
@@ -161,17 +170,37 @@ describe('AdolescentGirlsDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of adolescent girls who are enrolled for ICDS services'
+            'Percentage of pregnant women who delivered in a public or private medical facility in the last month. \n' +
+            '\n' +
+            'Delivery in medical instituitions is associated with a decrease in maternal mortality rate'
         );
     });
 
     it('tests chart tooltip content', function () {
+        var data = {in_month: 5, y: 0.72, all: 10};
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>60</strong></p>';
+            + '<p>Total number of pregnant women who delivered in the last month: <strong>10</strong></p>'
+            + '<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></p>'
+            + '<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></p>';
 
-        var result = controller.tooltipContent(month.value, 60);
+        var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
+    });
+
+    it('tests disable locations for user', function () {
+        controller.userLocationId = 'test_id4';
+        controller.location = {name: 'name4', location_id: 'test_id4'};
+        controller.selectedLocations.push(
+            {name: 'name1', location_id: 'test_id1'},
+            {name: 'name2', location_id: 'test_id2'},
+            {name: 'name3', location_id: 'test_id3'},
+            {name: 'name4', location_id: 'test_id4'},
+            {name: 'name5', location_id: 'test_id5'},
+            {name: 'name6', location_id: 'test_id6'}
+        );
+        var index = controller.getDisableIndex();
+        assert.equal(index, 3);
     });
 });
