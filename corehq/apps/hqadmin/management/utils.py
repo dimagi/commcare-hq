@@ -8,7 +8,8 @@ import requests
 from gevent.pool import Pool
 
 LABELS_TO_EXPAND = [
-    "product/all-users",
+    "product/all-users-all-environments",
+    "product/prod-india-all-users",
     "product/feature-flag"
 ]
 
