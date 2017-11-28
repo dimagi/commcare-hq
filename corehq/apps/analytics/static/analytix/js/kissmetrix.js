@@ -1,14 +1,23 @@
-/* globals _, _kmq */
+/* globals _kmq */
 
-var _kmq = window._kmq = _kmq || [];
+var _kmq = window._kmq = _kmq || [];        // TODO: test this in particular
 
-hqDefine('analytix/js/kissmetrix', function () {
+hqDefine('analytix/js/kissmetrix', [
+    'underscore',
+    'analytix/js/initial',
+    'analytix/js/logging',
+    'analytix/js/utils',
+], function (
+    _,
+    initialAnalytics,
+    logging,
+    utils
+) {
     'use strict';
-    var _get = hqImport('analytix/js/initial').getFn('kissmetrics'),
-        _global = hqImport('analytix/js/initial').getFn('global'),
-        _abTests = hqImport('analytix/js/initial').getAbTests('kissmetrics'),
-        logger = hqImport('analytix/js/logging').getLoggerForApi('Kissmetrics'),
-        _utils = hqImport('analytix/js/utils'),
+    var _get = initialAnalytics.getFn('kissmetrics'),
+        _global = initialAnalytics.getFn('global'),
+        _abTests = initialAnalytics.getAbTests('kissmetrics'),
+        logger = logging.getLoggerForApi('Kissmetrics'),
         _allAbTests = {},
         _init = {};
 
@@ -44,7 +53,7 @@ hqDefine('analytix/js/kissmetrix', function () {
      * @private
      */
     var _addKissmetricsScript = function (srcUrl) {
-        _utils.insertScript(srcUrl, logger.debug.log);
+        utils.insertScript(srcUrl, logger.debug.log);
     };
 
     var __init__ = function () {
