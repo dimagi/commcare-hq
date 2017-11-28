@@ -35,12 +35,51 @@ class TestAdhaar(TestCase):
                     "st1": {
                         "in_month": 64,
                         "all": 221,
+                        'original_name': [],
                         "fillKey": "25%-50%"
                     },
                     "st2": {
                         "in_month": 67,
                         "all": 279,
+                        'original_name': [],
                         "fillKey": "0%-25%"
+                    }
+                },
+                "slug": "adhaar",
+                "label": "Percent Aadhaar-seeded Beneficiaries"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_adhaar_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of individuals registered using CAS "
+                            "whose Aadhaar identification has been captured",
+                    "average": 28.959276018099548
+                },
+                "fills": {
+                    "0%-25%": "#de2d26",
+                    "25%-50%": "#fc9272",
+                    "50%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'in_month': 64,
+                        'original_name': ['b1', 'b2'],
+                        'all': 221,
+                        'fillKey': '25%-50%'
                     }
                 },
                 "slug": "adhaar",

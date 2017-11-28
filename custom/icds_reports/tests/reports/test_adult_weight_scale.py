@@ -35,12 +35,50 @@ class TestAdultWeightScale(TestCase):
                     "st1": {
                         "in_month": 5,
                         "all": 26.0,
+                        'original_name': [],
                         "fillKey": "0%-25%"
                     },
                     "st2": {
                         "in_month": 4,
                         "all": 24.0,
+                        'original_name': [],
                         "fillKey": "0%-25%"
+                    }
+                },
+                "slug": "adult_weight_scale",
+                "label": "Percent AWCs with Weighing Scale: Mother and Child"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_adult_weight_scale_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of AWCs with weighing scale for mother and child",
+                    "average": 19.23076923076923
+                },
+                "fills": {
+                    "0%-25%": "#de2d26",
+                    "25%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'in_month': 5,
+                        'original_name': ['b1', 'b2'],
+                        'all': 26,
+                        'fillKey': '0%-25%'
                     }
                 },
                 "slug": "adult_weight_scale",

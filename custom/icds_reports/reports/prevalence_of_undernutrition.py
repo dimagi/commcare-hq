@@ -31,7 +31,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
@@ -44,39 +44,46 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
             queryset = queryset.exclude(age_tranche=72)
         return queryset
 
-    map_data = {}
+    data_for_map = defaultdict(lambda: {
+        'moderately_underweight': 0,
+        'severely_underweight': 0,
+        'normal': 0,
+        'total': 0,
+        'original_name': []
+    })
+
     moderately_underweight_total = 0
     severely_underweight_total = 0
     valid_total = 0
 
     for row in get_data_for(config):
-        valid = row['valid']
+        valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
+        on_map_name = row['%s_map_location_name' % loc_level] or name
+        severely_underweight = row['severely_underweight'] or 0
+        moderately_underweight = row['moderately_underweight'] or 0
+        normal = row['normal'] or 0
 
-        severely_underweight = row['severely_underweight']
-        moderately_underweight = row['moderately_underweight']
-        normal = row['normal']
+        moderately_underweight_total += moderately_underweight
+        severely_underweight_total += severely_underweight_total
+        valid_total += valid
 
-        value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
+        data_for_map[on_map_name]['severely_underweight'] += severely_underweight
+        data_for_map[on_map_name]['moderately_underweight'] += moderately_underweight
+        data_for_map[on_map_name]['normal'] += normal
+        data_for_map[on_map_name]['total'] += valid
+        if name != on_map_name:
+            data_for_map[on_map_name]['original_name'].append(name)
 
-        moderately_underweight_total += (moderately_underweight or 0)
-        severely_underweight_total += (severely_underweight_total or 0)
-        valid_total += (valid or 0)
-
-        row_values = {
-            'severely_underweight': severely_underweight or 0,
-            'moderately_underweight': moderately_underweight or 0,
-            'total': valid or 0,
-            'normal': normal
-        }
+    for data_for_location in six.itervalues(data_for_map):
+        numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']
+        value = numerator * 100 / (data_for_location['total'] or 1)
         if value < 20:
-            row_values.update({'fillKey': '0%-20%'})
+            data_for_location.update({'fillKey': '0%-20%'})
         elif 20 <= value < 35:
-            row_values.update({'fillKey': '20%-35%'})
+            data_for_location.update({'fillKey': '20%-35%'})
         elif value >= 35:
-            row_values.update({'fillKey': '35%-100%'})
-
-        map_data.update({name: row_values})
+            data_for_location.update({'fillKey': '35%-100%'})
 
     fills = OrderedDict()
     fills.update({'0%-20%': PINK})
@@ -102,7 +109,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                     "Children who are moderately or severely underweight have a higher risk of mortality"
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 

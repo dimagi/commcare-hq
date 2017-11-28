@@ -29,7 +29,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             moderate=Sum('stunting_moderate'),
             severe=Sum('stunting_severe'),
@@ -43,41 +43,49 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
-    map_data = {}
+    data_for_map = defaultdict(lambda: {
+        'moderate': 0,
+        'severe': 0,
+        'normal': 0,
+        'total': 0,
+        'total_measured': 0,
+        'original_name': []
+    })
 
     moderate_total = 0
     severe_total = 0
     valid_total = 0
 
     for row in get_data_for(config):
-        valid = row['valid']
+        valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
+        on_map_name = row['%s_map_location_name' % loc_level] or name
+        severe = row['severe'] or 0
+        moderate = row['moderate'] or 0
+        normal = row['normal'] or 0
+        total_measured = row['total_measured'] or 0
 
-        severe = row['severe']
-        moderate = row['moderate']
-        normal = row['normal']
-        total_measured = row['total_measured']
+        severe_total += severe
+        moderate_total += moderate
+        valid_total += valid
 
-        moderate_total += (moderate or 0)
-        severe_total += (severe or 0)
-        valid_total += (valid or 0)
+        data_for_map[on_map_name]['severe'] += severe
+        data_for_map[on_map_name]['moderate'] += moderate
+        data_for_map[on_map_name]['normal'] += normal
+        data_for_map[on_map_name]['total'] += valid
+        data_for_map[on_map_name]['total_measured'] += total_measured
+        if name != on_map_name:
+            data_for_map[on_map_name]['original_name'].append(name)
 
-        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
-        row_values = {
-            'severe': severe or 0,
-            'moderate': moderate or 0,
-            'total': valid or 0,
-            'normal': normal or 0,
-            'total_measured': total_measured or 0,
-        }
+    for data_for_location in six.itervalues(data_for_map):
+        numerator = data_for_location['moderate'] + data_for_location['severe']
+        value = numerator * 100 / (data_for_location['total'] or 1)
         if value < 25:
-            row_values.update({'fillKey': '0%-25%'})
+            data_for_location.update({'fillKey': '0%-25%'})
         elif 25 <= value < 38:
-            row_values.update({'fillKey': '25%-38%'})
+            data_for_location.update({'fillKey': '25%-38%'})
         elif value >= 38:
-            row_values.update({'fillKey': '38%-100%'})
-
-        map_data.update({name: row_values})
+            data_for_location.update({'fillKey': '38%-100%'})
 
     fills = OrderedDict()
     fills.update({'0%-25%': PINK})
@@ -100,7 +108,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
                     "consequences on the growth of a child"
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 

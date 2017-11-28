@@ -31,7 +31,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
         )
@@ -39,19 +39,22 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
+    data_for_map = defaultdict(lambda: {
+        'valid': 0,
+        'original_name': [],
+        'fillKey': 'Adolescent Girls'
+    })
     average = []
     for row in get_data_for(config):
-        valid = row['valid']
+        valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
+        on_map_name = row['%s_map_location_name' % loc_level] or name
 
         average.append(valid)
-        row_values = {
-            'valid': valid or 0,
-            'fillKey': 'Adolescent Girls'
-        }
 
-        map_data.update({name: row_values})
+        data_for_map[on_map_name]['valid'] += valid
+        if name != on_map_name:
+            data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Adolescent Girls': BLUE})
@@ -69,7 +72,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
                     "Total number of adolescent girls who are enrolled for ICDS services"
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 

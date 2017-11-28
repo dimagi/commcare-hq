@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import json
 import os
 
+from collections import OrderedDict, defaultdict
 from datetime import datetime, timedelta
 
 import operator
@@ -340,3 +341,40 @@ def exclude_records_by_age_for_column(exclude_config, column):
         default=0,
         output_field=IntegerField()
     )
+
+
+def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger):
+    data_for_map = defaultdict(lambda: {
+        num_prop: 0,
+        denom_prop: 0,
+        'original_name': []
+    })
+
+    valid_total = 0
+    in_month_total = 0
+
+    for row in data:
+        valid = row[denom_prop] or 0
+        name = row['%s_name' % loc_level]
+        on_map_name = row['%s_map_location_name' % loc_level] or name
+        in_month = row[num_prop] or 0
+
+        valid_total += valid
+        in_month_total += in_month
+
+        data_for_map[on_map_name][num_prop] += in_month
+        data_for_map[on_map_name][denom_prop] += valid
+        if name != on_map_name:
+            data_for_map[on_map_name]['original_name'].append(name)
+
+    for data_for_location in six.itervalues(data_for_map):
+        value = data_for_location[num_prop] * 100 / (data_for_location[denom_prop] or 1)
+        fill_format = '%s%%-%s%%'
+        if value < fill_key_lower:
+            data_for_location.update({'fillKey': (fill_format % (0, fill_key_lower))})
+        elif fill_key_lower <= value < fill_key_bigger:
+            data_for_location.update({'fillKey': (fill_format % (fill_key_lower, fill_key_bigger))})
+        elif value >= fill_key_bigger:
+            data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
+
+    return data_for_map, valid_total, in_month_total

@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map
 import six
 
 RED = '#de2d26'
@@ -30,43 +30,24 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            in_month=Sum('cf_initiation_in_month'),
-            eligible=Sum('cf_initiation_eligible'),
+            children=Sum('cf_initiation_in_month'),
+            all=Sum('cf_initiation_eligible'),
         )
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
-
-    in_month_total = 0
-    valid_total = 0
-
-    for row in get_data_for(config):
-        valid = row['eligible']
-        name = row['%s_name' % loc_level]
-
-        in_month = row['in_month']
-
-        in_month_total += (in_month or 0)
-        valid_total += (valid or 0)
-
-        value = (in_month or 0) * 100 / (valid or 1)
-        row_values = {
-            'children': in_month or 0,
-            'all': valid or 0
-        }
-        if value < 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-60%'})
-        elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, valid_total, in_month_total = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'children',
+        'all',
+        20,
+        60
+    )
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
@@ -86,7 +67,7 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
                     "semi-solid or soft food."
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 

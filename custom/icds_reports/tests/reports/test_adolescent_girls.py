@@ -33,12 +33,47 @@ class TestAdolescentGirls(TestCase):
                 "data": {
                     "st1": {
                         "valid": 22,
+                        'original_name': [],
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
                         "valid": 25,
+                        'original_name': [],
                         "fillKey": "Adolescent Girls"
                     }
+                },
+                "slug": "adolescent_girls",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_adolescent_girls_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Total number of adolescent girls who are enrolled for ICDS services",
+                    "average": 11.0,
+                    "average_format": "number"
+                },
+                "fills": {
+                    "Adolescent Girls": "#006fdf",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'valid': 22,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Adolescent Girls'}
                 },
                 "slug": "adolescent_girls",
                 "label": ""
