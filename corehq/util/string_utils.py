@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import random
 import string
 import six
+from six.moves import range
 
 
 def random_string(n=6):

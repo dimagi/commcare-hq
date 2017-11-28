@@ -17,6 +17,7 @@ from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
+from six.moves import range
 
 
 class RetireUserTestCase(TestCase):

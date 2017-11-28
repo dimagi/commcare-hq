@@ -23,6 +23,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
 import six
+from six.moves import range
 
 
 PARAM_SLUG_STATUS = 'status'

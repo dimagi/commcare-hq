@@ -100,6 +100,7 @@ from corehq.apps.export.utils import (
     domain_has_excel_dashboard_access,
 )
 import six
+from six.moves import range
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 

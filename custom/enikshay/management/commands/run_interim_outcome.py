@@ -18,6 +18,7 @@ from custom.enikshay.const import (
     TEST_RESULT_TB_NOT_DETECTED,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from six.moves import range
 
 
 class Command(BaseCommand):

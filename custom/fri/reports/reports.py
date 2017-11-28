@@ -28,6 +28,7 @@ from custom.fri.api import get_interactive_participants, get_valid_date_range
 from django.urls import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from dateutil.parser import parse
+from six.moves import range
 
 RESPONSE_NOT_APPLICABLE = 1
 NO_RESPONSE = 2

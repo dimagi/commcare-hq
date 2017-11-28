@@ -14,6 +14,7 @@ from pact.lib.quicksect import IntervalNode
 from pact.utils import get_patient_display_cache, get_report_script_field
 import logging
 from six.moves import zip
+from six.moves import range
 
 cached_schedules = {}
 

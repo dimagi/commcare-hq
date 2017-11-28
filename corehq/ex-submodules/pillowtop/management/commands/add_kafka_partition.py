@@ -8,6 +8,7 @@ from pillowtop.models import (
     DjangoPillowCheckpoint, KafkaCheckpoint, str_to_kafka_seq, kafka_seq_to_str
 )
 from six.moves import input
+from six.moves import range
 
 
 class Command(BaseCommand):

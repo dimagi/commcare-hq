@@ -18,6 +18,7 @@ from custom.enikshay.private_sector_datamigration.models import (
 from custom.enikshay.user_setup import compress_nikshay_id
 
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import range
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'

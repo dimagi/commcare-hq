@@ -14,6 +14,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
+from six.moves import range
 
 
 class TestEmwfPagination(SimpleTestCase):

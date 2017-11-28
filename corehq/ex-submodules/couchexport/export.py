@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from couchexport.util import get_schema_index_view_keys, default_cleanup
 from datetime import datetime
 import six
+from six.moves import range
 
 
 class ExportConfiguration(object):

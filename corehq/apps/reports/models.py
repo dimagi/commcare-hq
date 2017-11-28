@@ -68,6 +68,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six
+from six.moves import range
 
 
 class HQUserType(object):

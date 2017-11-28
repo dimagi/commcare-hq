@@ -13,6 +13,7 @@ from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, DeliveryMothersIds
 import six
 from functools import reduce
+from six.moves import range
 
 
 class ChildRegistrationDetails(MotherRegistrationDetails):

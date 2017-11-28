@@ -17,6 +17,7 @@ from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
+from six.moves import range
 
 
 def visit_completion_counter(case):

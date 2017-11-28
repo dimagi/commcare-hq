@@ -29,6 +29,7 @@ from .const import (
     PRIVATE_SECTOR_WORKER_ROLE,
 )
 from .models import AgencyIdCounter, IssuerId
+from six.moves import range
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -124,7 +125,7 @@ def get_site_code(name, nikshay_code, type_code, parent):
         return slugify(re.sub(r'\s+', '_', word))
 
     nikshay_code = code_ify(nikshay_code)
-    if nikshay_code in map(str, range(0, 10)):
+    if nikshay_code in map(str, list(range(0, 10))):
         nikshay_code = "0{}".format(nikshay_code)
 
     parent_site_code = parent.site_code

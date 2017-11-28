@@ -12,6 +12,7 @@ from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, use_sql_backend
 from corehq.sql_db.config import partition_config
 import six
+from six.moves import range
 
 DOMAIN = 'sharding-test'
 

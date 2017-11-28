@@ -34,6 +34,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 import six
+from six.moves import range
 
 
 @require_POST
@@ -122,7 +123,7 @@ class ProductListView(BaseCommTrackManageView):
                 it later."
             ),
             'show_inactive': self.show_only_inactive,
-            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'pagination_limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
             'program_product_options': {
                 'total': self.total,
                 'start_page': self.page,

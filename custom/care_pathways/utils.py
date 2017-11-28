@@ -8,6 +8,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.reports.sqlreport import DataFormatter
 import six
+from six.moves import range
 
 
 @quickcache(['domain'], timeout=5 * 60)
@@ -61,7 +62,7 @@ def get_pracices(domain_name, value_chain=None):
 
 
 def _chunks(l, n):
-    return [l[i:i+n] for i in xrange(0, len(l), n)]
+    return [l[i:i+n] for i in range(0, len(l), n)]
 
 
 class ByTypeHierarchyRecord(JsonObject):
@@ -164,7 +165,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
             ['D'],
         ]
 
-        for i in xrange(0, max([len(element) for element in data]) - 2):
+        for i in range(0, max([len(element) for element in data]) - 2):
             range_groups[0].append(0)
             range_groups[1].append(0)
             range_groups[2].append(0)

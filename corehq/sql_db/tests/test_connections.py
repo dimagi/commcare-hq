@@ -5,6 +5,7 @@ from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
 from corehq.sql_db.connections import ConnectionManager
+from six.moves import range
 
 
 def _get_db_config(db_name):

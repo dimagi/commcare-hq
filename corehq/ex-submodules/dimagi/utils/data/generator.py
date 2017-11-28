@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import random
 import uuid
+from six.moves import range
 
 # these lists arbitrarily generated once from http://www.generatedata.com/
 

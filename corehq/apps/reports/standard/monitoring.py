@@ -61,6 +61,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.translation import ugettext_noop
 import six
 from functools import reduce
+from six.moves import range
 
 
 TOO_MUCH_DATA = ugettext_noop(

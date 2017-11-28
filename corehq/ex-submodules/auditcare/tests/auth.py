@@ -12,6 +12,7 @@ from auditcare.models import AuditEvent, ModelActionAudit, AccessAudit
 from auditcare import models
 from auditcare.tests.testutils import delete_all, get_latest_access
 from auditcare.utils import _thread_locals
+from six.moves import range
 
 
 class AuthenticationTestCase(TestCase):

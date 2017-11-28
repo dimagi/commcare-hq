@@ -23,6 +23,7 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 import six
+from six.moves import range
 
 
 class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):

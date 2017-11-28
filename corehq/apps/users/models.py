@@ -75,6 +75,7 @@ from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 
 from dimagi.utils.web import get_site_domain
 import six
+from six.moves import range
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 

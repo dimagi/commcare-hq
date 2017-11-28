@@ -8,6 +8,7 @@ import time
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 import sys
 from restkit.session import set_session
+from six.moves import range
 set_session("gevent")
 from gevent.pool import Pool
 

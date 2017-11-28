@@ -8,6 +8,7 @@ from dimagi.utils.couch.bulk import get_docs
 from requests.exceptions import RequestException
 from time import sleep
 import six
+from six.moves import range
 
 
 class DocTypeMismatchException(Exception):

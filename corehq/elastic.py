@@ -25,6 +25,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 import six
+from six.moves import range
 
 
 def _es_hosts():
