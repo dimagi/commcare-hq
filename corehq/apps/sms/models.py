@@ -2244,7 +2244,7 @@ class PhoneLoadBalancingMixin(object):
             return self.load_balancing_numbers[0]
 
         hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
-        index = long(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
+        index = int(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
         return self.load_balancing_numbers[index]
 
 

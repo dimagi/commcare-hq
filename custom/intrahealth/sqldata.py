@@ -83,7 +83,7 @@ class BaseSqlData(SqlData):
             num_cols = len(rows[0])
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long, float))]
+                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:
@@ -376,7 +376,7 @@ class PPSAvecDonnees(BaseSqlData):
 
         columns.append(DatabaseColumn(_(u"PPS Avec Données Soumises"),
                                       CountUniqueAndSumCustomColumn('location_id'),
-                                      format_fn=lambda x: {'sort_key': long(x), 'html': long(x)})
+                                      format_fn=lambda x: {'sort_key': int(x), 'html': int(x)})
         )
         return columns
 
@@ -642,7 +642,7 @@ class NombreData(BaseSqlData):
                     total_row.append("%0.3f" % (float(cp[0]) / (float(cp[1]) or 1.0)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long, float))]
+                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:
