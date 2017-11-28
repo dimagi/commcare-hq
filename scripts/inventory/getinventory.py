@@ -22,23 +22,29 @@ class ArgParser(argparse.ArgumentParser):
         super(ArgParser, self).print_help(stream)
 
 
-def read_inventory_file(filename):
+def import_read_inventory_file():
     """
-    filename is a path to an ansible inventory file
+    This is a hack that makes this script dependent on commcare-hq-deploy
 
-    returns a mapping of group names ("webworker", "proxy", etc.)
-    to lists of hosts (ip addresses)
+    Not sure this is a great idea. If you ever find its brittleness breaks something,
+    feel free to copy and paste read_inventory_file from there, which is how it was before.
 
     """
-    from ansible.inventory.manager import InventoryManager
-    from ansible.parsing.dataloader import DataLoader
-
-    loader = DataLoader()
-    inventory = InventoryManager(loader=loader, sources=filename)
-    return inventory.get_groups_dict()
+    sys.path.append(os.path.join(ROOT, 'deployment', 'commcare-hq-deploy'))
+    try:
+        from fab.utils import read_inventory_file
+    except ImportError:
+        print('Ooops. It looks like the commcare-hq-deploy repo is no longer '
+              'at "{}". Please update this script with its new location, or '
+              'resolve the dependency.'
+              .format(os.path.join(ROOT, 'deployment', 'commcare-hq-deploy')))
+        raise
+    sys.path.remove(os.path.join(ROOT, 'deployment', 'commcare-hq-deploy'))
+    return read_inventory_file
 
 
 def get_instance_group(instance, group):
+    read_inventory_file = import_read_inventory_file()
     servers = read_inventory_file(
         os.path.join(ROOT, 'fab', 'inventory', instance))
     return servers[group]
