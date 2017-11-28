@@ -677,6 +677,7 @@ def _send_downgrade_notice(invoice, context):
         render_to_string('accounting/downgrade.html', context),
         render_to_string('accounting/downgrade.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
+        bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email()
     )
 
@@ -701,6 +702,7 @@ def _send_downgrade_warning(invoice, context):
         render_to_string('accounting/downgrade_warning.html', context),
         render_to_string('accounting/downgrade_warning.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
+        bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
 
 
@@ -711,6 +713,7 @@ def _send_overdue_notice(invoice, context):
         render_to_string('accounting/30_days.html', context),
         render_to_string('accounting/30_days.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
+        bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
 
 
