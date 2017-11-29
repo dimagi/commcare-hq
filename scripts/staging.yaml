@@ -48,7 +48,6 @@ branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - br/kill-old-cloucare  # Danny 7/21
-  - jls/fixtures-require-js-2017-qa # Jenny 9/18
   - mk-search-under-location # Manish 4-Oct
   - es/loc-safe-reports  # Ethan 11/1
   - ce/latest-saved-profile # Jenny Nov 15
@@ -66,7 +65,6 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - jls/r-js # Jenny 10/2
+    branches: []
   submodules/commcare-translations:
     branches: []
