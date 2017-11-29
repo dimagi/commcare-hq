@@ -917,7 +917,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         Assemble a row for a given user.
         If no user is passed, assemble a totals row.
         """
-        user_ids = [user.user_id for user in [user] if user else self.all_users]
+        if user:
+            user_ids = [user.user_id]
+        else:
+            user_ids = [user.user_id for user in self.all_users]
 
         if self.is_submission_time:
             get_counts_by_date = get_submission_counts_by_date
