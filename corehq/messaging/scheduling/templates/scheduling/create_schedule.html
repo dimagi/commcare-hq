@@ -1,0 +1,11 @@
+{% extends "scheduling/create_schedule_base.html" %}
+{% load crispy_forms_tags %}
+
+
+{% block page_content %}{{ block.super }}
+    <form class="form form-horizontal" method="POST" action="#">
+        <div id="create-schedule-form">
+            {% crispy schedule_form %}
+        </div>
+    </form>
+{% endblock %}

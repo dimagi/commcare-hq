@@ -171,7 +171,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def page_context(self):
         return {
-            'form': self.schedule_form,
+            'schedule_form': self.schedule_form,
         }
 
     def post(self, request, *args, **kwargs):

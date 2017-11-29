@@ -1,5 +1,5 @@
 <div class="btn-group report-filter-button-group">
-    {% for code, description in form.recipient_types.field.choices %}
+    {% for code, description in schedule_form.recipient_types.field.choices %}
         <span {% if not form.recipient_types.field.disabled %}
               class="btn btn-default"
               data-bind="css: {'btn-success': recipientTypeSelected('{{ code }}'),
@@ -12,7 +12,7 @@
               >
         {{ description }}</span>
     {% endfor %}
-    {% for code, description in form.recipient_types.field.choices %}
+    {% for code, description in schedule_form.recipient_types.field.choices %}
         <input type="checkbox" class="hide" name="recipient_types" value="{{ code }}" data-bind="checked: recipient_types" />
     {% endfor %}
 </div>

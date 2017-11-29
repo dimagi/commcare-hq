@@ -321,6 +321,7 @@ class ScheduleForm(Form):
             self.update_send_frequency_choices(initial.get('send_frequency'))
 
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
