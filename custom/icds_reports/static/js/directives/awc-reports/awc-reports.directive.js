@@ -2416,30 +2416,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         },
     };
 
-    // hack to have the same width between origin table and fixture headers,
-    // without this fixture headers are bigger and not align to original columns
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-                var hasClass = [].some.call(mutation.addedNodes, function(el) {
-                    return el.classList.contains('fixedHeader-floating');
-                });
-                if (hasClass && $scope.$ctrl.beneficiary === null) {
-                    var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
-                    mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
-                }
-            }
-        });
-    });
-
-    var config = {
-        attributes: true,
-        childList: true,
-        characterData: true,
-    };
-
-    observer.observe(document.body, config);
-
     vm.getDataForStep(vm.step);
 }
 
