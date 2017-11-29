@@ -23,6 +23,8 @@ def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
 
 @receiver(user_login_failed)
 def add_failed_attempt(sender, credentials, **kwargs):
+    if credentials['username'].endswith('.commcarehq.org'):
+        return  # mobile user
     user = CouchUser.get_by_username(credentials['username'])
     if user and user.is_web_user():
         if user.is_locked_out():
