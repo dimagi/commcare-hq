@@ -10,9 +10,9 @@ formplayer:
     - couch
     - redis
   expose:
-    - 8080
+    - 8010
   ports:
-    - "8080:8080"
+    - "8010:8010"
 
 postgres:
   extends:
