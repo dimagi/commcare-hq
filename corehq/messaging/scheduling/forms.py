@@ -309,15 +309,15 @@ class ScheduleForm(Form):
         if kwargs.get('initial'):
             raise ValueError("Initial values are set by the form")
 
+        initial = {}
         if schedule:
             initial = self.compute_initial()
             kwargs['initial'] = initial
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
 
-        intial_send_frequency = initial.get('send_frequency') if initial else None
-        if intial_send_frequency:
-            self.update_send_frequency_choices(intial_send_frequency)
+        if initial.get('send_frequency'):
+            self.update_send_frequency_choices(initial.get('send_frequency'))
 
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
