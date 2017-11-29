@@ -266,7 +266,7 @@ hqDefine('export/js/models', function () {
         if (this.isNew()) {
             eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
             hqImport('analytix/js/google').track.event(eventCategory, 'Custom export creation', '');
-            hqImport('analytix/js/kissmetrix').track.event("Clicked 'Create' in export edit page", callback);
+            hqImport('analytix/js/kissmetrix').track.event("Clicked 'Create' in export edit page", {}, callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
         }
