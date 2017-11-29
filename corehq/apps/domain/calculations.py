@@ -25,6 +25,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.userreports.util import number_of_report_builder_reports
 
 
 def num_web_users(domain, *args):
@@ -374,7 +375,8 @@ def calced_props(dom, id, all_stats):
         "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
         "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
         "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
-        "cp_300th_form": CALC_FNS["300th_form_submission"](dom)
+        "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
+        "cp_n_rb_reports": number_of_report_builder_reports(dom),
     }
 
 
