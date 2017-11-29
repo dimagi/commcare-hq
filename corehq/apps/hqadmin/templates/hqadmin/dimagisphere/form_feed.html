@@ -10,6 +10,7 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}" />
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}" />
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'font-awesome/css/font-awesome.css' %}" />
     {% endcompress %}
     <style>
         .chart-wrapper, .map-wrapper {
@@ -87,7 +88,7 @@
             </div>
             <div id="controls" class="pull-right">Simulate:
                 <button id="controlButton" type="button" class="btn btn-default btn-xs">
-                    <span class="glyphicon glyphicon-play"></span>
+                    <span class="fa fa-play"></span>
                 </button>
             </div>
 		{% endblock main_content %}

@@ -80,8 +80,7 @@
                     <p ng-show="inboundSMSReceived && !pollingErrorOccurred">
                         {% trans "Message received!" %}
                         <a class="btn btn-primary" href="#/finish">
-                            {% trans "Continue" %}
-                            <span class="glyphicon glyphicon-chevron-right" />
+                            {% trans "Continue" %} &raquo;
                         </a>
                     </p>
                     <p ng-show="inboundWaitTimedOut && !inboundSMSReceived && !pollingErrorOccurred">
