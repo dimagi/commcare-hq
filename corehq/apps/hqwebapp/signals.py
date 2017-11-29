@@ -15,7 +15,9 @@ def clear_login_attempts(user):
 
 @receiver(user_logged_in)
 def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
-    couch_user = CouchUser.from_django_user(user)
+    couch_user = getattr(request, 'couch_user', None)
+    if not couch_user:
+        couch_user = CouchUser.from_django_user(user)
     clear_login_attempts(couch_user)
 
 
