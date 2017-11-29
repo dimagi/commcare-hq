@@ -920,7 +920,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         if user:
             user_ids = [user.user_id]
         else:
-            user_ids = [user.user_id for user in self.all_users]
+            user_ids = [u.user_id for u in self.all_users]
 
         if self.is_submission_time:
             get_counts_by_date = get_submission_counts_by_date
