@@ -31,7 +31,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
                         var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
                         mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
                     } else {
-                        mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + 'display: none;')
+                        mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + 'display: none;');
                     }
                 }
             }

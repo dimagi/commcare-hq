@@ -90,7 +90,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
         var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
         var current_month = new Date().getMonth() + 1;
         var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
     };
 
     vm.getDataForStep(vm.step);

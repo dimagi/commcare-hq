@@ -17,7 +17,7 @@ function KpiController($location) {
         var current_month = new Date().getMonth() + 1;
         var current_year = new Date().getFullYear();
 
-        return selected_month !== current_month || selected_year !== current_year
+        return selected_month !== current_month || selected_year !== current_year;
     };
 }
 
