@@ -80,7 +80,7 @@ def cases(domain, *args):
     return get_number_of_cases_in_domain(domain)
 
 
-def cases_in_last(domain, days):
+def cases_in_last(domain, days, case_type=None):
     """
     Returns the number of open cases that have been modified in the last <days> days
     """
@@ -93,7 +93,9 @@ def cases_in_last(domain, days):
             "modified_on": {
                 "from": then,
                 "to": now}}}}
-    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
+    query_params = {"domain.exact": domain, 'closed': False}
+    query_params["type.exact"] = case_type if case_type
+    data = es_query(params=query_params, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
 
@@ -377,6 +379,7 @@ def calced_props(dom, id, all_stats):
         "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
         "cp_n_rb_reports": number_of_report_builder_reports(dom),
+        "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
     }
 
 
