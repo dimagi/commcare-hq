@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, moment */
 
 var weight_for_age = {
     F: {
@@ -1706,6 +1706,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.data = null;
     vm.filters = ['gender', 'age'];
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+
+
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
             url:  url('awc_reports', vm.step),
@@ -2398,6 +2402,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
     };
 
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
+
     vm.layers = {
         baselayers: {
             mapbox_light: {
@@ -2415,30 +2427,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
         },
     };
-
-    // hack to have the same width between origin table and fixture headers,
-    // without this fixture headers are bigger and not align to original columns
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-                var hasClass = [].some.call(mutation.addedNodes, function(el) {
-                    return el.classList.contains('fixedHeader-floating');
-                });
-                if (hasClass && $scope.$ctrl.beneficiary === null) {
-                    var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
-                    mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
-                }
-            }
-        });
-    });
-
-    var config = {
-        attributes: true,
-        childList: true,
-        characterData: true,
-    };
-
-    observer.observe(document.body, config);
 
     vm.getDataForStep(vm.step);
 }
