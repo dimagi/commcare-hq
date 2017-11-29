@@ -20,23 +20,19 @@ from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
-from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
 from corehq.messaging.scheduling.forms import (
-    ScheduleForm,
     BroadcastForm,
     ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
 )
 from corehq.messaging.scheduling.models import (
-    Schedule,
     AlertSchedule,
     TimedSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
-    SMSContent,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.const import SERVER_DATETIME_FORMAT
