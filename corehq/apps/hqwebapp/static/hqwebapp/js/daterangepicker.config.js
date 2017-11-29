@@ -49,7 +49,7 @@
 
         var $el = $(this);
         $el.daterangepicker(config);
-        $el.on('cancel.daterangepicker', function(ev, picker) {
+        $el.on('cancel.daterangepicker', function() {
             $el.val('');
         });
 
