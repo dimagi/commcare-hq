@@ -293,8 +293,12 @@ def _get_parent_modules(app, module, case_property_builder, case_type_):
 
 
 def _get_valid_parent_modules(app, module):
+    if getattr(module, 'root_module_id', None):
+        return []
+    invalid_ids = set([m.unique_id for m in app.modules if getattr(m, 'root_module_id', None)])
+    invalid_ids = invalid_ids.union([getattr(m, 'root_module_id', None) for m in app.modules])
     return [parent_module for parent_module in app.modules
-            if not getattr(parent_module, 'root_module_id', None)
+            if (parent_module.unique_id not in invalid_ids or parent_module.unique_id == getattr(module, 'root_module_id', None))
             and not parent_module == module and parent_module.doc_type != "ShadowModule"]
 
 
