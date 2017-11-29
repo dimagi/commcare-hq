@@ -1242,6 +1242,11 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
+        if 'date_delay_invoicing' in kwargs:
+            date_delay_invoicing = kwargs.pop('date_delay_invoicing')
+        else:
+            date_delay_invoicing = self.date_delay_invoicing
+
         new_subscription = Subscription(
             account=account if account else self.account,
             plan_version=new_plan_version,
@@ -1249,7 +1254,7 @@ class Subscription(models.Model):
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=today,
             date_end=date_end,
-            date_delay_invoicing=kwargs['date_delay_invoicing'] if 'date_delay_invoicing' in kwargs else self.date_delay_invoicing,
+            date_delay_invoicing=date_delay_invoicing,
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
