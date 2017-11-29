@@ -230,13 +230,6 @@ def _rename_key(dct, old, new):
 
 
 @memoized
-def load_app_template(slug):
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
-    with open(os.path.join(path, slug + '.json')) as f:
-        return json.load(f)
-
-
-@memoized
 def load_case_reserved_words():
     with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
         return json.load(f)
