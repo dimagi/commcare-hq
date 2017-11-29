@@ -8,7 +8,6 @@
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
     "icds"
   ],
   "report_id": "static-mpr_2bii_child_death_list",
