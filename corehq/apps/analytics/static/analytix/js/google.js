@@ -1,14 +1,25 @@
-/* globals _, $, Array, window */
+/* globals Array, window */
 /**
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).
  */
-hqDefine('analytix/js/google', function () {
+hqDefine('analytix/js/google', [
+    'jquery',
+    'underscore',
+    'analytix/js/initial',
+    'analytix/js/logging',
+    'analytix/js/utils',
+], function (
+    $,
+    _,
+    initialAnalytics,
+    logging,
+    utils
+) {
     'use strict';
-    var _get = hqImport('analytix/js/initial').getFn('google'),
-        _global = hqImport('analytix/js/initial').getFn('global'),
-        logger = hqImport('analytix/js/logging').getLoggerForApi('Google Analytics'),
-        _utils = hqImport('analytix/js/utils'),
+    var _get = initialAnalytics.getFn('google'),
+        _global = initialAnalytics.getFn('global'),
+        logger = logging.getLoggerForApi('Google Analytics'),
         _data = {},
         module = {},
         _gtag = function () {};
@@ -19,7 +30,7 @@ hqDefine('analytix/js/google', function () {
 
         if (_data.apiId) {
             _data.scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + _data.apiId;
-            _utils.insertScript(_data.scriptUrl, logger.debug.log);
+            utils.insertScript(_data.scriptUrl, logger.debug.log);
         }
 
         window.dataLayer = window.dataLayer || [];
@@ -104,7 +115,7 @@ hqDefine('analytix/js/google', function () {
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
         if (_global('isEnabled')) {
-            _utils.trackClickHelper(
+            utils.trackClickHelper(
                 element,
                 function (callbackFn) {
                     trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);

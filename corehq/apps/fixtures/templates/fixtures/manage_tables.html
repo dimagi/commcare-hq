@@ -2,10 +2,7 @@
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
-
-{% block js %}{{ block.super }}
-<script src="{% static 'fixtures/js/lookup-manage.js' %}"></script>
-{% endblock %}
+{% requirejs_main "fixtures/js/lookup-manage" %}
 
 {% block page_title %}
     {% trans 'Manage Lookup Tables' %}

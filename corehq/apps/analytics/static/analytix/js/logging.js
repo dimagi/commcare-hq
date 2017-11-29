@@ -1,4 +1,4 @@
-/* globals _, JSON */
+/* globals JSON */
 /**
  * To Use this library, enable the feature flag ANALYTICS_NEW.
  *
@@ -8,7 +8,13 @@
  * WARNING, DEPRECATED: ANALYTICS_DEPRECATED
  *
  */
-hqDefine('analytix/js/logging', function () {
+hqDefine('analytix/js/logging', [
+    'underscore',
+    'analytix/js/initial',
+], function (
+    _,
+    initialAnalytics
+) {
     'use strict';
 
     var _makeLevel = function (name, style) {
@@ -129,7 +135,7 @@ hqDefine('analytix/js/logging', function () {
     };
 
     var Level = function (_levelSlug, _levelPrefix, _logger) {
-        var _get = hqImport('analytix/js/initial').getFn('logging'),
+        var _get = initialAnalytics.getFn('logging'),
             _levelData = {
                 slug: _levelSlug,
                 prefix: _levelPrefix,
