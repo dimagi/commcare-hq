@@ -36,18 +36,56 @@ class TestChildrenInitiated(TestCase):
                     "st1": {
                         "all": 17,
                         "children": 14,
+                        'original_name': [],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "all": 23,
                         "children": 20,
+                        'original_name': [],
                         "fillKey": "60%-100%"
                     }
                 },
                 "slug": "severe",
                 "label": "Percent Children (6-8 months) initiated Complementary Feeding"
             }
+        )
 
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_children_initiated_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of children between 6 - 8 months"
+                            " given timely introduction to solid, semi-solid or soft food.",
+                    "average": 82.3529411764706
+                },
+                "fills": {
+                    "0%-20%": "#de2d26",
+                    "20%-60%": "#fc9272",
+                    "60%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'all': 17,
+                        'original_name': ['b1', 'b2'],
+                        'children': 14,
+                        'fillKey': '60%-100%'
+                    }
+                },
+                "slug": "severe",
+                "label": "Percent Children (6-8 months) initiated Complementary Feeding"
+            }
         )
 
     def test_chart_data(self):

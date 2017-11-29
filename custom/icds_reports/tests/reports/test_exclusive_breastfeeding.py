@@ -39,12 +39,54 @@ class TestExclusiveBreastfeeding(TestCase):
                     "st1": {
                         "all": 26,
                         "children": 17,
+                        'original_name': [],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "all": 24,
                         "children": 11,
+                        'original_name': [],
                         "fillKey": "20%-60%"
+                    }
+                },
+                "slug": "severe",
+                "label": "Percent Exclusive Breastfeeding"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_exclusive_breastfeeding_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of infants 0-6 months of age who are fed exclusively "
+                            "with breast milk. <br/><br/>An infant is exclusively breastfed "
+                            "if they recieve only breastmilk with "
+                            "no additional food, liquids (even water) "
+                            "ensuring optimal nutrition and growth between 0 - 6 months",
+                    "average": 65.38461538461539
+                },
+                "fills": {
+                    "0%-20%": "#de2d26",
+                    "20%-60%": "#fc9272",
+                    "60%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'all': 26,
+                        'original_name': ['b1', 'b2'],
+                        'children': 17,
+                        'fillKey': '60%-100%'
                     }
                 },
                 "slug": "severe",

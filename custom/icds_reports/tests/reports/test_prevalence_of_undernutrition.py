@@ -39,18 +39,65 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     ]
                 ),
                 'data': {
-                    u'st1': {
+                    'st1': {
                         'total': 2375,
                         'severely_underweight': 40,
                         'moderately_underweight': 450,
                         'fillKey': '20%-35%',
+                        'original_name': [],
                         'normal': 1820
                     },
-                    u'st2': {
+                    'st2': {
                         'total': 2570,
                         'severely_underweight': 70,
                         'moderately_underweight': 420,
-                        'fillKey': '0%-20%', 'normal': 1975
+                        'original_name': [],
+                        'fillKey': '0%-20%',
+                        'normal': 1975
+                    }
+                },
+                'slug': 'moderately_underweight',
+                'label': 'Percent of Children Underweight (0-5 years)'
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_prevalence_of_undernutrition_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                'rightLegend': {
+                    'info': u'Percentage of children between 0-5 years enrolled for ICDS services'
+                            u' with weight-for-age less than -2 standard deviations'
+                            u' of the WHO Child Growth Standards median.'
+                            u' <br/><br/>Children who are moderately or severely underweight'
+                            u' have a higher risk of mortality',
+                    'average': 18.94736842105263
+                },
+                'fills': OrderedDict(
+                    [
+                        ('0%-20%', '#fee0d2'),
+                        ('20%-35%', '#fc9272'),
+                        ('35%-100%', '#de2d26'),
+                        ('defaultFill', '#9D9D9D')
+                    ]
+                ),
+                'data': {
+                    'block_map': {
+                        'severely_underweight': 8,
+                        'moderately_underweight': 90,
+                        'normal': 364,
+                        'total': 475,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': '20%-35%'
                     }
                 },
                 'slug': 'moderately_underweight',

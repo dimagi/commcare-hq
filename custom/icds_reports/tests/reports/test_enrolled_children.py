@@ -34,11 +34,48 @@ class TestEnrolledChildren(TestCase):
                 "data": {
                     "st1": {
                         "valid": 618,
+                        'original_name': [],
                         "fillKey": "Children"
                     },
                     "st2": {
                         "valid": 669,
+                        'original_name': [],
                         "fillKey": "Children"
+                    }
+                },
+                "slug": "enrolled_children",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_enrolled_children_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Total number of children between the age "
+                            "of 0 - 6 years who are enrolled for ICDS services",
+                    "average": 309.0,
+                    "average_format": "number"
+                },
+                "fills": {
+                    "Children": "#006fdf",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'valid': 618,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Children'
                     }
                 },
                 "slug": "enrolled_children",

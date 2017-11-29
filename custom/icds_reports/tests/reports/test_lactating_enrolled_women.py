@@ -155,11 +155,47 @@ class TestLactatingEnrolledWomen(TestCase):
                 "data": {
                     "st1": {
                         "valid": 87,
+                        'original_name': [],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 79,
+                        'original_name': [],
                         "fillKey": "Women"
+                    }
+                },
+                "slug": "lactating_enrolled_women",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_lactating_enrolled_women_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Lactating Mothers enrolled for ICDS services.",
+                    "average": 43.5,
+                    "average_format": "number"
+                },
+                "fills": {
+                    "Women": "#006fdf",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'valid': 87,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Women'
                     }
                 },
                 "slug": "lactating_enrolled_women",
