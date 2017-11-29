@@ -89,14 +89,18 @@ def iter_all_rows(reindex_accessor):
 
 
 def iter_all_ids(reindex_accessor):
-    for db_alias in reindex_accessor.sql_db_aliases:
-        docs = reindex_accessor.get_doc_ids(db_alias)
-        while docs:
-            for doc in docs:
-                yield doc.doc_id
+    for doc_id in iter_all_ids_chunked(reindex_accessor):
+        yield doc_id
 
-            last_id = doc.primary_key
-            docs = reindex_accessor.get_doc_ids(db_alias, last_doc_pk=last_id)
+
+def iter_all_ids_chunked(reindex_accessor):
+    for db_alias in reindex_accessor.sql_db_aliases:
+        docs = list(reindex_accessor.get_doc_ids(db_alias))
+        while docs:
+            yield [d.doc_id for d in docs]
+
+            last_id = docs[-1].primary_key
+            docs = list(reindex_accessor.get_doc_ids(db_alias, last_doc_pk=last_id))
 
 
 class ShardAccessor(object):
