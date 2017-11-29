@@ -996,6 +996,9 @@ class MessagingTab(UITab):
                     BroadcastListView as NewBroadcastListView,
                     CreateScheduleView,
                     EditScheduleView,
+                    ConditionalAlertListView,
+                    CreateConditionalAlertView,
+                    EditConditionalAlertView,
                 )
                 messages_urls.extend([
                     {
@@ -1009,6 +1012,21 @@ class MessagingTab(UITab):
                             {
                                 'title': _("Edit"),
                                 'urlname': EditScheduleView.urlname,
+                            },
+                        ],
+                        'show_in_dropdown': True,
+                    },
+                    {
+                        'title': _("Schedule a Conditional Message"),
+                        'url': reverse(ConditionalAlertListView.urlname, args=[self.domain]),
+                        'subpages': [
+                            {
+                                'title': _("New"),
+                                'urlname': CreateConditionalAlertView.urlname,
+                            },
+                            {
+                                'title': _("Edit"),
+                                'urlname': EditConditionalAlertView.urlname,
                             },
                         ],
                         'show_in_dropdown': True,
