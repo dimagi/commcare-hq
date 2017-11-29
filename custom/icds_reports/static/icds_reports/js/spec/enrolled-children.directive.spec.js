@@ -85,11 +85,14 @@ describe('EnrolledChildrenDirective', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
-            + '<p>test</p>'
-            + '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>2</strong></div>');
-    });
+        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2, all: 4});
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>test</p>' +
+            '<div>Number of children (0 - 6 years) who are enrolled for ICDS services: <strong>2</strong>' +
+            '<div>Total number of children (0 - 6 years) who are registered: <strong>3</strong>' +
+            '<div>Percentage of registered children (0-6 years) who are enrolled for ICDS services: <strong>50.00%</strong>' +
+            '</div>';
+        assert.equal(result, expected);
 
     it('tests location change', function () {
         controller.init();

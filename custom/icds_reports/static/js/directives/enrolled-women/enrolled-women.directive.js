@@ -56,9 +56,14 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
 
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
+        var all = $filter('indiaNumbers')(row ? row.all : 0);
+        var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of pregnant women who are enrolled for ICDS services: <strong>' + valid + '</strong></div>';
+            '<div>Number of pregnant women who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Total number of pregnant women who are registered: <strong>' + all + '</strong>' +
+            '<div>Percentage of registered pregnant women who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '</div>';
     };
 
     vm.loadData = function () {
@@ -100,7 +105,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
                     });
                 }));
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [(min - range/10).toFixed(2), (max + range/10).toFixed(2)];
+                vm.chartOptions.chart.forceY = [(min - range/10), (max + range/10)];
             }
         });
     };
@@ -181,14 +186,8 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
             callback: function (chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
-                    };
-
-                    var tooltipContent = vm.tooltipContent(d.value, findValue(vm.chartData[0].values, d.value));
-                    return tooltipContent;
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, day);
                 });
                 return chart;
             },
@@ -204,9 +203,11 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         },
     };
 
-    vm.tooltipContent = function(monthName, value) {
+    vm.tooltipContent = function(monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of pregnant women who are enrolled for ICDS services: <strong>" + value + "</strong></p>";
+            + "<p>Number of pregnant women who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
+            + "<p>Total number of pregnant women who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>"
+            + "<p>Percentage of registered pregnant women who are enrolled for ICDS services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {
