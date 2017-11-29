@@ -67,6 +67,6 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches:
-      - jls/r-js # Jenny 10/2
+      - jls/r-js-fail # Jenny 10/2
   submodules/commcare-translations:
     branches: []
