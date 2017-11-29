@@ -78,7 +78,7 @@ def check_kafka():
 
 def check_touchforms():
     if not getattr(settings, 'XFORMS_PLAYER_URL', None):
-        return
+        return ServiceStatus(True, "Touchforms isn't needed for this cluster")
 
     try:
         res = requests.post(settings.XFORMS_PLAYER_URL,
