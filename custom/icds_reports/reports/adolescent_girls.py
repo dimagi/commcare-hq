@@ -34,7 +34,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset

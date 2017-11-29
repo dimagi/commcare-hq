@@ -35,7 +35,7 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
         ).annotate(
             children=Sum('ebf_in_month'),
             all=Sum('ebf_eligible'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset

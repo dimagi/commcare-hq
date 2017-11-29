@@ -33,7 +33,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
         ).annotate(
             birth=Sum('bf_at_birth'),
             in_month=Sum('born_in_month'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)

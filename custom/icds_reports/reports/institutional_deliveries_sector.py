@@ -110,7 +110,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
         ).annotate(
             children=Sum('institutional_delivery_in_month'),
             all=Sum('delivered_in_month'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset

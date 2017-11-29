@@ -34,7 +34,7 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
         ).annotate(
             children=Sum('cf_initiation_in_month'),
             all=Sum('cf_initiation_eligible'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)

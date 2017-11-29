@@ -34,7 +34,7 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
         ).annotate(
             low_birth=Sum('low_birth_weight_in_month'),
             in_month=Sum('born_in_month'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset

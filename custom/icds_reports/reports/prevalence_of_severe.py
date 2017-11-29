@@ -36,7 +36,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
             normal=Sum('wasting_normal'),
             valid=Sum('height_eligible'),
             total_measured=Sum('height_measured_in_month'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)

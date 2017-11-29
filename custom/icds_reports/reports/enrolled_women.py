@@ -32,7 +32,7 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             valid=Sum('pregnant'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset

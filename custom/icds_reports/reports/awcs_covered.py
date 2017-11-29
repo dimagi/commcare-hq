@@ -38,7 +38,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
             supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)

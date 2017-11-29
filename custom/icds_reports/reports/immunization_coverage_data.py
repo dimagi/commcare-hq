@@ -35,7 +35,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
         ).annotate(
             children=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
             all=Sum('fully_immunized_eligible'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
