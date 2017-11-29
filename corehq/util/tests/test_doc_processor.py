@@ -205,6 +205,18 @@ class BaseResumableSqlModelIteratorTest(object):
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
 
+    def test_resume_iteration_with_v1_persistent_state(self):
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
+        # simulate old state
+        # do not change this unless there are no existing iterations in progress
+        arg0, arg1 = self.itr.state.args
+        self.itr.state.args = [arg0, "legacy/ignored filter_value", arg1]
+        self.itr._save_state()
+        # stop/resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+
     def test_resume_iteration_with_new_chunk_size(self):
         def data_function(*args, **kw):
             chunk = real_data_function(*args, **kw)

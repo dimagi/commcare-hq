@@ -44,8 +44,12 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
     that were previously yielded may be yielded again if the iteration
     is stopped and later resumed.
     """
+    NULL = object()
 
-    def data_function(from_db, last_id):
+    def data_function(from_db, filter_value, last_id=NULL):
+        if last_id is NULL:
+            # adapt to old iteration states
+            last_id = filter_value
         return reindex_accessor.get_docs(from_db, last_id, limit=chunk_size)
 
     args_provider = SqlModelArgsProvider(reindex_accessor.sql_db_aliases)
