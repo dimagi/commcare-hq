@@ -67,7 +67,7 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - jls/r-js # Jenny 10/2
+    branches: []
+#      - jls/r-js # Jenny 10/2
   submodules/commcare-translations:
     branches: []
