@@ -2489,7 +2489,11 @@ def can_download_daily_saved_export(export, domain, couch_user):
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
     with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        try:
+            export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        except ResourceNotFound:
+            raise Http404
+
         assert domain == export_instance.domain
 
         if export_instance.export_format == "html":
