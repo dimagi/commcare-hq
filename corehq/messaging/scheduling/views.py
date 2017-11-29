@@ -24,7 +24,12 @@ from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
-from corehq.messaging.scheduling.forms import ScheduleForm, ConditionalAlertForm, ConditionalAlertCriteriaForm
+from corehq.messaging.scheduling.forms import (
+    ScheduleForm,
+    BroadcastForm,
+    ConditionalAlertForm,
+    ConditionalAlertCriteriaForm,
+)
 from corehq.messaging.scheduling.models import (
     Schedule,
     AlertSchedule,
@@ -162,16 +167,19 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         ]
 
     @property
-    def form_kwargs(self):
-        return {
-            'domain': self.domain,
-        }
+    def broadcast(self):
+        return None
+
+    @property
+    def schedule(self):
+        return None
 
     @cached_property
     def schedule_form(self):
         if self.request.method == 'POST':
-            return ScheduleForm(self.request.POST, **self.form_kwargs)
-        return ScheduleForm(**self.form_kwargs)
+            return BroadcastForm(self.domain, self.schedule, self.broadcast, self.request.POST)
+
+        return BroadcastForm(self.domain, self.schedule, self.broadcast)
 
     @property
     def page_context(self):
@@ -417,83 +425,9 @@ class EditScheduleView(CreateScheduleView):
 
         return broadcast
 
-    def get_scheduling_fields_initial(self, broadcast):
-        result = {}
-        if isinstance(broadcast, ImmediateBroadcast):
-            if broadcast.schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
-                result['send_frequency'] = ScheduleForm.SEND_IMMEDIATELY
-            else:
-                raise UnsupportedScheduleError(
-                    "Unexpected Schedule ui_type '%s' for Schedule '%s'" %
-                    (broadcast.schedule.ui_type, broadcast.schedule.schedule_id)
-                )
-        elif isinstance(broadcast, ScheduledBroadcast):
-            schedule = broadcast.schedule
-            if schedule.ui_type == Schedule.UI_TYPE_DAILY:
-                result['send_frequency'] = ScheduleForm.SEND_DAILY
-            elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
-                weekdays = [(schedule.start_day_of_week + e.day) % 7 for e in schedule.memoized_events]
-                result['send_frequency'] = ScheduleForm.SEND_WEEKLY
-                result['weekdays'] = [str(day) for day in weekdays]
-            elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
-                result['send_frequency'] = ScheduleForm.SEND_MONTHLY
-                result['days_of_month'] = [str(e.day) for e in schedule.memoized_events]
-            else:
-                raise UnsupportedScheduleError(
-                    "Unexpected Schedule ui_type '%s' for Schedule '%s'" % (schedule.ui_type, schedule.schedule_id)
-                )
-
-            result['send_time'] = schedule.memoized_events[0].time.strftime('%H:%M')
-            result['start_date'] = broadcast.start_date.strftime('%Y-%m-%d')
-            if schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
-                result['stop_type'] = ScheduleForm.STOP_NEVER
-            else:
-                result['stop_type'] = ScheduleForm.STOP_AFTER_OCCURRENCES
-                result['occurrences'] = schedule.total_iterations
-
-        return result
-
-    @cached_property
-    def schedule_form(self):
-        if self.request.method == 'POST':
-            return ScheduleForm(self.request.POST, **self.form_kwargs)
-
-        broadcast = self.broadcast
-        schedule = broadcast.schedule
-
-        recipient_types = set()
-        user_recipients = []
-        user_group_recipients = []
-        user_organization_recipients = []
-        case_group_recipients = []
-        for doc_type, doc_id in broadcast.recipients:
-            if doc_type == 'CommCareUser':
-                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_USER)
-                user_recipients.append(doc_id)
-            elif doc_type == 'Group':
-                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_USER_GROUP)
-                user_group_recipients.append(doc_id)
-            elif doc_type == 'Location':
-                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_LOCATION)
-                user_organization_recipients.append(doc_id)
-            elif doc_type == 'CommCareCaseGroup':
-                recipient_types.add(ScheduleForm.RECIPIENT_TYPE_CASE_GROUP)
-                case_group_recipients.append(doc_id)
-
-        initial = {
-            'schedule_name': broadcast.name,
-            'recipient_types': list(recipient_types),
-            'user_recipients': ','.join(user_recipients),
-            'user_group_recipients': ','.join(user_group_recipients),
-            'user_organization_recipients': ','.join(user_organization_recipients),
-            'case_group_recipients': ','.join(case_group_recipients),
-            'include_descendant_locations': broadcast.schedule.include_descendant_locations,
-            'content': 'sms',
-            # only works for SMS
-            'message': schedule.memoized_events[0].content.message,
-        }
-        initial.update(self.get_scheduling_fields_initial(broadcast))
-        return ScheduleForm(initial=initial, **self.form_kwargs)
+    @property
+    def schedule(self):
+        return self.broadcast.schedule
 
 
 class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):

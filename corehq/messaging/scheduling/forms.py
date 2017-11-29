@@ -25,6 +25,15 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.exceptions import UnsupportedScheduleError
+from corehq.messaging.scheduling.models import (
+    Schedule,
+    AlertSchedule,
+    TimedSchedule,
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    SMSContent,
+)
 from couchdbkit.resource import ResourceNotFound
 import six
 
@@ -77,6 +86,11 @@ class ScheduleForm(Form):
     RECIPIENT_TYPE_USER_GROUP = 'USER_GROUP'
     RECIPIENT_TYPE_LOCATION = 'LOCATION'
     RECIPIENT_TYPE_CASE_GROUP = 'CASE_GROUP'
+
+    CONTENT_SMS = 'sms'
+    CONTENT_EMAIL = 'email'
+    CONTENT_SMS_SURVEY = 'sms_survey'
+    CONTENT_IVR_SURVEY = 'ivr_survey'
 
     schedule_name = CharField(
         required=True,
@@ -168,10 +182,10 @@ class ScheduleForm(Form):
         required=True,
         label=_("What to send"),
         choices=(
-            ('sms', _('SMS')),
-            # ('email', _('Email')),
-            # ('sms_survey', _('SMS Survey')),
-            # ('ivr_survey', _('IVR Survey')),
+            (CONTENT_SMS, _('SMS')),
+            # (CONTENT_EMAIL, _('Email')),
+            # (CONTENT_SMS_SURVEY, _('SMS Survey')),
+            # (CONTENT_IVR_SURVEY, _('IVR Survey')),
         )
     )
     translate = BooleanField(
@@ -180,9 +194,6 @@ class ScheduleForm(Form):
     )
 
     def update_send_frequency_choices(self, initial_value):
-        if not initial_value:
-            return
-
         def filter_function(two_tuple):
             if initial_value == self.SEND_IMMEDIATELY:
                 return two_tuple[0] == self.SEND_IMMEDIATELY
@@ -193,27 +204,128 @@ class ScheduleForm(Form):
             c for c in self.fields['send_frequency'].choices if filter_function(c)
         ]
 
-    def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain')
-        initial = kwargs.get('initial')
-        readonly = False
-        if initial:
-            readonly = (initial.get('send_frequency') == self.SEND_IMMEDIATELY)
-            message = initial.get('message', {})
-            kwargs['initial']['translate'] = '*' not in message
-            kwargs['initial']['non_translated_message'] = message.get('*', '')
+    def add_intial_for_immediate_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_IMMEDIATELY
+
+    def add_intial_for_daily_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_DAILY
+
+    def add_intial_for_weekly_schedule(self, initial):
+        weekdays = [(self.initial_schedule.start_day_of_week + e.day) % 7
+                    for e in self.initial_schedule.memoized_events]
+        initial['send_frequency'] = self.SEND_WEEKLY
+        initial['weekdays'] = [str(day) for day in weekdays]
+
+    def add_intial_for_monthly_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_MONTHLY
+        initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
+
+    def add_initial_for_timed_schedule(self, initial):
+        initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+        if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+            initial['stop_type'] = self.STOP_NEVER
+        else:
+            initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
+            initial['occurrences'] = self.initial_schedule.total_iterations
+
+    def add_initial_recipients(self, recipients, initial):
+        recipient_types = set()
+        user_recipients = []
+        user_group_recipients = []
+        user_organization_recipients = []
+        case_group_recipients = []
+
+        for doc_type, doc_id in recipients:
+            if doc_type == 'CommCareUser':
+                recipient_types.add(self.RECIPIENT_TYPE_USER)
+                user_recipients.append(doc_id)
+            elif doc_type == 'Group':
+                recipient_types.add(self.RECIPIENT_TYPE_USER_GROUP)
+                user_group_recipients.append(doc_id)
+            elif doc_type == 'Location':
+                recipient_types.add(self.RECIPIENT_TYPE_LOCATION)
+                user_organization_recipients.append(doc_id)
+            elif doc_type == 'CommCareCaseGroup':
+                recipient_types.add(self.RECIPIENT_TYPE_CASE_GROUP)
+                case_group_recipients.append(doc_id)
+
+        initial.update({
+            'recipient_types': list(recipient_types),
+            'user_recipients': ','.join(user_recipients),
+            'user_group_recipients': ','.join(user_group_recipients),
+            'user_organization_recipients': ','.join(user_organization_recipients),
+            'case_group_recipients': ','.join(case_group_recipients),
+            'include_descendant_locations': self.initial_schedule.include_descendant_locations,
+        })
+
+    def add_initial_for_content(self, result):
+        content = self.initial_schedule.memoized_events[0].content
+        if isinstance(content, SMSContent):
+            result['content'] = self.CONTENT_SMS
+            result['translate'] = '*' not in content.message
+            result['non_translated_message'] = content.message.get('*', '')
             for lang in self.project_languages:
-                kwargs['initial']['message_%s' % lang] = message.get(lang, '')
+                result['message_%s' % lang] = content.message.get(lang, '')
+
+    def compute_initial(self):
+        result = {}
+        schedule = self.initial_schedule
+        if schedule:
+            if isinstance(schedule, AlertSchedule):
+                if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
+                    self.add_intial_for_immediate_schedule(result)
+                else:
+                    raise UnsupportedScheduleError(
+                        "Unexpected Schedule ui_type '%s' for AlertSchedule '%s'" %
+                        (schedule.ui_type, schedule.schedule_id)
+                    )
+            elif isinstance(schedule, TimedSchedule):
+                if schedule.ui_type == Schedule.UI_TYPE_DAILY:
+                    self.add_intial_for_daily_schedule(result)
+                elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+                    self.add_intial_for_weekly_schedule(result)
+                elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
+                    self.add_intial_for_monthly_schedule(result)
+                else:
+                    raise UnsupportedScheduleError(
+                        "Unexpected Schedule ui_type '%s' for TimedSchedule '%s'" %
+                        (schedule.ui_type, schedule.schedule_id)
+                    )
+
+                self.add_initial_for_timed_schedule(result)
+
+            self.add_initial_for_content(result)
+
+        return result
+
+    @property
+    def readonly_mode(self):
+        return False
+
+    def __init__(self, domain, schedule, *args, **kwargs):
+        self.domain = domain
+        self.initial_schedule = schedule
+
+        if kwargs.get('initial'):
+            raise ValueError("Initial values are set by the form")
+
+        if schedule:
+            initial = self.compute_initial()
+            kwargs['initial'] = initial
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
-        self.update_send_frequency_choices(initial.get('send_frequency') if initial else None)
+
+        intial_send_frequency = initial.get('send_frequency') if initial else None
+        if intial_send_frequency:
+            self.update_send_frequency_choices(intial_send_frequency)
+
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
         self.add_content_fields()
 
-        if readonly:
+        if self.readonly_mode:
             for field_name, field in self.fields.items():
                 field.disabled = True
 
@@ -232,7 +344,7 @@ class ScheduleForm(Form):
             )
         ]
 
-        if not readonly:
+        if not self.readonly_mode:
             layout_fields += [
                 hqcrispy.FormActions(
                     twbscrispy.StrictButton(
@@ -619,6 +731,27 @@ class ScheduleForm(Form):
             raise error
 
         return occurrences
+
+
+class BroadcastForm(ScheduleForm):
+
+    def __init__(self, domain, schedule, broadcast, *args, **kwargs):
+        self.initial_broadcast = broadcast
+        super(BroadcastForm, self).__init__(domain, schedule, *args, **kwargs)
+
+    def compute_initial(self):
+        result = super(BroadcastForm, self).compute_initial()
+        if self.initial_broadcast:
+            result['schedule_name'] = self.initial_broadcast.name
+            self.add_initial_recipients(self.initial_broadcast.recipients, result)
+            if isinstance(self.initial_broadcast, ScheduledBroadcast):
+                result['start_date'] = self.initial_broadcast.start_date.strftime('%Y-%m-%d')
+
+        return result
+
+    @property
+    def readonly_mode(self):
+        return isinstance(self.initial_broadcast, ImmediateBroadcast)
 
 
 class ConditionalAlertForm(Form):
