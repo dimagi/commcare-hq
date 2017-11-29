@@ -37,6 +37,9 @@ LOCATION_OPENMRS = 'openmrs_uuid'  # The location metadata key that maps to its 
 
 
 def parse_params(params, location=None):
+    """
+    Inserts date and OpenMRS location UUID into report params
+    """
     today = datetime.today().strftime('%Y-%m-%d')
     location_uuid = location.metadata[LOCATION_OPENMRS] if location else None
 
@@ -50,6 +53,9 @@ def parse_params(params, location=None):
 
 
 def get_openmrs_patients(requests, importer, location=None):
+    """
+    Send request to OpenMRS Reporting API and return results
+    """
     endpoint = '/ws/rest/v1/reportingrest/reportdata/' + importer.report_uuid
     params = parse_params(importer.report_params, location)
     response = requests.get(endpoint, params=params)
@@ -95,19 +101,7 @@ def get_commcare_users_by_location(domain_name, location_id):
             yield user
 
 
-def import_patients_to_location(requests, importer, domain_name, location):
-    try:
-        if location is None:
-            owner = CommCareUser.get(importer.owner_id)
-        else:
-            # Don't assign cases to the location itself (until we have a project that needs to)
-            owner = next(get_commcare_users_by_location(domain_name, location.location_id))
-    except (ResourceNotFound, StopIteration):
-        # Location has no users
-        logger.error('Project space "{domain}" location "{location}" has no user to own imported cases'.format(
-            domain=domain_name, location=location.name))
-        return
-
+def import_patients_of_owner(requests, importer, domain_name, owner, location=None):
     openmrs_patients = get_openmrs_patients(requests, importer, location)
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
@@ -158,9 +152,35 @@ def import_patients_to_domain(domain_name, force=False):
                 continue
             locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type).all()
             for location in locations:
-                import_patients_to_location(requests, importer, domain_name, location)
+                # Assign cases to the first user in the location, not to the location itself
+                try:
+                    owner = next(get_commcare_users_by_location(domain_name, location.location_id))
+                except StopIteration:
+                    logger.error(
+                        'Project space "{domain}" at location "{location}" has no user to own cases imported from '
+                        'OpenMRS Importer "{importer}"'.format(
+                            domain=domain_name, location=location.name, importer=importer)
+                    )
+                    continue
+                import_patients_of_owner(requests, importer, domain_name, owner, location)
+        elif importer.owner_id:
+            try:
+                owner = CommCareUser.get(importer.owner_id)
+            except ResourceNotFound:
+                logger.error(
+                    'Project space "{domain}" has no user to own cases imported from OpenMRS Importer '
+                    '"{importer}"'.format(
+                        domain=domain_name, importer=importer)
+                )
+                continue
+            import_patients_of_owner(requests, importer, domain_name, owner)
         else:
-            import_patients_to_location(requests, importer, domain_name, None)
+            logger.error(
+                'Error importing patients for project space "{domain}" from OpenMRS Importer "{importer}": Unable '
+                'to determine the owner of imported cases without either owner_id or location_type_name'.format(
+                    domain=domain_name, importer=importer)
+            )
+            continue
 
 
 @periodic_task(

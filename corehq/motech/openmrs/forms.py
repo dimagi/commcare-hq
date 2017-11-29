@@ -55,6 +55,10 @@ class OpenmrsConfigForm(forms.Form):
         return self.cleaned_data['case_config']
 
 
+_owner_id_label = _('Owner ID')
+_location_type_name_label = _('Organization Level')
+
+
 class OpenmrsImporterForm(forms.Form):
     server_url = forms.CharField(label=_('OpenMRS URL'), required=True,
                                  help_text=_('e.g. "http://www.example.com/openmrs"'))
@@ -68,12 +72,13 @@ class OpenmrsImporterForm(forms.Form):
                                   help_text=_('The OpenMRS UUID of the report of patients to be imported'))
     report_params = JsonField(label=_('Report Parameters'), required=False, expected_type=dict)
     case_type = forms.CharField(label=_('Case Type'), required=True)
-    owner_id = forms.CharField(label=_('Owner ID'), required=False,
+    owner_id = forms.CharField(label=_owner_id_label, required=False,
                                help_text=_('The ID of the mobile worker or location who will own new cases'))
-    location_type_name = forms.CharField(label=_('Organization Level'), required=False,
-                                         help_text=_('The Organization Level whose owners will own new cases'))
+    location_type_name = forms.CharField(label=_location_type_name_label, required=False,
+                                         help_text=_('The Organization Level whose mobile worker will own new '
+                                                     'cases'))
     external_id_column = forms.CharField(label=_('External ID Column'), required=True,
-                                         help_text=_("The column that stores the case's external ID"))
+                                         help_text=_("The column that contains the OpenMRS UUID of the patient"))
     name_columns = forms.CharField(label=_('Name Columns'), required=True,
                                    help_text=_('Space-separated column(s) to be concatenated to create the case '
                                                'name (e.g. "givenName familyName")'))
@@ -118,6 +123,17 @@ class OpenmrsImporterForm(forms.Form):
                 ),
             ),
         )
+
+    def clean(self):
+        cleaned_data = super(OpenmrsImporterForm, self).clean()
+        if bool(cleaned_data.get('owner_id')) == bool(cleaned_data.get('location_type_name')):
+            message = _(
+                'The owner of imported patient cases is determined using either "{owner_id}" or '
+                '"{location_type_name}". Please specify either one or the other.').format(
+                owner_id=_owner_id_label, location_type_name=_location_type_name_label)
+            self.add_error('owner_id', message)
+            self.add_error('location_type_name', message)
+        return self.cleaned_data
 
     def save(self, domain_name):
         try:
