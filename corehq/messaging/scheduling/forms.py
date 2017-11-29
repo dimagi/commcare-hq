@@ -8,6 +8,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from dateutil import parser
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.forms.fields import (
     BooleanField,
     CharField,
@@ -25,7 +26,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.scheduling.exceptions import UnsupportedScheduleError
+from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
 from corehq.messaging.scheduling.models import (
     Schedule,
     AlertSchedule,
@@ -732,6 +733,164 @@ class ScheduleForm(Form):
 
         return occurrences
 
+    def distill_content(self):
+        form_data = self.cleaned_data
+        if form_data['translate']:
+            messages = {}
+            for lang in self.project_languages:
+                key = 'message_%s' % lang
+                if key in form_data:
+                    messages[lang] = form_data[key]
+            content = SMSContent(message=messages)
+        else:
+            content = SMSContent(message={'*': form_data['non_translated_message']})
+
+        return content
+
+    def distill_recipients(self):
+        form_data = self.cleaned_data
+        return (
+            [('CommCareUser', user_id) for user_id in form_data['user_recipients']] +
+            [('Group', group_id) for group_id in form_data['user_group_recipients']] +
+            [('Location', location_id) for location_id in form_data['user_organization_recipients']] +
+            [('CommCareCaseGroup', case_group_id) for case_group_id in form_data['case_group_recipients']]
+        )
+
+    def distill_total_iterations(self):
+        form_data = self.cleaned_data
+        if form_data['stop_type'] == self.STOP_NEVER:
+            return TimedSchedule.REPEAT_INDEFINITELY
+
+        return form_data['occurrences']
+
+    def distill_extra_scheduling_options(self):
+        form_data = self.cleaned_data
+        return {
+            'include_descendant_locations': (
+                ScheduleForm.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
+                form_data['include_descendant_locations']
+            ),
+        }
+
+    def assert_alert_schedule(self, schedule):
+        if not isinstance(schedule, AlertSchedule):
+            raise TypeError("Expected AlertSchedule")
+
+    def assert_timed_schedule(self, schedule):
+        if not isinstance(schedule, TimedSchedule):
+            raise TypeError("Expected TimedSchedule")
+
+    def save_immediate_schedule(self):
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_alert_schedule(schedule)
+            schedule.set_simple_alert(content, extra_options=extra_scheduling_options)
+        else:
+            schedule = AlertSchedule.create_simple_alert(self.domain, content,
+                extra_options=extra_scheduling_options)
+
+        return schedule
+
+    def save_daily_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_daily_schedule(
+                form_data['send_time'],
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_daily_schedule(
+                self.domain,
+                form_data['send_time'],
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_weekly_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_weekly_schedule(
+                form_data['send_time'],
+                content,
+                form_data['weekdays'],
+                form_data['start_date'].weekday(),
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_weekly_schedule(
+                self.domain,
+                form_data['send_time'],
+                content,
+                form_data['weekdays'],
+                form_data['start_date'].weekday(),
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_monthly_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        positive_days = [day for day in form_data['days_of_month'] if day > 0]
+        negative_days = [day for day in form_data['days_of_month'] if day < 0]
+        sorted_days_of_month = sorted(positive_days) + sorted(negative_days)
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_monthly_schedule(
+                form_data['send_time'],
+                sorted_days_of_month,
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_monthly_schedule(
+                self.domain,
+                form_data['send_time'],
+                sorted_days_of_month,
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_schedule(self):
+        send_frequency = self.cleaned_data['send_frequency']
+        return {
+            self.SEND_IMMEDIATELY: self.save_immediate_schedule,
+            self.SEND_DAILY: self.save_daily_schedule,
+            self.SEND_WEEKLY: self.save_weekly_schedule,
+            self.SEND_MONTHLY: self.save_monthly_schedule,
+        }[send_frequency]()
+
 
 class BroadcastForm(ScheduleForm):
 
@@ -752,6 +911,54 @@ class BroadcastForm(ScheduleForm):
     @property
     def readonly_mode(self):
         return isinstance(self.initial_broadcast, ImmediateBroadcast)
+
+    def save_immediate_broadcast(self, schedule):
+        form_data = self.cleaned_data
+        recipients = self.distill_recipients()
+
+        if self.initial_broadcast:
+            raise ImmediateMessageEditAttempt("Cannot edit an ImmediateBroadcast")
+
+        return ImmediateBroadcast.objects.create(
+            domain=self.domain,
+            name=form_data['schedule_name'],
+            schedule=schedule,
+            recipients=recipients,
+        )
+
+    def save_scheduled_broadcast(self, schedule):
+        form_data = self.cleaned_data
+        recipients = self.distill_recipients()
+
+        if self.initial_broadcast:
+            broadcast = self.initial_broadcast
+            if not isinstance(broadcast, ScheduledBroadcast):
+                raise TypeError("Expected ScheduledBroadcast")
+        else:
+            broadcast = ScheduledBroadcast(
+                domain=self.domain,
+                schedule=schedule,
+            )
+
+        broadcast.name = form_data['schedule_name']
+        broadcast.start_date = form_data['start_date']
+        broadcast.recipients = recipients
+        broadcast.save()
+        return broadcast
+
+    def save_broadcast_and_schedule(self):
+        with transaction.atomic():
+            schedule = self.save_schedule()
+
+            send_frequency = self.cleaned_data['send_frequency']
+            broadcast = {
+                self.SEND_IMMEDIATELY: self.save_immediate_broadcast,
+                self.SEND_DAILY: self.save_scheduled_broadcast,
+                self.SEND_WEEKLY: self.save_scheduled_broadcast,
+                self.SEND_MONTHLY: self.save_scheduled_broadcast,
+            }[send_frequency](schedule)
+
+        return (broadcast, schedule)
 
 
 class ConditionalAlertForm(Form):
