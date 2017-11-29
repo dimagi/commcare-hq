@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, moment */
 
 var weight_for_age = {
     F: {
