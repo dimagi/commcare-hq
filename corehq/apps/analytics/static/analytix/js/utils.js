@@ -1,5 +1,5 @@
-/* globals _, JSON */
-hqDefine('analytix/js/utils', function () {
+/* globals JSON */
+hqDefine('analytix/js/utils', ['jquery', 'underscore'], function ($, _) {
     'use strict';
 
     /**
