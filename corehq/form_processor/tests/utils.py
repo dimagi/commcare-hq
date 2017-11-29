@@ -234,10 +234,7 @@ def create_form_for_test(
     )
 
     attachments = attachments or {}
-    attachment_tuples = map(
-        lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
-        attachments.items()
-    )
+    attachment_tuples = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
     attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)

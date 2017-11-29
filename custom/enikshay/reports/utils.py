@@ -7,4 +7,4 @@ StubReport = namedtuple('Report', 'domain')
 
 
 def convert_to_raw_filters_list(*filters):
-    return map(lambda x: RawFilter(x), filters)
+    return [RawFilter(x) for x in filters]

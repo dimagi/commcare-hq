@@ -16,6 +16,7 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
 import six
+from six.moves import map
 
 
 def _get_pillow_instance(full_class_str):

@@ -35,6 +35,7 @@ from corehq.apps.domain.decorators import (
 )
 import six
 from six.moves import range
+from six.moves import map
 
 
 @require_POST
@@ -141,7 +142,7 @@ class FetchProductListView(ProductListView):
     def product_data(self):
         start = (self.page - 1) * self.limit
         end = start + self.limit
-        return map(self.make_product_dict, self.product_queryset[start:end])
+        return list(map(self.make_product_dict, self.product_queryset[start:end]))
 
     def make_product_dict(self, product):
         archive_config = self.get_archive_config()

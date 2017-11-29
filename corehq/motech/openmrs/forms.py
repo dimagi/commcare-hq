@@ -14,6 +14,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from six.moves import map
 
 
 class OpenmrsConfigForm(forms.Form):
@@ -156,7 +157,7 @@ class OpenmrsImporterForm(forms.Form):
             importer.location_type_name = self.cleaned_data['location_type_name']
             importer.external_id_column = self.cleaned_data['external_id_column']
             importer.name_columns = self.cleaned_data['name_columns']
-            importer.column_map = map(ColumnMapping.wrap, self.cleaned_data['column_map'])
+            importer.column_map = list(map(ColumnMapping.wrap, self.cleaned_data['column_map']))
             importer.save()
             return True
         except Exception as err:

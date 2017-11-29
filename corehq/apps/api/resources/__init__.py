@@ -73,7 +73,7 @@ class CorsResourceMixin(object):
             allowed = []
 
         request_method = request.method.lower()
-        allows = ','.join(map(lambda x: x.upper() if x else '', allowed))
+        allows = ','.join([x.upper() if x else '' for x in allowed])
 
         if request_method == 'options':
             response = HttpResponse(allows)
