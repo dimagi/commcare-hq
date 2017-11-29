@@ -379,7 +379,7 @@ def login(req):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
 
-    if settings.SERVER_ENVIRONMENT == 'icds':
+    if settings.SERVER_ENVIRONMENT in ('icds', 'icds-new'):
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 

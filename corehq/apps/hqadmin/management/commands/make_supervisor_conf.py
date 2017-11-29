@@ -46,6 +46,7 @@ class SupervisorConfCommand(BaseCommand):
         self.params = options['params'] or {}
         if self.params:
             self.params = self.extend_params(json.loads(self.params))
+        self.environment = self.params.get('environment', settings.SERVER_ENVIRONMENT)
 
         service_dir = settings.SERVICE_DIR
 
@@ -61,7 +62,7 @@ class SupervisorConfCommand(BaseCommand):
             conf_template_string = fin.read()
         dest_filepath = os.path.join(
             self.conf_dest,
-            '%s_%s' % (settings.SERVER_ENVIRONMENT, self.conf_destination_filename)
+            '%s_%s' % (self.environment, self.conf_destination_filename)
         )
         rendered_conf = self.render_configuration_file(conf_template_string, self.params)
 
