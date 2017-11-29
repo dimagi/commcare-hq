@@ -11,6 +11,14 @@ function KpiController($location) {
         return page_path;
     };
 
+    this.show_percent_info = function (){
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+
+        return selected_month !== current_month || selected_year !== current_year
+    }
 }
 
 KpiController.$inject = ['$location'];

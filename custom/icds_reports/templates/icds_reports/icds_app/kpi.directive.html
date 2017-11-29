@@ -23,7 +23,7 @@
                     </div>
                     <div class="row kpi-percents" ng-if="cell.show_percent === void(0)">
                         <p>
-                            <span class="white" ng-show="cell.percent !== null">
+                            <span class="white" ng-show="cell.percent !== null && $ctrl.show_percent_info()">
                                 <i class="fa" style="font-size: 1.5em" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0, 'green': cell.color === 'green', 'red': cell.color === 'red'}" ></i>&nbsp;
                                 <span class="white" ng-bind="cell.percent | number:2"></span>% from previous {$ cell.frequency $}
                             </span>
