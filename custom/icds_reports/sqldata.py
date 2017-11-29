@@ -1892,9 +1892,10 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
     @property
     def get_columns_by_loc_level(self):
+        selected_month = self.config['month']
         columns = [
             DatabaseColumn(
-                'Name',
+                'Child Name',
                 SimpleColumn('person_name'),
                 slug='person_name'
             ),
@@ -1904,7 +1905,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='dob'
             ),
             DatabaseColumn(
-                'Current Age (In years)',
+                'Current Age (as of {})'.format(selected_month.isoformat()),
                 AliasColumn('dob'),
                 format_fn=lambda x: current_age(x, self.config['month']),
                 slug='current_age'
@@ -1925,19 +1926,19 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='month'
             ),
             DatabaseColumn(
-                'Weight recorded',
+                'Weight Recorded (in Month)',
                 SimpleColumn('recorded_weight'),
                 format_fn=lambda x: "%.2f" % x,
                 slug='recorded_weight'
             ),
             DatabaseColumn(
-                'Height recorded',
+                'Height Recorded (in Month)',
                 SimpleColumn('recorded_height'),
                 format_fn=lambda x: "%.2f" % x,
                 slug='recorded_height'
             ),
             DatabaseColumn(
-                'Weight-for-Age Status',
+                'Weight-for-Age Status (in Month)',
                 SimpleColumn('current_month_nutrition_status'),
                 format_fn=lambda x: get_status(
                     x,
@@ -1948,7 +1949,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='current_month_nutrition_status'
             ),
             DatabaseColumn(
-                'Weight-for-Height Status',
+                'Weight-for-Height Status (in Month)',
                 SimpleColumn('current_month_wasting'),
                 format_fn=lambda x: get_status(
                     x,
@@ -1959,7 +1960,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug="current_month_wasting"
             ),
             DatabaseColumn(
-                'Height-for-Age status',
+                'Height-for-Age Status (in Month)',
                 SimpleColumn('current_month_stunting'),
                 format_fn=lambda x: get_status(
                     x,
@@ -1970,7 +1971,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug="current_month_stunting"
             ),
             DatabaseColumn(
-                'PSE Attendance (Days)',
+                'Days attended PSE (as of {})'.format(selected_month.isoformat()),
                 SimpleColumn('pse_days_attended'),
                 slug="pse_days_attended"
             ),
