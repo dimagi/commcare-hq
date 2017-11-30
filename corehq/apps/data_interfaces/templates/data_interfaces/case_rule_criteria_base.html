@@ -2,12 +2,9 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/main.js' %}"></script>
     <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
-{% initial_page_data 'criteria_initial' criteria_form.current_values %}
-{% initial_page_data 'criteria_constants' criteria_form.constants %}
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 {% endblock %}
