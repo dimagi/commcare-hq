@@ -921,7 +921,6 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('num_awcs'),
             clean_water=Sum('infra_clean_water'),
             functional_toilet=Sum('infra_functional_toilet'),
             medicine_kits=Sum('infra_medicine_kits'),

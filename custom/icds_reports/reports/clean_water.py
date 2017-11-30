@@ -33,8 +33,9 @@ def get_clean_water_data_map(domain, config, loc_level, show_test=False):
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             in_month=Sum('infra_clean_water'),
-            all=Sum('num_awcs'),
+            all=Sum('num_awc_infra_last_update'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
+
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
@@ -56,12 +57,12 @@ def get_clean_water_data_map(domain, config, loc_level, show_test=False):
 
     return {
         "slug": "clean_water",
-        "label": "Percent AWCs with Clean Drinking Water",
+        "label": "Percentage of AWCs that reported having a source of clean drinking water",
         "fills": fills,
         "rightLegend": {
             "average": (in_month_total * 100) / float(valid_total or 1),
             "info": _((
-                "Percentage of AWCs with a source of clean drinking water"
+                "Percentage of AWCs that reported having a source of clean drinking water"
             )),
             "extended_info": [
                 {
@@ -96,7 +97,7 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_clean_water'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('month')
 
     if not show_test:
@@ -152,7 +153,7 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
                         'in_month': value['in_month']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "% of AWCs with a source of clean drinking water",
+                "key": "Percentage of AWCs that reported having a source of clean drinking water",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -176,7 +177,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
         *group_by
     ).annotate(
         in_month=Sum('infra_clean_water'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update')
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -224,7 +225,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs with a source of clean drinking water"
+            "Percentage of AWCs that reported having a source of clean drinking water"
         )),
         "chart_data": [
             {

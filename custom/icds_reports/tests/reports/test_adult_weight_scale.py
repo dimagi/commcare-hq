@@ -1,7 +1,7 @@
 from __future__ import absolute_import
+
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_map, \
     get_adult_weight_scale_data_chart, get_adult_weight_scale_sector_data
 from django.test import TestCase
@@ -22,8 +22,8 @@ class TestAdultWeightScale(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs with weighing scale for mother and child",
-                    "average": 18.0,
+                    "info": "Percentage of AWCs that reported having a weighing scale for mother and child",
+                    "average": 30.0,
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a weighing scale for mother and child:',
@@ -38,22 +38,28 @@ class TestAdultWeightScale(TestCase):
                     "75%-100%": "#fee0d2",
                     "defaultFill": "#9D9D9D"
                 },
+                "label": "Percentage of AWCs that reported having a weighing scale for mother and child",
                 "data": {
                     "st1": {
                         "in_month": 5,
-                        "all": 26.0,
-                        'original_name': ["st1"],
-                        "fillKey": "0%-25%"
+                        "original_name": [],
+                        "all": 17,
+                        "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 4,
-                        "all": 24.0,
-                        'original_name': ["st2"],
-                        "fillKey": "0%-25%"
+                        "original_name": [],
+                        "all": 13,
+                        "fillKey": "25%-75%"
                     }
                 },
                 "slug": "adult_weight_scale",
-                "label": "Percent AWCs with Weighing Scale: Mother and Child"
+                "fills": {
+                    "0%-25%": "#de2d26",
+                    "25%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                }
             }
         )
 
@@ -71,8 +77,8 @@ class TestAdultWeightScale(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs with weighing scale for mother and child",
-                    "average": 19.23076923076923,
+                    "info": "Percentage of AWCs that reported having a weighing scale for mother and child",
+                    "average": 29.41176470588235,
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a weighing scale for mother and child:',
@@ -81,22 +87,25 @@ class TestAdultWeightScale(TestCase):
                         {'indicator': '% of AWCs with a weighing scale for mother and child:', 'value': '19.23%'}
                     ]
                 },
+                "label": "Percentage of AWCs that reported having a weighing scale for mother and child",
+                "data": {
+                    "block_map": {
+                        "in_month": 5,
+                        "original_name": [
+                            "b1",
+                            "b2"
+                        ],
+                        "all": 17,
+                        "fillKey": "25%-75%"
+                    }
+                },
+                "slug": "adult_weight_scale",
                 "fills": {
                     "0%-25%": "#de2d26",
                     "25%-75%": "#fc9272",
                     "75%-100%": "#fee0d2",
                     "defaultFill": "#9D9D9D"
-                },
-                "data": {
-                    'block_map': {
-                        'in_month': 5,
-                        'original_name': ['b1', 'b2'],
-                        'all': 26,
-                        'fillKey': '0%-25%'
-                    }
-                },
-                "slug": "adult_weight_scale",
-                "label": "Percent AWCs with Weighing Scale: Mother and Child"
+                }
             }
         )
 
@@ -111,32 +120,9 @@ class TestAdultWeightScale(TestCase):
                 loc_level='state'
             ),
             {
-                "location_type": "State",
-                "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 19.23076923076923
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 16.666666666666668
-                    }
-                ],
-                "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 19.23076923076923
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 16.666666666666668
-                    }
-                ],
                 "chart_data": [
                     {
-                        "color": ChartColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
+                        "color": "#005ebd",
                         "values": [
                             {
                                 "y": 0.0,
@@ -149,27 +135,50 @@ class TestAdultWeightScale(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.06,
+                                "y": 0.21428571428571427,
                                 "x": 1491004800000,
                                 "in_month": 3
                             },
                             {
-                                "y": 0.18,
+                                "y": 0.3,
                                 "x": 1493596800000,
                                 "in_month": 9
                             }
                         ],
-                        "key": "% of AWCs with a weighing scale for mother and child"
+                        "strokeWidth": 2,
+                        "classed": "dashed",
+                        "key": "Percentage of AWCs that reported having a weighing scale for mother and child"
                     }
                 ],
-                "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 19.23076923076923
-                    },
+                "top_five": [
                     {
                         "loc_name": "st2",
-                        "percent": 16.666666666666668
+                        "percent": 30.76923076923077
+                    },
+                    {
+                        "loc_name": "st1",
+                        "percent": 29.41176470588235
+                    }
+                ],
+                "location_type": "State",
+                "all_locations": [
+                    {
+                        "loc_name": "st2",
+                        "percent": 30.76923076923077
+                    },
+                    {
+                        "loc_name": "st1",
+                        "percent": 29.41176470588235
+                    }
+                ],
+                "bottom_five": [
+                    {
+                        "loc_name": "st2",
+                        "percent": 30.76923076923077
+                    },
+                    {
+                        "loc_name": "st1",
+                        "percent": 29.41176470588235
                     }
                 ]
             }
@@ -190,32 +199,32 @@ class TestAdultWeightScale(TestCase):
                 location_id='b1',
             ),
             {
-                "info": "Percentage of AWCs with weighing scale for mother and child",
+                "info": "Percentage of AWCs that reported having a weighing scale for mother and child",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 1,
-                        "all": 7
+                        "all": 3
                     },
                     "s1": {
                         "in_month": 1,
-                        "all": 7
+                        "all": 5
                     }
                 },
                 "chart_data": [
                     {
                         "color": "#006fdf",
-                        "classed": "dashed",
-                        "strokeWidth": 2,
                         "values": [
                             [
                                 "s1",
-                                0.14285714285714285
+                                0.2
                             ],
                             [
                                 "s2",
-                                0.14285714285714285
+                                0.3333333333333333
                             ]
                         ],
+                        "strokeWidth": 2,
+                        "classed": "dashed",
                         "key": ""
                     }
                 ]

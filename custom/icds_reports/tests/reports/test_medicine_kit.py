@@ -1,7 +1,7 @@
 from __future__ import absolute_import
+
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.medicine_kit import get_medicine_kit_data_map, get_medicine_kit_data_chart, \
     get_medicine_kit_sector_data
 from django.test import TestCase
@@ -22,8 +22,8 @@ class TestMedicineKit(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs with a Medicine Kit",
-                    "average": 40.0,
+                    "info": "Percentage of AWCs that reported having a Medicine Kit",
+                    "average": 66.66666666666667,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "20"},
                         {'indicator': '% of AWCs with a Medicine Kit:', 'value': '40.00%'}
@@ -35,22 +35,28 @@ class TestMedicineKit(TestCase):
                     "75%-100%": "#fee0d2",
                     "defaultFill": "#9D9D9D"
                 },
+                "label": "Percentage of AWCs that reported having a Medicine Kit",
                 "data": {
                     "st1": {
                         "in_month": 9,
-                        "all": 26,
-                        'original_name': ["st1"],
+                        "original_name": [],
+                        "all": 17,
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 11,
-                        "all": 24,
-                        'original_name': ["st2"],
-                        "fillKey": "25%-75%"
+                        "original_name": [],
+                        "all": 13,
+                        "fillKey": "75%-100%"
                     }
                 },
                 "slug": "medicine_kit",
-                "label": "Percent AWCs with Medicine Kit"
+                "fills": {
+                    "0%-25%": "#de2d26",
+                    "25%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                }
             }
         )
 
@@ -68,29 +74,32 @@ class TestMedicineKit(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs with a Medicine Kit",
-                    "average": 34.61538461538461,
+                    "info": "Percentage of AWCs that reported having a Medicine Kit",
+                    "average": 52.94117647058823,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "9"},
                         {'indicator': '% of AWCs with a Medicine Kit:', 'value': '34.62%'}
                     ]
                 },
+                "label": "Percentage of AWCs that reported having a Medicine Kit",
+                "data": {
+                    "block_map": {
+                        "in_month": 9,
+                        "original_name": [
+                            "b1",
+                            "b2"
+                        ],
+                        "all": 17,
+                        "fillKey": "25%-75%"
+                    }
+                },
+                "slug": "medicine_kit",
                 "fills": {
                     "0%-25%": "#de2d26",
                     "25%-75%": "#fc9272",
                     "75%-100%": "#fee0d2",
                     "defaultFill": "#9D9D9D"
-                },
-                "data": {
-                    'block_map': {
-                        'in_month': 9,
-                        'original_name': ['b1', 'b2'],
-                        'all': 26,
-                        'fillKey': '25%-75%'
-                    }
-                },
-                "slug": "medicine_kit",
-                "label": "Percent AWCs with Medicine Kit"
+                }
             }
         )
 
@@ -109,26 +118,26 @@ class TestMedicineKit(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 1100.0
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 34.61538461538461
+                        "percent": 900.0
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 1100.0
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 34.61538461538461
+                        "percent": 900.0
                     }
                 ],
                 "chart_data": [
                     {
-                        "color": ChartColors.BLUE,
+                        "color": "#005ebd",
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -143,27 +152,27 @@ class TestMedicineKit(TestCase):
                                 "in_month": 0
                             },
                             {
-                                "y": 0.22,
+                                "y": 5.5,
                                 "x": 1491004800000,
                                 "in_month": 11
                             },
                             {
-                                "y": 0.4,
+                                "y": 10.0,
                                 "x": 1493596800000,
                                 "in_month": 20
                             }
                         ],
-                        "key": "% of AWCs with a Medicine Kit."
+                        "key": "Percentage of AWCs that reported having a Medicine Kit"
                     }
                 ],
                 "all_locations": [
                     {
                         "loc_name": "st2",
-                        "percent": 45.833333333333336
+                        "percent": 1100.0
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 34.61538461538461
+                        "percent": 900.0
                     }
                 ]
             }
@@ -184,32 +193,32 @@ class TestMedicineKit(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs with a Medicine Kit",
+                "info": "Percentage of AWCs that reported having a Medicine Kit",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 2,
-                        "all": 7
+                        "all": 3
                     },
                     "s1": {
                         "in_month": 3,
-                        "all": 7
+                        "all": 5
                     }
                 },
                 "chart_data": [
                     {
                         "color": "#006fdf",
-                        "classed": "dashed",
-                        "strokeWidth": 2,
                         "values": [
                             [
                                 "s1",
-                                0.42857142857142855
+                                0.6
                             ],
                             [
                                 "s2",
-                                0.2857142857142857
+                                0.6666666666666666
                             ]
                         ],
+                        "strokeWidth": 2,
+                        "classed": "dashed",
                         "key": ""
                     }
                 ]

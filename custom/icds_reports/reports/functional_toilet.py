@@ -14,6 +14,7 @@ from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations
+from django.db.models import Case, When, Q, IntegerField
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -33,8 +34,9 @@ def get_functional_toilet_data_map(domain, config, loc_level, show_test=False):
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             in_month=Sum('infra_functional_toilet'),
-            all=Sum('num_awcs'),
+            all=Sum('num_awc_infra_last_update'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
+
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
@@ -56,12 +58,12 @@ def get_functional_toilet_data_map(domain, config, loc_level, show_test=False):
 
     return {
         "slug": "functional_toilet",
-        "label": "Percent AWCs with Functional Toilet",
+        "label": "Percentage of AWCs that reported having a functional toilet",
         "fills": fills,
         "rightLegend": {
             "average": (in_month_total * 100) / float(valid_total or 1),
             "info": _((
-                "Percentage of AWCs with a functional toilet"
+                "Percentage of AWCs that reported having a functional toilet"
             )),
             "extended_info": [
                 {
@@ -96,7 +98,7 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_functional_toilet'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('month')
 
     if not show_test:
@@ -151,7 +153,7 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
                         'in_month': value['in_month']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "% of AWCs with a functional toilet.",
+                "key": "Percentage of AWCs that reported having a functional toilet",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -175,7 +177,7 @@ def get_functional_toilet_sector_data(domain, config, loc_level, location_id, sh
         *group_by
     ).annotate(
         in_month=Sum('infra_functional_toilet'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -222,7 +224,7 @@ def get_functional_toilet_sector_data(domain, config, loc_level, location_id, sh
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs with a functional toilet"
+            "Percentage of AWCs that reported having a functional toilet"
         )),
         "chart_data": [
             {

@@ -21,62 +21,63 @@ class TestAWCInfrastructure(TestCase):
                     [
                         {
                             "redirect": "clean_water",
-                            "color": "green",
-                            "all": 50,
-                            "frequency": "month",
+                            "all": 30,
                             "format": "percent_and_div",
-                            "help_text": "Percentage of AWCs with a source of clean drinking water",
-                            "percent": 107.1428571428571,
+                            "color": "red",
+                            "percent": -3.3333333333333286,
                             "value": 29,
-                            "label": "AWCs with Clean Drinking Water"
+                            "label": "AWCs Reported Clean Drinking Water",
+                            "frequency": "month",
+                            "help_text": "Percentage of AWCs that reported having a source of clean drinking water"
                         },
                         {
                             "redirect": "functional_toilet",
-                            "color": "green",
-                            "all": 50,
-                            "frequency": "month",
+                            "all": 30,
                             "format": "percent_and_div",
-                            "help_text": "AWCs with functional toilet",
-                            "percent": 87.5,
+                            "color": "red",
+                            "percent": -12.499999999999995,
                             "value": 15,
-                            "label": "AWCs with Functional Toilet"
+                            "label": "AWCs Reported Functional Toilet",
+                            "frequency": "month",
+                            "help_text": "Percentage of AWCs that reported having a functional toilet"
                         }
                     ],
                     [
                         {
                             "redirect": "infants_weight_scale",
-                            "color": "green",
-                            "all": 50,
-                            "frequency": "month",
+                            "all": 30,
                             "format": "percent_and_div",
-                            "help_text": "Percentage of AWCs with weighing scale for infants",
-                            "percent": 140.0,
+                            "color": "green",
+                            "percent": 11.999999999999996,
                             "value": 24,
-                            "label": "AWCs with Weighing Scale: Infants"
+                            "label": "AWCs Reported Weighing Scale: Infants",
+                            "frequency": "month",
+                            "help_text": "Percentage of AWCs that reported having a weighing scale for infants"
                         },
                         {
                             "redirect": "adult_weight_scale",
-                            "color": "green",
-                            "all": 50,
-                            "frequency": "month",
+                            "all": 30,
                             "format": "percent_and_div",
-                            "help_text": "Percentage of AWCs with weighing scale for mother and child",
-                            "percent": 200.0,
+                            "color": "green",
+                            "percent": 40.00000000000001,
                             "value": 9,
-                            "label": "AWCs with Weighing Scale: Mother and Child"
+                            "label": "AWCs Reported Weighing Scale: Mother and Child",
+                            "frequency": "month",
+                            "help_text": "Percentage of AWCs that reported having"
+                                         " a weighing scale for mother and child"
                         }
                     ],
                     [
                         {
                             "redirect": "medicine_kit",
-                            "color": "green",
-                            "all": 50,
-                            "frequency": "month",
+                            "all": 30,
                             "format": "percent_and_div",
-                            "help_text": "Percentage of AWCs with a Medicine Kit",
-                            "percent": 81.81818181818183,
+                            "color": "red",
+                            "percent": -15.15151515151516,
                             "value": 20,
-                            "label": "AWCs with Medicine Kit"
+                            "label": "AWCs Reported Medicine Kit",
+                            "frequency": "month",
+                            "help_text": "Percentage of AWCs that reported having a Medicine Kit"
                         }
                     ]
                 ]
