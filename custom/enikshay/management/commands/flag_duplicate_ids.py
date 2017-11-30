@@ -39,22 +39,20 @@ class Command(BaseCommand):
         print("Logging actions to {}".format(filename))
         with open(filename, 'w') as f:
             logfile = csv.writer(f)
-            logfile.writerow(['case_id', 'marked_as_duplicate'])
+            logfile.writerow(['case_id', 'readable_id', 'opened_on'])
             for chunk in chunked(self.get_updates(logfile), 100):
                 if commit:
                     bulk_update_cases(self.domain, chunk, self.__module__)
 
     def get_updates(self, logfile):
         accessor = CaseAccessors(self.domain)
+        print("Fetching all case ids")
         case_ids = accessor.get_case_ids_in_domain(self.case_type)
+        print("Finding duplicates")
         bad_cases = get_cases_with_duplicate_ids(self.domain, self.case_type, case_ids)
         # bad_case_ids = [case['case_id'] for case in bad_cases]
         # for case in with_progress_bar(accessor.iter_cases(bad_case_ids), len(bad_case_ids)):
+        print("Processing duplicate cases")
         for case in with_progress_bar(bad_cases):
-            if case['case_id'] in self.already_seen:
-                yield (case['case_id'], {'has_duplicate_id': 'yes'}, False)
-                logfile.writerow([case['case_id'], True])
-            else:
-                # Don't mark this one
-                self.already_seen.add(case['case_id'])
-                logfile.writerow([case['case_id'], False])
+            yield (case['case_id'], {'has_duplicate_id': 'yes'}, False)
+            logfile.writerow([case['case_id'], case['readable_id'], case['opened_on']])
