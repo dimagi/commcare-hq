@@ -3,7 +3,7 @@ import json
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug
+from django.core.validators import RegexValidator, validate_slug
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -57,6 +57,7 @@ class XmlSlugField(forms.SlugField):
     default_validators = [
         validate_slug,
         validate_reserved_words,
+        RegexValidator(r'^[a-zA-Z]', ''),
     ]
 
 
@@ -72,8 +73,8 @@ class CustomDataFieldForm(forms.Form):
         required=True,
         error_messages={
             'required': ugettext_lazy('All fields are required'),
-            'invalid': ugettext_lazy('Key fields must consist only of letters, numbers, '
-                         'underscores or hyphens.'),
+            'invalid': ugettext_lazy('Properties must start with a letter and '
+                         'consist only of letters, numbers, underscores or hyphens.'),
         }
     )
     is_required = forms.BooleanField(required=False)
