@@ -26,7 +26,8 @@ from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.userreports.util import number_of_report_builder_reports
-
+from corehq.apps.sms.models import SQLMobileBackend
+from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -94,7 +95,8 @@ def cases_in_last(domain, days, case_type=None):
                 "from": then,
                 "to": now}}}}
     query_params = {"domain.exact": domain, 'closed': False}
-    query_params["type.exact"] = case_type if case_type
+    if case_type:
+        query_params["type.exact"] = case_type
     data = es_query(params=query_params, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
@@ -380,6 +382,7 @@ def calced_props(dom, id, all_stats):
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
         "cp_n_rb_reports": number_of_report_builder_reports(dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
+        "cp_n_trivet_backends": num_telerivet_backends(dom),
     }
 
 
@@ -394,3 +397,8 @@ def total_distinct_users(domain):
     }
     user_ids = terms.intersection(set(CouchUser.ids_by_domain(domain)))
     return len(user_ids)
+
+
+def num_telerivet_backends(domain):
+    backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
+    return len([b for b in backends if type(b) is SQLTelerivetBackend ]
