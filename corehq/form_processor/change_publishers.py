@@ -80,16 +80,26 @@ def publish_case_deleted(domain, case_id):
 
 
 def publish_ledger_v2_saved(ledger_value):
-    producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(ledger_value))
+    producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(
+        ledger_value.ledger_reference, ledger_value.domain
+    ))
 
 
-def change_meta_from_ledger_v2(ledger_value):
+def publish_ledger_v2_deleted(domain, case_id, section_id, entry_id):
+    from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+    ref = UniqueLedgerReference(
+        case_id=case_id, section_id=section_id, entry_id=entry_id
+    )
+    producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(ref, domain, True))
+
+
+def change_meta_from_ledger_v2(ledger_ref, domain, deleted=False):
     return ChangeMeta(
-        document_id=ledger_value.ledger_reference.as_id(),
+        document_id=ledger_ref.as_id(),
         data_source_type=data_sources.LEDGER_V2,
         data_source_name='ledger-v2',  # todo: this isn't really needed.
-        domain=ledger_value.domain,
-        is_deletion=False,
+        domain=domain,
+        is_deletion=deleted,
     )
 
 
