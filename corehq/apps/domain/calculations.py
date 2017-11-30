@@ -401,4 +401,4 @@ def total_distinct_users(domain):
 
 def num_telerivet_backends(domain):
     backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
-    return len([b for b in backends if type(b) is SQLTelerivetBackend ]
+    return len([b for b in backends if type(b) is SQLTelerivetBackend ])
