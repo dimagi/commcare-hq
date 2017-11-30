@@ -70,10 +70,13 @@ describe('EnrolledWomenDirective', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">'
-            + '<p>test</p>'
-            + '<div>Total number of pregnant women who are enrolled for ICDS services: <strong>2</strong></div>';
+        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2, all: 4});
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">' +
+            '<p>test</p>' +
+            '<div>Number of pregnant women who are enrolled for ICDS services: <strong>2</strong>' +
+            '<div>Total number of pregnant women who are registered: <strong>4</strong>' +
+            '<div>Percentage of registered pregnant women who are enrolled for ICDS services: <strong>50.00%</strong>' +
+            '</div>';
 
         assert.equal(result, expected);
     });
@@ -175,13 +178,15 @@ describe('EnrolledWomenDirective', function () {
     });
 
     it('tests chart tooltip content', function () {
-        var data = {all: 0, series: 0, x: 1501545600000, y: 72};
+        var data = {all: 72, series: 0, x: 1501545600000, y: 72};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of pregnant women who are enrolled for ICDS services: <strong>72</strong></p>';
+        var expected = "<p><strong>Jul 2017</strong></p><br/>"
+            + "<p>Number of pregnant women who are enrolled for ICDS services: <strong>72</strong></p>"
+            + "<p>Total number of pregnant women who are registered: <strong>72</strong></p>"
+            + "<p>Percentage of registered pregnant women who are enrolled for ICDS services: <strong>100.00%</strong></p>";
 
-        var result = controller.tooltipContent(month.value, data.y);
+        var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 });

@@ -32,6 +32,7 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             valid=Sum('pregnant'),
+            all=Sum('pregnant_all')
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -39,17 +40,20 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
 
     data_for_map = defaultdict(lambda: {
         'valid': 0,
+        'all': 0,
         'original_name': [],
         'fillKey': 'Women'
     })
     average = []
     for row in get_data_for(config):
         valid = row['valid'] or 0
+        all_pregnant = row['all'] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
 
         average.append(valid)
         data_for_map[on_map_name]['valid'] += valid
+        data_for_map[on_map_name]['all'] += all_pregnant
         if name != on_map_name:
             data_for_map[on_map_name]['original_name'].append(name)
 
@@ -85,6 +89,7 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
         *group_by
     ).annotate(
         valid=Sum('pregnant'),
+        all=Sum('pregnant_all')
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -95,19 +100,22 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
     }
 
     tooltips_data = defaultdict(lambda: {
-        'valid': 0
+        'valid': 0,
+        'all': 0
     })
 
     loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
     result_set = set()
 
     for row in data:
-        valid = row['valid']
+        valid = row['valid'] or 0
+        all_pregnant = row['all'] or 0
         name = row['%s_name' % loc_level]
         result_set.add(name)
 
         row_values = {
-            'valid': valid or 0,
+            'valid': valid,
+            'all': all_pregnant
         }
         for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
@@ -140,7 +148,7 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+# @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -154,6 +162,7 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
         'month', '%s_name' % loc_level
     ).annotate(
         valid=Sum('pregnant'),
+        all=Sum('pregnant_all'),
     ).order_by('month')
 
     if not show_test:
@@ -172,7 +181,8 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
     best_worst = {}
     for row in chart_data:
         date = row['month']
-        valid = (row['valid'] or 0)
+        valid = row['valid'] or 0
+        all_pregnant = row['all'] or 0
         location = row['%s_name' % loc_level]
 
         if date.month == month.month:
@@ -184,6 +194,7 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['blue'][date_in_miliseconds]['y'] += valid
+        data['blue'][date_in_miliseconds]['all'] += all_pregnant
 
     top_locations = sorted(
         [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
@@ -197,7 +208,7 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
+                        'y': value['y'],
                         'all': value['all']
                     } for key, value in six.iteritems(data['blue'])
                 ],

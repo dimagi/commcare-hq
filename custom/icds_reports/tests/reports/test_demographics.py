@@ -47,6 +47,7 @@ class TestDemographics(TestCase):
                     ],
                     [
                         {
+                            "redirect": "enrolled_children",
                             "all": 1287,
                             "format": "percent_and_div",
                             "color": "red",
@@ -72,6 +73,7 @@ class TestDemographics(TestCase):
                     ],
                     [
                         {
+                            'redirect': 'lactating_enrolled_women',
                             "all": 166,
                             "format": "percent_and_div",
                             "color": "red",

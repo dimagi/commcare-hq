@@ -115,6 +115,7 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'all': get_value(data, 'child_health_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
+                    'redirect': 'enrolled_children'
                 },
                 {
                     'label': _('Percent pregnant women enrolled for ICDS services'),
@@ -148,7 +149,8 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                     'value': get_value(data, 'css_lactating'),
                     'all': get_value(data, 'css_lactating_all'),
                     'format': 'percent_and_div',
-                    'frequency': frequency
+                    'frequency': frequency,
+                    'redirect': 'lactating_enrolled_women'
                 },
                 {
                     'label': _('Percent adolescent girls (11-18 years) enrolled for ICDS services'),
