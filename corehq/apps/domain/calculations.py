@@ -383,6 +383,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_rb_reports": number_of_report_builder_reports(dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
+        "cp_use_two_factor": use_two_factor(dom),
     }
 
 
@@ -402,3 +403,8 @@ def total_distinct_users(domain):
 def num_telerivet_backends(domain):
     backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
     return len([b for b in backends if type(b) is SQLTelerivetBackend ])
+
+
+def use_two_factor(domain):
+    domain = Domain.get_by_name(domain)
+    return domain.two_factor_auth
