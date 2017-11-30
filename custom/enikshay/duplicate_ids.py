@@ -95,7 +95,23 @@ def get_bad_case_info(domain, case_type, full_debug_info=False):
     accessor = CaseAccessors(domain)
     case_ids = accessor.get_case_ids_in_domain(case_type)
     bad_cases = get_cases_with_duplicate_ids(domain, case_type, case_ids)
+    add_debug_info_to_cases(bad_cases, full_debug_info)
+    context = {
+        'case_type': case_type,
+        'num_bad_cases': len(bad_cases),
+        'num_total_cases': len(case_ids),
+        'num_good_cases': len(case_ids) - len(bad_cases),
+        'bad_cases': sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
+    }
+    return context
 
+
+def add_debug_info_to_cases(bad_cases, full_debug_info):
+    _add_form_info_to_cases(bad_cases, full_debug_info)
+    _add_user_info_to_cases(bad_cases)
+
+
+def _add_form_info_to_cases(bad_cases, full_debug_info):
     for case in bad_cases[:None if full_debug_info else 300]:
         form = CaseAccessorSQL.get_transactions(case['case_id'])[0].form
         if form:
@@ -105,16 +121,6 @@ def get_bad_case_info(domain, case_type, full_debug_info=False):
             case['form_device_id'] = form.metadata.deviceID
             case['form_user_id'] = form.user_id
             case['auth_user_id'] = form.auth_context.get('user_id')
-
-    _add_user_info_to_cases(bad_cases)
-    context = {
-        'case_type': case_type,
-        'num_bad_cases': len(bad_cases),
-        'num_total_cases': len(case_ids),
-        'num_good_cases': len(case_ids) - len(bad_cases),
-        'bad_cases': sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
-    }
-    return context
 
 
 def _add_user_info_to_cases(bad_cases):
