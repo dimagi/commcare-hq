@@ -4,6 +4,9 @@
 
 {# Container template for adding/removing criteria #}
 
+{% initial_page_data 'criteria_initial' form.current_values %}
+{% initial_page_data 'criteria_constants' form.constants %}
+
 <script type="text/html" id="case-filters">
     {% if form.errors %}
         <div class="alert alert-block alert-danger">
