@@ -388,6 +388,7 @@ def calced_props(dom, id, all_stats):
         "cp_use_two_factor": use_two_factor(dom),
         "cp_n_custom_roles": num_custom_roles(dom),
         "cp_using_locations": users_have_locations(dom),
+        "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
     }
 
 
@@ -415,6 +416,12 @@ def use_two_factor(domain):
 
 
 def num_custom_roles(domain):
-    custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain)
+    custom_roles = [r for r in UserRole.get_custom_roles_by_domain(domain)
                     if r.is_archived == False]
     return len(custom_roles)
+
+
+def num_location_restricted_roles(domain):
+    roles = [r for r in UserRole.by_domain(domain)
+             if r.permissions.access_all_locations == False]
+    return len(roles)
