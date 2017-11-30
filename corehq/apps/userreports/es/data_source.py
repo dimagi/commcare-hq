@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from collections import OrderedDict
 import copy
-from six.moves import filter as ifilter
+from six.moves import filter
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
@@ -29,7 +29,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
     @property
     def filters(self):
-        return list(ifilter(None, [f.to_es_filter() for f in self._filter_values.values()]))
+        return list(filter(None, [f.to_es_filter() for f in self._filter_values.values()]))
 
     @property
     def order_by(self):
@@ -43,7 +43,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                     ret.append((sort_column_id, order))
         elif self.top_level_columns:
             # can only sort by columns that come from the DB
-            col = list(ifilter(lambda col: hasattr(col, 'field'), self.top_level_columns))
+            col = list(filter(lambda col: hasattr(col, 'field'), self.top_level_columns))
             if col:
                 col = col[0]
                 ret.append((col.field, ASCENDING))

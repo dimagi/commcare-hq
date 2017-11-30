@@ -1,5 +1,11 @@
-hqDefine("reports/js/config.dataTables.bootstrap", function() {
-
+hqDefine("reports/js/config.dataTables.bootstrap", [
+    'jquery',
+    'analytix/js/google',
+    'datatables.bootstrap',
+], function(
+    $,
+    googleAnalytics
+) {
     var HQReportDataTables = function(options) {
         var self = this;
         self.dataTableElem = options.dataTableElem || '.datatable';
@@ -61,8 +67,8 @@ hqDefine("reports/js/config.dataTables.bootstrap", function() {
         this.render = function () {
             if (self.rendered) {
                 $(self.dataTableElem).each(function () {
-                    if (jQuery.fn.dataTable.versionCheck) {
-                        // jQuery.fn.dataTable.versionCheck does not exist prior to 1.10
+                    if ($.fn.dataTable.versionCheck) {
+                        // $.fn.dataTable.versionCheck does not exist prior to 1.10
                         $(this).DataTable().ajax.reload();
                     } else {
                         $(this).dataTable().fnReloadAjax();
@@ -267,7 +273,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", function() {
                     $selectField.addClass('form-control');
                     $selectField.on("change", function(){
                         var selected_value = $selectField.find('option:selected').val();
-                        hqImport('analytics/js/google').track.event("Reports", "Changed number of items shown", selected_value);
+                        googleAnalytics.track.event("Reports", "Changed number of items shown", selected_value);
                     });
                 }
                 $(".dataTables_length select").change(function () {
@@ -313,13 +319,13 @@ hqDefine("reports/js/config.dataTables.bootstrap", function() {
         return new Date(m[1]);
     }
 
-    jQuery.fn.dataTableExt.oSort['title-numeric-asc'] = function(a, b) { return sortSpecial(a, b, true, convertNum); };
+    $.fn.dataTableExt.oSort['title-numeric-asc'] = function(a, b) { return sortSpecial(a, b, true, convertNum); };
 
-    jQuery.fn.dataTableExt.oSort['title-numeric-desc'] = function(a, b) { return sortSpecial(a, b, false, convertNum); };
+    $.fn.dataTableExt.oSort['title-numeric-desc'] = function(a, b) { return sortSpecial(a, b, false, convertNum); };
 
-    jQuery.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpecial(a, b, true, convertDate); };
+    $.fn.dataTableExt.oSort['title-date-asc']  = function(a,b) { return sortSpecial(a, b, true, convertDate); };
 
-    jQuery.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
+    $.fn.dataTableExt.oSort['title-date-desc']  = function(a,b) { return sortSpecial(a, b, false, convertDate); };
 
     return {
         HQReportDataTables: function(options) { return new HQReportDataTables(options); },

@@ -114,7 +114,7 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.ota.utils import update_device_id
+from corehq.apps.users.util import update_device_meta
 from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
@@ -122,6 +122,7 @@ from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
 from custom.enikshay.user_setup import compress_nikshay_id
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 logger = logging.getLogger('two_b_datamigration')
 
@@ -2147,7 +2148,7 @@ class _PersonIdGenerator(object):
     @classmethod
     def id_device_body(cls, user, commit):
         script_device_id = "drtb-case-import-script"
-        update_device_id(user, script_device_id)
+        update_device_meta(user, script_device_id)
         if commit:
             user.save()
         index = [x.device_id for x in user.devices].index(script_device_id)

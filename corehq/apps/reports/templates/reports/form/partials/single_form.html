@@ -41,7 +41,7 @@ requires imports/proptable.html to be included in the main template
             {% if context_case_id %}
             label = 'case';
             {% endif %}
-            hqImport('analytics/js/google').track.event('Edit Data', action, label, '', extra, callback);
+            hqImport('analytix/js/google').track.event('Edit Data', action, label, '', extra, callback);
         }
 
         $('.hq-help-template').each(function () {
@@ -63,14 +63,14 @@ requires imports/proptable.html to be included in the main template
                 }
             );
             _analytics_usage('Archive Form Submission', analyticsCallback);
-            hqImport('analytics/js/kissmetrics').track.event("Clicked on Archive Form", {}, analyticsCallback);
+            hqImport('analytix/js/kissmetrix').track.event("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
         });
         $("#unarchive-form").submit(function() {
             document.getElementById('unarchive-form-btn').disabled=true;
             $('#unarchive-spinner').show();
-            hqImport('analytics/js/google').track.event('Reports', 'Case History', 'Restore this form', "", {}, function () {
+            hqImport('analytix/js/google').track.event('Reports', 'Case History', 'Restore this form', "", {}, function () {
                 document.getElementById('unarchive-form').submit();
             });
             return false;

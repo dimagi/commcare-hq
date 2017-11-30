@@ -25,11 +25,11 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.$httpBackend.flush();
             assert.isFalse(DnldExpData.currentScope.preparingExport);
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
-            var lastCallNum = hqImport('analytics/js/google').track.event.callCount - 1;
-            var userTypeCall = hqImport('analytics/js/google').track.event.getCall(lastCallNum - 1);
+            var lastCallNum = hqImport('analytix/js/google').track.event.callCount - 1;
+            var userTypeCall = hqImport('analytix/js/google').track.event.getCall(lastCallNum - 1);
             assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', "mobile"));
-            assert.isTrue(hqImport('analytics/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
-            assert.isTrue(hqImport('analytics/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('user type analytics', function () {
@@ -40,13 +40,13 @@ describe('DownloadExportFormController - Prepare Download', function() {
             DnldExpData.currentScope.formData.user_types = testUserTypes;
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
-            assert.isTrue(hqImport('analytics/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
-            var lastCallNum = hqImport('analytics/js/google').track.event.callCount - 1;
+            assert.isTrue(hqImport('analytix/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Regular"));
+            var lastCallNum = hqImport('analytix/js/google').track.event.callCount - 1;
             for (var i = 1; i < 4; i++) {
-                var userTypeCall = hqImport('analytics/js/google').track.event.getCall(lastCallNum - i);
+                var userTypeCall = hqImport('analytix/js/google').track.event.getCall(lastCallNum - i);
                 assert.isTrue(userTypeCall.calledWith("Download Export", 'Select "user type"', testUserTypes[testUserTypes.length - i]));
             }
-            assert.isTrue(hqImport('analytics/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('bulk form analytics', function () {
@@ -56,8 +56,8 @@ describe('DownloadExportFormController - Prepare Download', function() {
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
-            assert.isTrue(hqImport('analytics/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Bulk"));
-            assert.isTrue(hqImport('analytics/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/google').track.event.lastCall.calledWith("Download Export", "Form", "Bulk"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('start exportDownloadService', function () {
@@ -72,7 +72,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             assert.isTrue(DnldExpData.currentScope.downloadInProgress);
             assert.isFalse(DnldExpData.exportDownloadService.isMultimediaDownload);
             assert.equal(DnldExpData.exportDownloadService.downloadId, downloadId);
-            assert.isTrue(hqImport('analytics/js/kissmetrics').track.event.lastCall.calledWith("Clicked Prepare Export"));
+            assert.isTrue(hqImport('analytix/js/kissmetrix').track.event.lastCall.calledWith("Clicked Prepare Export"));
         });
 
         it('poll download progress', function () {

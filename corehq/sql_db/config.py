@@ -9,6 +9,7 @@ from dimagi.utils.decorators.memoized import memoized
 from six.moves import zip
 from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError, \
     NoSuchShardDatabaseError
+from six.moves import range
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'

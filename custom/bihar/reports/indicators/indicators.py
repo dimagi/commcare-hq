@@ -8,6 +8,7 @@ from custom.bihar.utils import get_all_owner_ids_from_group
 from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator, PostDeliveryDoneDueCLD
 from django.utils.translation import ugettext_noop as _
 from six.moves import zip
+from six.moves import map
 
 
 # static config - should this eventually live in the DB?
@@ -354,7 +355,7 @@ class IndicatorDataProvider(object):
         # (0, 0) to set the dimensions
         # otherwise if results is ()
         # it'll be num, denom = () and that'll raise a ValueError
-        num, denom = map(sum, zip((0, 0), *pairs()))
+        num, denom = list(map(sum, zip((0, 0), *pairs())))
         return num, denom
 
     def get_indicator_value(self, indicator):

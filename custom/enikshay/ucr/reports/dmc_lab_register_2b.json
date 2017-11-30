@@ -478,20 +478,14 @@
                 "display": "Diabetic status (Diabetic / Non Diabetic / Unknown)"
             },
             {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                    "type": "translation",
-                    "translations": {
-                        "R Sensitive": "Sensitive"
-                    }
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
                 },
-                "aggregation": "simple",
-                "field": "rif_resistance_result",
-                "calculate_total": false,
-                "type": "field",
-                "display": "DST result"
+                "display": "DST result",
+                "sortable": false,
+                "column_id": "DST result"
             },
             {
                 "sortable": false,

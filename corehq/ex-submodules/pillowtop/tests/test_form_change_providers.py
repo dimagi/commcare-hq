@@ -10,6 +10,7 @@ from corehq.form_processor.tests.utils import create_form_for_test, FormProcesso
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from pillowtop.reindexer.change_providers.form import SqlDomainXFormChangeProvider
+from six.moves import range
 
 
 class TestCouchDomainFormChangeProvider(SimpleTestCase):

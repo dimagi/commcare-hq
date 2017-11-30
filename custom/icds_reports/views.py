@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
@@ -268,8 +268,12 @@ class ProgramSummaryView(View):
         step = kwargs.get('step')
 
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
+        if now.day == 1:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        else:
+            month = int(request.GET.get('month', now.month))
+            year = int(request.GET.get('year', now.year))
 
         include_test = request.GET.get('include_test', False)
 
@@ -412,7 +416,7 @@ class LocationAncestorsView(View):
         parents = list(SQLLocation.objects.get_queryset_ancestors(
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
         ).distinct()) + list(selected_location.get_ancestors())
-        parent_ids = map(lambda x: x.pk, parents)
+        parent_ids = [x.pk for x in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(
@@ -446,8 +450,12 @@ class AwcReportsView(View):
         include_test = request.GET.get('include_test', False)
 
         now = datetime.utcnow()
-        month_param = int(request.GET.get('month', now.month))
-        year_param = int(request.GET.get('year', now.year))
+        if now.day == 1:
+            month_param = (now - relativedelta(months=1)).month
+            year_param = now.year
+        else:
+            month_param = int(request.GET.get('month', now.month))
+            year_param = int(request.GET.get('year', now.year))
         month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
         two_before = month - relativedelta(months=2)
@@ -554,7 +562,7 @@ class ExportIndicatorView(View):
             'aggregation_level': aggregation_level,
             'domain': self.kwargs['domain']
         }
-        beneficiary_config = {'domain': self.kwargs['domain']}
+        beneficiary_config = {'domain': self.kwargs['domain'], 'filters': request.POST.getlist('filter[]')}
 
         if month and year:
             beneficiary_config['month'] = date(year, month, 1)
@@ -563,6 +571,8 @@ class ExportIndicatorView(View):
             })
 
         location = request.POST.get('location', '')
+
+        sql_location = None
 
         if location:
             try:
@@ -573,10 +583,9 @@ class ExportIndicatorView(View):
                     config.update({
                         location_key: loc.location_id,
                     })
-                    if location_key == 'awc_id':
-                        beneficiary_config.update({
-                            location_key: loc.location_id
-                        })
+                    beneficiary_config.update({
+                        location_key: loc.location_id
+                    })
             except SQLLocation.DoesNotExist:
                 pass
 
@@ -611,11 +620,13 @@ class ExportIndicatorView(View):
                 show_test=include_test
             ).to_export(export_format, location)
         elif indicator == 6:
+            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
+                return HttpResponseBadRequest()
             return BeneficiaryExport(
                 config=beneficiary_config,
                 loc_level=aggregation_level,
                 show_test=include_test
-            ).to_export(export_format, location)
+            ).to_export('csv', location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')

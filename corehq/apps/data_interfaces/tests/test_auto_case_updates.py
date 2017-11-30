@@ -429,7 +429,7 @@ class AutomaticCaseUpdateTest(TestCase):
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         expected_case_types = ['test-case-type', 'test-case-type-2', 'test-case-type-3']
-        actual_case_types = rules_by_case_type.keys()
+        actual_case_types = list(rules_by_case_type)
         self.assertEqual(set(expected_case_types), set(actual_case_types))
 
         expected_rule_ids = [self.rule.pk, self.rule4.pk]
@@ -1440,7 +1440,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         expected_case_types = ['person-1', 'person-2']
-        actual_case_types = rules_by_case_type.keys()
+        actual_case_types = list(rules_by_case_type)
         self.assertEqual(expected_case_types, sorted(actual_case_types))
 
         expected_rule_ids = [rule1.pk, rule2.pk]

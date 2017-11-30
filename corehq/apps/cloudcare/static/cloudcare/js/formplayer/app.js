@@ -147,8 +147,8 @@ FormplayerFrontend.on('startForm', function (data) {
         if (resp.status === "success") {
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
-                hqImport('analytics/js/kissmetrics').track.event("[app-preview] User submitted a form");
-                hqImport('analytics/js/google').track.event("App Preview", "User submitted a form");
+                hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
+                hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
             }
 
             // After end of form nav, we want to clear everything except app and sesson id

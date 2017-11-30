@@ -143,7 +143,7 @@ function LocationModel(data, root, depth) {
     this.load(data);
 
     this.new_location_tracking = function() {
-        hqImport('analytics/js/google').track.event('Organization Structure', '+ New _______');
+        hqImport('analytix/js/google').track.event('Organization Structure', '+ New _______');
         return true;
     };
 }

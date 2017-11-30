@@ -33,10 +33,10 @@ hqDefine("app_manager/js/app_view", function() {
 
         // Multimedia analytics
         $(document).on("click", '#download_zip', function() {
-            hqImport('analytics/js/google').track.event('App Builder', 'Download Multimedia');
+            hqImport('analytix/js/google').track.event('App Builder', 'Download Multimedia');
         });
         $(document).on("click", '#open_checker', function() {
-            hqImport('analytics/js/google').track.event('App Builder', 'Manage Multimedia');
+            hqImport('analytix/js/google').track.event('App Builder', 'Manage Multimedia');
         });
 
         // Multimedia content

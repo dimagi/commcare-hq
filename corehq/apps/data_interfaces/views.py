@@ -55,6 +55,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
+from six.moves import map
 
 
 @login_and_domain_required
@@ -670,7 +671,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
 
         return {
             'response': {
-                'itemList': map(self._format_rule, rule_page),
+                'itemList': list(map(self._format_rule, rule_page)),
                 'total': total,
                 'page': page,
             },

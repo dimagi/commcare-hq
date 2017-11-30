@@ -225,11 +225,11 @@ hqDefine('app_manager/js/app_manager', function () {
                             $form.data('clicked', 'true');
                             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
                             if (dataType === "case") {
-                                hqImport('analytics/js/google').track.event("Added Case List Menu");
-                                hqImport('analytics/js/kissmetrics').track.event("Added Case List Menu");
+                                hqImport('analytix/js/google').track.event("Added Case List Menu");
+                                hqImport('analytix/js/kissmetrix').track.event("Added Case List Menu");
                             } else if (dataType === "survey") {
-                                hqImport('analytics/js/google').track.event("Added Surveys Menu");
-                                hqImport('analytics/js/kissmetrics').track.event("Added Surveys Menu");
+                                hqImport('analytix/js/google').track.event("Added Surveys Menu");
+                                hqImport('analytix/js/kissmetrix').track.event("Added Surveys Menu");
                             }
                             $form.submit();
                         }

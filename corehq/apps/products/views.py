@@ -34,6 +34,8 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
 )
 import six
+from six.moves import range
+from six.moves import map
 
 
 @require_POST
@@ -122,7 +124,7 @@ class ProductListView(BaseCommTrackManageView):
                 it later."
             ),
             'show_inactive': self.show_only_inactive,
-            'pagination_limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+            'pagination_limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
             'program_product_options': {
                 'total': self.total,
                 'start_page': self.page,
@@ -140,7 +142,7 @@ class FetchProductListView(ProductListView):
     def product_data(self):
         start = (self.page - 1) * self.limit
         end = start + self.limit
-        return map(self.make_product_dict, self.product_queryset[start:end])
+        return list(map(self.make_product_dict, self.product_queryset[start:end]))
 
     def make_product_dict(self, product):
         archive_config = self.get_archive_config()

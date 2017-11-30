@@ -19,6 +19,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
+from six.moves import range
 
 DOMAIN_MAX_LENGTH = 25
 
@@ -168,7 +169,7 @@ class StockReportDomainTest(TestCase):
     @run_with_all_backends
     def test_get_current_ledger_state(self):
         def test_transactions(expected):
-            state = LedgerAccessors(self.domain).get_current_ledger_state(self.case_ids.keys())
+            state = LedgerAccessors(self.domain).get_current_ledger_state(list(self.case_ids))
             for case_id, sections in state.items():
                 self._validate_case_data(sections, expected[case_id])
 

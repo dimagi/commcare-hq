@@ -11,6 +11,7 @@ from custom.care_pathways.sqldata import GeographySqlData
 from custom.care_pathways.utils import get_domain_configuration, ByTypeHierarchyRecord
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 
 class CareBaseSingleOptionFilter(BaseSingleOptionFilter):

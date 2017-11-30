@@ -25,6 +25,7 @@ from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
+from six.moves import range
 
 
 class TestSyncLogMigration(SimpleTestCase):

@@ -14,16 +14,16 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
         self.user_recipients = new RecipientsSelect2Handler(select2_user_recipients,
-            initial_values.user_recipients, 'user_recipients');
+            initial_values.user_recipients, 'schedule-user_recipients');
         self.user_recipients.init();
         self.user_group_recipients = new RecipientsSelect2Handler(select2_user_group_recipients,
-            initial_values.user_group_recipients, 'user_group_recipients');
+            initial_values.user_group_recipients, 'schedule-user_group_recipients');
         self.user_group_recipients.init();
         self.user_organization_recipients = new RecipientsSelect2Handler(select2_user_organization_recipients,
-            initial_values.user_organization_recipients, 'user_organization_recipients');
+            initial_values.user_organization_recipients, 'schedule-user_organization_recipients');
         self.user_organization_recipients.init();
         self.case_group_recipients = new RecipientsSelect2Handler(select2_case_group_recipients,
-            initial_values.case_group_recipients, 'case_group_recipients');
+            initial_values.case_group_recipients, 'schedule-case_group_recipients');
         self.case_group_recipients.init();
 
         self.is_trial_project = initial_values.is_trial_project;

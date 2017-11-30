@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque
+from six.moves import map
 try:
     from reprlib import repr
 except ImportError:

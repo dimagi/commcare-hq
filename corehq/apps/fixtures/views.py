@@ -43,6 +43,7 @@ from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 import six
+from six.moves import range
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -128,8 +129,8 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = map(lambda e: _("\"%s\" cannot include special characters or "
-                                            "begin with \"xml\" or a number.") % e, validation_errors)
+        validation_errors = [_("\"%s\" cannot include special characters or "
+                                            "begin with \"xml\" or a number.") % e for e in validation_errors]
         if len(data_tag) > 31:
             validation_errors.append(_("Table ID can not be longer than 31 characters."))
 
@@ -391,7 +392,7 @@ class UploadFixtureAPIResponse(object):
 
     def __init__(self, status, message):
         assert status in self.response_codes, \
-            'status must be in {!r}: {}'.format(self.status.keys(), status)
+            'status must be in {!r}: {}'.format(list(self.response_codes), status)
         self.status = status
         self.message = message
 

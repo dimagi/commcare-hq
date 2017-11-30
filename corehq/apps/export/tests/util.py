@@ -4,6 +4,7 @@ import uuid
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 import six
+from six.moves import map
 
 DOMAIN = "export-file-domain"
 DEFAULT_USER = "user1"

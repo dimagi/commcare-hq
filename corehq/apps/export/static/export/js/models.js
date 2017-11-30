@@ -254,19 +254,19 @@ hqDefine('export/js/models', function () {
             args,
             eventCategory;
 
-        hqImport('analytics/js/google').track.event("Create Export", analyticsExportType, analyticsAction);
+        hqImport('analytix/js/google').track.event("Create Export", analyticsExportType, analyticsAction);
         if (this.export_format === constants.EXPORT_FORMATS.HTML) {
             args = ["Create Export", analyticsExportType, 'Excel Dashboard', '', {}];
             // If it's not new then we have to add the callback in to redirect
             if (!this.isNew()) {
                 args.push(callback);
             }
-            hqImport('analytics/js/google').track.event.apply(null, args);
+            hqImport('analytix/js/google').track.event.apply(null, args);
         }
         if (this.isNew()) {
             eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
-            hqImport('analytics/js/google').track.event(eventCategory, 'Custom export creation', '');
-            hqImport('analytics/js/kissmetrics').track.event("Clicked 'Create' in export edit page", callback);
+            hqImport('analytix/js/google').track.event(eventCategory, 'Custom export creation', '');
+            hqImport('analytix/js/kissmetrix').track.event("Clicked 'Create' in export edit page", {}, callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
         }

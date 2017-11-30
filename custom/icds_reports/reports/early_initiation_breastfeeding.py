@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -11,7 +11,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map
 import six
 
 RED = '#de2d26'
@@ -29,41 +29,24 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             birth=Sum('bf_at_birth'),
             in_month=Sum('born_in_month'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
-    birth_total = 0
-    in_month_total = 0
-    for row in get_data_for(config):
-        name = row['%s_name' % loc_level]
-
-        birth = row['birth']
-        in_month = row['in_month']
-
-        birth_total += (birth or 0)
-        in_month_total += (in_month or 0)
-
-        value = (birth or 0) * 100 / (in_month or 1)
-        row_values = {
-            'birth': birth,
-            'in_month': in_month,
-        }
-        if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-60%'})
-        elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, in_month_total, birth_total = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'birth',
+        'in_month',
+        20,
+        60
+    )
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
@@ -85,7 +68,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                     "nutrients and encourages exclusive breastfeeding practice"
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 

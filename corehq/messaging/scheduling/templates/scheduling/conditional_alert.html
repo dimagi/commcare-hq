@@ -1,0 +1,46 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
+{% endblock %}
+
+{% block page_content %}
+{% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
+
+<div class="row">
+    <div class="col-sm-12">
+        <form id="conditional-alert-form" class="form form-horizontal" method="POST" action="#">
+            {% crispy basic_info_form %}
+            <ul class="nav nav-tabs">
+                <li class="active">
+                    <a href="#rule" data-toggle="tab">{% trans "Rule Criteria" %}</a>
+                </li>
+                <li>
+                    <a href="#schedule" data-toggle="tab">{% trans "Schedule" %}</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="rule">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            {% crispy criteria_form %}
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane" id="schedule">
+                    <div class="row">
+                        <div class="col-sm-12">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-1">
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

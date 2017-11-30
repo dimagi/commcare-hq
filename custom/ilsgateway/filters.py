@@ -10,6 +10,7 @@ from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSing
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from custom.common import ALL_OPTION
 import six
+from six.moves import range
 
 
 class ProductByProgramFilter(BaseDrilldownOptionFilter):

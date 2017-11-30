@@ -16,6 +16,7 @@ import json
 from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
 import six
+from six.moves import range
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -112,7 +113,7 @@ $(function() {
         tags: %s
     });
 });
-</script>\n""" % (attrs['id'], json.dumps(map(lambda c: {'text': c, 'id': c}, self.choices))))
+</script>\n""" % (attrs['id'], json.dumps([{'text': c, 'id': c} for c in self.choices])))
 
         else:
             output = mark_safe("")

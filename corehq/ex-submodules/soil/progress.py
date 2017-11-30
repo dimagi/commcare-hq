@@ -143,7 +143,7 @@ def get_task_status(task, is_multiple_download_task=False):
 
 def _is_task_pending(task):
     if isinstance(task, GroupResult):
-        return any(map(lambda async_task: async_task.state == 'PENDING', task.children))
+        return any([async_task.state == 'PENDING' for async_task in task.children])
     else:
         return task.state == 'PENDING'
 

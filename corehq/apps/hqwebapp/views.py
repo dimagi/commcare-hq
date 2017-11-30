@@ -78,6 +78,7 @@ from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.view_utils import reverse
 import six
+from six.moves import range
 
 
 def is_deploy_in_progress():
@@ -378,7 +379,7 @@ def login(req):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
 
-    if settings.SERVER_ENVIRONMENT == 'icds':
+    if settings.SERVER_ENVIRONMENT in ('icds', 'icds-new'):
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -888,7 +889,7 @@ class CRUDPaginatedViewMixin(object):
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total,
-                'limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+                'limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
                 'column_names': self.column_names,
                 'num_columns': len(self.column_names),
                 'text': {

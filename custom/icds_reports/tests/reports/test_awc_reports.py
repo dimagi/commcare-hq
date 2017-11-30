@@ -791,93 +791,50 @@ class TestAWCReport(TestCase):
                     ],
                     [
                         {
-                            "all": None,
-                            "format": "number",
+                            "all": 0,
+                            "format": "percent_and_div",
                             "color": "red",
                             "percent": 0.0,
                             "value": 0,
-                            "label": "Children (0-6 years)",
+                            "label": "Percent children (0-6 years) enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of children registered between the age of 0 - 6 years"
+                            "help_text": "Percentage of children registered between 0-6 years old "
+                                         "who are enrolled for ICDS services"
                         },
                         {
-                            "all": None,
-                            "format": "number",
+                            "all": 2,
+                            "format": "percent_and_div",
                             "color": "red",
                             "percent": 0.0,
-                            "value": 0,
-                            "label": "Children (0-6 years) enrolled for ICDS services",
+                            "value": 2,
+                            "label": "Percent pregnant women enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of children registered between"
-                                         " the age of 0 - 6 years and enrolled for ICDS services"
+                            "help_text": "Percentage of pregnant women registered "
+                                         "who are enrolled for ICDS services"
                         }
                     ],
                     [
                         {
-                            "all": "",
-                            "format": "number",
-                            "color": "green",
-                            "percent": 100.0,
-                            "value": 2,
-                            "label": "Pregnant Women",
+                            "all": 3,
+                            "format": "percent_and_div",
+                            "color": "red",
+                            "percent": 0.0,
+                            "value": 3,
+                            "label": "Percent lactating women enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of pregnant women registered"
+                            "help_text": "Percentage of lactating women registered "
+                                         "who are enrolled for ICDS services"
                         },
                         {
-                            "all": None,
-                            "format": "number",
-                            "color": "green",
-                            "percent": 100.0,
-                            "value": 2,
-                            "label": "Pregnant Women enrolled for ICDS services",
-                            "frequency": "month",
-                            "help_text": "Total number of pregnant women registered and enrolled for ICDS services"
-                        }
-                    ],
-                    [
-                        {
-                            "all": "",
-                            "format": "number",
-                            "color": "green",
-                            "percent": 50.0,
-                            "value": 3,
-                            "label": "Lactating Mothers",
-                            "frequency": "month",
-                            "help_text": "Total number of lactating women registered"
-                        },
-                        {
-                            "all": None,
-                            "format": "number",
-                            "color": "green",
-                            "percent": 50.0,
-                            "value": 3,
-                            "label": "Lactating Women enrolled for ICDS services",
-                            "frequency": "month",
-                            "help_text": "Total number of lactating women registered and "
-                                         "enrolled for ICDS services"
-                        }
-                    ],
-                    [
-                        {
-                            "all": "",
-                            "format": "number",
+                            "all": 0,
+                            "format": "percent_and_div",
                             "color": "red",
                             "percent": -100.0,
                             "value": 0,
-                            "label": "Adolescent Girls (11-18 years)",
+                            "label": "Percent adolescent girls (11-18 years) enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of adolescent girls (11 - 18 years) who are registered"
-                        },
-                        {
-                            "all": None,
-                            "format": "number",
-                            "color": "red",
-                            "percent": -100.0,
-                            "value": 0,
-                            "label": "Adolescent Girls (11-18 years) enrolled for ICDS services",
-                            "frequency": "month",
-                            "help_text": "Total number of adolescent girls (11 - 18 years) "
-                                         "who are registered and enrolled for ICDS services"
+                            "help_text": "Percentage of adolescent girls registered between"
+                                         " 11-18 years old who are enrolled for ICDS services"
                         }
                     ]
                 ],

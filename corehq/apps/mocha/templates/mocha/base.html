@@ -5,6 +5,7 @@
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>CommCareHQ Test</title>
     <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'underscore/underscore.js' %}"></script>
     <!-- Mocha and test-only dependencies -->
     <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
     <script src="{% static 'mocha/mocha.js' %}"></script>
@@ -27,6 +28,7 @@
     {% include "hqwebapp/includes/core_libraries.html" %}
     {% include "hqwebapp/includes/ko.html" %}
     <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
     {% endblock %}
 
     <!-- App specific dependencies -->
@@ -34,9 +36,9 @@
 
     {% include 'analytics/analytics_js.html' %}
     <script>
-        hqImport('analytics/js/google').track.event = sinon.spy();
-        hqImport('analytics/js/google').track.click = sinon.spy();
-        hqImport('analytics/js/kissmetrics').track.event = sinon.spy();
+        hqImport('analytix/js/google').track.event = sinon.spy();
+        hqImport('analytix/js/google').track.click = sinon.spy();
+        hqImport('analytix/js/kissmetrix').track.event = sinon.spy();
     </script>
   </head>
   <body>

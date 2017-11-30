@@ -1,5 +1,15 @@
-/* globals hqDefine */
-hqDefine("hqwebapp/js/main", function() {
+hqDefine('hqwebapp/js/main', [
+    "jquery",
+    "underscore",
+    "hqwebapp/js/alert_user",
+    "analytix/js/google",
+    "hqwebapp/js/hq_extensions.jquery",
+], function(
+    $,
+    _,
+    alertUser,
+    googleAnalytics
+) {
     var eventize = function (that) {
         'use strict';
         var events = {};
@@ -169,7 +179,7 @@ hqDefine("hqwebapp/js/main", function() {
                                 // this is sending back a full html page, likely login, so no error message.
                                 customError = null;
                             }
-                            hqImport("hqwebapp/js/alert_user").alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                            alertUser.alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                             error.apply(this, arguments);
                         };
                         var jqXHR = $.ajax(options);
@@ -267,13 +277,13 @@ hqDefine("hqwebapp/js/main", function() {
         $(document).on('click', '.track-usage-link', function(e) {
             var $link = $(e.currentTarget),
                 data = $link.data();
-            hqImport('analytics/js/google').track.click($link, data.category, data.action, data.label, data.value);
+            googleAnalytics.track.click($link, data.category, data.action, data.label, data.value);
         });
 
         $(document).on('click', '.mainmenu-tab a', function(e) {
             var data = $(e.currentTarget).closest(".mainmenu-tab").data();
             if (data.category && data.action) {
-                hqImport('analytics/js/google').track.event(data.category, data.action, data.label);
+                googleAnalytics.track.event(data.category, data.action, data.label);
             }
         });
 

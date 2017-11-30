@@ -26,6 +26,7 @@ from couchexport.properties import TimeStampProperty, JsonProperty
 from dimagi.utils.logging import notify_exception
 import six
 from six.moves import zip
+from six.moves import range
 
 
 ColumnType = namedtuple('ColumnType', 'cls label')

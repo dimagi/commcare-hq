@@ -274,7 +274,7 @@ hqDefine('userreports/js/builder_view_models', function () {
         this.columns.push(this._createListItem());
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
             hqImport('userreports/js/report_analytics').track.event(this.analyticsAction, this.analyticsLabel);
-            hqImport('analytics/js/kissmetrics').track.event("Clicked " + this.analyticsAction + " in Report Builder");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked " + this.analyticsAction + " in Report Builder");
         }
         if (_.isFunction(this.addItemCallback)) {
             this.addItemCallback();

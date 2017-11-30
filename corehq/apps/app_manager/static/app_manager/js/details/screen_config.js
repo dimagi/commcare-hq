@@ -524,7 +524,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 // because this way the events are not fired during the initialization
                 // of the page.
                 this.format.$edit_view.on("change", function(event){
-                    hqImport('analytics/js/google').track.event('Case List Config', 'Display Format', event.target.value);
+                    hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
                 });
             }
 
@@ -899,7 +899,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 },
                 addProperty: function () {
                     var type = this.columnKey === "short" ? "List" : "Detail";
-                    hqImport('analytics/js/google').track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
+                    hqImport('analytix/js/google').track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
                     this.addItem({hasAutocomplete: true});
                 },
                 addCalculation: function () {

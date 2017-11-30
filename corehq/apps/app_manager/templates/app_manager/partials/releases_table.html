@@ -31,7 +31,7 @@
     <p>
         <button class="btn btn-success" data-bind="
             click: function() {
-                hqImport('analytics/js/kissmetrics').track.event('Clicked Make New Version');
+                hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
                           return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},

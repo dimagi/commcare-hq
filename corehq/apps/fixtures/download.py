@@ -14,6 +14,7 @@ from couchexport.models import Format
 
 from soil import DownloadBase
 from soil.util import expose_cached_download
+from six.moves import range
 
 
 def prepare_fixture_download(table_ids, domain, task, download_id):

@@ -57,6 +57,7 @@ from .models import (
 )
 from .scheduled import get_scheduled_report_ids
 import six
+from six.moves import map
 
 
 logging = get_task_logger(__name__)
@@ -288,7 +289,7 @@ def build_form_multimedia_zip(
 
     case_id_to_name = _get_case_names(
         domain,
-        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)) if forms_info else set(),
+        set.union(*[form_info['case_ids'] for form_info in forms_info]) if forms_info else set(),
     )
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
@@ -379,7 +380,7 @@ def _get_export_properties(export_id, export_is_legacy):
             schema = FormExportSchema.get(export_id)
             for table in schema.tables:
                 properties |= _convert_legacy_indices_to_export_properties(
-                    map(lambda column: column.index, table.columns)
+                    [column.index for column in table.columns]
                 )
         else:
             from corehq.apps.export.models import FormExportInstance

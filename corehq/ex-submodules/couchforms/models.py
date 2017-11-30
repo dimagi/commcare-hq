@@ -11,7 +11,14 @@ from django.db import models
 
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import PreconditionFailed
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    DocumentSchema,
+    DateTimeProperty,
+    StringProperty,
+    DictProperty,
+    SchemaListProperty,
+    BooleanProperty,
+    SafeSaveDocument)
 from dimagi.utils.couch import CouchDocLockableMixIn
 from dimagi.utils.couch.database import get_safe_read_kwargs
 from dimagi.utils.couch.safe_index import safe_index
@@ -24,8 +31,6 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin
-from corehq.util.couch_helpers import CouchAttachmentsBuilder
-from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.utils import clean_metadata
@@ -117,6 +122,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     xmlns = StringProperty()
     form = DictProperty()
     received_on = DateTimeProperty()
+    server_modified_on = DateTimeProperty()
     # Used to tag forms that were forcefully submitted
     # without a touchforms session completing normally
     partial_submission = BooleanProperty(default=False)
@@ -226,8 +232,9 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         # which throws errors here. use a try/retry loop here to get around
         # it until we find something more stable.
         RETRIES = 10
-        SLEEP = 0.5 # seconds
+        SLEEP = 0.5  # seconds
         tries = 0
+        self.server_modified_on = datetime.datetime.utcnow()
         while True:
             try:
                 return super(XFormInstance, self).save(**kwargs)

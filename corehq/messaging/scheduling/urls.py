@@ -5,6 +5,9 @@ from corehq.messaging.scheduling.views import (
     BroadcastListView,
     CreateScheduleView,
     EditScheduleView,
+    ConditionalAlertListView,
+    CreateConditionalAlertView,
+    EditConditionalAlertView,
 )
 
 urlpatterns = [
@@ -12,4 +15,8 @@ urlpatterns = [
     url(r'^broadcasts/add/$', CreateScheduleView.as_view(), name=CreateScheduleView.urlname),
     url(r'^broadcasts/edit/(?P<broadcast_type>[\w-]+)/(?P<broadcast_id>[\w-]+)/$', EditScheduleView.as_view(),
         name=EditScheduleView.urlname),
+    url(r'^conditional/$', ConditionalAlertListView.as_view(), name=ConditionalAlertListView.urlname),
+    url(r'^conditional/add/$', CreateConditionalAlertView.as_view(), name=CreateConditionalAlertView.urlname),
+    url(r'^conditional/edit/(?P<rule_id>[\d]+)/$', EditConditionalAlertView.as_view(),
+        name=EditConditionalAlertView.urlname),
 ]

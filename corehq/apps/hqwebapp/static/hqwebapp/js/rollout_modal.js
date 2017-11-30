@@ -2,12 +2,12 @@
     To use, include this file on a page that also includes hqwebapp/rollout_modal.html
 */
 hqDefine("hqwebapp/js/rollout_modal", function() {
-    var _trackSoftRollout = hqImport('analytics/js/google').trackCategory("Soft Rollout");
+    var _trackSoftRollout = hqImport('analytix/js/google').trackCategory("Soft Rollout");
 
     function snooze(slug) {
         $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
         _trackSoftRollout.event("snooze", slug);
-        hqImport('analytics/js/kissmetrics').track.event("Soft Rollout snooze " + slug);
+        hqImport('analytix/js/kissmetrix').track.event("Soft Rollout snooze " + slug);
     }
 
     function cookieName(slug) {
@@ -45,7 +45,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                 },
             });
             _trackSoftRollout.event("enable", slug);
-            hqImport('analytics/js/kissmetrics').track.event("Soft Rollout enable " + slug);
+            hqImport('analytix/js/kissmetrix').track.event("Soft Rollout enable " + slug);
         });
 
         // User clicks to snooze
@@ -75,7 +75,7 @@ hqDefine("hqwebapp/js/rollout_modal", function() {
                 },
             });
             _trackSoftRollout.event("disable", slug);
-            hqImport('analytics/js/kissmetrics').track.event("Soft Rollout disable " + slug);
+            hqImport('analytix/js/kissmetrix').track.event("Soft Rollout disable " + slug);
         });
     });
 });

@@ -19,7 +19,7 @@ hqDefine("userreports/js/configurable_report", function() {
             });
             hqImport('userreports/js/report_analytics').track.event("Loaded Report Builder Report");
             $editReportButton.click(function () {
-                hqImport('analytics/js/kissmetrics').track.event("RBv2 - Click Edit Report");
+                hqImport('analytix/js/kissmetrix').track.event("RBv2 - Click Edit Report");
             });
         }
 

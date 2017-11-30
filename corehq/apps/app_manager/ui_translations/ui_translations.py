@@ -11,6 +11,7 @@ from corehq.apps.translations import system_text_sources
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from couchexport.export import export_raw_to_writer
 import six
+from six.moves import range
 
 
 def process_ui_translation_upload(app, trans_file):

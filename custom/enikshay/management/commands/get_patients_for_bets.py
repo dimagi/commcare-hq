@@ -8,6 +8,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.integrations.bets.repeater_generators import BETSBeneficiaryPayloadGenerator
 from custom.enikshay.case_utils import CASE_TYPE_PERSON
+from six.moves import map
 
 
 class Command(BaseCommand):
@@ -95,4 +96,4 @@ class Command(BaseCommand):
                 return person_data[obj].get(key, '')
             return person_data[field]
 
-        writer.writerow(map(get_field, self.field_names))
+        writer.writerow(list(map(get_field, self.field_names)))

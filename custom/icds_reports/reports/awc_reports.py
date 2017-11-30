@@ -207,17 +207,17 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 
     for map_row in map_image_data:
         lat = map_row['form_location_lat']
-        long = map_row['form_location_long']
+        longitude = map_row['form_location_long']
         awc_name = map_row['awc_name']
         image_name = map_row['image_name']
         doc_id = map_row['doc_id']
         pse_date = map_row['pse_date']
-        if lat and long:
+        if lat and longitude:
             key = doc_id.replace('-', '')
             map_data.update({
                 key: {
                     'lat': float(lat),
-                    'lng': float(long),
+                    'lng': float(longitude),
                     'focus': 'true',
                     'message': awc_name,
                 }
@@ -834,135 +834,73 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             ],
             [
                 {
-                    'label': _('Children (0-6 years)'),
-                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
-                    'percent': percent_increase('child_health_all', data, prev_data),
-                    'color': 'green' if percent_increase(
+                    'label': _('Percent children (0-6 years) enrolled for ICDS services'),
+                    'help_text': _('Percentage of children registered between '
+                                   '0-6 years old who are enrolled for ICDS services'),
+                    'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
+                    'color': 'green' if percent_diff(
                         'child_health_all',
                         data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'child_health_all'),
-                    'all': None,
-                    'format': 'number',
+                        prev_data, 'child_health_all') > 0 else 'red',
+                    'value': get_value(data, 'child_health'),
+                    'all': get_value(data, 'child_health_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency,
                 },
                 {
-                    'label': _('Children (0-6 years) enrolled for ICDS services'),
-                    'help_text': _((
-                        "Total number of children registered between the age of 0 - 6 years "
-                        "and enrolled for ICDS services"
-                    )),
-                    'percent': percent_increase('child_health', data, prev_data),
-                    'color': 'green' if percent_increase(
-                        'child_health',
+                    'label': _('Percent pregnant women enrolled for ICDS services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for ICDS services'),
+                    'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
+                    'color': 'green' if percent_diff(
+                        'ccs_pregnant',
                         data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'child_health'),
-                    'all': None,
-                    'format': 'number',
+                        prev_data,
+                        'ccs_pregnant_all'
+                    ) > 0 else 'red',
+                    'value': get_value(data, 'ccs_pregnant'),
+                    'all': get_value(data, 'ccs_pregnant_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency
                 }
             ],
             [
+
                 {
-                    'label': _('Pregnant Women'),
-                    'help_text': _("Total number of pregnant women registered"),
-                    'percent': percent_increase(
-                        'ccs_pregnant_all',
-                        data,
-                        prev_data,
-                    ),
-                    'color': 'green' if percent_increase(
-                        'ccs_pregnant_all',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'ccs_pregnant_all'),
-                    'all': '',
-                    'format': 'number',
-                    'frequency': frequency
-                },
-                {
-                    'label': _('Pregnant Women enrolled for ICDS services'),
-                    'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('ccs_pregnant', data, prev_data),
-                    'color': 'green' if percent_increase(
-                        'ccs_pregnant',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'ccs_pregnant'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': frequency
-                },
-            ],
-            [
-                {
-                    'label': _('Lactating Mothers'),
-                    'help_text': _('Total number of lactating women registered'),
-                    'percent': percent_increase(
-                        'css_lactating_all',
-                        data,
-                        prev_data
-                    ),
-                    'color': 'green' if percent_increase(
-                        'css_lactating_all',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'css_lactating_all'),
-                    'all': '',
-                    'format': 'number',
-                    'frequency': frequency
-                },
-                {
-                    'label': _('Lactating Women enrolled for ICDS services'),
-                    'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('css_lactating', data, prev_data),
-                    'color': 'green' if percent_increase(
+                    'label': _('Percent lactating women enrolled for ICDS services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for ICDS services'),
+                    'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
+                    'color': 'green' if percent_diff(
                         'css_lactating',
                         data,
-                        prev_data) > 0 else 'red',
+                        prev_data,
+                        'css_lactating_all'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'css_lactating'),
-                    'all': None,
-                    'format': 'number',
+                    'all': get_value(data, 'css_lactating_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency
                 },
-            ],
-            [
                 {
-                    'label': _('Adolescent Girls (11-18 years)'),
-                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
-                    'percent': percent_increase(
-                        'person_adolescent_all',
+                    'label': _('Percent adolescent girls (11-18 years) enrolled for ICDS services'),
+                    'help_text': _((
+                        "Percentage of adolescent girls registered between 11-18 years"
+                        " old who are enrolled for ICDS services"
+                    )),
+                    'percent': percent_diff(
+                        'person_adolescent',
                         data,
                         prev_data,
+                        'person_adolescent_all'
                     ),
-                    'color': 'green' if percent_increase(
-                        'person_adolescent_all',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'person_adolescent_all'),
-                    'all': '',
-                    'format': 'number',
-                    'frequency': frequency
-                },
-                {
-                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
-                    'help_text': _((
-                        "Total number of adolescent girls (11 - 18 years) "
-                        "who are registered and enrolled for ICDS services"
-                    )),
-                    'percent': percent_increase(
+                    'color': 'green' if percent_diff(
                         'person_adolescent',
                         data,
-                        prev_data
-                    ),
-                    'color': 'green' if percent_increase(
-                        'person_adolescent',
-                        data,
-                        prev_data) > 0 else 'red',
+                        prev_data,
+                        'person_adolescent_all'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'person_adolescent'),
-                    'all': None,
-                    'format': 'number',
+                    'all': get_value(data, 'person_adolescent_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency
                 }
             ]

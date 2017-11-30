@@ -4,19 +4,16 @@ from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 
 
 class SqlModelArgsProvider(ArgsProvider):
-    def __init__(self, model_filter_attribute, model_attribute_min_value, db_list):
-        self.model_filter_attribute = model_filter_attribute
-        self.model_attribute_min_value = model_attribute_min_value
+    def __init__(self, db_list):
         self.db_list = db_list
 
     def get_initial_args(self):
-        return [self.db_list[0], self.model_attribute_min_value, None], {}
+        return [self.db_list[0], None], {}
 
     def get_next_args(self, result, *last_args, **last_view_kwargs):
         if result:
-            next_filter_value = getattr(result, self.model_filter_attribute)
             next_id = result.pk
-            return [last_args[0], next_filter_value, next_id], {}
+            return [last_args[0], next_id], {}
         else:
             last_db = last_args[0]
             # skip databases already processed
@@ -27,7 +24,7 @@ class SqlModelArgsProvider(ArgsProvider):
             except IndexError:
                 raise StopIteration
 
-            return [next_db, self.model_attribute_min_value, None], {}
+            return [next_db, None], {}
 
 
 def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100, event_handler=None):
@@ -47,15 +44,15 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
     that were previously yielded may be yielded again if the iteration
     is stopped and later resumed.
     """
+    NULL = object()
 
-    def data_function(from_db, filter_value, last_id):
-        return reindex_accessor.get_docs(from_db, filter_value, last_id, limit=chunk_size)
+    def data_function(from_db, filter_value, last_id=NULL):
+        if last_id is NULL:
+            # adapt to old iteration states
+            last_id = filter_value
+        return reindex_accessor.get_docs(from_db, last_id, limit=chunk_size)
 
-    args_provider = SqlModelArgsProvider(
-        reindex_accessor.startkey_attribute_name,
-        reindex_accessor.startkey_min_value,
-        reindex_accessor.sql_db_aliases,
-    )
+    args_provider = SqlModelArgsProvider(reindex_accessor.sql_db_aliases)
 
     class ResumableModelIterator(ResumableFunctionIterator):
         def __iter__(self):
@@ -88,6 +85,6 @@ class SqlDocumentProvider(DocumentProvider):
 
     def get_total_document_count(self):
         return sum(
-            self.reindex_accessor.get_doc_count(from_db)
+            self.reindex_accessor.get_approximate_doc_count(from_db)
             for from_db in self.reindex_accessor.sql_db_aliases
         )

@@ -364,7 +364,7 @@ var CustomExportView = {
 
                     if (event_category) {
                         // Record an event
-                        hqImport('analytics/js/google').track.event(event_category, 'Custom export creation', "", "", {}, redirect);
+                        hqImport('analytix/js/google').track.event(event_category, 'Custom export creation', "", "", {}, redirect);
                         return;
                     }
                 }
@@ -400,13 +400,13 @@ var CustomExportView = {
             if (self.presave()) {
                 action = "Saved";
             }
-            hqImport('analytics/js/google').track.event("Create Export", exportType, action);
+            hqImport('analytix/js/google').track.event("Create Export", exportType, action);
             if (self.custom_export.default_format() === 'html') {
-                hqImport('analytics/js/google').track.event("Create Export", exportType, "Excel Dashboard");
+                hqImport('analytix/js/google').track.event("Create Export", exportType, "Excel Dashboard");
             }
 
             if (!self.custom_export._id || !self.custom_export._id()) {
-                hqImport('analytics/js/kissmetrics').track.event("Clicked 'Create' in export edit page");
+                hqImport('analytix/js/kissmetrix').track.event("Clicked 'Create' in export edit page");
             }
             self.save(false);
         };

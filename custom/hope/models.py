@@ -5,6 +5,7 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.models import CommCareUser
 from custom.hope.const import MOTHER_OTHER_PROPERTIES, CHILD_OTHER_PROPERTIES, CHILD_EVENTS_ATTRIBUTES, MOTHER_EVENTS_ATTRIBUTES
+from six.moves import range
 
 CC_BIHAR_NEWBORN = 'cc_bihar_newborn'
 

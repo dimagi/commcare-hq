@@ -14,8 +14,7 @@ See render_case() in casexml for an example of the display definition format.
 from __future__ import absolute_import
 import collections
 import datetime
-import itertools
-import types
+
 from corehq.util.dates import iso_string_to_datetime
 
 from dimagi.ext.jsonobject import DateProperty
@@ -34,6 +33,8 @@ from corehq.const import USER_DATETIME_FORMAT, USER_DATE_FORMAT
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from dimagi.utils.dates import safe_strftime
 import six
+from six.moves import zip_longest
+from six.moves import map
 
 register = template.Library()
 
@@ -119,7 +120,7 @@ def _to_html(val, key=None, level=0, timeago=False):
     return mark_safe(ret)
 
 
-def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
+def get_display_data(data, prop_def, processors=None, timezone=pytz.utc, info_url=None):
     # when prop_def came from a couchdbkit document, it will be a LazyDict with
     # a broken pop method.  This conversion also has the effect of a shallow
     # copy, which we want.
@@ -166,7 +167,8 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     return {
         "expr": expr_name,
         "name": name,
-        "value": val
+        "value": val,
+        "info_url": info_url.replace("__placeholder__", expr) if info_url is not None else None,
     }
 
 
@@ -189,7 +191,7 @@ def eval_expr(expr, dict_data):
         return dict_data.get(expr, None)
 
 
-def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
+def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc, info_url=None):
     """
     Return a low-level definition of a group of tables, given a data object and
     a high-level declarative definition of the table rows and value
@@ -201,11 +203,15 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
 
     for section in definition:
         rows = [
-            [get_display_data(data, prop, timezone=timezone, processors=processors) for prop in row]
-            for row in section['layout']
-        ]
+            [get_display_data(
+                data,
+                prop,
+                timezone=timezone,
+                processors=processors,
+                info_url=info_url) for prop in row]
+            for row in section['layout']]
 
-        max_row_len = max(map(len, rows)) if rows else 0
+        max_row_len = max(list(map(len, rows))) if rows else 0
         for row in rows:
             if len(row) < max_row_len:
                 row.append({
@@ -223,7 +229,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
 def get_tables_as_columns(*args, **kwargs):
     sections = get_tables_as_rows(*args, **kwargs)
     for section in sections:
-        section['columns'] = list(itertools.izip_longest(*section['rows']))
+        section['columns'] = list(zip_longest(*section['rows']))
         del section['rows']
 
     return sections

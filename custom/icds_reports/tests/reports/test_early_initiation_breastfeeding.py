@@ -38,18 +38,58 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     "st1": {
                         "in_month": 4,
                         "birth": 3,
+                        'original_name': [],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "in_month": 3,
                         "birth": 1,
+                        'original_name': [],
                         "fillKey": "20%-60%"
                     }
                 },
                 "slug": "early_initiation",
                 "label": "Percent Early Initiation of Breastfeeding"
             }
+        )
 
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_early_initiation_breastfeeding_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of children who were put to the breast within one hour of birth."
+                            "<br/><br/>Early initiation of breastfeeding ensure the newborn "
+                            "recieves the 'first milk' rich in nutrients"
+                            " and encourages exclusive breastfeeding practice",
+                    "average": 75.0
+                },
+                "fills": {
+                    "0%-20%": "#de2d26",
+                    "20%-60%": "#fc9272",
+                    "60%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'in_month': 4,
+                        'original_name': ['b1', 'b2'],
+                        'birth': 3,
+                        'fillKey': '60%-100%'
+                    }
+                },
+                "slug": "early_initiation",
+                "label": "Percent Early Initiation of Breastfeeding"
+            }
         )
 
     def test_chart_data(self):

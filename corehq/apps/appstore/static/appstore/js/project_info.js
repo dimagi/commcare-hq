@@ -32,11 +32,11 @@ hqDefine('appstore/js/project_info', function () {
         // Analytics
         var project = hqImport('hqwebapp/js/initial_page_data').get('project');
         $('#download-new-project').click(function() {
-            hqImport('analytics/js/google').track.event('Exchange', 'Download As New Project', project);
+            hqImport('analytix/js/google').track.event('Exchange', 'Download As New Project', project);
         });
     
         $('#import-app-button').click(function() {
-            hqImport('analytics/js/google').track.event('Exchange', 'Download to Existing Project', project);
+            hqImport('analytix/js/google').track.event('Exchange', 'Download to Existing Project', project);
         });
     });
 });

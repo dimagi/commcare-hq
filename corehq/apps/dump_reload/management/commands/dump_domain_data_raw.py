@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import functools
 import gzip
 import json
 import os
@@ -13,7 +14,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from s3transfer import S3Transfer
 
-from corehq.apps.es import FormES, CaseES
+from corehq.apps.es import FormES, CaseES, LedgerES
 from corehq.blobs.s3db import is_not_found
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.log import with_progress_bar
@@ -55,7 +56,8 @@ class Command(BaseCommand):
 
         exporters = {
             'forms': _get_form_query,
-            'cases': _get_case_query
+            'cases': functools.partial(_get_query, CaseES),
+            'ledgers': functools.partial(_get_query, LedgerES),
         }.items()
 
         if options['type']:
@@ -114,6 +116,5 @@ def _get_form_query(domain):
             .remove_default_filter('has_user'))
 
 
-def _get_case_query(domain):
-    return (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(domain))
+def _get_query(ES, domain):
+    return ES(es_instance_alias=ES_EXPORT_INSTANCE).domain(domain)

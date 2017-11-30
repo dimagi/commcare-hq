@@ -57,10 +57,7 @@ class SubmissionErrorReport(DeploymentsReport):
     @property
     @memoized
     def paged_result(self):
-        doc_types = map(
-            lambda filter_: filter_.doc_type,
-            filter(lambda filter_: filter_.show, self.submitfilter)
-        )
+        doc_types = [filter_.doc_type for filter_ in filter(lambda filter_: filter_.show, self.submitfilter)]
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
