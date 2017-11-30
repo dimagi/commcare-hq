@@ -59,7 +59,7 @@ class LedgerPillowTest(TestCase):
 
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
-        submit_case_blocks([
+        xform, _ = submit_case_blocks([
             get_single_balance_block(case.case_id, self.product_id, 100)],
             self.domain
         )
@@ -84,6 +84,15 @@ class LedgerPillowTest(TestCase):
         # confirm change made it to elasticserach
         self._assert_ledger_in_es(ref)
 
+        kafka_seq = get_topic_offset(topics.LEDGER)
+
+        xform.archive()
+
+        self.pillow.process_changes(since=kafka_seq, forever=False)
+        self.elasticsearch.indices.refresh(LEDGER_INDEX_INFO.index)
+
+        self._assert_ledger_es_count(0)
+
     @run_with_all_backends
     def test_ledger_reindexer(self):
         factory = CaseFactory(domain=self.domain)
@@ -105,6 +114,14 @@ class LedgerPillowTest(TestCase):
         self._assert_ledger_in_es(ref)
 
     def _assert_ledger_in_es(self, ref):
+        results = self._assert_ledger_es_count(1)
+        ledger_doc = results['hits']['hits'][0]['_source']
+        self.assertEqual(self.domain, ledger_doc['domain'])
+        self.assertEqual(ref.case_id, ledger_doc['case_id'])
+        self.assertEqual(ref.section_id, ledger_doc['section_id'])
+        self.assertEqual(ref.entry_id, ledger_doc['entry_id'])
+
+    def _assert_ledger_es_count(self, count):
         results = self.elasticsearch.search(
             LEDGER_INDEX_INFO.index,
             LEDGER_INDEX_INFO.type, body={
@@ -117,9 +134,5 @@ class LedgerPillowTest(TestCase):
                 }
             }
         )
-        self.assertEqual(1, results['hits']['total'])
-        ledger_doc = results['hits']['hits'][0]['_source']
-        self.assertEqual(self.domain, ledger_doc['domain'])
-        self.assertEqual(ref.case_id, ledger_doc['case_id'])
-        self.assertEqual(ref.section_id, ledger_doc['section_id'])
-        self.assertEqual(ref.entry_id, ledger_doc['entry_id'])
+        self.assertEqual(count, results['hits']['total'])
+        return results
