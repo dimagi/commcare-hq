@@ -58,5 +58,6 @@ class DistrictLocationsView(LocationsView):
 class DuplicateIdsReport(TemplateView):
     def get(self, request, domain, case_type, *args, **kwargs):
         case_type = {'voucher': CASE_TYPE_VOUCHER, 'person': CASE_TYPE_PERSON}[case_type]
-        context = get_bad_case_info(domain, case_type)
+        full_debug_info = bool(request.GET.get('full_debug_info'))
+        context = get_bad_case_info(domain, case_type, full_debug_info)
         return render(request, 'enikshay/duplicate_ids_report.html', context)

@@ -91,12 +91,12 @@ def get_cases_with_duplicate_ids(domain, case_type, all_case_ids):
     return [case for case in all_cases if counts[case['readable_id']] > 1]
 
 
-def get_bad_case_info(domain, case_type):
+def get_bad_case_info(domain, case_type, full_debug_info=False):
     accessor = CaseAccessors(domain)
     case_ids = accessor.get_case_ids_in_domain(case_type)
     bad_cases = get_cases_with_duplicate_ids(domain, case_type, case_ids)
 
-    for case in bad_cases:
+    for case in bad_cases[:None if full_debug_info else 300]:
         form = CaseAccessorSQL.get_transactions(case['case_id'])[0].form
         if form:
             case['form_name'] = form.form_data.get('@name', 'NA')
