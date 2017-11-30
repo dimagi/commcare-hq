@@ -29,6 +29,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.userreports.util import number_of_report_builder_reports
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+from corehq.apps.locations.analytics import users_have_locations
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -386,6 +387,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_trivet_backends": num_telerivet_backends(dom),
         "cp_use_two_factor": use_two_factor(dom),
         "cp_n_custom_roles": num_custom_roles(dom),
+        "cp_using_locations": users_have_locations(dom),
     }
 
 
