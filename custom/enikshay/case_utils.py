@@ -154,9 +154,7 @@ def get_all_episode_cases_from_person(domain, person_case_id):
     occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
     for occurrence_case in occurrence_cases:
         all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.get_id])
-        episode_cases += [case for case in all_cases
-                          if case.type == CASE_TYPE_EPISODE and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+        episode_cases += [case for case in all_cases if case.type == CASE_TYPE_EPISODE]
     return episode_cases
 
 
@@ -203,15 +201,24 @@ def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
 
 def get_open_episode_case_from_person(domain, person_case_id):
     """
-    Gets the first open 'episode' case for the person
+    Gets the first most recently open 'episode' case for the person
 
     Assumes the following case structure:
     Person <--ext-- Occurrence <--ext-- Episode
 
     """
-    return get_open_episode_case_from_occurrence(
-        domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
-    )
+    episode_cases = get_all_episode_cases_from_person(domain, person_case_id)
+    valid_cases = [case for case in episode_cases if (
+        case.dynamic_case_properties().get('referral_status') not in [
+            'invalid_episode',
+            'duplicate',
+            'invalid_registration'
+        ]
+    )]
+    if not valid_cases:
+        return None
+    else:
+        return sorted(valid_cases, key=(lambda case: case.opened_on))[0]
 
 
 def get_open_referral_case_from_person(domain, person_case_id):
@@ -228,7 +235,10 @@ def get_open_referral_case_from_person(domain, person_case_id):
     reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
     open_referral_cases.extend(
         case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if not case.closed and case.type == CASE_TYPE_REFERRAL and (
+            case.dynamic_case_properties().get('referral_status') != 'rejected' or
+            case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
+        )
     )
     if not open_referral_cases:
         return None
