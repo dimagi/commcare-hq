@@ -37,11 +37,11 @@
             {
                 "type": "boolean",
                 "filter": {
-                    "type": "or",
+                    "type": "and",
                     "filters": [
                         {
                             "type": "boolean_expression",
-                            "operator": "not_eq",
+                            "operator": "eq",
                             "expression": {
                                 "type": "property_name",
                                 "property_name": "episode_type"
@@ -50,10 +50,10 @@
                         },
                         {
                             "type": "boolean_expression",
-                            "operator": "eq",
+                            "operator": "gt",
                             "expression": {
                                  "value_expression": {
-                                     "datatype": "string",
+                                     "datatype": "integer",
                                      "type": "property_name",
                                      "property_name": "occurrence_episode_count"
                                  },
