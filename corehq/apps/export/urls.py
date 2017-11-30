@@ -117,7 +117,7 @@ urlpatterns = [
     url(r"^custom/new/case/download/(?P<export_id>[\w\-]+)/$",
         DownloadNewCaseExportView.as_view(),
         name=DownloadNewCaseExportView.urlname),
-    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
+    url(r"^custom/daily_saved/download/(?P<export_instance_id>[\w\-]+)/$",
         download_daily_saved_export,
         name="download_daily_saved_export"),
     url(r"^custom/new/sms/download/$",
@@ -169,9 +169,6 @@ urlpatterns = [
         DailySavedExportPaywall.as_view(),
         name=DailySavedExportPaywall.urlname),
 
-    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
-        download_daily_saved_export,
-        name="download_daily_saved_export"),
     url(r"^build_full_schema/$",
         GenerateSchemaFromAllBuildsView.as_view(),
         name=GenerateSchemaFromAllBuildsView.urlname),
