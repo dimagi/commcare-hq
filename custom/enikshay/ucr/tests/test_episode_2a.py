@@ -74,5 +74,3 @@ class TestEpisode2B(TestDataSourceExpressions):
         self.assertEqual(expression(episode_case_two, EvaluationContext(episode_case_two, 0)), 0)
         self.assertEqual(expression(episode_case_three, EvaluationContext(episode_case_three, 0)), 0)
         self.assertEqual(expression(episode_case_four, EvaluationContext(episode_case_four, 0)), 0)
-
-
