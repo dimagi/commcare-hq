@@ -1,9 +1,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{{ request|toggle_tag_info:"NEW_MULTIMEDIA_UPLOADER" }}
-
-{% if request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
 <div class="container">
 
     <!-- launch button for modal -->
@@ -92,5 +89,3 @@
       </div>
     </div>
   </script>
-
-{% endif %}
