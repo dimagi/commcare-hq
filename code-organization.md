@@ -14,7 +14,6 @@ please keep reading.
 
 ## Static Files Organization
 
-JavaScript can currently live in a few different places.
 JavaScript files belong in the `static` directory of a Django app,
 which we structure as follows:
 
@@ -35,6 +34,7 @@ myapp/
 
 
 ## Using Django Template Tags and Variables
+
 Keeping JavaScript in dedicated files has numerous benefits over inline script blocks:
 - Better readability due to languages being separate
 - Easier code reuse
