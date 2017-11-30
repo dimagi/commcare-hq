@@ -59,9 +59,9 @@ hqDefine("dashboard/js/dashboard", function() {
                     },
                 });
 
-                // Update pagination, which shows links for at most 8 pages
-                var maxPages = 8,
-                    midpoint = maxPages / 2 + 1,
+                // Update pagination
+                var maxPages = 6,
+                    midpoint = Math.floor(maxPages / 2),
                     lowestPage = 1,
                     highestPage = Math.min(self.totalPages, maxPages);
 
