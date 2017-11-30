@@ -585,9 +585,13 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def iter_all_active_person_episode_cases(domain, case_ids):
+def iter_all_active_person_episode_cases(domain, case_ids, sector="both"):
     """From a list of case_ids, return all the active episodes and associate person case
     """
+    accepted_sectors = ['both', 'private', 'public']
+    if sector not in accepted_sectors:
+        raise ValueError('sector argument should be one of {}'.format(accepted_sectors))
+
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.iter_cases(case_ids)
     for episode_case in episode_cases:
@@ -595,6 +599,11 @@ def iter_all_active_person_episode_cases(domain, case_ids):
             continue
 
         if episode_case.closed:
+            continue
+
+        if sector == 'private' and episode_case.get_case_property('enrolled_in_private') != 'true':
+            continue
+        elif sector == 'public' and episode_case.get_case_property('enrolled_in_private') == 'true':
             continue
 
         try:
