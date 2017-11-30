@@ -131,7 +131,7 @@ def login_and_domain_required(view_func):
 def _ensure_request_couch_user(request):
     couch_user = getattr(request, 'couch_user', None)
     if not couch_user and hasattr(request, 'user'):
-        request.couch_user = CouchUser.from_django_user(request.user)
+        request.couch_user = couch_user = CouchUser.from_django_user(request.user)
     return couch_user
 
 
