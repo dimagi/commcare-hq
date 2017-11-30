@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
+from corehq.apps.users.models import UserRole
 from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -384,6 +385,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
         "cp_use_two_factor": use_two_factor(dom),
+        "cp_n_custom_roles": num_custom_roles(dom),
     }
 
 
@@ -408,3 +410,8 @@ def num_telerivet_backends(domain):
 def use_two_factor(domain):
     domain = Domain.get_by_name(domain)
     return domain.two_factor_auth
+
+
+def num_custom_roles(domain):
+    custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain)]
+    return len(custom_roles)
