@@ -1,7 +1,7 @@
 # Code Organization
 
 TL;DR
-- put code in .js files (and not in html) as much as possible
+- put code in .js files, not in html
 - use `hqDefine` and `hqImport` as your module system
 - you'll see various versions of modules based on manually
   restricting the global footprint of a file.
@@ -26,30 +26,33 @@ myapp/
     images/
     js/       <= JavaScript
     less/
-    lib/      <= Third-party code
+    lib/      <= Third-party code: This should be rare, since most third-party code should be coming from bower
     spec/     <= JavaScript tests
     ...       <= May contain other directories for data files, i.e., `json/`
   templates/myapp/
     mytemplate.html
 ```
 
-The best place for JavaScript to live is, of course, in a .js file.
-But first a note about the other common case, JavaScript in your template.
 
 ## Using Django Template Tags and Variables
-This is sometimes necessary, but is best to isolate.
-For instance, if you need some view context is your javascript,
-try declaring that up front for use later,
-rather than peppering django template tags throughout your javascript code.
-[Here's a good example](https://github.com/dimagi/commcare-hq/blob/9a6baaba0a5c94e603f820ca2c0e38dfb00c3c4e/corehq/apps/app_manager/templates/app_manager/releases.html#L22-L42) where we do that.
+Keeping JavaScript in dedicated files has numerous benefits over inline script blocks:
+- Better readability due to languages being separate
+- Easier code reuse
+- Browser caching of js files
+- Better integration with JavaScript tools
 
-As a rule of thumb, JavaScript code should only be in a template
-if its point is to bootstrap your JavaScript
-with values from Django template variables.
-In this case, as much as possible of the JavaScript should
-still live in its own module;
-what little is in the template should be there only to pass the baton
-from Django templates to your JavaScript modules. See [Server Integration Patterns](./integration-patterns.md) for more detail on best practices for accessing server data in JavaScript.
+The most common historical reason we've put JavaScript into Django templates has been to 
+pass data from the server to a script. We now have infrastructure to access server data
+from .js files; see [Server Integration Patterns](./integration-patterns.md) for more detail.
+
+There are a few places we do intentionally use script blocks, such as configuring less.js in CommCareHQ's
+main template, `hqwebapp/base.html`. These are places where there's just a few lines
+of code that's truly independent of the rest of the site's JavaScript. They are rare.
+
+There are also a number of Django templates with legacy `<script>` blocks. By and large,
+these are being "externalized" into separate files as we modernize our JavaScript. See
+[Migrating](./migrating.md) for guidance migrating inline JavaScript to an external .js file.
+
 
 ## Module patterns
 
