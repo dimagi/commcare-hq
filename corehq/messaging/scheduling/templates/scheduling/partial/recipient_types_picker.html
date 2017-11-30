@@ -13,6 +13,6 @@
         {{ description }}</span>
     {% endfor %}
     {% for code, description in schedule_form.recipient_types.field.choices %}
-        <input type="checkbox" class="hide" name="recipient_types" value="{{ code }}" data-bind="checked: recipient_types" />
+        <input type="checkbox" class="hide" name="schedule-recipient_types" value="{{ code }}" data-bind="checked: recipient_types" />
     {% endfor %}
 </div>

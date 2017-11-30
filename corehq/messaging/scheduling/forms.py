@@ -75,6 +75,10 @@ class RecipientField(CharField):
 
 
 class ScheduleForm(Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "schedule-"
+    prefix = "schedule"
+
     SEND_DAILY = 'daily'
     SEND_WEEKLY = 'weekly'
     SEND_MONTHLY = 'monthly'
