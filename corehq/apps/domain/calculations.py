@@ -33,6 +33,7 @@ from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
 from corehq.apps.groups.models import Group
 from corehq.motech.repeaters.models import Repeater
+from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -395,6 +396,9 @@ def calced_props(dom, id, all_stats):
         "cp_n_case_sharing_olevels": num_case_sharing_loc_types(dom),
         "cp_n_case_sharing_groups": num_case_sharing_groups(dom),
         "cp_n_repeaters": num_repeaters(dom),
+        "cp_n_case_exports": num_exports(dom),
+        "cp_n_deid_exports": num_deid_exports(dom),
+        "cp_n_saved_exports": num_saved_exports(dom),
     }
 
 
@@ -447,3 +451,21 @@ def num_case_sharing_groups(domain):
 
 def num_repeaters(domain):
     return len(Repeater.by_domain(domain))
+
+
+def _get_domain_exports(domain):
+    return get_form_exports_by_domain(domain, True) + get_case_exports_by_domain(domain, True)
+
+
+def num_deid_exports(domain):
+    return len([e for e in _get_domain_exports(domain)
+                if e.is_safe == True])
+
+
+def num_exports(domain):
+    return len(_get_domain_exports(domain))
+
+
+def num_saved_exports(domain):
+    return len([e for e in _get_domain_exports(domain)
+                if e.is_daily_saved_export == True])
