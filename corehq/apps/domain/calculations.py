@@ -415,5 +415,6 @@ def use_two_factor(domain):
 
 
 def num_custom_roles(domain):
-    custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain)]
+    custom_roles = [r.name for r in UserRole.get_custom_roles_by_domain(domain)
+                    if r.is_archived == False]
     return len(custom_roles)
