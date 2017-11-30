@@ -816,9 +816,8 @@ class ApplicationsTab(UITab):
 
     @property
     def dropdown_items(self):
-        # todo async refresh submenu when on the applications page and
-        # you change the application name
         apps = get_brief_apps_in_domain(self.domain)
+        apps = sorted(apps, key=lambda item: item.name.lower())
         submenu_context = []
         if not apps:
             return submenu_context
