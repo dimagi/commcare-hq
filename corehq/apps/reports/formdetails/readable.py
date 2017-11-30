@@ -14,6 +14,7 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
 import six
+from six.moves import map
 
 
 class CaseMetaException(Exception):

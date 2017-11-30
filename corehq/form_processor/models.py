@@ -38,6 +38,7 @@ from dimagi.utils.decorators.memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound
 import six
+from six.moves import map
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -1243,7 +1244,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def form_transaction(cls, case, xform, action_types=None):
         action_types = action_types or []
 
-        if any(map(lambda action_type: not cls._valid_action_type(action_type), action_types)):
+        if any([not cls._valid_action_type(action_type) for action_type in action_types]):
             raise UnknownActionType('Unknown action type found')
 
         type_ = cls.TYPE_FORM

@@ -24,6 +24,7 @@ from .base import (
     BaseSingleOptionFilter,
 )
 from six.moves import range
+from six.moves import map
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):

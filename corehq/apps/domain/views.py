@@ -148,6 +148,7 @@ from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 import six
+from six.moves import map
 
 
 PAYMENT_ERROR_MESSAGES = {
@@ -800,7 +801,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 )),
             }
 
-        return map(_get_feature_info, plan_version.feature_rates.all())
+        return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
     @property
     def page_context(self):

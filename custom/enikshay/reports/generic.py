@@ -59,7 +59,7 @@ class EnikshayMultiReport(MultiReport, DatespanMixin):
             if isinstance(field_instance, DatespanFilter):
                 value = field_instance.datespan.default_serialization()
             elif isinstance(field_instance, BaseMultipleOptionFilter):
-                value = ', '.join(map(lambda s: s.get('text', ''), field_instance.selected))
+                value = ', '.join([s.get('text', '') for s in field_instance.selected])
             elif isinstance(field_instance, BaseSingleOptionFilter):
                 filter_value = field_instance.selected
                 if not filter_value:

@@ -48,6 +48,7 @@ from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 from itertools import chain
+from six.moves import map
 
 
 MOCK_BULK_USER_ES = None
@@ -134,7 +135,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
             size=param('limit'),
             start_at=param('offset'),
         )
-        return map(self.to_obj, users)
+        return list(map(self.to_obj, users))
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
