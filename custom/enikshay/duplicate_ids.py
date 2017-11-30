@@ -88,7 +88,8 @@ def get_cases_with_duplicate_ids(domain, case_type, all_case_ids):
         for case in accessor.iter_cases(all_case_ids)
     ]
     counts = Counter(case['readable_id'] for case in all_cases)
-    return [case for case in all_cases if counts[case['readable_id']] > 1]
+    bad_cases = (case for case in all_cases if counts[case['readable_id']] > 1)
+    return sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
 
 
 def get_bad_case_info(domain, case_type, full_debug_info=False):
@@ -101,7 +102,7 @@ def get_bad_case_info(domain, case_type, full_debug_info=False):
         'num_bad_cases': len(bad_cases),
         'num_total_cases': len(case_ids),
         'num_good_cases': len(case_ids) - len(bad_cases),
-        'bad_cases': sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
+        'bad_cases': bad_cases,
     }
     return context
 
