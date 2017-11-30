@@ -30,6 +30,7 @@ from corehq.apps.userreports.util import number_of_report_builder_reports
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.locations.models import LocationType
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -389,6 +390,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_custom_roles": num_custom_roles(dom),
         "cp_using_locations": users_have_locations(dom),
         "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
+        "cp_n_case_sharing_levels": num_case_sharing_loc_types(dom),
     }
 
 
@@ -425,3 +427,9 @@ def num_location_restricted_roles(domain):
     roles = [r for r in UserRole.by_domain(domain)
              if r.permissions.access_all_locations == False]
     return len(roles)
+
+
+def num_case_sharing_loc_types(domain):
+    loc_types = [l for l in LocationType.objects.by_domain(domain)
+                 if l.shares_cases == True]
+    return len(loc_types)
