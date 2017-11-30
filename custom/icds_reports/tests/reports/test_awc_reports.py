@@ -802,7 +802,6 @@ class TestAWCReport(TestCase):
                                          "who are enrolled for ICDS services"
                         },
                         {
-                            "redirect": "enrolled_women",
                             "all": 2,
                             "format": "percent_and_div",
                             "color": "red",
@@ -827,7 +826,6 @@ class TestAWCReport(TestCase):
                                          "who are enrolled for ICDS services"
                         },
                         {
-                            "redirect": "adolescent_girls",
                             "all": 0,
                             "format": "percent_and_div",
                             "color": "red",

@@ -860,8 +860,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
-                    'frequency': frequency,
-                    'redirect': 'enrolled_women'
+                    'frequency': frequency
                 }
             ],
             [
@@ -902,8 +901,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'value': get_value(data, 'person_adolescent'),
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
-                    'frequency': frequency,
-                    'redirect': 'adolescent_girls'
+                    'frequency': frequency
                 }
             ]
         ]
