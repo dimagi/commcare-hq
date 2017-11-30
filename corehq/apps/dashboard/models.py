@@ -219,7 +219,9 @@ class DataPaginator(TilePaginator, ExportsPermissionsMixin):
         return exports
 
     def _paginated_items(self, items_per_page, skip):
-        exports = (self.form_exports + self.case_exports)[skip:skip + items_per_page]
+        exports = (self.form_exports + self.case_exports)
+        exports = sorted(exports, key=lambda item: item.name.lower())
+        exports = exports[skip:skip + items_per_page]
         for export in exports:
             urlname = ''
             if isinstance(export, CaseExportInstance):
