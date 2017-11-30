@@ -32,6 +32,7 @@ from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
 from corehq.apps.groups.models import Group
+from corehq.motech.repeaters.models import Repeater
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -393,6 +394,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
         "cp_n_case_sharing_olevels": num_case_sharing_loc_types(dom),
         "cp_n_case_sharing_groups": num_case_sharing_groups(dom),
+        "cp_n_repeaters": num_repeaters(dom),
     }
 
 
@@ -441,3 +443,7 @@ def num_case_sharing_groups(domain):
     groups = [g for g in Group.by_domain(domain)
               if g.case_sharing == True]
     return len(groups)
+
+
+def num_repeaters(domain):
+    return len(Repeater.by_domain(domain))
