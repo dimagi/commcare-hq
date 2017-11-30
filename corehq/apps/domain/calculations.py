@@ -426,8 +426,7 @@ def use_two_factor(domain):
 
 
 def num_custom_roles(domain):
-    custom_roles = [r for r in UserRole.get_custom_roles_by_domain(domain)
-                    if r.is_archived == False]
+    custom_roles = [r for r in UserRole.get_custom_roles_by_domain(domain) if not r.is_archived]
     return len(custom_roles)
 
 
@@ -438,14 +437,12 @@ def num_location_restricted_roles(domain):
 
 
 def num_case_sharing_loc_types(domain):
-    loc_types = [l for l in LocationType.objects.by_domain(domain)
-                 if l.shares_cases == True]
+    loc_types = [l for l in LocationType.objects.by_domain(domain) if l.shares_cases]
     return len(loc_types)
 
 
 def num_case_sharing_groups(domain):
-    groups = [g for g in Group.by_domain(domain)
-              if g.case_sharing == True]
+    groups = [g for g in Group.by_domain(domain) if g.case_sharing]
     return len(groups)
 
 
@@ -458,8 +455,7 @@ def _get_domain_exports(domain):
 
 
 def num_deid_exports(domain):
-    return len([e for e in _get_domain_exports(domain)
-                if e.is_safe == True])
+    return len([e for e in _get_domain_exports(domain) if e.is_safe])
 
 
 def num_exports(domain):
@@ -467,5 +463,4 @@ def num_exports(domain):
 
 
 def num_saved_exports(domain):
-    return len([e for e in _get_domain_exports(domain)
-                if e.is_daily_saved_export == True])
+    return len([e for e in _get_domain_exports(domain) if e.is_daily_saved_export])
