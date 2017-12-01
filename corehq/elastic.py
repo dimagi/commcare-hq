@@ -25,6 +25,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 import six
+from six.moves import range
 
 
 def _es_hosts():
@@ -459,7 +460,7 @@ def generate_sortables_from_facets(results, params=None):
 
     def generate_facet_dict(f_name, ft):
         if isinstance(ft['term'], six.text_type): #hack to get around unicode encoding issues. However it breaks this specific facet
-            ft['term'] = ft['term'].encode('ascii','replace')
+            ft['term'] = ft['term'].encode('ascii', 'replace')
 
         return {'name': ft["term"],
                 'count': ft["count"],

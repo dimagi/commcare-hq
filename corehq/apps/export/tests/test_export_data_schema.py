@@ -43,6 +43,7 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
 )
+from six.moves import map
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -205,7 +206,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
 
         self.assertEqual(len(group_schema.items), 6)
-        self.assertTrue(all(map(lambda item: item.doc_type == 'StockItem', group_schema.items)))
+        self.assertTrue(all([item.doc_type == 'StockItem' for item in group_schema.items]))
         for parent_attr in ['@type', '@entity-id', '@date', '@section-id']:
             self.assertTrue(any(map(
                 lambda item: item.path == [
@@ -695,7 +696,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             ],
             group_schema
         )
-        path_suffixes = set(map(lambda item: item.path[-1].name, group_schema.items))
+        path_suffixes = set([item.path[-1].name for item in group_schema.items])
         self.assertEqual(len(path_suffixes & set(CASE_ATTRIBUTES)), len(CASE_ATTRIBUTES))
 
 

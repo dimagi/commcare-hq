@@ -15,7 +15,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         consolidated = set(show_urls.show_urls(urls.urlpatterns))
         for raw_path, view_name in consolidated:
-            path = raw_path.replace('^', '/').replace('$','')
+            path = raw_path.replace('^', '/').replace('$', '')
             try:
                 print('%s|"%s"' % (path, view_name))
                 #print "%s\t%s" % (resolve_to_name(path), view_name)

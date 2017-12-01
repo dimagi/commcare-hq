@@ -38,18 +38,58 @@ class TestNewBornWithLowWeight(TestCase):
                     "st1": {
                         "in_month": 4,
                         "low_birth": 2,
+                        'original_name': [],
                         "fillKey": "20%-60%"
                     },
                     "st2": {
                         "in_month": 3,
                         "low_birth": 0,
+                        'original_name': [],
                         "fillKey": "0%-20%"
                     }
                 },
                 "slug": "low_birth",
                 "label": "Percent Newborns with Low Birth Weight"
             }
+        )
 
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_newborn_with_low_birth_weight_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of newborns with born with birth weight less than 2500 grams."
+                            "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
+                            "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
+                            " and chronic diseases later in life",
+                    "average": 50.0
+                },
+                "fills": {
+                    "0%-20%": "#fee0d2",
+                    "20%-60%": "#fc9272",
+                    "60%-100%": "#de2d26",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'in_month': 4,
+                        'original_name': ['b1', 'b2'],
+                        'low_birth': 2,
+                        'fillKey': '20%-60%'
+                    }
+                },
+                "slug": "low_birth",
+                "label": "Percent Newborns with Low Birth Weight"
+            }
         )
 
     def test_chart_data(self):

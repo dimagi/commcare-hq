@@ -490,6 +490,7 @@ SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
@@ -1967,6 +1968,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
@@ -1974,6 +1976,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),

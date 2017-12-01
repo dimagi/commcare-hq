@@ -382,7 +382,7 @@ def identify(email, properties):
 
 @memoized
 def _get_export_count(domain):
-    from corehq.apps.export.views import get_export_count_by_domain
+    from corehq.apps.export.dbaccessors import get_export_count_by_domain
 
     return get_export_count_by_domain(domain)
 

@@ -152,6 +152,8 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 import six
+from six.moves import range
+from six.moves import map
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
@@ -2573,7 +2575,7 @@ class ModuleDetailsMixin():
             ('ref_short', self.ref_details.short, False),
             ('ref_long', self.ref_details.long, False),
         ]
-        if module_offers_search(self):
+        if module_offers_search(self) and not self.case_details.short.custom_xml:
             details.append(('search_short', self.search_detail, True))
         return tuple(details)
 
@@ -3523,7 +3525,7 @@ class AdvancedModule(ModuleBase):
             ('product_short', self.product_details.short, self.get_app().commtrack_enabled),
             ('product_long', self.product_details.long, False),
         ]
-        if module_offers_search(self):
+        if module_offers_search(self) and not self.case_details.short.custom_xml:
             details.append(('search_short', self.search_detail, True))
         return details
 
@@ -5798,7 +5800,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return
         if new_lang in self.langs:
             raise AppEditingError("Language %s already exists!" % new_lang)
-        for i,lang in enumerate(self.langs):
+        for i, lang in enumerate(self.langs):
             if lang == old_lang:
                 self.langs[i] = new_lang
         for profile in self.build_profiles:

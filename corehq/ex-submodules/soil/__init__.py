@@ -100,7 +100,7 @@ class DownloadBase(object):
         if self.transfer_encoding is not None:
             response['Transfer-Encoding'] = self.transfer_encoding
         response['Content-Disposition'] = self.content_disposition
-        for k,v in self.extras.items():
+        for k, v in self.extras.items():
             response[k] = v
         return response
 

@@ -218,7 +218,7 @@ class BlobMixin(Document):
                 self.external_blobs = old_external_blobs
                 if self._migrating_blobs_from_couch:
                     self._attachments = old_attachments
-                raise typ, exc, tb
+                six.reraise(typ, exc, tb)
             finally:
                 self._atomic_blobs = atomicity
             if success:

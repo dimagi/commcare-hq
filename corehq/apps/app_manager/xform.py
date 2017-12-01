@@ -215,8 +215,7 @@ class WrappedNode(object):
     def __bool__(self):
         return self.xml is not None
 
-    def __nonzero__(self):
-        return self.__bool__()
+    __nonzero__ = __bool__
 
     def __len__(self):
         return len(self.xml) if self.exists() else 0
@@ -1032,10 +1031,7 @@ class XForm(WrappedNode):
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
                     if len(parent):
-                        is_stock_element = any(map(
-                            lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
-                            parent.nsmap.values()
-                        ))
+                        is_stock_element = any([namespace == COMMTRACK_REPORT_XMLNS for namespace in parent.nsmap.values()])
                         if is_stock_element:
                             question.update({
                                 "stock_entry_attributes": dict(data_node.xml.attrib),

@@ -37,12 +37,52 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     "st1": {
                         "all": 13,
                         "children": 9,
+                        'original_name': [],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "all": 13,
                         "children": 11,
+                        'original_name': [],
                         "fillKey": "60%-100%"
+                    }
+                },
+                "slug": "institutional_deliveries",
+                "label": "Percent Instituitional Deliveries"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_institutional_deliveries_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of pregnant women who delivered in a public or "
+                            "private medical facility in the last month. <br/><br/>Delivery in medical"
+                            " instituitions is associated with a decrease in maternal mortality rate",
+                    "average": 69.23076923076923
+                },
+                "fills": {
+                    "0%-20%": "#de2d26",
+                    "20%-60%": "#fc9272",
+                    "60%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'all': 13,
+                        'original_name': ['b1', 'b2'],
+                        'children': 9,
+                        'fillKey': '60%-100%'
                     }
                 },
                 "slug": "institutional_deliveries",

@@ -158,7 +158,7 @@ class ESQuery(object):
         self.index = index if index is not None else self.index
         if self.index not in ES_META and not is_ucr_table(self.index):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
-                index, ', '.join(ES_META.keys()))
+                index, ', '.join(ES_META))
             raise IndexError(msg)
 
         self.debug_host = debug_host

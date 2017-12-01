@@ -1,0 +1,12 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block page_content %}
+    <div class="btn-group">
+        <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-success">
+            <i class="fa fa-plus"></i>
+            {% trans "New Conditional Message" %}
+        </a>
+    </div>
+{% endblock %}

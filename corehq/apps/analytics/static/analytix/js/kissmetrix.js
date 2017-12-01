@@ -1,14 +1,24 @@
-/* globals _, _kmq */
+/* globals _kmq */
 
 var _kmq = window._kmq = _kmq || [];
 
-hqDefine('analytics/js/kissmetrics', function () {
+hqDefine('analytix/js/kissmetrix', [
+    'underscore',
+    'analytix/js/initial',
+    'analytix/js/logging',
+    'analytix/js/utils',
+], function (
+    _,
+    initialAnalytics,
+    logging,
+    utils
+) {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('kissmetrics'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        _abTests = hqImport('analytics/js/initial').getAbTests('kissmetrics'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Kissmetrics'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = initialAnalytics.getFn('kissmetrics'),
+        _global = initialAnalytics.getFn('global'),
+        _abTests = initialAnalytics.getAbTests('kissmetrics'),
+        logger = logging.getLoggerForApi('Kissmetrics'),
+        _allAbTests = {},
         _init = {};
 
     window.dataLayer = window.dataLayer || [];
@@ -32,6 +42,8 @@ hqDefine('analytics/js/kissmetrics', function () {
             if (properties) data.km_property = properties;
             window.dataLayer.push(data);
             logger.verbose.log(command, ['window._kmq.push', 'window.dataLayer.push', '_kmqPushCommand', commandName]);
+        } else if (callbackFn) {
+            callbackFn();
         }
     };
 
@@ -41,7 +53,7 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @private
      */
     var _addKissmetricsScript = function (srcUrl) {
-        _utils.insertScript(srcUrl, logger.debug.log);
+        utils.insertScript(srcUrl, logger.debug.log);
     };
 
     var __init__ = function () {
@@ -60,11 +72,10 @@ hqDefine('analytics/js/kissmetrics', function () {
             testName = _.last(testName.split('.'));
             if (_.isObject(ab) && ab.version) {
                 test[ab.name || testName] = ab.version;
-            } else {
-                test[testName] = ab;
+                logger.debug.log(test, ["AB Test", "New Test: " + testName]);
+                _kmqPushCommand('set', test);
+                _.extend(_allAbTests, test);
             }
-            logger.debug.log(test, ["AB Test", "New Test: " + testName]);
-            _kmqPushCommand('set', test);
         });
     };
 
@@ -91,11 +102,9 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @param {integer} timeout - (optional) timeout in milliseconds
      */
     var identifyTraits = function (traits, callbackFn, timeout) {
-        if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
-            callbackFn = _utils.createSafeCallback(callbackFn, timeout);
-            _kmqPushCommand('set', traits, callbackFn);
-        }
+        logger.debug.log(logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
+        callbackFn = utils.createSafeCallback(callbackFn, timeout);
+        _kmqPushCommand('set', traits, callbackFn);
     };
 
     /**
@@ -106,11 +115,9 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @param {integer} timeout - (optional) Timeout for safe callback
      */
     var trackEvent = function (name, properties, callbackFn, timeout) {
-        if (_global('isEnabled')) {
-            logger.debug.log(arguments, 'RECORD EVENT');
-            callbackFn = _utils.createSafeCallback(callbackFn, timeout);
-            _kmqPushCommand('record', properties, callbackFn, name);
-        }
+        logger.debug.log(arguments, 'RECORD EVENT');
+        callbackFn = utils.createSafeCallback(callbackFn, timeout);
+        _kmqPushCommand('record', properties, callbackFn, name);
     };
 
     /**
@@ -120,10 +127,8 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var internalClick = function (selector, name, properties) {
-        if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
-            _kmqPushCommand('trackClick', properties, undefined, name);
-        }
+        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
+        _kmqPushCommand('trackClick', properties, undefined, name);
     };
 
     /**
@@ -133,10 +138,17 @@ hqDefine('analytics/js/kissmetrics', function () {
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var trackOutboundLink = function (selector, name, properties) {
-        if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
-            _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
-        }
+        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
+        _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
+    };
+
+    /**
+     * Fetches value for a given AB Test.
+     * @param testSlug
+     * @returns {*|{}}
+     */
+    var getAbTest = function (testSlug) {
+        return _allAbTests[testSlug];
     };
 
     return {
@@ -148,5 +160,6 @@ hqDefine('analytics/js/kissmetrics', function () {
             internalClick: internalClick,
             outboundLink: trackOutboundLink,
         },
+        getAbTest: getAbTest,
     };
 });

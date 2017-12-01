@@ -17,6 +17,7 @@ from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
+from six.moves import range
 
 
 class RetireUserTestCase(TestCase):
@@ -69,14 +70,14 @@ class RetireUserTestCase(TestCase):
 
         self.commcare_user.retire()
         cases = CaseAccessors(self.domain).get_cases(case_ids)
-        self.assertTrue(all(map(lambda c: c.is_deleted, cases)))
+        self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertTrue(form.is_deleted)
 
         self.commcare_user.unretire()
         cases = CaseAccessors(self.domain).get_cases(case_ids)
-        self.assertFalse(all(map(lambda c: c.is_deleted, cases)))
+        self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertFalse(form.is_deleted)

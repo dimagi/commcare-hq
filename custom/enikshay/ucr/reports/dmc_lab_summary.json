@@ -1,0 +1,180 @@
+{
+  "domains": [
+    "enikshay",
+    "enikshay-reports-qa"
+  ],
+  "server_environment": [
+    "enikshay",
+    "softlayer"
+  ],
+  "data_source_table": "test_2b_v5",
+  "report_id": "dmc_lab_summary",
+  "config": {
+    "description": "",
+    "title": "DMC Lab Summary",
+    "sort_expression": [],
+    "visible": true,
+    "configured_charts": [],
+    "aggregation_columns": [],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "datetime",
+        "required": false,
+        "slug": "date_reported",
+        "field": "date_reported",
+        "type": "date",
+        "display": "Date of Test Result Update"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "order_by_hierarchy": true,
+          "show_full_path": true
+        },
+        "show_all": true,
+        "display": "Location",
+        "field": "dmc_referring_facility_id",
+        "type": "dynamic_choice_list",
+        "slug": "village"
+      },
+      {
+        "pre_value": 1,
+        "datatype": "integer",
+        "pre_operator": null,
+        "slug": "date_reported_pre",
+        "field": "has_date_reported",
+        "type": "pre",
+        "display": null
+      },
+      {
+        "pre_value": 1,
+        "datatype": "integer",
+        "pre_operator": null,
+        "slug": "is_microscopy",
+        "field": "is_microscopy",
+        "type": "pre",
+        "display": null
+      },
+      {
+        "pre_value": "pmdt_excel",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "slug": "migration_type",
+        "field": "migration_type",
+        "type": "pre",
+        "display": null
+      }
+    ],
+    "columns": [
+      {
+        "field": "presumptives_examined_for_diagnosis",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "aggregation": "sum",
+        "visible": true,
+        "display": "TB Presumptives Examined for Diagnosis",
+        "calculate_total": false,
+        "column_id": "presumptives_examined_for_diagnosis",
+        "type": "field",
+        "width": null
+      },
+      {
+        "field": "presumptives_found_positive",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "aggregation": "sum",
+        "visible": true,
+        "display": "TB Presumptives found positive",
+        "calculate_total": false,
+        "column_id": "presumptives_found_positive",
+        "type": "field",
+        "width": null
+      },
+      {
+        "field": "follow_up_patients_examined",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "aggregation": "sum",
+        "visible": true,
+        "display": "Follow-up patients examined",
+        "calculate_total": false,
+        "column_id": "follow_up_patients_examined",
+        "type": "field",
+        "width": null
+      },
+      {
+        "field": "patients_positive_on_follow_up",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "aggregation": "sum",
+        "visible": true,
+        "display": "Patients positive on follow-up",
+        "calculate_total": false,
+        "column_id": "patients_positive_on_follow_up",
+        "type": "field",
+        "width": null
+      },
+      {
+        "field": "slides_examined",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "aggregation": "sum",
+        "visible": true,
+        "display": "Total Slides Examined",
+        "calculate_total": false,
+        "column_id": "slides_examined",
+        "type": "field",
+        "width": null
+      },
+      {
+        "field": "positive_slides",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "aggregation": "sum",
+        "visible": true,
+        "display": "Total Positive Slides",
+        "calculate_total": false,
+        "column_id": "positive_slides",
+        "type": "field",
+        "width": null
+      },
+      {
+        "field": "negative_slides",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "aggregation": "sum",
+        "visible": true,
+        "display": "Total Negative Slides",
+        "calculate_total": false,
+        "column_id": "negative_slides",
+        "type": "field",
+        "width": null
+      }
+    ]
+  }
+}

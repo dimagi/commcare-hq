@@ -269,6 +269,27 @@ class SMS(SMSBase):
         from corehq.apps.sms.tasks import publish_sms_change
         publish_sms_change.delay(self)
 
+    def requeue(self):
+        if self.processed or self.direction != OUTGOING:
+            raise ValueError("Should only requeue outgoing messages that haven't yet been proccessed")
+
+        with transaction.atomic():
+            queued_sms = QueuedSMS()
+            for field in self._meta.fields:
+                if field.name != 'id':
+                    setattr(queued_sms, field.name, getattr(self, field.name))
+
+            queued_sms.processed = False
+            queued_sms.error = False
+            queued_sms.system_error_message = None
+            queued_sms.num_processing_attempts = 0
+            queued_sms.date = datetime.utcnow()
+            queued_sms.datetime_to_process = datetime.utcnow()
+            queued_sms.queued_timestamp = datetime.utcnow()
+            queued_sms.processed_timestamp = None
+            self.delete()
+            queued_sms.save()
+
 
 class QueuedSMS(SMSBase):
 
@@ -2223,7 +2244,7 @@ class PhoneLoadBalancingMixin(object):
             return self.load_balancing_numbers[0]
 
         hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
-        index = long(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
+        index = int(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
         return self.load_balancing_numbers[index]
 
 

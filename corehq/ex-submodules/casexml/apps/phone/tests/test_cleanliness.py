@@ -12,6 +12,7 @@ from casexml.apps.phone.exceptions import InvalidDomainError, InvalidOwnerIdErro
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from casexml.apps.phone.tests.test_sync_mode import DeprecatedBaseSyncTest
 from corehq.form_processor.tests.utils import use_sql_backend
+from six.moves import range
 
 
 @override_settings(TESTS_SHOULD_TRACK_CLEANLINESS=None)

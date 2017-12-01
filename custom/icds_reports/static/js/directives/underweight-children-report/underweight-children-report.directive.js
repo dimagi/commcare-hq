@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -10,15 +10,16 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+    vm.userLocationId = userLocationId;
 
-    var ageIndex = ages.findIndex(function (x) {
+    var ageIndex = _.findIndex(ages, function (x) {
         return x.id === vm.filtersData.age;
     });
     if (ageIndex !== -1) {
         vm.ageLabel = ages[ageIndex].name;
     }
 
-    var genderIndex = genders.findIndex(function (x) {
+    var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
@@ -37,6 +38,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = [];
@@ -124,8 +127,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -138,7 +141,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -147,7 +150,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -226,14 +229,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     var normal = findValue(vm.chartData[0].values, d.value).y;
                     var moderately = findValue(vm.chartData[1].values, d.value).y;
                     var severely = findValue(vm.chartData[2].values, d.value).y;
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children normal: <strong>" + d3.format(".2%")(normal) + "</strong></p>";
-                    tooltip_content += "<p>% children moderately underweight: <strong>" + d3.format(".2%")(moderately) + "</strong></p>";
-                    tooltip_content += "<p>% children severely underweight: <strong>" + d3.format(".2%")(severely) + "</strong></p>";
-                    tooltip_content += "<p>% unweighed: <strong>" + d3.format(".2%")(1 - (normal + moderately + severely)) + "</strong></p>";
-
-                    return tooltip_content;
+                    return vm.tooltipContent(d.value, normal, moderately, severely);
                 });
                 return chart;
             },
@@ -248,6 +244,14 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, normal, moderate, severe) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>% children normal: <strong>" + d3.format(".2%")(normal) + "</strong></p>"
+            + "<p>% children moderately underweight: <strong>" + d3.format(".2%")(moderate) + "</strong></p>"
+            + "<p>% children severely underweight: <strong>" + d3.format(".2%")(severe) + "</strong></p>"
+            + "<p>% unweighed: <strong>" + d3.format(".2%")((1 - (normal + moderate + severe))) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

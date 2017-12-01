@@ -3,6 +3,7 @@ import hashlib
 from datetime import datetime
 from functools import reduce
 import six
+from six.moves import range
 
 def to_number(bytes):
     return reduce(lambda a, b: a*256 + b, bytes)
@@ -48,4 +49,4 @@ class DeidGenerator(object):
 
     def random_number(self, low, high):
         """Generate a 'random' number such that low <= n < high"""
-        return self.digest(range(low, high))[-1]
+        return self.digest(list(range(low, high)))[-1]

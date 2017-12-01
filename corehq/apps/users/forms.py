@@ -47,6 +47,7 @@ import re
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
+from six.moves import range
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')

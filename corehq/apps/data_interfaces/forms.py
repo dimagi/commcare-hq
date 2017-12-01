@@ -49,7 +49,7 @@ def remove_quotes(value):
     return value
 
 
-def validate_case_property_name(value):
+def validate_case_property_name(value, allow_parent_case_references=True):
     if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property name."))
 
@@ -59,6 +59,12 @@ def validate_case_property_name(value):
         raise ValidationError(_("Please specify a case property name."))
 
     if '/' in property_name:
+        if not allow_parent_case_references:
+            raise ValidationError(
+                _("Invalid character '/' in case property name: '{}'. "
+                  "Parent or host case references are not allowed.").format(value)
+            )
+
         raise ValidationError(
             _("Case property reference cannot contain '/' unless referencing the parent "
               "or host case with 'parent/' or 'host/'")
@@ -615,6 +621,30 @@ class CaseRuleCriteriaForm(forms.Form):
         initial['property_match_definitions'] = json.dumps(property_match_definitions)
         return initial
 
+    @property
+    def show_fieldset_title(self):
+        return True
+
+    @property
+    def fieldset_help_text(self):
+        return _("The Actions will be performed for all open cases that match all filter criteria below.")
+
+    @property
+    def allow_parent_case_references(self):
+        return True
+
+    @property
+    def allow_case_modified_filter(self):
+        return True
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return True
+
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
             raise ValueError("Initial values are set by the form")
@@ -636,10 +666,9 @@ class CaseRuleCriteriaForm(forms.Form):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset(
-                _("Case Filters"),
+                _("Case Filters") if self.show_fieldset_title else "",
                 HTML(
-                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
-                    _("The Actions will be performed for all open cases that match all filter criteria below.")
+                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
                 hidden_bound_field('filter_on_server_modified'),
                 hidden_bound_field('server_modified_boundary'),
@@ -748,7 +777,8 @@ class CaseRuleCriteriaForm(forms.Form):
             ):
                 self._json_fail_hard()
 
-            property_name = validate_case_property_name(obj['property_name'])
+            property_name = validate_case_property_name(obj['property_name'],
+                allow_parent_case_references=self.allow_parent_case_references)
             match_type = obj['match_type']
             if match_type not in MatchPropertyDefinition.MATCH_CHOICES:
                 self._json_fail_hard()

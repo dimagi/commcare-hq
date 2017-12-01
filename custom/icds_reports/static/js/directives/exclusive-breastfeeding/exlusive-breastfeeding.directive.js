@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -10,8 +10,9 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+    vm.userLocationId = userLocationId;
 
-    var genderIndex = genders.findIndex(function (x) {
+    var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
@@ -30,6 +31,8 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age'];
@@ -112,8 +115,8 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -126,7 +129,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -135,7 +138,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -194,15 +197,8 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></p>";
-                    tooltip_content += "<p>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, dataInMonth);
                 });
                 return chart;
             },
@@ -218,6 +214,13 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
+            + "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
+            + "<p>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
     };
 
     vm.resetAdditionalFilter = function() {

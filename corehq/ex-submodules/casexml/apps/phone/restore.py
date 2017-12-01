@@ -242,8 +242,7 @@ class CachedResponse(object):
         except NotFound:
             return False
 
-    def __nonzero__(self):
-        return self.__bool__()
+    __nonzero__ = __bool__
 
     def as_string(self):
         with self.as_file() as fileobj:

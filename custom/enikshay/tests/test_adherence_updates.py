@@ -25,8 +25,8 @@ from custom.enikshay.tasks import (
     EpisodeAdherenceUpdate,
     calculate_dose_status_by_day,
     get_datastore,
+    update_single_episode,
 )
-from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
@@ -767,7 +767,7 @@ class TestAdherenceUpdater(TestCase):
             'schedule1',
             []
         )
-        update_episode_adherence_properties(self.domain, self.person_id)
+        update_single_episode(self.domain, episode)
 
         episode = CaseAccessors(self.domain).get_case(episode.case_id)
         self.assertDictEqual(

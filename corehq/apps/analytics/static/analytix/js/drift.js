@@ -1,14 +1,25 @@
-/* global _, Array, window */
+/* global Array, window */
 
 /**
  * Instantiates the Drift analytics and customer support messaging platform.
  */
-hqDefine('analytics/js/drift', function () {
+hqDefine('analytix/js/drift', [
+    'underscore',
+    'analytix/js/initial',
+    'analytix/js/logging',
+    'analytix/js/utils',
+    'analytix/js/hubspot',
+], function (
+    _,
+    initialAnalytics,
+    logging,
+    utils,
+    hubspot
+) {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('drift'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Drift'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = initialAnalytics.getFn('drift'),
+        _global = initialAnalytics.getFn('global'),
+        logger = logging.getLoggerForApi('Drift'),
         _data = {},
         _drift = {};
 
@@ -33,15 +44,15 @@ hqDefine('analytics/js/drift', function () {
         _data.apiId = _get('apiId');
 
         if (_data.apiId) {
-            _data.scriptUrl = "https://js.driftt.com/include/" + _utils.getDateHash() + "/" + _data.apiId + '.js';
+            _data.scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + _data.apiId + '.js';
             logger.verbose.log(_data.scriptUrl, "Adding Script");
-            _utils.insertScript(_data.scriptUrl, logger.debug.log, {
+            utils.insertScript(_data.scriptUrl, logger.debug.log, {
                 crossorigin: 'anonymous',
             });
         }
         _drift.on('emailCapture',function(e){
-            hqImport('analytics/js/hubspot').identify({email: e.data.email});
-            hqImport('analytics/js/hubspot').trackEvent('Identified via Drift');
+            hubspot.identify({email: e.data.email});
+            hubspot.trackEvent('Identified via Drift');
         });
     };
     if (_global('isEnabled')) {

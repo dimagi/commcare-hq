@@ -15,6 +15,7 @@ from corehq.apps.es.users import UserES
 from itertools import chain
 from corehq.apps.locations.models import SQLLocation
 from django.db.models import Sum
+from six.moves import range
 
 
 def get_performance_threshold(domain_name):

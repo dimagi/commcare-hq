@@ -5,6 +5,7 @@ from django.test import TestCase
 from pact.dot_data import cmp_observation, sort_observations
 from pact.enums import DOT_ADHERENCE_EMPTY, DOT_OBSERVATION_DIRECT, DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_SELF, DOT_ADHERENCE_UNCHECKED
 from pact.models import CObservation
+from six.moves import range
 
 
 def _observationGenerator(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
@@ -14,7 +15,7 @@ def _observationGenerator(encounter_date, observation_date, adherence=DOT_ADHERE
 
 
 def generateDirect(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
-    obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
+    obs = _observationGenerator(encounter_date, observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_DIRECT
     return obs
 
@@ -30,19 +31,19 @@ def generateReconciliation():
 
 
 def generatePillbox(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
-    obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
+    obs = _observationGenerator(encounter_date, observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_PILLBOX
     return obs
 
 
 def generateSelf(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
-    obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
+    obs = _observationGenerator(encounter_date, observation_date, adherence=adherence)
     obs.method=DOT_OBSERVATION_SELF
     return obs
 
 
 def generateAny(encounter_date, observation_date, adherence=DOT_ADHERENCE_EMPTY):
-    obs = _observationGenerator(encounter_date,observation_date, adherence=adherence)
+    obs = _observationGenerator(encounter_date, observation_date, adherence=adherence)
     obs.method=random.choice([DOT_OBSERVATION_PILLBOX, DOT_OBSERVATION_PILLBOX])
     return obs
 
@@ -134,7 +135,7 @@ class dotsAlgorithmTests(TestCase):
         self.assertEqual(no_direct_winner.encounter_date, no_direct_sorted[0].encounter_date)
 
         #at least one direct
-        direct = generateDirect(datetime.utcnow() + timedelta(days=random.randint(-100,100)), observed_date)
+        direct = generateDirect(datetime.utcnow() + timedelta(days=random.randint(-100, 100)), observed_date)
         with_direct = [generateAny(x, observed_date) for x in encounter_dates] + [direct]
         random.shuffle(with_direct)
 

@@ -48,7 +48,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
                     template_list.append(os.path.join(base_dir, filename))
 
         # Filter lines that are not html and strip whitespace
-        filenames = filter(lambda name: name.endswith('.html'), map(lambda name: name.strip(), template_list))
+        filenames = filter(lambda name: name.endswith('.html'), [name.strip() for name in template_list])
 
         for filename in filenames:
             with open(filename, 'r') as f:

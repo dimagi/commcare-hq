@@ -17,6 +17,34 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
             templateUrl: 'reportIssueModal.html',
         });
     };
+
+    // hack to have the same width between origin table and fixture headers,
+    // without this fixture headers are bigger and not align to original columns
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                var hasClass = [].some.call(mutation.addedNodes, function(el) {
+                    return el.classList !== void(0) && el.classList.contains('fixedHeader-floating');
+                });
+                if (hasClass) {
+                    if ($scope.$route.current.pathParams.step === 'beneficiary') {
+                        var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
+                        mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
+                    } else {
+                        mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + 'display: none;');
+                    }
+                }
+            }
+        });
+    });
+
+    var config = {
+        attributes: true,
+        childList: true,
+        characterData: true,
+    };
+
+    observer.observe(document.body, config);
 }
 
 MainController.$inject = [

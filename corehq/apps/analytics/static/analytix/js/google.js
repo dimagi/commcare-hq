@@ -1,15 +1,27 @@
-/* globals _, $, Array, window */
+/* globals Array, window */
 /**
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).
  */
-hqDefine('analytics/js/google', function () {
+hqDefine('analytix/js/google', [
+    'jquery',
+    'underscore',
+    'analytix/js/initial',
+    'analytix/js/logging',
+    'analytix/js/utils',
+], function (
+    $,
+    _,
+    initialAnalytics,
+    logging,
+    utils
+) {
     'use strict';
-    var _get = hqImport('analytics/js/initial').getFn('google'),
-        _global = hqImport('analytics/js/initial').getFn('global'),
-        logger = hqImport('analytics/js/logging').getLoggerForApi('Google Analytics'),
-        _utils = hqImport('analytics/js/utils'),
+    var _get = initialAnalytics.getFn('google'),
+        _global = initialAnalytics.getFn('global'),
+        logger = logging.getLoggerForApi('Google Analytics'),
         _data = {},
+        module = {},
         _gtag = function () {};
 
     var __init__ = function () {
@@ -18,7 +30,7 @@ hqDefine('analytics/js/google', function () {
 
         if (_data.apiId) {
             _data.scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + _data.apiId;
-            _utils.insertScript(_data.scriptUrl, logger.debug.log);
+            utils.insertScript(_data.scriptUrl, logger.debug.log);
         }
 
         window.dataLayer = window.dataLayer || [];
@@ -84,6 +96,8 @@ hqDefine('analytics/js/google', function () {
             }
             logger.debug.log(logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
             _gtag('event', eventAction, params);
+        } else if (eventCallback) {
+            eventCallback();
         }
     };
 
@@ -101,7 +115,7 @@ hqDefine('analytics/js/google', function () {
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
         if (_global('isEnabled')) {
-            _utils.trackClickHelper(
+            utils.trackClickHelper(
                 element,
                 function (callbackFn) {
                     trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);
@@ -109,6 +123,15 @@ hqDefine('analytics/js/google', function () {
             );
             logger.debug.log(logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
         }
+    };
+
+
+    module = {
+        logger: logger,
+        track: {
+            event: trackEvent,
+            click: trackClick,
+        },
     };
 
     /**
@@ -129,7 +152,7 @@ hqDefine('analytics/js/google', function () {
              * @param {function} eventCallback - (optional) Event callback fn
              */
             event: function (eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-                trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
+                module.track.event(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
             },
             /**
              * @param {(object|string)} element - The element (or a selector) whose clicks you want to track.
@@ -139,17 +162,13 @@ hqDefine('analytics/js/google', function () {
              * @param {object} eventParameters - (optional) Extra event parameters
              */
             click: function (element, eventAction, eventLabel, eventValue, eventParameters) {
-                trackClick(element, eventCategory, eventLabel, eventValue, eventParameters);
+                // directly reference what the module returns instead of the private function,
+                // as some mocha tests will want to replace the module's returned functions
+                module.track.click(element, eventCategory, eventLabel, eventValue, eventParameters);
             },
         };
     };
 
-    return {
-        logger: logger,
-        track: {
-            event: trackEvent,
-            click: trackClick,
-        },
-        trackCategory: trackCategory,
-    };
+    module.trackCategory = trackCategory;
+    return module;
 });

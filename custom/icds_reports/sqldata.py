@@ -8,7 +8,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND
+from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
@@ -24,6 +24,7 @@ from couchexport.shortcuts import export_response
 from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import range
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -1850,11 +1851,37 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 group_by.append(column.slug)
         return group_by
 
+    def _map_filter_name_to_sql_filter(self, filter_name):
+        return {
+            'unweighed': RawFilter('recorded_weight IS NULL'),
+            'umeasured': RawFilter('recorded_height IS NULL'),
+            'severely_underweight': RawFilter("current_month_nutrition_status = 'severely_underweight'"),
+            'moderately_underweight': RawFilter("current_month_nutrition_status = 'moderately_underweight'"),
+            'normal_wfa': RawFilter("current_month_nutrition_status = 'normal'"),
+            'severely_stunted': RawFilter("current_month_stunting = 'severe'"),
+            'moderately_stunted': RawFilter("current_month_stunting = 'moderate'"),
+            'normal_hfa': RawFilter("current_month_stunting = 'normal'"),
+            'severely_wasted': RawFilter("current_month_wasting = 'severe'"),
+            'moderately_wasted': RawFilter("current_month_wasting = 'moderate'"),
+            'normal_wfh': RawFilter("current_month_wasting = 'normal'"),
+        }[filter_name]
+
+    def _build_additional_filters(self, filters):
+        if len(filters) == 1:
+            return self._map_filter_name_to_sql_filter(filters[0])
+        return ORFilter([
+            self._map_filter_name_to_sql_filter(filter_name)
+            for filter_name in filters
+        ])
+
     @property
     def filters(self):
         filters = []
         for key, value in six.iteritems(self.config):
             if key == 'domain':
+                continue
+            elif key == 'filters':
+                filters.append(self._build_additional_filters(value))
                 continue
             filters.append(EQ(key, key))
         return filters

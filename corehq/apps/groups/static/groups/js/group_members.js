@@ -29,10 +29,8 @@ hqDefine("groups/js/group_members", function() {
         // Delete group event
         var $deleteGroupModalForm = $("#delete_group_modal form");
         $("button:submit", $deleteGroupModalForm).click(function(){
-            ga_track_event("Editing Group", "Deleted Group", initial_page_data("group_id"), {
-                'hitCallback': function() {
-                    $deleteGroupModalForm.submit();
-                },
+            hqImport('analytix/js/google').track.event("Editing Group", "Deleted Group", initial_page_data("group_id"), "", {}, function() {
+                $deleteGroupModalForm.submit();
             });
             return false;
         });
@@ -76,7 +74,7 @@ hqDefine("groups/js/group_members", function() {
                 }
 
                 if (gaEventLabel){
-                    ga_track_event('Editing Group', gaEventLabel, initial_page_data("group_id"));
+                    hqImport('analytix/js/google').track.event('Editing Group', gaEventLabel, initial_page_data("group_id"));
                 }
             };
         }

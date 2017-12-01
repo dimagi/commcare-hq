@@ -17,6 +17,8 @@ import urllib
 import re
 from django.utils import html
 from custom.utils.utils import clean_IN_filter_value
+from six.moves import range
+from six.moves import map
 
 
 def _get_grouping(prop_dict):
@@ -517,8 +519,8 @@ class TableCardReportIndividualPercentSqlData(TableCardSqlData):
             if 'html' in row:
                 row = remove_tags(row['html'])
 
-            init_values = map(int, re.findall(r'\d+', total_row[idx]['html']))
-            new_values = map(int, re.findall(r'\d+', row))
+            init_values = list(map(int, re.findall(r'\d+', total_row[idx]['html'])))
+            new_values = list(map(int, re.findall(r'\d+', row)))
 
             init_values[0] += new_values[0]
             init_values[1] += new_values[1]

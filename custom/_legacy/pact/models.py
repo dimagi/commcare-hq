@@ -19,6 +19,7 @@ from pact.enums import (
 )
 from pact.regimen import regimen_string_from_doc
 import six
+from six.moves import range
 
 
 def make_uuid():
@@ -309,7 +310,7 @@ class PactPatientCase(CommCareCase):
 
     @property
     def phones(self):
-        for ix in range(1,6):
+        for ix in range(1, 6):
             if hasattr(self, 'Phone%d' % ix) and hasattr(self, 'Phone%dType' % ix):
                 number = getattr(self, "Phone%d" % ix, None)
                 if number is not None and number != "":

@@ -6,6 +6,7 @@ from corehq.apps.users.models import CouchUser, WebUser, AnonymousCouchUser
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 import six
+from functools import reduce
 
 
 def coerce_timezone_value(value):

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime
 from decimal import Decimal
-import itertools
 import jsonfield
 
 from django.db import models
@@ -21,6 +20,7 @@ from dimagi.utils.couch.database import iter_docs
 # move these too
 from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
 import six
+from six.moves import map
 
 
 class Product(Document):
@@ -280,7 +280,7 @@ class ProductQueriesMixin(object):
         ids = self.product_ids()
         products = iter_docs(Product.get_db(), ids)
         if wrapped:
-            return itertools.imap(Product.wrap, products)
+            return map(Product.wrap, products)
         return products
 
 

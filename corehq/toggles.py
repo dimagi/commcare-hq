@@ -1155,7 +1155,7 @@ DATA_MIGRATION = StaticToggle(
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users or Locations (LocationRestrictedEMWF) filter',
+    'Make the Worker Activity Report use the Groups or Users or Locations filter',
     TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
@@ -1179,7 +1179,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
     always_enabled={
         "icds-dashboard-qa",
         "icds-sql",
@@ -1355,13 +1355,6 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_NEW = StaticToggle(
-    'analytics_new',
-    "Use refactored analytics across all of HQ (for QA purposes).",
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )

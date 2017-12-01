@@ -100,6 +100,8 @@ from corehq.apps.export.utils import (
     domain_has_excel_dashboard_access,
 )
 import six
+from six.moves import range
+from six.moves import map
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -156,7 +158,7 @@ class ExportItem(DocumentSchema):
     label = StringProperty()
     tag = StringProperty()
     last_occurrences = DictProperty()
-    transform = StringProperty(choices=TRANSFORM_FUNCTIONS.keys())
+    transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
@@ -220,7 +222,7 @@ class ExportItem(DocumentSchema):
 
     @property
     def readable_path(self):
-        return '.'.join(map(lambda node: node.name, self.path))
+        return '.'.join([node.name for node in self.path])
 
 
 class ExportColumn(DocumentSchema):
@@ -239,7 +241,7 @@ class ExportColumn(DocumentSchema):
     help_text = StringProperty()
 
     # A transforms that deidentifies the value
-    deid_transform = StringProperty(choices=DEID_TRANSFORM_FUNCTIONS.keys())
+    deid_transform = StringProperty(choices=list(DEID_TRANSFORM_FUNCTIONS))
 
     def get_value(self, domain, doc_id, doc, base_path, transform_dates=False, row_index=None, split_column=False):
         """
@@ -844,7 +846,7 @@ class ExportInstance(BlobMixin, Document):
         :param top: When True inserts the columns at the top, when false at the bottom
         :param column_initialization_data: Extra data to be passed to the column if needed on initialization
         """
-        properties = map(copy, properties)
+        properties = list(map(copy, properties))
         if top:
             properties = reversed(properties)
 
@@ -1288,7 +1290,7 @@ class InferredExportGroupSchema(ExportGroupSchema):
 
         item = item_cls(
             path=path,
-            label='.'.join(map(lambda node: node.name, path)),
+            label='.'.join([node.name for node in path]),
             inferred=True,
             inferred_from=set([inferred_from or UNKNOWN_INFERRED_FROM])
         )
@@ -1995,7 +1997,7 @@ class CaseExportDataSchema(ExportDataSchema):
             app.master_id,  # If not copy, must be current app
             app.version,
         ))
-        if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
+        if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
                 app.master_id,
                 app.version,
@@ -2016,7 +2018,7 @@ class CaseExportDataSchema(ExportDataSchema):
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case.
         """
-        assert len(case_property_mapping.keys()) == 1
+        assert len(list(case_property_mapping)) == 1
         schema = cls()
 
         group_schema = ExportGroupSchema(
@@ -2056,14 +2058,14 @@ class CaseExportDataSchema(ExportDataSchema):
     @classmethod
     def _generate_schema_for_case_history(cls, case_property_mapping, app_id, app_version):
         """Generates the schema for the Case History tab on the export page"""
-        assert len(case_property_mapping.keys()) == 1
+        assert len(list(case_property_mapping)) == 1
         schema = cls()
 
         group_schema = ExportGroupSchema(
             path=CASE_HISTORY_TABLE,
             last_occurrences={app_id: app_version},
         )
-        unknown_case_properties = set(case_property_mapping[case_property_mapping.keys()[0]])
+        unknown_case_properties = set(case_property_mapping[list(case_property_mapping)[0]])
         unknown_case_properties -= set(KNOWN_CASE_PROPERTIES)
 
         def _add_to_group_schema(group_schema, path_start, prop, app_id, app_version):
@@ -2254,7 +2256,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
         row = []
         for option in self.user_defined_options:
             row.append(selected.pop(option, None))
-        row.append(" ".join(selected.keys()))
+        row.append(" ".join(selected))
         return row
 
     def get_headers(self, **kwargs):
@@ -2312,7 +2314,7 @@ class SplitGPSExportColumn(ExportColumn):
             _(u'{}: altitude (meters)'),
             _(u'{}: accuracy (meters)'),
         ]
-        return map(lambda header_template: header_template.format(header), header_templates)
+        return [header_template.format(header) for header_template in header_templates]
 
     def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
         value = super(SplitGPSExportColumn, self).get_value(
@@ -2389,7 +2391,7 @@ class SplitExportColumn(ExportColumn):
         for option in self.item.options:
             row.append(selected.pop(option.value, EMPTY_VALUE))
         if not self.ignore_unspecified_options:
-            row.append(" ".join(selected.keys()))
+            row.append(" ".join(selected))
         return row
 
     def get_headers(self, split_column=False):
@@ -2448,10 +2450,7 @@ class CaseIndexExportColumn(ExportColumn):
         case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
-        case_ids = map(
-            lambda index: index.get('referenced_id'),
-            filter(lambda index: index.get('referenced_type') == case_type, indices)
-        )
+        case_ids = [index.get('referenced_id') for index in filter(lambda index: index.get('referenced_type') == case_type, indices)]
         return ' '.join(case_ids)
 
 
@@ -2482,10 +2481,7 @@ class StockFormExportColumn(ExportColumn):
         # In order to mitigate this, we encode the question id into the path so we do not
         # have to create a new TableConfiguration for the edge case mentioned above.
         for idx, path_name in enumerate(path):
-            is_stock_question_element = any(map(
-                lambda tag_name: path_name.startswith('{}:'.format(tag_name)),
-                STOCK_QUESTION_TAG_NAMES
-            ))
+            is_stock_question_element = any([path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES])
             if is_stock_question_element:
                 question_path, question_id = path_name.split(':')
                 path[idx] = question_path
@@ -2538,7 +2534,7 @@ class StockExportColumn(ExportColumn):
     @memoized
     def _column_tuples(self):
         combos = get_ledger_section_entry_combinations(self.domain)
-        section_and_product_ids = sorted(set(map(lambda combo: (combo.entry_id, combo.section_id), combos)))
+        section_and_product_ids = sorted(set([(combo.entry_id, combo.section_id) for combo in combos]))
         return section_and_product_ids
 
     def _get_product_name(self, product_id):

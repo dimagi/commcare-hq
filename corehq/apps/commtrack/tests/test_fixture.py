@@ -18,6 +18,7 @@ from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.tests import util
+from six.moves import range
 
 
 class FixtureTest(TestCase, TestXmlMixin):

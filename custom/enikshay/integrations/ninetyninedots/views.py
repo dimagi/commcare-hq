@@ -8,14 +8,14 @@ from django.utils.dateparse import parse_datetime
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, check_domain_migration
 from dimagi.utils.web import json_response
+from dimagi.utils.logging import notify_exception
 
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.integrations.ninetyninedots.utils import (
-    create_adherence_cases,
+    AdherenceCaseFactory,
     update_adherence_confidence_level,
     update_default_confidence_level,
-    update_episode_adherence_properties,
 )
 import six
 
@@ -57,14 +57,22 @@ def update_patient_adherence(request, domain):
 
     beneficiary_id = request_json.get('beneficiary_id')
     adherence_values = request_json.get('adherences')
+    factory = AdherenceCaseFactory(domain, beneficiary_id)
 
     try:
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
-        create_adherence_cases(domain, beneficiary_id, adherence_values)
-        update_episode_adherence_properties(domain, beneficiary_id)
+        factory.create_adherence_cases(adherence_values)
     except AdherenceException as e:
-        return json_response({"error": e.message}, status_code=400)
+        return json_response({"error": six.text_type(e)}, status_code=400)
+
+    try:
+        factory.update_episode_adherence_properties()
+    except AdherenceException as e:
+        notify_exception(
+            request,
+            message=("An error occurred updating the episode case after receiving a 99DOTS"
+                     "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
 
     return json_response({"success": "Patient adherences updated."})
 

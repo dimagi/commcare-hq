@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.test.utils import override_settings
 from mock import Mock, patch
+from six.moves import range
 
 
 def patch_datetime_api(timestamp):

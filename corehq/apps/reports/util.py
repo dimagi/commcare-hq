@@ -40,6 +40,8 @@ from .analytics.esaccessors import (
     get_username_in_last_form_user_id_submitted,
 )
 import six
+from six.moves import range
+from six.moves import map
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -250,7 +252,7 @@ def get_simplified_users(user_es_query):
     """
     fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
     users = user_es_query.fields(fields).run().hits
-    users = map(_report_user_dict, users)
+    users = list(map(_report_user_dict, users))
     return sorted(users, key=lambda u: u['username_in_report'])
 
 
@@ -490,12 +492,13 @@ def validate_xform_for_edit(xform):
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
-def is_query_too_big(domain, mobile_user_and_group_slugs):
+def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
     user_es_query = ExpandedMobileWorkerFilter.user_es_query(
         domain,
         mobile_user_and_group_slugs,
+        request_user,
     )
     return user_es_query.count() > USER_QUERY_LIMIT
 

@@ -40,12 +40,55 @@ class TestImmunizationCoverage(TestCase):
                     "st1": {
                         "all": 573,
                         "children": 85,
+                        'original_name': [],
                         "fillKey": "0%-20%"
                     },
                     "st2": {
                         "all": 620,
                         "children": 45,
+                        'original_name': [],
                         "fillKey": "0%-20%"
+                    }
+                },
+                "slug": "institutional_deliveries",
+                "label": "Percent Immunization Coverage at 1 year"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_immunization_coverage_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of children 1 year+ who have received complete immunization as per "
+                            "National Immunization Schedule of India required by age 1."
+                            "<br/><br/>"
+                            "This includes the following immunizations:<br/>"
+                            "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                            "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
+                    "average": 14.834205933682373
+                },
+                "fills": {
+                    "0%-20%": "#de2d26",
+                    "20%-60%": "#fc9272",
+                    "60%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'all': 573,
+                        'original_name': ['b1', 'b2'],
+                        'children': 85,
+                        'fillKey': '0%-20%'
                     }
                 },
                 "slug": "institutional_deliveries",

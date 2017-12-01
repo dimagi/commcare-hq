@@ -10,6 +10,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.nikshay_datamigration.models import Followup
+from six.moves import map
 
 
 class Command(BaseCommand):

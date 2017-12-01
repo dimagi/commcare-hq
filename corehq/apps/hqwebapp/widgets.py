@@ -16,6 +16,7 @@ import json
 from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
 import six
+from six.moves import range
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -48,7 +49,7 @@ class BootstrapAddressField(MultiValueField):
     def __init__(self,num_lines=3,*args,**kwargs):
         fields = tuple([CharField(widget=TextInput(attrs={'class':'input-xxlarge'})) for _ in range(0, num_lines)])
         self.widget = BootstrapAddressFieldWidget(widgets=[field.widget for field in fields])
-        super(BootstrapAddressField,self).__init__(fields=fields,*args,**kwargs)
+        super(BootstrapAddressField, self).__init__(fields=fields,*args,**kwargs)
 
     def compress(self, data_list):
         return data_list
@@ -112,7 +113,7 @@ $(function() {
         tags: %s
     });
 });
-</script>\n""" % (attrs['id'], json.dumps(map(lambda c: {'text': c, 'id': c}, self.choices))))
+</script>\n""" % (attrs['id'], json.dumps([{'text': c, 'id': c} for c in self.choices])))
 
         else:
             output = mark_safe("")

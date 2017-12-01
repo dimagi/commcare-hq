@@ -24,7 +24,7 @@ class DatabaseShardInfo(object):
                 self._unexpected_data[shard_id][model] += object_count
 
     def __str__(self):
-        return """"
+        return """
 ========================================
               {db}
 
@@ -38,6 +38,19 @@ class DatabaseShardInfo(object):
             expected_data=self._get_formatted_expected_data(),
             unexpected_data=self._get_formatted_unexpected_data(),
         )
+
+    def to_csv(self):
+        def _add_to_rows(rows, data, label):
+            for shard_id in sorted(data.keys()):
+                rows.extend([
+                    '{}, {}, {}, {}'.format(shard_id, model.__name__, data[shard_id][model], label)
+                    for model in sorted(data[shard_id].keys())
+                ])
+
+        rows = []
+        _add_to_rows(rows, self._expected_data, 'valid')
+        _add_to_rows(rows, self._unexpected_data, 'INVALID')
+        return '\n'.join(rows)
 
     def _get_formatted_expected_data(self):
         return self._get_formatted_data(self._expected_data)

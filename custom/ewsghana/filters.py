@@ -20,6 +20,7 @@ from custom.common import ALL_OPTION
 from corehq.apps.domain.models import Domain
 from custom.ewsghana.utils import ews_date_format, calculate_last_period
 import six
+from six.moves import range
 
 
 class ProductByProgramFilter(BaseSingleOptionFilter):

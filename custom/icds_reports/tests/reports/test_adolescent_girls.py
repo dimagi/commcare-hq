@@ -33,12 +33,50 @@ class TestAdolescentGirls(TestCase):
                 "data": {
                     "st1": {
                         "valid": 22,
+                        "all": 22,
+                        'original_name': [],
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
                         "valid": 25,
+                        "all": 25,
+                        'original_name': [],
                         "fillKey": "Adolescent Girls"
                     }
+                },
+                "slug": "adolescent_girls",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_adolescent_girls_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Total number of adolescent girls who are enrolled for ICDS services",
+                    "average": 11.0,
+                    "average_format": "number"
+                },
+                "fills": {
+                    "Adolescent Girls": "#006fdf",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'valid': 22,
+                        'all': 22,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Adolescent Girls'}
                 },
                 "slug": "adolescent_girls",
                 "label": ""
@@ -84,24 +122,24 @@ class TestAdolescentGirls(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
-                                "y": 57.0,
+                                "y": 57,
                                 "x": 1491004800000,
-                                "all": 0
+                                "all": 57
                             },
                             {
-                                "y": 47.0,
+                                "y": 47,
                                 "x": 1493596800000,
-                                "all": 0
+                                "all": 47
                             }
                         ],
                         "key": "Total number of adolescent girls who are enrolled for ICDS services"
@@ -138,10 +176,12 @@ class TestAdolescentGirls(TestCase):
                 "info": "Total number of adolescent girls who are enrolled for ICDS services",
                 "tooltips_data": {
                     "s2": {
+                        "all": 6,
                         "valid": 6
                     },
                     "s1": {
-                        "valid": 5
+                        "valid": 5,
+                        "all": 5
                     },
                 },
                 "chart_data": [

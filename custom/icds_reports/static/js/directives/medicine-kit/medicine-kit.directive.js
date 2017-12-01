@@ -9,6 +9,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
     vm.label = "AWCs with Medicine Kit";
     vm.step = $routeParams.step;
@@ -22,6 +23,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
@@ -102,8 +105,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -116,7 +119,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -125,7 +128,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -185,13 +188,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var data_in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of AWCs with a Medicine Kit: <strong>" + $filter('indiaNumbers')(data_in_month.in_month) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs with a Medicine Kit: <strong>" + d3.format('.2%')(data_in_month.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, dataInMonth);
                 });
                 return chart;
             },
@@ -205,6 +203,12 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Number of AWCs with a Medicine Kit: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
+            + "<p>% of AWCs with a Medicine Kit: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

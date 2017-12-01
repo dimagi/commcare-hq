@@ -166,7 +166,7 @@ def validate_answer(event, text, v):
     # Validate longint
     elif event.datatype == "longint":
         try:
-            long(text)
+            int(text)
             valid = True
         except ValueError:
             error_msg = get_message(MSG_INVALID_LONG, v)

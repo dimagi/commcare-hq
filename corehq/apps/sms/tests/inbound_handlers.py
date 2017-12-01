@@ -298,7 +298,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
         self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
@@ -381,7 +381,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
         self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
@@ -431,7 +431,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
         self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
@@ -481,7 +481,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
         self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
@@ -531,7 +531,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
         self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 

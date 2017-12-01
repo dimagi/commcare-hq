@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from gevent import monkey
 import six
+from six.moves import map
 monkey.patch_all()
 
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG

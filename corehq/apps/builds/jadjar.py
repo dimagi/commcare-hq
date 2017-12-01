@@ -70,7 +70,7 @@ def sign_jar(jad, jar, use_j2me_endpoint=False):
     key_alias   = settings.JAR_SIGN['key_alias']
     store_pass  = settings.JAR_SIGN['store_pass']
     key_pass    = settings.JAR_SIGN['key_pass']
-    jad_tool    = os.path.join(os.path.abspath(os.path.dirname(__file__)),'JadTool.jar')
+    jad_tool    = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'JadTool.jar')
     # remove traces of former jar signings, if any
     jad.update({
         "MIDlet-Certificate-1-1" : None,
