@@ -7,7 +7,6 @@
     Options. Note that setting these to False will not necessarily exclude that library,
     as a different library may depend on it.
         underscore: Include underscore
-        jquery: Include jQuery and common jQuery plugins, e.g., jquery.cookie
         ko: Include knockout
         analytics: Include Google Analytics, Kissmetrics, etc.
         hq: Include initial_page_data and hq.helpers.js, needed for most HQ pages.
@@ -17,19 +16,17 @@
     <script src="{% static 'underscore/underscore-min.js' %}"></script>
 {% endif %}
 
-{% if jquery or analytics or hq %}
-    {% if request.use_legacy_jquery %}
-        <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
-    {% else %}
-        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-    {% endif %}
-    {% compress js %}
-        <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
-        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
-        <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
-        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-    {% endcompress %}
+{% if request.use_legacy_jquery %}
+    <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
+{% else %}
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 {% endif %}
+{% compress js %}
+    <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
+    <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
+    <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
+    <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+{% endcompress %}
 
 {% comment %}
     Required for inline edit widget. Also used by cloudcare.
