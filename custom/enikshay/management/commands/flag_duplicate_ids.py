@@ -48,9 +48,10 @@ class Command(BaseCommand):
         print("Logging actions to {}".format(filename))
         with open(filename, 'w') as f:
             if self.debug_info:
-                logfile = csv.DictWriter(f, self.logfile_fields + self.logfile_debug_fields)
+                fields = self.logfile_fields + self.logfile_debug_fields
             else:
-                logfile = csv.DictWriter(f, self.logfile_fields)
+                fields = self.logfile_fields
+            logfile = csv.DictWriter(f, fields, extrasaction='ignore')
             logfile.writeheader()
             for chunk in chunked(self.get_updates(logfile), 100):
                 if commit:
