@@ -112,15 +112,25 @@
             <div>
                 <!-- ko if: help() -->
                 <a
-                    class="help-popover"
-                    tabindex="0"
+                    class="help-text-trigger"
                     role="button"
-                    data-trigger="focus"
                     data-placement="top"
-                    data-toggle="popover"
-                    data-bind="attr: { 'data-content': help }">
+                    data-toggle="modal"
+                    data-target="#help-text-modal">
                     <i class="fa fa-info-circle"></i>
                 </a>
+                <div id="help-text-modal" class="modal fade" role="dialog" tabindex='-1'>
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-body">
+                                <p align="left" data-bind="text: help"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- /ko -->
                 <span data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
             </div>
