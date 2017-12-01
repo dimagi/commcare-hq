@@ -10,6 +10,7 @@ from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.util import get_obj
+from corehq.apps.analytics.tasks import track_workflow
 
 
 class DictObject(object):
@@ -104,6 +105,11 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 content_type="application/json",
                 status=401))
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
+            if type(self) is DomainSpecificResourceMixin:
+                track_workflow(request.couch_user.username, "API Request", properties={
+                    'domain': request.domain,
+                    'is_dimagi': request.couch_user.is_dimagi
+                })
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:
             raise ImmediateHttpResponse(HttpResponse(
