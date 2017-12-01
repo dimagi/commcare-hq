@@ -5,7 +5,7 @@ import hashlib
 from itertools import islice
 import os
 import tempfile
-from urllib2 import URLError
+from six.moves.urllib.error import URLError
 from dimagi.ext.couchdbkit import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty

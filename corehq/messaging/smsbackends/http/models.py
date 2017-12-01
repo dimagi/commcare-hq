@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from urllib import urlencode
-from urllib2 import urlopen
+from six.moves.urllib.parse import urlencode
+from six.moves.urllib.request import urlopen
 import sys
 from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.forms import BackendForm

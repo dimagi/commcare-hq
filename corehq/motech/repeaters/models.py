@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime, timedelta
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import urlparse
 import warnings
 
@@ -320,7 +320,7 @@ class FormRepeater(Repeater):
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
-            url_parts[4] = urllib.urlencode(query)
+            url_parts[4] = six.moves.urllib.parse.urlencode(query)
             return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import random
 from contextlib import contextmanager
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 import sqlalchemy

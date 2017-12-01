@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 import datetime
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 import math
 import operator
 from pygooglechart import ScatterChart

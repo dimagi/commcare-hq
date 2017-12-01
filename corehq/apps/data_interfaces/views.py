@@ -529,8 +529,8 @@ class XFormManagementView(DataInterfaceSection):
         if 'select_all' in self.request.POST:
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in an async task instead
-            import urllib
-            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
+            import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+            form_query_string = six.moves.urllib.parse.unquote(self.request.POST.get('select_all'))
             from django.http import HttpRequest, QueryDict
 
             _request = HttpRequest()

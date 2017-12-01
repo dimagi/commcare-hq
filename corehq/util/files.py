@@ -1,7 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import
 from unidecode import unidecode
-from urllib import quote
+from six.moves.urllib.parse import quote
 import six
 
 

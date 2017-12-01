@@ -3,7 +3,7 @@ from smtplib import SMTPSenderRefused
 import uuid
 import requests
 import re
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives

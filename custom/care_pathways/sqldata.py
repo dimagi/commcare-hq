@@ -13,7 +13,7 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.care_pathways.utils import get_domain_configuration, is_mapping, get_mapping, is_domain, is_practice, get_pracices, get_domains, TableCardDataIndividualFormatter, TableCardDataGroupsFormatter, \
     get_domains_with_next, TableCardDataGroupsIndividualFormatter
 from sqlalchemy import select
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import re
 from django.utils import html
 from custom.utils.utils import clean_IN_filter_value
@@ -229,7 +229,7 @@ class AdoptionBarChartReportSqlData(CareSqlData):
             text = next((item for item in get_pracices(self.domain) if item['val'] == group_name), None)['text']
 
         from custom.care_pathways.reports.adoption_bar_char_report import AdoptionBarChartReport
-        url = html.escape(AdoptionBarChartReport.get_url(*[self.domain]) + "?" + urllib.urlencode(self.request_params))
+        url = html.escape(AdoptionBarChartReport.get_url(*[self.domain]) + "?" + six.moves.urllib.parse.urlencode(self.request_params))
         return html.mark_safe("<a class='ajax_dialog' href='%s' target='_blank'>%s</a>" % (url, text))
 
     @property

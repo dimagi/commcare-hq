@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from collections import namedtuple, OrderedDict
 import datetime
 import functools
@@ -778,7 +778,7 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(urllib.unquote(request.body))
+        report_data = json.loads(six.moves.urllib.parse.unquote(request.body))
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore filters
