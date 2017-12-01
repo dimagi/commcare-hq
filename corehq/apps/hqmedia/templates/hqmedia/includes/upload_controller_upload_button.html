@@ -1,0 +1,15 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<button type="button" class="btn btn-default"
+        data-toggle="modal" data-target="#{{ slug }}"
+        data-bind="
+            attr: { 'data-hqmediapath': currentPath },
+           event: {
+                mediaUploadComplete: uploadComplete,
+                click: passToUploadController
+           }">
+        <i class="fa fa-cloud-upload"></i>
+        <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
+        <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
+</button>

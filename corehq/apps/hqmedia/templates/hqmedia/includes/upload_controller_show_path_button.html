@@ -1,0 +1,13 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<button type="button" class="btn btn-default pull-right"
+        data-bind="
+            visible: showDefaultPath,
+            click: function () {
+                setCustomPath();
+                analytics.usage('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
+            }">
+    <i class="fa fa-cog"></i>
+    {% trans 'Set Path' %}
+</button>
