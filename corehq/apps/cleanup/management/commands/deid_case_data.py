@@ -6,6 +6,7 @@ from django.db import connections
 
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.log import with_progress_bar
 
 DEID_FIELDS = {
     'household': [
@@ -80,14 +81,17 @@ class Command(BaseCommand):
             global_min_id, global_max_id = result.min_id, result.max_id
 
         print("Data range: %s to %s" % (global_min_id, global_max_id))
-        rows_to_update = 1000
+        rows_to_update = 10000
+        batches = [
+            (min, min + rows_to_update)
+            for min in range(global_min_id, global_max_id, rows_to_update)
+        ]
         for case_type, fields in DEID_FIELDS.items():
-            min_id = global_min_id
-            max_id = min(min_id + rows_to_update, global_max_id)
-            print("Updating data from %s to %s" % (min_id, max_id))
+            print("Updating '%s' data" % case_type)
             keys = '{"%s"}' % '", "'.join(fields)  # '{"f1","f2",...}'
             values = '{%s}' % ','.join(['""'] * len(fields))  # '{"","",...}'
-            while max_id <= global_max_id:
+            for batch in with_progress_bar(batches, oneline=True):
+                min_id, max_id = batch
                 with connections[database].cursor() as cursor:
                     cursor.execute("""
                         UPDATE form_processor_commcarecasesql
