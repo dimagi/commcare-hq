@@ -923,6 +923,13 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
+CASE_PROPERTY_HISTORY = StaticToggle(
+    'case_property_history',
+    'Shows a modal on the case property page allowing you to see the history of various case properties',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
     'Basic modules can be child modules',
