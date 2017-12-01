@@ -10,7 +10,7 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.enikshay.case_utils import get_open_referral_case_from_person, get_latest_trail_case_from_person, \
-    get_open_episode_case_from_person
+    get_open_episode_case_from_person, get_recent_referral_case_from_person
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.dates import force_to_datetime
@@ -356,5 +356,73 @@ def key_populations_expression(spec, context):
     wrapped = KeyPopulationsExpression.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.key_populations_expression, context)
+    )
+    return wrapped
+
+
+class MostRecentReferralCaseFromPerson(JsonObject):
+    """
+    An expression that returns the the most recent Referral Case from Person which pass the filters:
+       -> referral_status != 'rejected' and 'referral_closed_reason' != 'duplicate_referral_reconciliation'
+    """
+    type = TypeProperty('enikshay_most_recent_referral_from_person')
+
+    person_id_expression = DefaultProperty(required=True)
+
+    def configure(self, person_id_expression):
+        self._person_id_expression = person_id_expression
+
+    def __call__(self, item, context=None):
+        person_id = self._person_id_expression(item, context)
+        domain = context.root_doc['domain']
+
+        if not person_id:
+            return None
+        try:
+            referral = get_recent_referral_case_from_person(domain, person_id)
+        except ENikshayCaseNotFound:
+            return None
+        if referral:
+            return referral.to_json()
+        return None
+
+
+def most_recent_referral_expression(spec, context):
+    wrapped = MostRecentReferralCaseFromPerson.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.most_recent_referral_expression, context)
+    )
+    return wrapped
+
+
+class MostRecentEpisodeCaseFromPerson(JsonObject):
+    """
+    An expression that returns the the most recent Referral Case from Person which pass the filters:
+       -> referral_status != 'rejected' and 'referral_closed_reason' != 'duplicate_referral_reconciliation'
+    """
+    type = TypeProperty('enikshay_most_recent_episode_from_person')
+    person_id_expression = DefaultProperty(required=True)
+
+    def configure(self, person_id_expression):
+        self._person_id_expression = person_id_expression
+
+    def __call__(self, item, context=None):
+        person_id = self._person_id_expression(item, context)
+        domain = context.root_doc['domain']
+        if not person_id:
+            return None
+        try:
+            episode = get_open_episode_case_from_person(domain, person_id)
+        except ENikshayCaseNotFound:
+            return None
+        if episode:
+            return episode.to_json()
+        return None
+
+
+def most_recent_episode_expression(spec, context):
+    wrapped = MostRecentEpisodeCaseFromPerson.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.most_recent_episode_expression, context)
     )
     return wrapped

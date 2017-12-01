@@ -14,8 +14,8 @@
         "description": "A data source based on person cases to be used for the referred-in report",
         "base_item_expression": {
         },
-        "table_id": "person-for-referral-2017-06-23_v2",
-        "display_name": "person (for referral report) V2",
+        "table_id": "person-for-referral-2017-06-23_v3",
+        "display_name": "person (for referral report) V3",
         "configured_filter": {
             "type": "and",
             "filters": [
@@ -41,10 +41,17 @@
                 "is_nullable": true,
                 "column_id": "referred_to",
                 "expression": {
-                    "type": "enikshay_referred_to",
-                    "person_id_expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
                         "type": "property_name",
-                        "property_name": "_id"
+                        "property_name": "owner_id"
                     }
                 }
             },
@@ -57,10 +64,17 @@
                 "is_nullable": true,
                 "column_id": "date_of_referral",
                 "expression": {
-                    "type": "enikshay_date_of_referral",
-                    "person_id_expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
                         "type": "property_name",
-                        "property_name": "_id"
+                        "property_name": "referral_initiated_date"
                     }
                 }
             },
@@ -76,10 +90,17 @@
                 "is_nullable": true,
                 "column_id": "date_of_acceptance",
                 "expression": {
-                    "type": "enikshay_date_of_acceptance",
-                    "person_id_expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
                         "type": "property_name",
-                        "property_name": "_id"
+                        "property_name": "referral_closed_date"
                     }
                 }
             },
@@ -185,7 +206,7 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "enikshay_episode_from_person",
+                        "type": "enikshay_most_recent_episode_from_person",
                         "person_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
@@ -216,7 +237,7 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "enikshay_episode_from_person",
+                        "type": "enikshay_most_recent_episode_from_person",
                         "person_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
@@ -239,7 +260,7 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "enikshay_episode_from_person",
+                        "type": "enikshay_most_recent_episode_from_person",
                         "person_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
@@ -294,10 +315,17 @@
                     "type": "related_doc",
                     "related_doc_type": "Location",
                     "doc_id_expression": {
-                        "type": "enikshay_referred_to",
-                        "person_id_expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "enikshay_most_recent_referral_from_person",
+                            "person_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "value_expression": {
                             "type": "property_name",
-                            "property_name": "_id"
+                            "property_name": "owner_id"
                         }
                     }
                 }
@@ -313,10 +341,17 @@
                         "operator": "in",
                         "expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -338,10 +373,17 @@
                         "type": "nested",
                         "argument_expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -380,10 +422,17 @@
                     "type": "related_doc",
                     "related_doc_type": "Location",
                     "doc_id_expression": {
-                        "type": "enikshay_referred_to",
-                        "person_id_expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "enikshay_most_recent_referral_from_person",
+                            "person_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "value_expression": {
                             "type": "property_name",
-                            "property_name": "_id"
+                            "property_name": "owner_id"
                         }
                     }
                 }
@@ -399,10 +448,17 @@
                         "operator": "in",
                         "expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -424,10 +480,17 @@
                         "type": "nested",
                         "argument_expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -466,10 +529,17 @@
                     "type": "related_doc",
                     "related_doc_type": "Location",
                     "doc_id_expression": {
-                        "type": "enikshay_referred_to",
-                        "person_id_expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "enikshay_most_recent_referral_from_person",
+                            "person_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "value_expression": {
                             "type": "property_name",
-                            "property_name": "_id"
+                            "property_name": "owner_id"
                         }
                     }
                 }
@@ -485,10 +555,17 @@
                         "operator": "in",
                         "expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -510,10 +587,17 @@
                         "type": "nested",
                         "argument_expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -552,10 +636,17 @@
                     "type": "related_doc",
                     "related_doc_type": "Location",
                     "doc_id_expression": {
-                        "type": "enikshay_referred_to",
-                        "person_id_expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "enikshay_most_recent_referral_from_person",
+                            "person_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "value_expression": {
                             "type": "property_name",
-                            "property_name": "_id"
+                            "property_name": "owner_id"
                         }
                     }
                 }
@@ -571,10 +662,17 @@
                         "operator": "in",
                         "expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -596,10 +694,17 @@
                         "type": "nested",
                         "argument_expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -638,10 +743,17 @@
                     "type": "related_doc",
                     "related_doc_type": "Location",
                     "doc_id_expression": {
-                        "type": "enikshay_referred_to",
-                        "person_id_expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "enikshay_most_recent_referral_from_person",
+                            "person_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "value_expression": {
                             "type": "property_name",
-                            "property_name": "_id"
+                            "property_name": "owner_id"
                         }
                     }
                 }
@@ -657,10 +769,17 @@
                         "operator": "in",
                         "expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -682,10 +801,17 @@
                         "type": "nested",
                         "argument_expression": {
                             "location_id": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "ancestor_location",
@@ -713,10 +839,17 @@
                                     "type": "related_doc",
                                     "related_doc_type": "CommCareUser",
                                     "doc_id_expression": {
-                                        "type": "enikshay_referred_by",
-                                        "person_id_expression": {
+                                        "type": "nested",
+                                        "argument_expression": {
+                                            "type": "enikshay_most_recent_referral_from_person",
+                                            "person_id_expression": {
+                                                "type": "property_name",
+                                                "property_name": "_id"
+                                            }
+                                        },
+                                        "value_expression": {
                                             "type": "property_name",
-                                            "property_name": "_id"
+                                            "property_name": "opened_by"
                                         }
                                     }
                                 },
@@ -729,10 +862,17 @@
                                 ]
                             },
                             "expression_if_true": {
-                                "type": "enikshay_referred_by",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "opened_by"
                                 }
                             },
                             "type": "conditional",
@@ -744,10 +884,17 @@
                                 "type": "related_doc",
                                 "related_doc_type": "CommCareUser",
                                 "doc_id_expression": {
-                                    "type": "enikshay_referred_by",
-                                    "person_id_expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "enikshay_most_recent_referral_from_person",
+                                        "person_id_expression": {
+                                            "type": "property_name",
+                                            "property_name": "_id"
+                                        }
+                                    },
+                                    "value_expression": {
                                         "type": "property_name",
-                                        "property_name": "_id"
+                                        "property_name": "opened_by"
                                     }
                                 }
                             }
@@ -781,10 +928,17 @@
                                         "type": "related_doc",
                                         "related_doc_type": "CommCareUser",
                                         "doc_id_expression": {
-                                            "type": "enikshay_referred_by",
-                                            "person_id_expression": {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "enikshay_most_recent_referral_from_person",
+                                                "person_id_expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "_id"
+                                                }
+                                            },
+                                            "value_expression": {
                                                 "type": "property_name",
-                                                "property_name": "_id"
+                                                "property_name": "opened_by"
                                             }
                                         }
                                     },
@@ -797,10 +951,17 @@
                                     ]
                                 },
                                 "expression_if_true": {
-                                    "type": "enikshay_referred_by",
-                                    "person_id_expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "enikshay_most_recent_referral_from_person",
+                                        "person_id_expression": {
+                                            "type": "property_name",
+                                            "property_name": "_id"
+                                        }
+                                    },
+                                    "value_expression": {
                                         "type": "property_name",
-                                        "property_name": "_id"
+                                        "property_name": "opened_by"
                                     }
                                 },
                                 "type": "conditional",
@@ -812,10 +973,17 @@
                                     "type": "related_doc",
                                     "related_doc_type": "CommCareUser",
                                     "doc_id_expression": {
-                                        "type": "enikshay_referred_by",
-                                        "person_id_expression": {
+                                        "type": "nested",
+                                        "argument_expression": {
+                                            "type": "enikshay_most_recent_referral_from_person",
+                                            "person_id_expression": {
+                                                "type": "property_name",
+                                                "property_name": "_id"
+                                            }
+                                        },
+                                        "value_expression": {
                                             "type": "property_name",
-                                            "property_name": "_id"
+                                            "property_name": "opened_by"
                                         }
                                     }
                                 }
@@ -843,10 +1011,17 @@
                                                         "type": "related_doc",
                                                         "related_doc_type": "CommCareUser",
                                                         "doc_id_expression": {
-                                                            "type": "enikshay_referred_by",
-                                                            "person_id_expression": {
+                                                            "type": "nested",
+                                                            "argument_expression": {
+                                                                "type": "enikshay_most_recent_referral_from_person",
+                                                                "person_id_expression": {
+                                                                    "type": "property_name",
+                                                                    "property_name": "_id"
+                                                                }
+                                                            },
+                                                            "value_expression": {
                                                                 "type": "property_name",
-                                                                "property_name": "_id"
+                                                                "property_name": "opened_by"
                                                             }
                                                         }
                                                     },
@@ -859,10 +1034,17 @@
                                                     ]
                                                 },
                                                 "expression_if_true": {
-                                                    "type": "enikshay_referred_by",
-                                                    "person_id_expression": {
+                                                    "type": "nested",
+                                                    "argument_expression": {
+                                                        "type": "enikshay_most_recent_referral_from_person",
+                                                        "person_id_expression": {
+                                                            "type": "property_name",
+                                                            "property_name": "_id"
+                                                        }
+                                                    },
+                                                    "value_expression": {
                                                         "type": "property_name",
-                                                        "property_name": "_id"
+                                                        "property_name": "opened_by"
                                                     }
                                                 },
                                                 "type": "conditional",
@@ -874,10 +1056,17 @@
                                                     "type": "related_doc",
                                                     "related_doc_type": "CommCareUser",
                                                     "doc_id_expression": {
-                                                        "type": "enikshay_referred_by",
-                                                        "person_id_expression": {
+                                                        "type": "nested",
+                                                        "argument_expression": {
+                                                            "type": "enikshay_most_recent_referral_from_person",
+                                                            "person_id_expression": {
+                                                                "type": "property_name",
+                                                                "property_name": "_id"
+                                                            }
+                                                        },
+                                                        "value_expression": {
                                                             "type": "property_name",
-                                                            "property_name": "_id"
+                                                            "property_name": "opened_by"
                                                         }
                                                     }
                                                 }
@@ -904,10 +1093,17 @@
                                                         "type": "related_doc",
                                                         "related_doc_type": "CommCareUser",
                                                         "doc_id_expression": {
-                                                            "type": "enikshay_referred_by",
-                                                            "person_id_expression": {
+                                                            "type": "nested",
+                                                            "argument_expression": {
+                                                                "type": "enikshay_most_recent_referral_from_person",
+                                                                "person_id_expression": {
+                                                                    "type": "property_name",
+                                                                    "property_name": "_id"
+                                                                }
+                                                            },
+                                                            "value_expression": {
                                                                 "type": "property_name",
-                                                                "property_name": "_id"
+                                                                "property_name": "opened_by"
                                                             }
                                                         }
                                                     },
@@ -920,10 +1116,17 @@
                                                     ]
                                                 },
                                                 "expression_if_true": {
-                                                    "type": "enikshay_referred_by",
-                                                    "person_id_expression": {
+                                                    "type": "nested",
+                                                    "argument_expression": {
+                                                        "type": "enikshay_most_recent_referral_from_person",
+                                                        "person_id_expression": {
+                                                            "type": "property_name",
+                                                            "property_name": "_id"
+                                                        }
+                                                    },
+                                                    "value_expression": {
                                                         "type": "property_name",
-                                                        "property_name": "_id"
+                                                        "property_name": "opened_by"
                                                     }
                                                 },
                                                 "type": "conditional",
@@ -935,10 +1138,17 @@
                                                     "type": "related_doc",
                                                     "related_doc_type": "CommCareUser",
                                                     "doc_id_expression": {
-                                                        "type": "enikshay_referred_by",
-                                                        "person_id_expression": {
+                                                        "type": "nested",
+                                                        "argument_expression": {
+                                                            "type": "enikshay_most_recent_referral_from_person",
+                                                            "person_id_expression": {
+                                                                "type": "property_name",
+                                                                "property_name": "_id"
+                                                            }
+                                                        },
+                                                        "value_expression": {
                                                             "type": "property_name",
-                                                            "property_name": "_id"
+                                                            "property_name": "opened_by"
                                                         }
                                                     }
                                                 }
@@ -965,10 +1175,17 @@
                                                     "type": "related_doc",
                                                     "related_doc_type": "CommCareUser",
                                                     "doc_id_expression": {
-                                                        "type": "enikshay_referred_by",
-                                                        "person_id_expression": {
+                                                        "type": "nested",
+                                                        "argument_expression": {
+                                                            "type": "enikshay_most_recent_referral_from_person",
+                                                            "person_id_expression": {
+                                                                "type": "property_name",
+                                                                "property_name": "_id"
+                                                            }
+                                                        },
+                                                        "value_expression": {
                                                             "type": "property_name",
-                                                            "property_name": "_id"
+                                                            "property_name": "opened_by"
                                                         }
                                                     }
                                                 },
@@ -981,10 +1198,17 @@
                                                 ]
                                             },
                                             "expression_if_true": {
-                                                "type": "enikshay_referred_by",
-                                                "person_id_expression": {
+                                                "type": "nested",
+                                                "argument_expression": {
+                                                    "type": "enikshay_most_recent_referral_from_person",
+                                                    "person_id_expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "_id"
+                                                    }
+                                                },
+                                                "value_expression": {
                                                     "type": "property_name",
-                                                    "property_name": "_id"
+                                                    "property_name": "opened_by"
                                                 }
                                             },
                                             "type": "conditional",
@@ -996,10 +1220,17 @@
                                                 "type": "related_doc",
                                                 "related_doc_type": "CommCareUser",
                                                 "doc_id_expression": {
-                                                    "type": "enikshay_referred_by",
-                                                    "person_id_expression": {
+                                                    "type": "nested",
+                                                    "argument_expression": {
+                                                        "type": "enikshay_most_recent_referral_from_person",
+                                                        "person_id_expression": {
+                                                            "type": "property_name",
+                                                            "property_name": "_id"
+                                                        }
+                                                    },
+                                                    "value_expression": {
                                                         "type": "property_name",
-                                                        "property_name": "_id"
+                                                        "property_name": "opened_by"
                                                     }
                                                 }
                                             }
@@ -1029,10 +1260,17 @@
                                                         "type": "related_doc",
                                                         "related_doc_type": "CommCareUser",
                                                         "doc_id_expression": {
-                                                            "type": "enikshay_referred_by",
-                                                            "person_id_expression": {
+                                                            "type": "nested",
+                                                            "argument_expression": {
+                                                                "type": "enikshay_most_recent_referral_from_person",
+                                                                "person_id_expression": {
+                                                                    "type": "property_name",
+                                                                    "property_name": "_id"
+                                                                }
+                                                            },
+                                                            "value_expression": {
                                                                 "type": "property_name",
-                                                                "property_name": "_id"
+                                                                "property_name": "opened_by"
                                                             }
                                                         }
                                                     },
@@ -1045,10 +1283,17 @@
                                                     ]
                                                 },
                                                 "expression_if_true": {
-                                                    "type": "enikshay_referred_by",
-                                                    "person_id_expression": {
+                                                    "type": "nested",
+                                                    "argument_expression": {
+                                                        "type": "enikshay_most_recent_referral_from_person",
+                                                        "person_id_expression": {
+                                                            "type": "property_name",
+                                                            "property_name": "_id"
+                                                        }
+                                                    },
+                                                    "value_expression": {
                                                         "type": "property_name",
-                                                        "property_name": "_id"
+                                                        "property_name": "opened_by"
                                                     }
                                                 },
                                                 "type": "conditional",
@@ -1060,10 +1305,17 @@
                                                     "type": "related_doc",
                                                     "related_doc_type": "CommCareUser",
                                                     "doc_id_expression": {
-                                                        "type": "enikshay_referred_by",
-                                                        "person_id_expression": {
+                                                        "type": "nested",
+                                                        "argument_expression": {
+                                                            "type": "enikshay_most_recent_referral_from_person",
+                                                            "person_id_expression": {
+                                                                "type": "property_name",
+                                                                "property_name": "_id"
+                                                            }
+                                                        },
+                                                        "value_expression": {
                                                             "type": "property_name",
-                                                            "property_name": "_id"
+                                                            "property_name": "opened_by"
                                                         }
                                                     }
                                                 }
@@ -1090,10 +1342,17 @@
                                                     "type": "related_doc",
                                                     "related_doc_type": "CommCareUser",
                                                     "doc_id_expression": {
-                                                        "type": "enikshay_referred_by",
-                                                        "person_id_expression": {
+                                                        "type": "nested",
+                                                        "argument_expression": {
+                                                            "type": "enikshay_most_recent_referral_from_person",
+                                                            "person_id_expression": {
+                                                                "type": "property_name",
+                                                                "property_name": "_id"
+                                                            }
+                                                        },
+                                                        "value_expression": {
                                                             "type": "property_name",
-                                                            "property_name": "_id"
+                                                            "property_name": "opened_by"
                                                         }
                                                     }
                                                 },
@@ -1106,10 +1365,17 @@
                                                 ]
                                             },
                                             "expression_if_true": {
-                                                "type": "enikshay_referred_by",
-                                                "person_id_expression": {
+                                                "type": "nested",
+                                                "argument_expression": {
+                                                    "type": "enikshay_most_recent_referral_from_person",
+                                                    "person_id_expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "_id"
+                                                    }
+                                                },
+                                                "value_expression": {
                                                     "type": "property_name",
-                                                    "property_name": "_id"
+                                                    "property_name": "opened_by"
                                                 }
                                             },
                                             "type": "conditional",
@@ -1121,10 +1387,17 @@
                                                 "type": "related_doc",
                                                 "related_doc_type": "CommCareUser",
                                                 "doc_id_expression": {
-                                                    "type": "enikshay_referred_by",
-                                                    "person_id_expression": {
+                                                    "type": "nested",
+                                                    "argument_expression": {
+                                                        "type": "enikshay_most_recent_referral_from_person",
+                                                        "person_id_expression": {
+                                                            "type": "property_name",
+                                                            "property_name": "_id"
+                                                        }
+                                                    },
+                                                    "value_expression": {
                                                         "type": "property_name",
-                                                        "property_name": "_id"
+                                                        "property_name": "opened_by"
                                                     }
                                                 }
                                             }
@@ -1147,10 +1420,17 @@
                                         "type": "related_doc",
                                         "related_doc_type": "CommCareUser",
                                         "doc_id_expression": {
-                                            "type": "enikshay_referred_by",
-                                            "person_id_expression": {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "enikshay_most_recent_referral_from_person",
+                                                "person_id_expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "_id"
+                                                }
+                                            },
+                                            "value_expression": {
                                                 "type": "property_name",
-                                                "property_name": "_id"
+                                                "property_name": "opened_by"
                                             }
                                         }
                                     },
@@ -1163,10 +1443,17 @@
                                     ]
                                 },
                                 "expression_if_true": {
-                                    "type": "enikshay_referred_by",
-                                    "person_id_expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "enikshay_most_recent_referral_from_person",
+                                        "person_id_expression": {
+                                            "type": "property_name",
+                                            "property_name": "_id"
+                                        }
+                                    },
+                                    "value_expression": {
                                         "type": "property_name",
-                                        "property_name": "_id"
+                                        "property_name": "opened_by"
                                     }
                                 },
                                 "type": "conditional",
@@ -1178,10 +1465,17 @@
                                     "type": "related_doc",
                                     "related_doc_type": "CommCareUser",
                                     "doc_id_expression": {
-                                        "type": "enikshay_referred_by",
-                                        "person_id_expression": {
+                                        "type": "nested",
+                                        "argument_expression": {
+                                            "type": "enikshay_most_recent_referral_from_person",
+                                            "person_id_expression": {
+                                                "type": "property_name",
+                                                "property_name": "_id"
+                                            }
+                                        },
+                                        "value_expression": {
                                             "type": "property_name",
-                                            "property_name": "_id"
+                                            "property_name": "opened_by"
                                         }
                                     }
                                 }
@@ -1199,11 +1493,18 @@
                 "expression": {
                     "test": {
                         "operator": "in",
-                        "expression": {
-                            "type": "enikshay_referred_to",
-                            "person_id_expression": {
+                        "expression":{
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "enikshay_most_recent_referral_from_person",
+                                "person_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "value_expression": {
                                 "type": "property_name",
-                                "property_name": "_id"
+                                "property_name": "owner_id"
                             }
                         },
                         "type": "boolean_expression",
@@ -1225,10 +1526,17 @@
                             "type": "related_doc",
                             "related_doc_type": "Location",
                             "doc_id_expression": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             }
                         },
@@ -1244,10 +1552,17 @@
                                         "type": "nested",
                                         "argument_expression": {
                                             "location_id": {
-                                                "type": "enikshay_referred_to",
-                                                "person_id_expression": {
+                                                "type": "nested",
+                                                "argument_expression": {
+                                                    "type": "enikshay_most_recent_referral_from_person",
+                                                    "person_id_expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "_id"
+                                                    }
+                                                },
+                                                "value_expression": {
                                                     "type": "property_name",
-                                                    "property_name": "_id"
+                                                    "property_name": "owner_id"
                                                 }
                                             },
                                             "type": "ancestor_location",
@@ -1262,10 +1577,17 @@
                                         "type": "nested",
                                         "argument_expression": {
                                             "location_id": {
-                                                "type": "enikshay_referred_to",
-                                                "person_id_expression": {
+                                                "type": "nested",
+                                                "argument_expression": {
+                                                    "type": "enikshay_most_recent_referral_from_person",
+                                                    "person_id_expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "_id"
+                                                    }
+                                                },
+                                                "value_expression": {
                                                     "type": "property_name",
-                                                    "property_name": "_id"
+                                                    "property_name": "owner_id"
                                                 }
                                             },
                                             "type": "ancestor_location",
@@ -1280,10 +1602,17 @@
                                         "type": "related_doc",
                                         "related_doc_type": "Location",
                                         "doc_id_expression": {
-                                            "type": "enikshay_referred_to",
-                                            "person_id_expression": {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "enikshay_most_recent_referral_from_person",
+                                                "person_id_expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "_id"
+                                                }
+                                            },
+                                            "value_expression": {
                                                 "type": "property_name",
-                                                "property_name": "_id"
+                                                "property_name": "owner_id"
                                             }
                                         }
                                     }
@@ -1301,10 +1630,17 @@
                                         "type": "nested",
                                         "argument_expression": {
                                             "location_id": {
-                                                "type": "enikshay_referred_to",
-                                                "person_id_expression": {
+                                                "type": "nested",
+                                                "argument_expression": {
+                                                    "type": "enikshay_most_recent_referral_from_person",
+                                                    "person_id_expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "_id"
+                                                    }
+                                                },
+                                                "value_expression": {
                                                     "type": "property_name",
-                                                    "property_name": "_id"
+                                                    "property_name": "owner_id"
                                                 }
                                             },
                                             "type": "ancestor_location",
@@ -1319,10 +1655,17 @@
                                         "type": "related_doc",
                                         "related_doc_type": "Location",
                                         "doc_id_expression": {
-                                            "type": "enikshay_referred_to",
-                                            "person_id_expression": {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "enikshay_most_recent_referral_from_person",
+                                                "person_id_expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "_id"
+                                                }
+                                            },
+                                            "value_expression": {
                                                 "type": "property_name",
-                                                "property_name": "_id"
+                                                "property_name": "owner_id"
                                             }
                                         }
                                     }
@@ -1333,10 +1676,17 @@
                         "type": "switch",
                         "switch_on": {
                             "location_id_expression": {
-                                "type": "enikshay_referred_to",
-                                "person_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "enikshay_most_recent_referral_from_person",
+                                    "person_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "value_expression": {
                                     "type": "property_name",
-                                    "property_name": "_id"
+                                    "property_name": "owner_id"
                                 }
                             },
                             "type": "location_type_name"
@@ -1360,7 +1710,7 @@
                          "expression": {
                              "type": "nested",
                              "argument_expression": {
-                                "type": "enikshay_episode_from_person",
+                                "type": "enikshay_most_recent_episode_from_person",
                                 "person_id_expression": {
                                   "type": "property_name",
                                   "property_name": "_id"
@@ -1376,7 +1726,7 @@
                      "expression_if_true": {
                          "type": "nested",
                          "argument_expression": {
-                            "type": "enikshay_episode_from_person",
+                            "type": "enikshay_most_recent_episode_from_person",
                             "person_id_expression": {
                               "type": "property_name",
                               "property_name": "_id"
@@ -1395,7 +1745,7 @@
                              "expression": {
                                  "type": "nested",
                                  "argument_expression": {
-                                    "type": "enikshay_episode_from_person",
+                                    "type": "enikshay_most_recent_episode_from_person",
                                     "person_id_expression": {
                                       "type": "property_name",
                                       "property_name": "_id"
@@ -1416,7 +1766,7 @@
                                  "expression": {
                                      "type": "nested",
                                      "argument_expression": {
-                                        "type": "enikshay_episode_from_person",
+                                        "type": "enikshay_most_recent_episode_from_person",
                                         "person_id_expression": {
                                           "type": "property_name",
                                           "property_name": "_id"
@@ -1441,7 +1791,7 @@
                                      "expression": {
                                          "type": "nested",
                                          "argument_expression": {
-                                            "type": "enikshay_episode_from_person",
+                                            "type": "enikshay_most_recent_episode_from_person",
                                             "person_id_expression": {
                                               "type": "property_name",
                                               "property_name": "_id"
@@ -1466,7 +1816,7 @@
                                          "expression": {
                                              "type": "nested",
                                              "argument_expression": {
-                                                "type": "enikshay_episode_from_person",
+                                                "type": "enikshay_most_recent_episode_from_person",
                                                 "person_id_expression": {
                                                   "type": "property_name",
                                                   "property_name": "_id"
@@ -1513,7 +1863,7 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "enikshay_episode_from_person",
+                        "type": "enikshay_most_recent_episode_from_person",
                         "person_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
@@ -1536,7 +1886,7 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "enikshay_episode_from_person",
+                        "type": "enikshay_most_recent_episode_from_person",
                         "person_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
@@ -1559,7 +1909,7 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "enikshay_episode_from_person",
+                        "type": "enikshay_most_recent_episode_from_person",
                         "person_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
@@ -1582,7 +1932,7 @@
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
-                        "type": "enikshay_episode_from_person",
+                        "type": "enikshay_most_recent_episode_from_person",
                         "person_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"
