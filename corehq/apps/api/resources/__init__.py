@@ -105,7 +105,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 content_type="application/json",
                 status=401))
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
-            if isinstance(self) is DomainSpecificResourceMixin:
+            if isinstance(self, DomainSpecificResourceMixin):
                 track_workflow(request.couch_user.username, "API Request", properties={
                     'domain': request.domain,
                     'is_dimagi': request.couch_user.is_dimagi
