@@ -426,7 +426,7 @@ def total_distinct_users(domain):
 def num_telerivet_backends(domain):
     from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
     backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
-    return len([b for b in backends if type(b) is SQLTelerivetBackend])
+    return len([b for b in backends if isinstance(b, SQLTelerivetBackend)])
 
 
 def use_domain_security_settings(domain):
