@@ -41,7 +41,7 @@
 <script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
 
 {# Needs to come before knockout because HQ-specific knockout code uses hqDefine #}
-{% if hq %}
+{% if hq or analytics %} {# Analytics depend on hqDefine #}
     {% compress js %}
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
@@ -61,8 +61,7 @@
     {% endif %}
 {% endif %}
 
-{% if hq %}
-    {# Necessary because hq.helpers depends on it #}
+{% if analytics or hq %} {# Necessary if hq because hq.helpers depends on it #}
     {% include 'analytics/analytics_js.html' %}
 
     {% compress js %}

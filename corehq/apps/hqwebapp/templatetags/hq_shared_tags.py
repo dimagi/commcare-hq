@@ -749,5 +749,6 @@ def javascript_libraries(**kwargs):
         'underscore': kwargs.pop('underscore', False),
         'jquery': kwargs.pop('jquery', False),
         'ko': kwargs.pop('ko', False),
+        'analytics': kwargs.pop('analytics', False),
         'hq': kwargs.pop('hq', False),
     }
