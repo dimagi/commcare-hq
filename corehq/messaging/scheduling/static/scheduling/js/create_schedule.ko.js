@@ -8,6 +8,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.weekdays = ko.observableArray(initial_values.weekdays || []);
         self.days_of_month = ko.observableArray(initial_values.days_of_month || []);
         self.send_time = ko.observable(initial_values.send_time);
+        self.send_time_type = ko.observable(initial_values.send_time_type);
         self.start_date = ko.observable(initial_values.start_date);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);

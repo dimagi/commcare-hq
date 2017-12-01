@@ -358,8 +358,11 @@ class ScheduleForm(Form):
 
         self.helper.layout = crispy.Layout(*layout_fields)
 
+    def get_timing_layout_fields(self):
+        raise NotImplementedError()
+
     def get_scheduling_layout_fields(self):
-        return [
+        result = [
             crispy.Field(
                 'send_frequency',
                 data_bind='value: send_frequency',
@@ -379,14 +382,11 @@ class ScheduleForm(Form):
                 ),
                 data_bind='visible: showDaysOfMonthInput',
             ),
-            hqcrispy.B3MultiField(
-                ugettext("At"),
-                crispy.Field(
-                    'send_time',
-                    template='scheduling/partial/time_picker.html',
-                ),
-                data_bind='visible: showTimeInput',
-            ),
+        ]
+
+        result.extend(self.get_timing_layout_fields())
+
+        result.extend([
             hqcrispy.B3MultiField(
                 ugettext("Start"),
                 crispy.Div(
@@ -425,7 +425,9 @@ class ScheduleForm(Form):
                 ),
                 data_bind="visible: computedEndDate() !== ''",
             ),
-        ]
+        ])
+
+        return result
 
     def get_recipients_layout_fields(self):
         return [
@@ -903,6 +905,18 @@ class BroadcastForm(ScheduleForm):
         self.initial_broadcast = broadcast
         super(BroadcastForm, self).__init__(domain, schedule, *args, **kwargs)
 
+    def get_timing_layout_fields(self):
+        return [
+            hqcrispy.B3MultiField(
+                ugettext("At"),
+                crispy.Field(
+                    'send_time',
+                    template='scheduling/partial/time_picker.html',
+                ),
+                data_bind='visible: showTimeInput',
+            ),
+        ]
+
     def get_scheduling_layout_fields(self):
         result = [
             crispy.Field('schedule_name'),
@@ -975,9 +989,46 @@ class BroadcastForm(ScheduleForm):
 
 class ConditionalAlertScheduleForm(ScheduleForm):
 
+    SEND_TIME_SPECIFIC_TIME = 'SPECIFIC_TIME'
+
+    send_time_type = ChoiceField(
+        required=True,
+        choices=(
+            (SEND_TIME_SPECIFIC_TIME, _("A specific time")),
+        )
+    )
+
     def __init__(self, domain, schedule, rule, *args, **kwargs):
         self.initial_rule = rule
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+
+    def get_timing_layout_fields(self):
+        return [
+            hqcrispy.B3MultiField(
+                ugettext("At"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'send_time_type',
+                        data_bind='value: send_time_type',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'send_time',
+                        template='scheduling/partial/time_picker.html',
+                    ),
+                    data_bind="visible: send_time_type() === '%s'" % self.SEND_TIME_SPECIFIC_TIME,
+                ),
+                data_bind="visible: showTimeInput",
+            ),
+        ]
+
+    def clean_send_time(self):
+        if self.cleaned_data.get('send_time_type') == self.SEND_TIME_SPECIFIC_TIME:
+            return super(ConditionalAlertScheduleForm, self).clean_send_time()
+
+        return None
 
 
 class ConditionalAlertForm(Form):
