@@ -28,6 +28,7 @@ from corehq.util.quickcache import quickcache
 from . import const
 from .const import StockActions
 import six
+from six.moves import filter
 
 
 STOCK_ACTION_ORDER = [
