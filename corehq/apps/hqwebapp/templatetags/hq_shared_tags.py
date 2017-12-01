@@ -743,9 +743,10 @@ def bootstrap_form_errors(form):
     return {'form': form}
 
 
-@register.inclusion_tag('hqwebapp/includes/core_libraries.html')
-def javascript_libraries(**kwargs):
+@register.inclusion_tag('hqwebapp/includes/core_libraries.html', takes_context=True)
+def javascript_libraries(context, **kwargs):
     return {
+        'request': context['request'],
         'underscore': kwargs.pop('underscore', False),
         'jquery': kwargs.pop('jquery', False),
         'ko': kwargs.pop('ko', False),
