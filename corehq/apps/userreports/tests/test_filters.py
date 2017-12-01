@@ -4,6 +4,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
+from six.moves import filter  # keep unused import so py3 conversion scripts don't rewrite file
 
 
 class PropertyMatchFilterTest(SimpleTestCase):
