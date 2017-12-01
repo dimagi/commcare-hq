@@ -26,7 +26,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
-from corehq.apps.userreports.util import number_of_report_builder_reports
+from corehq.apps.userreports.util import number_of_report_builder_reports, number_of_ucr_reports
 from corehq.apps.sms.models import SQLMobileBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.locations.analytics import users_have_locations
@@ -230,10 +230,13 @@ def has_app(domain, *args):
     return domain_has_apps(domain)
 
 
+def _get_domain_apps(domain):
+    return Domain.get_by_name(domain).applications()
+
+
 def app_list(domain, *args):
-    domain = Domain.get_by_name(domain)
-    apps = domain.applications()
-    return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
+    apps = _get_domain_apps(domain)
+    return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain})
 
 
 def uses_reminders(domain, *args):
@@ -388,7 +391,6 @@ def calced_props(dom, id, all_stats):
         "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
         "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
-        "cp_n_rb_reports": number_of_report_builder_reports(dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
         "cp_use_domain_security": use_domain_security_settings(dom),
@@ -401,6 +403,8 @@ def calced_props(dom, id, all_stats):
         "cp_n_case_exports": num_exports(dom),
         "cp_n_deid_exports": num_deid_exports(dom),
         "cp_n_saved_exports": num_saved_exports(dom),
+        "cp_n_rb_reports": number_of_report_builder_reports(dom),
+        "cp_n_ucr_reports": number_of_ucr_reports(dom),
         "cp_n_lookup_tables": num_lookup_tables(dom),
         "cp_has_project_icon": has_domain_icon(dom),
         "cp_n_apps_with_icon": num_apps_with_icon(dom),
@@ -481,6 +485,10 @@ def has_domain_icon(domain):
 
 
 def num_apps_with_icon(domain):
-    domain = Domain.get_by_name(domain)
-    apps = domain.applications()
+    apps = _get_domain_apps(domain)
     return len([a for a in apps if isinstance(a, HQMediaMixin) and a.logo_refs])
+
+
+def num_apps_with_profile(domain):
+    apps = _get_domain_apps(domain)
+    return len([a for a in apps if a.build_profiles])
