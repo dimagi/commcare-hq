@@ -926,7 +926,8 @@ SUPPORT = StaticToggle(
 CASE_PROPERTY_HISTORY = StaticToggle(
     'case_property_history',
     'Shows a modal on the case property page allowing you to see the history of various case properties',
-    TAG_SOLUTIONS,
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )
 
 BASIC_CHILD_MODULE = StaticToggle(
