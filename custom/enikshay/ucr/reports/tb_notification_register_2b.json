@@ -9,7 +9,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode_2b_v4",
+    "data_source_table": "episode_2b_v5",
     "report_id": "tb_notification_register_2b",
     "config": {
         "description": "",
@@ -406,6 +406,23 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Case Definition"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "microscopy-zn": "Microscopy-ZN",
+                        "microscopy-fluorescent": "Microscopy-Fluorescent"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "microscopy_test_type",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Microbiological Confirmation SM - Test Type"
             },
             {
                 "sortable": false,
