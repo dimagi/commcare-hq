@@ -8,7 +8,6 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.log import with_progress_bar
 
 from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, add_debug_info_to_cases
 

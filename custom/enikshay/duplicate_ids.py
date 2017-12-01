@@ -1,14 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import six
 from collections import Counter
+import six
 
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.couch.database import iter_docs
 
-from .case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
 from .const import VOUCHER_ID, ENIKSHAY_ID
 
 
@@ -65,7 +64,7 @@ def _add_user_info_to_cases(bad_cases):
         case['form_user_id'] for case in bad_cases if 'form_user_id' in case)
 
     auth_user_ids = [case['auth_user_id'] for case in bad_cases
-                        if 'auth_user_id' in case]
+                     if 'auth_user_id' in case]
     auth_usernames = {user_doc['_id']: user_doc['username'] for user_doc in
                       iter_docs(CommCareUser.get_db(), auth_user_ids)}
     for case in bad_cases:
