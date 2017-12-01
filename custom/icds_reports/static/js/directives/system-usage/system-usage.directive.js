@@ -1,3 +1,5 @@
+/* global moment */
+
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId) {
@@ -8,6 +10,9 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.step = $routeParams.step;
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -78,6 +83,14 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1
     };
 
     vm.getDataForStep(vm.step);

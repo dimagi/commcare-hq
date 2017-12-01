@@ -1706,6 +1706,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.data = null;
     vm.filters = ['gender', 'age'];
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+
+
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
             url:  url('awc_reports', vm.step),
@@ -2396,6 +2400,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1
     };
 
     vm.layers = {
