@@ -109,6 +109,7 @@
         <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
         {% endif %}
 
+        {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
         {% compress js %}
@@ -151,7 +152,6 @@
         {% include 'formplayer/progress.html' %}
 
         {# javascript #}
-        {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
 
