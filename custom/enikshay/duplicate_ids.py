@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 import six
 from collections import Counter
 
-from corehq.apps.es import CaseSearchES
-from corehq.apps.es.aggregations import Aggregation, AggregationResult
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -12,68 +10,6 @@ from dimagi.utils.couch.database import iter_docs
 
 from .case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
 from .const import VOUCHER_ID, ENIKSHAY_ID
-
-
-class DuplicateIdsResult(AggregationResult):
-
-    def iter_case_ids(self):
-        for bucket in self.raw['duplicate_ids']['readable_ids']['values']['buckets']:
-            # Note: bucket['doc_count'] exists, and bucket['key'] is the readable ID
-            for doc in bucket['case_ids']['hits']['hits']:
-                yield doc['_id']
-
-
-class DuplicateIdsAggregation(Aggregation):
-    type = 'duplicate_ids'
-    name = 'duplicate_ids'
-    result_class = DuplicateIdsResult
-
-    def __init__(self, id_property):
-        self.body = {
-            "nested": {
-                "path": "case_properties"
-            },
-            "aggs": {
-                "readable_ids": {
-                    "filter": {
-                        "term": {
-                            "case_properties.key": id_property
-                        }
-                    },
-                    "aggs": {
-                        "values": {
-                            "terms": {
-                                "field": "case_properties.value",
-                                "size": 100000,
-                                "min_doc_count": 2
-                            },
-                            "aggs": {
-                                "case_ids": {
-                                    "top_hits": {
-                                        "_source": False,
-                                        "size": 100
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    def assemble(self):
-        return self.body
-
-
-def get_case_ids_with_duplicates(domain, case_type):
-    id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[case_type]
-    res = (CaseSearchES()
-           .case_type('voucher')
-           .domain(domain)
-           .aggregations([DuplicateIdsAggregation(id_property)])
-           .size(0)
-           .run())
-    return list(res.aggregations.duplicate_ids.iter_case_ids())
 
 
 def get_cases_with_duplicate_ids(domain, case_type, all_case_ids):
