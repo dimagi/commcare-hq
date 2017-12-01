@@ -97,11 +97,6 @@ class ScheduleForm(Form):
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
 
-    schedule_name = CharField(
-        required=True,
-        label=_('Schedule Name'),
-        max_length=1000,
-    )
     send_frequency = ChoiceField(
         required=True,
         label=_('Send'),
@@ -365,7 +360,6 @@ class ScheduleForm(Form):
 
     def get_scheduling_layout_fields(self):
         return [
-            crispy.Field('schedule_name'),
             crispy.Field(
                 'send_frequency',
                 data_bind='value: send_frequency',
@@ -899,9 +893,22 @@ class ScheduleForm(Form):
 
 class BroadcastForm(ScheduleForm):
 
+    schedule_name = CharField(
+        required=True,
+        label=_('Schedule Name'),
+        max_length=1000,
+    )
+
     def __init__(self, domain, schedule, broadcast, *args, **kwargs):
         self.initial_broadcast = broadcast
         super(BroadcastForm, self).__init__(domain, schedule, *args, **kwargs)
+
+    def get_scheduling_layout_fields(self):
+        result = [
+            crispy.Field('schedule_name'),
+        ]
+        result.extend(super(BroadcastForm, self).get_scheduling_layout_fields())
+        return result
 
     def compute_initial(self):
         result = super(BroadcastForm, self).compute_initial()

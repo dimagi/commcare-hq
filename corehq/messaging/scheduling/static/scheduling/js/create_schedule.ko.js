@@ -4,7 +4,6 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             select2_case_group_recipients) {
         var self = this;
 
-        self.schedule_name = ko.observable(initial_values.schedule_name);
         self.send_frequency = ko.observable(initial_values.send_frequency);
         self.weekdays = ko.observableArray(initial_values.weekdays || []);
         self.days_of_month = ko.observableArray(initial_values.days_of_month || []);
