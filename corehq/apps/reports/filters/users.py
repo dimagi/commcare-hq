@@ -183,7 +183,7 @@ class EmwfUtils(object):
             raise Exception("Unexpcted id: {}".format(id_))
 
         if hasattr(owner, 'is_deleted'):
-            if not owner.is_deleted or not owner.is_deleted():
+            if (callable(owner.is_deleted) and owner.is_deleted()) or owner.is_deleted == True:
                 # is_deleted may be an attr or callable depending on owner type
                 ret = (ret[0], 'Deleted - ' + ret[1])
 
