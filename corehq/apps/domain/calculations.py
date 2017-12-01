@@ -34,6 +34,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.groups.models import Group
 from corehq.motech.repeaters.models import Repeater
 from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain
+from corehq.apps.fixtures.models import FixtureDataType
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -399,6 +400,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_case_exports": num_exports(dom),
         "cp_n_deid_exports": num_deid_exports(dom),
         "cp_n_saved_exports": num_saved_exports(dom),
+        "cp_n_lookup_tables": num_lookup_tables(dom),
     }
 
 
@@ -464,3 +466,7 @@ def num_exports(domain):
 
 def num_saved_exports(domain):
     return len([e for e in _get_domain_exports(domain) if e.is_daily_saved_export])
+
+
+def num_lookup_tables(domain):
+    return len(FixtureDataType.by_domain(domain))
