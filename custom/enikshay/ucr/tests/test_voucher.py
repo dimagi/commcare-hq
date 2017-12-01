@@ -2,10 +2,7 @@ from __future__ import absolute_import
 
 import mock
 
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
-from corehq.apps.userreports.expressions.factory import SubcasesExpressionSpec
-from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+from corehq.apps.userreports.specs import EvaluationContext
 from custom.enikshay.expressions import FirstCaseFormWithXmlns
 from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 
