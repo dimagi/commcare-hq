@@ -1260,7 +1260,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": "purpose_of_test",
-                "datatype": "date",
+                "datatype": "string",
                 "expression": {
                     "value_expression": {
                         "datatype": "string",
@@ -1311,23 +1311,32 @@
                     "related_doc_type": "CommCareCase",
                     "doc_id_expression": {
                         "type": "named",
-                        "name": "date_reported"
+                        "name": "parent_case_id"
                     }
                 },
                 "is_primary_key": false,
                 "transform": {},
                 "is_nullable": true,
                 "type": "expression",
-                "column_id": "purpose_of_test"
+                "column_id": "date_reported"
             },
             {
                 "comment": null,
                 "create_index": false,
                 "display_name": "test_id",
-                "datatype": "date",
+                "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "parent_case_id"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "case_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "parent_case_id"
+                    }
                 },
                 "is_primary_key": false,
                 "transform": {},
