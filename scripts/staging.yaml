@@ -52,7 +52,6 @@ branches:
   - es/loc-safe-reports  # Ethan 11/1
   - jls/ko-dashboard # Jenny Nov 20
   - jls/modal-on-downgrade # Jenny Nov 22
-  - jls/rework-base-templates # Jenny Dec 1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
