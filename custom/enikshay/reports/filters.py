@@ -55,7 +55,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
     @classmethod
     def get_value(cls, request, domain):
         selected = super(EnikshayLocationFilter, cls).get_value(request, domain)
-        if len(filter(None, selected)) == 0 and not request.couch_user.has_permission(domain, 'access_all_locations'):
+        if len([_f for _f in selected if _f]) == 0 and not request.couch_user.has_permission(domain, 'access_all_locations'):
             # Force the user to select their assigned locations, otherwise selecting no locations will result in
             # all results being returned.
             selected = request.couch_user.get_location_ids(domain)

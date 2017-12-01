@@ -98,8 +98,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
 
         #ugh, not storing all form data by default - need to get?
         ret['sorted_visits'] = [DOTSubmission.wrap(x['_source']) for x in
-                                filter(lambda x: x['_source']['xmlns'] == XMLNS_DOTS_FORM,
-                                       res['hits']['hits'])]
+                                [x for x in res['hits']['hits'] if x['_source']['xmlns'] == XMLNS_DOTS_FORM]]
         return ret
 
 

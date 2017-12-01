@@ -285,7 +285,7 @@ def _choose_latest_version(*app_versions):
     Chooses the latest version from a list of AppVersion objects - choosing the first one passed
     in with the highest version number.
     """
-    usable_versions = filter(None, app_versions)
+    usable_versions = [_f for _f in app_versions if _f]
     if usable_versions:
         return sorted(usable_versions, key=lambda v: v.build_version)[-1]
 

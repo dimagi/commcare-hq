@@ -170,7 +170,7 @@ class EnikshaySqlData(SqlData):
             AND([GTE(self.date_property, 'start_date'), LT(self.date_property, 'end_date')])
         ]
 
-        locations_id = filter(lambda x: bool(x), self.config.locations_id)
+        locations_id = [x for x in self.config.locations_id if bool(x)]
 
         if locations_id:
             filters.append(

@@ -53,9 +53,9 @@ class FixtureGenerator(object):
         self._generator_providers = {}
         if hasattr(settings, "FIXTURE_GENERATORS"):
             for group, func_paths in settings.FIXTURE_GENERATORS.items():
-                self._generator_providers[group] = filter(None, [
+                self._generator_providers[group] = [_f for _f in [
                     to_function(func_path, failhard=True) for func_path in func_paths
-                ])
+                ] if _f]
 
     def get_providers(self, user, fixture_id=None, version=V2):
         if version == V1:

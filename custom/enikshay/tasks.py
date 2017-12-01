@@ -748,14 +748,11 @@ def _get_relevent_case(cases):
     if 'enikshay' not in sources:
         valid_cases = cases
     else:
-        valid_cases = filter(
-            lambda case: (
+        valid_cases = [case for case in cases if (
                 case.get('adherence_source') == 'enikshay' and
                 (not case['closed'] or (case['closed'] and
                     case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
-            ),
-            cases
-        )
+            )]
     if valid_cases:
         by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
         latest_case = by_modified_on[-1]

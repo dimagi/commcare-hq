@@ -295,7 +295,7 @@ def get_call_center_domains():
                 cc_case_type=case_type,
                 use_fixtures=config.get('use_fixtures', True)
             )
-    return filter(None, [to_domain_lite(hit) for hit in result.hits])
+    return [_f for _f in [to_domain_lite(hit) for hit in result.hits] if _f]
 
 
 def get_call_center_cases(domain_name, case_type, user=None):

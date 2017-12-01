@@ -92,10 +92,10 @@ class Command(BaseCommand):
                     else:
                         detected = ''
 
-                    result_summary_display = '\n'.join(filter(None, [
+                    result_summary_display = '\n'.join([_f for _f in [
                         detected,
                         resistance_display,
-                    ]))
+                    ] if _f])
 
                     case_id = test.case_id
                     f.write(case_id + "\n")

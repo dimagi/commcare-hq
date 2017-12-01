@@ -86,7 +86,7 @@ class TestUserSetupUtils(TestCase):
 
     def assertValid(self, form):
         if isinstance(form, ENikshayLocationFormSet):
-            errors = ", ".join(filter(None, [f.errors.as_text() for f in form.forms]))
+            errors = ", ".join([_f for _f in [f.errors.as_text() for f in form.forms] if _f])
         else:
             errors = form.errors.as_text()
         msg = "{} has errors: \n{}".format(form.__class__.__name__, errors)

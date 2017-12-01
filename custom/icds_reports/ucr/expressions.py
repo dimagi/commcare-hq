@@ -195,7 +195,7 @@ class FormsInDateExpressionSpec(JsonObject):
             return xform
 
         forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = filter(None, list(map(_transform_time_end, forms)))
+        forms = [_f for _f in list(map(_transform_time_end, forms)) if _f]
         context.set_cache_value(cache_key, forms)
         return forms
 

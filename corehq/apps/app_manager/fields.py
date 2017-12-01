@@ -322,28 +322,22 @@ class ApplicationDataRMIHelper(object):
     @property
     @memoized
     def _no_app_forms(self):
-        return filter(lambda f: not f.get('has_app', False), self._all_forms)
+        return [f for f in self._all_forms if not f.get('has_app', False)]
 
     @property
     @memoized
     def _remote_app_forms(self):
-        return filter(lambda f: f.get('has_app', False) and f.get('show_xmlns', False), self._all_forms)
+        return [f for f in self._all_forms if f.get('has_app', False) and f.get('show_xmlns', False)]
 
     @property
     @memoized
     def _deleted_app_forms(self):
-        return filter(
-            lambda f: f.get('has_app', False) and f.get('app_deleted') and not f.get('show_xmlns', False),
-            self._all_forms
-        )
+        return [f for f in self._all_forms if f.get('has_app', False) and f.get('app_deleted') and not f.get('show_xmlns', False)]
 
     @property
     @memoized
     def _available_app_forms(self):
-        return filter(
-            lambda f: f.get('has_app', False) and not f.get('app_deleted') and not f.get('show_xmlns', False),
-            self._all_forms
-        )
+        return [f for f in self._all_forms if f.get('has_app', False) and not f.get('app_deleted') and not f.get('show_xmlns', False)]
 
     @property
     @memoized

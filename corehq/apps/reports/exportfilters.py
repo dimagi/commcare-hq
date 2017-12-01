@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from casexml.apps.case.xform import is_device_report
+from six.moves import filter
 
 
 def form_matches_users(form, users):
@@ -21,7 +22,7 @@ def default_form_filter(form, filter):
     # which don't have standard meta blocks, so just always force them
     # to be accepted, since the only time they are relevant is when they're
     # explicitly wanted
-    return is_device_report(form) or filter(form)
+    return is_device_report(form) or list(filter(form))
 
 
 def default_case_filter(doc):

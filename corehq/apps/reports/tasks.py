@@ -58,6 +58,7 @@ from .models import (
 from .scheduled import get_scheduled_report_ids
 import six
 from six.moves import map
+from six.moves import filter
 
 
 logging = get_task_logger(__name__)
@@ -362,10 +363,10 @@ def _convert_legacy_indices_to_export_properties(indices):
     return set(map(
         lambda index: '-'.join(index.split('.')[1:]),
         # Filter out any columns that are not form questions
-        filter(
+        list(filter(
             lambda index: index and index.startswith('form'),
             indices,
-        ),
+        )),
     ))
 
 

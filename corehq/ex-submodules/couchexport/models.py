@@ -377,7 +377,7 @@ class ExportTable(DocumentSchema):
                 display = col.get_display()
                 if col.index == 'id':
                     id_len = len(
-                        filter(lambda part: part == '#', self.index.split('.'))
+                        [part for part in self.index.split('.') if part == '#']
                     )
                     headers.append(display)
                     if id_len > 1:

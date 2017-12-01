@@ -151,7 +151,7 @@ class ENikshay2BMigrator(object):
         queries per person case.
         """
         for person_chunk in chunked(person_ids, 100):
-            person_chunk = list(filter(None, person_chunk))
+            person_chunk = list([_f for _f in person_chunk if _f])
             all_persons = {}  # case_id: PersonCaseSet
             for person in self.accessor.get_cases(person_chunk):
                 # enrolled_in_private is blank/not set AND case_version is blank/not set
@@ -205,8 +205,7 @@ class ENikshay2BMigrator(object):
                 yield person
 
     def migrate_person_case_set(self, person):
-        changes = filter(None,
-            [self.migrate_person(person.person, person.occurrences, person.episodes)]
+        changes = [_f for _f in [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
             + [self.migrate_test(test, person.person, person.episodes) for test in person.tests]
@@ -214,8 +213,7 @@ class ENikshay2BMigrator(object):
             + [self.migrate_trail(trail, person.latest_occurrence) for trail in person.trails]
             + [self.open_secondary_owners(drtb_hiv, person.person, person.occurrences)
                for drtb_hiv in person.drtb_hiv]
-            + [self.close_drtb_hiv(drtb_hiv) for drtb_hiv in person.drtb_hiv]
-        )
+            + [self.close_drtb_hiv(drtb_hiv) for drtb_hiv in person.drtb_hiv] if _f]
         if self.commit:
             self.factory.create_or_update_cases(changes)
 
@@ -455,13 +453,13 @@ class ENikshay2BMigrator(object):
             else:
                 detected = ''
 
-        props['result_summary_display'] = '\n'.join(filter(None, [
+        props['result_summary_display'] = '\n'.join([_f for _f in [
             detected,
             test.get_case_property('result_grade'),
             resistance_display,
             'Count of bacilli: {}'.format(bacilli_count) if bacilli_count else None,
             test.get_case_property('clinical_remarks'),
-        ]))
+        ] if _f])
 
         return CaseStructure(
             case_id=test.case_id,

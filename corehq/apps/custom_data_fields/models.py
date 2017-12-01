@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 
 from .dbaccessors import get_by_domain_and_type
 import six
+from six.moves import filter
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
@@ -61,7 +62,7 @@ class CustomDataFieldsDefinition(Document):
                 (required_only and not field.is_required) or
                 (not include_system and is_system_key(field.slug))
             )
-        return filter(_is_match, self.fields)
+        return list(filter(_is_match, self.fields))
 
     @classmethod
     def get_or_create(cls, domain, field_type):
@@ -105,7 +106,7 @@ class CustomDataFieldsDefinition(Document):
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
-            return ' '.join(filter(None, errors))
+            return ' '.join([_f for _f in errors if _f])
 
         return validate_custom_fields
 

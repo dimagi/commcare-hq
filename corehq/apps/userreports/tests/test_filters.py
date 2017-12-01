@@ -4,6 +4,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
+from six.moves import filter
 
 
 class PropertyMatchFilterTest(SimpleTestCase):
@@ -135,9 +136,9 @@ class BooleanExpressionFilterTest(SimpleTestCase):
     def test_equal(self):
         match = 'match'
         filter = self.get_filter('eq', match)
-        self.assertTrue(filter({'foo': match}))
-        self.assertFalse(filter({'foo': 'non-match'}))
-        self.assertFalse(filter({'foo': None}))
+        self.assertTrue(list(filter({'foo': match})))
+        self.assertFalse(list(filter({'foo': 'non-match'})))
+        self.assertFalse(list(filter({'foo': None})))
 
     def test_equal_null(self):
         null_filter = self.get_filter('eq', None)
@@ -150,47 +151,47 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         values = ['a', 'b', 'c']
         filter = self.get_filter('in', values)
         for value in values:
-            self.assertTrue(filter({'foo': value}))
+            self.assertTrue(list(filter({'foo': value})))
         for value in ['d', 'e', 'f']:
-            self.assertFalse(filter({'foo': value}))
+            self.assertFalse(list(filter({'foo': value})))
 
     def test_in_multiselect(self):
         filter = self.get_filter('in_multi', 'a')
-        self.assertTrue(filter({'foo': 'a'}))
-        self.assertTrue(filter({'foo': 'a b c'}))
-        self.assertTrue(filter({'foo': 'b c a'}))
-        self.assertFalse(filter({'foo': 'b'}))
-        self.assertFalse(filter({'foo': 'abc'}))
-        self.assertFalse(filter({'foo': 'ab cd'}))
-        self.assertFalse(filter({'foo': 'd e f'}))
+        self.assertTrue(list(filter({'foo': 'a'})))
+        self.assertTrue(list(filter({'foo': 'a b c'})))
+        self.assertTrue(list(filter({'foo': 'b c a'})))
+        self.assertFalse(list(filter({'foo': 'b'})))
+        self.assertFalse(list(filter({'foo': 'abc'})))
+        self.assertFalse(list(filter({'foo': 'ab cd'})))
+        self.assertFalse(list(filter({'foo': 'd e f'})))
 
     def test_less_than(self):
         filter = self.get_filter('lt', 3)
         for match in (-10, 0, 2):
-            self.assertTrue(filter({'foo': match}))
+            self.assertTrue(list(filter({'foo': match})))
         for non_match in (3, 11, '2'):
-            self.assertFalse(filter({'foo': non_match}))
+            self.assertFalse(list(filter({'foo': non_match})))
 
     def test_less_than_equal(self):
         filter = self.get_filter('lte', 3)
         for match in (-10, 0, 2, 3):
-            self.assertTrue(filter({'foo': match}))
+            self.assertTrue(list(filter({'foo': match})))
         for non_match in (4, 11, '2'):
-            self.assertFalse(filter({'foo': non_match}))
+            self.assertFalse(list(filter({'foo': non_match})))
 
     def test_greater_than(self):
         filter = self.get_filter('gt', 3)
         for match in (4, 11, '2'):
-            self.assertTrue(filter({'foo': match}))
+            self.assertTrue(list(filter({'foo': match})))
         for non_match in (-10, 0, 2, 3):
-            self.assertFalse(filter({'foo': non_match}))
+            self.assertFalse(list(filter({'foo': non_match})))
 
     def test_greater_than_equal(self):
         filter = self.get_filter('gte', 3)
         for match in (3, 11, '2'):
-            self.assertTrue(filter({'foo': match}))
+            self.assertTrue(list(filter({'foo': match})))
         for non_match in (-10, 0, 2):
-            self.assertFalse(filter({'foo': non_match}))
+            self.assertFalse(list(filter({'foo': non_match})))
 
     def test_date_conversion(self):
         filter_with_date = FilterFactory.from_spec({
@@ -357,17 +358,17 @@ class ComplexFilterTest(SimpleTestCase):
             ]
         })
         # first level or
-        self.assertTrue(filter(dict(foo='bar')))
+        self.assertTrue(list(filter(dict(foo='bar'))))
         # first level and with both or's
-        self.assertTrue(filter(dict(foo1='bar1', foo2='bar2', foo3='bar3')))
-        self.assertTrue(filter(dict(foo1='bar1', foo2='bar2', foo4='bar4')))
+        self.assertTrue(list(filter(dict(foo1='bar1', foo2='bar2', foo3='bar3'))))
+        self.assertTrue(list(filter(dict(foo1='bar1', foo2='bar2', foo4='bar4'))))
 
         # first and not right
-        self.assertFalse(filter(dict(foo1='not bar1', foo2='bar2', foo3='bar3')))
+        self.assertFalse(list(filter(dict(foo1='not bar1', foo2='bar2', foo3='bar3'))))
         # second and not right
-        self.assertFalse(filter(dict(foo1='bar1', foo2='not bar2', foo3='bar3')))
+        self.assertFalse(list(filter(dict(foo1='bar1', foo2='not bar2', foo3='bar3'))))
         # last and not right
-        self.assertFalse(filter(dict(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4')))
+        self.assertFalse(list(filter(dict(foo1='bar1', foo2='bar2', foo3='not bar3', foo4='not bar4'))))
 
 
 class ConfigurableNOTFilterTest(SimpleTestCase):

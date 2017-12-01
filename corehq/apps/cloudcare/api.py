@@ -21,6 +21,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es_new, ES_META
+from six.moves import filter
 
 
 CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?
@@ -122,7 +123,7 @@ class CaseAPIHelper(object):
 
         if self.filters and not self.footprint:
             base_results = self._populate_results(case_id_list)
-            return filter(_filter, base_results)
+            return list(filter(_filter, base_results))
 
         if self.footprint:
             initial_case_ids = set(case_id_list)
@@ -350,7 +351,7 @@ def look_up_app_json(domain, app_id):
 
 def get_cloudcare_app(domain, app_name):
     apps = get_cloudcare_apps(domain)
-    app = filter(lambda x: x['name'] == app_name, apps)
+    app = [x for x in apps if x['name'] == app_name]
     if app:
         return look_up_app_json(domain, app[0]['_id'])
     else:

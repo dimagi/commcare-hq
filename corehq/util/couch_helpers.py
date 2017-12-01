@@ -74,7 +74,7 @@ class CouchAttachmentsBuilder(object):
         if isinstance(data, six.text_type):
             data = data.encode('utf-8')
         if content_type is None:
-            content_type = ';'.join(filter(None, guess_type(name)))
+            content_type = ';'.join([_f for _f in guess_type(name) if _f])
         # optimization alert:
         # don't make couch re-save attachment if there's no change in content
         if self.no_change(name, data):

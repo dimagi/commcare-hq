@@ -10,9 +10,9 @@ ParsedIndicator = namedtuple('ParsedIndicator', 'category, type, date_range, is_
 def get_call_center_config_from_app(app):
     indicators = get_indicators_used_in_app(app)
     custom_domain_indicators = const.PER_DOMAIN_FORM_INDICATORS.get(app.domain, {})
-    parsed_indicators = filter(None, {
+    parsed_indicators = [_f for _f in {
         parse_indicator(indicator, custom_domain_indicators) for indicator in indicators
-    })
+    } if _f]
     config = CallCenterIndicatorConfig()
     for parsed_indicator in parsed_indicators:
         config.set_indicator(parsed_indicator)

@@ -1050,12 +1050,12 @@ class AdminAppReport(AdminFacetedReport):
 
     @property
     def properties(self):
-        return filter(lambda p: p and p not in self.excluded_properties, Application.properties().keys())
+        return [p for p in Application.properties().keys() if p and p not in self.excluded_properties]
 
     @property
     def es_facet_list(self):
         props = self.properties + self.profile_list + ["cp_is_active"]
-        return filter(lambda p: p not in self.excluded_properties, props)
+        return [p for p in props if p not in self.excluded_properties]
 
     @property
     def es_facet_mapping(self):

@@ -102,9 +102,9 @@ class FormplayerMain(View):
             lambda app_id: self.fetch_app(domain, app_id),
             app_ids,
         ))
-        apps = filter(None, apps)
-        apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
-        apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+        apps = [_f for _f in apps if _f]
+        apps = [app for app in apps if app.get('cloudcare_enabled') or self.preview]
+        apps = [app for app in apps if app_access.user_can_access_app(user, app)]
         role = user.get_role(domain)
         if role:
             apps = [app for app in apps if role.permissions.view_web_app(app)]

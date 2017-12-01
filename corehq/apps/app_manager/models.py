@@ -2816,7 +2816,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             by_type[action_meta.get('type')].append(action_tag)
 
         for type, tag_list in six.iteritems(by_type):
-            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+            action_type.append(u'{} ({})'.format(type, ', '.join([_f for _f in tag_list if _f])))
 
         return ' '.join(action_type)
 
@@ -4384,7 +4384,7 @@ class LazyBlobDoc(BlobMixin):
             with self.atomic_blobs(super_save):
                 for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
-                        info['content_type'] = ';'.join(filter(None, guess_type(name)))
+                        info['content_type'] = ';'.join([_f for _f in guess_type(name) if _f])
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
             # super_save() has succeeded by now
             for name, info in self._LAZY_ATTACHMENTS.items():

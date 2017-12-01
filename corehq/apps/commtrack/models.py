@@ -77,7 +77,7 @@ class CommtrackActionConfig(DocumentSchema):
 
     @property
     def name(self):
-        return ':'.join(filter(None, [self.action, self.subaction]))
+        return ':'.join([_f for _f in [self.action, self.subaction] if _f])
 
     @property
     def is_stock(self):

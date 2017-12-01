@@ -1160,7 +1160,7 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
         if drug not in drug_name_to_id:
             raise FieldValidationFailure(result, "SLPA result")
     properties = {
-        "drug_resistance_list": " ".join(filter(None, [drug_name_to_id[drug_name] for drug_name in drugs])),
+        "drug_resistance_list": " ".join([_f for _f in [drug_name_to_id[drug_name] for drug_name in drugs] if _f]),
     }
     return properties
 
@@ -1184,7 +1184,7 @@ def get_test_summary(properties):
         elif drug_id in drug_sensitive_list:
             drug_output.append("{}: Sens".format(DRUG_MAP[drug_id]['drug_name']))
 
-    return '\n'.join(filter(None, [detected] + drug_output))
+    return '\n'.join([_f for _f in [detected] + drug_output if _f])
 
 
 def get_cbnaat_resistance(column_mapping, row):

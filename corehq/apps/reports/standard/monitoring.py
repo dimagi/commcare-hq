@@ -1373,7 +1373,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def case_types(self):
-        return filter(None, self.request.GET.getlist('case_type'))
+        return [_f for _f in self.request.GET.getlist('case_type') if _f]
 
     @property
     def view_by_groups(self):
@@ -1600,7 +1600,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def _rows_by_group(self, report_data):
         rows = []
         active_users_by_group = {
-            g: len(filter(lambda u: report_data.submissions_by_user.get(u['user_id']), users))
+            g: len([u for u in users if report_data.submissions_by_user.get(u['user_id'])])
             for g, users in six.iteritems(self.users_by_group)
         }
 
@@ -1753,11 +1753,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         for col in range(1, len(self.headers)):
             if col in summing_cols:
                 total_row.append(
-                    sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows]))
+                    sum([x for x in [row[col].get('sort_key', 0) for row in rows] if not math.isnan(x)])
                 )
             else:
                 total_row.append('---')
-        num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
+        num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
         case_owners = set()
         for user in self.users_to_iterate:
             case_owners = case_owners.union((user.user_id, user.location_id))

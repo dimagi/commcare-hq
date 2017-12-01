@@ -642,7 +642,7 @@ def export_all_form_metadata_async(req, domain):
         simplified=True,
         include_inactive=True
     )
-    user_ids = filter(None, [u["user_id"] for u in users])
+    user_ids = [_f for _f in [u["user_id"] for u in users] if _f]
     format = req.GET.get("format", Format.XLS_2007)
     filename = "%s_forms" % domain
 
@@ -1840,7 +1840,7 @@ class EditFormInstance(View):
             # any other path associated with it. This allows us to differentiate from parent cases.
             # You might think that you need to populate other session variables like parent_id, but those
             # are never actually used in the form.
-            non_parents = filter(lambda cb: cb.path == [], case_blocks)
+            non_parents = [cb for cb in case_blocks if cb.path == []]
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
                 case = CaseAccessors(domain).get_case(edit_session_data['case_id'])

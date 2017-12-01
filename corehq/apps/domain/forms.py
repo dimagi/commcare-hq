@@ -374,7 +374,7 @@ class SnapshotSettingsForm(forms.Form):
             if referenced_forms:
                 apps = [Application.get(app_id) for app_id in app_ids]
                 app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
-                nonexistent_forms = filter(lambda f: f not in app_forms, referenced_forms)
+                nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
                 nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
                 if nonexistent_forms:
                     msg = """

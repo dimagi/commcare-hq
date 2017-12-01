@@ -45,7 +45,7 @@ class EWSGhanaConfig(Document):
     @classmethod
     def get_all_enabled_domains(cls):
         configs = cls.get_all_configs()
-        return [c.domain for c in filter(lambda config: config.enabled, configs)]
+        return [c.domain for c in [config for config in configs if config.enabled]]
 
     @property
     def is_configured(self):

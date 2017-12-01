@@ -87,7 +87,7 @@ class FormProcessorCouch(object):
             if form:
                 form.server_modified_on = datetime.datetime.utcnow()
         docs += (cases or [])
-        docs = filter(None, docs)
+        docs = [_f for _f in docs if _f]
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         with bulk_atomic_blobs(docs):
             XFormInstance.get_db().bulk_save(docs)
@@ -146,7 +146,7 @@ class FormProcessorCouch(object):
         sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
         # don't process error forms which are being deprecated since they were never processed in the first place.
         # see http://manage.dimagi.com/default.asp?243382
-        filtered_sorted_forms = filter(lambda form: not (form.is_deprecated and form.problem), sorted_forms)
+        filtered_sorted_forms = [form for form in sorted_forms if not (form.is_deprecated and form.problem)]
         touched_cases = {}
         for xform in filtered_sorted_forms:
             for case_update in get_case_updates(xform):
