@@ -23,10 +23,12 @@ hqDefine('accounting/js/accounting.pricing_table', function () {
         self.form = undefined;
         self.openDowngradeModal = function(pricingTable, e) {
             var editionSlugs = _.map(self.editions(), function(e) { return e.slug(); });
+            self.form = $(e.currentTarget).closest("form");
             if (editionSlugs.indexOf(self.selected_edition()) < editionSlugs.indexOf(self.currentEdition)) {
                 var $modal = $("#modal-downgrade");
                 $modal.modal('show');
-                self.form = $(e.currentTarget).closest("form");
+            } else {
+                self.form.submit();
             }
         };
 
