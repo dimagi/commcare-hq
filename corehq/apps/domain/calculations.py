@@ -417,7 +417,7 @@ def total_distinct_users(domain):
 
 def num_telerivet_backends(domain):
     backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
-    return len([b for b in backends if type(b) is SQLTelerivetBackend ])
+    return len([b for b in backends if type(b) is SQLTelerivetBackend])
 
 
 def use_two_factor(domain):
@@ -432,7 +432,7 @@ def num_custom_roles(domain):
 
 def num_location_restricted_roles(domain):
     roles = [r for r in UserRole.by_domain(domain)
-             if r.permissions.access_all_locations == False]
+             if not r.permissions.access_all_locations]
     return len(roles)
 
 
