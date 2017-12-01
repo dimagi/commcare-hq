@@ -112,6 +112,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
@@ -2499,6 +2500,15 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
         if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
             raise Http404
+
+        if export_instance.export_format == "html":
+            message = "Download Excel Dashboard"
+        else:
+            message = "Download Saved Export"
+        track_workflow(req.couch_user.username, message, properties={
+            'domain': domain,
+            'is_dimagi': req.couch_user.is_dimagi
+        })
 
         if should_update_export(export_instance.last_accessed):
             try:
