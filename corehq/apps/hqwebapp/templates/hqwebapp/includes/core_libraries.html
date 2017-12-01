@@ -1,5 +1,71 @@
 {% load hq_shared_tags %}
-<script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
-<script src="{% static 'underscore/underscore.js' %}"></script>
-<script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
-<script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
+{% load compress %}
+
+{% comment %}
+    Template for including major JavaScript libraries, both third-party and HQ-specific.
+
+    Options. Note that setting these to False will not necessarily exclude that library,
+    as a different library may depend on it.
+        underscore: Include underscore
+        jquery: Include jQuery and common jQuery plugins, e.g., jquery.cookie
+        ko: Include knockout
+        hq: Core HQ-specific code like hqModules. Set to true if the template will use ANY JavaScript from corehq.
+        TODO: separate out hq.helpers, since they result in everything else being included, and maybe analytics
+{% endcomment %}
+<!-- jls -->
+
+{% if underscore or hq %} {# Necessary if hq because hq.helpers depends on underscore #}
+    <script src="{% static 'underscore/underscore-min.js' %}"></script>
+{% endif %}
+
+{% if jquery or hq %} {# Necessary if hq because hq.helpers depends on jQuery #}
+    {% if request.use_legacy_jquery %}
+        <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
+    {% else %}
+        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    {% endif %}
+    {% compress js %}
+        <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
+        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
+        <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
+        {# TODO: include bootstrap styling in this template? #}
+        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    {% endcompress %}
+{% endif %}
+
+{% comment %}
+    Required for inline edit widget. Also used by cloudcare.
+    Including globally rather than increasing complexity of this template.
+    File is 11 KB.
+{% endcomment %}
+<script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
+
+{# Needs to come before knockout because HQ-specific knockout code uses hqDefine #}
+{% if hq %}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    {% endcompress %}
+{% endif %}
+
+{% if ko or hq %} {# Necessary if hq because hq.helpers depends on knockout #}
+    <script src="{% static 'knockout/dist/knockout.js' %}"></script>{# already minified #}
+
+    {% if ko and hq %}
+        {% compress js %}
+            <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/knockout_bindings.ko.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/components/inline_edit.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/components.ko.js' %}"></script>
+        {% endcompress %}
+    {% endif %}
+{% endif %}
+
+{% if hq %}
+    {# Necessary because hq.helpers depends on it #}
+    {% include 'analytics/analytics_js.html' %}
+
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
+    {% endcompress %}
+{% endif %}

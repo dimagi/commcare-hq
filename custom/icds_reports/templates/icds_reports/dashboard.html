@@ -21,9 +21,9 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
+        
+        {% javascript_libraries underscore=True jquery=True hq=True %}
         <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script type="text/javascript" src="{% static 'jquery/dist/jquery.js' %}"></script>
-        <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
@@ -37,8 +37,6 @@
         <script type="text/javascript" src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
-        <script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
         <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
         <script type="text/javascript" src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
@@ -54,8 +52,6 @@
         <script type="text/javascript" src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/icds_app.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>

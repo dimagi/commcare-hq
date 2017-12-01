@@ -49,10 +49,9 @@
     {% block stylesheets %}
     {% endblock %}
 
-    {% include "hqwebapp/includes/jquery.html" %}
+    {% javascript_libraries jquery=True %}
     {% compress js %}
-    {% include "hqwebapp/includes/core_libraries.html" %}
-    <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
     {% endcompress %}
 
     <link rel="shortcut icon" href="{% static 'hqwebapp/images/favicon.png' %}" />
