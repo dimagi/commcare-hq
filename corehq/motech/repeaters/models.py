@@ -527,12 +527,16 @@ class RepeatRecord(Document):
     @property
     @memoized
     def repeater(self):
-        return Repeater.get(self.repeater_id)
+        try:
+            return Repeater.get(self.repeater_id)
+        except ResourceNotFound:
+            return None
 
     @property
     def url(self):
         warnings.warn("RepeatRecord.url is deprecated. Use Repeater.get_url instead", DeprecationWarning)
-        return self.repeater.get_url(self)
+        if self.repeater:
+            return self.repeater.get_url(self)
 
     @property
     def state(self):
