@@ -751,4 +751,5 @@ def javascript_libraries(**kwargs):
         'ko': kwargs.pop('ko', False),
         'analytics': kwargs.pop('analytics', False),
         'hq': kwargs.pop('hq', False),
+        'helpers': kwargs.pop('helpers', False),
     }

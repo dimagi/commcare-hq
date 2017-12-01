@@ -30,7 +30,7 @@
   <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqadmin/css/project_map.css' %}" />
   {% endcompress %}
 
-  {% javascript_libraries jquery=True knockout=True hq=True %}
+  {% javascript_libraries jquery=True knockout=True hq=True helpers=True %}
   {% compress js %}
   <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
   <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>

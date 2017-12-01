@@ -10,15 +10,15 @@
         jquery: Include jQuery and common jQuery plugins, e.g., jquery.cookie
         ko: Include knockout
         hq: Core HQ-specific code like hqModules. Set to true if the template will use ANY JavaScript from corehq.
-        TODO: separate out hq.helpers, since they result in everything else being included, and maybe analytics
+        analytics: Include Google Analytics, Kissmetrics, etc.
+        helpers: Include hq.helpers.js
 {% endcomment %}
-<!-- jls -->
 
-{% if underscore or hq %} {# Necessary if hq because hq.helpers depends on underscore #}
+{% if underscore or helpers %}
     <script src="{% static 'underscore/underscore-min.js' %}"></script>
 {% endif %}
 
-{% if jquery or hq %} {# Necessary if hq because hq.helpers depends on jQuery #}
+{% if jquery or helpers %}
     {% if request.use_legacy_jquery %}
         <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
     {% else %}
@@ -41,14 +41,14 @@
 <script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
 
 {# Needs to come before knockout because HQ-specific knockout code uses hqDefine #}
-{% if hq or analytics %} {# Analytics depend on hqDefine #}
+{% if hq or analytics or helpers %} {# Analytics depend on hqDefine #}
     {% compress js %}
         <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>{# TODO: remove $ and _ dependencies #}
     {% endcompress %}
 {% endif %}
 
-{% if ko or hq %} {# Necessary if hq because hq.helpers depends on knockout #}
+{% if ko or helpers %}
     <script src="{% static 'knockout/dist/knockout.js' %}"></script>{# already minified #}
 
     {% if ko and hq %}
@@ -61,9 +61,11 @@
     {% endif %}
 {% endif %}
 
-{% if analytics or hq %} {# Necessary if hq because hq.helpers depends on it #}
+{% if analytics or helpers %}
     {% include 'analytics/analytics_js.html' %}
+{% endif %}
 
+{% if helpers %}
     {% compress js %}
         <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
     {% endcompress %}
