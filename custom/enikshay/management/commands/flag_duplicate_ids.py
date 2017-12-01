@@ -43,7 +43,7 @@ class Command(BaseCommand):
         commit = options['commit']
         self.debug_info = options['debug_info']
 
-        filename = '{}-{}.csv'.format(self.__module__,
+        filename = '{}-{}.csv'.format(self.__module__.split('.')[-1],
                                       datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S'))
         print("Logging actions to {}".format(filename))
         with open(filename, 'w') as f:
