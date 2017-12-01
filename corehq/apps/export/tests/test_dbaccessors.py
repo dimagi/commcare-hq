@@ -19,6 +19,8 @@ from corehq.apps.export.dbaccessors import (
     get_properly_wrapped_export_instance,
     get_case_inferred_schema,
     get_form_inferred_schema,
+    get_form_exports_by_domain,
+    get_case_exports_by_domain
 )
 
 
@@ -108,6 +110,11 @@ class TestExportInstanceDBAccessors(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestExportInstanceDBAccessors, cls).setUpClass()
+        cls.form_instance = FormExportInstance(
+            domain=cls.domain,
+            name='Forms',
+            is_deidentified=False
+        )
         cls.form_instance_deid = FormExportInstance(
             domain=cls.domain,
             name='Forms',
@@ -137,6 +144,7 @@ class TestExportInstanceDBAccessors(TestCase):
         )
 
         cls.instances = [
+            cls.form_instance,
             cls.form_instance_deid,
             cls.form_instance_wrong,
             cls.form_instance_daily_saved,
@@ -155,7 +163,7 @@ class TestExportInstanceDBAccessors(TestCase):
 
     def test_get_form_export_instances(self):
         instances = get_form_export_instances(self.domain)
-        self.assertEqual(len(instances), 1)
+        self.assertEqual(len(instances), 2)
 
     def test_get_case_export_instances(self):
         instances = get_case_export_instances(self.domain)
@@ -178,6 +186,20 @@ class TestExportInstanceDBAccessors(TestCase):
 
         instance = get_properly_wrapped_export_instance(self.case_instance._id)
         self.assertEqual(type(instance), type(self.case_instance))
+
+    def test_deid_form_exports_permissions(self):
+        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=True)
+        self.assertEqual(len(instances), 2)
+
+        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=False)
+        self.assertEqual(len(instances), 1)
+
+    def test_deid_case_exports_permissions(self):
+        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=True)
+        self.assertEqual(len(instances), 2)
+
+        instances = get_form_exports_by_domain(self.domain, has_deid_permissions=False)
+        self.assertEqual(len(instances), 1)
 
 
 class TestInferredSchemasDBAccessors(TestCase):
