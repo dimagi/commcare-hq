@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.util.log import with_progress_bar
 
-from custom.enikshay.case_utils import get_all_episode_ids, iter_all_active_person_episode_cases
+from custom.enikshay.case_utils import get_all_episode_ids, iter_all_active_public_sector_person_from_episode_cases
 
 
 class ENikshayBatchCaseUpdaterCommand(BaseCommand):
@@ -36,7 +36,7 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
         errors = []
 
         case_ids = get_all_episode_ids(domain)
-        cases = iter_all_active_person_episode_cases(domain, case_ids)
+        cases = iter_all_active_public_sector_person_from_episode_cases(domain, case_ids)
 
         for person, episode in with_progress_bar(cases, len(case_ids), oneline=False):
             try:

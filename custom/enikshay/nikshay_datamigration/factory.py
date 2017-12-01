@@ -10,7 +10,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import (
     get_first_parent_of_case,
-    get_open_drtb_hiv_case_from_episode,
+    get_open_drtb_hiv_case_from_occurrence,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound, ENikshayLocationNotFound
 from custom.enikshay.nikshay_datamigration.exceptions import MatchingNikshayIdCaseNotMigrated
@@ -113,12 +113,13 @@ class EnikshayCaseFactory(object):
     @memoized
     def existing_drtb_hiv_case(self):
         """
-        Get the existing episode case for this nikshay ID, or None if no episode case exists
+        Get the existing secondary owner case for the occurrence case,
+        or None if no occurrence case exists
         """
-        if self.existing_episode_case:
+        if self.existing_occurrence_case:
             try:
-                return get_open_drtb_hiv_case_from_episode(
-                    self.domain, self.existing_episode_case.case_id
+                return get_open_drtb_hiv_case_from_occurrence(
+                    self.domain, self.existing_occurrence_case.case_id
                 )
             except ENikshayCaseNotFound:
                 return None

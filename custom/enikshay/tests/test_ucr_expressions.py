@@ -24,9 +24,6 @@ class ReferralTestExpression(ReferralExpressionBase):
     def _handle_referral_case(self, referral):
         return referral
 
-    def _handle_trail_case(self, context, trail, domain):
-        return trail
-
 
 @nottest
 def referral_test_expression(spec, context):

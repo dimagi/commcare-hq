@@ -19,7 +19,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
-    get_open_episode_case_from_occurrence,
+    get_open_active_dstb_episode_case_from_occurrence,
     person_has_any_nikshay_notifiable_episode,
     get_person_case_from_occurrence)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
@@ -43,7 +43,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
 )
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
-    is_valid_test_submission,
+    is_valid_test_case_submission,
     is_valid_archived_submission,
 )
 
@@ -201,7 +201,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                     test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
-                not is_valid_test_submission(test_case) and
+                is_valid_test_case_submission(test_case) and
                 person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:

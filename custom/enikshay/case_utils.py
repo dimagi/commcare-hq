@@ -16,7 +16,9 @@ from custom.enikshay.exceptions import (
     ENikshayCaseTypeNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
-    ENikshayException)
+    ENikshayException,
+    EnikshayBadAppState,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 import six
 
@@ -99,6 +101,9 @@ def get_all_occurrence_cases_from_person(domain, person_case_id):
     all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     occurrence_cases = [case for case in all_cases
                         if case.type == CASE_TYPE_OCCURRENCE]
+    open_occurrence_cases = [case for case in occurrence_cases if not case.closed]
+    if len(open_occurrence_cases) > 1:
+        raise EnikshayBadAppState("Multiple open occurrences found for person case : %s " % person_case_id)
     return occurrence_cases
 
 
@@ -110,10 +115,8 @@ def get_open_occurrence_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence
 
     """
-    case_accessor = CaseAccessors(domain)
-    occurrence_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    open_occurrence_cases = [case for case in occurrence_cases
-                             if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
+    occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
+    open_occurrence_cases = [case for case in occurrence_cases if not case.closed]
     if not open_occurrence_cases:
         raise ENikshayCaseNotFound(
             "Person with id: {} exists but has no open occurrence cases".format(person_case_id)
@@ -145,7 +148,7 @@ def get_associated_episode_case_for_test(test_case, occurrence_case_id):
             raise ENikshayCaseNotFound("Could not find episode case %s associated with test %s" %
                                        (test_case_episode_id, test_case.get_id))
 
-    return get_open_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
+    return get_open_active_dstb_episode_case_from_occurrence(test_case.domain, occurrence_case_id)
 
 
 def get_all_episode_cases_from_person(domain, person_case_id):
@@ -160,9 +163,10 @@ def get_all_episode_cases_from_person(domain, person_case_id):
     return episode_cases
 
 
-def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
+def get_open_active_dstb_episode_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open 'episode' case for the occurrence
+    In eNikshay public sector app
+    Gets the first open DSTB 'episode' case for the occurrence
 
     Assumes the following case structure:
     Occurrence <--ext-- Episode
@@ -170,34 +174,41 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     """
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
-    open_episode_cases = [case for case in episode_cases
-                          if not case.closed and case.type == CASE_TYPE_EPISODE and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
-    if open_episode_cases:
-        return open_episode_cases[0]
+    open_active_episode_cases = [case for case in episode_cases
+                                 if not case.closed and
+                                 case.type == CASE_TYPE_EPISODE and
+                                 case.get_case_property('episode_type') == "confirmed_tb" and
+                                 case.get_case_property('is_active') == 'true'
+                                 ]
+    if len(open_active_episode_cases) > 1:
+        raise EnikshayBadAppState("Multiple open active episode cases found for occurrence : %s" % occurrence_case_id)
+
+    if open_active_episode_cases:
+        return open_active_episode_cases[0]
     else:
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
         )
 
 
-def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
+def get_open_drtb_hiv_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open 'drtb-hiv-referral' case for the episode
-
-    Assumes the following case structure:
-    episode <--ext-- drtb-hiv-referral
+    - Get the occurrence case from the episode case
+    - Get an open secondary_owner case (extension of occurrence) where secondary_owner_type = drtb-hiv"
     """
     case_accessor = CaseAccessors(domain)
-    open_drtb_cases = [
-        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
-        if not case.closed and case.type == CASE_TYPE_DRTB_HIV_REFERRAL
+    open_drtb_hivsecondary_owner_case = [
+        case for case in case_accessor.get_reverse_indexed_cases([occurrence_case_id])
+        if not case.closed and
+        case.type == CASE_TYPE_SECONDARY_OWNER and
+        case.get_case_property('secondary_owner_type') == 'drtb-hiv'
     ]
-    if open_drtb_cases:
-        return open_drtb_cases[0]
+    if open_drtb_hivsecondary_owner_case:
+        return open_drtb_hivsecondary_owner_case[0]
     else:
         raise ENikshayCaseNotFound(
-            "Occurrence with id: {} exists but has no open episode cases".format(episode_case_id)
+            "Occurrence with id: {} exists but has no open drtb-hiv secondary owner case".format(
+                occurrence_case_id)
         )
 
 
@@ -209,31 +220,52 @@ def get_open_episode_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence <--ext-- Episode
 
     """
-    return get_open_episode_case_from_occurrence(
+    return get_open_active_dstb_episode_case_from_occurrence(
         domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
     )
 
 
-def get_open_referral_case_from_person(domain, person_case_id):
+def get_referral_cases_from_person(domain, person_case_id, closed_cases=False):
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    open_referral_cases = [
-        case for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
-    ]
-    occurrence_cases = [
-        case.case_id for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
-    ]
-    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
-    open_referral_cases.extend(
-        case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
-    )
+    if closed_cases:
+        referral_cases = [case for case in reverse_indexed_cases
+                          if case.closed and case.type == CASE_TYPE_REFERRAL]
+        occurrence_cases = [case.case_id for case in reverse_indexed_cases if case.type == CASE_TYPE_OCCURRENCE]
+        reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+        referral_cases.extend(
+            case for case in reversed_indexed_occurrence
+            if case.closed and case.type == CASE_TYPE_REFERRAL
+        )
+    else:
+        referral_cases = [case for case in reverse_indexed_cases
+                          if not case.closed and case.type == CASE_TYPE_REFERRAL]
+        occurrence_cases = [case.case_id for case in reverse_indexed_cases
+                            if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
+        reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+        referral_cases.extend(
+            case for case in reversed_indexed_occurrence
+            if not case.closed and case.type == CASE_TYPE_REFERRAL
+        )
+    return referral_cases
+
+
+def get_open_referral_case_from_person(domain, person_case_id):
+    open_referral_cases = get_referral_cases_from_person(domain, person_case_id)
     if not open_referral_cases:
         return None
     else:
         return sorted(open_referral_cases, key=(lambda case: case.opened_on))[0]
+
+
+def get_latest_closed_referral_case_from_person(domain, person_case_id, with_status=None):
+    closed_referral_cases = get_referral_cases_from_person(domain, person_case_id, closed_cases=True)
+    if with_status:
+        closed_referral_cases = [
+            referral_case for referral_case in closed_referral_cases
+            if referral_case.get_case_property('referral_status') == with_status
+        ]
+    return sorted(closed_referral_cases, key=lambda x: x.closed_on)[0]
 
 
 def get_latest_trail_case_from_person(domain, person_case_id):
@@ -585,7 +617,7 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def iter_all_active_person_episode_cases(domain, case_ids):
+def iter_all_active_public_sector_person_from_episode_cases(domain, case_ids):
     """From a list of case_ids, return all the active episodes and associate person case
     """
     case_accessor = CaseAccessors(domain)
@@ -595,6 +627,9 @@ def iter_all_active_person_episode_cases(domain, case_ids):
             continue
 
         if episode_case.closed:
+            continue
+
+        if episode_case.get_case_property('is_active') != 'true':
             continue
 
         try:
@@ -622,3 +657,12 @@ def person_has_any_nikshay_notifiable_episode(person_case):
     episode_cases = get_all_episode_cases_from_person(domain, person_case.case_id)
     return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
                for episode_case in episode_cases)
+
+
+def get_person_case_from_test(domain, test_case_id):
+    return (
+        get_person_case_from_occurrence(
+            domain,
+            get_occurrence_case_from_test(domain, test_case_id)
+        )
+    )

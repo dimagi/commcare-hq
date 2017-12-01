@@ -28,3 +28,7 @@ class NikshayRequiredValueMissing(ENikshayException):
 
 class EnikshayTaskException(ENikshayException):
     pass
+
+
+class EnikshayBadAppState(ENikshayException):
+    pass

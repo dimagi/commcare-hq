@@ -7,8 +7,13 @@ from custom.enikshay.exceptions import NikshayLocationNotFound, ENikshayCaseNotF
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_lab_referral_from_test,
-    get_person_case_from_voucher)
-from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+    get_person_case_from_voucher,
+    get_person_case_from_test,
+)
+from casexml.apps.case.const import (
+    ARCHIVED_CASE_OWNER_ID,
+    INVALID_CASE_OWNER_ID,
+)
 from custom.enikshay.const import (
     PERSON_CASE_2B_VERSION,
     REAL_DATASET_PROPERTY_VALUE,
@@ -33,8 +38,13 @@ def _is_submission_from_test_location(case_id, owner_id):
     return phi_location.metadata.get('is_test', "yes") == "yes"
 
 
+def is_invalid_person_submission(person_case):
+    return person_case.owner_id == INVALID_CASE_OWNER_ID
+
+
 def is_valid_person_submission(person_case):
-    if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+    if (person_case.owner_id == ARCHIVED_CASE_OWNER_ID or
+            is_invalid_person_submission(person_case)):
         return False
     if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
         return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
@@ -63,11 +73,18 @@ def is_valid_voucher_submission(voucher_case):
     return is_valid_person_submission(person_case)
 
 
-def is_valid_test_submission(test_case):
+def is_valid_test_case_submission(test_case):
+    """
+    this checks if the test case is submitted by a valid/real user
+    """
+    person_case = get_person_case_from_test(test_case.domain, test_case.case_id)
+    if is_invalid_person_submission(person_case):
+        return False
+
     try:
         lab_referral_case = get_lab_referral_from_test(test_case.domain, test_case.get_id)
     except ENikshayCaseNotFound:
-        return False
+        return True
 
     try:
         dmc_location = SQLLocation.objects.get(location_id=lab_referral_case.owner_id)
@@ -77,7 +94,7 @@ def is_valid_test_submission(test_case):
             {lab_referral_id}"
             .format(location_id=lab_referral_case.owner_id, lab_referral_id=lab_referral_case.case_id)
         )
-    return dmc_location.metadata.get('is_test', "yes") == "yes"
+    return dmc_location.metadata.get('is_test', "yes") == "no"
 
 
 def is_valid_archived_submission(episode_case):

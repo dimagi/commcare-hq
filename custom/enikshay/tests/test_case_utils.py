@@ -22,7 +22,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     update_case,
     get_open_occurrence_case_from_person,
-    get_open_episode_case_from_occurrence,
+    get_open_active_dstb_episode_case_from_occurrence,
     get_person_locations,
     get_episode_case_from_adherence,
     get_open_referral_case_from_person,
@@ -172,9 +172,9 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, ENikshayLocationStructu
             self.occurrence_id
         )
 
-    def test_get_open_episode_case_from_occurrence(self):
+    def test_get_open_active_dstb_episode_case_from_occurrence(self):
         self.assertEqual(
-            get_open_episode_case_from_occurrence(self.domain, self.occurrence_id).case_id,
+            get_open_active_dstb_episode_case_from_occurrence(self.domain, self.occurrence_id).case_id,
             self.episode_id
         )
 
