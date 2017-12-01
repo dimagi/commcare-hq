@@ -1301,7 +1301,10 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.urlname, args=[self.domain, case_id]),
                 "show_transaction_export": toggles.COMMTRACK.enabled(
                     self.request.user.username),
-                "property_details_enabled": toggles.SUPPORT.enabled(self.request.user.username),
+                "property_details_enabled": (
+                    toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request)
+                    or toggles.SUPPORT.enabled_for_request(self.request)
+                ),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": self.request.couch_user.can_edit_data,
