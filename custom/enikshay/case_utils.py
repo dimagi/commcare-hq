@@ -10,13 +10,13 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.const import ENROLLED_IN_PRIVATE, SECTORS, PRIVATE_SECTOR, PUBLIC_SECTOR
 from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
     ENikshayCaseTypeNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
-    ENikshayException)
+)
 from corehq.form_processor.exceptions import CaseNotFound
 import six
 
@@ -585,12 +585,11 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def iter_all_active_person_episode_cases(domain, case_ids, sector="both"):
+def iter_all_active_person_episode_cases(domain, case_ids, sector=None):
     """From a list of case_ids, return all the active episodes and associate person case
     """
-    accepted_sectors = ['both', 'private', 'public']
-    if sector not in accepted_sectors:
-        raise ValueError('sector argument should be one of {}'.format(accepted_sectors))
+    if sector is not None and sector not in SECTORS:
+        raise ValueError('sector argument should be one of {}, or None'.format(SECTORS))
 
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.iter_cases(case_ids)
@@ -601,9 +600,9 @@ def iter_all_active_person_episode_cases(domain, case_ids, sector="both"):
         if episode_case.closed:
             continue
 
-        if sector == 'private' and episode_case.get_case_property('enrolled_in_private') != 'true':
+        if sector == PRIVATE_SECTOR and episode_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
             continue
-        elif sector == 'public' and episode_case.get_case_property('enrolled_in_private') == 'true':
+        elif sector == PUBLIC_SECTOR and episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             continue
 
         try:
