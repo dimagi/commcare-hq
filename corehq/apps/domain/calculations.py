@@ -28,7 +28,6 @@ from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.userreports.util import number_of_report_builder_reports, number_of_ucr_reports
 from corehq.apps.sms.models import SQLMobileBackend
-from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
 from corehq.apps.groups.models import Group
@@ -425,6 +424,7 @@ def total_distinct_users(domain):
 
 
 def num_telerivet_backends(domain):
+    from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
     backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
     return len([b for b in backends if type(b) is SQLTelerivetBackend])
 
