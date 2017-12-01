@@ -880,7 +880,7 @@ RETRY_SMS_INDEFINITELY = StaticToggle(
     'Enikshay: Retry SMS indefinitely',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    description='Requeues an SMS that has reached the maximum number of unsuccessful attempts.',
+    description='Leaves on the queue an SMS that has reached the maximum number of unsuccessful attempts.',
 )
 
 OPENMRS_INTEGRATION = StaticToggle(
