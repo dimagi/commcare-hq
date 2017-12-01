@@ -366,7 +366,6 @@ class MostRecentReferralCaseFromPerson(JsonObject):
        -> referral_status != 'rejected' and 'referral_closed_reason' != 'duplicate_referral_reconciliation'
     """
     type = TypeProperty('enikshay_most_recent_referral_from_person')
-
     person_id_expression = DefaultProperty(required=True)
 
     def configure(self, person_id_expression):
@@ -390,7 +389,7 @@ class MostRecentReferralCaseFromPerson(JsonObject):
 def most_recent_referral_expression(spec, context):
     wrapped = MostRecentReferralCaseFromPerson.wrap(spec)
     wrapped.configure(
-        ExpressionFactory.from_spec(wrapped.most_recent_referral_expression, context)
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
     )
     return wrapped
 
@@ -423,6 +422,6 @@ class MostRecentEpisodeCaseFromPerson(JsonObject):
 def most_recent_episode_expression(spec, context):
     wrapped = MostRecentEpisodeCaseFromPerson.wrap(spec)
     wrapped.configure(
-        ExpressionFactory.from_spec(wrapped.most_recent_episode_expression, context)
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
     )
     return wrapped

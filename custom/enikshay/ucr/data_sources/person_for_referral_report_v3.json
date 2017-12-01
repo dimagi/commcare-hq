@@ -14,7 +14,7 @@
         "description": "A data source based on person cases to be used for the referred-in report",
         "base_item_expression": {
         },
-        "table_id": "person-for-referral-2017-06-23_v3",
+        "table_id": "person-for-referral-v3",
         "display_name": "person (for referral report) V3",
         "configured_filter": {
             "type": "and",
@@ -58,7 +58,7 @@
             {
                 "display_name": "date_of_referral",
                 "transform": {},
-                "datatype": "string",
+                "datatype": "date",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,
@@ -84,7 +84,7 @@
                     "type": "date_format",
                     "format": "%Y-%m-%d"
                 },
-                "datatype": "string",
+                "datatype": "date",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,
@@ -120,7 +120,7 @@
             {
                 "display_name": "dob",
                 "transform": {},
-                "datatype": "string",
+                "datatype": "date",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,
