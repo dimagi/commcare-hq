@@ -133,7 +133,6 @@
                 "type": "expression",
                 "column_id": "voucher_issued_by_login_name"
             },
-
             {
                 "comment": null,
                 "create_index": false,
@@ -1048,6 +1047,293 @@
                 "is_nullable": true,
                 "type": "expression",
                 "column_id": "voucher_type"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "private_sector_organization_name",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "private_sector_organization_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "private_sector_organization_name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "private_sector_organization_id",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "private_sector_organization_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "private_sector_organization_id"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "voucher_issued_by_name",
+                "datatype": "string",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "voucher_issued_by_name"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "voucher_issued_by_name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "voucher_issued_by_phone_number",
+                "datatype": "string",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "voucher_issued_by_phone_number"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "voucher_issued_by_phone_number"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "person_name",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "person_name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "person_name",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "person_name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "episode_type",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "episode_type"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "episode_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "episode_type"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "date_of_registration",
+                "datatype": "date",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "date_of_registration"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "date_of_registration"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "amount_fulfilled",
+                "datatype": "integer",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "amount_fulfilled"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "amount_fulfilled"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "voucher_fulfilled_by_phone_number",
+                "datatype": "string",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "voucher_fulfilled_by_phone_number"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "voucher_fulfilled_by_phone_number"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "purpose_of_test",
+                "datatype": "date",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "purpose_of_test"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "parent_case_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "purpose_of_test"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "investigation_type_name",
+                "datatype": "string",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "investigation_type_name"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "investigation_type_name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "date_reported",
+                "datatype": "date",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "date_reported"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "date_reported"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "purpose_of_test"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "test_id",
+                "datatype": "date",
+                "expression": {
+                    "type": "named",
+                    "name": "parent_case_id"
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "test_id"
             }
         ],
         "named_filters": {},
