@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base_section.html" %}
+{% extends "scheduling/create_schedule_base.html" %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
@@ -7,7 +7,7 @@
     <script src="{% static 'data_interfaces/js/case_rule_criteria.js' %}"></script>
 {% endblock %}
 
-{% block page_content %}
+{% block page_content %}{{ block.super }}
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 
 <div class="row">
@@ -32,7 +32,8 @@
                 </div>
                 <div class="tab-pane" id="schedule">
                     <div class="row">
-                        <div class="col-sm-12">
+                        <div id="create-schedule-form" class="col-sm-12">
+                            {% crispy schedule_form %}
                         </div>
                     </div>
                 </div>

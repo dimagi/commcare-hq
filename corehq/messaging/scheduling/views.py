@@ -27,6 +27,7 @@ from corehq.messaging.scheduling.forms import (
     BroadcastForm,
     ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
+    ConditionalAlertScheduleForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -280,10 +281,22 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return {
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
+            'schedule_form': self.schedule_form,
         }
 
+    @cached_property
+    def schedule_form(self):
+        if self.request.method == 'POST':
+            return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.request.POST)
+
+        return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule)
+
     @property
-    def initial_rule(self):
+    def schedule(self):
+        return None
+
+    @property
+    def rule(self):
         return None
 
     @cached_property
@@ -307,7 +320,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @cached_property
     def criteria_form(self):
         kwargs = {
-            'rule': self.initial_rule,
+            'rule': self.rule,
             'is_system_admin': self.is_system_admin,
         }
 
@@ -317,6 +330,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return ConditionalAlertCriteriaForm(self.domain, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+
         basic_info_form_valid = self.basic_info_form.is_valid()
         criteria_form_valid = self.criteria_form.is_valid()
 
@@ -332,8 +348,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 return HttpResponseBadRequest()
 
             with transaction.atomic():
-                if self.initial_rule:
-                    rule = self.initial_rule
+                if self.rule:
+                    rule = self.rule
                 else:
                     rule = AutomaticUpdateRule(
                         domain=self.domain,

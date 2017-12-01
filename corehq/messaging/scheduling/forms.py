@@ -973,6 +973,13 @@ class BroadcastForm(ScheduleForm):
         return (broadcast, schedule)
 
 
+class ConditionalAlertScheduleForm(ScheduleForm):
+
+    def __init__(self, domain, schedule, rule, *args, **kwargs):
+        self.initial_rule = rule
+        super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+
+
 class ConditionalAlertForm(Form):
     # Prefix to avoid name collisions; this means all input
     # names in the HTML are prefixed with "conditional-alert-"
