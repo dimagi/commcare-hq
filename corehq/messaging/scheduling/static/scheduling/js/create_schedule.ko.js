@@ -10,6 +10,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.send_time = ko.observable(initial_values.send_time);
         self.send_time_type = ko.observable(initial_values.send_time_type);
         self.start_date = ko.observable(initial_values.start_date);
+        self.start_date_type = ko.observable(initial_values.start_date_type);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);

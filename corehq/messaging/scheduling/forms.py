@@ -131,10 +131,6 @@ class ScheduleForm(Form):
         )
     )
     send_time = CharField(required=False)
-    start_date = CharField(
-        label='',
-        required=False
-    )
     stop_type = ChoiceField(
         required=False,
         choices=(
@@ -387,17 +383,6 @@ class ScheduleForm(Form):
         result.extend(self.get_timing_layout_fields())
 
         result.extend([
-            hqcrispy.B3MultiField(
-                ugettext("Start"),
-                crispy.Div(
-                    twbscrispy.InlineField(
-                        'start_date',
-                        data_bind='value: start_date',
-                    ),
-                    css_class='col-sm-6',
-                ),
-                data_bind='visible: showStartDateInput',
-            ),
             hqcrispy.B3MultiField(
                 ugettext("Stop"),
                 crispy.Div(
@@ -698,12 +683,6 @@ class ScheduleForm(Form):
 
         return validate_time(self.cleaned_data.get('send_time'))
 
-    def clean_start_date(self):
-        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
-            return None
-
-        return validate_date(self.cleaned_data.get('start_date'))
-
     def clean_stop_type(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
             return None
@@ -901,6 +880,11 @@ class BroadcastForm(ScheduleForm):
         max_length=1000,
     )
 
+    start_date = CharField(
+        label='',
+        required=False
+    )
+
     def __init__(self, domain, schedule, broadcast, *args, **kwargs):
         self.initial_broadcast = broadcast
         super(BroadcastForm, self).__init__(domain, schedule, *args, **kwargs)
@@ -914,6 +898,17 @@ class BroadcastForm(ScheduleForm):
                     template='scheduling/partial/time_picker.html',
                 ),
                 data_bind='visible: showTimeInput',
+            ),
+            hqcrispy.B3MultiField(
+                ugettext("Start"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date',
+                        data_bind='value: start_date',
+                    ),
+                    css_class='col-sm-6',
+                ),
+                data_bind='visible: showStartDateInput',
             ),
         ]
 
@@ -937,6 +932,12 @@ class BroadcastForm(ScheduleForm):
     @property
     def readonly_mode(self):
         return isinstance(self.initial_broadcast, ImmediateBroadcast)
+
+    def clean_start_date(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        return validate_date(self.cleaned_data.get('start_date'))
 
     def save_immediate_broadcast(self, schedule):
         form_data = self.cleaned_data
@@ -990,11 +991,19 @@ class BroadcastForm(ScheduleForm):
 class ConditionalAlertScheduleForm(ScheduleForm):
 
     SEND_TIME_SPECIFIC_TIME = 'SPECIFIC_TIME'
+    START_DATE_IMMEDIATELY = 'IMMEDIATELY'
 
     send_time_type = ChoiceField(
         required=True,
         choices=(
             (SEND_TIME_SPECIFIC_TIME, _("A specific time")),
+        )
+    )
+
+    start_date_type = ChoiceField(
+        required=True,
+        choices=(
+            (START_DATE_IMMEDIATELY, _("The date the rule is satisfied")),
         )
     )
 
@@ -1021,6 +1030,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: send_time_type() === '%s'" % self.SEND_TIME_SPECIFIC_TIME,
                 ),
                 data_bind="visible: showTimeInput",
+            ),
+            hqcrispy.B3MultiField(
+                ugettext("Start Date"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date_type',
+                        data_bind='value: start_date_type',
+                    ),
+                    css_class='col-sm-4',
+                ),
             ),
         ]
 
