@@ -170,7 +170,7 @@
         {% endif %}
 
         {% if not requirejs_main %}
-            {% javascript_libraries underscore=True jquery=True ko=True hq=True analytics=True helpers=True %}
+            {% javascript_libraries underscore=True jquery=True ko=True hq=True analytics=True %}
         {% endif %}
 
         {% if request.use_jquery_ui and not requirejs_main %}

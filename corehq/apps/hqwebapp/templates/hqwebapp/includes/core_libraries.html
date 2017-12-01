@@ -9,16 +9,15 @@
         underscore: Include underscore
         jquery: Include jQuery and common jQuery plugins, e.g., jquery.cookie
         ko: Include knockout
-        hq: Core HQ-specific code like hqModules. Set to true if the template will use ANY JavaScript from corehq.
         analytics: Include Google Analytics, Kissmetrics, etc.
-        helpers: Include hq.helpers.js
+        hq: Include initial_page_data and hq.helpers.js, needed for most HQ pages.
 {% endcomment %}
 
-{% if underscore or helpers %}
+{% if underscore or analytics or hq %}
     <script src="{% static 'underscore/underscore-min.js' %}"></script>
 {% endif %}
 
-{% if jquery or helpers %}
+{% if jquery or analytics or hq %}
     {% if request.use_legacy_jquery %}
         <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
     {% else %}
@@ -28,7 +27,6 @@
         <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
         <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
         <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
-        {# TODO: include bootstrap styling in this template? #}
         <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
     {% endcompress %}
 {% endif %}
@@ -40,18 +38,19 @@
 {% endcomment %}
 <script src="{% static 'DOMPurify/dist/purify.min.js' %}"></script>
 
-{# Needs to come before knockout because HQ-specific knockout code uses hqDefine #}
-{% if hq or analytics or helpers %} {# Analytics depend on hqDefine #}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>{# TODO: remove $ and _ dependencies #}
-    {% endcompress %}
-{% endif %}
+{% comment %}
+    HQ-specific knockout code, initial page data, analytics, and helpers all depend on this;
+    including globally rather than increasing complexity of this template.
+    File is 4 KB before compression.
+{% endcomment %}
+{% compress js %}
+    <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+{% endcompress %}
 
-{% if ko or helpers %}
+{% if ko or hq %}
     <script src="{% static 'knockout/dist/knockout.js' %}"></script>{# already minified #}
 
-    {% if ko and hq %}
+    {% if hq %}
         {% compress js %}
             <script src="{% static 'hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
             <script src="{% static 'hqwebapp/js/knockout_bindings.ko.js' %}"></script>
@@ -61,11 +60,17 @@
     {% endif %}
 {% endif %}
 
-{% if analytics or helpers %}
+{% comment %}
+    Analytics depend on initial page data, and hq.helpers depends on analytics.
+{% endcomment %}
+{% if analytics or hq %}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    {% endcompress %}
     {% include 'analytics/analytics_js.html' %}
 {% endif %}
 
-{% if helpers %}
+{% if hq %}
     {% compress js %}
         <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
     {% endcompress %}

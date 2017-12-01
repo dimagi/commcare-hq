@@ -7,7 +7,7 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
         <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 
-        {% javascript_libraries jquery=True hq=True %}
+        {% javascript_libraries jquery=True %}
         {% compress js %}
             <script src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
             <script src="{% static 'hqadmin/js/admin_restore.js' %}"></script>
