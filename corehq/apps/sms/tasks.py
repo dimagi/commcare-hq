@@ -49,7 +49,7 @@ def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
-    elif RETRY_SMS_INDEFINITELY.enabled(msg.domain):
+    elif msg.direction == OUTGOING and RETRY_SMS_INDEFINITELY.enabled(msg.domain):
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
