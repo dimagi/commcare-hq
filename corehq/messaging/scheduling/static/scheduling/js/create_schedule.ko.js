@@ -171,8 +171,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         };
 
         self.init = function () {
-            self.initDatePicker($("#id_start_date"));
-            self.initTimePicker($("#id_send_time"));
+            self.initDatePicker($("#id_schedule-start_date"));
+            self.initTimePicker($("#id_schedule-send_time"));
             self.setOccurrencesOptionText(self.send_frequency());
         };
     };
