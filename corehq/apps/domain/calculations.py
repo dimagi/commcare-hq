@@ -35,6 +35,7 @@ from corehq.apps.groups.models import Group
 from corehq.motech.repeaters.models import Repeater
 from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.models import HQMediaMixin
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -401,6 +402,8 @@ def calced_props(dom, id, all_stats):
         "cp_n_deid_exports": num_deid_exports(dom),
         "cp_n_saved_exports": num_saved_exports(dom),
         "cp_n_lookup_tables": num_lookup_tables(dom),
+        "cp_has_project_icon": has_domain_icon(dom),
+        "cp_n_apps_with_icon": num_apps_with_icon(dom),
     }
 
 
@@ -470,3 +473,14 @@ def num_saved_exports(domain):
 
 def num_lookup_tables(domain):
     return len(FixtureDataType.by_domain(domain))
+
+
+def has_domain_icon(domain):
+    domain = Domain.get_by_name(domain)
+    return domain.has_custom_logo
+
+
+def num_apps_with_icon(domain):
+    domain = Domain.get_by_name(domain)
+    apps = domain.applications()
+    return len([a for a in apps if isinstance(a, HQMediaMixin) and a.logo_refs])
