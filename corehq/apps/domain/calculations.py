@@ -390,7 +390,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_rb_reports": number_of_report_builder_reports(dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
-        "cp_use_two_factor": use_two_factor(dom),
+        "cp_use_domain_security": use_domain_security_settings(dom),
         "cp_n_custom_roles": num_custom_roles(dom),
         "cp_using_locations": users_have_locations(dom),
         "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
@@ -422,9 +422,9 @@ def num_telerivet_backends(domain):
     return len([b for b in backends if type(b) is SQLTelerivetBackend])
 
 
-def use_two_factor(domain):
+def use_domain_security_settings(domain):
     domain = Domain.get_by_name(domain)
-    return domain.two_factor_auth
+    return domain.two_factor_auth or domain.secure_sessions or domain.strong_mobile_passwords
 
 
 def num_custom_roles(domain):
