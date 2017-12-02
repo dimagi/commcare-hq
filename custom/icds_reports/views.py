@@ -524,9 +524,9 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:
-                start = request.GET.get('start', 0)
-                length = request.GET.get('length', 10)
-                draw = request.GET.get('draw', 0)
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
+                draw = int(request.GET.get('draw', 0))
 
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
