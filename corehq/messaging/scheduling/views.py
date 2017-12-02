@@ -335,13 +335,14 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         basic_info_form_valid = self.basic_info_form.is_valid()
         criteria_form_valid = self.criteria_form.is_valid()
+        schedule_form_valid = self.schedule_form.is_valid()
 
         if self.read_only_mode:
             # Don't allow making changes to rules that have custom
             # criteria/actions unless the user has permission to
             return HttpResponseBadRequest()
 
-        if basic_info_form_valid and criteria_form_valid:
+        if basic_info_form_valid and criteria_form_valid and schedule_form_valid:
             if not self.is_system_admin and self.criteria_form.requires_system_admin_to_save:
                 # Don't allow adding custom criteria/actions to rules
                 # unless the user has permission to
@@ -360,6 +361,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
                 rule.name = self.basic_info_form.cleaned_data['name']
                 self.criteria_form.save_criteria(rule)
+                self.schedule_form.save_rule_action_and_schedule(rule)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)

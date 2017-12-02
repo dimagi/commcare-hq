@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import re
 from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
+from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
@@ -1182,6 +1183,62 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def distill_start_day_of_week(self):
         return self.cleaned_data['start_day_of_week']
+
+    def distill_scheduler_module_info(self):
+        return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
+
+    def create_rule_action(self, rule, schedule):
+        fields = {
+            'recipients': self.distill_recipients(),
+            'reset_case_property_name': None,
+            'scheduler_module_info': self.distill_scheduler_module_info(),
+        }
+
+        if isinstance(schedule, AlertSchedule):
+            fields['alert_schedule'] = schedule
+        elif isinstance(schedule, TimedSchedule):
+            fields['timed_schedule'] = schedule
+        else:
+            raise TypeError("Unexpected Schedule type")
+
+        rule.add_action(CreateScheduleInstanceActionDefinition, **fields)
+
+    def edit_rule_action(self, rule, schedule):
+        action = rule.caseruleaction_set.all()[0]
+        action_definition = action.definition
+        self.validate_existing_action_definition(action_definition, schedule)
+
+        action_definition.recipients = self.distill_recipients()
+        action_definition.reset_case_property_name = None
+        action_definition.scheduler_module_info = self.distill_scheduler_module_info()
+        action_definition.save()
+
+    def validate_existing_action_definition(self, action_definition, schedule):
+        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
+            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
+
+        if isinstance(schedule, AlertSchedule):
+            if action_definition.alert_schedule_id != schedule.schedule_id:
+                raise ValueError("Schedule mismatch")
+        elif isinstance(schedule, TimedSchedule):
+            if action_definition.timed_schedule_id != schedule.schedule_id:
+                raise ValueError("Schedule mismatch")
+        else:
+            raise TypeError("Unexpected Schedule type")
+
+    def save_rule_action(self, rule, schedule):
+        num_actions = rule.caseruleaction_set.count()
+        if num_actions == 0:
+            self.create_rule_action(rule, schedule)
+        elif num_actions == 1:
+            self.edit_rule_action(rule, schedule)
+        else:
+            raise ValueError("Expected 0 or 1 action")
+
+    def save_rule_action_and_schedule(self, rule):
+        with transaction.atomic():
+            schedule = self.save_schedule()
+            self.save_rule_action(rule, schedule)
 
 
 class ConditionalAlertForm(Form):
