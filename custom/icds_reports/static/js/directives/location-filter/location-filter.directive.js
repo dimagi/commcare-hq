@@ -1,3 +1,5 @@
+/* global _ */
+
 var transformLocationTypeName = function(locationTypeName) {
     if (locationTypeName === 'awc') {
         return locationTypeName.toUpperCase();
@@ -228,7 +230,13 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
                 for (var parentId in locationsGrouppedByParent) {
                     if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        vm.locationsCache[parentId] = [ALL_OPTION].concat(locationsGrouppedByParent[parentId]);
+                        vm.locationsCache[parentId] = [ALL_OPTION].concat(
+                            _.sortBy(
+                               locationsGrouppedByParent[parentId], function(o) {
+                                    return o.name;
+                               }
+                            )
+                        );
                     }
                 }
 
@@ -305,7 +313,11 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             if (!selectedLocation || selectedLocation.location_id === ALL_OPTION.location_id) {
                 return [];
             }
-            return vm.locationsCache[selectedLocation.location_id];
+            return _.sortBy(
+                vm.locationsCache[selectedLocation.location_id], function(o) {
+                    return o.name;
+                }
+            );
         }
     };
 

@@ -105,7 +105,10 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
                     });
                 }));
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [(min - range/10), (max + range/10)];
+                vm.chartOptions.chart.forceY = [
+                    (min - range/10) < 0 ? 0 : (min - range/10),
+                    (max + range/10)
+                ];
             }
         });
     };

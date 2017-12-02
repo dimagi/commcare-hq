@@ -1734,9 +1734,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
         DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
         DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status (in Month)').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
         DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
     ];
 

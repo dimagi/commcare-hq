@@ -268,12 +268,13 @@ class ProgramSummaryView(View):
         step = kwargs.get('step')
 
         now = datetime.utcnow()
-        if now.day == 1:
+
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
             month = (now - relativedelta(months=1)).month
             year = now.year
-        else:
-            month = int(request.GET.get('month', now.month))
-            year = int(request.GET.get('year', now.year))
 
         include_test = request.GET.get('include_test', False)
 
@@ -450,12 +451,14 @@ class AwcReportsView(View):
         include_test = request.GET.get('include_test', False)
 
         now = datetime.utcnow()
-        if now.day == 1:
+
+        month_param = int(request.GET.get('month', now.month))
+        year_param = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month_param and now.year == year_param:
             month_param = (now - relativedelta(months=1)).month
             year_param = now.year
-        else:
-            month_param = int(request.GET.get('month', now.month))
-            year_param = int(request.GET.get('year', now.year))
+
         month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
         two_before = month - relativedelta(months=2)

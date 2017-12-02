@@ -28,7 +28,11 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
                 });
                 if (hasClass) {
                     if ($scope.$route.current.pathParams.step === 'beneficiary') {
-                        var width = "width: " + mutation.addedNodes[0].style.width + ' !important';
+                        var fixedTitle = d3.select('.fixed-title')[0][0].clientHeight;
+                        var fixedFilters = d3.select('.fixes-filters')[0][0].clientHeight;
+                        var width = "width: " + mutation.addedNodes[0].style.width + ' !important;'
+                            + 'top:' + (fixedTitle + fixedFilters - 8) + 'px !important;';
+                        ;
                         mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
                     } else {
                         mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + 'display: none;');
