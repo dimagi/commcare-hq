@@ -1023,9 +1023,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     start_offset_type = ChoiceField(
         required=False,
         choices=(
-            (START_OFFSET_ZERO, _("Exactly on this date")),
-            (START_OFFSET_NEGATIVE, _("Before this date by")),
-            (START_OFFSET_POSITIVE, _("After this date by")),
+            (START_OFFSET_ZERO, _("Exactly on the start date")),
+            (START_OFFSET_NEGATIVE, _("Before the start date by")),
+            (START_OFFSET_POSITIVE, _("After the start date by")),
         )
     )
 
