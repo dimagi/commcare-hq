@@ -1709,7 +1709,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
 
-
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
             url:  url('awc_reports', vm.step),
