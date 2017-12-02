@@ -233,7 +233,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                         vm.locationsCache[parentId] = [ALL_OPTION].concat(
                             _.sortBy(
                                locationsGrouppedByParent[parentId], function(o) {
-                                    return o.name;
+                                   return o.name;
                                }
                             )
                         );

@@ -123,8 +123,8 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
                     ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
-                    ((max + range/10)/100).toFixed(2)
-                ];;
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };

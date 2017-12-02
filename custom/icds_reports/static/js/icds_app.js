@@ -1,3 +1,5 @@
+/* global d3 */
+
 function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl, isWebUser) {
     $scope.$route = $route;
     $scope.$location = $location;
@@ -32,7 +34,6 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
                         var fixedFilters = d3.select('.fixes-filters')[0][0].clientHeight;
                         var width = "width: " + mutation.addedNodes[0].style.width + ' !important;'
                             + 'top:' + (fixedTitle + fixedFilters - 8) + 'px !important;';
-                        ;
                         mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
                     } else {
                         mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + 'display: none;');
