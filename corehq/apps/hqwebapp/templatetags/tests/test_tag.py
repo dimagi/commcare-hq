@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import copy
 import re
 import textwrap
-from mock import patch
 from django.conf import settings
 from django.template import Template, Context, TemplateSyntaxError
 from django.test import SimpleTestCase, override_settings
