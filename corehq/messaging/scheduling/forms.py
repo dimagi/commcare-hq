@@ -1062,6 +1062,24 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         self.initial_rule = rule
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
 
+    def compute_initial(self):
+        result = super(ConditionalAlertScheduleForm, self).compute_initial()
+        if self.initial_schedule:
+            if isinstance(self.initial_schedule, TimedSchedule):
+                if schedule.start_offset == 0:
+                    result['start_offset_type'] = self.START_OFFSET_ZERO
+                elif schedule.start_offset > 0:
+                    result['start_offset_type'] = self.START_OFFSET_POSITIVE
+                    result['start_offset'] = schedule.start_offset
+                else:
+                    result['start_offset_type'] = self.START_OFFSET_NEGATIVE
+                    result['start_offset'] = abs(schedule.start_offset)
+
+                if schedule.start_day_of_week >= 0:
+                    result['start_day_of_week'] = str(schedule.start_day_of_week)
+
+        return result
+
     def get_timing_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
