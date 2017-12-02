@@ -755,6 +755,9 @@ class ScheduleForm(Form):
     def distill_start_offset(self):
         raise NotImplementedError()
 
+    def distill_start_day_of_week(self):
+        raise NotImplementedError()
+
     def assert_alert_schedule(self, schedule):
         if not isinstance(schedule, AlertSchedule):
             raise TypeError("Expected AlertSchedule")
@@ -818,7 +821,7 @@ class ScheduleForm(Form):
                 form_data['send_time'],
                 content,
                 form_data['weekdays'],
-                form_data['start_date'].weekday(),
+                self.distill_start_day_of_week(),
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
             )
@@ -828,7 +831,7 @@ class ScheduleForm(Form):
                 form_data['send_time'],
                 content,
                 form_data['weekdays'],
-                form_data['start_date'].weekday(),
+                self.distill_start_day_of_week(),
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
             )
@@ -947,6 +950,12 @@ class BroadcastForm(ScheduleForm):
     def distill_start_offset(self):
         return 0
 
+    def distill_start_day_of_week(self):
+        if self.cleaned_data['send_frequency'] != self.SEND_WEEKLY:
+            return TimedSchedule.ANY_DAY
+
+        return self.cleaned_data['start_date'].weekday()
+
     def save_immediate_broadcast(self, schedule):
         form_data = self.cleaned_data
         recipients = self.distill_recipients()
@@ -1035,6 +1044,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         min_value=1,
     )
 
+    start_day_of_week = ChoiceField(
+        required=False,
+        choices=(
+            ('6', _('The first Sunday that occurs on or after the start date')),
+            ('0', _('The first Monday that occurs on or after the start date')),
+            ('1', _('The first Tuesday that occurs on or after the start date')),
+            ('2', _('The first Wednesday that occurs on or after the start date')),
+            ('3', _('The first Thursday that occurs on or after the start date')),
+            ('4', _('The first Friday that occurs on or after the start date')),
+            ('5', _('The first Saturday that occurs on or after the start date')),
+        ),
+    )
+
     def __init__(self, domain, schedule, rule, *args, **kwargs):
         self.initial_rule = rule
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
@@ -1090,6 +1112,11 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 ),
                 data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
             ),
+            hqcrispy.B3MultiField(
+                ugettext("Begin"),
+                twbscrispy.InlineField('start_day_of_week'),
+                data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+            ),
         ]
 
     def clean_send_time(self):
@@ -1099,7 +1126,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return None
 
     def clean_start_offset_type(self):
-        self.cleaned_data('send_frequency') != self.SEND_DAILY:
+        if self.cleaned_data.get('send_frequency') != self.SEND_DAILY:
             return None
 
         value = self.cleaned_data.get('start_offset_type')
@@ -1112,6 +1139,23 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             self.cleaned_data.get('start_date_type') == self.START_DATE_RULE_TRIGGER
         ):
             raise ValidationError(ugettext("You may not start sending before the day that the rule triggers."))
+
+        return value
+
+    def clean_start_day_of_week(self):
+        if self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY:
+            return TimedSchedule.ANY_DAY
+
+        value = self.cleaned_data.get('start_day_of_week')
+        error = ValidationError(ugettext("Invalid choice selected"))
+
+        try:
+            value = int(value)
+        except (ValueError, TypeError):
+            raise error
+
+        if value < 0 or value > 6:
+            raise error
 
         return value
 
@@ -1135,6 +1179,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 return start_offset
 
         return 0
+
+    def distill_start_day_of_week(self):
+        return self.cleaned_data['start_day_of_week']
 
 
 class ConditionalAlertForm(Form):
