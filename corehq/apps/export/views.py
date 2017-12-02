@@ -2492,7 +2492,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
         try:
             export_instance = get_properly_wrapped_export_instance(export_instance_id)
         except ResourceNotFound:
-            raise Http404
+            raise Http404(_(u"Export not found"))
 
         assert domain == export_instance.domain
 
