@@ -69,7 +69,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
         if ($location.path().indexOf('awc_reports') !== -1) {
-            vm.showMessage = selectedLocationIndex() !== 4;
+            vm.showMessage = vm.selectedLocations[4] === null;
         }
         locationsService.getChildren($item.location_id).then(function(data) {
             vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
