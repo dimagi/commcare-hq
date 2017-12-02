@@ -16,8 +16,8 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "voucher_v3",
-        "display_name": "voucher v3",
+        "table_id": "voucher_v4",
+        "display_name": "voucher v4",
         "configured_filter": {
             "operator": "eq",
             "expression": {
