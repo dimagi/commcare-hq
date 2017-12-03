@@ -572,7 +572,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
             self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
-        )
+        ) or set(['t__0'])  # default to all mobile workers on initial load
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
@@ -638,6 +638,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                 ]
 
         query = self.user_query().run()
+
         aggregations = query.aggregations
         last_submission_buckets = aggregations[0].raw_buckets
         last_sync_buckets = aggregations[1].raw_buckets
