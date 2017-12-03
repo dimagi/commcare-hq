@@ -67,7 +67,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
             if(newValue === 'daily') {
-                occurrences.text(gettext("After days:"));
+                occurrences.text(gettext("After occurrences:"));
             } else if(newValue === 'weekly') {
                 occurrences.text(gettext("After weeks:"));
             } else if(newValue === 'monthly') {
