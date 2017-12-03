@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 import csv
 
 from django.core.management.base import BaseCommand
@@ -50,5 +50,5 @@ class Command(BaseCommand):
                                 'application_id': application.get_id,
                                 'app_name': application.name,
                                 'all_add_ons_enabled': all_add_ons_enabled,
-                                'status': application.add_ons.get('custom_icon_badges')
+                                'status': application.add_ons.get(add_on_name)
                             })
