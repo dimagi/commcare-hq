@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 <div id="{{ series.id }}-data" class="hide" data-value='{{ series.get_chart_data_series|JSON }}'></div>
-<div id="{{ series.id }}-totals" class="hide" data-value='{{ series.get_chart_percent_series|JSON }}'></div>
+<div id="{{ series.id }}-percentages" class="hide" data-value='{{ series.get_chart_percent_series|JSON }}'></div>
 <div class="panel-heading">
   <h3 class="panel-title"><strong>{{ series.title }}</strong></h3>
 </div>
@@ -16,13 +16,13 @@
       <div class="col-sm-4 text-center">
           <div class="btn-group">
               <button type="button" class="btn btn-primary chart-toggle"
-                      data-chart-data="{{ series.id }}-data" data-chart-div="{{ series.id }}_dates">{% trans "Daily Breakdown" %}</button>
+                      data-chart-data="{{ series.id }}-percentages" data-chart-div="{{ series.id }}_chart">{% trans "Percent of Total Users" %}</button>
               <button type="button" class="btn chart-toggle"
-                      data-chart-data="{{ series.id }}-totals" data-chart-div="{{ series.id }}_dates">{% trans "Percent of Total Users" %}</button>
+                      data-chart-data="{{ series.id }}-data" data-chart-div="{{ series.id }}_chart">{% trans "Daily Breakdown" %}</button>
           </div>
       </div>
   </div>
   <div class="row">
-      <div id="{{ series.id }}_dates"><svg height="300px"></svg></div>
+      <div id="{{ series.id }}_chart"><svg height="300px"></svg></div>
   </div>
 </div>
