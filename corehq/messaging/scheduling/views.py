@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -313,9 +313,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @cached_property
     def basic_info_form(self):
         if self.request.method == 'POST':
-            return ConditionalAlertForm(self.domain, self.request.POST)
+            return ConditionalAlertForm(self.domain, self.rule, self.request.POST)
 
-        return ConditionalAlertForm(self.domain)
+        return ConditionalAlertForm(self.domain, self.rule)
 
     @cached_property
     def criteria_form(self):
@@ -370,3 +370,34 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 class EditConditionalAlertView(CreateConditionalAlertView):
     urlname = 'edit_conditional_alert'
     page_title = _('Edit Conditional Message')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.rule_id])
+
+    @property
+    def rule_id(self):
+        return self.kwargs.get('rule_id')
+
+    @cached_property
+    def rule(self):
+        try:
+            return AutomaticUpdateRule.objects.get(
+                pk=self.rule_id,
+                domain=self.domain,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            raise Http404()
+
+    @cached_property
+    def schedule(self):
+        if len(self.rule.memoized_actions) != 1:
+            raise ValueError("Expected exactly 1 action")
+
+        action = self.rule.memoized_actions[0]
+        action_definition = action.definition
+        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
+            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
+
+        return action_definition.schedule

@@ -1065,7 +1065,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def compute_initial(self):
         result = super(ConditionalAlertScheduleForm, self).compute_initial()
         if self.initial_schedule:
-            if isinstance(self.initial_schedule, TimedSchedule):
+            schedule = self.initial_schedule
+            if isinstance(schedule, TimedSchedule):
                 if schedule.start_offset == 0:
                     result['start_offset_type'] = self.START_OFFSET_ZERO
                 elif schedule.start_offset > 0:
@@ -1269,10 +1270,18 @@ class ConditionalAlertForm(Form):
         required=True,
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain, rule, *args, **kwargs):
+        self.domain = domain
+        self.initial_rule = rule
+
+        if kwargs.get('initial'):
+            raise ValueError("Initial values are set by the form")
+
+        if self.initial_rule:
+            kwargs['initial'] = self.compute_initial()
+
         super(ConditionalAlertForm, self).__init__(*args, **kwargs)
 
-        self.domain = domain
         self.helper = FormHelper()
         self.helper.label_class = 'col-xs-2 col-xs-offset-1'
         self.helper.field_class = 'col-xs-2'
@@ -1284,6 +1293,11 @@ class ConditionalAlertForm(Form):
                 crispy.Field('name'),
             ),
         )
+
+    def compute_initial(self):
+        return {
+            'name': self.initial_rule.name,
+        }
 
 
 class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
