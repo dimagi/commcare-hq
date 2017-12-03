@@ -623,6 +623,10 @@ SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
 # for a single SMS
 SMS_QUEUE_REPROCESS_INTERVAL = 5
 
+# Number of minutes to wait before retrying an SMS that has reached
+# the default maximum number of processing attempts
+SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL = 60 * 6
+
 # Max number of processing attempts before giving up on processing the SMS
 SMS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 
