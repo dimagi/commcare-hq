@@ -327,7 +327,10 @@ class ScheduleForm(Form):
             for field_name, field in self.fields.items():
                 field.disabled = True
 
-        layout_fields = [
+        self.helper.layout = crispy.Layout(*self.get_layout_fields())
+
+    def get_layout_fields(self):
+        return [
             crispy.Fieldset(
                 ugettext("Scheduling"),
                 *self.get_scheduling_layout_fields()
@@ -341,19 +344,6 @@ class ScheduleForm(Form):
                 *self.get_content_layout_fields()
             )
         ]
-
-        if not self.readonly_mode:
-            layout_fields += [
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _("Save"),
-                        css_class='btn-primary',
-                        type='submit',
-                    ),
-                ),
-            ]
-
-        self.helper.layout = crispy.Layout(*layout_fields)
 
     def get_timing_layout_fields(self):
         raise NotImplementedError()
@@ -897,6 +887,20 @@ class BroadcastForm(ScheduleForm):
     def __init__(self, domain, schedule, broadcast, *args, **kwargs):
         self.initial_broadcast = broadcast
         super(BroadcastForm, self).__init__(domain, schedule, *args, **kwargs)
+
+    def get_layout_fields(self):
+        result = super(BroadcastForm, self).get_layout_fields()
+        if not self.readonly_mode:
+            result.append(
+                hqcrispy.FormActions(
+                    twbscrispy.StrictButton(
+                        _("Save"),
+                        css_class='btn-primary',
+                        type='submit',
+                    ),
+                )
+            )
+        return result
 
     def get_timing_layout_fields(self):
         return [
