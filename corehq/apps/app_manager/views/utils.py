@@ -256,7 +256,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
 
 def handle_custom_icon_edits(request, form_or_module, lang):
-    if add_ons.show("custom_icon_badges", request, form_or_module.get_app()):
+    if toggles.CUSTOM_ICON_BADGES.enabled(request.domain):
         icon_text_body = request.POST.get("custom_icon_text_body")
         icon_xpath = request.POST.get("custom_icon_xpath")
         icon_form = request.POST.get("custom_icon_form")
