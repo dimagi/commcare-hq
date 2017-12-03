@@ -13,6 +13,10 @@ class Command(BaseCommand):
     Checks if an add on is enabled or was ever enabled for applications under all domains
     or under a specific domain with domain name if passed
     Also checks if toggle ENABLE_ALL_ADD_ONS enabled for domains
+    Can also enable the domains found for another toggle in case the add-on is meant to
+    be switched to a toggle
+    Example: ./manage.py applications_with_add_ons custom_icon_badges
+             --add_to_toggle=new_custom_icon
     """
 
     def add_arguments(self, parser):
