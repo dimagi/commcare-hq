@@ -6,7 +6,7 @@ from base64 import b64encode
 from copy import deepcopy
 from hashlib import md5
 from os.path import join
-from StringIO import StringIO
+from io import StringIO
 
 from django.conf import settings
 from django.test import SimpleTestCase

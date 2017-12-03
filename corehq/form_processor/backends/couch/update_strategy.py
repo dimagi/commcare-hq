@@ -3,7 +3,7 @@ import copy
 from functools import cmp_to_key
 import logging
 from PIL import Image
-from StringIO import StringIO
+from io import StringIO
 from couchdbkit import BadValueError
 import sys
 from datetime import date, datetime

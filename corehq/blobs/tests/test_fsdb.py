@@ -5,7 +5,7 @@ from os.path import isdir, join
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest import TestCase
-from StringIO import StringIO
+from io import StringIO
 
 import corehq.blobs.fsdb as mod
 from corehq.blobs.exceptions import ArgumentError

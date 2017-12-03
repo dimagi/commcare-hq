@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from unittest import TestCase
-from StringIO import StringIO
+from io import StringIO
 
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import InvalidContext, NotFound

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import StringIO
+import io
 import zipfile
 from django.core.cache import cache
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareVideo
@@ -111,7 +111,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
                                     _("Not a bulk-upload supported CommCareMedia type: %s" % media_class.__name__))
 
     def _get_upload_file(self):
-        saved_file = StringIO.StringIO()
+        saved_file = io.StringIO()
         try:
             saved_ref = DownloadBase.get(self.processing_id)
             data = saved_ref.get_content()

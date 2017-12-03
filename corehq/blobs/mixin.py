@@ -4,7 +4,7 @@ import sys
 import uuid
 from collections import defaultdict
 from contextlib import contextmanager, nested
-from cStringIO import StringIO
+from io import StringIO
 from hashlib import sha1
 from itertools import chain
 from os.path import join

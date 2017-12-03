@@ -4,7 +4,7 @@ import tempfile
 from couchexport.export import export_raw
 from couchexport.models import Format
 from django.test import SimpleTestCase, TestCase
-from StringIO import StringIO
+from io import StringIO
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.exceptions import FixtureUploadError

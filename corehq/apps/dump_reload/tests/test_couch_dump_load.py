@@ -3,7 +3,7 @@ import json
 import os
 import random
 import uuid
-from StringIO import StringIO
+from io import StringIO
 from collections import Counter
 
 from couchdbkit.exceptions import ResourceNotFound

@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from cStringIO import StringIO
+from io import StringIO
 from django.db import models, transaction
 
 from casexml.apps.phone.restore import stream_response

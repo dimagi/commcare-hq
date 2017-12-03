@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import datetime
 import json
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-from StringIO import StringIO
+from io import StringIO
 from six.moves.urllib.parse import urlencode
 
 from django.conf import settings

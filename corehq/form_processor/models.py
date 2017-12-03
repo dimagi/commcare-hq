@@ -10,7 +10,7 @@ from collections import (
 )
 from datetime import datetime
 
-from StringIO import StringIO
+from io import StringIO
 from django.db import models
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject

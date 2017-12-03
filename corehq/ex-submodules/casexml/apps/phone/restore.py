@@ -5,7 +5,7 @@ import os
 import shutil
 import tempfile
 from io import FileIO
-from cStringIO import StringIO
+from io import StringIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta

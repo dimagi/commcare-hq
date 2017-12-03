@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import datetime
 from decimal import Decimal
 import itertools
-from StringIO import StringIO
+from io import StringIO
 from tempfile import NamedTemporaryFile
 
 

@@ -3,7 +3,7 @@ import hashlib
 import logging
 import mimetypes
 from datetime import datetime
-from StringIO import StringIO
+from io import StringIO
 
 import magic
 from couchdbkit.exceptions import ResourceConflict

@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 import six
-from StringIO import StringIO
+from io import StringIO
 
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.quickcache import quickcache

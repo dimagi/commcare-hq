@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import itertools
 import os
 import shlex
-from StringIO import StringIO
+from io import StringIO
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, ZIP_DEFLATED

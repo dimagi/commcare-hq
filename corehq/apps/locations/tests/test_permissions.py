@@ -3,7 +3,7 @@ import json
 import uuid
 import random
 import string
-from StringIO import StringIO
+from io import StringIO
 import mock
 
 from django.urls import reverse

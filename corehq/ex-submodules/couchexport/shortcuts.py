@@ -6,7 +6,7 @@ from zipfile import ZipFile
 from couchexport.files import TempBase
 from couchexport.models import DefaultExportSchema, SavedExportSchema
 from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse
-from StringIO import StringIO
+from io import StringIO
 from unidecode import unidecode
 from couchexport.util import get_schema_index_view_keys
 from django.utils.translation import ugettext as _

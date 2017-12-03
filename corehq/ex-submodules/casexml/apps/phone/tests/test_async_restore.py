@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import mock
-from cStringIO import StringIO
+from io import StringIO
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from corehq.apps.app_manager.tests.util import TestXmlMixin

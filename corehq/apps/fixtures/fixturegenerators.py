@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from xml.etree import cElementTree as ElementTree
-from cStringIO import StringIO
+from io import StringIO
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX

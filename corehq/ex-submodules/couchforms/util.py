@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import logging
-from StringIO import StringIO
+from io import StringIO
 
 from couchdbkit import ResourceNotFound
 from django.test.client import Client

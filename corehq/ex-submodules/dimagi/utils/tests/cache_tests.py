@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import os
-import StringIO
+import io
 
 from PIL import Image
 from unittest2 import TestCase
@@ -38,7 +38,7 @@ class CachedObjectTests(TestCase):
     def testBasicObjects(self):
         text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         filename = "something"
-        buffer = StringIO.StringIO(text)
+        buffer = io.StringIO(text)
 
         obj = CachedObject(filename)
 
@@ -53,7 +53,7 @@ class CachedObjectTests(TestCase):
 
     def _make_image(self, width=3001, height=2001):
         im = Image.new("RGB", (width, height), (0, 0, 0))
-        buf = StringIO.StringIO()
+        buf = io.StringIO()
         im.save(buf, "png")
         buf.seek(0)
         return (im, buf)
@@ -61,7 +61,7 @@ class CachedObjectTests(TestCase):
     def test_is_cached_lost_meta_key(self):
         text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         filename = "something"
-        buffer = StringIO.StringIO(text)
+        buffer = io.StringIO(text)
         metadata = {'content_type': 'text/plain'}
 
         obj = CachedObject(filename)
@@ -73,7 +73,7 @@ class CachedObjectTests(TestCase):
     def test_is_cached_lost_stream_key(self):
         text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         filename = "something"
-        buffer = StringIO.StringIO(text)
+        buffer = io.StringIO(text)
         metadata = {'content_type': 'text/plain'}
 
         obj = CachedObject(filename)

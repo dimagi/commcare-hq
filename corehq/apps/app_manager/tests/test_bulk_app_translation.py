@@ -4,7 +4,7 @@ import codecs
 import tempfile
 
 from django.test import SimpleTestCase
-from StringIO import StringIO
+from io import StringIO
 
 from mock import patch
 
