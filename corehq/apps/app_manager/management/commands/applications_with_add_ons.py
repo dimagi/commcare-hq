@@ -1,9 +1,11 @@
 from __future__ import absolute_import, print_function
 import csv
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from corehq import toggles
 from corehq.apps.app_manager.models import Domain
+from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.toggles import NAMESPACE_DOMAIN
 
 
 class Command(BaseCommand):
@@ -16,6 +18,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--domain', type=str)
         parser.add_argument('add_on_name')
+        parser.add_argument('--add_to_toggle')
 
     @staticmethod
     def _iter_domains(options):
@@ -33,6 +36,11 @@ class Command(BaseCommand):
                 yield Domain.get(domain_id)
 
     def handle(self, add_on_name, *args, **options):
+        add_to_toggle = options.get('add_to_toggle')
+        if add_to_toggle:
+            add_to_toggle = find_static_toggle(add_to_toggle)
+            if not add_to_toggle:
+                raise CommandError('Toggle %s not found.' % add_to_toggle)
         with open("apps_with_feature_%s.csv" % add_on_name, "w") as csvfile:
             writer = csv.DictWriter(csvfile,
                                     fieldnames=[
@@ -52,3 +60,5 @@ class Command(BaseCommand):
                                 'all_add_ons_enabled': all_add_ons_enabled,
                                 'status': application.add_ons.get(add_on_name)
                             })
+                            if add_to_toggle:
+                                add_to_toggle.set(domain.name, True, NAMESPACE_DOMAIN)
