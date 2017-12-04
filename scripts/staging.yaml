@@ -50,6 +50,7 @@ branches:
   - br/kill-old-cloucare  # Danny 7/21
   - mk-search-under-location # Manish 4-Oct
   - es/loc-safe-reports  # Ethan 11/1
+  - jls/add-jquery-ui-to-core-libraries # Jenny 12/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
