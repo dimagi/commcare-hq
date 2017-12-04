@@ -624,7 +624,7 @@ def person_has_any_nikshay_notifiable_episode(person_case):
                for episode_case in episode_cases)
 
 
-def get_recent_referral_case_from_person(domain, person_case_id):
+def get_most_recent_referral_case_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     open_referral_cases = [
@@ -652,7 +652,7 @@ def get_recent_referral_case_from_person(domain, person_case_id):
         return sorted(valid_referral_cases, key=(lambda case: case.opened_on))[-1]
 
 
-def get_recent_episode_cases_from_person(domain, person_case_id):
+def get_most_recent_episode_case_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
     episode_cases = []
     occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)

@@ -10,7 +10,8 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.enikshay.case_utils import get_open_referral_case_from_person, get_latest_trail_case_from_person, \
-    get_open_episode_case_from_person, get_recent_referral_case_from_person
+    get_open_episode_case_from_person, get_most_recent_episode_case_from_person, \
+    get_most_recent_referral_case_from_person
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.dates import force_to_datetime
@@ -375,12 +376,21 @@ class MostRecentReferralCaseFromPerson(JsonObject):
         person_id = self._person_id_expression(item, context)
         domain = context.root_doc['domain']
 
+        cache_key = (
+            MostRecentEpisodeCaseFromPerson.__name__,
+            "enikshay_most_recent_referral_from_person",
+            person_id
+        )
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+
         if not person_id:
             return None
         try:
-            referral = get_recent_referral_case_from_person(domain, person_id)
+            referral = get_most_recent_referral_case_from_person(domain, person_id)
         except ENikshayCaseNotFound:
-            return None
+            referral = None
+        context.set_cache_value(cache_key, referral)
         if referral:
             return referral.to_json()
         return None
@@ -407,13 +417,21 @@ class MostRecentEpisodeCaseFromPerson(JsonObject):
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
+        cache_key = (
+            MostRecentEpisodeCaseFromPerson.__name__,
+            "enikshay_most_recent_episode_from_person",
+            person_id
+        )
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
         domain = context.root_doc['domain']
         if not person_id:
             return None
         try:
-            episode = get_open_episode_case_from_person(domain, person_id)
+            episode = get_most_recent_episode_case_from_person(domain, person_id)
         except ENikshayCaseNotFound:
-            return None
+            episode = None
+        context.set_cache_value(cache_key, episode)
         if episode:
             return episode.to_json()
         return None
