@@ -17,7 +17,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
-from custom.icds_reports.utils import ICDSMixin, get_status, current_age
+from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -964,7 +964,7 @@ class ChildrenExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             AggregateColumn(
-                'Weighing efficiency',
+                'Weighing efficiency (in month)',
                 percent,
                 [
                     SumColumn('nutrition_status_weighed', filters=self.filters + [
@@ -977,7 +977,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_weight_efficiency'
             ),
             AggregateColumn(
-                'Height Measurement Efficiency',
+                'Height measurement efficiency (in month)',
                 percent,
                 [
                     SumColumn('height_measured_in_month'),
@@ -1906,7 +1906,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Current Age (In years)',
                 AliasColumn('dob'),
-                format_fn=lambda x: current_age(x, self.config['month']),
+                format_fn=lambda x: calculate_date_for_age(x, self.config['month']),
                 slug='current_age'
             ),
             DatabaseColumn(
