@@ -623,6 +623,10 @@ SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
 # for a single SMS
 SMS_QUEUE_REPROCESS_INTERVAL = 5
 
+# Number of minutes to wait before retrying an SMS that has reached
+# the default maximum number of processing attempts
+SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL = 60 * 6
+
 # Max number of processing attempts before giving up on processing the SMS
 SMS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
 
@@ -1941,6 +1945,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v5.json'),
@@ -1955,7 +1960,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
@@ -2037,6 +2044,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
     ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
     ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
+    ('enikshay_most_recent_referral_from_person', 'custom.enikshay.expressions.most_recent_referral_expression'),
+    ('enikshay_most_recent_episode_from_person', 'custom.enikshay.expressions.most_recent_episode_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

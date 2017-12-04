@@ -304,7 +304,7 @@ def heartbeat(request, domain, app_build_id):
         )
 
         if save_user:
-            couch_user.save()
+            couch_user.save(fire_signals=False)
 
     return JsonResponse(info)
 

@@ -1,6 +1,5 @@
 from __future__ import absolute_import
-from corehq.apps.userreports.expressions.factory import ExpressionFactory
-from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
+from corehq.apps.userreports.specs import EvaluationContext
 from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 
 TEST_DATA_SOURCE = 'test_2b_v5.json'
@@ -128,7 +127,6 @@ class TestTestCase2B(TestDataSourceExpressions):
         test_case = {
             '_id': 'test_case_id',
             'domain': 'enikshay-test',
-            'episode_type_at_request': 'presumptive_tb',
             'rft_general': 'diagnosis_dstb'
         }
 
@@ -139,7 +137,7 @@ class TestTestCase2B(TestDataSourceExpressions):
         test_case['rft_general'] = 'diagnosis_drtb'
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
 
-        test_case['episode_type_at_request'] = 'other type'
+        test_case['rft_general'] = 'other type'
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
 
     def test_presumptives_found_positive(self):
@@ -161,35 +159,27 @@ class TestTestCase2B(TestDataSourceExpressions):
         test_case['result'] = 'other'
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
 
-        test_case['episode_type_at_request'] = 'other type'
-        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
-
     def test_follow_up_patients_examined(self):
         test_case = {
             '_id': 'test_case_id',
             'domain': 'enikshay-test',
-            'episode_type_at_request': 'confirmed_tb',
             'rft_general': 'follow_up_dstb'
         }
 
         expression = self.get_expression('follow_up_patients_examined', 'integer')
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
 
-        test_case['episode_type_at_request'] = 'confirmed_drtb'
         test_case['rft_general'] = 'follow_up_drtb'
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
 
         test_case['rft_general'] = 'diagnosis_drtb'
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
 
-        test_case['episode_type_at_request'] = 'other type'
-        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
 
     def test_patients_positive_on_follow_up(self):
         test_case = {
             '_id': 'test_case_id',
             'domain': 'enikshay-test',
-            'episode_type_at_request': 'confirmed_tb',
             'rft_general': 'follow_up_dstb',
             'result': 'tb_detected'
         }
@@ -197,15 +187,12 @@ class TestTestCase2B(TestDataSourceExpressions):
         expression = self.get_expression('patients_positive_on_follow_up', 'integer')
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
 
-        test_case['episode_type_at_request'] = 'confirmed_drtb'
         test_case['rft_general'] = 'follow_up_drtb'
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 1)
 
         test_case['result'] = 'other resault'
         self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
 
-        test_case['episode_type_at_request'] = 'other type'
-        self.assertEqual(expression(test_case, EvaluationContext(test_case, 0)), 0)
 
     def test_slides_examined(self):
         test_case = {

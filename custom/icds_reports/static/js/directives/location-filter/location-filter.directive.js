@@ -1,3 +1,5 @@
+/* global _ */
+
 var transformLocationTypeName = function(locationTypeName) {
     if (locationTypeName === 'awc') {
         return locationTypeName.toUpperCase();
@@ -67,7 +69,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
         if ($location.path().indexOf('awc_reports') !== -1) {
-            vm.showMessage = selectedLocationIndex() !== 4;
+            vm.showMessage = vm.selectedLocations[4] === null;
         }
         locationsService.getChildren($item.location_id).then(function(data) {
             vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
@@ -228,7 +230,13 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
                 for (var parentId in locationsGrouppedByParent) {
                     if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        vm.locationsCache[parentId] = [ALL_OPTION].concat(locationsGrouppedByParent[parentId]);
+                        vm.locationsCache[parentId] = [ALL_OPTION].concat(
+                            _.sortBy(
+                               locationsGrouppedByParent[parentId], function(o) {
+                                   return o.name;
+                               }
+                            )
+                        );
                     }
                 }
 
@@ -305,7 +313,11 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             if (!selectedLocation || selectedLocation.location_id === ALL_OPTION.location_id) {
                 return [];
             }
-            return vm.locationsCache[selectedLocation.location_id];
+            return _.sortBy(
+                vm.locationsCache[selectedLocation.location_id], function(o) {
+                    return o.name;
+                }
+            );
         }
     };
 

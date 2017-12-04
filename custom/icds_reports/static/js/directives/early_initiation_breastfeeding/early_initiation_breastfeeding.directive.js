@@ -42,6 +42,16 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
     vm.message = storageService.getKey('message') || false;
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
+
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -111,7 +121,10 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };

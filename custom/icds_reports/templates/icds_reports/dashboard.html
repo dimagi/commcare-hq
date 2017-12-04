@@ -120,13 +120,22 @@
                         <div class="container-fluid">
                             <div class="nav navbar-nav">
                                 <h2 class="dashboard-title">
-
                                     <strong>{% trans "ICDS-CAS Dashboard" %}</strong>
                                 </h2>
                             </div>
                             <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                 <div class="nav-settings-bar pull-right">
                                     <ul class="nav navbar-nav" role="menu">
+                                        <li class="dropdown">
+                                            <span class="pointer">
+                                                <a href="{% static 'media/Dashboard_v2_Training_Manual.pdf' %}" download>
+                                                    <i class="fa fa-question-circle nav-main-icon fa-2x light-grey"
+                                                        uib-popover-html="'Download user manual'"
+                                                        popover-placement="left"
+                                                        popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
+                                                </a>
+                                            </span>
+                                        </li>
                                         <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
                                             <span>
                                                 <print-report></print-report>

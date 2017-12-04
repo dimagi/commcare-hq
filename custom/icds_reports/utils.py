@@ -378,3 +378,12 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
     return data_for_map, valid_total, in_month_total
+
+
+def calculate_date_for_age(dob, date):
+    now = datetime.utcnow().date()
+    if now.month == date.month and now.year == date.year:
+        date_for_age = now
+    else:
+        date_for_age = (date + relativedelta(months=1)) - relativedelta(days=1)
+    return current_age(dob, date_for_age)

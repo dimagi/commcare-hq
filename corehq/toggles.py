@@ -875,6 +875,14 @@ BETS_INTEGRATION = StaticToggle(
     always_enabled={"enikshay"},
 )
 
+RETRY_SMS_INDEFINITELY = StaticToggle(
+    'retry_sms_indefinitely',
+    'Enikshay: Retry SMS indefinitely',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description='Leaves on the queue an SMS that has reached the maximum number of unsuccessful attempts.',
+)
+
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'FGH: Enable OpenMRS integration',

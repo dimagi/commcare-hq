@@ -43,7 +43,7 @@ class DatabaseShardInfo(object):
         def _add_to_rows(rows, data, label):
             for shard_id in sorted(data.keys()):
                 rows.extend([
-                    '{}, {}, {}, {}'.format(shard_id, model.__name__, data[shard_id][model], label)
+                    '{},{},{},{}'.format(shard_id, model.__name__, data[shard_id][model], label)
                     for model in sorted(data[shard_id].keys())
                 ])
 

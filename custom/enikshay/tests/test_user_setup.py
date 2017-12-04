@@ -31,6 +31,7 @@ from ..user_setup import (
     set_enikshay_device_id,
 )
 from ..models import IssuerId
+from six.moves import filter
 
 
 @flag_enabled('ENIKSHAY')

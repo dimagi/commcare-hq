@@ -10,13 +10,13 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.const import ENROLLED_IN_PRIVATE, SECTORS, PRIVATE_SECTOR, PUBLIC_SECTOR
 from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
     ENikshayCaseTypeNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
-    ENikshayException)
+)
 from corehq.form_processor.exceptions import CaseNotFound
 import six
 
@@ -585,9 +585,12 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def iter_all_active_person_episode_cases(domain, case_ids):
+def iter_all_active_person_episode_cases(domain, case_ids, sector=None):
     """From a list of case_ids, return all the active episodes and associate person case
     """
+    if sector is not None and sector not in SECTORS:
+        raise ValueError('sector argument should be one of {}, or None'.format(SECTORS))
+
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.iter_cases(case_ids)
     for episode_case in episode_cases:
@@ -595,6 +598,11 @@ def iter_all_active_person_episode_cases(domain, case_ids):
             continue
 
         if episode_case.closed:
+            continue
+
+        if sector == PRIVATE_SECTOR and episode_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
+            continue
+        elif sector == PUBLIC_SECTOR and episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             continue
 
         try:
@@ -622,3 +630,53 @@ def person_has_any_nikshay_notifiable_episode(person_case):
     episode_cases = get_all_episode_cases_from_person(domain, person_case.case_id)
     return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
                for episode_case in episode_cases)
+
+
+def get_most_recent_referral_case_from_person(domain, person_case_id):
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    open_referral_cases = [
+        case for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    ]
+    occurrence_cases = [
+        case.case_id for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    ]
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    open_referral_cases.extend(
+        case for case in reversed_indexed_occurrence
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    )
+    valid_referral_cases = [
+        case for case in open_referral_cases if (
+            case.dynamic_case_properties().get('referral_status') != 'rejected' and
+            case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
+        )
+    ]
+    if not valid_referral_cases:
+        return None
+    else:
+        return sorted(valid_referral_cases, key=(lambda case: case.opened_on))[-1]
+
+
+def get_most_recent_episode_case_from_person(domain, person_case_id):
+    case_accessor = CaseAccessors(domain)
+    episode_cases = []
+    occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
+    for occurrence_case in occurrence_cases:
+        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.get_id])
+        episode_cases += [
+            case for case in all_cases
+            if case.type == CASE_TYPE_EPISODE and (
+                case.dynamic_case_properties().get('referral_status') not in [
+                    'invalid_episode',
+                    'duplicate',
+                    'invalid_registration'
+                ]
+            )
+        ]
+    if not episode_cases:
+        return None
+    else:
+        return sorted(episode_cases, key=(lambda case: case.opened_on))[-1]
