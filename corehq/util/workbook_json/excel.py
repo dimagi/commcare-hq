@@ -179,7 +179,7 @@ class WorksheetJSONReader(IteratorJSONReader):
                     _convert_float(cell.value)
                     for cell in row[:width]
                 ]
-                if not any(cell_values):
+                if not any(cell != '' for cell in cell_values):
                     break
                 yield cell_values
         super(WorksheetJSONReader, self).__init__(iterator())
