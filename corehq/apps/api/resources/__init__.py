@@ -108,7 +108,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
             if isinstance(self, DomainSpecificResourceMixin):
                 track_workflow(request.user.username, "API Request", properties={
                     'domain': request.domain,
-                    'is_dimagi': request.user.is_dimagi
+                    'is_dimagi': request.user.username.endswith('@dimagi.com'),
                 })
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:
