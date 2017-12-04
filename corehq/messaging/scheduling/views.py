@@ -244,12 +244,47 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     urlname = 'conditional_alert_list'
     page_title = _('Schedule a Conditional Message')
 
+    LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
+
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
+
+    def get_conditional_alerts_queryset(self):
+        return (
+            AutomaticUpdateRule
+            .objects
+            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+            .order_by('case_type', 'name')
+        )
+
+    def get_conditional_alerts_ajax_response(self):
+        query = self.get_conditional_alerts_queryset()
+        total_records = query.count()
+
+        rules = query[self.display_start:self.display_start + self.display_length]
+        data = []
+        for rule in rules:
+            data.append([
+                '< delete placeholder >',
+                rule.name,
+                rule.case_type,
+                rule.active,
+                '< action placeholder >',
+                rule.pk,
+            ])
+
+        return self.datatables_ajax_response(data, total_records)
+
+    def get(self, request, *args, **kwargs):
+        action = request.GET.get('action')
+        if action == self.LIST_CONDITIONAL_ALERTS:
+            return self.get_conditional_alerts_ajax_response()
+
+        return super(ConditionalAlertListView, self).get(*args, **kwargs)
 
 
 class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
