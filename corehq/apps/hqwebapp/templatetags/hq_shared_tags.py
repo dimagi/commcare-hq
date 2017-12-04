@@ -748,7 +748,7 @@ def javascript_libraries(context, **kwargs):
     return {
         'request': getattr(context, 'request', None),
         'underscore': kwargs.pop('underscore', False),
-        'jquery': kwargs.pop('jquery', False),
+        'jquery_ui': kwargs.pop('jquery_ui', False),
         'ko': kwargs.pop('ko', False),
         'analytics': kwargs.pop('analytics', False),
         'hq': kwargs.pop('hq', False),
