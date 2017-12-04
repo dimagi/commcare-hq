@@ -16,8 +16,8 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "voucher_v3",
-        "display_name": "voucher v3",
+        "table_id": "voucher_v4",
+        "display_name": "voucher v4",
         "configured_filter": {
             "operator": "eq",
             "expression": {
@@ -1127,30 +1127,6 @@
                 "is_nullable": true,
                 "type": "expression",
                 "column_id": "voucher_issued_by_phone_number"
-            },
-            {
-                "comment": null,
-                "create_index": false,
-                "display_name": "person_name",
-                "datatype": "string",
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "name"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "is_primary_key": false,
-                "transform": {},
-                "is_nullable": true,
-                "type": "expression",
-                "column_id": "person_name"
             },
             {
                 "comment": null,
