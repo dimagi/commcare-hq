@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import Counter
 import six
 
+from corehq.apps.es import CaseES
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -11,9 +12,10 @@ from dimagi.utils.couch.database import iter_docs
 from .const import VOUCHER_ID, ENIKSHAY_ID
 
 
-def get_cases_with_duplicate_ids(domain, case_type, all_case_ids):
+def get_cases_with_duplicate_ids(domain, case_type):
     accessor = CaseAccessors(domain)
     id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[case_type]
+    all_case_ids = accessor.get_case_ids_in_domain(case_type)
     all_cases = [
         {
             'case_id': case.case_id,
@@ -28,15 +30,14 @@ def get_cases_with_duplicate_ids(domain, case_type, all_case_ids):
 
 
 def get_bad_case_info(domain, case_type, full_debug_info=False):
-    accessor = CaseAccessors(domain)
-    case_ids = accessor.get_case_ids_in_domain(case_type)
-    bad_cases = get_cases_with_duplicate_ids(domain, case_type, case_ids)
+    total_cases = CaseES().domain(domain).case_type(case_type).count()
+    bad_cases = get_cases_with_duplicate_ids(domain, case_type)
     add_debug_info_to_cases(bad_cases, full_debug_info)
     context = {
         'case_type': case_type,
         'num_bad_cases': len(bad_cases),
-        'num_total_cases': len(case_ids),
-        'num_good_cases': len(case_ids) - len(bad_cases),
+        'num_total_cases': total_cases,
+        'num_good_cases': total_cases - len(bad_cases),
         'bad_cases': bad_cases,
     }
     return context

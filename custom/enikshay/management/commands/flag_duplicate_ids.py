@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import bulk_update_cases
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, add_debug_info_to_cases
 
@@ -57,11 +56,8 @@ class Command(BaseCommand):
                     bulk_update_cases(self.domain, chunk, self.__module__)
 
     def get_updates(self, logfile):
-        accessor = CaseAccessors(self.domain)
-        print("Fetching all case ids")
-        case_ids = accessor.get_case_ids_in_domain(self.case_type)
         print("Finding duplicates")
-        bad_cases = get_cases_with_duplicate_ids(self.domain, self.case_type, case_ids)
+        bad_cases = get_cases_with_duplicate_ids(self.domain, self.case_type)
         if self.debug_info:
             print("Adding debug info to cases")
             add_debug_info_to_cases(bad_cases, full_debug_info=True)
