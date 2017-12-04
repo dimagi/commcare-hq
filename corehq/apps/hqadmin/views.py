@@ -954,6 +954,26 @@ def doc_in_es(request):
     def to_json(doc):
         return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
 
+    def hq_url(doc):
+        if not doc:
+            return
+        from corehq.apps.users.views.mobile.users import EditCommCareUserView
+        from corehq.apps.users.views import EditWebUserView
+        from corehq.apps.userreports.views import EditDataSourceView, ConfigureReport
+
+        doc_type = doc.get('doc_type')
+        url_map = {
+            'Application': 'view_app',
+            'CommCareUser': EditCommCareUserView.urlname,
+            'WebUser': EditWebUserView.urlname,
+            'DataSourceConfiguration': EditDataSourceView.urlname,
+            'ReportConfiguration': ConfigureReport.urlname,
+        }
+        if doc_type in url_map:
+            return reverse(url_map[doc_type], args=[doc['domain'], doc_id])
+        else:
+            return None
+
     query = {"filter": {"ids": {"values": [doc_id]}}}
     found_indices = {}
     es_doc_type = None
@@ -964,6 +984,7 @@ def doc_in_es(request):
             found_indices[index] = to_json(es_doc)
             es_doc_type = es_doc_type or es_doc.get('doc_type')
 
+    couch_info = _lookup_id_in_database(doc_id)
     context = {
         "doc_id": doc_id,
         "es_info": {
@@ -971,7 +992,8 @@ def doc_in_es(request):
             "doc_type": es_doc_type,
             "found_indices": found_indices,
         },
-        "couch_info": _lookup_id_in_database(doc_id),
+        "couch_info": couch_info,
+        "hq_url": hq_url(json.loads(couch_info.get('doc'))),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
 
