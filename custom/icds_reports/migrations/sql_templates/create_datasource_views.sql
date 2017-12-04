@@ -95,6 +95,7 @@ CREATE VIEW agg_awc_monthly AS
         COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_15_18",
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) AS "cases_person_adolescent_girls_11_14_all",
         COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_all", 0) AS "cases_person_adolescent_girls_15_18_all",
+        COALESCE("agg_awc"."cases_person_referred", 0) AS "cases_person_referred",
         COALESCE("agg_awc"."cases_ccs_pregnant", 0) AS "cases_ccs_pregnant",
         COALESCE("agg_awc"."cases_ccs_lactating", 0) AS "cases_ccs_lactating",
         COALESCE("agg_awc"."cases_child_health", 0) AS "cases_child_health",
