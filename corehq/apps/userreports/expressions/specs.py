@@ -9,6 +9,7 @@ import six
 
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
+from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.users.models import CommCareUser
@@ -215,25 +216,23 @@ class RelatedDocExpressionSpec(JsonObject):
         if doc_id:
             return self.get_value(doc_id, context)
 
-    def _context_cache_key(self, doc_id):
-        return '{}-{}'.format(self.related_doc_type, doc_id)
-
-    def get_value(self, doc_id, context):
+    @staticmethod
+    @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
+    def _get_document(related_doc_type, doc_id, context):
+        document_store = get_document_store(context.root_doc['domain'], related_doc_type)
         try:
-            assert context.root_doc['domain']
-            document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
-
-            doc = context.get_cache_value(self._context_cache_key(doc_id))
-            if not doc:
-                doc = document_store.get_document(doc_id)
-                context.set_cache_value(self._context_cache_key(doc_id), doc)
-            # ensure no cross-domain lookups of different documents
-            if context.root_doc['domain'] != doc.get('domain'):
-                return None
-            # explicitly use a new evaluation context since this is a new document
-            return self._value_expression(doc, EvaluationContext(doc, 0))
+            doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:
             return None
+        if context.root_doc['domain'] != doc.get('domain'):
+            return None
+        return doc
+
+    def get_value(self, doc_id, context):
+        assert context.root_doc['domain']
+        doc = self._get_document(self.related_doc_type, doc_id)
+        # explicitly use a new evaluation context since this is a new document
+        return self._value_expression(doc, EvaluationContext(doc, 0))
 
 
 class NestedExpressionSpec(JsonObject):
@@ -325,15 +324,10 @@ class FormsExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, xforms)
         return xforms
 
+    @ucr_context_cache(vary_on=('case_id',))
     def _get_case_forms(self, case_id, context):
-        cache_key = (self.__class__.__name__, 'helper', case_id)
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
-
         domain = context.root_doc['domain']
-        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
-        context.set_cache_value(cache_key, xforms)
-        return xforms
+        return FormProcessorInterface(domain).get_case_forms(case_id)
 
     def _get_form_json(self, form, context):
         cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
@@ -360,15 +354,10 @@ class SubcasesExpressionSpec(JsonObject):
         assert context.root_doc['domain']
         return self._get_subcases(case_id, context)
 
-    def _get_subcases(self, case_id, context):
+    @ucr_context_cache(vary_on=('case_id',))
+   def _get_subcases(self, case_id, context):
         domain = context.root_doc['domain']
-        cache_key = (self.__class__.__name__, case_id)
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
-
-        subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
-        context.set_cache_value(cache_key, subcases)
-        return subcases
+        return [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
 
 
 class _GroupsExpressionSpec(JsonObject):
@@ -385,20 +374,15 @@ class _GroupsExpressionSpec(JsonObject):
         assert context.root_doc['domain']
         return self._get_groups(user_id, context)
 
+    @ucr_context_cache(vary_on=('user_id',))
     def _get_groups(self, user_id, context):
         domain = context.root_doc['domain']
-        cache_key = (self.__class__.__name__, domain, user_id)
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
-
         user = CommCareUser.get_by_user_id(user_id, domain)
         if not user:
             return []
 
         groups = self._get_groups_from_user(user)
-        groups = [g.to_json() for g in groups]
-        context.set_cache_value(cache_key, groups)
-        return groups
+        return [g.to_json() for g in groups]
 
     def _get_groups_from_user(self, user):
         raise NotImplementedError
