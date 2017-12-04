@@ -899,7 +899,7 @@ def _has_at_least_one_translation(row, prefix, langs):
     :param langs:
     :return:
     """
-    return bool(filter(None, [row.get(prefix + '_' + l) for l in langs]))
+    return any(row.get(prefix + '_' + l) for l in langs)
 
 
 def _get_col_key(translation_type, language):
