@@ -572,7 +572,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
         # partially inspired by ApplicationStatusReport.user_query
         mobile_user_and_group_slugs = set(
             self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
-        )
+        ) or set(['t__0'])  # default to all mobile workers on initial load
         user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
@@ -587,6 +587,28 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @property
     def template_context(self):
+
+        class SeriesData(namedtuple('SeriesData', 'id title chart_color bucket_series')):
+            """
+            Utility class containing everything needed to render the chart in a template.
+            """
+
+            def get_chart_data_series(self):
+                return {
+                    'key': _('Count of Users'),
+                    'values': self.bucket_series.data_series,
+                    'color': self.chart_color,
+                }
+
+            def get_chart_percent_series(self):
+                return {
+                    'key': _('Percent of Users'),
+                    'values': self.bucket_series.percent_series,
+                    'color': self.chart_color,
+                }
+
+            def get_buckets(self):
+                return self.bucket_series.get_summary_data()
 
         class BucketSeries(namedtuple('Bucket', 'data_series total_series total')):
             @property
@@ -616,6 +638,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                 ]
 
         query = self.user_query().run()
+
         aggregations = query.aggregations
         last_submission_buckets = aggregations[0].raw_buckets
         last_sync_buckets = aggregations[1].raw_buckets
@@ -678,32 +701,22 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
             )
             return BucketSeries(daily_series, running_total_series, total)
 
-        submission_series = _buckets_to_series(last_submission_buckets)
-        sync_series = _buckets_to_series(last_sync_buckets)
+        submission_series = SeriesData(
+            id='submission',
+            title=_('Mobile Workers who have Submitted'),
+            chart_color='#004abf',
+            bucket_series=_buckets_to_series(last_submission_buckets)
+        )
+        sync_series = SeriesData(
+            id='sync',
+            title=_('Mobile Workers who have Synced'),
+            chart_color='#f58220',
+            bucket_series=_buckets_to_series(last_sync_buckets),
+        )
         return {
-            'last_submission_data': {
-                'key': _('Count of Users'),
-                'values': submission_series.data_series,
-                'color': '#004abf',
-            },
-            'last_submission_totals': {
-                'key': _('Percent of Users'),
-                'values': submission_series.percent_series,
-                'color': '#004abf',
-            },
-            'last_sync_data': {
-                'key': _('Count of Users'),
-                'values': sync_series.data_series,
-                'color': '#f58220',
-            },
-            'last_sync_totals': {
-                'key': _('Percent of Users'),
-                'values': sync_series.percent_series,
-                'color': '#f58220',
-            },
+            'submission_series': submission_series,
+            'sync_series': sync_series,
             'total_users': total_users,
-            'ever_submitted': submission_series.total,
-            'ever_synced': sync_series.total,
-            'submission_summary': submission_series.get_summary_data(),
-            'sync_summary': sync_series.get_summary_data(),
+            'ever_submitted': submission_series.bucket_series.total,
+            'ever_synced': sync_series.bucket_series.total,
         }
