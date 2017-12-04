@@ -693,7 +693,7 @@ class ExportInstance(BlobMixin, Document):
 
     @property
     def selected_tables(self):
-        return filter(lambda t: t.selected, self.tables)
+        return [t for t in self.tables if t.selected]
 
     def get_table(self, path):
         for table in self.tables:
@@ -1517,7 +1517,7 @@ class ExportDataSchema(Document):
                     ordered_items[orders[item]] = item
                 else:
                     unordered_items.append(item)
-            group_schema.items = filter(None, ordered_items) + unordered_items
+            group_schema.items = [_f for _f in ordered_items if _f] + unordered_items
         return current_schema
 
     @classmethod
@@ -2450,7 +2450,7 @@ class CaseIndexExportColumn(ExportColumn):
         case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
-        case_ids = [index.get('referenced_id') for index in filter(lambda index: index.get('referenced_type') == case_type, indices)]
+        case_ids = [index.get('referenced_id') for index in [index for index in indices if index.get('referenced_type') == case_type]]
         return ' '.join(case_ids)
 
 

@@ -165,7 +165,7 @@ def get_schedule_tally(username, total_interval, override_date=None):
         td = timedelta(days=n)
         visit_date = nowdate - td
         scheduled_case_ids = chw_schedule.scheduled_for_date(visit_date)
-        patient_case_ids = set(filter(lambda x: x is not None, scheduled_case_ids))
+        patient_case_ids = set([x for x in scheduled_case_ids if x is not None])
         dereferenced_patient_info = [patient_cache.get(x, {}) for x in patient_case_ids]
         visited = []
 

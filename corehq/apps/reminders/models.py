@@ -32,6 +32,7 @@ from dimagi.utils.couch.database import iter_docs
 from django.db import models, transaction
 from string import Formatter
 import six
+from six.moves import filter
 
 
 class IllegalModelStateException(Exception):
@@ -1112,7 +1113,7 @@ class CaseReminderHandler(Document):
 
             return True
 
-        return filter(filter_fcn, recipients)
+        return list(filter(filter_fcn, recipients))
 
     def recipient_is_list_of_locations(self, recipient):
         return (isinstance(recipient, list) and
@@ -1682,7 +1683,7 @@ class CaseReminderHandler(Document):
     def get_referenced_forms(cls, domain):
         handlers = cls.get_handlers(domain)
         referenced_forms = [e.form_unique_id for events in [h.events for h in handlers] for e in events]
-        return filter(None, referenced_forms)
+        return [_f for _f in referenced_forms if _f]
 
     @classmethod
     def get_all_reminders(cls, domain=None, due_before=None, ids_only=False):

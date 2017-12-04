@@ -84,7 +84,7 @@ class CustomDataFieldForm(forms.Form):
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
         # serializes the list and you can't get it
-        self._raw_choices = filter(None, raw.get('choices', []))
+        self._raw_choices = [_f for _f in raw.get('choices', []) if _f]
         super(CustomDataFieldForm, self).__init__(raw, *args, **kwargs)
 
     def clean_choices(self):

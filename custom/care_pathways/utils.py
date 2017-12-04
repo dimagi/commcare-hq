@@ -42,7 +42,7 @@ def get_mapping(domain_name):
 def get_domains_with_next(domain_name, value_chain=None):
     configuration = get_domain_configuration(domain_name).by_type_hierarchy
     if value_chain:
-        configuration = filter(lambda x: x['val'] == value_chain, configuration)
+        configuration = [x for x in configuration if x['val'] == value_chain]
     domains = []
     for chain in configuration:
         domains.extend(chain.next)

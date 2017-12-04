@@ -10,6 +10,7 @@ from restkit import Resource
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.utils import force_seq_int
+from six.moves import filter
 
 EPSILON = 10000000
 
@@ -94,15 +95,15 @@ def parse_celery_workers(celery_workers):
     we expect to be running and a list of hosts we expect to be stopped
     """
     expect_stopped = []
-    expect_running = filter(
+    expect_running = list(filter(
         lambda hostname: not hostname.endswith('_timestamp'),
         celery_workers.keys(),
-    )
+    ))
 
-    timestamped_workers = filter(
+    timestamped_workers = list(filter(
         lambda hostname: hostname.endswith('_timestamp'),
         celery_workers.keys(),
-    )
+    ))
 
     def _strip_timestamp(hostname):
         return '.'.join(hostname.split('.')[:-1])

@@ -64,7 +64,7 @@ class CaseAccessorTestsSQL(TestCase):
         traces = _create_case_transactions(case)
 
         self.assertEqual(
-            set([form_id1] + [t.form_id for t in filter(lambda t: t.include, traces)]),
+            set([form_id1] + [t.form_id for t in [t for t in traces if t.include]]),
             set(CaseAccessorSQL.get_case_xform_ids(case.case_id))
         )
 
@@ -242,7 +242,7 @@ class CaseAccessorTestsSQL(TestCase):
         transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
         self.assertEqual(4, len(transactions))
         self.assertEqual(
-            [form_id] + [t.form_id for t in filter(lambda t: t.include, traces)],
+            [form_id] + [t.form_id for t in [t for t in traces if t.include]],
             [t.form_id for t in transactions],
         )
 

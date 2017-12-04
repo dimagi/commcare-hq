@@ -238,7 +238,7 @@ def send_to_recipients(request, domain):
                     keys=[recipient, recipient[1:]], include_docs=True,
                     wrapper=wrap_user_by_type).all()
 
-                phone_users = filter(lambda u: u.is_member_of(domain), phone_users)
+                phone_users = [u for u in phone_users if u.is_member_of(domain)]
                 if len(phone_users) > 0:
                     phone_numbers.append((phone_users[0], recipient))
                 else:
@@ -785,7 +785,7 @@ def chat_contact_list(request, domain):
 
     if sSearch:
         regex = re.compile('^.*%s.*$' % sSearch)
-        data = filter(lambda row: regex.match(row[0]) or regex.match(row[2]), data)
+        data = [row for row in data if regex.match(row[0]) or regex.match(row[2])]
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])

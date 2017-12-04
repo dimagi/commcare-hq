@@ -198,13 +198,10 @@ def get_app_view_context(request, app):
         # get setting dict from settings_layout
         if not settings_layout:
             return None
-        matched = filter(
-            lambda x: x['type'] == setting_type and x['id'] == setting_id,
-            [
+        matched = [x for x in [
                 setting for section in settings_layout
                 for setting in section['settings']
-            ]
-        )
+            ] if x['type'] == setting_type and x['id'] == setting_id]
         if matched:
             return matched[0]
         else:

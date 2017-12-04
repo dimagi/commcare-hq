@@ -573,8 +573,8 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.repeat_record = MockRepeatRecord(MockRepeater(username="arwen", password="Hadhafang"))
 
     def create_case_structure(self):
-        return {case.get_id: case for case in filter(None, self.factory.create_or_update_cases(
-            [self.person, self.episode]))}
+        return {case.get_id: case for case in [_f for _f in self.factory.create_or_update_cases(
+            [self.person, self.episode]) if _f]}
 
     def _create_nikshay_registered_case(self):
         update_case(self.domain, self.episode_id, {
@@ -924,8 +924,8 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.repeat_record = MockRepeatRecord(MockRepeater(username="arwen", password="Hadhafang"))
 
     def create_case_structure(self):
-        return {case.get_id: case for case in filter(None, self.factory.create_or_update_cases(
-            [self.lab_referral, self.test, self.episode]))}
+        return {case.get_id: case for case in [_f for _f in self.factory.create_or_update_cases(
+            [self.lab_referral, self.test, self.episode]) if _f]}
 
     def _create_nikshay_registered_case(self):
         update_case(self.domain, self.episode_id, {

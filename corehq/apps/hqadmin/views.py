@@ -272,7 +272,7 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     if type == "_active_tasks":
         try:
-            tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+            tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
         except Unauthorized:
             return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
 
@@ -997,7 +997,7 @@ def raw_doc(request):
             return HttpResponse(json.dumps({"status": "missing"}),
                                 content_type="application/json", status=404)
 
-    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug.keys() if _f])
     context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
     context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)

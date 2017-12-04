@@ -151,14 +151,14 @@ class dotsSubmissionTests(TestCase):
             art_nonart.add(obs.is_art)
             self.assertEquals(obs.doc_id, bundle['xform_id'])
 
-        art = filter(lambda x: x.is_art, observations)
+        art = [x for x in observations if x.is_art]
         self.assertEquals(2, len(art))
-        art_answered = filter(lambda x: x.adherence != "unchecked", art)
+        art_answered = [x for x in art if x.adherence != "unchecked"]
         self.assertEquals(1, len(art_answered))
 
-        nonart = filter(lambda x: not x.is_art, observations)
+        nonart = [x for x in observations if not x.is_art]
         self.assertEquals(3, len(nonart))
-        nonart_answered = filter(lambda x: x.adherence != "unchecked", nonart)
+        nonart_answered = [x for x in nonart if x.adherence != "unchecked"]
         self.assertEquals(1, len(nonart_answered))
 
         #this only does SINGLE observations for art and non art

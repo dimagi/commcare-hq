@@ -766,7 +766,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
-        found = filter(lambda i: i.identifier == index_id, self.indices)
+        found = [i for i in self.indices if i.identifier == index_id]
         if found:
             assert(len(found) == 1)
             return found[0]
@@ -795,10 +795,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transactions = filter(
-            lambda t: t.form_id == form_id,
-            self.get_tracked_models_to_create(CaseTransaction)
-        )
+        transactions = [t for t in self.get_tracked_models_to_create(CaseTransaction) if t.form_id == form_id]
         assert len(transactions) <= 1
         transaction = transactions[0] if transactions else None
 
@@ -842,10 +839,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
-        transactions += filter(
-            lambda t: (t.type & transaction_type) == transaction_type,
-            self.get_tracked_models_to_create(CaseTransaction)
-        )
+        transactions += [t for t in self.get_tracked_models_to_create(CaseTransaction) if (t.type & transaction_type) == transaction_type]
         return transactions
 
     def modified_since_sync(self, sync_log):
@@ -896,10 +890,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         indices = self.indices
 
         if identifier:
-            indices = filter(lambda index: index.identifier == identifier, indices)
+            indices = [index for index in indices if index.identifier == identifier]
 
         if relationship:
-            indices = filter(lambda index: index.relationship_id == relationship, indices)
+            indices = [index for index in indices if index.relationship_id == relationship]
 
         return [index.referenced_case for index in indices]
 
