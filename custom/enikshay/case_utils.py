@@ -630,3 +630,53 @@ def person_has_any_nikshay_notifiable_episode(person_case):
     episode_cases = get_all_episode_cases_from_person(domain, person_case.case_id)
     return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
                for episode_case in episode_cases)
+
+
+def get_most_recent_referral_case_from_person(domain, person_case_id):
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    open_referral_cases = [
+        case for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    ]
+    occurrence_cases = [
+        case.case_id for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    ]
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    open_referral_cases.extend(
+        case for case in reversed_indexed_occurrence
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    )
+    valid_referral_cases = [
+        case for case in open_referral_cases if (
+            case.dynamic_case_properties().get('referral_status') != 'rejected' and
+            case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
+        )
+    ]
+    if not valid_referral_cases:
+        return None
+    else:
+        return sorted(valid_referral_cases, key=(lambda case: case.opened_on))[-1]
+
+
+def get_most_recent_episode_case_from_person(domain, person_case_id):
+    case_accessor = CaseAccessors(domain)
+    episode_cases = []
+    occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
+    for occurrence_case in occurrence_cases:
+        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.get_id])
+        episode_cases += [
+            case for case in all_cases
+            if case.type == CASE_TYPE_EPISODE and (
+                case.dynamic_case_properties().get('referral_status') not in [
+                    'invalid_episode',
+                    'duplicate',
+                    'invalid_registration'
+                ]
+            )
+        ]
+    if not episode_cases:
+        return None
+    else:
+        return sorted(episode_cases, key=(lambda case: case.opened_on))[-1]

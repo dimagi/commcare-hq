@@ -1990,6 +1990,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
@@ -2071,6 +2072,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
     ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
     ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
+    ('enikshay_most_recent_referral_from_person', 'custom.enikshay.expressions.most_recent_referral_expression'),
+    ('enikshay_most_recent_episode_from_person', 'custom.enikshay.expressions.most_recent_episode_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
