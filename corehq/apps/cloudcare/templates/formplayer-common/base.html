@@ -109,23 +109,8 @@
         <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
         {% endif %}
 
-        {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
+        {% javascript_libraries underscore=True jquery_ui=True ko=True hq=True analytics=True %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-
-        {% compress js %}
-        <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
-        {% endcompress %}
 
         {% compress js %}
         <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>

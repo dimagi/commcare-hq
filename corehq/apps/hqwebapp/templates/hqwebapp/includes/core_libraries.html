@@ -7,6 +7,7 @@
     Options. Note that setting these to False will not necessarily exclude that library,
     as a different library may depend on it.
         underscore: Include underscore
+        jquery_ui: Include jQuery UI
         ko: Include knockout
         analytics: Include Google Analytics, Kissmetrics, etc.
         hq: Include initial_page_data and hq.helpers.js, needed for most HQ pages.
@@ -25,8 +26,33 @@
     <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
     <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
     <script src="{% static 'jquery.rmi/jquery.rmi.js' %}"></script>
-    <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 {% endcompress %}
+
+{% if jquery_ui %}
+    {% compress js %}
+        <!-- UI libraries needed for all other widgets and interactions -->
+        <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
+
+        <!-- Individual widgets and interactions -->
+        <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
+        <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
+    {% endcompress %}
+{% endif %}
+
+{% comment %}
+    jQuery UI, if included, needs to appear before bootstrap's JavaScript;
+    otherwise the two tooltip widgets and two button widgets conflict.
+{% endcomment %}
+<script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 
 {% comment %}
     Required for inline edit widget. Also used by cloudcare.
