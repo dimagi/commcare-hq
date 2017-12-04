@@ -707,7 +707,9 @@ ko.virtualElements.allowedBindings.stopBinding = true;
 ko.bindingHandlers.popover = {
     update: function(element, valueAccessor) {
         var options = ko.utils.unwrapObservable(valueAccessor());
-        $(element).popover(options);
+        if (options.title || options.context) {     // don't show empty popovers
+            $(element).popover(options);
+        }
     }
 };
 
