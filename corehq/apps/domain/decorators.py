@@ -21,8 +21,8 @@ from django.utils.translation import ugettext as _
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
-    BASIC, DIGEST, API_KEY, TOKEN
-)
+    BASIC, DIGEST, API_KEY, TOKEN,
+    get_username_and_password_from_request)
 from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
@@ -338,7 +338,7 @@ def login_required(view_func):
 def check_lockout(fn):
     @wraps(fn)
     def _inner(request, *args, **kwargs):
-        username = _get_username_from_request(request)
+        username, password = get_username_and_password_from_request(request)
         user = CouchUser.get_by_username(username)
         if user and user.is_web_user() and user.is_locked_out():
             return json_response({_("error"): _("maximum password attempts exceeded")}, status_code=401)
@@ -346,19 +346,6 @@ def check_lockout(fn):
             return fn(request, *args, **kwargs)
     return _inner
 
-
-def _get_username_from_request(request):
-    auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    username = None
-    if auth_header.startswith('digest '):
-        digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
-        username = digest.username
-    elif auth_header.startswith('basic '):
-        try:
-            username = b64decode(request.META['HTTP_AUTHORIZATION'].split()[1]).split(':')[0]
-        except IndexError:
-            pass
-    return username
 
 ########################################################################################################
 #

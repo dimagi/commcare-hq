@@ -49,6 +49,7 @@ from .const import (
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
+import six
 
 
 logger = get_task_logger(__name__)
@@ -189,14 +190,6 @@ class EpisodeUpdater(object):
                 bulk_update_cases(self.domain, updates, device_id)
 
         return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
-
-    def update_single_case(self, episode_case):
-        # updates a single episode_case.
-        assert episode_case.domain == self.domain
-        update_json = EpisodeAdherenceUpdate(self.domain, episode_case).update_json()
-        if update_json:
-            update_case(self.domain, episode_case.case_id, update_json,
-                        device_id="%s.%s" % (__name__, type(self).__name__))
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
@@ -356,7 +349,7 @@ class EpisodeAdherenceUpdate(object):
         else:
             return len([
                 status
-                for date, status in dose_status_by_date.iteritems()
+                for date, status in six.iteritems(dose_status_by_date)
                 if start_date <= date <= end_date and getattr(status, dose_type)
             ])
 
@@ -367,7 +360,7 @@ class EpisodeAdherenceUpdate(object):
         {'99DOTS': 1, 'MERM': 1, 'treatment_supervisor': 0, ... }
         """
         counts = defaultdict(int)
-        for date, status in dose_status_by_date.iteritems():
+        for date, status in six.iteritems(dose_status_by_date):
             if status.source in VALID_ADHERENCE_SOURCES:
                 if start_date and end_date and start_date <= date <= end_date:
                     counts[status.source] += 1
@@ -419,7 +412,7 @@ class EpisodeAdherenceUpdate(object):
         start_date = self.get_adherence_schedule_start_date()
 
         properties = {}
-        for num_days, day_name in readable_day_names.iteritems():
+        for num_days, day_name in six.iteritems(readable_day_names):
             if today - datetime.timedelta(days=num_days) >= start_date:
                 start = today - datetime.timedelta(days=num_days)
                 end = today
@@ -540,7 +533,7 @@ class EpisodeAdherenceUpdate(object):
         """
         needs_update = any([
             self.episode.get_case_property(k) != v
-            for (k, v) in update_dict.iteritems()
+            for (k, v) in six.iteritems(update_dict)
         ])
         if needs_update:
             return update_dict
@@ -725,7 +718,7 @@ def calculate_dose_status_by_day(adherence_cases):
         adherence_cases_by_date[adherence_date].append(case)
 
     status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False))
-    for day, cases in adherence_cases_by_date.iteritems():
+    for day, cases in six.iteritems(adherence_cases_by_date):
         case = _get_relevent_case(cases)
         if not case:
             pass  # unknown
@@ -755,14 +748,11 @@ def _get_relevent_case(cases):
     if 'enikshay' not in sources:
         valid_cases = cases
     else:
-        valid_cases = filter(
-            lambda case: (
+        valid_cases = [case for case in cases if (
                 case.get('adherence_source') == 'enikshay' and
                 (not case['closed'] or (case['closed'] and
                     case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
-            ),
-            cases
-        )
+            )]
     if valid_cases:
         by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
         latest_case = by_modified_on[-1]
@@ -773,8 +763,16 @@ def _get_relevent_case(cases):
 def get_updated_fields(existing_properties, new_properties):
     updated_fields = {}
     for prop, value in new_properties.items():
-        existing_value = unicode(existing_properties.get(prop, '--'))
-        new_value = unicode(value) if value is not None else u""
+        existing_value = six.text_type(existing_properties.get(prop, '--'))
+        new_value = six.text_type(value) if value is not None else u""
         if existing_value != new_value:
             updated_fields[prop] = value
     return updated_fields
+
+
+@task
+def update_single_episode(domain, episode_case):
+    update_json = EpisodeAdherenceUpdate(domain, episode_case).update_json()
+    if update_json:
+        update_case(domain, episode_case.case_id, update_json,
+                    device_id="%s.%s" % (__name__, 'update_single_episode'))

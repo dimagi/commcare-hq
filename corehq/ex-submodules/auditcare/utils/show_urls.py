@@ -13,7 +13,7 @@ def show_urls(urllist, depth=0):
         else:
             print(entry)
             if isinstance(entry.callback, FunctionType):
-                callback_str = "%s.%s" % (entry.callback.__module__, entry.callback.func_name)
+                callback_str = "%s.%s" % (entry.callback.__module__, entry.callback.__name__)
                 ret.append((entry.regex.pattern, callback_str))
         if hasattr(entry, 'url_patterns'):
             ret.extend(show_urls(entry.url_patterns, depth + 1))

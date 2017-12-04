@@ -19,6 +19,9 @@ from corehq.apps.reports.datatables import (
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
 import six
+from six.moves import zip
+from functools import reduce
+from six.moves import range
 
 
 class SqlReportException(Exception):
@@ -234,7 +237,7 @@ class SqlData(ReportDataSource):
     @property
     def wrapped_filters(self):
         def _wrap_if_necessary(string_or_filter):
-            if isinstance(string_or_filter, basestring):
+            if isinstance(string_or_filter, six.string_types):
                 filter = RawFilter(string_or_filter)
             else:
                 filter = string_or_filter

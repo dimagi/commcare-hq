@@ -45,7 +45,7 @@ class SMSTests(TestCase):
         if not case_id:
             case_id = self.sp.case_id
 
-        [product] = filter(lambda p: p.code_ == code, self.products)
+        [product] = [p for p in self.products if p.code_ == code]
 
         try:
             state = StockState.objects.get(
@@ -89,7 +89,7 @@ class StockReportTest(SMSTests):
         self.assertEqual(3, report.stocktransaction_set.count())
 
         for code, amt in amounts.items():
-            [product] = filter(lambda p: p.code_ == code, self.products)
+            [product] = [p for p in self.products if p.code_ == code]
             trans = StockTransaction.objects.get(product_id=product._id)
             self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)
@@ -113,7 +113,7 @@ class StockReportTest(SMSTests):
         self.assertEqual(_get_location_from_sp(self.sp), _get_location_from_form(forms[0]))
 
         for code, amt in amounts.items():
-            [product] = filter(lambda p: p.code_ == code, self.products)
+            [product] = [p for p in self.products if p.code_ == code]
             trans = StockTransaction.objects.get(product_id=product._id)
             self.assertEqual(self.sp.case_id, trans.case_id)
             self.assertEqual(0, trans.quantity)

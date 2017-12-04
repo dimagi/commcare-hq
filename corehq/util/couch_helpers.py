@@ -5,6 +5,8 @@ import threading
 from copy import copy
 from mimetypes import guess_type
 from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
+import six
+from six.moves import filter
 
 
 class CouchAttachmentsBuilder(object):
@@ -70,7 +72,7 @@ class CouchAttachmentsBuilder(object):
             data = content.read()
         else:
             data = content
-        if isinstance(data, unicode):
+        if isinstance(data, six.text_type):
             data = data.encode('utf-8')
         if content_type is None:
             content_type = ';'.join(filter(None, guess_type(name)))

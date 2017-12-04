@@ -1,6 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from itertools import izip_longest, groupby
+from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -19,7 +19,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
-from six.moves import input
+from six.moves import input, zip_longest
 
 
 class Command(BaseCommand):
@@ -174,7 +174,7 @@ class Command(BaseCommand):
             if ids_in_couch ^ ids_in_sql:
                 couch_only = list(ids_in_couch - ids_in_sql)
                 sql_only = list(ids_in_sql - ids_in_couch)
-                for couch, sql in izip_longest(couch_only, sql_only):
+                for couch, sql in zip_longest(couch_only, sql_only):
                     print(row.format(couch or '', sql or ''))
 
         return True

@@ -220,6 +220,7 @@ nvd3 > svg {
     font-size: 14px;
     padding-right: 0;
     padding-left: 0;
+    z-index: 1;
 }
 
 .navbar-default {
@@ -676,16 +677,9 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-    position: relative;
-    top: 20%;
-    left: 50%;
-    width: 100%;
+    left: 80%;
+    width: 40%;
     height: 40px;
-    margin-left: -50%;
-    margin-top: -25px;
-    padding-top: 20px;
-    text-align: center;
-    font-size: 1.2em;
 }
 
 #beneficiariesTable {
@@ -712,7 +706,6 @@ table.dataTable.fixedHeader-locked {
 
 table.dataTable.fixedHeader-floating {
     position: fixed !important;
-    width: 80.3% !important;
 }
 
 table.dataTable.fixedHeader-locked {
@@ -725,10 +718,29 @@ table.dataTable.fixedHeader-locked {
   }
 }
 
-.medium-col {
-    width: 12% !important;
+.locPopup {
+    position: fixed;
+    display:none;
+    z-index: 90000;
+    background-color: white;
+    border: 1px solid #a9a9a9;
+    padding: 5px;
+    border-radius: 5px;
 }
 
-.big-col {
-    width: 16% !important;
+.locPopup > .row {
+    width: 100%;
+}
+
+.locPopup > button {
+    display: block;
+    margin: 5px auto;
+}
+
+table.dataTable,
+table.dataTable th,
+table.dataTable td {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
 }

@@ -27,6 +27,8 @@ from datetime import datetime
 
 from corehq.apps.sms.util import register_sms_contact, strip_plus
 from corehq import toggles
+import six
+from six.moves import range
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -102,7 +104,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
     """
     if phone_number is None:
         return False
-    if isinstance(phone_number, int) or isinstance(phone_number, long):
+    if isinstance(phone_number, six.integer_types):
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
@@ -478,7 +480,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 
 
 def is_opt_message(text, keyword_list):
-    if not isinstance(text, basestring):
+    if not isinstance(text, six.string_types):
         return False
 
     text = text.strip().upper()

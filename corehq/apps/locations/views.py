@@ -57,6 +57,8 @@ from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationFormSet, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
+import six
+from six.moves import map
 
 
 logger = logging.getLogger(__name__)
@@ -225,7 +227,7 @@ class LocationsListView(BaseLocationView):
                 SQLLocation.objects.filter(domain=self.domain, parent_id=None),
                 self.show_inactive,
             )
-            return map(to_json, locs)
+            return list(map(to_json, locs))
         else:
             return [to_json(user.get_sql_location(self.domain))]
 
@@ -295,7 +297,7 @@ class LocationTypesView(BaseDomainView):
         sql_loc_types = {}
 
         def _is_fake_pk(pk):
-            return isinstance(pk, basestring) and pk.startswith("fake-pk-")
+            return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative, has_user,
                        shares_cases, view_descendants, pk, code, **kwargs):
@@ -944,7 +946,7 @@ def child_locations_for_select2(request, domain):
         if locs != [] and query:
             locs = locs.filter(name__icontains=query)
 
-        return json_response(map(loc_to_payload, locs[:10]))
+        return json_response(list(map(loc_to_payload, locs[:10])))
 
 
 class DowngradeLocationsView(BaseDomainView):

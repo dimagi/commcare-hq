@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from pact.enums import DAY_SLOTS_BY_TIME, DAY_SLOTS_BY_IDX, DOT_ART, DOT_NONART, \
     CASE_ART_REGIMEN_PROP, CASE_NONART_REGIMEN_PROP
+from six.moves import range
 
 type_keys = {DOT_ART: 'dot_a_%s', DOT_NONART: 'dot_n_%s'}
 digit_strings = ['one', 'two', 'three', 'four']

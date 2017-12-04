@@ -18,6 +18,7 @@ from custom.enikshay.reports.filters import EnikshayLocationFilter, EnikshayMigr
 from custom.utils.utils import clean_IN_filter_value
 
 from django.utils.translation import ugettext as _
+import six
 
 TABLE_ID = 'episode'
 
@@ -58,11 +59,11 @@ class EnikshayMultiReport(MultiReport, DatespanMixin):
             if isinstance(field_instance, DatespanFilter):
                 value = field_instance.datespan.default_serialization()
             elif isinstance(field_instance, BaseMultipleOptionFilter):
-                value = ', '.join(map(lambda s: s.get('text', ''), field_instance.selected))
+                value = ', '.join([s.get('text', '') for s in field_instance.selected])
             elif isinstance(field_instance, BaseSingleOptionFilter):
                 filter_value = field_instance.selected
                 if not filter_value:
-                    value = unicode(field_instance.default_text)
+                    value = six.text_type(field_instance.default_text)
                 else:
                     value = [
                         display_text
@@ -70,8 +71,8 @@ class EnikshayMultiReport(MultiReport, DatespanMixin):
                         if option_value == filter_value
                     ][0]
             else:
-                value = unicode(field_instance.get_value(self.request, self.domain))
-            yield unicode(field.label), value
+                value = six.text_type(field_instance.get_value(self.request, self.domain))
+            yield six.text_type(field.label), value
 
     @property
     def export_table(self):
@@ -97,7 +98,7 @@ class EnikshayMultiReport(MultiReport, DatespanMixin):
                 [header.html for header in report_instance.headers.header]
             ]
             report_table = [
-                unicode(report.name[:28] + '...'),
+                six.text_type(report.name[:28] + '...'),
                 rows
             ]
             export_table.append(report_table)
@@ -108,7 +109,7 @@ class EnikshayMultiReport(MultiReport, DatespanMixin):
                     if isinstance(element, dict):
                         row_formatted.append(element['sort_key'])
                     else:
-                        row_formatted.append(unicode(element))
+                        row_formatted.append(six.text_type(element))
                 rows.append(row_formatted)
         return export_table
 
@@ -169,7 +170,7 @@ class EnikshaySqlData(SqlData):
             AND([GTE(self.date_property, 'start_date'), LT(self.date_property, 'end_date')])
         ]
 
-        locations_id = filter(lambda x: bool(x), self.config.locations_id)
+        locations_id = [x for x in self.config.locations_id if bool(x)]
 
         if locations_id:
             filters.append(

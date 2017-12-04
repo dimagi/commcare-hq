@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -10,6 +10,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -26,27 +27,34 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             valid=Sum('valid_in_month'),
-        )
+            all=Sum('valid_all_registered_in_month')
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
+    data_for_map = defaultdict(lambda: {
+        'valid': 0,
+        'all': 0,
+        'original_name': [],
+        'fillKey': 'Children'
+    })
     average = []
     for row in get_data_for(config):
-        valid = row['valid']
+        valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
+        all_children = row['all'] or 0
+        on_map_name = row['%s_map_location_name' % loc_level] or name
 
         average.append(valid)
-        row_values = {
-            'valid': valid or 0,
-            'fillKey': 'Children'
-        }
 
-        map_data.update({name: row_values})
+        data_for_map[on_map_name]['valid'] += valid
+        data_for_map[on_map_name]['all'] += all_children
+        if name != on_map_name:
+            data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Children': BLUE})
@@ -64,7 +72,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
                     "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
@@ -117,7 +125,7 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
                         'x': key,
                         'y': value,
                         'all': all
-                    } for key, value in chart.iteritems()
+                    } for key, value in six.iteritems(chart)
                 ],
                 "key": "Children (0-6 years) who are enrolled",
                 "strokeWidth": 2,
@@ -140,6 +148,7 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
         *group_by
     ).annotate(
         valid=Sum('valid_in_month'),
+        all=Sum('valid_all_registered_in_month')
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -150,22 +159,25 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
     }
 
     tooltips_data = defaultdict(lambda: {
-        'valid': 0
+        'valid': 0,
+        'all': 0
     })
 
     loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
     result_set = set()
 
     for row in data:
-        valid = row['valid']
+        valid = row['valid'] or 0
+        all_children = row['all'] or 0
         name = row['%s_name' % loc_level]
         result_set.add(name)
 
         row_values = {
-            'valid': valid or 0,
+            'valid': valid,
+            'all': all_children
         }
 
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([

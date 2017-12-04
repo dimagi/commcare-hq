@@ -14,15 +14,15 @@ from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get
 
 class TestAWCReport(TestCase):
     def test_beneficiary_details_recorded_weight_none(self):
-        data = get_beneficiary_details(case_id='6b234c5b-883c-4849-9dfd-b1571af8717b', month=(2017, 5, 1))
+        data = get_beneficiary_details(case_id='6b234c5b-883c-4849-9dfd-b1571af8717b')
         self.assertEqual(data['age_in_months'], 69)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3342')
         self.assertEqual(data['mother_name'], 'संगीता')
 
     def test_beneficiary_details_recorded_weight_is_not_none(self):
-        data = get_beneficiary_details(case_id='8e226cc6-740f-4146-b017-69d9f6e9651b', month=(2017, 4, 1))
-        self.assertEqual(data['age_in_months'], 53)
+        data = get_beneficiary_details(case_id='8e226cc6-740f-4146-b017-69d9f6e9651b')
+        self.assertEqual(data['age_in_months'], 54)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
         self.assertEqual(data['mother_name'], 'शियामु बाई')
@@ -31,8 +31,8 @@ class TestAWCReport(TestCase):
         self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
-        data = get_beneficiary_details(case_id='411c4234-8475-415a-9c28-911b85868aa5', month=(2017, 4, 1))
-        self.assertEqual(data['age_in_months'], 36)
+        data = get_beneficiary_details(case_id='411c4234-8475-415a-9c28-911b85868aa5')
+        self.assertEqual(data['age_in_months'], 37)
         self.assertEqual(data['sex'], 'F')
         self.assertEqual(data['person_name'], 'Name 3483')
         self.assertEqual(data['mother_name'], u'रींकीकुँवर')
@@ -791,93 +791,50 @@ class TestAWCReport(TestCase):
                     ],
                     [
                         {
-                            "all": None,
-                            "format": "number",
+                            "all": 0,
+                            "format": "percent_and_div",
                             "color": "red",
                             "percent": 0.0,
                             "value": 0,
-                            "label": "Children (0-6 years)",
+                            "label": "Percent children (0-6 years) enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of children registered between the age of 0 - 6 years"
+                            "help_text": "Percentage of children registered between 0-6 years old "
+                                         "who are enrolled for ICDS services"
                         },
                         {
-                            "all": None,
-                            "format": "number",
+                            "all": 2,
+                            "format": "percent_and_div",
                             "color": "red",
                             "percent": 0.0,
-                            "value": 0,
-                            "label": "Children (0-6 years) enrolled for ICDS services",
+                            "value": 2,
+                            "label": "Percent pregnant women enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of children registered between"
-                                         " the age of 0 - 6 years and enrolled for ICDS services"
+                            "help_text": "Percentage of pregnant women registered "
+                                         "who are enrolled for ICDS services"
                         }
                     ],
                     [
                         {
-                            "all": "",
-                            "format": "number",
-                            "color": "green",
-                            "percent": 100.0,
-                            "value": 2,
-                            "label": "Pregnant Women",
+                            "all": 3,
+                            "format": "percent_and_div",
+                            "color": "red",
+                            "percent": 0.0,
+                            "value": 3,
+                            "label": "Percent lactating women enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of pregnant women registered"
+                            "help_text": "Percentage of lactating women registered "
+                                         "who are enrolled for ICDS services"
                         },
                         {
-                            "all": None,
-                            "format": "number",
-                            "color": "green",
-                            "percent": 100.0,
-                            "value": 2,
-                            "label": "Pregnant Women enrolled for ICDS services",
-                            "frequency": "month",
-                            "help_text": "Total number of pregnant women registered and enrolled for ICDS services"
-                        }
-                    ],
-                    [
-                        {
-                            "all": "",
-                            "format": "number",
-                            "color": "green",
-                            "percent": 50.0,
-                            "value": 3,
-                            "label": "Lactating Mothers",
-                            "frequency": "month",
-                            "help_text": "Total number of lactating women registered"
-                        },
-                        {
-                            "all": None,
-                            "format": "number",
-                            "color": "green",
-                            "percent": 50.0,
-                            "value": 3,
-                            "label": "Lactating Women enrolled for ICDS services",
-                            "frequency": "month",
-                            "help_text": "Total number of lactating women registered and "
-                                         "enrolled for ICDS services"
-                        }
-                    ],
-                    [
-                        {
-                            "all": "",
-                            "format": "number",
+                            "all": 0,
+                            "format": "percent_and_div",
                             "color": "red",
                             "percent": -100.0,
                             "value": 0,
-                            "label": "Adolescent Girls (11-18 years)",
+                            "label": "Percent adolescent girls (11-18 years) enrolled for ICDS services",
                             "frequency": "month",
-                            "help_text": "Total number of adolescent girls (11 - 18 years) who are registered"
-                        },
-                        {
-                            "all": None,
-                            "format": "number",
-                            "color": "red",
-                            "percent": -100.0,
-                            "value": 0,
-                            "label": "Adolescent Girls (11-18 years) enrolled for ICDS services",
-                            "frequency": "month",
-                            "help_text": "Total number of adolescent girls (11 - 18 years) "
-                                         "who are registered and enrolled for ICDS services"
+                            "help_text": "Percentage of adolescent girls registered between"
+                                         " 11-18 years old who are enrolled for ICDS services"
                         }
                     ]
                 ],
@@ -1006,7 +963,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 7,
                         "dob": "2011-07-23",
-                        "age": "5 years 9 months ",
+                        "age": "5 years 10 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1031,7 +988,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 2,
                         "dob": "2011-10-21",
-                        "age": "5 years 6 months ",
+                        "age": "5 years 7 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1081,7 +1038,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-02-13",
-                        "age": "5 years 2 months ",
+                        "age": "5 years 3 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1106,7 +1063,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 17,
                         "dob": "2012-03-27",
-                        "age": "5 years 1 month ",
+                        "age": "5 years 2 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1131,7 +1088,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-06-03",
-                        "age": "4 years 10 months ",
+                        "age": "4 years 11 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Normal height for age"
@@ -1156,7 +1113,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-06-23",
-                        "age": "4 years 10 months ",
+                        "age": "4 years 11 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1181,7 +1138,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 1,
                         "dob": "2012-06-26",
-                        "age": "4 years 10 months ",
+                        "age": "4 years 11 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1206,7 +1163,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-07-05",
-                        "age": "4 years 9 months ",
+                        "age": "4 years 10 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1231,7 +1188,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 16,
                         "dob": "2012-07-18",
-                        "age": "4 years 9 months ",
+                        "age": "4 years 10 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"

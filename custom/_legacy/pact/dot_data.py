@@ -15,6 +15,7 @@ from pact.enums import (
 )
 
 from pact.models import CObservation
+from six.moves import range
 
 
 class DOTDayDose(object):
@@ -149,7 +150,7 @@ class DOTDay(object):
 
 def filter_obs_for_day(this_date, observations):
     assert this_date.__class__ == date
-    ret = filter(lambda x: x['observed_date'].date() == this_date, observations)
+    ret = [x for x in observations if x['observed_date'].date() == this_date]
 
     return ret
 

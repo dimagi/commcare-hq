@@ -20,6 +20,7 @@ from custom.enikshay.case_utils import CASE_TYPE_VOUCHER
 from custom.enikshay.const import VOUCHER_ID
 from custom.enikshay.integrations.bets.repeater_generators import VoucherPayload
 from custom.enikshay.integrations.bets.views import VoucherUpdate
+from six.moves import map
 
 
 class Command(BaseCommand):
@@ -74,7 +75,7 @@ class Command(BaseCommand):
 
         with open(filename) as f:
             reader = csv.reader(f)
-            headers = reader.next()
+            headers = next(reader)
             missing_headers = set(self.voucher_update_properties) - set(headers)
             if missing_headers:
                 print("Missing the following headers:")
@@ -146,7 +147,7 @@ class Command(BaseCommand):
                 voucher_update[prop] for prop in self.voucher_update_properties
             ]
 
-        rows = map(make_row, voucher_updates)
+        rows = list(map(make_row, voucher_updates))
         self.write_csv('updates', headers, rows)
 
     def log_unrecognized_vouchers(self, headers, unrecognized_vouchers):
@@ -170,7 +171,7 @@ class Command(BaseCommand):
                 api_payload[prop] for prop in self.voucher_api_properties
             ]
 
-        rows = map(make_row, unmodified_vouchers)
+        rows = list(map(make_row, unmodified_vouchers))
         self.write_csv('updates', headers, rows)
 
     def update_vouchers(self, voucher_updates):

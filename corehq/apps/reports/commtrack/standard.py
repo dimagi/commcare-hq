@@ -21,6 +21,7 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, ge
     get_product_ids_for_program, get_consumption_helper_from_ledger_value
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
+import six
 
 
 class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, DatespanMixin):
@@ -430,13 +431,13 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
             for site in statuses:
                 if child_loc(site['loc_path']) is not None:
                     yield (site['loc_path'], site['reporting_status'])
-        status_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), status)],
+        status_by_agg_site = map_reduce(lambda path_status: [(child_loc(path_status[0]), path_status[1])],
                                         data=case_iter())
-        sites_by_agg_site = map_reduce(lambda (path, status): [(child_loc(path), path[-1])],
+        sites_by_agg_site = map_reduce(lambda path_status1: [(child_loc(path_status1[0]), path_status1[0][-1])],
                                        data=case_iter())
 
         status_counts = dict((loc_id, self.status_tally(statuses))
-                             for loc_id, statuses in status_by_agg_site.iteritems())
+                             for loc_id, statuses in six.iteritems(status_by_agg_site))
 
         master_tally = self.status_tally([site['reporting_status'] for site in statuses])
 

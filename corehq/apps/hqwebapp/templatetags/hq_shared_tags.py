@@ -3,10 +3,9 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 import hashlib
 import json
-import warnings
 
 from django.conf import settings
-from django.template import loader_tags, NodeList
+from django.template import loader_tags, NodeList, TemplateSyntaxError
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -27,6 +26,7 @@ from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq import toggles
+import six
 
 
 register = template.Library()
@@ -201,7 +201,7 @@ def pretty_doc_info(doc_info):
 
 
 def _get_obj_from_name_or_instance(module, name_or_instance):
-    if isinstance(name_or_instance, basestring):
+    if isinstance(name_or_instance, six.string_types):
         obj = getattr(module, name_or_instance)
     else:
         obj = name_or_instance
@@ -651,7 +651,7 @@ def registerurl(parser, token):
 
 @register.simple_tag
 def html_attr(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         value = JSON(value)
     return escape(value)
 
@@ -688,6 +688,69 @@ def analytics_ab_test(parser, token):
     return _create_page_data(parser, token, 'analytics_ab_test')
 
 
+@register.tag
+def requirejs_main(parser, token):
+    """
+    Indicate that a page should be using RequireJS, by naming the
+    JavaScript module to be used as the page's main entry point.
+
+    The base template must have a `{% requirejs_main ... %}` tag before
+    the `requirejs_main` variable is accessed anywhere in the template.
+    The base template need not specify a value in its `{% requirejs_main %}`
+    tag, allowing it to be extended by templates that may or may not
+    use requirejs. In this case the `requirejs_main` template variable
+    will have a value of `None` unless an extending template has a
+    `{% requirejs_main "..." %}` with a value.
+    """
+    bits = token.contents.split(None, 1)
+    if len(bits) == 1:
+        tag_name = bits[0]
+        value = None
+    else:
+        tag_name, value = bits
+    if getattr(parser, "__saw_requirejs_main", False):
+        raise TemplateSyntaxError(
+            "multiple '%s' tags not allowed (%s)" % tuple(bits))
+    parser.__saw_requirejs_main = True
+
+    if value and (len(value) < 2 or value[0] not in '"\'' or value[0] != value[-1]):
+        raise TemplateSyntaxError("bad '%s' argument: %s" % tuple(bits))
+
+    # use a block to allow extension template to set requirejs_main for base
+    return loader_tags.BlockNode("__" + tag_name, NodeList([
+        RequireJSMainNode(tag_name, value and value[1:-1])
+    ]))
+
+
+class RequireJSMainNode(template.Node):
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __repr__(self):
+        return "<RequireJSMain Node: %r>" % (self.value,)
+
+    def render(self, context):
+        if self.name not in context:
+            # set name in block parent context
+            context.dicts[-2][self.name] = self.value
+        return ''
+
+
 @register.inclusion_tag('hqwebapp/basic_errors.html')
 def bootstrap_form_errors(form):
     return {'form': form}
+
+
+@register.inclusion_tag('hqwebapp/includes/core_libraries.html', takes_context=True)
+def javascript_libraries(context, **kwargs):
+    return {
+        'request': getattr(context, 'request', None),
+        'underscore': kwargs.pop('underscore', False),
+        'jquery': kwargs.pop('jquery', False),
+        'ko': kwargs.pop('ko', False),
+        'analytics': kwargs.pop('analytics', False),
+        'hq': kwargs.pop('hq', False),
+        'helpers': kwargs.pop('helpers', False),
+    }

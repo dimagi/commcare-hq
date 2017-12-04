@@ -53,6 +53,7 @@ from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENi
 from custom.enikshay.tests.utils import (
     ENikshayLocationStructureMixin, get_person_case_structure, setup_enikshay_locations)
 from custom.enikshay.case_utils import update_case
+import six
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -199,6 +200,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"Location": self.pcc.location_id,
             u"DTOLocation": self.dto.location_id,
             u"VoucherID": voucher.case_id,
+            u"ReadableVoucherID": voucher.get_case_property('voucher_id'),
             u"Amount": u'9',
             u"InvestigationType": None,
             u"PersonId": self.person.attrs['update']['person_id'],
@@ -238,6 +240,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"Location": self.plc.location_id,
             u"DTOLocation": self.dto.location_id,
             u"VoucherID": voucher.case_id,
+            u"ReadableVoucherID": voucher.get_case_property('voucher_id'),
             u"Amount": u'10',
             u"InvestigationType": u"xray",
             u"PersonId": self.person.attrs['update']['person_id'],
@@ -268,7 +271,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(TREATMENT_180_EVENT),
+            u"EventID": six.text_type(TREATMENT_180_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.user.user_id,
             u"BeneficiaryType": u"mbbs",
@@ -295,7 +298,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(DRUG_REFILL_EVENT),
+            u"EventID": six.text_type(DRUG_REFILL_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
             u"BeneficiaryType": u"patient",
@@ -322,7 +325,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
+            u"EventID": six.text_type(SUCCESSFUL_TREATMENT_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
             u"BeneficiaryType": u"patient",
@@ -349,7 +352,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
+            u"EventID": six.text_type(SUCCESSFUL_TREATMENT_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
             u"BeneficiaryType": u"patient",
@@ -376,7 +379,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(DIAGNOSIS_AND_NOTIFICATION_EVENT),
+            u"EventID": six.text_type(DIAGNOSIS_AND_NOTIFICATION_EVENT),
             u"EventOccurDate": date_today,
             u"BeneficiaryUUID": self.user.user_id,
             u"BeneficiaryType": u"mbbs",
@@ -405,7 +408,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(AYUSH_REFERRAL_EVENT),
+            u"EventID": six.text_type(AYUSH_REFERRAL_EVENT),
             u"EventOccurDate": date_today,
             u"BeneficiaryUUID": self.user.user_id,
             u"BeneficiaryType": u"ayush_other",

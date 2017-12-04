@@ -9,11 +9,10 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import LocationFieldsView
-from corehq.apps.ota.utils import update_device_id
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE, UserFieldsView
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, update_device_meta
 from .utils import setup_enikshay_locations
 from ..const import (
     DEFAULT_MOBILE_WORKER_ROLE,
@@ -32,6 +31,7 @@ from ..user_setup import (
     set_enikshay_device_id,
 )
 from ..models import IssuerId
+from six.moves import filter
 
 
 @flag_enabled('ENIKSHAY')
@@ -259,21 +259,21 @@ class TestUserSetupUtils(TestCase):
         self.assertEqual(user.user_data['id_device_number'], 3)
 
         # Oberyn uses the palm-pilot again, which was device #2
-        update_device_id(user, 'palm-pilot')
+        update_device_meta(user, 'palm-pilot')
         self.assertEqual(user.user_data['id_device_number'], 2)
 
     def test_device_id_same_day(self):
         user = self.make_user('redviper@martell.biz', 'DTO')
-        update_device_id(user, 'rotary')
-        update_device_id(user, 'palm-pilot')
-        update_device_id(user, 'blackberry')
+        update_device_meta(user, 'rotary')
+        update_device_meta(user, 'palm-pilot')
+        update_device_meta(user, 'blackberry')
         palm_pilot_last_used_1 = [device.last_used for device in user.devices
                                   if device.device_id == 'palm-pilot'][0]
         self.assertEqual(user.user_data['id_device_number'], 3)
 
         # Updating the device ID a second time in the same day doesn't change
         # the entry in user.devices, but it SHOULD update the enikshay user data
-        update_device_id(user, 'palm-pilot')
+        update_device_meta(user, 'palm-pilot')
         palm_pilot_last_used_2 = [device.last_used for device in user.devices
                                   if device.device_id == 'palm-pilot'][0]
         self.assertEqual(palm_pilot_last_used_1, palm_pilot_last_used_2)

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -12,7 +12,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -29,43 +30,24 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            in_month=Sum('cf_initiation_in_month'),
-            eligible=Sum('cf_initiation_eligible'),
-        )
+            children=Sum('cf_initiation_in_month'),
+            all=Sum('cf_initiation_eligible'),
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
-
-    in_month_total = 0
-    valid_total = 0
-
-    for row in get_data_for(config):
-        valid = row['eligible']
-        name = row['%s_name' % loc_level]
-
-        in_month = row['in_month']
-
-        in_month_total += (in_month or 0)
-        valid_total += (valid or 0)
-
-        value = (in_month or 0) * 100 / (valid or 1)
-        row_values = {
-            'children': in_month or 0,
-            'all': valid or 0
-        }
-        if value < 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-60%'})
-        elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, valid_total, in_month_total = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'children',
+        'all',
+        20,
+        60
+    )
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
@@ -85,7 +67,7 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
                     "semi-solid or soft food."
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
@@ -145,7 +127,7 @@ def get_children_initiated_data_chart(domain, config, loc_level, show_test=False
             dict(
                 loc_name=key,
                 percent=(value['in_month'] * 100) / float(value['all'] or 1)
-            ) for key, value in best_worst.iteritems()
+            ) for key, value in six.iteritems(best_worst)
         ],
         key=lambda x: x['percent'],
         reverse=True
@@ -160,7 +142,7 @@ def get_children_initiated_data_chart(domain, config, loc_level, show_test=False
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "% Children began complementary feeding",
                 "strokeWidth": 2,
@@ -214,7 +196,7 @@ def get_children_initiated_sector_data(domain, config, loc_level, location_id, s
             'children': in_month or 0,
             'all': valid or 0
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)

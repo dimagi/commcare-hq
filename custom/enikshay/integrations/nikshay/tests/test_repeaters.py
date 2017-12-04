@@ -51,6 +51,7 @@ from casexml.apps.case.mock import CaseStructure
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from casexml.apps.case.tests.util import delete_all_cases
+import six
 
 DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"
 
@@ -455,7 +456,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         )
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'false')
-        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', six.text_type(message))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -572,8 +573,8 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.repeat_record = MockRepeatRecord(MockRepeater(username="arwen", password="Hadhafang"))
 
     def create_case_structure(self):
-        return {case.get_id: case for case in filter(None, self.factory.create_or_update_cases(
-            [self.person, self.episode]))}
+        return {case.get_id: case for case in [_f for _f in self.factory.create_or_update_cases(
+            [self.person, self.episode]) if _f]}
 
     def _create_nikshay_registered_case(self):
         update_case(self.domain, self.episode_id, {
@@ -923,8 +924,8 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
         self.repeat_record = MockRepeatRecord(MockRepeater(username="arwen", password="Hadhafang"))
 
     def create_case_structure(self):
-        return {case.get_id: case for case in filter(None, self.factory.create_or_update_cases(
-            [self.lab_referral, self.test, self.episode]))}
+        return {case.get_id: case for case in [_f for _f in self.factory.create_or_update_cases(
+            [self.lab_referral, self.test, self.episode]) if _f]}
 
     def _create_nikshay_registered_case(self):
         update_case(self.domain, self.episode_id, {

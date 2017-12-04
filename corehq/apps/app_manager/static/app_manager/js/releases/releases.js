@@ -1,4 +1,3 @@
-/* globals: ga_track_event */
 hqDefine('app_manager/js/releases/releases', function () {
     function SavedApp(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
@@ -41,7 +40,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.track_deploy_type = function(type) {
-            ga_track_event('App Manager', 'Deploy Type', type);
+            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Type', type);
         };
 
         self.changeAppCode = function () {
@@ -120,8 +119,8 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.click_app_code = function() {
             self.get_app_code();
-            ga_track_event('App Manager', 'Initiate Install', 'Get App Code');
-            analytics.workflow('Initiate Installation Method');
+            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Get App Code');
+            hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
         };
         
         self.get_app_code = function() {
@@ -169,8 +168,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.clickDeploy = function () {
-            ga_track_event('App Manager', 'Deploy Button', self.id());
-            analytics.workflow('Clicked Deploy');
+            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
+            hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
             self.get_short_odk_url();
         };
@@ -192,8 +191,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.trackScan = function() {
-            ga_track_event('App Manager', 'Initiate Install', 'Show Bar Code');
-            analytics.workflow('Initiate Installation Method');
+            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Show Bar Code');
+            hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
         };
 
         self.reveal_java_download = function(){

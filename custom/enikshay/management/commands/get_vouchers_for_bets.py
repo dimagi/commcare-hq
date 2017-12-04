@@ -10,6 +10,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 from custom.enikshay.case_utils import get_person_case_from_voucher
+import six
 
 
 class Command(BaseCommand):
@@ -63,7 +64,7 @@ class Command(BaseCommand):
                     voucher_id = record.payload_id
                     payload['Succeeded'] = record.succeeded
                 except Exception as e:
-                    errors.append([record.payload_id, unicode(e)])
+                    errors.append([record.payload_id, six.text_type(e)])
                     continue
                 if voucher_id in seen_voucher_ids:
                     duplicate_voucher_ids.add(voucher_id)

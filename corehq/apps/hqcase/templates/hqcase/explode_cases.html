@@ -7,7 +7,30 @@
              factor: ko.observable(''),
              user_id: ko.observable(''),
          });
-         $('#explode-user_id').select2();
+         $('#explode-user_id').select2({
+             ajax: {
+                 url: "{% url 'users_select2_options' domain %}",
+                 type: 'POST',
+                 datatype: 'json',
+                 quietMills: 250,
+                 data: function (term, page) {
+                     return {
+                         q: term,
+                         page: page,
+                     };
+                 },
+                 results: function (data, page) {
+                     if (data.success) {
+                         var limit = data.limit;
+                         var hasMore = (page * limit) < data.total;
+                         return {
+                             results: data.items,
+                             more: hasMore,
+                         };
+                     }
+                 }
+             }
+         });
      });
     </script>
 {% endblock %}
@@ -39,27 +62,27 @@
                             {% csrf_token %}
                             <div class="form-group">
                                 <label for="explode-user_id">User</label>
-                                <select class="form-control" id="explode-user_id" name="user_id" data-bind="value: user_id" placeholder="Select a User">
-                                    <option></option>
-                                    {% for user in users %}
-                                        <option value="{{ user.user_id }}">{{ user.raw_username }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input id="explode-user_id"
+                                       name="user_id"
+                                       class="input form-control report-filter-single-option-paginated"
+                                       data-bind="value: user_id"
+                                       style="width: 100%"
+                                       placeholder="Select a User"/>
                             </div>
                             <div class="form-group" id="explode-factor-input" data-bind="css: {
-                                        'has-error': factor() < 2 || factor() >= 15 ,
-                                        'has-warning': factor() >= 10 && factor() <= 15  }">
+                                        'has-error': factor() < 2 || factor() >= 150 ,
+                                        'has-warning': factor() >= 10 && factor() <= 150  }">
                                 <label for="explode-factor">Factor</label>
                                 <input class="form-control" id="explode-factor" data-bind="value: factor" name="factor" />
-                                <span id="factor-warning" class="help-block" data-bind="visible: factor() >= 10 && factor() <= 15">
+                                <span id="factor-warning" class="help-block" data-bind="visible: factor() >= 10 && factor() <= 150">
                                     Wowza! You are multiplying by a large factor! Are you sure you want to do this?
                                 </span>
-                                <span id="factor-error" class="help-block" data-bind="visible: factor() > 15">
+                                <span id="factor-error" class="help-block" data-bind="visible: factor() > 150">
                                     That number is too high! Please try smaller increments to get to the number of cases you require.
                                 </span>
                             </div>
                             <button type="submit" class="btn btn-danger"
-                                    data-bind="attr: {disabled: !user_id() || factor() < 2 || factor() > 15 }">Explode Cases</button>
+                                    data-bind="attr: {disabled: !user_id() || factor() < 2 || factor() > 150 }">Explode Cases</button>
                         </form>
                     </div>
                 </div>

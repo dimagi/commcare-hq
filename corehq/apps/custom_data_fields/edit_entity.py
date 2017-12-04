@@ -12,6 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, is_system_key,
                      CUSTOM_DATA_FIELD_PREFIX)
+import six
 
 
 def add_prefix(field_dict, prefix):
@@ -21,7 +22,7 @@ def add_prefix(field_dict, prefix):
     """
     return {
         "{}-{}".format(prefix, k): v
-        for k, v in field_dict.iteritems()
+        for k, v in six.iteritems(field_dict)
     }
 
 
@@ -123,7 +124,7 @@ class CustomDataEditor(object):
                 for field_name, field in fields.items()
             ]
         else:
-            field_names = fields.keys()
+            field_names = list(fields)
 
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()

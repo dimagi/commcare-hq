@@ -14,7 +14,5 @@
     if (!$(filter_id).val() && $(filter_id_start).val() && $(filter_id_end).val()) {
         var text = $(filter_id_start).val() + $().getDateRangeSeparator() + $(filter_id_end).val();
         $(filter_id).val(text);
-    } else if (!$(filter_id).val()) {
-        $(filter_id).val(gettext("Show All Dates"));
     }
 })($, gettext);

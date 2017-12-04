@@ -37,6 +37,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import doc_types
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
+import six
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -190,7 +191,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=get_all_repeater_types().keys())
+                                       additional_doc_types=list(get_all_repeater_types()))
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']
@@ -445,7 +446,7 @@ class ApplicationResource(BaseApplicationResource):
             return dehydrated
         except Exception as e:
             return {
-                'error': unicode(e)
+                'error': six.text_type(e)
             }
 
     def dehydrate_modules(self, bundle):
@@ -512,8 +513,8 @@ class HOPECaseResource(CommCareCaseResource):
             bundle.data['case_properties'] = bundle.data['properties']
             del bundle.data['properties']
 
-        mother_lists = filter(lambda x: x.obj.type == CC_BIHAR_PREGNANCY, data['objects'])
-        child_lists = filter(lambda x: x.obj.type == CC_BIHAR_NEWBORN, data['objects'])
+        mother_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_PREGNANCY]
+        child_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_NEWBORN]
 
         return {'objects': {
             'mother_lists': mother_lists,

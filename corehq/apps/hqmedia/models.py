@@ -22,6 +22,7 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from corehq.blobs.mixin import BlobMixin
+import six
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -443,7 +444,7 @@ class ApplicationMediaReference(object):
                  form_id=None, form_name=None, form_order=None,
                  media_class=None, is_menu_media=False, app_lang=None):
 
-        if not isinstance(path, basestring):
+        if not isinstance(path, six.string_types):
             path = ''
         self.path = path.strip()
 
@@ -557,7 +558,7 @@ class HQMediaMixin(Document):
                           for audio in item.all_audio_paths()
                           if audio])
 
-        for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
+        for m, module in enumerate([m for m in self.get_modules() if m.uses_media()]):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,

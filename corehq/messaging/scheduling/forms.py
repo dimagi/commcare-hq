@@ -1,11 +1,14 @@
 from __future__ import absolute_import
 import re
+from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from dateutil import parser
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.forms.fields import (
     BooleanField,
     CharField,
@@ -16,17 +19,31 @@ from django.forms.fields import (
 from django.forms.forms import Form
 from django.forms.widgets import Textarea, CheckboxSelectMultiple
 from django.utils.functional import cached_property
+from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext_lazy as _, ugettext
-
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
+from corehq.messaging.scheduling.models import (
+    Schedule,
+    AlertSchedule,
+    TimedSchedule,
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    SMSContent,
+)
+from couchdbkit.resource import ResourceNotFound
+import six
+from six.moves import range
 
 
 def validate_time(value):
     error = ValidationError(_("Please enter a valid 24-hour time in the format HH:MM"))
 
-    if not isinstance(value, (unicode, str)) or not re.match('^\d?\d:\d\d$', value):
+    if not isinstance(value, (six.text_type, str)) or not re.match('^\d?\d:\d\d$', value):
         raise error
 
     try:
@@ -40,7 +57,7 @@ def validate_time(value):
 def validate_date(value):
     error = ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
 
-    if not isinstance(value, (unicode, str)) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
+    if not isinstance(value, (six.text_type, str)) or not re.match('^\d\d\d\d-\d\d-\d\d$', value):
         raise error
 
     try:
@@ -59,6 +76,10 @@ class RecipientField(CharField):
 
 
 class ScheduleForm(Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "schedule-"
+    prefix = "schedule"
+
     SEND_DAILY = 'daily'
     SEND_WEEKLY = 'weekly'
     SEND_MONTHLY = 'monthly'
@@ -66,6 +87,16 @@ class ScheduleForm(Form):
 
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
+
+    RECIPIENT_TYPE_USER = 'USER'
+    RECIPIENT_TYPE_USER_GROUP = 'USER_GROUP'
+    RECIPIENT_TYPE_LOCATION = 'LOCATION'
+    RECIPIENT_TYPE_CASE_GROUP = 'CASE_GROUP'
+
+    CONTENT_SMS = 'sms'
+    CONTENT_EMAIL = 'email'
+    CONTENT_SMS_SURVEY = 'sms_survey'
+    CONTENT_IVR_SURVEY = 'ivr_survey'
 
     schedule_name = CharField(
         required=True,
@@ -123,18 +154,44 @@ class ScheduleForm(Form):
         min_value=1,
         label='',
     )
-    recipients = RecipientField(
-        label=_("Recipient(s)"),
-        help_text=_("Type a username, group name or location"),
+    recipient_types = MultipleChoiceField(
+        required=True,
+        label=_('Recipient(s)'),
+        choices=(
+            (RECIPIENT_TYPE_USER, _("Users")),
+            (RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
+            (RECIPIENT_TYPE_LOCATION, _("User Organizations")),
+            (RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
+        )
+    )
+    user_recipients = RecipientField(
+        required=False,
+        label=_("User Recipient(s)"),
+    )
+    user_group_recipients = RecipientField(
+        required=False,
+        label=_("User Group Recipient(s)"),
+    )
+    user_organization_recipients = RecipientField(
+        required=False,
+        label=_("User Organization Recipient(s)"),
+    )
+    include_descendant_locations = BooleanField(
+        required=False,
+        label=_("Also send to users at child locations"),
+    )
+    case_group_recipients = RecipientField(
+        required=False,
+        label=_("Case Group Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
         label=_("What to send"),
         choices=(
-            ('sms', _('SMS')),
-            # ('email', _('Email')),
-            # ('sms_survey', _('SMS Survey')),
-            # ('ivr_survey', _('IVR Survey')),
+            (CONTENT_SMS, _('SMS')),
+            # (CONTENT_EMAIL, _('Email')),
+            # (CONTENT_SMS_SURVEY, _('SMS Survey')),
+            # (CONTENT_IVR_SURVEY, _('IVR Survey')),
         )
     )
     translate = BooleanField(
@@ -143,9 +200,6 @@ class ScheduleForm(Form):
     )
 
     def update_send_frequency_choices(self, initial_value):
-        if not initial_value:
-            return
-
         def filter_function(two_tuple):
             if initial_value == self.SEND_IMMEDIATELY:
                 return two_tuple[0] == self.SEND_IMMEDIATELY
@@ -156,27 +210,129 @@ class ScheduleForm(Form):
             c for c in self.fields['send_frequency'].choices if filter_function(c)
         ]
 
-    def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain')
-        initial = kwargs.get('initial')
-        readonly = False
-        if initial:
-            readonly = (initial.get('send_frequency') == self.SEND_IMMEDIATELY)
-            message = initial.get('message', {})
-            kwargs['initial']['translate'] = '*' not in message
-            kwargs['initial']['non_translated_message'] = message.get('*', '')
+    def add_intial_for_immediate_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_IMMEDIATELY
+
+    def add_intial_for_daily_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_DAILY
+
+    def add_intial_for_weekly_schedule(self, initial):
+        weekdays = [(self.initial_schedule.start_day_of_week + e.day) % 7
+                    for e in self.initial_schedule.memoized_events]
+        initial['send_frequency'] = self.SEND_WEEKLY
+        initial['weekdays'] = [str(day) for day in weekdays]
+
+    def add_intial_for_monthly_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_MONTHLY
+        initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
+
+    def add_initial_for_timed_schedule(self, initial):
+        initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+        if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+            initial['stop_type'] = self.STOP_NEVER
+        else:
+            initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
+            initial['occurrences'] = self.initial_schedule.total_iterations
+
+    def add_initial_recipients(self, recipients, initial):
+        recipient_types = set()
+        user_recipients = []
+        user_group_recipients = []
+        user_organization_recipients = []
+        case_group_recipients = []
+
+        for doc_type, doc_id in recipients:
+            if doc_type == 'CommCareUser':
+                recipient_types.add(self.RECIPIENT_TYPE_USER)
+                user_recipients.append(doc_id)
+            elif doc_type == 'Group':
+                recipient_types.add(self.RECIPIENT_TYPE_USER_GROUP)
+                user_group_recipients.append(doc_id)
+            elif doc_type == 'Location':
+                recipient_types.add(self.RECIPIENT_TYPE_LOCATION)
+                user_organization_recipients.append(doc_id)
+            elif doc_type == 'CommCareCaseGroup':
+                recipient_types.add(self.RECIPIENT_TYPE_CASE_GROUP)
+                case_group_recipients.append(doc_id)
+
+        initial.update({
+            'recipient_types': list(recipient_types),
+            'user_recipients': ','.join(user_recipients),
+            'user_group_recipients': ','.join(user_group_recipients),
+            'user_organization_recipients': ','.join(user_organization_recipients),
+            'case_group_recipients': ','.join(case_group_recipients),
+            'include_descendant_locations': self.initial_schedule.include_descendant_locations,
+        })
+
+    def add_initial_for_content(self, result):
+        content = self.initial_schedule.memoized_events[0].content
+        if isinstance(content, SMSContent):
+            result['content'] = self.CONTENT_SMS
+            result['translate'] = '*' not in content.message
+            result['non_translated_message'] = content.message.get('*', '')
             for lang in self.project_languages:
-                kwargs['initial']['message_%s' % lang] = message.get(lang, '')
+                result['message_%s' % lang] = content.message.get(lang, '')
+
+    def compute_initial(self):
+        result = {}
+        schedule = self.initial_schedule
+        if schedule:
+            if isinstance(schedule, AlertSchedule):
+                if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
+                    self.add_intial_for_immediate_schedule(result)
+                else:
+                    raise UnsupportedScheduleError(
+                        "Unexpected Schedule ui_type '%s' for AlertSchedule '%s'" %
+                        (schedule.ui_type, schedule.schedule_id)
+                    )
+            elif isinstance(schedule, TimedSchedule):
+                if schedule.ui_type == Schedule.UI_TYPE_DAILY:
+                    self.add_intial_for_daily_schedule(result)
+                elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+                    self.add_intial_for_weekly_schedule(result)
+                elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
+                    self.add_intial_for_monthly_schedule(result)
+                else:
+                    raise UnsupportedScheduleError(
+                        "Unexpected Schedule ui_type '%s' for TimedSchedule '%s'" %
+                        (schedule.ui_type, schedule.schedule_id)
+                    )
+
+                self.add_initial_for_timed_schedule(result)
+
+            self.add_initial_for_content(result)
+
+        return result
+
+    @property
+    def readonly_mode(self):
+        return False
+
+    def __init__(self, domain, schedule, *args, **kwargs):
+        self.domain = domain
+        self.initial_schedule = schedule
+
+        if kwargs.get('initial'):
+            raise ValueError("Initial values are set by the form")
+
+        initial = {}
+        if schedule:
+            initial = self.compute_initial()
+            kwargs['initial'] = initial
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
-        self.update_send_frequency_choices(initial.get('send_frequency') if initial else None)
+
+        if initial.get('send_frequency'):
+            self.update_send_frequency_choices(initial.get('send_frequency'))
+
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
         self.add_content_fields()
 
-        if readonly:
+        if self.readonly_mode:
             for field_name, field in self.fields.items():
                 field.disabled = True
 
@@ -195,7 +351,7 @@ class ScheduleForm(Form):
             )
         ]
 
-        if not readonly:
+        if not self.readonly_mode:
             layout_fields += [
                 hqcrispy.FormActions(
                     twbscrispy.StrictButton(
@@ -269,7 +425,7 @@ class ScheduleForm(Form):
                 data_bind='visible: showStopInput',
             ),
             hqcrispy.B3MultiField(
-                ugettext(""),
+                "",
                 crispy.HTML(
                     '<span>%s</span> <span data-bind="text: computedEndDate"></span>'
                     % ugettext("Date of final occurrence:"),
@@ -280,10 +436,45 @@ class ScheduleForm(Form):
 
     def get_recipients_layout_fields(self):
         return [
-            crispy.Field(
-                'recipients',
-                data_bind='value: message_recipients.value',
-                placeholder=_("Select some recipients")
+            hqcrispy.B3MultiField(
+                ugettext("Recipient(s)"),
+                crispy.Field(
+                    'recipient_types',
+                    template='scheduling/partial/recipient_types_picker.html',
+                ),
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_recipients',
+                    data_bind='value: user_recipients.value',
+                    placeholder=_("Select mobile worker(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER,
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_group_recipients',
+                    data_bind='value: user_group_recipients.value',
+                    placeholder=_("Select user group(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER_GROUP,
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'user_organization_recipients',
+                    data_bind='value: user_organization_recipients.value',
+                    placeholder=_("Select user organization(s)")
+                ),
+                crispy.Field('include_descendant_locations'),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'case_group_recipients',
+                    data_bind='value: case_group_recipients.value',
+                    placeholder=_("Select case group(s)")
+                ),
+                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_CASE_GROUP,
             ),
         ]
 
@@ -325,13 +516,164 @@ class ScheduleForm(Form):
             values[field_name] = self[field_name].value()
         return values
 
-    def clean_recipients(self):
-        data = self.cleaned_data['recipients']
-        # TODO Will need to add more than user ids
-        # TODO batch id verification
+    @property
+    def current_select2_user_recipients(self):
+        value = self['user_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for user_id in value.strip().split(','):
+            user_id = user_id.strip()
+            user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
+            result.append({"id": user_id, "text": user.raw_username})
+
+        return result
+
+    @property
+    def current_select2_user_group_recipients(self):
+        value = self['user_group_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for group_id in value.strip().split(','):
+            group_id = group_id.strip()
+            group = Group.get(group_id)
+            if group.domain != self.domain:
+                continue
+            result.append({"id": group_id, "text": group.name})
+
+        return result
+
+    @property
+    def current_select2_user_organization_recipients(self):
+        value = self['user_organization_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for location_id in value.strip().split(','):
+            location_id = location_id.strip()
+            try:
+                location = SQLLocation.objects.get(domain=self.domain, location_id=location_id)
+            except SQLLocation.DoesNotExist:
+                continue
+
+            result.append({"id": location_id, "text": location.name})
+
+        return result
+
+    @property
+    def current_select2_case_group_recipients(self):
+        value = self['case_group_recipients'].value()
+        if not value:
+            return []
+
+        result = []
+        for case_group_id in value.strip().split(','):
+            case_group_id = case_group_id.strip()
+            case_group = CommCareCaseGroup.get(case_group_id)
+            if case_group.domain != self.domain:
+                continue
+
+            result.append({"id": case_group_id, "text": case_group.name})
+
+        return result
+
+    def clean_user_recipients(self):
+        if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_recipients']
+
+        if not data:
+            raise ValidationError(_("Please specify the user(s) or deselect users as recipients"))
+
         for user_id in data:
-            user = CommCareUser.get_db().get(user_id)
-            assert user['domain'] == self.domain, "User must be in the same domain"
+            user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
+            if not user:
+                raise ValidationError(
+                    _("One or more users were unexpectedly not found. Please select user(s) again.")
+                )
+
+        return data
+
+    def clean_user_group_recipients(self):
+        if self.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_group_recipients']
+
+        if not data:
+            raise ValidationError(_("Please specify the groups(s) or deselect user groups as recipients"))
+
+        not_found_error = ValidationError(
+            _("One or more user groups were unexpectedly not found. Please select group(s) again.")
+        )
+
+        for group_id in data:
+            try:
+                group = Group.get(group_id)
+            except ResourceNotFound:
+                raise not_found_error
+
+            if group.doc_type != 'Group':
+                raise not_found_error
+
+            if group.domain != self.domain:
+                raise not_found_error
+
+        return data
+
+    def clean_user_organization_recipients(self):
+        if self.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['user_organization_recipients']
+
+        if not data:
+            raise ValidationError(
+                _("Please specify the organization(s) or deselect user organizations as recipients")
+            )
+
+        for location_id in data:
+            try:
+                SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
+            except SQLLocation.DoesNotExist:
+                raise ValidationError(
+                    _("One or more user organizations were unexpectedly not found. "
+                      "Please select organization(s) again.")
+                )
+
+        return data
+
+    def clean_case_group_recipients(self):
+        if self.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
+            return []
+
+        data = self.cleaned_data['case_group_recipients']
+
+        if not data:
+            raise ValidationError(
+                _("Please specify the case groups(s) or deselect case groups as recipients")
+            )
+
+        not_found_error = ValidationError(
+            _("One or more case groups were unexpectedly not found. Please select group(s) again.")
+        )
+
+        for case_group_id in data:
+            try:
+                case_group = CommCareCaseGroup.get(case_group_id)
+            except ResourceNotFound:
+                raise not_found_error
+
+            if case_group.doc_type != 'CommCareCaseGroup':
+                raise not_found_error
+
+            if case_group.domain != self.domain:
+                raise not_found_error
 
         return data
 
@@ -396,3 +738,284 @@ class ScheduleForm(Form):
             raise error
 
         return occurrences
+
+    def distill_content(self):
+        form_data = self.cleaned_data
+        if form_data['translate']:
+            messages = {}
+            for lang in self.project_languages:
+                key = 'message_%s' % lang
+                if key in form_data:
+                    messages[lang] = form_data[key]
+            content = SMSContent(message=messages)
+        else:
+            content = SMSContent(message={'*': form_data['non_translated_message']})
+
+        return content
+
+    def distill_recipients(self):
+        form_data = self.cleaned_data
+        return (
+            [('CommCareUser', user_id) for user_id in form_data['user_recipients']] +
+            [('Group', group_id) for group_id in form_data['user_group_recipients']] +
+            [('Location', location_id) for location_id in form_data['user_organization_recipients']] +
+            [('CommCareCaseGroup', case_group_id) for case_group_id in form_data['case_group_recipients']]
+        )
+
+    def distill_total_iterations(self):
+        form_data = self.cleaned_data
+        if form_data['stop_type'] == self.STOP_NEVER:
+            return TimedSchedule.REPEAT_INDEFINITELY
+
+        return form_data['occurrences']
+
+    def distill_extra_scheduling_options(self):
+        form_data = self.cleaned_data
+        return {
+            'include_descendant_locations': (
+                ScheduleForm.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
+                form_data['include_descendant_locations']
+            ),
+        }
+
+    def assert_alert_schedule(self, schedule):
+        if not isinstance(schedule, AlertSchedule):
+            raise TypeError("Expected AlertSchedule")
+
+    def assert_timed_schedule(self, schedule):
+        if not isinstance(schedule, TimedSchedule):
+            raise TypeError("Expected TimedSchedule")
+
+    def save_immediate_schedule(self):
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_alert_schedule(schedule)
+            schedule.set_simple_alert(content, extra_options=extra_scheduling_options)
+        else:
+            schedule = AlertSchedule.create_simple_alert(self.domain, content,
+                extra_options=extra_scheduling_options)
+
+        return schedule
+
+    def save_daily_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_daily_schedule(
+                form_data['send_time'],
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_daily_schedule(
+                self.domain,
+                form_data['send_time'],
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_weekly_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_weekly_schedule(
+                form_data['send_time'],
+                content,
+                form_data['weekdays'],
+                form_data['start_date'].weekday(),
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_weekly_schedule(
+                self.domain,
+                form_data['send_time'],
+                content,
+                form_data['weekdays'],
+                form_data['start_date'].weekday(),
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_monthly_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        positive_days = [day for day in form_data['days_of_month'] if day > 0]
+        negative_days = [day for day in form_data['days_of_month'] if day < 0]
+        sorted_days_of_month = sorted(positive_days) + sorted(negative_days)
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_monthly_schedule(
+                form_data['send_time'],
+                sorted_days_of_month,
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_monthly_schedule(
+                self.domain,
+                form_data['send_time'],
+                sorted_days_of_month,
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_schedule(self):
+        send_frequency = self.cleaned_data['send_frequency']
+        return {
+            self.SEND_IMMEDIATELY: self.save_immediate_schedule,
+            self.SEND_DAILY: self.save_daily_schedule,
+            self.SEND_WEEKLY: self.save_weekly_schedule,
+            self.SEND_MONTHLY: self.save_monthly_schedule,
+        }[send_frequency]()
+
+
+class BroadcastForm(ScheduleForm):
+
+    def __init__(self, domain, schedule, broadcast, *args, **kwargs):
+        self.initial_broadcast = broadcast
+        super(BroadcastForm, self).__init__(domain, schedule, *args, **kwargs)
+
+    def compute_initial(self):
+        result = super(BroadcastForm, self).compute_initial()
+        if self.initial_broadcast:
+            result['schedule_name'] = self.initial_broadcast.name
+            self.add_initial_recipients(self.initial_broadcast.recipients, result)
+            if isinstance(self.initial_broadcast, ScheduledBroadcast):
+                result['start_date'] = self.initial_broadcast.start_date.strftime('%Y-%m-%d')
+
+        return result
+
+    @property
+    def readonly_mode(self):
+        return isinstance(self.initial_broadcast, ImmediateBroadcast)
+
+    def save_immediate_broadcast(self, schedule):
+        form_data = self.cleaned_data
+        recipients = self.distill_recipients()
+
+        if self.initial_broadcast:
+            raise ImmediateMessageEditAttempt("Cannot edit an ImmediateBroadcast")
+
+        return ImmediateBroadcast.objects.create(
+            domain=self.domain,
+            name=form_data['schedule_name'],
+            schedule=schedule,
+            recipients=recipients,
+        )
+
+    def save_scheduled_broadcast(self, schedule):
+        form_data = self.cleaned_data
+        recipients = self.distill_recipients()
+
+        if self.initial_broadcast:
+            broadcast = self.initial_broadcast
+            if not isinstance(broadcast, ScheduledBroadcast):
+                raise TypeError("Expected ScheduledBroadcast")
+        else:
+            broadcast = ScheduledBroadcast(
+                domain=self.domain,
+                schedule=schedule,
+            )
+
+        broadcast.name = form_data['schedule_name']
+        broadcast.start_date = form_data['start_date']
+        broadcast.recipients = recipients
+        broadcast.save()
+        return broadcast
+
+    def save_broadcast_and_schedule(self):
+        with transaction.atomic():
+            schedule = self.save_schedule()
+
+            send_frequency = self.cleaned_data['send_frequency']
+            broadcast = {
+                self.SEND_IMMEDIATELY: self.save_immediate_broadcast,
+                self.SEND_DAILY: self.save_scheduled_broadcast,
+                self.SEND_WEEKLY: self.save_scheduled_broadcast,
+                self.SEND_MONTHLY: self.save_scheduled_broadcast,
+            }[send_frequency](schedule)
+
+        return (broadcast, schedule)
+
+
+class ConditionalAlertForm(Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "conditional-alert-"
+    prefix = "conditional-alert"
+
+    name = TrimmedCharField(
+        label=_("Name"),
+        required=True,
+    )
+
+    def __init__(self, domain, *args, **kwargs):
+        super(ConditionalAlertForm, self).__init__(*args, **kwargs)
+
+        self.domain = domain
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.helper.field_class = 'col-xs-2'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "",
+                crispy.Field('name'),
+            ),
+        )
+
+
+class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
+
+    @property
+    def show_fieldset_title(self):
+        return False
+
+    @property
+    def fieldset_help_text(self):
+        return _("An instance of the schedule will be created for each case matching all filter criteria below.")
+
+    @property
+    def allow_parent_case_references(self):
+        return False
+
+    @property
+    def allow_case_modified_filter(self):
+        return False
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return False

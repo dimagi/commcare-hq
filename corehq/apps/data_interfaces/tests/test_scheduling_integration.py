@@ -36,6 +36,7 @@ from datetime import datetime, date, time
 from django.db.models import Q
 from django.test import TestCase
 from mock import patch
+from six.moves import range
 
 
 def get_visit_scheduler_module_and_form_for_test():

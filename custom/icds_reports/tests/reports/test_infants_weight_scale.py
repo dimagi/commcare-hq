@@ -35,12 +35,50 @@ class TestInfantsWeightScale(TestCase):
                     "st1": {
                         "in_month": 13,
                         "all": 26,
+                        'original_name': [],
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 11,
                         "all": 24,
+                        'original_name': [],
                         "fillKey": "25%-75%"
+                    }
+                },
+                "slug": "infants_weight_scale",
+                "label": "Percent AWCs with Weighing Scale: Infants"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_infants_weight_scale_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of AWCs with weighing scale for infants",
+                    "average": 50.0
+                },
+                "fills": {
+                    "0%-25%": "#de2d26",
+                    "25%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'in_month': 13,
+                        'original_name': ['b1', 'b2'],
+                        'all': 26,
+                        'fillKey': '25%-75%'
                     }
                 },
                 "slug": "infants_weight_scale",

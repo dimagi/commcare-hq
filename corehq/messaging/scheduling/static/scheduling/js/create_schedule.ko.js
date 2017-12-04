@@ -1,5 +1,7 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
-    var CreateMessageViewModel = function (initial_values) {
+    var CreateMessageViewModel = function (initial_values, select2_user_recipients,
+            select2_user_group_recipients, select2_user_organization_recipients,
+            select2_case_group_recipients) {
         var self = this;
 
         self.schedule_name = ko.observable(initial_values.schedule_name);
@@ -10,8 +12,19 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.start_date = ko.observable(initial_values.start_date);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
-        self.message_recipients = new MessagingSelect2Handler(initial_values.recipients);
-        self.message_recipients.init();
+        self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
+        self.user_recipients = new RecipientsSelect2Handler(select2_user_recipients,
+            initial_values.user_recipients, 'schedule-user_recipients');
+        self.user_recipients.init();
+        self.user_group_recipients = new RecipientsSelect2Handler(select2_user_group_recipients,
+            initial_values.user_group_recipients, 'schedule-user_group_recipients');
+        self.user_group_recipients.init();
+        self.user_organization_recipients = new RecipientsSelect2Handler(select2_user_organization_recipients,
+            initial_values.user_organization_recipients, 'schedule-user_organization_recipients');
+        self.user_organization_recipients.init();
+        self.case_group_recipients = new RecipientsSelect2Handler(select2_case_group_recipients,
+            initial_values.case_group_recipients, 'schedule-case_group_recipients');
+        self.case_group_recipients.init();
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
@@ -36,6 +49,18 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             {row: ['22', '23', '24', '25', '26', '27', '28'].map(self.create_day_of_month_choice)},
             {row: ['-3', '-2', '-1'].map(self.create_day_of_month_choice)},
         ];
+
+        self.recipientTypeSelected = function(value) {
+            return self.recipient_types().indexOf(value) !== -1;
+        };
+
+        self.toggleRecipientType = function(value) {
+            if(self.recipientTypeSelected(value)) {
+                self.recipient_types.remove(value);
+            } else {
+                self.recipient_types.push(value);
+            }
+        };
 
         self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
@@ -154,27 +179,41 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     };
 
     var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler,
-        MessagingSelect2Handler = function (recipients) {
+        RecipientsSelect2Handler = function (initial_object_list, initial_comma_separated_list, field) {
+            /*
+             * initial_object_list is a list of {id: ..., text: ...} objects representing the initial value
+             *
+             * intial_comma_separated_list is a string representation of initial_object_list consisting of just
+             * the ids separated by a comma
+             */
             BaseSelect2Handler.call(this, {
-                fieldName: "recipients",
+                fieldName: field,
                 multiple: true,
             });
             var self = this;
         
             self.getHandlerSlug = function () {
-                return 'messaging_recipients';
+                return 'scheduling_recipients';
             };
         
             self.getInitialData = function () {
-                return recipients;
+                return initial_object_list;
             };
+
+            self.value(initial_comma_separated_list);
         };
     
-    MessagingSelect2Handler.prototype = Object.create(MessagingSelect2Handler.prototype);
-    MessagingSelect2Handler.prototype.constructor = MessagingSelect2Handler;
+    RecipientsSelect2Handler.prototype = Object.create(RecipientsSelect2Handler.prototype);
+    RecipientsSelect2Handler.prototype.constructor = RecipientsSelect2Handler;
 
     $(function () {
-        var cmvm = new CreateMessageViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
+        var cmvm = new CreateMessageViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("current_values"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients")
+        );
         $('#create-schedule-form').koApplyBindings(cmvm);
         cmvm.init();
     });

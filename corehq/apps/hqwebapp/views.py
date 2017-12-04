@@ -77,6 +77,8 @@ from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.view_utils import reverse
+import six
+from six.moves import range
 
 
 def is_deploy_in_progress():
@@ -96,7 +98,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return u'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
-        unicode(exc)
+        six.text_type(exc)
     )
 
 
@@ -268,7 +270,11 @@ def server_up(req):
         },
         "formplayer": {
             "always_check": True,
-            "check_func": checks.check_formplayer
+            "check_func": checks.check_formplayer,
+        },
+        "elasticsearch": {
+            "always_check": True,
+            "check_func": checks.check_elasticsearch,
         },
     }
 
@@ -377,7 +383,7 @@ def login(req):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
 
-    if settings.SERVER_ENVIRONMENT == 'icds':
+    if settings.SERVER_ENVIRONMENT in ('icds', 'icds-new'):
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -887,7 +893,7 @@ class CRUDPaginatedViewMixin(object):
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total,
-                'limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+                'limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
                 'column_names': self.column_names,
                 'num_columns': len(self.column_names),
                 'text': {
@@ -1143,7 +1149,7 @@ def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
 
     return render(request, template, {
         'alerts': [{
-            'created': unicode(alert.created),
+            'created': six.text_type(alert.created),
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,
@@ -1165,7 +1171,7 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': unicode(alert.created),
+            'created': six.text_type(alert.created),
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,

@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import csv
 import codecs
 import cStringIO
+import six
 
 
 class UTF8Recoder:
@@ -38,7 +39,7 @@ class UnicodeReader:
 
     def __next__(self):
         row = next(self.reader)
-        return [unicode(s, "utf-8") for s in row]
+        return [six.text_type(s, "utf-8") for s in row]
 
     next = __next__  # For Py2 compatibility
 
@@ -59,7 +60,7 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([unicode(s).encode("utf-8") for s in row])
+        self.writer.writerow([six.text_type(s).encode("utf-8") for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")

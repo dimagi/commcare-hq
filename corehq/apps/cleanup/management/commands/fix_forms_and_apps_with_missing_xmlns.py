@@ -22,6 +22,7 @@ from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
+import six
 
 
 ONE_HOUR = 60 * 60
@@ -85,7 +86,7 @@ class Command(BaseCommand):
                 app_to_unique_ids_map[(app_id, domain)].add(form_unique_id)
 
         # Logging here instead of in the loop to reduce superfluous repeated lines
-        for key, unique_ids in app_to_unique_ids_map.iteritems():
+        for key, unique_ids in six.iteritems(app_to_unique_ids_map):
             for form_unique_id in unique_ids:
                 new_log_file.write(unique_ids_map_log_message(
                     key[0], key[1], form_unique_id
@@ -337,6 +338,6 @@ def get_xmlns(form_unique_id, app_id, domain):
 def name_matches(xform_name, form_names):
     if xform_name in form_names.values():
         return True
-    if xform_name in [u"{} [{}]".format(v, k) for k, v in form_names.iteritems()]:
+    if xform_name in [u"{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
         return True
     return False

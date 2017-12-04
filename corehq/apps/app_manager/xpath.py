@@ -16,6 +16,7 @@ from corehq.apps.app_manager.exceptions import (
     ScheduleError,
 )
 from django.utils.translation import ugettext as _, ugettext_lazy
+import six
 
 
 # Note that this may match strings that do not need interpolation, such as "blah == 'ellipsis...'",
@@ -112,7 +113,7 @@ def session_var(var, path=u'data'):
     return session.slash(var)
 
 
-class XPath(unicode):
+class XPath(six.text_type):
 
     def __new__(cls, string=u'', compound=False):
         return super(XPath, cls).__new__(cls, string)
@@ -121,7 +122,7 @@ class XPath(unicode):
         self.compound = compound
 
     def paren(self, force=False):
-        return unicode(self) if not (force or self.compound) else u'({})'.format(self)
+        return six.text_type(self) if not (force or self.compound) else u'({})'.format(self)
 
     def slash(self, xpath):
         if self:

@@ -6,6 +6,7 @@ from tastypie.resources import Resource
 from casexml.apps.case.mock import CaseFactory
 from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.util import remove_advanced_fields
+from six.moves import range
 
 
 class TestRemoveAdvancedFields(SimpleTestCase):

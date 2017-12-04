@@ -109,11 +109,7 @@
         <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
         {% endif %}
 
-        <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
+        {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
         {% compress js %}
@@ -142,6 +138,7 @@
     <body>
 	{% block body %}{% endblock %}
 
+        {# HTML templates #}
         {% include 'form_entry/templates.html' %}
         {% include 'formplayer/debugger.html' %}
         {% include 'formplayer/grid_view.html' %}
@@ -153,10 +150,22 @@
         {% include 'formplayer/confirmation_modal.html' %}
         {% include 'formplayer/users.html' %}
         {% include 'formplayer/progress.html' %}
+
+        {# javascript #}
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
-        {% include "hqwebapp/includes/ko.html" %}
-        {% include 'hqwebapp/includes/analytics_all.html' %}
+
+        {% include 'analytics/initial/all.html' %}
+        <div class="initial-analytics-data hide">
+        {% block initial_analytics_data %}
+            {# do not override this block, use initial_analytics_data template tag to populate #}
+        {% endblock %}
+        </div>
+        <div class="analytics-ab-tests hide">
+        {% block analytics_ab_test %}
+            {# do not override this block, use analytics_ab_test template tag to populate #}
+        {% endblock %}
+        </div>
 
         {% block js %}{% endblock %}
         {% block js-inline %}{% endblock %}

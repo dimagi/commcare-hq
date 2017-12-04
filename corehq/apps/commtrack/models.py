@@ -27,6 +27,8 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from . import const
 from .const import StockActions
+import six
+from six.moves import filter
 
 
 STOCK_ACTION_ORDER = [
@@ -452,7 +454,7 @@ def sync_supply_point(location, is_deletion=False):
 
 @receiver(post_save, sender=StockState)
 def update_domain_mapping(sender, instance, *args, **kwargs):
-    case_id = unicode(instance.case_id)
+    case_id = six.text_type(instance.case_id)
     try:
         domain_name = instance.__domain
         if not domain_name:

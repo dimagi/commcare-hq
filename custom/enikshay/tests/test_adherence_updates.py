@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import mock
 import datetime
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
@@ -25,16 +25,18 @@ from custom.enikshay.tasks import (
     EpisodeAdherenceUpdate,
     calculate_dose_status_by_day,
     get_datastore,
+    update_single_episode,
 )
-from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
     get_occurrence_case_structure,
     get_episode_case_structure
 )
+import six
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestAdherenceUpdater(TestCase):
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
@@ -86,7 +88,7 @@ class TestAdherenceUpdater(TestCase):
         )
         cls.data_type.save()
         cls.data_items = []
-        for _id, value in cls.fixture_data.iteritems():
+        for _id, value in six.iteritems(cls.fixture_data):
             data_item = FixtureDataItem(
                 domain=cls.domain,
                 data_type_id=cls.data_type.get_id,
@@ -187,7 +189,7 @@ class TestAdherenceUpdater(TestCase):
 
         self.assertDictContainsSubset(
             # convert values to strings
-            {key: str(val) for key, val in expected.iteritems()},
+            {key: str(val) for key, val in six.iteritems(expected)},
             {key: str(actual[key]) for key in expected},
         )
 
@@ -765,12 +767,12 @@ class TestAdherenceUpdater(TestCase):
             'schedule1',
             []
         )
-        update_episode_adherence_properties(self.domain, self.person_id)
+        update_single_episode(self.domain, episode)
 
         episode = CaseAccessors(self.domain).get_case(episode.case_id)
         self.assertDictEqual(
             {key: episode.dynamic_case_properties()[key] for key in expected_update},
-            {key: str(val) for key, val in expected_update.iteritems()}  # convert values to strings
+            {key: str(val) for key, val in six.iteritems(expected_update)}  # convert values to strings
         )
 
     def test_adherence_score_start_date_month(self):

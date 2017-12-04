@@ -1,9 +1,9 @@
 from __future__ import absolute_import
-from itertools import ifilter
 from dimagi.utils.couch.database import is_bigcouch
 from django.http import HttpResponse
 import json
 from restkit.errors import RequestFailed
+from six.moves import filter
 
 DEFAULT_DISPLAY_LENGTH = "10"
 DEFAULT_START = "0"
@@ -185,7 +185,7 @@ class LucenePaginator(object):
         )
         rows = (self._generator_func(row) for row in results)
         try:
-            return results.total_rows, ifilter(None, rows)
+            return results.total_rows, filter(None, rows)
         except RequestFailed:
             # just ignore poorly formatted search terms for now
             return 0, []

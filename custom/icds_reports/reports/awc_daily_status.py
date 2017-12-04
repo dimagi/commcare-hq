@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -12,7 +12,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcDailyView
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -30,44 +31,25 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         queryset = AggAwcDailyView.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             in_day=Sum('daily_attendance_open'),
             all=Sum('num_launched_awcs'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
 
         return queryset
 
-    map_data = {}
-
-    in_day_total = 0
-    valid_total = 0
-
-    for row in get_data_for(config):
-        valid = row['all']
-        name = row['%s_name' % loc_level]
-
-        in_day = row['in_day']
-
-        in_day_total += (in_day or 0)
-        valid_total += (valid or 0)
-
-        value = (in_day or 0) * 100 / (valid or 1)
-        row_values = {
-            'in_day': in_day or 0,
-            'all': valid or 0
-        }
-        if value < 50:
-            row_values.update({'fillKey': '0%-50%'})
-        elif 50 <= value < 75:
-            row_values.update({'fillKey': '50%-75%'})
-        elif value >= 75:
-            row_values.update({'fillKey': '75%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, valid_total, in_day_total = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'in_day',
+        'all',
+        50,
+        75
+    )
 
     fills = OrderedDict()
     fills.update({'0%-50%': RED})
@@ -87,7 +69,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
                 )),
                 'period': 'Daily'
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
@@ -148,7 +130,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
             dict(
                 loc_name=key,
                 value=value['in_day']
-            ) for key, value in best_worst.iteritems()
+            ) for key, value in six.iteritems(best_worst)
         ],
         key=lambda x: x['value'],
         reverse=True
@@ -162,7 +144,7 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['launched'].iteritems()
+                    } for key, value in six.iteritems(data['launched'])
                 ],
                 "key": "Number of AWCs launched",
                 "strokeWidth": 2,
@@ -175,9 +157,9 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['open_in_day'].iteritems()
+                    } for key, value in six.iteritems(data['open_in_day'])
                 ],
-                "key": "Total AWCs open yesterday",
+                "key": "Total AWCs open",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -230,7 +212,7 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
             'in_day': in_day or 0,
             'all': valid or 0
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = (in_day or 0) / float(valid or 1)

@@ -1,23 +1,20 @@
 from __future__ import absolute_import
+
+import six
+from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
+
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
-from couchdbkit import ResourceConflict
-
+from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.permissions import user_can_access_other_user
+from corehq.apps.users.decorators import ensure_active_user_by_username
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
-
-from corehq import toggles
-from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
-from corehq.apps.users.decorators import ensure_active_user_by_username
-from corehq.apps.locations.permissions import user_can_access_other_user
-
-from custom.enikshay.user_setup import set_enikshay_device_id
-
-from .models import DemoUserRestore
 from .exceptions import RestorePermissionDenied
+from .models import DemoUserRestore
 
 
 def turn_off_demo_mode(commcare_user):
@@ -121,7 +118,7 @@ def is_permitted_to_restore(domain, couch_user, as_user_obj):
             _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
     except RestorePermissionDenied as e:
-        return False, unicode(e)
+        return False, six.text_type(e)
     else:
         return True, None
 
@@ -186,7 +183,7 @@ def handle_401_response(f):
         if response.status_code == 401:
             auth_type = determine_authtype_from_request(request)
             if auth_type and auth_type == 'basic':
-                username, password = get_username_and_password_from_request(request)
+                username, _ = get_username_and_password_from_request(request)
                 if username:
                     valid, message, error_code = ensure_active_user_by_username(username)
                     if not valid:
@@ -197,14 +194,3 @@ def handle_401_response(f):
 
         return response
     return _inner
-
-
-def update_device_id(user, device_id):
-    if device_id and isinstance(user, CommCareUser):
-        if not user.is_demo_user:
-            # this only updates once per day for each device
-            updated = user.update_device_id_last_used(device_id)
-            if toggles.ENIKSHAY.enabled(user.domain):
-                updated = set_enikshay_device_id(user, device_id) or updated
-            if updated:
-                user.save(fire_signals=False)

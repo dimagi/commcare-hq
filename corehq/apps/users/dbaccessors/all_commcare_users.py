@@ -1,16 +1,16 @@
 from __future__ import absolute_import
-from itertools import imap
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es import UserES
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
+from six.moves import map
 
 
 def get_all_commcare_users_by_domain(domain):
     """Returns all CommCareUsers by domain regardless of their active status"""
     ids = get_all_user_ids_by_domain(domain, include_web_users=False)
-    return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), ids))
+    return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), ids))
 
 
 def get_commcare_users_by_filters(domain, user_filters, count_only=False):
@@ -42,7 +42,7 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     if count_only:
         return query.count()
     user_ids = [u['_id'] for u in query.source(['_id']).run().hits]
-    return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), user_ids))
+    return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), user_ids))
 
 
 def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):

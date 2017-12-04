@@ -11,6 +11,7 @@ import corehq.blobs.fsdb as mod
 from corehq.blobs.exceptions import ArgumentError
 from corehq.blobs.tests.util import get_id
 from corehq.util.test_utils import generate_cases
+from six.moves import zip
 
 
 class _BlobDBTests(object):
@@ -89,7 +90,7 @@ class _BlobDBTests(object):
             for blob in blobs
         ]
 
-        blob_infos = zip(blobs, infos)
+        blob_infos = list(zip(blobs, infos))
         paths = [self.db.get_path(info.identifier, blob[1]) for blob, info in blob_infos]
         self.assertTrue(self.db.bulk_delete(paths), 'delete failed')
 

@@ -15,6 +15,7 @@ from corehq.util.validation import is_url_or_host_banned
 from django.utils.translation import ugettext as _, ugettext_noop
 from crispy_forms import layout as crispy
 from django.conf import settings
+import six
 
 
 class HttpBackendForm(BackendForm):
@@ -34,8 +35,8 @@ class HttpBackendForm(BackendForm):
     method = ChoiceField(
         label=ugettext_noop("HTTP Request Method"),
         choices=(
-            ("GET","GET"),
-            ("POST","POST")
+            ("GET", "GET"),
+            ("POST", "POST")
         ),
     )
     additional_params = RecordListField(
@@ -146,4 +147,4 @@ class SQLHttpBackend(SQLSMSBackend):
                     timeout=settings.SMS_GATEWAY_TIMEOUT).read()
         except Exception as e:
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
-            raise BackendProcessingException(msg), None, sys.exc_info()[2]
+            six.reraise(BackendProcessingException(msg), None, sys.exc_info()[2])

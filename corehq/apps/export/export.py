@@ -29,6 +29,7 @@ from corehq.apps.export.models.new import (
     SMSExportInstance,
 )
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+import six
 
 
 class ExportFile(object):
@@ -154,7 +155,7 @@ class _PaginatedExportWriter(object):
         fd, self._path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file_handle:
             self.writer.open(
-                self._get_paginated_headers().iteritems(),
+                six.iteritems(self._get_paginated_headers()),
                 file_handle,
                 table_titles=self._get_paginated_table_titles(),
                 archive_basepath=self.name
@@ -236,7 +237,7 @@ class _PaginatedExportWriter(object):
             (<table.path>, <page>): (['Column1', 'Column2'],)
         }
         '''
-        return {self._paged_table_index(table): (headers,) for table, headers in self.headers.iteritems()}
+        return {self._paged_table_index(table): (headers,) for table, headers in six.iteritems(self.headers)}
 
     def _get_paginated_table_titles(self):
         '''
@@ -252,7 +253,7 @@ class _PaginatedExportWriter(object):
         }
         '''
         paginated_table_titles = {}
-        for table, table_name in self.table_names.iteritems():
+        for table, table_name in six.iteritems(self.table_names):
             paginated_table_titles[self._paged_table_index(table)] = '{}_{}'.format(
                 table_name, format(self.pages[table], '03')
             )

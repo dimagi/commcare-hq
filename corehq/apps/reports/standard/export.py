@@ -45,7 +45,7 @@ class FormExportReportBase(ExportReport, DatespanMixin):
         from corehq.apps.export.views import user_can_view_deid_exports
         exports = FormExportSchema.get_stale_exports(self.domain)
         if not user_can_view_deid_exports(self.domain, self.request.couch_user):
-            exports = filter(lambda x: not x.is_safe, exports)
+            exports = [x for x in exports if not x.is_safe]
         return sorted(exports, key=lambda x: x.name)
 
     @property
@@ -84,7 +84,7 @@ class DeidExportReport(FormExportReportBase):
         return domain and stale_get_export_count(domain) > 0
 
     def get_saved_exports(self):
-        return filter(lambda export: export.is_safe, super(DeidExportReport, self).get_saved_exports())
+        return [export for export in super(DeidExportReport, self).get_saved_exports() if export.is_safe]
 
     @property
     def report_context(self):

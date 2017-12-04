@@ -26,7 +26,7 @@ class Command(BaseCommand):
             for row in reader:
                 name_by_map[row[0]] = row[1]
 
-        domain_ids = get_domain_ids_by_names(name_by_map.keys())
+        domain_ids = get_domain_ids_by_names(list(name_by_map))
 
         def update_domain(doc):
             domain = Domain.wrap(doc)

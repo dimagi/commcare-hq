@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from datetime import datetime
 
 from collections import defaultdict, OrderedDict
@@ -13,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -30,27 +31,34 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-        )
+            all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
+    data_for_map = defaultdict(lambda: {
+        'valid': 0,
+        'all': 0,
+        'original_name': [],
+        'fillKey': 'Adolescent Girls'
+    })
     average = []
     for row in get_data_for(config):
-        valid = row['valid']
+        valid = row['valid'] or 0
+        all_adolescent = row['all'] or 0
         name = row['%s_name' % loc_level]
+        on_map_name = row['%s_map_location_name' % loc_level] or name
 
         average.append(valid)
-        row_values = {
-            'valid': valid or 0,
-            'fillKey': 'Adolescent Girls'
-        }
 
-        map_data.update({name: row_values})
+        data_for_map[on_map_name]['valid'] += valid
+        data_for_map[on_map_name]['all'] += all_adolescent
+        if name != on_map_name:
+            data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Adolescent Girls': BLUE})
@@ -68,7 +76,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
                     "Total number of adolescent girls who are enrolled for ICDS services"
                 ))
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
@@ -84,6 +92,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         *group_by
     ).annotate(
         valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
+        all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -94,21 +103,24 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     }
 
     tooltips_data = defaultdict(lambda: {
-        'valid': 0
+        'valid': 0,
+        'all': 0
     })
 
     loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
     result_set = set()
 
     for row in data:
-        valid = row['valid']
+        valid = row['valid'] or 0
+        all_adolescent = row['all'] or 0
         name = row['%s_name' % loc_level]
         result_set.add(name)
 
         row_values = {
-            'valid': valid or 0,
+            'valid': valid,
+            'all': all_adolescent
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         chart_data['blue'].append([
@@ -154,6 +166,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
         'month', '%s_name' % loc_level
     ).annotate(
         valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
+        all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
     ).order_by('month')
 
     if not show_test:
@@ -172,7 +185,8 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
     best_worst = {}
     for row in chart_data:
         date = row['month']
-        valid = (row['valid'] or 0)
+        valid = row['valid'] or 0
+        all_adolescent = row['all'] or 0
         location = row['%s_name' % loc_level]
 
         if date.month == month.month:
@@ -184,9 +198,10 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['blue'][date_in_miliseconds]['y'] += valid
+        data['blue'][date_in_miliseconds]['all'] += all_adolescent
 
     top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['value'],
         reverse=True
     )
@@ -197,9 +212,9 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
+                        'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "Total number of adolescent girls who are enrolled for ICDS services",
                 "strokeWidth": 2,

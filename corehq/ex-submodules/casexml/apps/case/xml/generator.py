@@ -8,10 +8,11 @@ from dateutil.parser import parse as parse_datetime
 
 from corehq.toggles import MM_CASE_PROPERTIES
 from corehq.util.quickcache import quickcache
+import six
 
 
 def datetime_to_xml_string(datetime_string):
-    if isinstance(datetime_string, basestring):
+    if isinstance(datetime_string, six.string_types):
         return datetime_string
 
     return json_format_datetime(datetime_string)
@@ -22,7 +23,7 @@ def safe_element(tag, text=None):
     # bad! copied from the phone's XML module
     if text:
         e = ElementTree.Element(tag)
-        e.text = unicode(text)
+        e.text = six.text_type(text)
         return e
     else:
         return ElementTree.Element(tag)
@@ -32,7 +33,7 @@ def date_to_xml_string(date):
     if not date:
         return ''
 
-    if isinstance(date, basestring):
+    if isinstance(date, six.string_types):
         date = parse_datetime(date)
 
     return json_format_date(date)
@@ -45,12 +46,12 @@ def get_dynamic_element(key, val):
     """
     element = ElementTree.Element(key)
     if isinstance(val, dict):
-        element.text = unicode(val.get('#text', ''))
-        element.attrib = dict([(x[1:], unicode(val[x])) for x in \
-                               filter(lambda x: x and x.startswith("@"), val.keys())])
+        element.text = six.text_type(val.get('#text', ''))
+        element.attrib = dict([(x[1:], six.text_type(val[x])) for x in \
+                               [x for x in val.keys() if x and x.startswith("@")]])
     else:
         # assume it's a string. Hopefully this is valid
-        element.text = unicode(val)
+        element.text = six.text_type(val)
     return element
 
 

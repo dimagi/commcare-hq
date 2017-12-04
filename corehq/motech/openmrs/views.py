@@ -23,6 +23,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import map
 
 
 class OpenmrsRepeaterView(AddCaseRepeaterView):
@@ -43,7 +44,7 @@ def openmrs_edit_config(request, domain, repeater_id):
             data = form.cleaned_data
             repeater.openmrs_config.openmrs_provider = data['openmrs_provider']
             repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
-            repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
+            repeater.openmrs_config.form_configs = list(map(OpenmrsFormConfig.wrap, data['form_configs']))
             repeater.save()
 
     else:

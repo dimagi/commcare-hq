@@ -42,11 +42,12 @@ from .const import (
 )
 
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
+import six
 
 
 def is_occurrence_deleted(last_occurrences, app_ids_and_versions):
     is_deleted = True
-    for app_id, version in app_ids_and_versions.iteritems():
+    for app_id, version in six.iteritems(app_ids_and_versions):
         if last_occurrences.get(app_id) >= version:
             is_deleted = False
             break
@@ -384,14 +385,14 @@ def _reorder_columns(new_table, columns):
 
 
 def _strip_deid_transform(transform):
-    return None if transform in DEID_TRANSFORM_FUNCTIONS.keys() else transform
+    return None if transform in DEID_TRANSFORM_FUNCTIONS else transform
 
 
 def _convert_transform(serializable_transform):
     transform_fn = to_function(serializable_transform.dumps_simple())
     if not transform_fn:
         return None
-    for slug, fn in list(TRANSFORM_FUNCTIONS.iteritems()) + list(DEID_TRANSFORM_FUNCTIONS.iteritems()):
+    for slug, fn in list(six.iteritems(TRANSFORM_FUNCTIONS)) + list(six.iteritems(DEID_TRANSFORM_FUNCTIONS)):
         if fn == transform_fn:
             return slug
     return None
@@ -403,12 +404,12 @@ def _get_for_single_node_repeat(tables, column_path, transform):
     """
     from .models import MAIN_TABLE
 
-    column_dot_path = '.'.join(map(lambda node: node.name, column_path))
+    column_dot_path = '.'.join([node.name for node in column_path])
     for new_table in tables:
         if new_table.path == MAIN_TABLE:
             continue
 
-        table_dot_path = '.'.join(map(lambda node: node.name, new_table.path))
+        table_dot_path = '.'.join([node.name for node in new_table.path])
         if column_dot_path.startswith(table_dot_path + '.'):
             new_column_path = new_table.path + column_path[len(new_table.path):]
         else:
@@ -423,16 +424,16 @@ def _get_column_for_stock_form_export(new_table, column_path, index):
     # and maps it to column.transfer.@date
     def _remove_question_id_from_path(path):
         parts = path.split('.')
-        parts_without_question_ids = map(lambda part: part.split(':')[0], parts)
+        parts_without_question_ids = [part.split(':')[0] for part in parts]
         return '.'.join(parts_without_question_ids)
 
-    stock_columns = filter(lambda c: c.item.doc_type == 'StockItem', new_table.columns)
+    stock_columns = [c for c in new_table.columns if c.item.doc_type == 'StockItem']
 
     # Map column to its readable path (dot path)
     stock_column_to_readable_path = {c: c.item.readable_path for c in stock_columns}
 
     matched_columns = []
-    for column, readable_path in stock_column_to_readable_path.iteritems():
+    for column, readable_path in six.iteritems(stock_column_to_readable_path):
         if _remove_question_id_from_path(readable_path) == index:
             matched_columns.append(column)
 
@@ -576,7 +577,7 @@ def _is_remote_app_conversion(domain, app_id, export_type):
         return app.is_remote_app()
     elif export_type == CASE_EXPORT:
         apps = get_brief_apps_in_domain(domain, include_remote=True)
-        return any(map(lambda app: app.is_remote_app(), apps))
+        return any([app.is_remote_app() for app in apps])
 
 
 def revert_new_exports(new_exports, dryrun=False):
@@ -644,7 +645,7 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
         toggle_js_domain_cachebuster.clear(domain)
 
     # Remote app migrations must have access to UserDefined columns and tables
-    if any(map(lambda meta: meta.is_remote_app_migration, metas)):
+    if any([meta.is_remote_app_migration for meta in metas]):
         set_toggle(
             ALLOW_USER_DEFINED_EXPORT_COLUMNS.slug,
             domain,

@@ -9,6 +9,8 @@ from corehq.apps.app_manager.exceptions import AppManagerException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
 from dimagi.utils.couch.database import iter_docs
+import six
+from six.moves import map
 
 
 class QuestionMeta(DocumentSchema):
@@ -33,8 +35,8 @@ class FormQuestionSchema(Document):
     xmlns = StringProperty(required=True)
 
     last_processed_version = IntegerProperty(default=0)
-    processed_apps = SetProperty(unicode)
-    apps_with_errors = SetProperty(unicode)
+    processed_apps = SetProperty(six.text_type)
+    apps_with_errors = SetProperty(six.text_type)
     question_schema = SchemaDictProperty(QuestionMeta)
 
     class Meta:
@@ -45,7 +47,7 @@ class FormQuestionSchema(Document):
         def _none_to_empty_string(str):
             return str if str is not None else ''
 
-        key = map(_none_to_empty_string, [domain, app_id, xmlns])
+        key = list(map(_none_to_empty_string, [domain, app_id, xmlns]))
         return hashlib.sha1(':'.join(key)).hexdigest()
 
     @classmethod

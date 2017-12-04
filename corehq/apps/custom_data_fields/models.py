@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 from .dbaccessors import get_by_domain_and_type
+import six
+from six.moves import filter
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
@@ -78,7 +80,7 @@ class CustomDataFieldsDefinition(Document):
         Returns a validator to be used in bulk import
         """
         def validate_choices(field, value):
-            if field.choices and value and unicode(value) not in field.choices:
+            if field.choices and value and six.text_type(value) not in field.choices:
                 return _(
                     "'{value}' is not a valid choice for {slug}, the available "
                     "options are: {options}."

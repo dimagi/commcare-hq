@@ -1,4 +1,4 @@
-/* global d3*/
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -10,8 +10,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
-
-    var genderIndex = genders.findIndex(function (x) {
+    vm.userLocationId = userLocationId;
+    var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
@@ -30,6 +30,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age'];
@@ -39,6 +41,16 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     };
 
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -63,11 +75,13 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
+        var unweighed_percent = row ? d3.format('.2%')((row.in_month - row.low_birth) / (row.in_month || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Number of Newborns born in given month: <strong>' + total + '</strong></div>' +
             '<div>Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div>' +
-            '<div>% newborns with LBW in given month: <strong>' + percent + '</strong></div>';
+            '<div>% newborns with LBW in given month: <strong>' + percent + '</strong></div>' +
+            '<div>% Unweighed: <strong>' + unweighed_percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -109,13 +123,16 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
@@ -128,7 +145,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         });
     };
 
-    init();
+    vm.init();
 
 
     $scope.$on('filtersChange', function() {
@@ -177,14 +194,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
-                    tooltip_content += "<p>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(day.low_birth) + "</strong></p>";
-                    tooltip_content += "<p>% newborns with LBW in given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, dataInMonth);
                 });
                 return chart;
             },
@@ -200,6 +211,14 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
+            + "<p>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.low_birth) + "</strong></p>"
+            + "<p>% newborns with LBW in given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>"
+            + "<p>% Unweighed: <strong>" + d3.format('.2%')(1 - dataInMonth.y) + "</strong></p>";
     };
 
     vm.moveToLocation = function(loc, index) {
