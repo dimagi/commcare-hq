@@ -1083,6 +1083,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 if schedule.start_day_of_week >= 0:
                     result['start_day_of_week'] = str(schedule.start_day_of_week)
 
+        if self.initial_rule:
+            self.add_initial_recipients(self.initial_rule.memoized_actions[0].definition.recipients, result)
+
         return result
 
     def get_timing_layout_fields(self):
