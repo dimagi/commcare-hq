@@ -11,14 +11,14 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 class MessagingRecipientHandler(BaseAsyncHandler):
     slug = 'scheduling_recipients'
     allowed_actions = [
-        'user_recipients',
-        'user_group_recipients',
-        'user_organization_recipients',
-        'case_group_recipients',
+        'schedule_user_recipients',
+        'schedule_user_group_recipients',
+        'schedule_user_organization_recipients',
+        'schedule_case_group_recipients',
     ]
 
     @property
-    def user_recipients_response(self):
+    def schedule_user_recipients_response(self):
         domain = self.request.domain
         query = self.data.get('searchString')
         users = get_search_users_in_domain_es_query(domain, query, 10, 0)
@@ -30,7 +30,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         return ret
 
     @property
-    def user_group_recipients_response(self):
+    def schedule_user_group_recipients_response(self):
         domain = self.request.domain
         query = self.data.get('searchString')
         group_result = (
@@ -48,7 +48,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         ]
 
     @property
-    def user_organization_recipients_response(self):
+    def schedule_user_organization_recipients_response(self):
         domain = self.request.domain
         query = self.data.get('searchString')
         result = (
@@ -64,7 +64,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         ]
 
     @property
-    def case_group_recipients_response(self):
+    def schedule_case_group_recipients_response(self):
         domain = self.request.domain
         query = self.data.get('searchString')
         return [
