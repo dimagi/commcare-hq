@@ -1056,7 +1056,8 @@ BEGIN
 		'awc_not_open_department_work = ut.awc_not_open_department_work, ' ||
 		'awc_not_open_other = ut.awc_not_open_other, ' ||
 		'awc_not_open_no_data = ut.awc_not_open_no_data, ' ||
-		'awc_num_open = ut.awc_num_open ' ||
+		'awc_num_open = ut.awc_num_open, ' ||
+		'awc_days_pse_conducted = ut.awc_days_pse_conducted ' ||
 	'FROM (SELECT ' ||
 		'awc_id, ' ||
 		'month, ' ||
@@ -1081,6 +1082,7 @@ BEGIN
 		'sum(awc_not_open_other) AS awc_not_open_other, ' ||
 		'25 - sum(awc_open_count) AS awc_not_open_no_data, ' ||
 		'CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open ' ||
+    'sum(pse_conducted) as awc_days_pse_conducted'
 		'FROM ' || quote_ident(_daily_attendance_tablename) || ' ' ||
 		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -1505,6 +1507,7 @@ BEGIN
         'sum(cases_person_adolescent_girls_15_18_all), ' ||
         'sum(infra_infant_weighing_scale), ' ||
         'sum(cases_person_beneficiary), ' ||
+        quote_nullable(_null_value) || ', ' ||
         quote_nullable(_null_value);
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||

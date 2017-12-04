@@ -67,6 +67,7 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."awc_days_provided_hotmeal" AS "awc_days_provided_hotmeal",
         "agg_awc"."awc_days_provided_thr" AS "awc_days_provided_thr",
         "agg_awc"."awc_days_provided_pse" AS "awc_days_provided_pse",
+        "agg_awc"."awc_days_pse_conducted" AS "awc_days_pse_conducted",
         "agg_awc"."awc_not_open_holiday" AS "awc_not_open_holiday",
         "agg_awc"."awc_not_open_festival" AS "awc_not_open_festival",
         "agg_awc"."awc_not_open_no_help" AS "awc_not_open_no_help",
