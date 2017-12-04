@@ -60,7 +60,7 @@ class Command(BaseCommand):
         bad_cases = get_cases_with_duplicate_ids(self.domain, self.case_type)
         if self.debug_info:
             print("Adding debug info to cases")
-            add_debug_info_to_cases(bad_cases, full_debug_info=True)
+            add_debug_info_to_cases(bad_cases, limit_debug_to=None)
         print("Processing duplicate cases")
         for case in bad_cases:
             yield (case['case_id'], {'has_duplicate_id': 'yes'}, False)

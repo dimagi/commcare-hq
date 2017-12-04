@@ -1,9 +1,14 @@
+"""
+Person and Voucher cases use a custom ID generation scheme for shorter,
+readable IDs. There have been errors in this scheme resulting in duplicate IDs.
+This file is a collection of utilities around identifying such cases, figuring
+out the cause of the duplication, and resolving duplicates.
+"""
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import Counter
 import six
 
-from corehq.apps.es import CaseES
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -29,27 +34,13 @@ def get_cases_with_duplicate_ids(domain, case_type):
     return sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
 
 
-def get_bad_case_info(domain, case_type, full_debug_info=False):
-    total_cases = CaseES().domain(domain).case_type(case_type).count()
-    bad_cases = get_cases_with_duplicate_ids(domain, case_type)
-    add_debug_info_to_cases(bad_cases, full_debug_info)
-    context = {
-        'case_type': case_type,
-        'num_bad_cases': len(bad_cases),
-        'num_total_cases': total_cases,
-        'num_good_cases': total_cases - len(bad_cases),
-        'bad_cases': bad_cases,
-    }
-    return context
-
-
-def add_debug_info_to_cases(bad_cases, full_debug_info):
-    _add_form_info_to_cases(bad_cases, full_debug_info)
+def add_debug_info_to_cases(bad_cases, limit_debug_to):
+    _add_form_info_to_cases(bad_cases, limit_debug_to)
     _add_user_info_to_cases(bad_cases)
 
 
-def _add_form_info_to_cases(bad_cases, full_debug_info):
-    for case in bad_cases[:None if full_debug_info else 300]:
+def _add_form_info_to_cases(bad_cases, limit_debug_to):
+    for case in bad_cases[:limit_debug_to]:
         form = CaseAccessorSQL.get_transactions(case['case_id'])[0].form
         if form:
             case['form_name'] = form.form_data.get('@name', 'NA')
@@ -74,6 +65,7 @@ def _add_user_info_to_cases(bad_cases):
             case['username'] = user_dict['username']
             device_id = case['form_device_id']
             if device_id == 'Formplayer':
+                # Hazard a guess as to what device ID was used in the restore
                 if case['form_user_id'] == case['auth_user_id']:
                     device_id = "WebAppsLogin"
                 else:

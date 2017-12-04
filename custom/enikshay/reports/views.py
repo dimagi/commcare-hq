@@ -7,10 +7,11 @@ from django.views.generic.base import View, TemplateView
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.es import CaseES
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext, LocationChoiceProvider
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
-from custom.enikshay.duplicate_ids import get_bad_case_info
+from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, add_debug_info_to_cases
 from custom.enikshay.reports.utils import StubReport
 from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
 
@@ -58,6 +59,21 @@ class DistrictLocationsView(LocationsView):
 class DuplicateIdsReport(TemplateView):
     def get(self, request, domain, case_type, *args, **kwargs):
         case_type = {'voucher': CASE_TYPE_VOUCHER, 'person': CASE_TYPE_PERSON}[case_type]
-        full_debug_info = bool(request.GET.get('full_debug_info'))
-        context = get_bad_case_info(domain, case_type, full_debug_info)
+        # By default, only show full debug info for the 300 most recent cases
+        limit_debug_to = None if request.GET.get('full_debug_info') else 300
+        context = self.get_duplicate_id_case_info(domain, case_type, limit_debug_to)
         return render(request, 'enikshay/duplicate_ids_report.html', context)
+
+    @staticmethod
+    def get_duplicate_id_case_info(domain, case_type, limit_debug_to=None):
+        total_cases = CaseES().domain(domain).case_type(case_type).count()
+        bad_cases = get_cases_with_duplicate_ids(domain, case_type)
+        add_debug_info_to_cases(bad_cases, limit_debug_to)
+        context = {
+            'case_type': case_type,
+            'num_bad_cases': len(bad_cases),
+            'num_total_cases': total_cases,
+            'num_good_cases': total_cases - len(bad_cases),
+            'bad_cases': bad_cases,
+        }
+        return context
