@@ -48,7 +48,7 @@ def get_dynamic_element(key, val):
     if isinstance(val, dict):
         element.text = six.text_type(val.get('#text', ''))
         element.attrib = dict([(x[1:], six.text_type(val[x])) for x in \
-                               filter(lambda x: x and x.startswith("@"), val.keys())])
+                               [x for x in val.keys() if x and x.startswith("@")]])
     else:
         # assume it's a string. Hopefully this is valid
         element.text = six.text_type(val)

@@ -32,7 +32,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
         notifications = Notification.get_by_user(self.request.user, self.request.couch_user)
-        has_unread = len(filter(lambda x: not x['isRead'], notifications)) > 0
+        has_unread = len([x for x in notifications if not x['isRead']]) > 0
         last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
             self.request.user
         )

@@ -90,7 +90,7 @@ class TestSequenceMeta(type):
     def __new__(mcs, name, bases, dict):
         tests_to_run = get_test_file_json('case_relationship_tests')
         assert_each_test_is_unique(tests_to_run)
-        run_single_tests = filter(lambda t: t.get('only', False), tests_to_run)
+        run_single_tests = [t for t in tests_to_run if t.get('only', False)]
         if run_single_tests:
             tests_to_run = run_single_tests
 

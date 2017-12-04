@@ -241,7 +241,7 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
         else:
             payloads[-1] = appended_payload
 
-    return filter(None, payloads)
+    return [_f for _f in payloads if _f]
 
 
 def ensure_matched_revisions(change):

@@ -609,7 +609,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
         if not self.has_view_permissions:
             if self.has_deid_view_permissions:
-                exports = filter(lambda x: x.is_safe, exports)
+                exports = [x for x in exports if x.is_safe]
             else:
                 raise Http404()
 
@@ -1134,10 +1134,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     def get_formatted_emailed_export(self, export):
 
-        emailed_exports = filter(
-            lambda x: x.config.index[-1] == export.get_id,
-            self.daily_emailed_exports
-        )
+        emailed_exports = [x for x in self.daily_emailed_exports if x.config.index[-1] == export.get_id]
 
         if not emailed_exports:
             return None
@@ -1180,7 +1177,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         try:
             saved_exports = self.get_saved_exports()
             if self.is_deid:
-                saved_exports = filter(lambda x: x.is_safe, saved_exports)
+                saved_exports = [x for x in saved_exports if x.is_safe]
             saved_exports = list(map(self.fmt_export_data, saved_exports))
         except Exception as e:
             return format_angular_error(
@@ -1353,7 +1350,7 @@ class DailySavedExportListView(BaseExportListView):
         if self.has_case_export_permissions:
             combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
-        return filter(lambda x: x.is_daily_saved_export and not x.export_format == "html", combined_exports)
+        return [x for x in combined_exports if x.is_daily_saved_export and not x.export_format == "html"]
 
     @property
     def daily_emailed_exports(self):
@@ -1518,7 +1515,7 @@ class DashboardFeedListView(DailySavedExportListView):
         if self.has_case_export_permissions:
             combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
-        return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
+        return [x for x in combined_exports if x.is_daily_saved_export and x.export_format == "html"]
 
 
 @location_safe
@@ -1632,7 +1629,7 @@ class FormExportListView(BaseExportListView):
         exports = get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_daily_saved_exports_ui(self.domain):
             # New exports display daily saved exports in their own view
-            exports = filter(lambda x: not x.is_daily_saved_export, exports)
+            exports = [x for x in exports if not x.is_daily_saved_export]
         return exports
 
     @property
@@ -1787,7 +1784,7 @@ class CaseExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_daily_saved_exports_ui(self.domain):
-            exports = filter(lambda x: not x.is_daily_saved_export, exports)
+            exports = [x for x in exports if not x.is_daily_saved_export]
         return exports
 
     @property

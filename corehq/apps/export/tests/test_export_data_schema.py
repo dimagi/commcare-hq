@@ -67,7 +67,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         self.assertEqual(len(group_schema.items), 2)
 
-        form_items = filter(lambda item: item.tag is None, group_schema.items)
+        form_items = [item for item in group_schema.items if item.tag is None]
         self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
         self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
 
@@ -105,7 +105,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(group_schema.items), 2)
         self.assertEqual(group_schema.path, MAIN_TABLE)
 
-        form_items = filter(lambda item: item.tag is None, group_schema.items)
+        form_items = [item for item in group_schema.items if item.tag is None]
         self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
         self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='zendquestion')])
 
@@ -133,7 +133,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
 
         self.assertEqual(len(group_schema.items), 2)
-        form_items = filter(lambda item: item.tag is None, group_schema.items)
+        form_items = [item for item in group_schema.items if item.tag is None]
         self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
 
         self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
@@ -172,7 +172,7 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 2)
 
         group_schema = schema.group_schemas[0]
-        attribute_items = filter(lambda item: item.path[-1].name in CASE_ATTRIBUTES, group_schema.items)
+        attribute_items = [item for item in group_schema.items if item.path[-1].name in CASE_ATTRIBUTES]
 
         self.assertEqual(len(attribute_items), len(CASE_ATTRIBUTES))
         self.assertTrue(all(map(
@@ -180,14 +180,14 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
             attribute_items,
         )))
 
-        create_items = filter(lambda item: item.path[-1].name in CASE_CREATE_ELEMENTS, group_schema.items)
+        create_items = [item for item in group_schema.items if item.path[-1].name in CASE_CREATE_ELEMENTS]
         self.assertEqual(len(create_items), len(CASE_CREATE_ELEMENTS))
         self.assertTrue(all(map(
             lambda item: item.readable_path.startswith('form.repeat.case.create'),
             create_items,
         )))
 
-        index_items = filter(lambda item: 'case.index.parent' in item.readable_path, group_schema.items)
+        index_items = [item for item in group_schema.items if 'case.index.parent' in item.readable_path]
         self.assertEqual(len(index_items), 2)
 
         update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items) - set(index_items))
@@ -318,7 +318,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 1)
         group_schema = schema.group_schemas[0]
 
-        update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
+        update_items = [item for item in group_schema.items if item.tag == PROPERTY_TAG_UPDATE]
         self.assertEqual(len(update_items), 2 + len(KNOWN_CASE_PROPERTIES))
 
 
@@ -368,8 +368,8 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = merged.group_schemas[0]
         self.assertEqual(len(group_schema.items), 2)
 
-        v1items = filter(lambda item: item.last_occurrences[self.app_id] == 1, group_schema.items)
-        v2items = filter(lambda item: item.last_occurrences[self.app_id] == 2, group_schema.items)
+        v1items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 1]
+        v2items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 2]
 
         self.assertEqual(
             len(v2items),
@@ -391,7 +391,7 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = merged.group_schemas[0]
         self.assertEqual(len(group_schema.items), 2)
 
-        v2items = filter(lambda item: item.last_occurrences[self.app_id] == 2, group_schema.items)
+        v2items = [item for item in group_schema.items if item.last_occurrences[self.app_id] == 2]
         self.assertEqual(len(v2items), 2)
 
         multichoice = filter(
@@ -400,12 +400,12 @@ class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         )[0]
         self.assertEqual(len(multichoice.options), 3)
         self.assertEqual(
-            len(filter(lambda o: o.last_occurrences[self.app_id] == 2, multichoice.options)),
+            len([o for o in multichoice.options if o.last_occurrences[self.app_id] == 2]),
             2,
         )
 
         self.assertEqual(
-            len(filter(lambda o: o.last_occurrences[self.app_id] == 1, multichoice.options)),
+            len([o for o in multichoice.options if o.last_occurrences[self.app_id] == 1]),
             1,
         )
 
@@ -461,7 +461,7 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema1.last_occurrences[app_id], 2)
         self.assertEqual(len(group_schema1.items), 3)
 
-        items = filter(lambda i: i.last_occurrences[app_id] == 1, group_schema1.items)
+        items = [i for i in group_schema1.items if i.last_occurrences[app_id] == 1]
         self.assertEqual(len(items), 1)
 
         self.assertEqual(group_schema2.last_occurrences[app_id], 2)
@@ -666,7 +666,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
         self.assertEqual(group_schema.path, MAIN_TABLE)
         self.assertTrue(group_schema.inferred)
-        inferred_items = filter(lambda item: item.inferred, group_schema.items)
+        inferred_items = [item for item in group_schema.items if item.inferred]
         self.assertEqual(len(inferred_items), 2)
 
     def test_build_with_advanced_app(self):
@@ -1154,12 +1154,12 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(len(schema.group_schemas), 3)
         main_table = filter(lambda gs: gs.path == MAIN_TABLE, schema.group_schemas)[0]
         self.assertEqual(
-            len(filter(lambda item: item.doc_type == 'CaseIndexItem', main_table.items)),
+            len([item for item in main_table.items if item.doc_type == 'CaseIndexItem']),
             1
         )
 
         self.assertEqual(
-            len(filter(lambda gs: gs.path == PARENT_CASE_TABLE, schema.group_schemas)),
+            len([gs for gs in schema.group_schemas if gs.path == PARENT_CASE_TABLE]),
             1
         )
 

@@ -170,8 +170,7 @@ def get_indexed_cases(domain, case_ids):
 
 
 def primary_actions(case):
-    return filter(lambda a: not a.is_case_rebuild,
-                  case.actions)
+    return [a for a in case.actions if not a.is_case_rebuild]
 
 
 def iter_cases(case_ids, strip_history=False, wrap=True):

@@ -28,7 +28,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         }
     )
 
-    recipient_list = filter(None, recipient_list)
+    recipient_list = [_f for _f in recipient_list if _f]
     if not recipient_list:
         return
     try:

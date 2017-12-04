@@ -427,7 +427,7 @@ def _get_column_for_stock_form_export(new_table, column_path, index):
         parts_without_question_ids = [part.split(':')[0] for part in parts]
         return '.'.join(parts_without_question_ids)
 
-    stock_columns = filter(lambda c: c.item.doc_type == 'StockItem', new_table.columns)
+    stock_columns = [c for c in new_table.columns if c.item.doc_type == 'StockItem']
 
     # Map column to its readable path (dot path)
     stock_column_to_readable_path = {c: c.item.readable_path for c in stock_columns}

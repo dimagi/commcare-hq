@@ -558,7 +558,7 @@ class HQMediaMixin(Document):
                           for audio in item.all_audio_paths()
                           if audio])
 
-        for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
+        for m, module in enumerate([m for m in self.get_modules() if m.uses_media()]):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,

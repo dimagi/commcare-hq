@@ -2534,10 +2534,7 @@ class FactSheetsReport(object):
 
     @property
     def config_list(self):
-        return filter(
-            lambda c: c['category'] == self.config['category'] or self.config['category'] == 'all',
-            self.new_table_config
-        )
+        return [c for c in self.new_table_config if c['category'] == self.config['category'] or self.config['category'] == 'all']
 
     def get_data(self):
         config_list = self.config_list

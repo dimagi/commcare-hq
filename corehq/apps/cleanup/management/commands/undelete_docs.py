@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
     def handle(self, database, ids_file, **options):
         # figure out db to use
-        slugs = ['commcarehq'] + sorted(filter(None, couch_config.all_dbs_by_slug))
+        slugs = ['commcarehq'] + sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
         if database not in slugs:
             print ("Did not recognize a database called '{}'.  "
                    "Options are: {}".format(database, ", ".join(slugs)))

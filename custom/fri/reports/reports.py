@@ -29,6 +29,7 @@ from django.urls import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from dateutil.parser import parse
 from six.moves import range
+from six.moves import filter
 
 RESPONSE_NOT_APPLICABLE = 1
 NO_RESPONSE = 2
@@ -417,7 +418,7 @@ class SurveyResponsesReport(FRIReport):
             last_tuesday = first_tuesday + timedelta(days=49)
             return first_tuesday <= survey_report_date <= last_tuesday
 
-        result = filter(filter_function, result)
+        result = list(filter(filter_function, result))
         return result
 
     def get_first_survey_response(self, case, dt):

@@ -111,7 +111,7 @@ class WorksheetWrapper(object):
     def get_header_columns(self):
         if self.max_row > 0:
             # remove None columns the library sometimes returns
-            return filter(None, next(self.iter_rows()))
+            return [_f for _f in next(self.iter_rows()) if _f]
         else:
             return []
 

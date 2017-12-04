@@ -42,4 +42,4 @@ def has_visit(case, type):
     """
     returns whether a visit of a type exists in the case
     """
-    return len(filter(lambda a: visit_is(a, type), case.actions)) > 0
+    return len([a for a in case.actions if visit_is(a, type)]) > 0

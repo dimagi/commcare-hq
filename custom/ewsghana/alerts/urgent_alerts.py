@@ -60,7 +60,7 @@ class UrgentStockoutAlert(UrgentAlert):
         program_id = user.get_domain_membership(self.domain).program_id
 
         if program_id:
-            sql_products = filter(lambda p: p.program_id == program_id, sql_products)
+            sql_products = [p for p in sql_products if p.program_id == program_id]
 
         if not sql_products:
             return

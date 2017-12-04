@@ -13,6 +13,7 @@ from corehq.blobs import get_blob_db
 from couchexport.models import Format
 from dimagi.utils.couch import CriticalSection
 from soil.util import expose_blob_download
+from six.moves import filter
 
 logger = logging.getLogger('export_migration')
 
@@ -84,10 +85,10 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
 
     for case_property in properties:
         path = [PathNode(name=case_property)]
-        system_property_column = filter(
+        system_property_column = list(filter(
             lambda column: column.item.path == path and column.item.transform is None,
             MAIN_CASE_TABLE_PROPERTIES,
-        )
+        ))
 
         if system_property_column:
             assert len(system_property_column) == 1

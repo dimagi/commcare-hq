@@ -331,7 +331,7 @@ def get_latest_app_ids_and_versions(domain, app_id=None):
 
     latest_ids_and_versions = {}
     if app_id:
-        results = filter(lambda r: r['value']['_id'] == app_id, results)
+        results = [r for r in results if r['value']['_id'] == app_id]
     for result in results:
         app_id = result['value']['_id']
         version = result['value']['version']

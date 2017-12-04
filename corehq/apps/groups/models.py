@@ -22,6 +22,7 @@ from corehq.apps.groups.exceptions import CantSaveException
 from corehq.util.quickcache import quickcache
 import six
 from six.moves import range
+from six.moves import filter
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
@@ -173,7 +174,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
                 return False
             return True
         users = map(CouchUser.wrap_correctly, iter_docs(self.get_db(), self.users))
-        return filter(is_relevant_user, users)
+        return list(filter(is_relevant_user, users))
 
     @memoized
     def get_static_user_ids(self, is_active=True):
