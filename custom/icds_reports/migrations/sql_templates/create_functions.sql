@@ -186,7 +186,8 @@ BEGIN
 		'current_month_wasting, ' ||
 		'valid_in_month, ' ||
 		'valid_all_registered_in_month, ' ||
-		'ebf_no_info_recorded ' ||
+		'ebf_no_info_recorded, ' ||
+		'dob ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
@@ -257,7 +258,9 @@ BEGIN
 		'pregnant_all, ' ||
 		'lactating, ' ||
 		'lactating_all, ' ||
-		'institutional_delivery_in_month FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'institutional_delivery_in_month, ' ||
+		'add ' ||
+		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
         -- There may be better indexes to put here. Should investigate what tableau queries
