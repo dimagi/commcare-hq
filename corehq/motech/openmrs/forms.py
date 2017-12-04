@@ -89,46 +89,6 @@ class OpenmrsImporterForm(forms.Form):
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
 
-    def __init__(self, *args, **kwargs):
-        super(OpenmrsImporterForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Edit OpenMRS Importer'),
-                crispy.Field('server_url'),
-                crispy.Field('username'),
-                crispy.Field('password'),
-                crispy.Field('location_id'),  # TODO: Look up ID. Use type-ahead on name.
-                crispy.Field('import_frequency'),
-                crispy.Field('log_level'),
-
-                crispy.Field('report_uuid'),
-                crispy.Field('report_params'),
-                crispy.Field('case_type'),
-                crispy.Field('owner_id'),
-                crispy.Field('location_type_name'),
-                crispy.Field('external_id_column'),
-                crispy.Field('name_columns'),
-                crispy.Field('column_map'),
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update OpenMRS Importer"),
-                    type="submit",
-                    css_class='btn-primary',
-                ),
-                StrictButton(
-                    _('Import Now'),
-                    type='button',
-                    id='btn-import-now',
-                    css_class='btn-default',
-                ),
-            ),
-        )
-
     def clean(self):
         cleaned_data = super(OpenmrsImporterForm, self).clean()
         if bool(cleaned_data.get('owner_id')) == bool(cleaned_data.get('location_type_name')):
