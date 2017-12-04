@@ -7,6 +7,8 @@ from corehq import toggles
 from corehq.apps.app_manager.models import Domain
 from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
+from corehq.apps.app_manager.models import Application
 
 
 class Command(BaseCommand):
@@ -54,7 +56,9 @@ class Command(BaseCommand):
                                     ])
             writer.writeheader()
             for domain in self._iter_domains(options):
-                for application in domain.full_applications(include_builds=False):
+                application_ids = get_app_ids_in_domain(domain.name)
+                for application_id in application_ids:
+                    application = Application.get(application_id)
                     if not application.is_remote_app():
                         all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain.name)
                         if add_on_name in application.add_ons or all_add_ons_enabled:
