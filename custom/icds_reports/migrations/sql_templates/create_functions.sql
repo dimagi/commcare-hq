@@ -333,6 +333,7 @@ BEGIN
 	_null_value = NULL;
 	_blank_value = '';
 	_no_text = 'no';
+	_one_week_ago = ($1 + INTERVAL ' - 7 DAYS')::DATE;
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
@@ -359,10 +360,10 @@ BEGIN
 		'sum(pse_eligible), ' ||
 		'sum(pse_attended_16_days), ' ||
 		'sum(born_in_month), ' ||
-		'sum(low_birth_weight_born_in_month), ' ||
+		'sum(CASE WHEN dob <= ' || quote_literal(_one_week_ago) || ' THEN low_birth_weight_in_month ELSE 0 END), ' ||
 		'sum(bf_at_birth_born_in_month), ' ||
-		'sum(ebf_eligible), ' ||
-		'sum(ebf_in_month), ' ||
+		'sum(CASE WHEN dob <= ' || quote_literal(_one_week_ago) || ' THEN ebf_eligible ELSE 0 END), ' ||
+		'sum(CASE WHEN dob <= ' || quote_literal(_one_week_ago) || ' THEN ebf_in_month ELSE 0 END), ' ||
 		'sum(cf_eligible), ' ||
 		'sum(cf_in_month), ' ||
 		'sum(cf_diet_diversity), ' ||
@@ -579,6 +580,7 @@ BEGIN
 	_blank_value = '';
 	_no_text = 'no';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
+	_one_week_ago = ($1 + INTERVAL ' - 7 DAYS')::DATE;
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
@@ -599,7 +601,7 @@ BEGIN
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed), ' ||
 		'sum(tetanus_complete), ' ||
-		'sum(delivered_in_month), ' ||
+		'sum(CASE WHEN add <= ' || quote_literal(_one_week_ago) || ' THEN delivered_in_month ELSE 0 END), ' ||
 		'sum(anc1_received_at_delivery), ' ||
 		'sum(anc2_received_at_delivery), ' ||
 		'sum(anc3_received_at_delivery), ' ||
@@ -629,7 +631,7 @@ BEGIN
 		'sum(has_aadhar_id), ' ||
 		'5, '
 		'sum(valid_all_registered_in_month), ' ||
-		'sum(institutional_delivery_in_month), ' ||
+		'sum(CASE WHEN add <= ' || quote_literal(_one_week_ago) || ' THEN institutional_delivery_in_month ELSE 0 END), ' ||
 		'sum(lactating_all), ' ||
 		'sum(pregnant_all) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
