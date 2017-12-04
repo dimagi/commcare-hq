@@ -319,6 +319,7 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
+	_one_week_ago date;
 	_rollup_text text;
 	_rollup_text2 text;
 BEGIN
@@ -566,6 +567,7 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
+	_one_week_ago date;
 	_rollup_text text;
 	_rollup_text2 text;
 BEGIN
