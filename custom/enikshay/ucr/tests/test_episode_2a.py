@@ -6,7 +6,7 @@ from custom.enikshay.ucr.tests.util import TestDataSourceExpressions
 EPISODE_DATA_SOURCE = 'episode_v4.json'
 
 
-class TestEpisode2B(TestDataSourceExpressions):
+class TestEpisode2A(TestDataSourceExpressions):
 
     data_source_name = EPISODE_DATA_SOURCE
 
