@@ -42,8 +42,8 @@ class TestExportData(TestCase):
                     [
                         [
                             "State",
-                            "Weighing efficiency",
-                            "Height Measurement Efficiency",
+                            "Weighing efficiency (in month)",
+                            "Height measurement efficiency (in month)",
                             "Total number of unweighed children (0-5 Years)",
                             "Percentage of severely underweight children",
                             "Percentage of moderately underweight children",
