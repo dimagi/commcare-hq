@@ -4,11 +4,15 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>CommCareHQ Test</title>
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    <script src="{% static 'underscore/underscore.js' %}"></script>
     <!-- Mocha and test-only dependencies -->
     <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
     <script src="{% static 'mocha/mocha.js' %}"></script>
     <script src="{% static 'chai/chai.js' %}"></script>
     <script src="{% static 'sinon/index.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     <script>
         mocha.setup('bdd')
         window.assert = chai.assert
@@ -20,12 +24,17 @@
 
     <!-- Core Libraries -->
     {% block core_libraries %}
-        {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
+    {% include "hqwebapp/includes/jquery.html" %}
+    {% include "hqwebapp/includes/core_libraries.html" %}
+    {% include "hqwebapp/includes/ko.html" %}
+    <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
     {% endblock %}
 
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}
 
+    {% include 'analytics/analytics_js.html' %}
     <script>
         hqImport('analytix/js/google').track.event = sinon.spy();
         hqImport('analytix/js/google').track.click = sinon.spy();

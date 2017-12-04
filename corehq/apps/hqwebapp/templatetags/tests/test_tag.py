@@ -30,7 +30,7 @@ class TagTest(SimpleTestCase):
         return re.sub(r'\s*\n+\s*', '\n', string).strip()
 
     @staticmethod
-    def _render_template(template_string, context=None):
+    def _render_template(template_string, context):
         return Template(template_string).render(Context(context or {}))
 
     @classmethod
@@ -44,12 +44,9 @@ class TagTest(SimpleTestCase):
             return f.read()
 
     def _test(self, filename, context):
-        template = self._get_file('templates', '{}.html'.format(filename))
-        actual = self._render_template(template, context)
-
-        # Expected template shouldn't include the tag being rendered but may require other template tags
-        expected_template = self._get_file('rendered', '{}.html'.format(filename))
-        expected = self._render_template(expected_template)
+        temp = self._get_file('templates', '{}.html'.format(filename))
+        actual = self._render_template(temp, context)
+        expected = self._get_file('rendered', '{}.html'.format(filename))
 
         self.assertEqual(
             self._normalize_whitespace(actual),
@@ -73,14 +70,6 @@ class TagTest(SimpleTestCase):
         # why does this test take 8s?
         self._test('registerurl', {
             'domain': 'hqsharedtags'
-        })
-
-    def test_javascript_libraries_jquery_only(self):
-        self._test('javascript_libraries_jquery_only', {})
-
-    def test_javascript_libraries_hq(self):
-        self._test('javascript_libraries_hq', {
-            'hq': True,
         })
 
     def test_requirejs_main(self):

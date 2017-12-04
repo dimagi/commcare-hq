@@ -10,7 +10,10 @@
               media="all"
               href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
 
-        {% javascript_libraries %}
+        {% compress js %}
+            <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        {% endcompress %}
 
         {# CodeMirror uses granular resources as a means of config #}
         {% if use_code_mirror %}
@@ -21,6 +24,7 @@
         <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqadmin/js/raw_couch.js' %}"></script>
         {% endif %}
 

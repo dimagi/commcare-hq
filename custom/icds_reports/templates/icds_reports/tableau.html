@@ -57,8 +57,14 @@
             padding-bottom: 21px;
         }
     </style>
-    {% javascript_libraries underscore=True ko=True hq=True %}
+    {% include "hqwebapp/includes/jquery.html" %}
+    {% include "hqwebapp/includes/core_libraries.html" %}
+    <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'tableau.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+    <script type="text/javascript" src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    {% include "hqwebapp/includes/ko.html" %}
+    <script type="text/javascript" src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
     <script type="text/javascript" src="{% static 'select2/dist/js/select2.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'tableau_app.js' %}"></script>
 </head>
