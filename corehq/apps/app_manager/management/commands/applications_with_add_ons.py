@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function
 import csv
 
@@ -57,12 +58,22 @@ class Command(BaseCommand):
                     if not application.is_remote_app():
                         all_add_ons_enabled = toggles.ENABLE_ALL_ADD_ONS.enabled(domain.name)
                         if add_on_name in application.add_ons or all_add_ons_enabled:
-                            writer.writerow({
-                                'domain': domain.name,
-                                'application_id': application.get_id,
-                                'app_name': application.name,
-                                'all_add_ons_enabled': all_add_ons_enabled,
-                                'status': application.add_ons.get(add_on_name)
-                            })
-                            if add_to_toggle:
-                                add_to_toggle.set(domain.name, True, NAMESPACE_DOMAIN)
+                            try:
+                                writer.writerow({
+                                    'domain': domain.name.encode('utf-8'),
+                                    'application_id': application.get_id,
+                                    'app_name': application.name.encode('utf-8'),
+                                    'all_add_ons_enabled': all_add_ons_enabled,
+                                    'status': application.add_ons.get(add_on_name)
+                                })
+                                if add_to_toggle:
+                                    add_to_toggle.set(domain.name, True, NAMESPACE_DOMAIN)
+                            except UnicodeEncodeError:
+                                print('encode error')
+                                print({
+                                    'domain': domain.name,
+                                    'application_id': application.get_id,
+                                    'app_name': application.name,
+                                    'all_add_ons_enabled': all_add_ons_enabled,
+                                    'status': application.add_ons.get(add_on_name)
+                                })
