@@ -35,6 +35,7 @@
             showDropdowns: true,
             ranges: ranges,
             timePicker: false,
+            maxDate: new Date(),
             locale: {
                 format: 'YYYY-MM-DD',
                 separator: separator,
