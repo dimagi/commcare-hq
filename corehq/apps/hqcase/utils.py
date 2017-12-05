@@ -267,4 +267,5 @@ def resync_case_to_es(domain, case):
 
 
 def resave_case(domain, case):
+    # actions to be done when a case is to be re-saved
     resync_case_to_es(domain, case)
