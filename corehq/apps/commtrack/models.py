@@ -13,7 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.stock.consumption import ConsumptionConfiguration, ConsumptionHelper
-from casexml.apps.stock.models import DocDomainMapping, StockTransaction
+from casexml.apps.stock.models import DocDomainMapping
 from couchexport.models import register_column_type, ComplexExportColumn
 from couchforms.signals import xform_archived, xform_unarchived
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin

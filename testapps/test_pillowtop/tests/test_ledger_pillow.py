@@ -12,7 +12,7 @@ from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.elastic import get_es_new
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, use_sql_backend
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.ledger import get_ledger_to_elasticsearch_pillow
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
