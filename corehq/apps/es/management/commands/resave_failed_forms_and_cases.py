@@ -2,6 +2,7 @@ from __future__ import (
     print_function,
     absolute_import
 )
+from six.moves import input
 from django.core.management.base import BaseCommand
 from corehq.apps.data_pipeline_audit.management.commands.compare_doc_ids import (
     compare_xforms,
