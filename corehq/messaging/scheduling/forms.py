@@ -8,6 +8,7 @@ from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from dateutil import parser
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms.fields import (
@@ -1060,8 +1061,17 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ),
     )
 
-    def __init__(self, domain, schedule, rule, *args, **kwargs):
+    custom_recipient = ChoiceField(
+        required=False,
+        choices=(
+            (k, v[1])
+            for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()
+        )
+    )
+
+    def __init__(self, domain, schedule, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
+        self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
         self.update_recipient_types_choices()
 
@@ -1071,7 +1081,23 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, _("The Case's Owner")),
         ]
         new_choices.extend(self.fields['recipient_types'].choices)
+
+        if (
+            self.criteria_form.is_system_admin or
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial['recipient_types']
+        ):
+            new_choices.extend([
+                (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, _("Custom Recipient")),
+            ])
+
         self.fields['recipient_types'].choices = new_choices
+
+    def add_initial_recipients(self, recipients, initial):
+        super(ConditionalAlertScheduleForm, self).add_initial_recipients(recipients, initial)
+
+        for recipient_type, recipient_id in recipients:
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM:
+                initial['custom_recipient'] = recipient_id
 
     def compute_initial(self):
         result = super(ConditionalAlertScheduleForm, self).compute_initial()
@@ -1153,6 +1179,25 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             ),
         ]
 
+    def get_recipients_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_recipients_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                ugettext("Custom Recipient"),
+                twbscrispy.InlineField('custom_recipient'),
+                self.get_system_admin_label(),
+                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+            ),
+        ])
+        return result
+
+    def get_system_admin_label(self):
+        return crispy.HTML("""
+            <label class="col-xs-1 control-label">
+                <span class="label label-primary">%s</span>
+            </label>
+        """ % ugettext("Requires System Admin"))
+
     def clean_send_time(self):
         if self.cleaned_data.get('send_time_type') == self.SEND_TIME_SPECIFIC_TIME:
             return super(ConditionalAlertScheduleForm, self).clean_send_time()
@@ -1193,6 +1238,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return value
 
+    def clean_custom_recipient(self):
+        recipient_types = self.cleaned_data.get('recipient_types')
+        custom_recipient = self.cleaned_data.get('custom_recipient')
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM not in recipient_types:
+            return None
+
+        if not custom_recipient:
+            raise ValidationError(ugettext("This field is required"))
+
+        return custom_recipient
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1229,6 +1286,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER in recipient_types:
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None))
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in recipient_types:
+            custom_recipient_id = self.cleaned_data['custom_recipient']
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
 
         return result
 

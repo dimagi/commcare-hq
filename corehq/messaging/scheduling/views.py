@@ -322,9 +322,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @cached_property
     def schedule_form(self):
         if self.request.method == 'POST':
-            return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.request.POST)
+            return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.criteria_form,
+                self.request.POST)
 
-        return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule)
+        return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.criteria_form)
 
     @property
     def schedule(self):
