@@ -49,8 +49,7 @@ class RegisterWebUserForm(forms.Form):
         choices=(
             (u"M&E", _("Monitor and evaluate a program")),
             (u"Exit Polling", _("Conduct exit polling")),
-            (u"Improve Delivery", _("Improve the delivery of services "
-                                   "to beneficiaries/customers")),
+            (u"Improve Delivery", _("Improve delivery of services")),
             (u"Census", _("Collect census data")),
             (u"Research", _("Collect data for a research project")),
             (u"Customer Relationship", _("Improve customer relationship management")),
