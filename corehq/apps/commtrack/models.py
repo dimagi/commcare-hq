@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from decimal import Decimal
 
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -471,8 +471,13 @@ def update_domain_mapping(sender, instance, *args, **kwargs):
 
 
 @receiver(post_save, sender=StockState)
-def publish_stock_state_to_kafka(sender, instance, *args, **kwargs):
+def publish_stock_state_to_kafka_on_save(sender, instance, *args, **kwargs):
     publish_ledger_v1_saved(instance)
+
+
+@receiver(post_delete, sender=StockState)
+def publish_stock_state_to_kafka_on_delete(sender, instance, *args, **kwargs):
+    publish_ledger_v1_saved(instance, deleted=True)
 
 
 @receiver(xform_archived)
