@@ -14,7 +14,6 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
@@ -260,6 +259,7 @@ def bulk_update_cases(domain, case_changes, device_id):
 
 
 def resync_case_to_es(domain, case):
+    from corehq.form_processor.change_publishers import publish_case_saved
     if should_use_sql_backend(domain):
         publish_case_saved(case)
     else:
