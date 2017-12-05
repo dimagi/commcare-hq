@@ -84,7 +84,7 @@ def _get_location(form):
         except SQLLocation.DoesNotExist:
             logging.info('Location %s Not Found.' % loc_id)
     else:
-        user_id = form['auth_context']['user_id']
+        user_id = form.user_id
         if not user_id:
             return None
         try:
