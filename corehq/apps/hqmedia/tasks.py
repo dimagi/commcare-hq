@@ -78,7 +78,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
                                           _("Matching path found, but could not save the data to couch."))
                 continue
 
-            is_new = not form_path in list(app.multimedia_map)
+            is_new = form_path not in list(app.multimedia_map)
             is_updated = multimedia.attach_data(data,
                                                 original_filename=file_name,
                                                 username=username)
