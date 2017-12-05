@@ -230,7 +230,7 @@ class RelatedDocExpressionSpec(JsonObject):
 
     def get_value(self, doc_id, context):
         assert context.root_doc['domain']
-        doc = self._get_document(self.related_doc_type, doc_id)
+        doc = self._get_document(self.related_doc_type, doc_id, context)
         # explicitly use a new evaluation context since this is a new document
         return self._value_expression(doc, EvaluationContext(doc, 0))
 

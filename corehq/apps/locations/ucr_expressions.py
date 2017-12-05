@@ -86,10 +86,11 @@ class AncestorLocationExpression(JsonObject):
     def __call__(self, item, context=None):
         location_id = self._location_id_expression(item, context)
         location_type = self._location_type_expression(item, context)
-        return self._get_ancestor(location_id, location_type)
+        return self._get_ancestor(location_id, location_type, context)
 
+    @staticmethod
     @ucr_context_cache(vary_on=('location_id', 'location_type',))
-    def _get_ancestor(self, location_id, location_type):
+    def _get_ancestor(location_id, location_type, context):
         try:
             location = SQLLocation.objects.get(location_id=location_id)
             ancestor = location.get_ancestors(include_self=False).get(location_type__name=location_type)
