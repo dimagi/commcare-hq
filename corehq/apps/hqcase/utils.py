@@ -14,6 +14,8 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
@@ -255,3 +257,14 @@ def bulk_update_cases(domain, case_changes, device_id):
         case_block = ElementTree.tostring(case_block.as_xml())
         case_blocks.append(case_block)
     return submit_case_blocks(case_blocks, domain, device_id=device_id)
+
+
+def resync_case_to_es(domain, case):
+    if should_use_sql_backend(domain):
+        publish_case_saved(case)
+    else:
+        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+
+
+def resave_case(domain, case):
+    resync_case_to_es(domain, case)
