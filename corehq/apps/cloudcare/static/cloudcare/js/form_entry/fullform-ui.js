@@ -276,6 +276,10 @@ function Form(json) {
         });
     };
 
+    self.afterRender = function() {
+      // Override with any logic that comes after rendering the Entry
+    };
+
     $.unsubscribe('session');
     $.subscribe('session.reconcile', function(e, response, element) {
         // TODO where does response status parsing belong?
