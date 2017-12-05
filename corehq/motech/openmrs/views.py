@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import json
 
-from django.forms import formset_factory
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator

@@ -62,7 +62,7 @@ hqDefine('openmrs/js/openmrs_importers', function () {
         var self = this;
         var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
-        self.openmrsImporters = ko.observableArray()
+        self.openmrsImporters = ko.observableArray();
 
         self.init = function () {
             if (openmrsImporters.length > 0) {
@@ -71,7 +71,7 @@ hqDefine('openmrs/js/openmrs_importers', function () {
                     self.openmrsImporters.push(openmrsImporter);
                 }
             } else {
-                self.addOpenmrsImporter()
+                self.addOpenmrsImporter();
             }
         };
 
@@ -97,7 +97,7 @@ hqDefine('openmrs/js/openmrs_importers', function () {
         };
 
         self.importNow = function () {
-            $.post(importNowUrl, {}, function (data) {
+            $.post(importNowUrl, {}, function () {
                 alert_user(gettext("Importing from OpenMRS will begin shortly."), "success");
             }).fail(function () {
                 alert_user(gettext("Failed to schedule task to import from OpenMRS."), "danger");
