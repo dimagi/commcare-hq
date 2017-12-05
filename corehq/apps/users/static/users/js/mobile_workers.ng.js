@@ -207,7 +207,7 @@
             var reqStr = location_url + "?name=" + query;
             $http.get(reqStr).then(
                 function (response) {
-                    $scope.availableLocations = response.data;
+                    $scope.availableLocations = response.data.results;
                 }
             );
         };
