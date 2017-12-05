@@ -385,7 +385,6 @@ class EpisodeAdherenceUpdate(object):
         dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
 
         update = {
-            'total_expected_doses_taken': self.get_total_expected_doses_taken(adherence_schedule_date_start),
             'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
         }
         update.update(self.get_adherence_scores(dose_status_by_date))
@@ -496,7 +495,6 @@ class EpisodeAdherenceUpdate(object):
         num_days = (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days + 1
         update['expected_doses_taken'] = int(doses_per_week * num_days / 7.0)
 
-        update['total_expected_doses_taken'] = self.get_total_expected_doses_taken(adherence_schedule_date_start)
         return update
 
     @memoized
@@ -512,13 +510,6 @@ class EpisodeAdherenceUpdate(object):
             )
             return 0
         return doses_per_week
-
-    def get_total_expected_doses_taken(self, adherence_schedule_date_start):
-        doses_per_week = self.get_doses_per_week()
-        today = self.date_today_in_india
-        total_expected_doses_taken = int(
-            round(((today - adherence_schedule_date_start).days / 7.0) * doses_per_week))
-        return total_expected_doses_taken
 
     def check_and_return(self, update_dict):
         """
