@@ -1508,7 +1508,7 @@ BEGIN
         'sum(infra_infant_weighing_scale), ' ||
         'sum(cases_person_beneficiary), ' ||
         quote_nullable(_null_value) || ', ' ||
-        quote_nullable(_null_value);
+        quote_nullable(_null_value) || ' ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
