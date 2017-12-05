@@ -36,6 +36,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     SMSContent,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
 from couchdbkit.resource import ResourceNotFound
 import six
 from six.moves import range
@@ -88,11 +89,6 @@ class ScheduleForm(Form):
 
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
-
-    RECIPIENT_TYPE_USER = 'USER'
-    RECIPIENT_TYPE_USER_GROUP = 'USER_GROUP'
-    RECIPIENT_TYPE_LOCATION = 'LOCATION'
-    RECIPIENT_TYPE_CASE_GROUP = 'CASE_GROUP'
 
     CONTENT_SMS = 'sms'
     CONTENT_EMAIL = 'email'
@@ -150,10 +146,10 @@ class ScheduleForm(Form):
         required=True,
         label=_('Recipient(s)'),
         choices=(
-            (RECIPIENT_TYPE_USER, _("Users")),
-            (RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
-            (RECIPIENT_TYPE_LOCATION, _("User Organizations")),
-            (RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, _("Users")),
+            (ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_LOCATION, _("User Organizations")),
+            (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
         )
     )
     user_recipients = RecipientField(
@@ -233,19 +229,19 @@ class ScheduleForm(Form):
         user_organization_recipients = []
         case_group_recipients = []
 
-        for doc_type, doc_id in recipients:
-            if doc_type == 'CommCareUser':
-                recipient_types.add(self.RECIPIENT_TYPE_USER)
-                user_recipients.append(doc_id)
-            elif doc_type == 'Group':
-                recipient_types.add(self.RECIPIENT_TYPE_USER_GROUP)
-                user_group_recipients.append(doc_id)
-            elif doc_type == 'Location':
-                recipient_types.add(self.RECIPIENT_TYPE_LOCATION)
-                user_organization_recipients.append(doc_id)
-            elif doc_type == 'CommCareCaseGroup':
-                recipient_types.add(self.RECIPIENT_TYPE_CASE_GROUP)
-                case_group_recipients.append(doc_id)
+        for recipient_type, recipient_id in recipients:
+            if recipient_type == ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER:
+                recipient_types.add(recipient_type)
+                user_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_USER_GROUP:
+                recipient_types.add(recipient_type)
+                user_group_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION:
+                recipient_types.add(recipient_type)
+                user_organization_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP:
+                recipient_types.add(recipient_type)
+                case_group_recipients.append(recipient_id)
 
         initial.update({
             'recipient_types': list(recipient_types),
@@ -421,7 +417,7 @@ class ScheduleForm(Form):
                     data_bind='value: user_recipients.value',
                     placeholder=_("Select mobile worker(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
             ),
             crispy.Div(
                 crispy.Field(
@@ -429,7 +425,7 @@ class ScheduleForm(Form):
                     data_bind='value: user_group_recipients.value',
                     placeholder=_("Select user group(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER_GROUP,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
             ),
             crispy.Div(
                 crispy.Field(
@@ -438,7 +434,7 @@ class ScheduleForm(Form):
                     placeholder=_("Select user organization(s)")
                 ),
                 crispy.Field('include_descendant_locations'),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_LOCATION,
             ),
             crispy.Div(
                 crispy.Field(
@@ -446,7 +442,7 @@ class ScheduleForm(Form):
                     data_bind='value: case_group_recipients.value',
                     placeholder=_("Select case group(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_CASE_GROUP,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
             ),
         ]
 
@@ -554,7 +550,7 @@ class ScheduleForm(Form):
         return result
 
     def clean_user_recipients(self):
-        if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_recipients']
@@ -572,7 +568,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_user_group_recipients(self):
-        if self.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_group_recipients']
@@ -599,7 +595,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_user_organization_recipients(self):
-        if self.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_organization_recipients']
@@ -621,7 +617,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_case_group_recipients(self):
-        if self.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['case_group_recipients']
@@ -722,10 +718,14 @@ class ScheduleForm(Form):
     def distill_recipients(self):
         form_data = self.cleaned_data
         return (
-            [('CommCareUser', user_id) for user_id in form_data['user_recipients']] +
-            [('Group', group_id) for group_id in form_data['user_group_recipients']] +
-            [('Location', location_id) for location_id in form_data['user_organization_recipients']] +
-            [('CommCareCaseGroup', case_group_id) for case_group_id in form_data['case_group_recipients']]
+            [(ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, user_id)
+             for user_id in form_data['user_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, group_id)
+             for group_id in form_data['user_group_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id)
+             for location_id in form_data['user_organization_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, case_group_id)
+             for case_group_id in form_data['case_group_recipients']]
         )
 
     def distill_total_iterations(self):
@@ -739,7 +739,7 @@ class ScheduleForm(Form):
         form_data = self.cleaned_data
         return {
             'include_descendant_locations': (
-                ScheduleForm.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
+                ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
                 form_data['include_descendant_locations']
             ),
         }
