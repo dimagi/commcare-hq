@@ -13,7 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
 )
 from corehq.form_processor.utils.xform import resave_form
-from corehq.apps.hqcase.utils import resync_case_to_es
+from corehq.apps.hqcase.utils import resave_case
 from corehq.util.log import with_progress_bar
 
 
@@ -61,6 +61,6 @@ def perform_resave_on_cases(domain):
     for case_id in with_progress_bar(case_ids_missing_in_es):
         case = case_accessor.get_case(case_id)
         if case:
-            resync_case_to_es(domain, case)
+            resave_case(domain, case)
         else:
             print("case not found %s" % case_id)
