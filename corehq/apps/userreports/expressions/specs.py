@@ -355,7 +355,7 @@ class SubcasesExpressionSpec(JsonObject):
         return self._get_subcases(case_id, context)
 
     @ucr_context_cache(vary_on=('case_id',))
-   def _get_subcases(self, case_id, context):
+    def _get_subcases(self, case_id, context):
         domain = context.root_doc['domain']
         return [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
 

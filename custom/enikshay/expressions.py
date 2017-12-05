@@ -388,6 +388,7 @@ class MostRecentEpisodeCaseFromPerson(JsonObject):
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
+        domain = context.root_doc['domain']
 
         @ucr_context_cache(vary_on=('person_id',))
         def _cached_get(person_id, context):
