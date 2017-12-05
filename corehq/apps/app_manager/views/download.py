@@ -33,7 +33,7 @@ BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuild
 
 def _get_profile(request):
     profile = request.GET.get('profile')
-    if profile not in (None, 'None'):
+    if profile not in request.app.build_profiles:
         return profile
     else:
         return None
