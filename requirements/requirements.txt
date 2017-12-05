@@ -3,7 +3,7 @@ cython==0.23.4
 restkit==4.2.2
 iso8601==0.1.11
 jsonobject==0.7.1
-jsonobject-couchdbkit==0.9.0.0
+git+git://github.com/dimagi/couchdbkit.git@jsonobject
 celery==3.1.18
 # required by django-digest
 decorator==4.0.11
