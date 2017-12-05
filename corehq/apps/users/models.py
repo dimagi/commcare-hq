@@ -19,6 +19,7 @@ from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.dates import get_timestamp_millis
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
@@ -1072,6 +1073,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def days_since_created(self):
         # Note this does not round, but returns the floor of days since creation
         return (datetime.utcnow() - self.created_on).days
+
+    @property
+    def created_on_in_millis(self):
+        return get_timestamp_millis(self.created_on)
 
     formatted_name = full_name
     name = full_name

@@ -1,7 +1,13 @@
 {% load hq_shared_tags %}
 {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-  {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
-    {# This was already publicly visible, best practice: todo get into settings #}
-    {% initial_analytics_data 'drift.apiId' '7456r8nz2u34' %}
-  {% endif %}
+    {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
+        {# This was already publicly visible, best practice: todo get into settings #}
+        {% initial_analytics_data 'drift.apiId' '7456r8nz2u34' %}
+        {% if request.couch_user %}
+            {% initial_analytics_data 'drift.email' request.couch_user.username %}
+            {% initial_analytics_data 'drift.name' request.couch_user.human_friendly_name %}
+            {% initial_analytics_data 'drift.startDate' request.couch_user.created_on_in_millis %}
+            {#% initial_analytics_data 'drift.persona' 'TODO: HQ does not have this' %#}
+        {% endif %}
+    {% endif %}
 {% endif %}
