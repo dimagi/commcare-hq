@@ -55,10 +55,13 @@ hqDefine('analytix/js/drift', [
             hubspot.trackEvent('Identified via Drift');
         });
     };
-    if (_global('isEnabled')) {
-        __init__();
-        logger.debug.log("Initialized");
-    }
+
+    $(function() {
+        if (_global('isEnabled')) {
+            __init__();
+            logger.debug.log("Initialized");
+        }
+    });
 
     // no methods just yet
     return {

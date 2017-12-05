@@ -30,10 +30,13 @@ hqDefine('analytix/js/hubspot', [
             });
         }
     };
-    if (_global('isEnabled')) {
-        __init__();
-        logger.debug.log('Initialized');
-    }
+
+    $(function() {
+        if (_global('isEnabled')) {
+            __init__();
+            logger.debug.log('Initialized');
+        }
+    });
 
     /**
      * Sends data to Hubspot to identify the current session.
