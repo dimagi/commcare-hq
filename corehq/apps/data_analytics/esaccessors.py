@@ -30,7 +30,7 @@ def get_app_submission_breakdown_es(domain_name, monthspan, user_ids=None):
 
 
 def get_domain_device_breakdown_es(domain_name, monthspan):
-    query = FormES().domain(domain_name).submitted(
+    query = FormES(es_instance_alias='export').domain(domain_name).submitted(
         gte=monthspan.startdate,
         lt=monthspan.computed_enddate,
     ).aggregation(TermsAggregation('device_id', 'form.meta.deviceID')).size(0)
@@ -46,7 +46,7 @@ def active_mobile_users(domain, start, end, *args):
 
     user_ids = get_mobile_users(domain.name)
 
-    form_users = (FormES()
+    form_users = (FormES(es_instance_alias='export')
                   .domain(domain.name)
                   .user_aggregation()
                   .submitted(gte=start, lt=end)
@@ -56,7 +56,7 @@ def active_mobile_users(domain, start, end, *args):
                   .aggregations.user.counts_by_bucket())
 
     sms_users = set(
-        SMSES()
+        SMSES(es_instance_alias='export')
         .incoming_messages()
         .user_aggregation()
         .to_commcare_user()
@@ -72,7 +72,7 @@ def active_mobile_users(domain, start, end, *args):
 
 def get_forms_for_users(domain, user_ids, start, end):
     query = (
-        FormES()
+        FormES(es_instance_alias='export')
         .domain(domain)
         .submitted(gte=start, lte=end)
         .user_id(user_ids)
@@ -91,7 +91,7 @@ def get_possibly_experienced(domain, start):
     end_month = datetime.date(day=1, year=threshold_month[0], month=threshold_month[1])
 
     form_users = set(
-        FormES()
+        FormES(es_instance_alias='export')
         .domain(domain.name)
         .user_aggregation()
         .submitted(lt=end_month)
