@@ -37,7 +37,7 @@ class DOTCalendarReporter(object):
 
     def unique_xforms(self):
         obs = self.dot_observation_range()
-        ret = set([x['doc_id'] for x in filter(lambda y: y.is_reconciliation is False, obs)])
+        ret = set([x['doc_id'] for x in [y for y in obs if y.is_reconciliation is False]])
         return ret
 
     @memoized

@@ -9,6 +9,7 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.util.log import with_progress_bar
 from custom.enikshay.integrations.bets.repeater_generators import BETSUserPayloadGenerator
 from custom.enikshay.integrations.bets.repeaters import BETSUserRepeater
+from six.moves import map
 
 
 class Command(BaseCommand):
@@ -130,4 +131,4 @@ class Command(BaseCommand):
                 return user_data[obj].get(key, '')
             return user_data.get(field, '')
 
-        writer.writerow(map(get_field, self.field_names))
+        writer.writerow(list(map(get_field, self.field_names)))

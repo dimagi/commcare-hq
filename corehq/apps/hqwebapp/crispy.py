@@ -358,3 +358,7 @@ class FieldsetAccordionGroup(AccordionGroup):
 
 class B3HiddenFieldWithErrors(Field):
     template = "hqwebapp/crispy/hidden_with_errors.html"
+
+
+class RadioSelect(Field):
+    template = "hqwebapp/crispy/radioselect.html"

@@ -58,6 +58,7 @@ from .forms import LocationFormSet, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 import six
+from six.moves import map
 
 
 logger = logging.getLogger(__name__)
@@ -226,7 +227,7 @@ class LocationsListView(BaseLocationView):
                 SQLLocation.objects.filter(domain=self.domain, parent_id=None),
                 self.show_inactive,
             )
-            return map(to_json, locs)
+            return list(map(to_json, locs))
         else:
             return [to_json(user.get_sql_location(self.domain))]
 
@@ -924,7 +925,7 @@ def child_locations_for_select2(request, domain):
     # 10 results per page
     paginator = Paginator(locs, 10)
     return json_response({
-        'results': map(loc_to_payload, paginator.page(page)),
+        'results': list(map(loc_to_payload, paginator.page(page))),
         'total_count': paginator.count,
     })
 

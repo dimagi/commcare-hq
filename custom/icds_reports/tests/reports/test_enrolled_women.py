@@ -33,11 +33,13 @@ class TestEnrolledWomen(TestCase):
                 "data": {
                     "st1": {
                         "valid": 70,
+                        "all": 70,
                         'original_name': [],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 85,
+                        "all": 85,
                         'original_name': [],
                         "fillKey": "Women"
                     }
@@ -72,6 +74,7 @@ class TestEnrolledWomen(TestCase):
                 "data": {
                     'block_map': {
                         'valid': 70,
+                        'all': 70,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Women'
                     }
@@ -120,24 +123,24 @@ class TestEnrolledWomen(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
-                                "y": 104.0,
+                                "y": 104,
                                 "x": 1491004800000,
-                                "all": 0
+                                "all": 104
                             },
                             {
-                                "y": 155.0,
+                                "y": 155,
                                 "x": 1493596800000,
-                                "all": 0
+                                "all": 155
                             }
                         ],
                         "key": "Total number of pregnant women who are enrolled for ICDS services"
@@ -174,10 +177,12 @@ class TestEnrolledWomen(TestCase):
                 "info": "Total number of pregnant women who are enrolled for ICDS services.",
                 "tooltips_data": {
                     "s2": {
-                        "valid": 24
+                        "valid": 24,
+                        "all": 24
                     },
                     "s1": {
-                        "valid": 17
+                        "valid": 17,
+                        "all": 17
                     }
                 },
                 "chart_data": [

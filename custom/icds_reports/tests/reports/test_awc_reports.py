@@ -802,7 +802,6 @@ class TestAWCReport(TestCase):
                                          "who are enrolled for ICDS services"
                         },
                         {
-                            "redirect": "enrolled_women",
                             "all": 2,
                             "format": "percent_and_div",
                             "color": "red",
@@ -827,7 +826,6 @@ class TestAWCReport(TestCase):
                                          "who are enrolled for ICDS services"
                         },
                         {
-                            "redirect": "adolescent_girls",
                             "all": 0,
                             "format": "percent_and_div",
                             "color": "red",
@@ -965,7 +963,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 7,
                         "dob": "2011-07-23",
-                        "age": "5 years 9 months ",
+                        "age": "5 years 10 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -990,7 +988,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 2,
                         "dob": "2011-10-21",
-                        "age": "5 years 6 months ",
+                        "age": "5 years 7 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1040,7 +1038,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-02-13",
-                        "age": "5 years 2 months ",
+                        "age": "5 years 3 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1065,7 +1063,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 17,
                         "dob": "2012-03-27",
-                        "age": "5 years 1 month ",
+                        "age": "5 years 2 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1090,7 +1088,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-06-03",
-                        "age": "4 years 10 months ",
+                        "age": "4 years 11 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Normal height for age"
@@ -1115,7 +1113,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-06-23",
-                        "age": "4 years 10 months ",
+                        "age": "4 years 11 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1140,7 +1138,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 1,
                         "dob": "2012-06-26",
-                        "age": "4 years 10 months ",
+                        "age": "4 years 11 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1165,7 +1163,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 14,
                         "dob": "2012-07-05",
-                        "age": "4 years 9 months ",
+                        "age": "4 years 10 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"
@@ -1190,7 +1188,7 @@ class TestAWCReport(TestCase):
                         },
                         "pse_days_attended": 16,
                         "dob": "2012-07-18",
-                        "age": "4 years 9 months ",
+                        "age": "4 years 10 months ",
                         "current_month_wasting": {
                             "color": "black",
                             "value": "Data Not Entered"

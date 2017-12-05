@@ -16,6 +16,7 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
 import six
+from six.moves import map
 
 
 def _get_pillow_instance(full_class_str):
@@ -240,7 +241,7 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
         else:
             payloads[-1] = appended_payload
 
-    return filter(None, payloads)
+    return [_f for _f in payloads if _f]
 
 
 def ensure_matched_revisions(change):

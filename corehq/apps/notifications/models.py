@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q
 from django.contrib.postgres.fields import ArrayField
+from six.moves import map
 
 
 NOTIFICATION_TYPES = (
@@ -60,7 +61,7 @@ class Notification(models.Model):
             }
             return note_dict
 
-        return map(_fmt_note, enumerate(notes))
+        return list(map(_fmt_note, enumerate(notes)))
 
     def mark_as_read(self, user):
         self.users_read.add(user)

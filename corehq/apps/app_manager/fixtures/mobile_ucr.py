@@ -31,6 +31,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
 from six.moves import zip
+from six.moves import map
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -237,8 +238,8 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
-                        map(str, total_row)
+                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(map(str, total_row))
                     )
                 ),
                 data_source.get_total_records(),
@@ -415,8 +416,8 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
-                        map(str, total_row)
+                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(map(str, total_row))
                     )
                 ),
                 data_source.get_total_records(),

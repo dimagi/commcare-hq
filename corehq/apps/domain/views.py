@@ -148,6 +148,7 @@ from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 import six
+from six.moves import map
 
 
 PAYMENT_ERROR_MESSAGES = {
@@ -800,7 +801,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 )),
             }
 
-        return map(_get_feature_info, plan_version.feature_rates.all())
+        return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
     @property
     def page_context(self):
@@ -1786,6 +1787,29 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
                     reverse(DomainSubscriptionView.urlname, args=[self.domain])
                 )
         return self.get(request, *args, **kwargs)
+
+
+class EmailOnDowngradeView(View):
+    urlname = "email_on_downgrade"
+
+    def post(self, request, *args, **kwargs):
+        message = '\n'.join([
+            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}.',
+            '',
+            'Note from user: {note}',
+        ]).format(
+            user=request.couch_user.username,
+            domain=request.domain,
+            old_plan=request.POST.get('old_plan', 'unknown'),
+            new_plan=request.POST.get('new_plan', 'unknown'),
+            note=request.POST.get('note', 'none'),
+        )
+
+        send_mail_async.delay(
+            'Subscription downgrade for {}'.format(request.domain),
+            message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
+        return json_response({'success': True})
 
 
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):

@@ -50,24 +50,24 @@ class TestLactatingEnrolledWomen(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
-                                "y": 159.0,
+                                "y": 159,
                                 "x": 1491004800000,
-                                "all": 0
+                                "all": 159
                             },
                             {
-                                "y": 166.0,
+                                "y": 166,
                                 "x": 1493596800000,
-                                "all": 0
+                                "all": 166
                             }
                         ],
                         "key": "Total number of lactating women who are enrolled for ICDS services"
@@ -104,10 +104,12 @@ class TestLactatingEnrolledWomen(TestCase):
                 "info": "Lactating Mothers enrolled for ICDS services.",
                 "tooltips_data": {
                     "s2": {
-                        "valid": 24
+                        "valid": 24,
+                        "all": 24
                     },
                     "s1": {
-                        "valid": 19
+                        "valid": 19,
+                        "all": 19
                     }
                 },
                 "chart_data": [
@@ -155,11 +157,13 @@ class TestLactatingEnrolledWomen(TestCase):
                 "data": {
                     "st1": {
                         "valid": 87,
+                        "all": 87,
                         'original_name': [],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 79,
+                        "all": 79,
                         'original_name': [],
                         "fillKey": "Women"
                     }
@@ -194,6 +198,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 "data": {
                     'block_map': {
                         'valid': 87,
+                        'all': 87,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Women'
                     }

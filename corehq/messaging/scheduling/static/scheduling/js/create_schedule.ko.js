@@ -4,26 +4,28 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             select2_case_group_recipients) {
         var self = this;
 
-        self.schedule_name = ko.observable(initial_values.schedule_name);
         self.send_frequency = ko.observable(initial_values.send_frequency);
         self.weekdays = ko.observableArray(initial_values.weekdays || []);
         self.days_of_month = ko.observableArray(initial_values.days_of_month || []);
         self.send_time = ko.observable(initial_values.send_time);
+        self.send_time_type = ko.observable(initial_values.send_time_type);
         self.start_date = ko.observable(initial_values.start_date);
+        self.start_date_type = ko.observable(initial_values.start_date_type);
+        self.start_offset_type = ko.observable(initial_values.start_offset_type);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
         self.user_recipients = new RecipientsSelect2Handler(select2_user_recipients,
-            initial_values.user_recipients, 'user_recipients');
+            initial_values.user_recipients, 'schedule-user_recipients');
         self.user_recipients.init();
         self.user_group_recipients = new RecipientsSelect2Handler(select2_user_group_recipients,
-            initial_values.user_group_recipients, 'user_group_recipients');
+            initial_values.user_group_recipients, 'schedule-user_group_recipients');
         self.user_group_recipients.init();
         self.user_organization_recipients = new RecipientsSelect2Handler(select2_user_organization_recipients,
-            initial_values.user_organization_recipients, 'user_organization_recipients');
+            initial_values.user_organization_recipients, 'schedule-user_organization_recipients');
         self.user_organization_recipients.init();
         self.case_group_recipients = new RecipientsSelect2Handler(select2_case_group_recipients,
-            initial_values.case_group_recipients, 'case_group_recipients');
+            initial_values.case_group_recipients, 'schedule-case_group_recipients');
         self.case_group_recipients.init();
 
         self.is_trial_project = initial_values.is_trial_project;
@@ -65,7 +67,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
             if(newValue === 'daily') {
-                occurrences.text(gettext("After days:"));
+                occurrences.text(gettext("After occurrences:"));
             } else if(newValue === 'weekly') {
                 occurrences.text(gettext("After weeks:"));
             } else if(newValue === 'monthly') {
@@ -172,8 +174,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         };
 
         self.init = function () {
-            self.initDatePicker($("#id_start_date"));
-            self.initTimePicker($("#id_send_time"));
+            self.initDatePicker($("#id_schedule-start_date"));
+            self.initTimePicker($("#id_schedule-send_time"));
             self.setOccurrencesOptionText(self.send_frequency());
         };
     };

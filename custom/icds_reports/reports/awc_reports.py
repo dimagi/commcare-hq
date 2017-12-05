@@ -14,7 +14,7 @@ from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, Da
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, get_status, \
-    current_age, exclude_records_by_age_for_column
+    current_age, exclude_records_by_age_for_column, calculate_date_for_age
 import six
 
 RED = '#de2d26'
@@ -860,8 +860,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'value': get_value(data, 'ccs_pregnant'),
                     'all': get_value(data, 'ccs_pregnant_all'),
                     'format': 'percent_and_div',
-                    'frequency': frequency,
-                    'redirect': 'enrolled_women'
+                    'frequency': frequency
                 }
             ],
             [
@@ -902,8 +901,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'value': get_value(data, 'person_adolescent'),
                     'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
-                    'frequency': frequency,
-                    'redirect': 'adolescent_girls'
+                    'frequency': frequency
                 }
             ]
         ]
@@ -1032,7 +1030,7 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             person_name=row_data.person_name,
             dob=row_data.dob,
             sex=row_data.sex,
-            age=current_age(row_data.dob, datetime(*month).date()),
+            age=calculate_date_for_age(row_data.dob, datetime(*month).date()),
             fully_immunized='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,

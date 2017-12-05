@@ -24,6 +24,7 @@ from .base import (
     BaseSingleOptionFilter,
 )
 from six.moves import range
+from six.moves import map
 
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
@@ -182,8 +183,10 @@ class EmwfUtils(object):
         else:
             raise Exception("Unexpcted id: {}".format(id_))
 
-        if hasattr(owner, 'is_deleted') and owner.is_deleted:
-            ret = (ret[0], 'Deleted - ' + ret[1])
+        if hasattr(owner, 'is_deleted'):
+            if (callable(owner.is_deleted) and owner.is_deleted()) or owner.is_deleted == True:
+                # is_deleted may be an attr or callable depending on owner type
+                ret = (ret[0], 'Deleted - ' + ret[1])
 
         return ret
 

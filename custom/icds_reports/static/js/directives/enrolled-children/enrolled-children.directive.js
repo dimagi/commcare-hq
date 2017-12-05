@@ -54,6 +54,16 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.message = storageService.getKey('message') || false;
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
+
     vm.hideRanking = true;
 
     $scope.$watch(function() {
@@ -77,9 +87,14 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
+        var all = $filter('indiaNumbers')(row ? row.all : 0);
+        var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>' + valid + '</strong></div>';
+            '<div>Number of children (0 - 6 years) who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Total number of children (0 - 6 years) who are registered: <strong>' + all + '</strong>' +
+            '<div>Percentage of registered children (0-6 years) who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '</div>';
     };
 
     vm.loadData = function () {

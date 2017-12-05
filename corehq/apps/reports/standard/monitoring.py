@@ -63,6 +63,7 @@ from django.utils.translation import ugettext_noop
 import six
 from functools import reduce
 from six.moves import range
+from six.moves import map
 
 
 TOO_MUCH_DATA = ugettext_noop(
@@ -393,12 +394,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         self.total_row = self._total_row
         if len(rows) <= self.pagination.count:
-            return map(self._format_row, rows)
+            return list(map(self._format_row, rows))
         else:
             start = self.pagination.start
             end = start + self.pagination.count
             paginated_rows = rows[start:end]
-            return map(self._format_row, paginated_rows)
+            return list(map(self._format_row, paginated_rows))
 
     @property
     def get_all_rows(self):
@@ -414,7 +415,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         rows.extend(self._unmatched_buckets(buckets, self.user_ids))
 
         self.total_row = self._total_row
-        return map(self._format_row, rows)
+        return list(map(self._format_row, rows))
 
     def _unmatched_buckets(self, buckets, user_ids):
         # ES doesn't return buckets that don't have any docs matching docs
@@ -871,10 +872,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         if order == "asc":
             users_with_forms.sort()
             sorted_users = users_without_forms
-            sorted_users += map(lambda u: u[1], users_with_forms)
+            sorted_users += [u[1] for u in users_with_forms]
         else:
             users_with_forms.sort(reverse=True)
-            sorted_users = map(lambda u: u[1], users_with_forms)
+            sorted_users = [u[1] for u in users_with_forms]
             sorted_users += users_without_forms
 
         return self.paginate_list(sorted_users)
@@ -916,7 +917,10 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         Assemble a row for a given user.
         If no user is passed, assemble a totals row.
         """
-        user_ids = map(lambda user: user.user_id, [user] if user else self.all_users)
+        if user:
+            user_ids = [user.user_id]
+        else:
+            user_ids = [u.user_id for u in self.all_users]
 
         if self.is_submission_time:
             get_counts_by_date = get_submission_counts_by_date
@@ -1369,7 +1373,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def case_types(self):
-        return filter(None, self.request.GET.getlist('case_type'))
+        return [_f for _f in self.request.GET.getlist('case_type') if _f]
 
     @property
     def view_by_groups(self):
@@ -1596,7 +1600,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def _rows_by_group(self, report_data):
         rows = []
         active_users_by_group = {
-            g: len(filter(lambda u: report_data.submissions_by_user.get(u['user_id']), users))
+            g: len([u for u in users if report_data.submissions_by_user.get(u['user_id'])])
             for g, users in six.iteritems(self.users_by_group)
         }
 
@@ -1749,11 +1753,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         for col in range(1, len(self.headers)):
             if col in summing_cols:
                 total_row.append(
-                    sum(filter(lambda x: not math.isnan(x), [row[col].get('sort_key', 0) for row in rows]))
+                    sum([x for x in [row[col].get('sort_key', 0) for row in rows] if not math.isnan(x)])
                 )
             else:
                 total_row.append('---')
-        num = len(filter(lambda row: row[3] != _(self.NO_FORMS_TEXT), rows))
+        num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
         case_owners = set()
         for user in self.users_to_iterate:
             case_owners = case_owners.union((user.user_id, user.location_id))

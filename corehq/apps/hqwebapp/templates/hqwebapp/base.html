@@ -169,34 +169,8 @@
                   href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
         {% endif %}
 
-        {# Core Libraries #}
         {% if not requirejs_main %}
-        {% include "hqwebapp/includes/jquery.html" %}
-        {% compress js %}
-        {% include "hqwebapp/includes/core_libraries.html" %}
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_jquery_ui and not requirejs_main %}
-        {% compress js %}
-            <!-- UI libraries needed for all other widgets and interactions -->
-            <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
-
-            <!-- Individual widgets and interactions -->
-            <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
-        {% if not requirejs_main %}
-        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
         {% endif %}
 
         {# Up here because if daterangepicker is called from within a form widget, #}
@@ -458,14 +432,6 @@
         {% if not requirejs_main %}
             <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
-            {# Core dependencies for analytics & HQ's libraries #}
-            {% compress js %}
-                <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-                <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-            {% endcompress %}
-
-            {% include 'analytics/analytics_js.html' %}
-
             {% compress js %}
                 <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
@@ -478,9 +444,6 @@
         {# JavaScript Display Logic Libaries #}
 
         {% if not requirejs_main %}
-        {% include "hqwebapp/includes/ko.html" %}
-        <!-- koApplyBindings in hq.helpers depends on knockout -->
-        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
         {% compress js %}
         <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
         {% endcompress %}

@@ -12,6 +12,7 @@ from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.motech.repeaters.models import Repeater, RepeatRecordAttempt
 from six.moves import input
+from six.moves import filter
 
 
 class Command(BaseCommand):
@@ -96,10 +97,10 @@ class Command(BaseCommand):
                            for include_regex in include_regexps)
             return True  # No filter applied
 
-        records = filter(
+        records = list(filter(
             meets_filter,
             iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
-        )
+        ))
 
         if verbose:
             for record in records:

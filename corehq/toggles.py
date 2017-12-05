@@ -875,6 +875,14 @@ BETS_INTEGRATION = StaticToggle(
     always_enabled={"enikshay"},
 )
 
+RETRY_SMS_INDEFINITELY = StaticToggle(
+    'retry_sms_indefinitely',
+    'Enikshay: Retry SMS indefinitely',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description='Leaves on the queue an SMS that has reached the maximum number of unsuccessful attempts.',
+)
+
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'FGH: Enable OpenMRS integration',
@@ -921,6 +929,13 @@ SUPPORT = StaticToggle(
     'General toggle for support features',
     TAG_INTERNAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
+)
+
+CASE_PROPERTY_HISTORY = StaticToggle(
+    'case_property_history',
+    'Shows a modal on the case property page allowing you to see the history of various case properties',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )
 
 BASIC_CHILD_MODULE = StaticToggle(

@@ -56,11 +56,11 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
-        awcs = row['awcs']
-        supervisors = row['supervisors']
-        blocks = row['blocks']
-        districts = row['districts']
-        states = row['states']
+        awcs = row['awcs'] or 0
+        supervisors = row['supervisors'] or 0
+        blocks = row['blocks'] or 0
+        districts = row['districts'] or 0
+        states = row['states'] or 0
 
         data_for_map[on_map_name]['awcs'].append(awcs)
         data_for_map[on_map_name]['supervisors'].append(supervisors)
@@ -97,8 +97,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), six.itervalues(data_for_map)))
-    total = sum(map(lambda x: (x[prop] or 0), six.itervalues(data_for_map)))
+    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(data_for_map)])
+    total = sum([(x[prop] or 0) for x in six.itervalues(data_for_map)])
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -168,11 +168,11 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
 
     for row in data:
         name = row['%s_name' % loc_level]
-        awcs = row['awcs']
-        supervisors = row['supervisors']
-        blocks = row['blocks']
-        districts = row['districts']
-        states = row['states']
+        awcs = row['awcs'] or 0
+        supervisors = row['supervisors'] or 0
+        blocks = row['blocks'] or 0
+        districts = row['districts'] or 0
+        states = row['states'] or 0
         result_set.add(name)
 
         row_values = {
@@ -205,8 +205,8 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), six.itervalues(tooltips_data)))
-    total = sum(map(lambda x: (x[prop] or 0), six.itervalues(tooltips_data)))
+    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(tooltips_data)])
+    total = sum([(x[prop] or 0) for x in six.itervalues(tooltips_data)])
 
     info = _(
         "Total AWCs that have launched ICDS CAS <br />" +

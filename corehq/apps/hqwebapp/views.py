@@ -270,7 +270,11 @@ def server_up(req):
         },
         "formplayer": {
             "always_check": True,
-            "check_func": checks.check_formplayer
+            "check_func": checks.check_formplayer,
+        },
+        "elasticsearch": {
+            "always_check": True,
+            "check_func": checks.check_elasticsearch,
         },
     }
 

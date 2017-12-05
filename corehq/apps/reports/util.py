@@ -41,6 +41,7 @@ from .analytics.esaccessors import (
 )
 import six
 from six.moves import range
+from six.moves import map
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -97,7 +98,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         return None
 
     user_ids = user_ids or []
-    user_ids = filter(None, user_ids)  # remove empty strings if any
+    user_ids = [_f for _f in user_ids if _f]  # remove empty strings if any
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -251,7 +252,7 @@ def get_simplified_users(user_es_query):
     """
     fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
     users = user_es_query.fields(fields).run().hits
-    users = map(_report_user_dict, users)
+    users = list(map(_report_user_dict, users))
     return sorted(users, key=lambda u: u['username_in_report'])
 
 

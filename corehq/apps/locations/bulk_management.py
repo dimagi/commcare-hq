@@ -456,8 +456,8 @@ class LocationTreeValidator(object):
     """
     def __init__(self, type_rows, location_rows, old_collection=None):
 
-        _to_be_deleted = lambda items: filter(lambda i: i.do_delete, items)
-        _not_to_be_deleted = lambda items: filter(lambda i: not i.do_delete, items)
+        _to_be_deleted = lambda items: [i for i in items if i.do_delete]
+        _not_to_be_deleted = lambda items: [i for i in items if not i.do_delete]
 
         self.all_listed_types = type_rows
         self.location_types = _not_to_be_deleted(type_rows)

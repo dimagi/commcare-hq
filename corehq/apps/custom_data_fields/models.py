@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 
 from .dbaccessors import get_by_domain_and_type
 import six
+from six.moves import filter
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"

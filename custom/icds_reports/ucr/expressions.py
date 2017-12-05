@@ -10,6 +10,8 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
+from six.moves import filter
+from six.moves import map
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -194,7 +196,7 @@ class FormsInDateExpressionSpec(JsonObject):
             return xform
 
         forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = filter(None, map(_transform_time_end, forms))
+        forms = list(filter(None, map(_transform_time_end, forms)))
         context.set_cache_value(cache_key, forms)
         return forms
 

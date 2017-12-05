@@ -40,6 +40,7 @@ from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
 import six
 from six.moves import range
+from six.moves import map
 
 
 class UserUploadError(Exception):
@@ -381,7 +382,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
             data = row.get('data')
             email = row.get('email')
-            group_names = map(six.text_type, row.get('group') or [])
+            group_names = list(map(six.text_type, row.get('group') or []))
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -598,10 +599,7 @@ def build_data_headers(keys, header_prefix='data'):
 def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
 
     def _get_group_names(user):
-        return sorted(map(
-            lambda id: group_memoizer.get(id).name,
-            Group.by_user(user, wrap=False)
-        ), key=alphanumeric_sort_key)
+        return sorted([group_memoizer.get(id).name for id in Group.by_user(user, wrap=False)], key=alphanumeric_sort_key)
 
     def _get_devices(user):
         """

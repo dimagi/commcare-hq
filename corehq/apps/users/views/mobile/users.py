@@ -682,7 +682,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         users_data = users_query.run()
         return {
             'response': {
-                'itemList': map(lambda user: self._format_user(user, include_location), users_data.hits),
+                'itemList': [self._format_user(user, include_location) for user in users_data.hits],
                 'total': users_data.total,
                 'page': page,
                 'query': query,

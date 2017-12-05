@@ -130,7 +130,7 @@ class FormAccessors(object):
 
     def iter_forms(self, form_ids):
         for chunk in chunked(form_ids, 100):
-            chunk = list(filter(None, chunk))
+            chunk = list([_f for _f in chunk if _f])
             for form in self.get_forms(chunk):
                 yield form
 
@@ -312,7 +312,7 @@ class CaseAccessors(object):
 
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
-            chunk = list(filter(None, chunk))
+            chunk = list([_f for _f in chunk if _f])
             for case in self.get_cases(chunk):
                 yield case
 

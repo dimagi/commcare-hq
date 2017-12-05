@@ -34,11 +34,13 @@ class TestEnrolledChildren(TestCase):
                 "data": {
                     "st1": {
                         "valid": 618,
+                        "all": 618,
                         'original_name': [],
                         "fillKey": "Children"
                     },
                     "st2": {
                         "valid": 669,
+                        "all": 669,
                         'original_name': [],
                         "fillKey": "Children"
                     }
@@ -73,6 +75,7 @@ class TestEnrolledChildren(TestCase):
                 },
                 "data": {
                     'block_map': {
+                        'all': 618,
                         'valid': 618,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Children'
@@ -152,9 +155,11 @@ class TestEnrolledChildren(TestCase):
                         " of 0 - 6 years who are enrolled for ICDS services",
                 "tooltips_data": {
                     "s2": {
+                        'all': 214,
                         "valid": 214
                     },
                     "s1": {
+                        'all': 103,
                         "valid": 103
                     }
                 },

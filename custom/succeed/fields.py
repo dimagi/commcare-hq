@@ -103,7 +103,7 @@ class PatientNameFilterMixin(object):
             user_ids = [user._id]
             owner_filters = _filter_gen('owner_id', owner_ids)
             user_filters = _filter_gen('user_id', user_ids)
-            filters = filter(None, [owner_filters, user_filters])
+            filters = [_f for _f in [owner_filters, user_filters] if _f]
             subterms = []
             subterms.append({'or': filters})
             es_filters["and"].append({'and': subterms} if subterms else {})

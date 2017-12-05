@@ -37,6 +37,10 @@ ENIKSHAY_ID = 'person_id'
 PERSON_FIRST_NAME = 'first_name'
 PERSON_LAST_NAME = 'last_name'
 
+PRIVATE_SECTOR = 'private'
+PUBLIC_SECTOR = 'public'
+SECTORS = (PRIVATE_SECTOR, PUBLIC_SECTOR)
+
 TREATMENT_START_DATE = 'treatment_initiation_date'
 TREATMENT_SUPPORTER_FIRST_NAME = 'treatment_supporter_first_name'
 TREATMENT_SUPPORTER_LAST_NAME = 'treatment_supporter_last_name'

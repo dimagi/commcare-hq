@@ -220,6 +220,7 @@ nvd3 > svg {
     font-size: 14px;
     padding-right: 0;
     padding-left: 0;
+    z-index: 1;
 }
 
 .navbar-default {
@@ -705,7 +706,6 @@ table.dataTable.fixedHeader-locked {
 
 table.dataTable.fixedHeader-floating {
     position: fixed !important;
-    width: 80.3% !important;
 }
 
 table.dataTable.fixedHeader-locked {
@@ -716,14 +716,6 @@ table.dataTable.fixedHeader-locked {
   table.fixedHeader-floating {
     display: none;
   }
-}
-
-.medium-col {
-    width: 12% !important;
-}
-
-.big-col {
-    width: 16% !important;
 }
 
 .locPopup {
@@ -743,4 +735,12 @@ table.dataTable.fixedHeader-locked {
 .locPopup > button {
     display: block;
     margin: 5px auto;
+}
+
+table.dataTable,
+table.dataTable th,
+table.dataTable td {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
 }

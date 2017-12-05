@@ -1,41 +1,11 @@
-{% extends "hqwebapp/base_section.html" %}
-{% load hq_shared_tags %}
+{% extends "scheduling/create_schedule_base.html" %}
 {% load crispy_forms_tags %}
-{% load i18n %}
 
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
-    <script src="{% static 'scheduling/js/create_schedule.ko.js' %}"></script>
-{% endblock %}
-
-{% block stylesheets %}{{ block.super }}
-<style>
-    .form-horizontal .form-group > .controls-multiple > .row {
-        margin-left: 0px;
-    }
-    .form-horizontal .form-group > div .row select {
-        margin-left: 0px;
-    }
-    .controls-multiple .row div {
-        padding-left: 0px;
-    }
-    .day-of-month-choices-table {
-        width: 100%;
-    }
-    .day-of-month-choices-cell {
-        width: 14%;
-    }
-</style>
-{% endblock %}
-
-{% block page_content %}
-    {% initial_page_data 'current_values' form.current_values %}
-    {% initial_page_data 'current_select2_user_recipients' form.current_select2_user_recipients %}
-    {% initial_page_data 'current_select2_user_group_recipients' form.current_select2_user_group_recipients %}
-    {% initial_page_data 'current_select2_user_organization_recipients' form.current_select2_user_organization_recipients %}
-    {% initial_page_data 'current_select2_case_group_recipients' form.current_select2_case_group_recipients %}
-    <div id="create-schedule-form">
-        {% crispy form %}
-    </div>
+{% block page_content %}{{ block.super }}
+    <form class="form form-horizontal" method="POST" action="#">
+        <div id="create-schedule-form">
+            {% crispy schedule_form %}
+        </div>
+    </form>
 {% endblock %}

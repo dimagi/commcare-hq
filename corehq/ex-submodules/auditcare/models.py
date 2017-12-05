@@ -212,18 +212,18 @@ class ModelActionAudit(AuditEvent):
         removed_keys = self.removed.keys()
 
         if filters:
-            are_changed = filter(lambda x: x in changed_keys, filters)
-            are_added = filter(lambda x: x in added_keys, filters)
-            are_removed = filter(lambda x: x in removed_keys, filters)
+            are_changed = [x for x in filters if x in changed_keys]
+            are_added = [x for x in filters if x in added_keys]
+            are_removed = [x for x in filters if x in removed_keys]
         else:
             are_changed = changed_keys[:]
             are_added = added_keys[:]
             are_removed = removed_keys[:]
 
         if excludes:
-            final_changed = filter(lambda x: x not in excludes, are_changed)
-            final_added = filter(lambda x: x not in excludes, are_added)
-            final_removed = filter(lambda x: x not in excludes, are_removed)
+            final_changed = [x for x in are_changed if x not in excludes]
+            final_added = [x for x in are_added if x not in excludes]
+            final_removed = [x for x in are_removed if x not in excludes]
         else:
             final_changed = are_changed
             final_added = are_added

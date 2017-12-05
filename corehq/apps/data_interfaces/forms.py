@@ -315,7 +315,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         if self.enhancements_enabled:
             self.allow_updates_without_closing()
 
-        _update_property_fields = filter(None, [
+        _update_property_fields = [_f for _f in [
             Field(
                 'update_property_name',
                 ng_model='update_property_name',
@@ -329,9 +329,9 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 'update_property_value',
                 ng_model='update_property_value',
             )
-        ])
+        ] if _f]
 
-        _basic_info_fields = filter(None, [
+        _basic_info_fields = [_f for _f in [
             Field(
                 'name',
                 ng_model='name',
@@ -375,7 +375,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 *_update_property_fields,
                 ng_show='showUpdateProperty()'
             )
-        ])
+        ] if _f]
 
         self.set_case_type_choices(self.initial.get('case_type'))
         self.helper.layout = Layout(
