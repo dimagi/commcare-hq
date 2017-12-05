@@ -282,8 +282,8 @@ def can_use_restore_as(request):
 @register.simple_tag
 def toggle_js_url(domain, username):
     return (
-        '{url}?username={username}'
-        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
+        u'{url}?username={username}'
+        u'&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
     ).format(
         url=reverse('toggles_js', args=[domain]),
         username=username,
