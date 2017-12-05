@@ -3,8 +3,7 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode_v4",
     "report_id": "beneficiary_register_v2",
