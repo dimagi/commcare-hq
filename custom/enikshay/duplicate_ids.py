@@ -12,6 +12,7 @@ import six
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CaseTransaction
 from dimagi.utils.couch.database import iter_docs
 
 from .const import VOUCHER_ID, ENIKSHAY_ID
@@ -41,14 +42,15 @@ def add_debug_info_to_cases(bad_cases, limit_debug_to):
 
 def _add_form_info_to_cases(bad_cases, limit_debug_to):
     for case in bad_cases[:limit_debug_to]:
-        form = CaseAccessorSQL.get_transactions(case['case_id'])[0].form
-        if form:
-            case['form_name'] = form.form_data.get('@name', 'NA')
-            form_device_number = form.form_data.get('serial_id', {}).get('outputs', {}).get('device_number')
-            case['device_number_in_form'] = form_device_number
-            case['form_device_id'] = form.metadata.deviceID
-            case['form_user_id'] = form.user_id
-            case['auth_user_id'] = form.auth_context.get('user_id')
+        form = CaseAccessorSQL.get_transactions_by_type(
+            case['case_id'], CaseTransaction.TYPE_CASE_CREATE,
+        )[0].form
+        case['form_name'] = form.form_data.get('@name', 'NA')
+        form_device_number = form.form_data.get('serial_id', {}).get('outputs', {}).get('device_number')
+        case['device_number_in_form'] = form_device_number
+        case['form_device_id'] = form.metadata.deviceID
+        case['form_user_id'] = form.user_id
+        case['auth_user_id'] = form.auth_context.get('user_id')
 
 
 def _add_user_info_to_cases(bad_cases):
