@@ -617,7 +617,7 @@ class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
             if item.get('value'):
                 unique_values[item['value']['_id']] = item['value']['value']
         value = sum(unique_values.values())
-        return (value, unique_values.keys()) if is_debug else value
+        return (value, list(unique_values)) if is_debug else value
 
     @classmethod
     def get_nice_name(cls):
@@ -951,7 +951,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
             if related_forms:
                 try:
                     value_list = computed.get(self.slug, {}).get('value', {})
-                    saved_form_ids = value_list.keys()
+                    saved_form_ids = list(value_list)
                     current_ids = set([f._id for f in related_forms])
                     is_update = len(current_ids.difference(saved_form_ids)) > 0
                     if is_update:

@@ -207,9 +207,9 @@ class ModelActionAudit(AuditEvent):
 
         Returns a tuple of field KEYS that lets you access the changed fields and also get the values from them programmatically later.
         """
-        changed_keys = self.changed.keys()
-        added_keys = self.added.keys()
-        removed_keys = self.removed.keys()
+        changed_keys = list(self.changed)
+        added_keys = list(self.added)
+        removed_keys = list(self.removed)
 
         if filters:
             are_changed = [x for x in filters if x in changed_keys]
@@ -331,7 +331,7 @@ class NavigationEventAudit(AuditEvent):
         try:
             audit = cls.create_audit(cls, user)
             audit.description += "View"
-            if len(request.GET.keys()) > 0:
+            if len(list(request.GET)) > 0:
                 audit.request_path = "%s?%s" % (
                     request.path, '&'.join(["%s=%s" % (x, request.GET[x]) for x in request.GET.keys()]))
             else:

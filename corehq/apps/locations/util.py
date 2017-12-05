@@ -188,7 +188,7 @@ class LocationExporter(object):
             model_data, uncategorized_data = \
                 self.data_model.get_model_and_uncategorized(loc.metadata)
 
-            uncategorized_keys.update(uncategorized_data.keys())
+            uncategorized_keys.update(uncategorized_data)
 
             loc_dict = {
                 'location_id': loc.location_id,

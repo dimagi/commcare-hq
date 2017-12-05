@@ -155,8 +155,8 @@ class FluffTest(TestCase):
         ]))
 
     def test_indicator_classes(self):
-        self.assertEquals(Indicators1._calculators.keys(), ['base0'])
-        self.assertEquals(Indicators2._calculators.keys(), ['base1', 'base2'])
+        self.assertEquals(list(Indicators1._calculators), ['base0'])
+        self.assertEquals(list(Indicators2._calculators), ['base1', 'base2'])
 
     def test_indicator_calculation(self):
         actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
@@ -197,7 +197,7 @@ class FluffTest(TestCase):
         calc.fluff = MockIndicators
         values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
                                                            dict(date="2012-09-24", x=3)])))
-        self.assertEquals(len(values.keys()), 8)
+        self.assertEquals(len(list(values)), 8)
         self.assertEquals(values['null_value'], [dict(date=None, value=2, group_by=None)])
         self.assertEquals(values['date_value'], [
             dict(date=date(2012, 9, 23), value=2, group_by=None),

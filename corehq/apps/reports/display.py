@@ -98,7 +98,7 @@ class _FormType(object):
                     if lang and menu.get(lang):
                         return menu.get(lang)
                     else:
-                        for lang in langs + menu.keys():
+                        for lang in langs + list(menu):
                             menu_name = menu.get(lang)
                             if menu_name is not None:
                                 return menu_name

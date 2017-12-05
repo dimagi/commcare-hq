@@ -324,7 +324,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     @property
     def direct_properties(self):
-        result = self.fields.keys()
+        result = list(self.fields)
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
         if not self.set_email_opt_out:
@@ -362,7 +362,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     @property
     def direct_properties(self):
         indirect_props = ['role']
-        return [k for k in self.fields.keys() if k not in indirect_props]
+        return [k for k in self.fields if k not in indirect_props]
 
 
 class RoleForm(forms.Form):

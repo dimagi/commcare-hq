@@ -651,7 +651,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
-        unrecognized_user_data_keys.update(user_dict['uncategorized_data'].keys())
+        unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
         user_groups_length = max(user_groups_length, len(group_names))
         max_location_length = max(max_location_length, len(user_dict["location_code"]))
 
@@ -699,7 +699,7 @@ def parse_groups(groups):
     )
     for group in sorted_groups:
         group_dicts.append(_make_group_dict(group))
-        group_data_keys.update(group.metadata.keys() if group.metadata else [])
+        group_data_keys.update(group.metadata if group.metadata else [])
 
     group_headers = ['id', 'name', 'case-sharing?', 'reporting?']
     group_headers.extend(build_data_headers(group_data_keys))

@@ -99,7 +99,7 @@ class CaseProcessingResult(object):
                 # only update the flags that are already in the database
                 flags_to_update = OwnershipCleanlinessFlag.objects.filter(
                     Q(domain=self.domain),
-                    Q(owner_id__in=flags_to_save.keys()),
+                    Q(owner_id__in=list(flags_to_save)),
                     Q(is_clean=True) | Q(hint__isnull=True)
                 )
                 for flag in flags_to_update:

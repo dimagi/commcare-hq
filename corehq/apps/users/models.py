@@ -235,7 +235,7 @@ class UserRolePresets(object):
     @classmethod
     def get_permissions(cls, preset):
         preset_map = cls.get_preset_map()
-        if preset not in preset_map.keys():
+        if preset not in preset_map:
             return None
         return preset_map[preset]()
 
@@ -975,11 +975,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def __repr__(self):
         # copied from jsonobject/base.py
         name = self.__class__.__name__
-        predefined_properties = set(self._properties_by_attr.keys())
+        predefined_properties = set(self._properties_by_attr)
         predefined_property_keys = set(self._properties_by_attr[p].name
                                        for p in predefined_properties)
-        dynamic_properties = (set(self._wrapped.keys())
-                              - predefined_property_keys)
+        dynamic_properties = set(self._wrapped) - predefined_property_keys
 
         # redact hashed password
         properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})

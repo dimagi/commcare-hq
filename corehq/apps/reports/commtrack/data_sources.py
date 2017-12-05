@@ -411,10 +411,10 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
 
         products = dict((r['product_id'], r['product_name']) for r in data)
-        product_ids = sorted(products.keys(), key=lambda e: products[e])
+        product_ids = sorted(products, key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = _location_map(by_supply_point.keys())
+        locs = _location_map(list(by_supply_point))
 
         for loc_id, subcases in six.iteritems(by_supply_point):
             if loc_id not in locs:

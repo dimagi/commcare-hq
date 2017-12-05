@@ -30,7 +30,7 @@ class FormQuestion(JsonObject):
     label = StringProperty()
     translations = DictProperty(exclude_if_none=True)
     tag = StringProperty()
-    type = StringProperty(choices=VELLUM_TYPES.keys())
+    type = StringProperty(choices=list(VELLUM_TYPES))
     value = StringProperty()
     repeat = StringProperty()
     group = StringProperty()

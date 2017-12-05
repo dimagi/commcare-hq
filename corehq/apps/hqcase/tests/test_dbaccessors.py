@@ -166,8 +166,8 @@ class DBAccessorsTest(TestCase):
             {prop
              for case in self.cases if case.domain == self.domain
              for action in case.actions
-             for prop in (action.updated_known_properties.keys() +
-                          action.updated_unknown_properties.keys())}
+             for prop in (list(action.updated_known_properties) +
+                          list(action.updated_unknown_properties))}
         )
 
 

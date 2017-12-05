@@ -185,6 +185,6 @@ def get_running_workers(timeout=10):
 
     worker_names = []
     for worker_info in result:
-        worker_names.extend(worker_info.keys())
+        worker_names.extend(list(worker_info))
 
     return worker_names
