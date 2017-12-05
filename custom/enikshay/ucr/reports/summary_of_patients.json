@@ -1,104 +1,303 @@
 {
-    "domains": [
-        "enikshay",
-        "enikshay-reports-qa",
-        "enikshay-performance-test"
+  "domains": [
+    "enikshay",
+    "enikshay-reports-qa",
+    "enikshay-performance-test"
+  ],
+  "server_environment": [
+    "enikshay",
+    "softlayer"
+  ],
+  "data_source_table": "episode_2b_v5",
+  "report_id": "summary_of_patients",
+  "config": {
+    "description": "",
+    "title": "Summary of Patients",
+    "sort_expression": [],
+    "visible": true,
+    "configured_charts": [],
+    "aggregation_columns": [],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "datetime",
+        "required": false,
+        "display": "Date of Diagnosis",
+        "field": "date_of_diagnosis",
+        "slug": "date_of_diagnosis",
+        "type": "date"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "slug": "village",
+        "field": "person_owner_id",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "show_full_path": true,
+          "order_by_hierarchy": true
+        },
+        "display": "Location"
+      },
+      {
+        "pre_value": 0,
+        "datatype": "integer",
+        "display": null,
+        "field": "is_enrolled_in_private",
+        "type": "pre",
+        "slug": "is_enrolled_in_private"
+      },
+      {
+        "pre_value": "invalid_episode",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "display": null,
+        "field": "close_reason",
+        "type": "pre",
+        "slug": "close_reason1"
+      },
+      {
+        "pre_value": "duplicate",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "display": null,
+        "field": "close_reason",
+        "type": "pre",
+        "slug": "close_reason2"
+      },
+      {
+        "pre_value": "invalid_registration",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "display": null,
+        "field": "close_reason",
+        "type": "pre",
+        "slug": "close_reason3"
+      },
+      {
+        "pre_value": "duplicate_reconciliation",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "display": null,
+        "field": "close_reason",
+        "type": "pre",
+        "slug": "close_reason4"
+      }
     ],
-    "server_environment": [
-        "enikshay",
-        "softlayer"
-    ],
-    "data_source_table": "episode",
-    "report_id": "summary_of_patients",
-    "config": {
-        "description": "",
-        "title": "Summary of Patients",
-        "sort_expression": [],
-        "visible": true,
-        "configured_charts": [],
-        "aggregation_columns": [],
-        "filters": [
-            {
-                "compare_as_string": false,
-                "datatype": "datetime",
-                "required": false,
-                "display": "Date of Diagnosis",
-                "field": "date_of_diagnosis",
-                "slug": "date_of_diagnosis",
-                "type": "date"
-            },
-            {
-                "compare_as_string": false,
-                "datatype": "string",
-                "type": "dynamic_choice_list",
-                "slug": "village",
-                "field": "person_owner_id",
-                "choice_provider": {
-                    "include_descendants": true,
-                    "type": "location",
-                    "show_full_path": true,
-                    "order_by_hierarchy": true
-                },
-                "display": "Location"
-            },
-            {
-                "pre_value": 0,
-                "datatype": "integer",
-                "display": null,
-                "field": "is_enrolled_in_private",
-                "type": "pre",
-                "slug": "is_enrolled_in_private"
-            }
-        ],
-        "columns": [
-            {
-                "display": "Total number of patients undergoing treatment",
-                "type": "field",
-                "field": "patient_on_ip_or_cp",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number of patients on IP",
-                "type": "field",
-                "field": "patient_on_ip",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number of patients on CP",
-                "type": "field",
-                "field": "patient_on_cp",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "No. of cases where Treatment outcome has been updated ",
-                "type": "field",
-                "field": "treatment_outcome_updated",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            }
-        ]
-    }
+    "columns": [
+      [
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "confirmed_tb",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Number of Confirmed DSTB Patients"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "confirmed_drtb",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Number of Confirmed DRTB Patients"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "dstb_patients_on_ip",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Number of DSTB Patients on IP"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "dstb_patients_on_cp",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Number of DSTB Patients on CP"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "dstb_patients_on_treatment",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Total Number of DSTB Patients on Treatment"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "drtb_patients_on_ip",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Number of DRTB Patients on IP"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "drtb_patients_on_cp",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Number of DRTB Patients on CP"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "drtb_patients_on_treatment",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Total Number of DRTB Patients on Treatment"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "treatment_outcome_for_sum",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Number of cases where treatment outcome has been updated"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_adult_25_39",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Daily Dose - Weight Category 25-39kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_adult_40_54",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Daily Dose - Weight Category 40-54kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_adult_55_69",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Daily Dose - Weight Category 55-69kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_adult_gt_70",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Daily Dose - Weight Category > 70kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_6_10",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Intermitent Dose - Weight Category 6-10kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_11_17",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Intermitent Dose - Weight Category 11-17kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_18_25",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Intermitent Dose - Weight Category 18-25kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_26_30",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Intermitent Dose - Weight Category 26-30kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_31_60",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Intermitent Dose - Weight Category 31-60kg"
+        },
+        {
+          "sortable": false,
+          "description": null,
+          "format": "default",
+          "transform": {},
+          "aggregation": "sum",
+          "field": "weight_band_above_60",
+          "calculate_total": false,
+          "type": "field",
+          "display": "Adult DSTB - Intermitent Dose - Weight Category Above 60kg"
+        }
+      ]
+    ]
+  }
 }
