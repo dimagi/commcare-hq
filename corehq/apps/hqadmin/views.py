@@ -530,7 +530,7 @@ class AdminRestoreView(TemplateView):
             )
             num_reports = len(reports)
             report_row_counts = {
-                report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+                report.attrib['id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
                 for report in reports
             }
         else:
