@@ -73,7 +73,7 @@ hqDefine('app_manager/js/app_manager_utils', function () {
         $(document).ajaxComplete(function(e, xhr, options) {
             var match = options.url.match(/\/apps\/(.*)/);
             if (match) {
-                suffix = match[1];  // first captured group
+                var suffix = match[1];  // first captured group
                 if (/^edit_form_attr/.test(suffix) ||
                     /^edit_module_attr/.test(suffix) ||
                     /^edit_module_detail_screens/.test(suffix) ||
