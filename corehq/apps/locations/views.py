@@ -900,7 +900,9 @@ class DownloadLocationStatusView(BaseLocationView):
 @locations_access_required
 @location_safe
 def child_locations_for_select2(request, domain):
+    from django.core.paginator import Paginator
     query = request.GET.get('name', '').lower()
+    page = int(request.GET.get('page', 1))
     user = request.couch_user
 
     base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
@@ -919,7 +921,12 @@ def child_locations_for_select2(request, domain):
     if locs != [] and query:
         locs = locs.filter(name__icontains=query)
 
-    return json_response(map(loc_to_payload, locs[:10]))
+    # 10 results per page
+    paginator = Paginator(locs, 10)
+    return json_response({
+        'results': map(loc_to_payload, paginator.page(page)),
+        'total_count': paginator.count,
+    })
 
 
 class DowngradeLocationsView(BaseDomainView):
