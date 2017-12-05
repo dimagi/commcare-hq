@@ -36,7 +36,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     SMSContent,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
 import six
 from six.moves import range
@@ -230,17 +230,14 @@ class ScheduleForm(Form):
         case_group_recipients = []
 
         for recipient_type, recipient_id in recipients:
+            recipient_types.add(recipient_type)
             if recipient_type == ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER:
-                recipient_types.add(recipient_type)
                 user_recipients.append(recipient_id)
             elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_USER_GROUP:
-                recipient_types.add(recipient_type)
                 user_group_recipients.append(recipient_id)
             elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION:
-                recipient_types.add(recipient_type)
                 user_organization_recipients.append(recipient_id)
             elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP:
-                recipient_types.add(recipient_type)
                 case_group_recipients.append(recipient_id)
 
         initial.update({
@@ -1066,6 +1063,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def __init__(self, domain, schedule, rule, *args, **kwargs):
         self.initial_rule = rule
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+        self.update_recipient_types_choices()
+
+    def update_recipient_types_choices(self):
+        new_choices = [
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, _("The Case")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, _("The Case's Owner")),
+        ]
+        new_choices.extend(self.fields['recipient_types'].choices)
+        self.fields['recipient_types'].choices = new_choices
 
     def compute_initial(self):
         result = super(ConditionalAlertScheduleForm, self).compute_initial()
@@ -1213,6 +1219,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def distill_scheduler_module_info(self):
         return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
+
+    def distill_recipients(self):
+        result = super(ConditionalAlertScheduleForm, self).distill_recipients()
+        recipient_types = self.cleaned_data['recipient_types']
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF in recipient_types:
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, None))
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER in recipient_types:
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None))
+
+        return result
 
     def create_rule_action(self, rule, schedule):
         fields = {
