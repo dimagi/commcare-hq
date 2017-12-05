@@ -51,7 +51,7 @@ def ucr_context_cache(vary_on=()):
     """
     def decorator(fn):
         assert 'context' in fn.func_code.co_varnames
-        assert isinstance(vary_on, (tuple, list))
+        assert isinstance(vary_on, tuple)
 
         @wraps(fn)
         def _inner(*args, **kwargs):
