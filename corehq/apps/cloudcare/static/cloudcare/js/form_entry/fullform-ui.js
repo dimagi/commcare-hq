@@ -281,7 +281,7 @@ function Form(json) {
         $(".help-text-trigger").click(function() {
             var container = $(event.target).closest(".caption");
             container.find("#help-text-modal").modal('show');
-        })
+        });
     }
 
     $.unsubscribe('session');
