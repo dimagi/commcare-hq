@@ -4,6 +4,7 @@ from collections import namedtuple
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
@@ -408,6 +409,18 @@ class SyncHistoryReport(DeploymentsReport):
             return min(self.MAX_LIMIT, int(self.request.GET.get('limit', self.DEFAULT_LIMIT)))
         except ValueError:
             return self.DEFAULT_LIMIT
+
+    @property
+    def view_response(self):
+        from django.contrib import messages
+        messages.success(
+            self.request,
+            _('Sync History Report is not being maintained anymore and will be removed soon. '
+              'Please report an issue if you have any concerns regarding this.')
+        )
+        return HttpResponseRedirect(
+            reverse(ApplicationStatusReport.dispatcher.name(), args=[],
+                    kwargs={'domain': self.domain, 'report_slug': ApplicationStatusReport.slug}))
 
 
 def _get_sort_key(date):
