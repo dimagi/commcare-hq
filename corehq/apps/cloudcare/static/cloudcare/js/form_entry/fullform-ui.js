@@ -282,7 +282,7 @@ function Form(json) {
             var container = $(event.target).closest(".caption");
             container.find("#help-text-modal").modal('show');
         });
-    }
+    };
 
     $.unsubscribe('session');
     $.subscribe('session.reconcile', function(e, response, element) {
