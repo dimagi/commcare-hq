@@ -151,7 +151,7 @@ commands = {
 def main():
     parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('host_url')
-    parser.add_argument('command', choices=commands.keys())
+    parser.add_argument('command', choices=list(commands))
     args = parser.parse_args()
     es = Elasticsearch([{'host': args.host_url, 'port': 9200}])
     commands[args.command](es)

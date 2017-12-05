@@ -407,8 +407,8 @@ def download_products(request, domain):
 
         product_model, product_uncategorized = _parse_custom_properties(product)
 
-        model_data.update(product_model.keys())
-        uncategorized_data.update(product_uncategorized.keys())
+        model_data.update(product_model)
+        uncategorized_data.update(product_uncategorized)
 
         product_dict.update(product_model)
         product_dict.update(product_uncategorized)

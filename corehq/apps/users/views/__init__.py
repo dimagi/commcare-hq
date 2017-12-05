@@ -597,7 +597,10 @@ def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
     role_data = json.loads(request.body)
-    role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
+    role_data = dict(
+        (p, role_data[p])
+        for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
+    )
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']

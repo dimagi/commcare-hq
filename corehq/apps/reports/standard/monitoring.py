@@ -295,7 +295,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     @property
     @memoized
     def user_ids(self):
-        return self.users_by_id.keys()
+        return list(self.users_by_id)
 
     @property
     @memoized

@@ -67,7 +67,7 @@ class IteratorJSONReader(object):
             if not isinstance(field, six.string_types):
                 raise HeaderValueError(u'Field %s is not a string.' % field)
             self.set_field_value(obj, field, value)
-        return obj.keys()
+        return list(obj)
 
     @classmethod
     def set_field_value(cls, obj, field, value):

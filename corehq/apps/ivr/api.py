@@ -345,7 +345,7 @@ def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
         phone_number = (verified_number.phone_number if verified_number
             else unverified_number)
         phone_number = strip_plus(str(phone_number))
-        prefixes = settings.IVR_BACKEND_MAP.keys()
+        prefixes = list(settings.IVR_BACKEND_MAP)
         prefixes = sorted(prefixes, key=lambda x: len(x), reverse=True)
         for prefix in prefixes:
             if phone_number.startswith(prefix):

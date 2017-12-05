@@ -97,7 +97,7 @@ class Format(object):
 
     }
 
-    VALID_FORMATS = FORMAT_DICT.keys()
+    VALID_FORMATS = list(FORMAT_DICT)
 
     def __init__(self, slug, mimetype, extension, download):
         self.slug = slug

@@ -130,7 +130,7 @@ class CallReport(BaseCommConnectLogReport):
             
             result.append(row)
 
-        all_session_ids = xforms_sessions.keys()
+        all_session_ids = list(xforms_sessions)
         session_submission_map = dict(
             SQLXFormsSession.objects.filter(session_id__in=all_session_ids).values_list(
                 'session_id', 'submission_id'

@@ -987,7 +987,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'is_trial_project': domain_is_on_trial(self.domain),
             'email_trial_message': EMAIL_TRIAL_MESSAGE % {'limit': TRIAL_MAX_EMAILS},
         }
-        for field_name in self.fields.keys():
+        for field_name in self.fields:
             current_values[field_name] = self[field_name].value()
         return current_values
 
@@ -1503,8 +1503,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @classmethod
     def compute_initial(cls, reminder_handler, available_languages):
         initial = {}
-        fields = cls.__dict__['base_fields'].keys()
-        for field in fields:
+        for field in cls.__dict__['base_fields']:
             try:
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
