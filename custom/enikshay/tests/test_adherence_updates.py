@@ -246,28 +246,6 @@ class TestAdherenceUpdater(TestCase):
                        for episode in self.case_updater._get_open_episode_cases(case_ids)]
         self.assertEqual(episode_ids, [self.episode_id])
 
-    def test_total_expected_doses_taken(self):
-
-        # adherence_schedule_start after purge
-        self.assert_update(
-            datetime.date(2016, 1, 15), datetime.date(2016, 1, 17), 'schedule1',
-            adherence_cases=[],
-            output={
-                'total_expected_doses_taken': 31,
-            },
-            date_today_in_india=datetime.date(2016, 2, 17),
-        )
-
-        # adherence_schedule_start before purge
-        self.assert_update(
-            datetime.date(2015, 1, 15), datetime.date(2016, 2, 15), 'schedule1',
-            adherence_cases=[],
-            output={
-                'total_expected_doses_taken': 2,
-            },
-            date_today_in_india=datetime.date(2016, 2, 17),
-        )
-
     def test_adherence_schedule_date_start_late(self):
         self.assert_update(
             datetime.date(2016, 1, 15), datetime.date(2016, 1, 17), 'schedule1',
