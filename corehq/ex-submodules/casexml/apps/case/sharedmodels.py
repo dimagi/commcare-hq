@@ -106,14 +106,14 @@ class IndexHoldingMixIn(object):
         return id in (i.identifier for i in self.indices)
     
     def get_index(self, id):
-        found = filter(lambda i: i.identifier == id, self.indices)
+        found = [i for i in self.indices if i.identifier == id]
         if found:
             assert(len(found) == 1)
             return found[0]
         return None
     
     def get_index_by_ref_id(self, doc_id):
-        found = filter(lambda i: i.referenced_id == doc_id, self.indices)
+        found = [i for i in self.indices if i.referenced_id == doc_id]
         if found:
             assert(len(found) == 1)
             return found[0]

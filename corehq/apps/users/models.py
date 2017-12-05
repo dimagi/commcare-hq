@@ -235,7 +235,7 @@ class UserRolePresets(object):
     @classmethod
     def get_permissions(cls, preset):
         preset_map = cls.get_preset_map()
-        if preset not in preset_map.keys():
+        if preset not in preset_map:
             return None
         return preset_map[preset]()
 
@@ -263,7 +263,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return filter(lambda x: x.is_archived == is_archived, all_roles)
+        return [x for x in all_roles if x.is_archived == is_archived]
 
     @classmethod
     def by_domain_and_name(cls, domain, name, is_archived=False):
@@ -274,7 +274,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return filter(lambda x: x.is_archived == is_archived, all_roles)
+        return [x for x in all_roles if x.is_archived == is_archived]
 
     @classmethod
     def get_or_create_with_permissions(cls, domain, permissions, name=None):
@@ -290,10 +290,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         def get_name():
             if name:
                 return name
-            preset_match = filter(
-                lambda x: x[1]() == permissions,
-                UserRolePresets.get_preset_map().items()
-            )
+            preset_match = [x for x in UserRolePresets.get_preset_map().items() if x[1]() == permissions]
             if preset_match:
                 return preset_match[0][0]
         role = cls(domain=domain, permissions=permissions, name=get_name())
@@ -311,17 +308,11 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def get_custom_roles_by_domain(cls, domain):
-        return filter(
-            lambda x: x.name not in UserRolePresets.INITIAL_ROLES,
-            cls.by_domain(domain)
-        )
+        return [x for x in cls.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
 
     @classmethod
     def reset_initial_roles_for_domain(cls, domain):
-        initial_roles = filter(
-            lambda x: x.name in UserRolePresets.INITIAL_ROLES,
-            cls.by_domain(domain)
-        )
+        initial_roles = [x for x in cls.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
         for role in initial_roles:
             role.permissions = UserRolePresets.get_permissions(role.name)
             role.save()
@@ -984,11 +975,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def __repr__(self):
         # copied from jsonobject/base.py
         name = self.__class__.__name__
-        predefined_properties = set(self._properties_by_attr.keys())
+        predefined_properties = set(self._properties_by_attr)
         predefined_property_keys = set(self._properties_by_attr[p].name
                                        for p in predefined_properties)
-        dynamic_properties = (set(self._wrapped.keys())
-                              - predefined_property_keys)
+        dynamic_properties = set(self._wrapped) - predefined_property_keys
 
         # redact hashed password
         properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
@@ -1509,7 +1499,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         models = self._get_viewable_report_slugs(domain)
         if slug or name:
-            return filter(None, [slug_name(m) for m in models])
+            return [_f for _f in [slug_name(m) for m in models] if _f]
 
         return models
 
@@ -2542,10 +2532,7 @@ class Invitation(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
-        return filter(
-            lambda domain_invitation: not domain_invitation.is_accepted,
-            get_docs_in_domain_by_class(domain, cls)
-        )
+        return [domain_invitation for domain_invitation in get_docs_in_domain_by_class(domain, cls) if not domain_invitation.is_accepted]
 
     @classmethod
     def by_email(cls, email, is_active=True):

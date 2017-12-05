@@ -25,7 +25,7 @@ class Command(BaseCommand):
         verbose = options['verbose']
         csv_mode = options['csv']
         if csv_mode:
-            print('shard_id, model_name, doc_count, valid/invalid')
+            print('shard_id,model_name,doc_count,valid/invalid')
         for database in get_db_aliases_for_partitioned_query():
             if verbose:
                 print('Checking database {}...'.format(database))

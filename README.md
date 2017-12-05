@@ -74,10 +74,9 @@ First create your `localsettings.py` file:
 
 
 Enter `localsettings.py` and do the following:
-    - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist
-and are writeable. If they do not exist, create them.
-    - You may also want to add the line `from dev_settings import *` at the top of the file, which
-      includes some useful default settings.
+- Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist and are writeable. If they do not exist, create them.
+- Find the `LOCAL_APPS` section and un-comment the line that starts with `'kombu.transport.django'`
+- You may also want to add the line `from dev_settings import *` at the top of the file, which includes some useful default settings.
 
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).

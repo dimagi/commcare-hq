@@ -112,6 +112,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from couchexport.models import SavedExportSchema, ExportSchema
@@ -609,7 +610,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
         if not self.has_view_permissions:
             if self.has_deid_view_permissions:
-                exports = filter(lambda x: x.is_safe, exports)
+                exports = [x for x in exports if x.is_safe]
             else:
                 raise Http404()
 
@@ -1134,10 +1135,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     def get_formatted_emailed_export(self, export):
 
-        emailed_exports = filter(
-            lambda x: x.config.index[-1] == export.get_id,
-            self.daily_emailed_exports
-        )
+        emailed_exports = [x for x in self.daily_emailed_exports if x.config.index[-1] == export.get_id]
 
         if not emailed_exports:
             return None
@@ -1180,7 +1178,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         try:
             saved_exports = self.get_saved_exports()
             if self.is_deid:
-                saved_exports = filter(lambda x: x.is_safe, saved_exports)
+                saved_exports = [x for x in saved_exports if x.is_safe]
             saved_exports = list(map(self.fmt_export_data, saved_exports))
         except Exception as e:
             return format_angular_error(
@@ -1353,7 +1351,7 @@ class DailySavedExportListView(BaseExportListView):
         if self.has_case_export_permissions:
             combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
-        return filter(lambda x: x.is_daily_saved_export and not x.export_format == "html", combined_exports)
+        return [x for x in combined_exports if x.is_daily_saved_export and not x.export_format == "html"]
 
     @property
     def daily_emailed_exports(self):
@@ -1518,7 +1516,7 @@ class DashboardFeedListView(DailySavedExportListView):
         if self.has_case_export_permissions:
             combined_exports.extend(get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
-        return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
+        return [x for x in combined_exports if x.is_daily_saved_export and x.export_format == "html"]
 
 
 @location_safe
@@ -1632,7 +1630,7 @@ class FormExportListView(BaseExportListView):
         exports = get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_daily_saved_exports_ui(self.domain):
             # New exports display daily saved exports in their own view
-            exports = filter(lambda x: not x.is_daily_saved_export, exports)
+            exports = [x for x in exports if not x.is_daily_saved_export]
         return exports
 
     @property
@@ -1787,7 +1785,7 @@ class CaseExportListView(BaseExportListView):
     def get_saved_exports(self):
         exports = get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_daily_saved_exports_ui(self.domain):
-            exports = filter(lambda x: not x.is_daily_saved_export, exports)
+            exports = [x for x in exports if not x.is_daily_saved_export]
         return exports
 
     @property
@@ -2484,7 +2482,11 @@ def can_download_daily_saved_export(export, domain, couch_user):
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
     with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        try:
+            export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        except ResourceNotFound:
+            raise Http404(_(u"Export not found"))
+
         assert domain == export_instance.domain
 
         if export_instance.export_format == "html":
@@ -2499,6 +2501,15 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
         if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
             raise Http404
+
+        if export_instance.export_format == "html":
+            message = "Download Excel Dashboard"
+        else:
+            message = "Download Saved Export"
+        track_workflow(req.couch_user.username, message, properties={
+            'domain': domain,
+            'is_dimagi': req.couch_user.is_dimagi
+        })
 
         if should_update_export(export_instance.last_accessed):
             try:

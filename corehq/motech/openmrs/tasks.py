@@ -152,6 +152,32 @@ def import_patients_to_domain(domain_name, force=False):
     """
     Iterates OpenmrsImporters of a domain, and imports patients
 
+    Who owns the imported cases?
+
+    If `importer.owner_id` is set, then the server will be queried
+    once. All patients, regardless of their location, will be assigned
+    to the mobile worker whose ID is `importer.owner_id`.
+
+    If `importer.location_type_name` is set, then check whether the
+    OpenmrsImporter's location is set with `importer.location_id`.
+
+    If `importer.location_id` is given, then the server will be queried
+    for each location among its descendants whose type is
+    `importer.location_type_name`. The request's query parameters will
+    include that descendant location's OpenMRS UUID. Imported cases
+    will be owned by the first mobile worker in that location.
+
+    If `importer.location_id` is given, then the server will be queried
+    for each location in the project space whose type is
+    `importer.location_type_name`. As when `importer.location_id` is
+    specified, the request's query parameters will include that
+    location's OpenMRS UUID, and imported cases will be owned by the
+    first mobile worker in that location.
+
+    ..NOTE:: As you can see from the description above, if
+             `importer.owner_id` is set then `importer.location_id` is
+             not used.
+
     :param domain_name: The name of the domain
     :param force: Import regardless of the configured import frequency / today's date
     """
@@ -174,7 +200,11 @@ def import_patients_to_domain(domain_name, force=False):
                         location_type=importer.location_type_name, domain=domain_name)
                 )
                 continue
-            locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type).all()
+            if importer.location_id:
+                location = SQLLocation.objects.filter(domain=domain_name).get(importer.location_id)
+                locations = location.get_descendants.filter(location_type=location_type)
+            else:
+                locations = SQLLocation.objects.filter(domain=domain_name, location_type=location_type)
             for location in locations:
                 # Assign cases to the first user in the location, not to the location itself
                 try:

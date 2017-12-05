@@ -65,6 +65,9 @@ class OpenmrsImporterForm(forms.Form):
                                  help_text=_('e.g. "http://www.example.com/openmrs"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
+    location_id = forms.CharField(label=_('Location ID'), required=False,
+                                  help_text='If a project space has multiple OpenMRS servers to import from, for '
+                                            'which CommCare location is this OpenMRS server authoritative?')
     import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
                                          help_text=_('How often should cases be imported?'), required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
@@ -85,45 +88,6 @@ class OpenmrsImporterForm(forms.Form):
                                                'name (e.g. "givenName familyName")'))
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
-
-    def __init__(self, *args, **kwargs):
-        super(OpenmrsImporterForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Edit OpenMRS Importer'),
-                crispy.Field('server_url'),
-                crispy.Field('username'),
-                crispy.Field('password'),
-                crispy.Field('import_frequency'),
-                crispy.Field('log_level'),
-
-                crispy.Field('report_uuid'),
-                crispy.Field('report_params'),
-                crispy.Field('case_type'),
-                crispy.Field('owner_id'),
-                crispy.Field('location_type_name'),
-                crispy.Field('external_id_column'),
-                crispy.Field('name_columns'),
-                crispy.Field('column_map'),
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update OpenMRS Importer"),
-                    type="submit",
-                    css_class='btn-primary',
-                ),
-                StrictButton(
-                    _('Import Now'),
-                    type='button',
-                    id='btn-import-now',
-                    css_class='btn-default',
-                ),
-            ),
-        )
 
     def clean(self):
         cleaned_data = super(OpenmrsImporterForm, self).clean()
@@ -147,6 +111,7 @@ class OpenmrsImporterForm(forms.Form):
             if self.cleaned_data['password']:
                 # Don't save it if it hasn't been changed.
                 importer.password = b64_aes_encrypt(self.cleaned_data['password'])
+            importer.location_id = self.cleaned_data['location_id']
             importer.import_frequency = self.cleaned_data['import_frequency']
             importer.log_level = self.cleaned_data['log_level']
 

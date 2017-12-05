@@ -558,7 +558,7 @@ class HQMediaMixin(Document):
                           for audio in item.all_audio_paths()
                           if audio])
 
-        for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
+        for m, module in enumerate([m for m in self.get_modules() if m.uses_media()]):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
@@ -725,7 +725,7 @@ class HQMediaMixin(Document):
         map_changed = False
         if self.check_media_state()['has_form_errors']:
             return
-        paths = self.multimedia_map.keys() if self.multimedia_map else []
+        paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths | self.logo_paths
         for path in paths:
             if path not in permitted_paths:

@@ -170,7 +170,7 @@ def mod(value, arg):
 def listsort(value):
     if isinstance(value, dict):
         new_dict = OrderedDict()
-        key_list = value.keys()
+        key_list = list(value)
         key_list.sort()
         for key in key_list:
             new_dict[key] = value[key]
@@ -282,8 +282,8 @@ def can_use_restore_as(request):
 @register.simple_tag
 def toggle_js_url(domain, username):
     return (
-        '{url}?username={username}'
-        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
+        u'{url}?username={username}'
+        u'&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
     ).format(
         url=reverse('toggles_js', args=[domain]),
         username=username,
@@ -741,3 +741,16 @@ class RequireJSMainNode(template.Node):
 @register.inclusion_tag('hqwebapp/basic_errors.html')
 def bootstrap_form_errors(form):
     return {'form': form}
+
+
+@register.inclusion_tag('hqwebapp/includes/core_libraries.html', takes_context=True)
+def javascript_libraries(context, **kwargs):
+    return {
+        'request': getattr(context, 'request', None),
+        'underscore': kwargs.pop('underscore', False),
+        'jquery_ui': kwargs.pop('jquery_ui', False),
+        'ko': kwargs.pop('ko', False),
+        'analytics': kwargs.pop('analytics', False),
+        'hq': kwargs.pop('hq', False),
+        'helpers': kwargs.pop('helpers', False),
+    }

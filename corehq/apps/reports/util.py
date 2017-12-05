@@ -98,7 +98,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         return None
 
     user_ids = user_ids or []
-    user_ids = filter(None, user_ids)  # remove empty strings if any
+    user_ids = [_f for _f in user_ids if _f]  # remove empty strings if any
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 

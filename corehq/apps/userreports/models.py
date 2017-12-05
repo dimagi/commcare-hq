@@ -706,7 +706,7 @@ class StaticReportConfiguration(JsonObject):
         metadata = mapping.get(config_id, None)
         if not metadata:
             raise BadSpecError(_('The report configuration referenced by this report could '
-                                 'not be found: %(report_id)S') % {'report_id': config_id})
+                                 'not be found: %(report_id)s') % {'report_id': config_id})
 
         config = cls._get_from_metadata(metadata)
         if domain and config.domain != domain:

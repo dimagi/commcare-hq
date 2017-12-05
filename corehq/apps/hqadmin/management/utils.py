@@ -26,7 +26,7 @@ def get_deploy_email_message_body(environment, user, compare_url):
     else:
         pr_numbers = _get_pr_numbers(last_deploy, current_deploy)
         pool = Pool(5)
-        pr_infos = filter(None, pool.map(_get_pr_info, pr_numbers))
+        pr_infos = [_f for _f in pool.map(_get_pr_info, pr_numbers) if _f]
 
     prs_by_label = _get_prs_by_label(pr_infos)
 
@@ -44,10 +44,7 @@ def _get_pr_numbers(last_deploy, current_deploy):
     repo = GitHub().repository('dimagi', 'commcare-hq')
     comparison = repo.compare_commits(last_deploy, current_deploy)
 
-    pr_numbers = [int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1)) for repo_commit in filter(
-            lambda repo_commit: repo_commit.commit.message.startswith('Merge pull request'),
-            comparison.commits
-        )]
+    pr_numbers = [int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1)) for repo_commit in [repo_commit for repo_commit in comparison.commits if repo_commit.commit.message.startswith('Merge pull request')]]
     return pr_numbers
 
 

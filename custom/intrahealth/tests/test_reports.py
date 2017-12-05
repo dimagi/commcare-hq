@@ -8,6 +8,7 @@ from custom.intrahealth.sqldata import DispDesProducts
 from custom.intrahealth.tests.test_fluffs import DATAPATH
 from custom.intrahealth.tests.test_utils import IntraHealthTestCase, TEST_DOMAIN
 from django.core import management
+import xml.etree.ElementTree as ElementTree
 
 from dimagi.utils.parsing import json_format_date
 from testapps.test_pillowtop.utils import real_pillow_settings
@@ -20,6 +21,9 @@ class TestReports(IntraHealthTestCase):
         super(TestReports, cls).setUpClass()
         with open(os.path.join(DATAPATH, 'taux.xml')) as f:
             xml = f.read()
+            xml_obj = ElementTree.fromstring(xml)
+            xml_obj[2][4].text = cls.mobile_worker.get_id
+            xml = ElementTree.tostring(xml_obj)
             cls.taux = submit_form_locally(
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True

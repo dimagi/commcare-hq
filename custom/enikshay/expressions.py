@@ -10,10 +10,20 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.enikshay.case_utils import get_open_referral_case_from_person, get_latest_trail_case_from_person, \
-    get_open_episode_case_from_person
+    get_open_episode_case_from_person, get_most_recent_episode_case_from_person, \
+    get_most_recent_referral_case_from_person
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.dates import force_to_datetime
+
+
+def _get_case_forms(domain, case_id, context):
+    cache_key = ('_get_case_forms', case_id)
+    if context.get_cache_value(cache_key) is not None:
+        return context.get_cache_value(cache_key)
+    xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+    context.set_cache_value(cache_key, xforms)
+    return xforms
 
 
 class FirstCaseFormWithXmlns(JsonObject):
@@ -40,12 +50,7 @@ class FirstCaseFormWithXmlns(JsonObject):
         domain = context.root_doc['domain']
 
         xmlns = [self.xmlns] if isinstance(self.xmlns, six.string_types) else self.xmlns
-
-        cache_key = (self.__class__.__name__, case_id, hashlib.md5(','.join(xmlns)).hexdigest(), self.reverse)
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
-
-        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        xforms = _get_case_forms(domain, case_id, context)
         xforms = sorted(
             [form for form in xforms if form.xmlns in xmlns and form.domain == domain],
             key=lambda x: x.received_on
@@ -55,8 +60,6 @@ class FirstCaseFormWithXmlns(JsonObject):
         else:
             index = -1 if self.reverse else 0
             form = xforms[index].to_json()
-
-        context.set_cache_value(cache_key, form)
         return form
 
 
@@ -91,14 +94,8 @@ class CountCaseFormsWithXmlns(JsonObject):
         domain = context.root_doc['domain']
 
         xmlns = [self.xmlns] if isinstance(self.xmlns, six.string_types) else self.xmlns
-
-        cache_key = (self.__class__.__name__, case_id, hashlib.md5(','.join(xmlns)).hexdigest())
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
-
-        xforms = FormProcessorInterface(domain).get_case_forms(case_id)
+        xforms = _get_case_forms(domain, case_id, context)
         count = len([form for form in xforms if form.xmlns in xmlns and form.domain == domain])
-        context.set_cache_value(cache_key, count)
         return count
 
 
@@ -356,5 +353,89 @@ def key_populations_expression(spec, context):
     wrapped = KeyPopulationsExpression.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.key_populations_expression, context)
+    )
+    return wrapped
+
+
+class MostRecentReferralCaseFromPerson(JsonObject):
+    """
+    An expression that returns the the most recent Referral Case from Person which pass the filters:
+       -> referral_status != 'rejected' and 'referral_closed_reason' != 'duplicate_referral_reconciliation'
+    """
+    type = TypeProperty('enikshay_most_recent_referral_from_person')
+    person_id_expression = DefaultProperty(required=True)
+
+    def configure(self, person_id_expression):
+        self._person_id_expression = person_id_expression
+
+    def __call__(self, item, context=None):
+        person_id = self._person_id_expression(item, context)
+        domain = context.root_doc['domain']
+
+        cache_key = (
+            MostRecentEpisodeCaseFromPerson.__name__,
+            "enikshay_most_recent_referral_from_person",
+            person_id
+        )
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+
+        if not person_id:
+            return None
+        try:
+            referral = get_most_recent_referral_case_from_person(domain, person_id)
+        except ENikshayCaseNotFound:
+            referral = None
+        context.set_cache_value(cache_key, referral)
+        if referral:
+            return referral.to_json()
+        return None
+
+
+def most_recent_referral_expression(spec, context):
+    wrapped = MostRecentReferralCaseFromPerson.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
+    )
+    return wrapped
+
+
+class MostRecentEpisodeCaseFromPerson(JsonObject):
+    """
+    An expression that returns the the most recent Referral Case from Person which pass the filters:
+       -> referral_status != 'rejected' and 'referral_closed_reason' != 'duplicate_referral_reconciliation'
+    """
+    type = TypeProperty('enikshay_most_recent_episode_from_person')
+    person_id_expression = DefaultProperty(required=True)
+
+    def configure(self, person_id_expression):
+        self._person_id_expression = person_id_expression
+
+    def __call__(self, item, context=None):
+        person_id = self._person_id_expression(item, context)
+        cache_key = (
+            MostRecentEpisodeCaseFromPerson.__name__,
+            "enikshay_most_recent_episode_from_person",
+            person_id
+        )
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+        domain = context.root_doc['domain']
+        if not person_id:
+            return None
+        try:
+            episode = get_most_recent_episode_case_from_person(domain, person_id)
+        except ENikshayCaseNotFound:
+            episode = None
+        context.set_cache_value(cache_key, episode)
+        if episode:
+            return episode.to_json()
+        return None
+
+
+def most_recent_episode_expression(spec, context):
+    wrapped = MostRecentEpisodeCaseFromPerson.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
     )
     return wrapped

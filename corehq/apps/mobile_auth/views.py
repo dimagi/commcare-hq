@@ -51,7 +51,7 @@ class FetchKeyRecords(object):
         current_key = self.get_or_create_current_record()
         if old_key and current_key.uuid == old_key.uuid:
             current_key = None
-        return filter(None, [old_key, current_key])
+        return [_f for _f in [old_key, current_key] if _f]
 
     def get_payload(self):
         return get_mobile_auth_payload(

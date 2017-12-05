@@ -283,7 +283,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         field = self.id_field
         if isinstance(field, dict):
             query = query.annotate(**field)
-            field = field.keys()[0]
+            field = list(field)[0]
         query = query.values(self.primary_key_field_name, field)
         for row in query.order_by(self.primary_key_field_name)[:limit]:
             yield DocIds(row[field], row[self.primary_key_field_name])
@@ -879,7 +879,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         cases_by_id = {case.case_id: case for case in cases}
         indices = list(CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-            [domain, cases_by_id.keys()])
+            [domain, list(cases_by_id)])
         )
         _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases

@@ -152,6 +152,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 import six
+from six.moves import filter
 from six.moves import range
 from six.moves import map
 
@@ -228,13 +229,6 @@ def _rename_key(dct, old, new):
             dct["%s_backup_%s" % (new, hex(random.getrandbits(32))[2:-1])] = dct[new]
         dct[new] = dct[old]
         del dct[old]
-
-
-@memoized
-def load_app_template(slug):
-    path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'template_apps')
-    with open(os.path.join(path, slug + '.json')) as f:
-        return json.load(f)
 
 
 @memoized

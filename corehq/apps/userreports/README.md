@@ -802,7 +802,8 @@ Operator   | Description  | Value type | Example
 `eq`       | is equal     | constant   | `doc["age"] == 21`
 `not_eq`   | is not equal | constant   | `doc["age"] != 21`
 `in`       | single value is in a list | list | `doc["color"] in ["red", "blue"]`
-`in_multi` | multiselect value is in a list | list | `selected(doc["color"], ["red", "blue"])`
+`in_multi` | a value is in a multi select | list | `selected(doc["color"], "red")`
+`any_in_multi` | one of a list of values in in a multiselect | list | `selected(doc["color"], ["red", "blue"])`
 `lt`       | is less than | number | `doc["age"] < 21`
 `lte`      | is less than or equal | number | `doc["age"] <= 21`
 `gt`       | is greater than | number | `doc["age"] > 21`

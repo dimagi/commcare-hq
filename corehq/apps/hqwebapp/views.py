@@ -631,8 +631,8 @@ class BugReportView(View):
             ).format(
                 software_plan=software_plan,
                 self_started=domain_object.internal.self_started,
-                feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
-                feature_previews=feature_previews.previews_dict(domain).keys(),
+                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
+                feature_previews=list(feature_previews.previews_dict(domain)),
                 scale_backend=should_use_sql_backend(domain),
                 has_handoff_info=bool(domain_object.internal.partner_contact),
                 internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),

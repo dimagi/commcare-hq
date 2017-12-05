@@ -109,28 +109,8 @@
         <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
         {% endif %}
 
-        <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script src="{% static 'underscore/underscore.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        {% javascript_libraries underscore=True jquery_ui=True ko=True hq=True analytics=True %}
         <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-
-        {% compress js %}
-        <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
-        <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
-        {% endcompress %}
 
         {% compress js %}
         <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
@@ -157,7 +137,6 @@
         {% include 'formplayer/progress.html' %}
 
         {# javascript #}
-        {% include "hqwebapp/includes/ko.html" %}
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
 
@@ -172,10 +151,6 @@
             {# do not override this block, use analytics_ab_test template tag to populate #}
         {% endblock %}
         </div>
-
-        {% include 'analytics/analytics_js.html' %}
-
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
 
         {% block js %}{% endblock %}
         {% block js-inline %}{% endblock %}

@@ -104,15 +104,30 @@ def allowed_report_builder_reports(request):
         return 5
 
 
-def number_of_report_builder_reports(domain):
+def _get_existing_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
     existing_reports = ReportConfiguration.by_domain(domain)
-    builder_reports = [
+    return [
         report for report in existing_reports
-        if report.report_meta.created_by_builder and not report.title.startswith(TEMP_REPORT_PREFIX)
+        if not report.title.startswith(TEMP_REPORT_PREFIX)
+    ]
+
+
+def number_of_report_builder_reports(domain):
+    builder_reports = [
+        report for report in _get_existing_reports(domain)
+        if report.report_meta.created_by_builder
     ]
     return len(builder_reports)
+
+
+def number_of_ucr_reports(domain):
+    ucr_reports = [
+        report for report in _get_existing_reports(domain)
+        if not report.report_meta.created_by_builder
+    ]
+    return len(ucr_reports)
 
 
 def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=False):

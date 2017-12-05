@@ -50,7 +50,7 @@ def get_cloudcare_app():
     app = api.get_cloudcare_app(PACT_DOMAIN, PACT_CLOUD_APPNAME)
     app_id = app['_id']
 
-    pact_cloudcare = filter(lambda x: x['name']['en'] == PACT_CLOUDCARE_MODULE, app['modules'])
+    pact_cloudcare = [x for x in app['modules'] if x['name']['en'] == PACT_CLOUDCARE_MODULE]
     forms = pact_cloudcare[0]['forms']
     ret = dict((f['name']['en'], ix) for (ix, f) in enumerate(forms))
 

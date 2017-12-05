@@ -25,6 +25,7 @@ from corehq.apps.groups.models import Group
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
+from six.moves import filter
 
 
 LOCATION_KEYWORD = 'LOCATION'
@@ -534,7 +535,7 @@ def get_case_by_external_id(domain, external_id, user):
 
     def filter_fcn(case):
         return not case.closed and user_can_access_case(user, case)
-    cases = filter(filter_fcn, cases)
+    cases = list(filter(filter_fcn, cases))
 
     if len(cases) == 1:
         return (cases[0], 1)

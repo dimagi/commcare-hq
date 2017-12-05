@@ -659,14 +659,11 @@ class Agency_Jul19(models.Model):
 
     @property
     def name(self):
-        return ' '.join(filter(
-            None,
-            [
+        return ' '.join([_f for _f in [
                 self._primary_user_detail.firstName,
                 self._primary_user_detail.middleName,
                 self._primary_user_detail.lastName,
-            ]
-        ))
+            ] if _f])
 
     @property
     @memoized

@@ -153,7 +153,7 @@ class CaseSearchPillowTest(TestCase):
         self.assertEqual(case.case_id, case_doc['_id'])
         self.assertEqual(case.name, case_doc['name'])
         # Confirm change contains case_properties
-        self.assertItemsEqual(case_doc['case_properties'][0].keys(), ['key', 'value'])
+        self.assertItemsEqual(list(case_doc['case_properties'][0]), ['key', 'value'])
         for case_property in case_doc['case_properties']:
             key = case_property['key']
             self.assertEqual(case.get_case_property(key), case_property['value'])

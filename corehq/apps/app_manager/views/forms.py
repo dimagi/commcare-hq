@@ -625,7 +625,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             star = '* ' if auto_link else '  '
             return u"{}{} -> {}".format(star, module_name, form_name)
 
-        modules = filter(lambda m: m.case_type == module.case_type, all_modules)
+        modules = [m for m in all_modules if m.case_type == module.case_type]
         if getattr(module, 'root_module_id', None) and module.root_module not in modules:
             modules.append(module.root_module)
         auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))

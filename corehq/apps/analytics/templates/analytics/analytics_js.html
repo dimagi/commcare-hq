@@ -1,11 +1,14 @@
 {% load hq_shared_tags %}
-{# NOTE: analytix is purposely the dir name because some adblockers regex* against *analytics* #}
-<script src="{% static 'analytix/js/initial.js' %}"></script>
-<script src="{% static 'analytix/js/utils.js' %}"></script>
-<script src="{% static 'analytix/js/logging.js' %}"></script>
-<script src="{% static 'analytix/js/google.js' %}"></script>
-{# NOTE: kissmetrix is the filename because some adblockers regex *kissmetrics* #}
-<script src="{% static 'analytix/js/kissmetrix.js' %}"></script>
-<script src="{% static 'analytix/js/hubspot.js' %}"></script>
-<script src="{% static 'analytix/js/drift.js' %}"></script>
+{% load compress %}
 
+{% compress js %}
+    {# analytix is purposely the dir name because some adblockers regex* against *analytics* #}
+    <script src="{% static 'analytix/js/initial.js' %}"></script>
+    <script src="{% static 'analytix/js/utils.js' %}"></script>
+    <script src="{% static 'analytix/js/logging.js' %}"></script>
+    <script src="{% static 'analytix/js/google.js' %}"></script>
+    {# kissmetrix is the filename because some adblockers regex *kissmetrics* #}
+    <script src="{% static 'analytix/js/kissmetrix.js' %}"></script>
+    <script src="{% static 'analytix/js/hubspot.js' %}"></script>
+    <script src="{% static 'analytix/js/drift.js' %}"></script>
+{% endcompress %}

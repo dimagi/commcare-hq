@@ -4,10 +4,7 @@
     <head>
         <title>Doc {{ doc_id }} {{ es_info.status }}</title>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-        {% compress js %}
-            <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-            <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        {% endcompress %}
+        {% javascript_libraries %}
     </head>
     <body>
         <div class="container-fluid">

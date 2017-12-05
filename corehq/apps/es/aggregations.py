@@ -374,7 +374,7 @@ class TopHitsAggregation(Aggregation):
 class FilterResult(AggregationResult):
 
     def __getattr__(self, attr):
-        sub_aggregation = list(filter(lambda a: a.name == attr, self._aggregations))[0]
+        sub_aggregation = list([a for a in self._aggregations if a.name == attr])[0]
         if sub_aggregation:
             return sub_aggregation.parse_result(self.result)
 

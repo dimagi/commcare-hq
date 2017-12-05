@@ -1,0 +1,47 @@
+{% load i18n %}
+
+<script type="text/html" id="importer_template">
+    <fieldset>
+        <legend>{% trans "OpenMRS Importer" %}</legend>
+
+        <div class="col-sm-8">&nbsp;</div>
+        <div class="col-sm-4">
+            <button type="button"
+                    class="btn btn-danger"
+                    data-bind="click: $root.removeOpenmrsImporter">{% trans "Remove" %}</button>
+        </div>
+
+        {% for field in form %}
+        <div class="form-group">
+            <label class="control-label col-sm-3 col-md-2{% if field.field.required %} requiredField{% endif %}">
+                {{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+            </label>
+            <div class="controls col-sm-9 col-md-8 col-lg-6">
+                {% if field.field.widget.input_type == 'select' %}
+                <select class="select form-control"
+                        data-bind="options: {{ field.html_name }}_options,
+                                   optionsText: 'text',
+                                   optionsValue: 'value',
+                                   value: {{ field.html_name }}"></select>
+                {% elif 'textarea' in field.field.widget.template_name %}
+                <textarea name="form_configs"
+                          {% if field.field.required %}required=""{% endif %}
+                          rows="10"
+                          cols="40"
+                          class="jsonwidget form-control"
+                          data-bind="value: {{ field.html_name }}"></textarea>
+                {% else %}
+                <input class="textinput textInput form-control"
+                       {% if field.field.required %}required=""{% endif %}
+                       {% if field.field.widget.input_type == 'password' %}type="password"{% else %}type="text"{% endif %}
+                       data-bind="value: {{ field.html_name }}" />
+                {% endif %}
+                {% if field.help_text %}
+                <p class="help-block">{{ field.help_text|safe }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+    </fieldset>
+</script>

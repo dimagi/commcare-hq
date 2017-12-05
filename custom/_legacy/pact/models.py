@@ -290,9 +290,9 @@ class PactPatientCase(CommCareCase):
         if PACT_SCHEDULES_NAMESPACE in computed:
             schedule_arr = self.get_schedules()
 
-            past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)
-            current = filter(lambda x: x.is_current, schedule_arr)
-            future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
+            past = [x for x in schedule_arr if x.ended is not None and x.ended < datetime.utcnow()]
+            current = [x for x in schedule_arr if x.is_current]
+            future = [x for x in schedule_arr if x.deprecated and x.started > datetime.utcnow()]
             past.reverse()
 
             ret['current_schedule'] = current[0]

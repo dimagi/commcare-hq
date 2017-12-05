@@ -64,6 +64,7 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
+from six.moves import filter
 from six.moves import map
 
 

@@ -513,8 +513,8 @@ class HOPECaseResource(CommCareCaseResource):
             bundle.data['case_properties'] = bundle.data['properties']
             del bundle.data['properties']
 
-        mother_lists = filter(lambda x: x.obj.type == CC_BIHAR_PREGNANCY, data['objects'])
-        child_lists = filter(lambda x: x.obj.type == CC_BIHAR_NEWBORN, data['objects'])
+        mother_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_PREGNANCY]
+        child_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_NEWBORN]
 
         return {'objects': {
             'mother_lists': mother_lists,

@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -27,6 +27,7 @@ from corehq.messaging.scheduling.forms import (
     BroadcastForm,
     ConditionalAlertForm,
     ConditionalAlertCriteriaForm,
+    ConditionalAlertScheduleForm,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -243,12 +244,47 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     urlname = 'conditional_alert_list'
     page_title = _('Schedule a Conditional Message')
 
+    LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
+
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(Permissions.edit_data))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
+
+    def get_conditional_alerts_queryset(self):
+        return (
+            AutomaticUpdateRule
+            .objects
+            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+            .order_by('case_type', 'name')
+        )
+
+    def get_conditional_alerts_ajax_response(self):
+        query = self.get_conditional_alerts_queryset()
+        total_records = query.count()
+
+        rules = query[self.display_start:self.display_start + self.display_length]
+        data = []
+        for rule in rules:
+            data.append([
+                '< delete placeholder >',
+                rule.name,
+                rule.case_type,
+                rule.active,
+                '< action placeholder >',
+                rule.pk,
+            ])
+
+        return self.datatables_ajax_response(data, total_records)
+
+    def get(self, request, *args, **kwargs):
+        action = request.GET.get('action')
+        if action == self.LIST_CONDITIONAL_ALERTS:
+            return self.get_conditional_alerts_ajax_response()
+
+        return super(ConditionalAlertListView, self).get(*args, **kwargs)
 
 
 class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
@@ -280,10 +316,22 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return {
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
+            'schedule_form': self.schedule_form,
         }
 
+    @cached_property
+    def schedule_form(self):
+        if self.request.method == 'POST':
+            return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.request.POST)
+
+        return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule)
+
     @property
-    def initial_rule(self):
+    def schedule(self):
+        return None
+
+    @property
+    def rule(self):
         return None
 
     @cached_property
@@ -300,14 +348,14 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @cached_property
     def basic_info_form(self):
         if self.request.method == 'POST':
-            return ConditionalAlertForm(self.domain, self.request.POST)
+            return ConditionalAlertForm(self.domain, self.rule, self.request.POST)
 
-        return ConditionalAlertForm(self.domain)
+        return ConditionalAlertForm(self.domain, self.rule)
 
     @cached_property
     def criteria_form(self):
         kwargs = {
-            'rule': self.initial_rule,
+            'rule': self.rule,
             'is_system_admin': self.is_system_admin,
         }
 
@@ -317,23 +365,27 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         return ConditionalAlertCriteriaForm(self.domain, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+
         basic_info_form_valid = self.basic_info_form.is_valid()
         criteria_form_valid = self.criteria_form.is_valid()
+        schedule_form_valid = self.schedule_form.is_valid()
 
         if self.read_only_mode:
             # Don't allow making changes to rules that have custom
             # criteria/actions unless the user has permission to
             return HttpResponseBadRequest()
 
-        if basic_info_form_valid and criteria_form_valid:
+        if basic_info_form_valid and criteria_form_valid and schedule_form_valid:
             if not self.is_system_admin and self.criteria_form.requires_system_admin_to_save:
                 # Don't allow adding custom criteria/actions to rules
                 # unless the user has permission to
                 return HttpResponseBadRequest()
 
             with transaction.atomic():
-                if self.initial_rule:
-                    rule = self.initial_rule
+                if self.rule:
+                    rule = self.rule
                 else:
                     rule = AutomaticUpdateRule(
                         domain=self.domain,
@@ -344,6 +396,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
                 rule.name = self.basic_info_form.cleaned_data['name']
                 self.criteria_form.save_criteria(rule)
+                self.schedule_form.save_rule_action_and_schedule(rule)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
@@ -352,3 +405,34 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 class EditConditionalAlertView(CreateConditionalAlertView):
     urlname = 'edit_conditional_alert'
     page_title = _('Edit Conditional Message')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.rule_id])
+
+    @property
+    def rule_id(self):
+        return self.kwargs.get('rule_id')
+
+    @cached_property
+    def rule(self):
+        try:
+            return AutomaticUpdateRule.objects.get(
+                pk=self.rule_id,
+                domain=self.domain,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            raise Http404()
+
+    @cached_property
+    def schedule(self):
+        if len(self.rule.memoized_actions) != 1:
+            raise ValueError("Expected exactly 1 action")
+
+        action = self.rule.memoized_actions[0]
+        action_definition = action.definition
+        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
+            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
+
+        return action_definition.schedule

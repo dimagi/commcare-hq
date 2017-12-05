@@ -184,7 +184,7 @@ class IncentivePayload(BETSPayload):
         # We don't know whether the trigger fired because the threshold was met
         # or because treatment ended.  Just use whichever happened first.
         return string_to_date_or_None(
-            min(filter(None, [completed_date, threshold_met_date])))
+            min([_f for _f in [completed_date, threshold_met_date] if _f]))
 
     @classmethod
     def create_successful_treatment_payload(cls, episode_case):

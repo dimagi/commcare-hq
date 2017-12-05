@@ -9,6 +9,7 @@ from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDue
 from django.utils.translation import ugettext_noop as _
 from six.moves import zip
 from six.moves import map
+from six.moves import filter
 
 
 # static config - should this eventually live in the DB?
@@ -261,7 +262,7 @@ INDICATOR_SETS = [
 
 def _one(filter_func, list):
     # this will (intentionally) fail hard if not exactly 1 match
-    [ret] = filter(filter_func, list)
+    [ret] = list(filter(filter_func, list))
     return ret
 
 

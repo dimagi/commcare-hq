@@ -14,6 +14,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, Crea
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     XPath
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import filter
 
 
 class WorkflowHelper(PostProcessor):
@@ -99,7 +100,7 @@ class WorkflowHelper(PostProcessor):
         return frame_children
 
     def create_workflow_stack(self, form_command, frame_metas):
-        frames = filter(None, [meta.to_frame() for meta in frame_metas if meta is not None])
+        frames = [_f for _f in [meta.to_frame() for meta in frame_metas if meta is not None] if _f]
         if not frames:
             return
 
@@ -316,7 +317,7 @@ class EndOfFormNavigationWorkflow(object):
                 # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
                 link_xpaths = [link.xpath for link in form.form_links]
                 # remove any empty string
-                link_xpaths = filter(lambda x: x.strip(), link_xpaths)
+                link_xpaths = [x for x in link_xpaths if x.strip()]
                 if link_xpaths:
                     negate_of_all_link_paths = (
                         ' and '.join(

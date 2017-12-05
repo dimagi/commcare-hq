@@ -77,7 +77,7 @@ class CouchConfig(object):
             return self.all_dbs_by_db_name[db_name]
         except KeyError:
             raise DatabaseNotFound('no database with name {} in settings! Options are: {}'.format(
-                db_name, ', '.join(self.all_dbs_by_db_name.keys())
+                db_name, ', '.join(self.all_dbs_by_db_name)
             ))
 
 
