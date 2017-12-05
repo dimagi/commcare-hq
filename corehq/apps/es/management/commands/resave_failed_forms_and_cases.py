@@ -13,7 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
 )
 from corehq.form_processor.utils.xform import resave_form
-from corehq.apps.hqcase.utils import resave_case
+from corehq.apps.hqcase.utils import resync_case_to_es
 from corehq.util.log import with_progress_bar
 
 
@@ -41,7 +41,7 @@ def perform_resave_on_xforms(domain):
         print("No changes made")
         return
     form_accessor = FormAccessors(domain)
-    for xform_id in with_progress_bar(xform_ids_missing_in_es, length=10):
+    for xform_id in with_progress_bar(xform_ids_missing_in_es):
         xform = form_accessor.get_form(xform_id)
         if xform:
             resave_form(domain, xform)
@@ -58,9 +58,9 @@ def perform_resave_on_cases(domain):
         print("No changes made")
         return
     case_accessor = CaseAccessors(domain)
-    for case_id in with_progress_bar(case_ids_missing_in_es, length=10):
+    for case_id in with_progress_bar(case_ids_missing_in_es):
         case = case_accessor.get_case(case_id)
         if case:
-            resave_case(domain, case)
+            resync_case_to_es(domain, case)
         else:
             print("case not found %s" % case_id)
