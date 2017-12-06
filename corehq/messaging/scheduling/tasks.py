@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from celery.task import task
+from corehq.messaging.scheduling.models import (
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
     TimedScheduleInstance,
@@ -211,9 +215,19 @@ def delete_broadcast(broadcast):
 
 
 def _handle_schedule_instance(instance, save_function):
+    """
+    :return: True if the event was handled, otherwise False
+    """
     if instance.active and instance.next_event_due < datetime.utcnow():
         instance.handle_current_event()
         save_function(instance)
+        return True
+
+    return False
+
+
+def update_broadcast_last_sent_timestamp(broadcast_class, schedule_id):
+    broadcast_class.objects.filter(schedule_id=schedule_id).update(last_sent_timestamp=datetime.utcnow())
 
 
 @no_result_task(queue='reminder_queue')
@@ -223,7 +237,8 @@ def handle_alert_schedule_instance(schedule_instance_id):
     except AlertScheduleInstance.DoesNotExist:
         return
 
-    _handle_schedule_instance(instance, save_alert_schedule_instance)
+    if _handle_schedule_instance(instance, save_alert_schedule_instance):
+        update_broadcast_last_sent_timestamp(ImmediateBroadcast, instance.alert_schedule_id)
 
 
 @no_result_task(queue='reminder_queue')
@@ -233,7 +248,8 @@ def handle_timed_schedule_instance(schedule_instance_id):
     except TimedScheduleInstance.DoesNotExist:
         return
 
-    _handle_schedule_instance(instance, save_timed_schedule_instance)
+    if _handle_schedule_instance(instance, save_timed_schedule_instance):
+        update_broadcast_last_sent_timestamp(ScheduledBroadcast, instance.timed_schedule_id)
 
 
 @no_result_task(queue='reminder_queue')
