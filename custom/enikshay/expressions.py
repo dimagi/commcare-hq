@@ -296,16 +296,20 @@ class EpisodeFromPersonExpression(JsonObject):
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
-        domain = context.root_doc['domain']
         if not person_id:
             return None
+        return self._get_open_episode_case_json(person_id, context)
+
+    @staticmethod
+    @ucr_context_cache(vary_on=('person_id',))
+    def  _get_open_episode_case_json(person_id, context):
+        domain = context.root_doc['domain']
         try:
             episode = get_open_episode_case_from_person(domain, person_id)
         except ENikshayCaseNotFound:
             return None
         if episode:
             return episode.to_json()
-        return None
 
 
 def episode_from_person_expression(spec, context):
