@@ -24,7 +24,7 @@ hqDefine('analytix/js/drift', [
 
     $(function () {
         var apiId = _get('apiId'),
-            scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + apiId + '_.js';
+            scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + apiId + '.js';
 
         _logger = logging.getLoggerForApi('Drift');
         _ready = utils.initApi(apiId, scriptUrl, _logger, function() {
