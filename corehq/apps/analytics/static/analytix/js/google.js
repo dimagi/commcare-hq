@@ -18,19 +18,20 @@ hqDefine('analytix/js/google', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('google'),
-        _global = initialAnalytics.getFn('global'),
         _logger = undefined,
         _data = {},
         module = {},
-        _gtag = function () {},
+        _gtag = function () {}, // TODO: log that nothing happened
+        _logger,
         _ready = $.Deferred();
 
     $(function () {
         _logger = logging.getLoggerForApi('Google Analytics');
+
         _data.apiId = _get('apiId');
         _logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
 
-        if (!_data.apiId || !_global('isEnabled')) {
+        if (!_data.apiId || !initialAnalytics.getFn('global')(('isEnabled'))) {
             _logger.debug.log("Failed TODO");
             _ready.reject();
             return;
@@ -71,7 +72,7 @@ hqDefine('analytix/js/google', [
 
                 // Configure Gtag with User Info
                 _gtag('config', _data.apiId, _data.user);
-                _ready.resove();
+                _ready.resolve();
 
                 _logger.debug.log('Initialized');
             })
@@ -106,7 +107,9 @@ hqDefine('analytix/js/google', [
             _logger.debug.log(_logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
             _gtag('event', eventAction, params);
         }).fail(function() {
-            eventCallback();
+            if (_.isFunction(eventCallback)) {
+                eventCallback();
+            }
         });
     };
 
