@@ -70,6 +70,7 @@ An overview of the design, API and data structures used here.
             - [Formats](#formats)
         - [AggregateDateColumn](#aggregatedatecolumn)
         - [Expanded Columns](#expanded-columns)
+        - [Expression Columns](#expression-columns)
         - [The "aggregation" column property](#the-aggregation-column-property)
             - [Column IDs](#column-ids)
         - [Calculating Column Totals](#calculating-column-totals)
@@ -1341,6 +1342,7 @@ Reports are made up of columns. The currently supported column types ares:
 * [_percent_](#percent-columns) which combines two values in to a percent
 * [_aggregate_date_](#aggregatedatecolumn) which aggregates data by month
 * [_expanded_](#expanded-columns) which expands a select question into multiple columns
+* [_expression_](#expression-columns) which can do calculations on data in other columns
 
 ### Field columns
 
