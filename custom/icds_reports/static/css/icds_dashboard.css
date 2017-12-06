@@ -678,9 +678,12 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-    left: 80%;
+    position: fixed;
+    left: 85%;
     width: 40%;
     height: 40px;
+    top: 25%;
+    padding-top: 10px;
 }
 
 #beneficiariesTable {
