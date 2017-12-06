@@ -19,7 +19,7 @@ hqDefine('analytix/js/google', [
     'use strict';
     var _get = initialAnalytics.getFn('google'),
         _logger,
-        _ready = $.Deferred();
+        _ready;
 
     var _gtag = function () {
         // This should never run, because all calls to _gtag should be
@@ -28,60 +28,44 @@ hqDefine('analytix/js/google', [
     };
 
     $(function () {
+        var apiId = _get('apiId'),
+            scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
+
         _logger = logging.getLoggerForApi('Google Analytics');
+        _ready = utils.initApi(apiId, scriptUrl, _logger, function() {
+            window.dataLayer = window.dataLayer || [];
+            _gtag = function () {
+                window.dataLayer.push(arguments);
+                _logger.verbose.log(arguments, 'gtag');
+            };
+            _gtag('js', new Date());
 
-        var apiId = _get('apiId');
-        _logger.verbose.log(apiId || "NOT SET",["DATA", "API ID"]);
+            var user = {
+                user_id: _get('userId', 'none'),
+                isDimagi: _get('userIsDimagi', 'no', 'yes'),
+                isCommCare: _get('userIsCommCare', 'no', 'yes'),
+                domain: _get('domain', 'none'),
+                hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
+            };
 
-        if (!apiId || !initialAnalytics.getFn('global')(('isEnabled'))) {
-            _logger.debug.log("Failed TODO");
-            _ready.reject();
-            return;
-        }
-
-        var scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
-        $.getScript(scriptUrl)
-            .done(function() {
-                window.dataLayer = window.dataLayer || [];
-                _gtag = function () {
-                    window.dataLayer.push(arguments);
-                    _logger.verbose.log(arguments, 'gtag');
-                };
-                _gtag('js', new Date());
-
-                var user = {
-                    user_id: _get('userId', 'none'),
-                    isDimagi: _get('userIsDimagi', 'no', 'yes'),
-                    isCommCare: _get('userIsCommCare', 'no', 'yes'),
-                    domain: _get('domain', 'none'),
-                    hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
-                };
-
-                // Update User Data & Legacy "Dimensions"
-                var dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
-                if (user.user_id !== 'none') {
-                    user.daysOld = _get('userDaysSinceCreated');
-                    user.isFirstDay = user.daysOld < 1 ? 'yes' : 'no';
-                    dimLabels.push('isFirstDay');
-                    user.isFirstWeek = user.daysOld >= 1 && user.daysOld < 7 ? 'yes' : 'no';
-                    dimLabels.push('isFirstWeek');
-                }
-                // Legacy Dimensions
-                user.custom_map = {};
-                _.each(dimLabels, function (val, ind) {
-                    user.custom_map['dimension' + ind] = user[val];
-                });
-
-                // Configure Gtag with User Info
-                _gtag('config', apiId, user);
-                _ready.resolve();
-
-                _logger.debug.log('Initialized');
-            })
-            .fail(function() {
-                _logger.debug.log(scriptUrl, "Failed to Load Script - Check Adblocker");
-                _ready.reject();
+            // Update User Data & Legacy "Dimensions"
+            var dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
+            if (user.user_id !== 'none') {
+                user.daysOld = _get('userDaysSinceCreated');
+                user.isFirstDay = user.daysOld < 1 ? 'yes' : 'no';
+                dimLabels.push('isFirstDay');
+                user.isFirstWeek = user.daysOld >= 1 && user.daysOld < 7 ? 'yes' : 'no';
+                dimLabels.push('isFirstWeek');
+            }
+            // Legacy Dimensions
+            user.custom_map = {};
+            _.each(dimLabels, function (val, ind) {
+                user.custom_map['dimension' + ind] = user[val];
             });
+
+            // Configure Gtag with User Info
+            _gtag('config', apiId, user);
+        });
     });
 
     /**
