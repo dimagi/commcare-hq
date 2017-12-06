@@ -192,6 +192,7 @@ AGENCY_USER_FIELDS = [
 ]
 
 AGENCY_LOCATION_FIELDS = [
+    ('nikshay_code', "Nikshay Code", []),
     ('private_sector_org_id', "Private Sector Org ID", []),
     ('nikshay_tu_id', "Nikshay TU id", []),
     ('facility_type', "Facility type", ["Hospital", "Doctor"]),
