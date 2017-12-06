@@ -16,7 +16,6 @@ hqDefine('analytix/js/hubspot', [
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _global = initialAnalytics.getFn('global'),
-        _data = {},
         _logger;
 
     var _hsq = window._hsq = window._hsq || [];
@@ -24,10 +23,10 @@ hqDefine('analytix/js/hubspot', [
     $(function () {
         _logger = logging.getLoggerForApi('Hubspot');
         if (_global('isEnabled')) {
-            _data.apiId = _get('apiId');
-            if (_data.apiId) {
-                _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId + '.js';
-                utils.insertScript(_data.scriptSrc, _logger.debug.log, {
+            var apiId = _get('apiId');
+            if (apiId) {
+                var scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
+                utils.insertScript(scriptSrc, _logger.debug.log, {
                     id: 'hs-analytics',
                 });
             }
