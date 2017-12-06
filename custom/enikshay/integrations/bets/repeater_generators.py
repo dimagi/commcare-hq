@@ -635,6 +635,6 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
 
 def get_national_number(phonenumber):
     try:
-        return str(phonenumbers.parse(phonenumber, "IN").national_number)
+        return str(phonenumbers.parse(str(phonenumber), "IN").national_number)
     except phonenumbers.NumberParseException:
         return ""
