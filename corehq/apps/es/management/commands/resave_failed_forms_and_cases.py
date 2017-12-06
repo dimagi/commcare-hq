@@ -61,6 +61,6 @@ def perform_resave_on_cases(domain):
     for case_id in with_progress_bar(case_ids_missing_in_es):
         case = case_accessor.get_case(case_id)
         if case:
-            resave_case(domain, case)
+            resave_case(domain, case, send_post_save_signal=False)
         else:
             print("case not found %s" % case_id)

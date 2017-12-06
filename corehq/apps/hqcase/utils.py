@@ -258,9 +258,9 @@ def bulk_update_cases(domain, case_changes, device_id):
     return submit_case_blocks(case_blocks, domain, device_id=device_id)
 
 
-def resave_case(domain, case):
+def resave_case(domain, case, send_post_save_signal=True):
     from corehq.form_processor.change_publishers import publish_case_saved
     if should_use_sql_backend(domain):
-        publish_case_saved(case)
+        publish_case_saved(case, send_post_save_signal)
     else:
         CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
