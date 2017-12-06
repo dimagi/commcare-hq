@@ -29,7 +29,7 @@
             >
             {% trans "View forwarded records" %}
         </a>
-        {% if cls == 'OpenmrsRepeater' %}
+        {% if cls == 'OpenmrsRepeater' and gefingerpoken %}
         <a class="btn btn-default" href="{% url 'openmrs_edit_config' domain repeater.get_id %}">
             {% trans "Configure" %}
         </a>
