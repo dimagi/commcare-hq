@@ -16,12 +16,13 @@ hqDefine('analytix/js/hubspot', [
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _global = initialAnalytics.getFn('global'),
-        logger = logging.getLoggerForApi('Hubspot'),
-        _data = {};
+        _data = {},
+        logger;
 
     var _hsq = window._hsq = window._hsq || [];
 
     $(function () {
+        logger = logging.getLoggerForApi('Hubspot');
         if (_global('isEnabled')) {
             _data.apiId = _get('apiId');
             if (_data.apiId) {

@@ -19,11 +19,12 @@ hqDefine('analytix/js/drift', [
     'use strict';
     var _get = initialAnalytics.getFn('drift'),
         _global = initialAnalytics.getFn('global'),
-        logger = logging.getLoggerForApi('Drift'),
         _data = {},
-        _drift = {};
+        _drift = {},
+        logger;
 
     $(function () {
+        logger = logging.getLoggerForApi('Drift'),
         if (_global('isEnabled')) {
             _drift = window.driftt = window.drift = window.driftt || [];
             if (!_drift.init && !_drift.invoked ) {
