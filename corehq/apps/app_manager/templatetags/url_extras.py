@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from django import template
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import six
 
 register = template.Library()
@@ -67,4 +67,4 @@ class URLEncodeNode(template.Node):
         for key in params:
             if isinstance(params[key], six.text_type):
                 params[key] = params[key].encode('utf-8')
-        return "%s?%s" % (path, urllib.urlencode(params, True)) if params else path
+        return "%s?%s" % (path, six.moves.urllib.parse.urlencode(params, True)) if params else path

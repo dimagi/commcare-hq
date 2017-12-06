@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import json
 import uuid
 from functools import partial
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404

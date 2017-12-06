@@ -532,6 +532,7 @@ class AdminRestoreView(TemplateView):
             report_row_counts = {
                 report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
                 for report in reports
+                if 'report_id' in report.attrib
             }
         else:
             if response.status_code in (401, 404):

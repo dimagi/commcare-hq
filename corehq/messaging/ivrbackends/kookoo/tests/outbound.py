@@ -13,8 +13,8 @@ from mock import patch
 from datetime import datetime, time
 import hashlib
 import os
-import urllib
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 
 
 def mock_kookoo_outbound_api(*args, **kwargs):
@@ -91,18 +91,18 @@ class KooKooTestCase(TouchformsTestCase):
         params should be a dictionary containing:
         event, cid, sid, and (optionally) data
         """
-        params = urllib.urlencode(params)
+        params = six.moves.urllib.parse.urlencode(params)
         url = "%s/kookoo/ivr/" % self.live_server_url
-        return urllib2.urlopen("%s?%s" % (url, params)).read()
+        return six.moves.urllib.request.urlopen("%s?%s" % (url, params)).read()
 
     def kookoo_finished(self, params):
         """
         params should be a dictionary containing:
         sid, status, and duration
         """
-        params = urllib.urlencode(params)
+        params = six.moves.urllib.parse.urlencode(params)
         url = "%s/kookoo/ivr_finished/" % self.live_server_url
-        return urllib2.urlopen(url, params).read()
+        return six.moves.urllib.request.urlopen(url, params).read()
 
     @run_with_all_backends
     def testOutbound(self):

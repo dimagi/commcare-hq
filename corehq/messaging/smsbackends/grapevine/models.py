@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import urlparse
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
@@ -79,8 +79,8 @@ class SQLGrapevineBackend(SQLSMSBackend):
         )
 
         url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
-        req = urllib2.Request(url, data)
-        response = urllib2.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
+        req = six.moves.urllib.request.Request(url, data)
+        response = six.moves.urllib.request.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
         resp = response.read()
 
 

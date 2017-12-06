@@ -79,10 +79,12 @@ hqDefine('analytix/js/kissmetrix', [
         });
     };
 
-    if (_global('isEnabled')) {
-        __init__();
-        logger.debug.log("Initialized");
-    }
+    $(function() {
+        if (_global('isEnabled')) {
+            __init__();
+            logger.debug.log("Initialized");
+        }
+    });
 
     /**
      * Identifies the current user

@@ -67,10 +67,12 @@ hqDefine('analytix/js/google', [
         _gtag('config', _data.apiId, _data.user);
     };
 
-    if (_global('isEnabled')) {
-        __init__();
-        logger.debug.log('Initialized');
-    }
+    $(function() {
+        if (_global('isEnabled')) {
+            __init__();
+            logger.debug.log('Initialized');
+        }
+    });
 
     /**
      * Helper function for sending a Google Analytics Event.

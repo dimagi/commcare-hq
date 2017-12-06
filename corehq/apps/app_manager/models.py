@@ -41,7 +41,7 @@ from collections import defaultdict, namedtuple, Counter
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
-from urllib2 import urlopen
+from six.moves.urllib.request import urlopen
 from urlparse import urljoin
 
 from couchdbkit import MultipleResultsFound

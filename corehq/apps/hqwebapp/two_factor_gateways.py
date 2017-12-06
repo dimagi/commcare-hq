@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.utils import translation
 from django.utils.translation import ugettext as _

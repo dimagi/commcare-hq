@@ -8,6 +8,7 @@ from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from dateutil import parser
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms.fields import (
@@ -36,6 +37,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     SMSContent,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
 import six
 from six.moves import range
@@ -88,11 +90,6 @@ class ScheduleForm(Form):
 
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
-
-    RECIPIENT_TYPE_USER = 'USER'
-    RECIPIENT_TYPE_USER_GROUP = 'USER_GROUP'
-    RECIPIENT_TYPE_LOCATION = 'LOCATION'
-    RECIPIENT_TYPE_CASE_GROUP = 'CASE_GROUP'
 
     CONTENT_SMS = 'sms'
     CONTENT_EMAIL = 'email'
@@ -150,10 +147,10 @@ class ScheduleForm(Form):
         required=True,
         label=_('Recipient(s)'),
         choices=(
-            (RECIPIENT_TYPE_USER, _("Users")),
-            (RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
-            (RECIPIENT_TYPE_LOCATION, _("User Organizations")),
-            (RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, _("Users")),
+            (ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_LOCATION, _("User Organizations")),
+            (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
         )
     )
     user_recipients = RecipientField(
@@ -233,19 +230,16 @@ class ScheduleForm(Form):
         user_organization_recipients = []
         case_group_recipients = []
 
-        for doc_type, doc_id in recipients:
-            if doc_type == 'CommCareUser':
-                recipient_types.add(self.RECIPIENT_TYPE_USER)
-                user_recipients.append(doc_id)
-            elif doc_type == 'Group':
-                recipient_types.add(self.RECIPIENT_TYPE_USER_GROUP)
-                user_group_recipients.append(doc_id)
-            elif doc_type == 'Location':
-                recipient_types.add(self.RECIPIENT_TYPE_LOCATION)
-                user_organization_recipients.append(doc_id)
-            elif doc_type == 'CommCareCaseGroup':
-                recipient_types.add(self.RECIPIENT_TYPE_CASE_GROUP)
-                case_group_recipients.append(doc_id)
+        for recipient_type, recipient_id in recipients:
+            recipient_types.add(recipient_type)
+            if recipient_type == ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER:
+                user_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_USER_GROUP:
+                user_group_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION:
+                user_organization_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP:
+                case_group_recipients.append(recipient_id)
 
         initial.update({
             'recipient_types': list(recipient_types),
@@ -296,10 +290,6 @@ class ScheduleForm(Form):
 
         return result
 
-    @property
-    def readonly_mode(self):
-        return False
-
     def __init__(self, domain, schedule, *args, **kwargs):
         self.domain = domain
         self.initial_schedule = schedule
@@ -323,10 +313,6 @@ class ScheduleForm(Form):
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
         self.add_content_fields()
-
-        if self.readonly_mode:
-            for field_name, field in self.fields.items():
-                field.disabled = True
 
         self.helper.layout = crispy.Layout(*self.get_layout_fields())
 
@@ -421,7 +407,7 @@ class ScheduleForm(Form):
                     data_bind='value: user_recipients.value',
                     placeholder=_("Select mobile worker(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
             ),
             crispy.Div(
                 crispy.Field(
@@ -429,7 +415,7 @@ class ScheduleForm(Form):
                     data_bind='value: user_group_recipients.value',
                     placeholder=_("Select user group(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER_GROUP,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
             ),
             crispy.Div(
                 crispy.Field(
@@ -438,7 +424,7 @@ class ScheduleForm(Form):
                     placeholder=_("Select user organization(s)")
                 ),
                 crispy.Field('include_descendant_locations'),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_LOCATION,
             ),
             crispy.Div(
                 crispy.Field(
@@ -446,7 +432,7 @@ class ScheduleForm(Form):
                     data_bind='value: case_group_recipients.value',
                     placeholder=_("Select case group(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_CASE_GROUP,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
             ),
         ]
 
@@ -554,7 +540,7 @@ class ScheduleForm(Form):
         return result
 
     def clean_user_recipients(self):
-        if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_recipients']
@@ -572,7 +558,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_user_group_recipients(self):
-        if self.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_group_recipients']
@@ -599,7 +585,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_user_organization_recipients(self):
-        if self.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_organization_recipients']
@@ -621,7 +607,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_case_group_recipients(self):
-        if self.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['case_group_recipients']
@@ -722,10 +708,14 @@ class ScheduleForm(Form):
     def distill_recipients(self):
         form_data = self.cleaned_data
         return (
-            [('CommCareUser', user_id) for user_id in form_data['user_recipients']] +
-            [('Group', group_id) for group_id in form_data['user_group_recipients']] +
-            [('Location', location_id) for location_id in form_data['user_organization_recipients']] +
-            [('CommCareCaseGroup', case_group_id) for case_group_id in form_data['case_group_recipients']]
+            [(ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, user_id)
+             for user_id in form_data['user_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, group_id)
+             for group_id in form_data['user_group_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id)
+             for location_id in form_data['user_organization_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, case_group_id)
+             for case_group_id in form_data['case_group_recipients']]
         )
 
     def distill_total_iterations(self):
@@ -739,7 +729,7 @@ class ScheduleForm(Form):
         form_data = self.cleaned_data
         return {
             'include_descendant_locations': (
-                ScheduleForm.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
+                ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
                 form_data['include_descendant_locations']
             ),
         }
@@ -891,16 +881,15 @@ class BroadcastForm(ScheduleForm):
 
     def get_layout_fields(self):
         result = super(BroadcastForm, self).get_layout_fields()
-        if not self.readonly_mode:
-            result.append(
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _("Save"),
-                        css_class='btn-primary',
-                        type='submit',
-                    ),
-                )
+        result.append(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
             )
+        )
         return result
 
     def get_timing_layout_fields(self):
@@ -942,10 +931,6 @@ class BroadcastForm(ScheduleForm):
                 result['start_date'] = self.initial_broadcast.start_date.strftime('%Y-%m-%d')
 
         return result
-
-    @property
-    def readonly_mode(self):
-        return isinstance(self.initial_broadcast, ImmediateBroadcast)
 
     def clean_start_date(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
@@ -1063,9 +1048,51 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ),
     )
 
-    def __init__(self, domain, schedule, rule, *args, **kwargs):
+    custom_recipient = ChoiceField(
+        required=False,
+        choices=(
+            (k, v[1])
+            for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()
+        )
+    )
+
+    def __init__(self, domain, schedule, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
+        self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+        self.update_recipient_types_choices()
+
+    @cached_property
+    def requires_system_admin_to_edit(self):
+        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
+
+    @cached_property
+    def requires_system_admin_to_save(self):
+        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types']
+
+    def update_recipient_types_choices(self):
+        new_choices = [
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, _("The Case")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, _("The Case's Owner")),
+        ]
+        new_choices.extend(self.fields['recipient_types'].choices)
+
+        if (
+            self.criteria_form.is_system_admin or
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial['recipient_types']
+        ):
+            new_choices.extend([
+                (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, _("Custom Recipient")),
+            ])
+
+        self.fields['recipient_types'].choices = new_choices
+
+    def add_initial_recipients(self, recipients, initial):
+        super(ConditionalAlertScheduleForm, self).add_initial_recipients(recipients, initial)
+
+        for recipient_type, recipient_id in recipients:
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM:
+                initial['custom_recipient'] = recipient_id
 
     def compute_initial(self):
         result = super(ConditionalAlertScheduleForm, self).compute_initial()
@@ -1147,6 +1174,25 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             ),
         ]
 
+    def get_recipients_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_recipients_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                ugettext("Custom Recipient"),
+                twbscrispy.InlineField('custom_recipient'),
+                self.get_system_admin_label(),
+                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+            ),
+        ])
+        return result
+
+    def get_system_admin_label(self):
+        return crispy.HTML("""
+            <label class="col-xs-1 control-label">
+                <span class="label label-primary">%s</span>
+            </label>
+        """ % ugettext("Requires System Admin"))
+
     def clean_send_time(self):
         if self.cleaned_data.get('send_time_type') == self.SEND_TIME_SPECIFIC_TIME:
             return super(ConditionalAlertScheduleForm, self).clean_send_time()
@@ -1187,6 +1233,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return value
 
+    def clean_custom_recipient(self):
+        recipient_types = self.cleaned_data.get('recipient_types')
+        custom_recipient = self.cleaned_data.get('custom_recipient')
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM not in recipient_types:
+            return None
+
+        if not custom_recipient:
+            raise ValidationError(ugettext("This field is required"))
+
+        return custom_recipient
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1213,6 +1271,22 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def distill_scheduler_module_info(self):
         return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
+
+    def distill_recipients(self):
+        result = super(ConditionalAlertScheduleForm, self).distill_recipients()
+        recipient_types = self.cleaned_data['recipient_types']
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF in recipient_types:
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, None))
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER in recipient_types:
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None))
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in recipient_types:
+            custom_recipient_id = self.cleaned_data['custom_recipient']
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
+
+        return result
 
     def create_rule_action(self, rule, schedule):
         fields = {

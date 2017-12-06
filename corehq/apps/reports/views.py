@@ -24,7 +24,7 @@ import pytz
 import re
 from StringIO import StringIO
 import tempfile
-from urllib2 import URLError
+from six.moves.urllib.error import URLError
 
 from django.conf import settings
 from django.contrib import messages

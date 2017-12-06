@@ -901,9 +901,9 @@ class DownloadLocationStatusView(BaseLocationView):
 @locations_access_required
 @location_safe
 def child_locations_for_select2(request, domain):
-    location_id = request.GET.get('id')
-    ids = request.GET.get('ids')
+    from django.core.paginator import Paginator
     query = request.GET.get('name', '').lower()
+    page = int(request.GET.get('page', 1))
     user = request.couch_user
 
     base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
@@ -911,42 +911,23 @@ def child_locations_for_select2(request, domain):
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    if location_id:
-        try:
-            loc = base_queryset.get(location_id=location_id)
-            if loc.domain != domain:
-                raise SQLLocation.DoesNotExist()
-        except SQLLocation.DoesNotExist:
-            return json_response(
-                {'message': 'no location with id %s found' % location_id},
-                status_code=404,
-            )
-        else:
-            return json_response(loc_to_payload(loc))
-    elif ids:
-        from corehq.apps.locations.util import get_locations_from_ids
-        ids = json.loads(ids)
-        try:
-            locations = get_locations_from_ids(ids, domain, base_queryset=base_queryset)
-        except SQLLocation.DoesNotExist:
-            return json_response(
-                {'message': 'one or more locations not found'},
-                status_code=404,
-            )
-        return json_response([loc_to_payload(loc) for loc in locations])
-    else:
-        locs = []
-        user_loc = user.get_sql_location(domain)
+    locs = []
+    user_loc = user.get_sql_location(domain)
 
-        if user_can_edit_any_location(user, request.project):
-            locs = base_queryset.filter(domain=domain, is_archived=False)
-        elif user_loc:
-            locs = user_loc.get_descendants(include_self=True)
+    if user_can_edit_any_location(user, request.project):
+        locs = base_queryset.filter(domain=domain, is_archived=False)
+    elif user_loc:
+        locs = user_loc.get_descendants(include_self=True)
 
-        if locs != [] and query:
-            locs = locs.filter(name__icontains=query)
+    if locs != [] and query:
+        locs = locs.filter(name__icontains=query)
 
-        return json_response(list(map(loc_to_payload, locs[:10])))
+    # 10 results per page
+    paginator = Paginator(locs, 10)
+    return json_response({
+        'results': list(map(loc_to_payload, paginator.page(page))),
+        'total_count': paginator.count,
+    })
 
 
 class DowngradeLocationsView(BaseDomainView):

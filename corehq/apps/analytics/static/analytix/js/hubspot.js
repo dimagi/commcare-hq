@@ -24,16 +24,19 @@ hqDefine('analytix/js/hubspot', [
     var __init__ = function () {
         _data.apiId = _get('apiId');
         if (_data.apiId) {
-            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId;
+            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId + '.js';
             utils.insertScript(_data.scriptSrc, logger.debug.log, {
                 id: 'hs-analytics',
             });
         }
     };
-    if (_global('isEnabled')) {
-        __init__();
-        logger.debug.log('Initialized');
-    }
+
+    $(function() {
+        if (_global('isEnabled')) {
+            __init__();
+            logger.debug.log('Initialized');
+        }
+    });
 
     /**
      * Sends data to Hubspot to identify the current session.

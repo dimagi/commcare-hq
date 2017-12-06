@@ -14,7 +14,7 @@ from datetime import datetime, date, timedelta
 import time
 import json
 import requests
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import KISSmetrics
 import logging
 
@@ -85,7 +85,7 @@ def _track_on_hubspot(webuser, properties):
         # Note: Hubspot recommends OAuth instead of api key
         _hubspot_post(
             url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-                urllib.quote(webuser.get_email())
+                six.moves.urllib.parse.quote(webuser.get_email())
             ),
             data=json.dumps(
                 {'properties': [
@@ -99,7 +99,7 @@ def _track_on_hubspot_by_email(email, properties):
     # Note: Hubspot recommends OAuth instead of api key
     _hubspot_post(
         url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            urllib.quote(email)
+            six.moves.urllib.parse.quote(email)
         ),
         data=json.dumps(
             {'properties': [
@@ -117,7 +117,7 @@ def set_analytics_opt_out(webuser, analytics_enabled):
     """
     _hubspot_post(
         url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            urllib.quote(webuser.get_email())
+            six.moves.urllib.parse.quote(webuser.get_email())
         ),
         data=json.dumps(
             {'properties': [
@@ -176,7 +176,7 @@ def _get_user_hubspot_id(webuser):
     if api_key and webuser.analytics_enabled:
         req = requests.get(
             u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
-                urllib.quote(webuser.username)
+                six.moves.urllib.parse.quote(webuser.username)
             ),
             params={'hapikey': api_key},
         )
