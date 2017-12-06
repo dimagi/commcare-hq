@@ -248,7 +248,7 @@ class DateOfAcceptance(ReferralExpressionBase):
         domain = context.root_doc['domain']
         if not person_id:
             return None
-        trail = get_latest_trail_case_from_person(domain, person_id)
+        trail = self._get_trail(context, domain, person_id)
         if trail:
             return trail.opened_on
         return None
