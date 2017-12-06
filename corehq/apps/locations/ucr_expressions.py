@@ -9,6 +9,17 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, DictProperty
 
 
+@ucr_context_cache(vary_on=('location_id',))
+def _get_location(location_id, context):
+    try:
+        return SQLLocation.objects.prefetch_related('location_type').get(
+            domain=context.root_doc['domain'],
+            location_id=location_id
+        )
+    except SQLLocation.DoesNotExist:
+        return None
+
+
 class LocationTypeSpec(JsonObject):
     type = TypeProperty('location_type_name')
     location_id_expression = DictProperty(required=True)
@@ -22,19 +33,9 @@ class LocationTypeSpec(JsonObject):
             return None
 
         assert context.root_doc['domain']
-        return self._get_location_type(doc_id, context.root_doc['domain'])
-
-    @staticmethod
-    @quickcache(['location_id', 'domain'], timeout=600)
-    def _get_location_type(location_id, domain):
-        sql_location = SQLLocation.objects.filter(
-            domain=domain,
-            location_id=location_id
-        )
-        if sql_location:
-            return sql_location[0].location_type.name
-        else:
-            return None
+        location = _get_location(doc_id, context)
+        if location:
+            return location.location_type.name
 
 
 class LocationParentIdSpec(JsonObject):
@@ -92,7 +93,7 @@ class AncestorLocationExpression(JsonObject):
     @ucr_context_cache(vary_on=('location_id', 'location_type',))
     def _get_ancestor(location_id, location_type, context):
         try:
-            location = SQLLocation.objects.get(location_id=location_id)
+            location = _get_location(location_id, context)
             ancestor = location.get_ancestors(include_self=False).get(location_type__name=location_type)
             return ancestor.to_json()
         except (AttributeError, SQLLocation.DoesNotExist):
