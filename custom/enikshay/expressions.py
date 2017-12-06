@@ -248,7 +248,7 @@ class DateOfAcceptance(ReferralExpressionBase):
         domain = context.root_doc['domain']
         if not person_id:
             return None
-        trail = get_latest_trail_case_from_person(domain, person_id)
+        trail = self._get_trail(context, domain, person_id)
         if trail:
             return trail.opened_on
         return None
@@ -296,16 +296,20 @@ class EpisodeFromPersonExpression(JsonObject):
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
-        domain = context.root_doc['domain']
         if not person_id:
             return None
+        return self._get_open_episode_case_json(person_id, context)
+
+    @staticmethod
+    @ucr_context_cache(vary_on=('person_id',))
+    def _get_open_episode_case_json(person_id, context):
+        domain = context.root_doc['domain']
         try:
             episode = get_open_episode_case_from_person(domain, person_id)
         except ENikshayCaseNotFound:
             return None
         if episode:
             return episode.to_json()
-        return None
 
 
 def episode_from_person_expression(spec, context):
@@ -351,20 +355,20 @@ class MostRecentReferralCaseFromPerson(JsonObject):
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
+        return self._get_most_recent_refererral_case_json(person_id, context)
+
+    @staticmethod
+    @ucr_context_cache(vary_on=('person_id',))
+    def _get_most_recent_refererral_case_json(person_id, context):
         domain = context.root_doc['domain']
-
-        @ucr_context_cache(vary_on=('person_id',))
-        def _cached_get(person_id, context):
-            if not person_id:
-                return None
-            try:
-                referral = get_most_recent_referral_case_from_person(domain, person_id)
-            except ENikshayCaseNotFound:
-                referral = None
-            if referral:
-                return referral.to_json()
-
-        return _cached_get(person_id, context)
+        if not person_id:
+            return None
+        try:
+            referral = get_most_recent_referral_case_from_person(domain, person_id)
+        except ENikshayCaseNotFound:
+            referral = None
+        if referral:
+            return referral.to_json()
 
 
 def most_recent_referral_expression(spec, context):
@@ -388,20 +392,20 @@ class MostRecentEpisodeCaseFromPerson(JsonObject):
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
+        return self._get_most_recent_episode_case_json(person_id, context)
+
+    @staticmethod
+    @ucr_context_cache(vary_on=('person_id',))
+    def _get_most_recent_episode_case_json(person_id, context):
         domain = context.root_doc['domain']
-
-        @ucr_context_cache(vary_on=('person_id',))
-        def _cached_get(person_id, context):
-            if not person_id:
-                return None
-            try:
-                episode = get_most_recent_episode_case_from_person(domain, person_id)
-            except ENikshayCaseNotFound:
-                episode = None
-            if episode:
-                return episode.to_json()
-
-        return _cached_get(person_id, context)
+        if not person_id:
+            return None
+        try:
+            episode = get_most_recent_episode_case_from_person(domain, person_id)
+        except ENikshayCaseNotFound:
+            episode = None
+        if episode:
+            return episode.to_json()
 
 
 def most_recent_episode_expression(spec, context):
