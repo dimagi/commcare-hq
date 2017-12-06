@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from jsonobject import DefaultProperty
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.util.quickcache import quickcache
@@ -85,15 +86,11 @@ class AncestorLocationExpression(JsonObject):
     def __call__(self, item, context=None):
         location_id = self._location_id_expression(item, context)
         location_type = self._location_type_expression(item, context)
+        return self._get_ancestor(location_id, location_type, context)
 
-        cache_key = (self.__class__.__name__, location_id, location_type)
-        if context.get_cache_value(cache_key, False) is not False:
-            return context.get_cache_value(cache_key)
-        ancestor_json = self._get_ancestor(location_id, location_type)
-        context.set_cache_value(cache_key, ancestor_json)
-        return ancestor_json
-
-    def _get_ancestor(self, location_id, location_type):
+    @staticmethod
+    @ucr_context_cache(vary_on=('location_id', 'location_type',))
+    def _get_ancestor(location_id, location_type, context):
         try:
             location = SQLLocation.objects.get(location_id=location_id)
             ancestor = location.get_ancestors(include_self=False).get(location_type__name=location_type)

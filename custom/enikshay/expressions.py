@@ -5,6 +5,7 @@ from jsonobject import DefaultProperty, BooleanProperty
 from jsonobject.properties import ListProperty, StringProperty
 import six
 
+from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -17,13 +18,9 @@ from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.dates import force_to_datetime
 
 
+@ucr_context_cache(vary_on=('case_id',))
 def _get_case_forms(domain, case_id, context):
-    cache_key = ('_get_case_forms', case_id)
-    if context.get_cache_value(cache_key) is not None:
-        return context.get_cache_value(cache_key)
-    xforms = FormProcessorInterface(domain).get_case_forms(case_id)
-    context.set_cache_value(cache_key, xforms)
-    return xforms
+    return FormProcessorInterface(domain).get_case_forms(case_id)
 
 
 class FirstCaseFormWithXmlns(JsonObject):
@@ -153,38 +150,22 @@ class ReferralExpressionBase(JsonObject):
         return None
 
     @staticmethod
+    @ucr_context_cache(vary_on=('person_id',))
     def _get_referral(context, domain, person_id):
-        cache_key = (ReferralExpressionBase.__name__, "_get_referral", person_id)
-        if context.get_cache_value(cache_key, False) is not False:
-            return context.get_cache_value(cache_key)
-
         referral = get_open_referral_case_from_person(domain, person_id)
         if referral and (referral.dynamic_case_properties().get("referral_status") == "rejected"):
             referral = None
-        context.set_cache_value(cache_key, referral)
         return referral
 
     @staticmethod
+    @ucr_context_cache(vary_on=('referral_id',))
     def _get_referral_by_id(context, domain, referral_id):
-        cache_key = (ReferralExpressionBase.__name__, "_get_referral_by_id", referral_id)
-        if context.get_cache_value(cache_key, False) is not False:
-            return context.get_cache_value(cache_key)
-
-        referral = CaseAccessors(domain).get_case(referral_id)
-
-        context.set_cache_value(cache_key, referral)
-        return referral
+        return CaseAccessors(domain).get_case(referral_id)
 
     @staticmethod
+    @ucr_context_cache(vary_on=('person_id',))
     def _get_trail(context, domain, person_id):
-        cache_key = (ReferralExpressionBase.__name__, "_get_trail", person_id)
-
-        if context.get_cache_value(cache_key, False) is not False:
-            return context.get_cache_value(cache_key)
-
-        trail = get_latest_trail_case_from_person(domain, person_id)
-        context.set_cache_value(cache_key, trail)
-        return trail
+        return get_latest_trail_case_from_person(domain, person_id)
 
     def _handle_referral_case(self, referral):
         raise NotImplementedError
@@ -372,24 +353,18 @@ class MostRecentReferralCaseFromPerson(JsonObject):
         person_id = self._person_id_expression(item, context)
         domain = context.root_doc['domain']
 
-        cache_key = (
-            MostRecentEpisodeCaseFromPerson.__name__,
-            "enikshay_most_recent_referral_from_person",
-            person_id
-        )
-        if context.get_cache_value(cache_key, False) is not False:
-            return context.get_cache_value(cache_key)
+        @ucr_context_cache(vary_on=('person_id',))
+        def _cached_get(person_id, context):
+            if not person_id:
+                return None
+            try:
+                referral = get_most_recent_referral_case_from_person(domain, person_id)
+            except ENikshayCaseNotFound:
+                referral = None
+            if referral:
+                return referral.to_json()
 
-        if not person_id:
-            return None
-        try:
-            referral = get_most_recent_referral_case_from_person(domain, person_id)
-        except ENikshayCaseNotFound:
-            referral = None
-        context.set_cache_value(cache_key, referral)
-        if referral:
-            return referral.to_json()
-        return None
+        return _cached_get(person_id, context)
 
 
 def most_recent_referral_expression(spec, context):
@@ -413,24 +388,20 @@ class MostRecentEpisodeCaseFromPerson(JsonObject):
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
-        cache_key = (
-            MostRecentEpisodeCaseFromPerson.__name__,
-            "enikshay_most_recent_episode_from_person",
-            person_id
-        )
-        if context.get_cache_value(cache_key, False) is not False:
-            return context.get_cache_value(cache_key)
         domain = context.root_doc['domain']
-        if not person_id:
-            return None
-        try:
-            episode = get_most_recent_episode_case_from_person(domain, person_id)
-        except ENikshayCaseNotFound:
-            episode = None
-        context.set_cache_value(cache_key, episode)
-        if episode:
-            return episode.to_json()
-        return None
+
+        @ucr_context_cache(vary_on=('person_id',))
+        def _cached_get(person_id, context):
+            if not person_id:
+                return None
+            try:
+                episode = get_most_recent_episode_case_from_person(domain, person_id)
+            except ENikshayCaseNotFound:
+                episode = None
+            if episode:
+                return episode.to_json()
+
+        return _cached_get(person_id, context)
 
 
 def most_recent_episode_expression(spec, context):
