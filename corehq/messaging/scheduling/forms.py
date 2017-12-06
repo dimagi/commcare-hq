@@ -1066,6 +1066,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def requires_system_admin_to_edit(self):
         return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
 
+    @cached_property
+    def requires_system_admin_to_save(self):
+        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types']
+
     def update_recipient_types_choices(self):
         new_choices = [
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, _("The Case")),

@@ -389,7 +389,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             return HttpResponseBadRequest()
 
         if basic_info_form_valid and criteria_form_valid and schedule_form_valid:
-            if not self.is_system_admin and self.criteria_form.requires_system_admin_to_save:
+            if not self.is_system_admin and (
+                self.criteria_form.requires_system_admin_to_save or
+                self.schedule_form.requires_system_admin_to_save
+            ):
                 # Don't allow adding custom criteria/actions to rules
                 # unless the user has permission to
                 return HttpResponseBadRequest()
