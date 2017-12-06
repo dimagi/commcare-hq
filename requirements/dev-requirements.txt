@@ -19,5 +19,6 @@ wheel==0.29.0
 graphviz==0.7
 git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver
 transifex-client==0.12.4
+git@github.com:python-modernize/python-modernize.git@7370cc96e70313ba19dfa45f7c8e106d1396681e
 
 --requirement=test-requirements.txt
