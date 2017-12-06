@@ -18,7 +18,6 @@ hqDefine('analytix/js/drift', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('drift'),
-        _global = initialAnalytics.getFn('global'),
         _drift = {},
         _logger,
         _ready;
