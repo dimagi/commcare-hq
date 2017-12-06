@@ -29,6 +29,11 @@
             >
             {% trans "View forwarded records" %}
         </a>
+        {% if cls == 'OpenmrsRepeater' and gefingerpoken %}
+        <a class="btn btn-default" href="{% url 'openmrs_edit_config' domain repeater.get_id %}">
+            {% trans "Configure" %}
+        </a>
+        {% endif %}
         <a class="btn btn-danger" href="#stop_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
                 class="fa fa-remove"></i> {% trans "Stop Forwarding" %}</a>
 
