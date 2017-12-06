@@ -1,5 +1,13 @@
 /* globals JSON */
-hqDefine('analytix/js/utils', ['jquery', 'underscore'], function ($, _) {
+hqDefine('analytix/js/utils', [
+    'jquery',
+    'underscore',
+    'analytix/js/initial',
+], function (
+    $,
+    _,
+    initialAnalytics
+) {
     'use strict';
 
     /**
@@ -108,10 +116,55 @@ hqDefine('analytix/js/utils', ['jquery', 'underscore'], function ($, _) {
         return oneTimeCallback;
     };
 
+    /**
+     * Initialize an API.
+     * @param {string} apiId
+     * @param {string} scriptUrl
+     * @param {Logger} logger
+     * @param {function} initCallback - Logic to run once any scripts are loaded but before
+        the promise this function returns is resolved.
+     * @returns {Deferred} A promise that will resolve once the API is fully initialized.
+     *  This promise will be rejected if the API fails to initialize for any reason, most
+     *  likely because analytics is disabled or because a script failed to load.
+     */
+     var initApi = function(apiId, scriptUrl, logger, initCallback) {
+        var ready = $.Deferred();
+
+        logger.verbose.log(apiId || "NOT SET",["DATA", "API ID"]);
+
+        if (!initialAnalytics.getFn('global')(('isEnabled'))) {
+            logger.debug.log("Failed to initialize because analytics are disabled");
+            ready.reject();
+            return ready;
+        }
+
+        if (!apiId) {
+            logger.debug.log("Failed to initialize because apiId was not provided");
+            ready.reject();
+            return ready;
+        }
+
+        $.getScript(scriptUrl)
+            .done(function() {
+                if (_.isFunction(initCallback)) {
+                    initCallback();
+                }
+                logger.debug.log('Initialized');
+                ready.resolve();
+            })
+            .fail(function() {
+                logger.debug.log(scriptUrl, "Failed to Load Script - Check Adblocker");
+                ready.reject();
+            });
+
+        return ready;
+     };
+
     return {
         trackClickHelper: trackClickHelper,
         insertScript: insertScript,
         createSafeCallback: createSafeCallback,
         getDateHash: getDateHash,
+        initApi: initApi,
     };
 });
