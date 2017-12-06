@@ -24,7 +24,7 @@ hqDefine('analytix/js/hubspot', [
     var __init__ = function () {
         _data.apiId = _get('apiId');
         if (_data.apiId) {
-            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId;
+            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId + '.js';
             utils.insertScript(_data.scriptSrc, logger.debug.log, {
                 id: 'hs-analytics',
             });
