@@ -6,7 +6,7 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
@@ -138,8 +138,8 @@ class GenericReportView(object):
     parent_report_class = None
 
     is_deprecated = False
-    deprecation_email_message = None
-    deprecation_message = None
+    deprecation_email_message = ugettext("This report has been deprecated.")
+    deprecation_message = ugettext("This report has been deprecated.")
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -566,7 +566,12 @@ class GenericReportView(object):
 
     @property
     def deprecate_response(self):
-        raise NotImplementedError
+        from django.contrib import messages
+        messages.warning(
+            self.request,
+            self.deprecation_message
+        )
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', '/'))
 
     @property
     def view_response(self):
