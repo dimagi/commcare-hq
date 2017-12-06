@@ -1,9 +1,15 @@
 {% extends "scheduling/create_schedule_base.html" %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
 
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
+{% endblock %}
 
 {% block page_content %}{{ block.super }}
-    <form class="form form-horizontal" method="POST" action="#">
+    {% initial_page_data 'read_only_mode' read_only_mode %}
+    <form class="form form-horizontal main-form" method="POST" action="#">
         <div id="create-schedule-form">
             {% crispy schedule_form %}
         </div>

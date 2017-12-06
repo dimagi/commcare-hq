@@ -36,6 +36,13 @@ class ScheduleInstance(PartitionedModel):
     next_event_due = models.DateTimeField()
     active = models.BooleanField()
 
+    RECIPIENT_TYPE_CASE = 'CommCareCase'
+    RECIPIENT_TYPE_MOBILE_WORKER = 'CommCareUser'
+    RECIPIENT_TYPE_WEB_USER = 'WebUser'
+    RECIPIENT_TYPE_CASE_GROUP = 'CommCareCaseGroup'
+    RECIPIENT_TYPE_USER_GROUP = 'Group'
+    RECIPIENT_TYPE_LOCATION = 'Location'
+
     class Meta:
         abstract = True
         index_together = (
@@ -51,17 +58,17 @@ class ScheduleInstance(PartitionedModel):
     @property
     @memoized
     def recipient(self):
-        if self.recipient_type == 'CommCareCase':
+        if self.recipient_type == self.RECIPIENT_TYPE_CASE:
             return CaseAccessors(self.domain).get_case(self.recipient_id)
-        elif self.recipient_type == 'CommCareUser':
+        elif self.recipient_type == self.RECIPIENT_TYPE_MOBILE_WORKER:
             return CommCareUser.get(self.recipient_id)
-        elif self.recipient_type == 'WebUser':
+        elif self.recipient_type == self.RECIPIENT_TYPE_WEB_USER:
             return WebUser.get(self.recipient_id)
-        elif self.recipient_type == 'CommCareCaseGroup':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_GROUP:
             return CommCareCaseGroup.get(self.recipient_id)
-        elif self.recipient_type == 'Group':
+        elif self.recipient_type == self.RECIPIENT_TYPE_USER_GROUP:
             return Group.get(self.recipient_id)
-        elif self.recipient_type == 'Location':
+        elif self.recipient_type == self.RECIPIENT_TYPE_LOCATION:
             return SQLLocation.by_location_id(self.recipient_id)
         else:
             raise UnknownRecipientType(self.recipient_type)
@@ -253,6 +260,13 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
 
 class CaseScheduleInstanceMixin(object):
 
+    RECIPIENT_TYPE_SELF = 'Self'
+    RECIPIENT_TYPE_CASE_OWNER = 'Owner'
+    RECIPIENT_TYPE_LAST_SUBMTTING_USER = 'LastSubmittingUser'
+    RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
+    RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
+    RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
+
     @property
     @memoized
     def case(self):
@@ -272,17 +286,17 @@ class CaseScheduleInstanceMixin(object):
     @property
     @memoized
     def recipient(self):
-        if self.recipient_type == 'Self':
+        if self.recipient_type == self.RECIPIENT_TYPE_SELF:
             return self.case
-        elif self.recipient_type == 'Owner':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_OWNER:
             return self.case_owner
-        if self.recipient_type == 'LastSubmittingUser':
+        if self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMTTING_USER:
             return None
-        elif self.recipient_type == 'ParentCase':
+        elif self.recipient_type == self.RECIPIENT_TYPE_PARENT_CASE:
             return None
-        elif self.recipient_type == 'SubCase':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CHILD_CASE:
             return None
-        elif self.recipient_type == 'CustomRecipient':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CUSTOM:
             custom_function = to_function(
                 settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
             )

@@ -1,6 +1,6 @@
 <div class="btn-group report-filter-button-group">
     {% for code, description in schedule_form.recipient_types.field.choices %}
-        <span {% if not form.recipient_types.field.disabled %}
+        <span {% if not read_only_mode %}
               class="btn btn-default"
               data-bind="css: {'btn-success': recipientTypeSelected('{{ code }}'),
                                'active': !recipientTypeSelected('{{ code }}')},

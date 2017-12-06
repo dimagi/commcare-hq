@@ -6,6 +6,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'data_interfaces/js/case_rule_actions.js' %}"></script>
     <script src="{% static 'data_interfaces/js/case_rule.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}{{ block.super }}
@@ -20,7 +21,7 @@
             {% trans "NOTE: A system administrator is required to edit this rule." %}
         </p>
     {% endif %}
-    <form id="rule-definition-form" class="form form-horizontal" method="POST" action="#">
+    <form id="rule-definition-form" class="form form-horizontal main-form" method="POST" action="#">
         {% crispy rule_form %}
         {% crispy criteria_form %}
         {% crispy actions_form %}
