@@ -1,5 +1,5 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
-    var CreateMessageViewModel = function (initial_values, select2_user_recipients,
+    var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
             select2_user_group_recipients, select2_user_organization_recipients,
             select2_case_group_recipients) {
         var self = this;
@@ -209,14 +209,14 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     RecipientsSelect2Handler.prototype.constructor = RecipientsSelect2Handler;
 
     $(function () {
-        var cmvm = new CreateMessageViewModel(
+        var scheduleViewModel = new CreateScheduleViewModel(
             hqImport("hqwebapp/js/initial_page_data").get("current_values"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients")
         );
-        $('#create-schedule-form').koApplyBindings(cmvm);
-        cmvm.init();
+        $('#create-schedule-form').koApplyBindings(scheduleViewModel);
+        scheduleViewModel.init();
     });
 });
