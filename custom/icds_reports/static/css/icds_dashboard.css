@@ -463,6 +463,7 @@ h4 {
     bottom: -10px;
     width: 100%;
     position: absolute;
+    margin-bottom: 10px;
 }
 
 .kpi-numbers {
