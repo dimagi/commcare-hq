@@ -84,7 +84,7 @@ def get_username_and_password_from_request(request):
             return string.decode('latin1')
 
     auth = request.META['HTTP_AUTHORIZATION'].split()
-    username = password = None, None
+    username = password = None
     if auth[0].lower() == DIGEST:
         try:
             digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
