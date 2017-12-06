@@ -19,59 +19,70 @@ hqDefine('analytix/js/google', [
     'use strict';
     var _get = initialAnalytics.getFn('google'),
         _global = initialAnalytics.getFn('global'),
-        logger = logging.getLoggerForApi('Google Analytics'),
+        logger = undefined,
         _data = {},
         module = {},
-        _gtag = function () {};
+        _gtag = function () {},
+        _ready = $.Deferred();
 
     var __init__ = function () {
+        logger = logging.getLoggerForApi('Google Analytics');
         _data.apiId = _get('apiId');
         logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
 
-        if (_data.apiId) {
-            _data.scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + _data.apiId;
-            utils.insertScript(_data.scriptUrl, logger.debug.log);
+        if (!_data.apiId || !_global('isEnabled')) {
+            logger.debug.log("Failed TODO");
+            _ready.reject();
+            return;
         }
 
-        window.dataLayer = window.dataLayer || [];
-        _gtag = function () {
-            window.dataLayer.push(arguments);
-            logger.verbose.log(arguments, 'gtag');
-        };
-        _gtag('js', new Date());
+        _data.scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + _data.apiId;
+        $.getScript(_data.scriptUrl)
+            .done(function() {
+                window.dataLayer = window.dataLayer || [];
+                _gtag = function () {
+                    window.dataLayer.push(arguments);
+                    logger.verbose.log(arguments, 'gtag');
+                };
+                _gtag('js', new Date());
 
-        _data.user = {
-            user_id: _get('userId', 'none'),
-            isDimagi: _get('userIsDimagi', 'no', 'yes'),
-            isCommCare: _get('userIsCommCare', 'no', 'yes'),
-            domain: _get('domain', 'none'),
-            hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
-        };
+                _data.user = {
+                    user_id: _get('userId', 'none'),
+                    isDimagi: _get('userIsDimagi', 'no', 'yes'),
+                    isCommCare: _get('userIsCommCare', 'no', 'yes'),
+                    domain: _get('domain', 'none'),
+                    hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
+                };
 
-        // Update User Data & Legacy "Dimensions"
-        _data.dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
-        if (_data.user.user_id !== 'none') {
-            _data.user.daysOld = _get('userDaysSinceCreated');
-            _data.user.isFirstDay = _data.user.daysOld < 1 ? 'yes' : 'no';
-            _data.dimLabels.push('isFirstDay');
-            _data.user.isFirstWeek = _data.user.daysOld >= 1 && _data.user.daysOld < 7 ? 'yes' : 'no';
-            _data.dimLabels.push('isFirstWeek');
-        }
-        // Legacy Dimensions
-        _data.user.custom_map = {};
-        _.each(_data.dimLabels, function (val, ind) {
-            _data.user.custom_map['dimension' + ind] = _data.user[val];
-        });
+                // Update User Data & Legacy "Dimensions"
+                _data.dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
+                if (_data.user.user_id !== 'none') {
+                    _data.user.daysOld = _get('userDaysSinceCreated');
+                    _data.user.isFirstDay = _data.user.daysOld < 1 ? 'yes' : 'no';
+                    _data.dimLabels.push('isFirstDay');
+                    _data.user.isFirstWeek = _data.user.daysOld >= 1 && _data.user.daysOld < 7 ? 'yes' : 'no';
+                    _data.dimLabels.push('isFirstWeek');
+                }
+                // Legacy Dimensions
+                _data.user.custom_map = {};
+                _.each(_data.dimLabels, function (val, ind) {
+                    _data.user.custom_map['dimension' + ind] = _data.user[val];
+                });
 
-        // Configure Gtag with User Info
-        _gtag('config', _data.apiId, _data.user);
+                // Configure Gtag with User Info
+                _gtag('config', _data.apiId, _data.user);
+                _ready.resove();
+
+                logger.debug.log('Initialized');
+            })
+            .fail(function() {
+                logger.debug.log(_data.scriptUrl, "Failed to Load Script - Check Adblocker");
+                _ready.reject();
+            });
     };
 
     $(function() {
-        if (_global('isEnabled')) {
-            __init__();
-            logger.debug.log('Initialized');
-        }
+        __init__();
     });
 
     /**
@@ -85,7 +96,7 @@ hqDefine('analytix/js/google', [
      * @param {function} eventCallback - (optional) Event callback fn
      */
     var trackEvent = function (eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-        if (_global('isEnabled')) {
+        _ready.done(function() {
             var params = {
                 event_category: eventCategory,
                 event_label: eventLabel,
@@ -98,9 +109,9 @@ hqDefine('analytix/js/google', [
             }
             logger.debug.log(logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
             _gtag('event', eventAction, params);
-        } else if (eventCallback) {
+        }).fail(function() {
             eventCallback();
-        }
+        });
     };
 
     /**
@@ -116,7 +127,7 @@ hqDefine('analytix/js/google', [
      * @param {object} eventParameters - (optional) Extra event parameters
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
-        if (_global('isEnabled')) {
+        _ready.done(function() {
             utils.trackClickHelper(
                 element,
                 function (callbackFn) {
@@ -124,7 +135,7 @@ hqDefine('analytix/js/google', [
                 }
             );
             logger.debug.log(logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
-        }
+        });
     };
 
 
