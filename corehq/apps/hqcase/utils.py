@@ -240,7 +240,7 @@ def bulk_update_cases(domain, case_changes, device_id):
     """
     Updates or closes a list of cases (or both) by submitting a form.
     domain - the cases' domain
-    cases - a tuple in the form (case_id, case_properties, close)
+    case_changes - a tuple in the form (case_id, case_properties, close)
         case_id - id of the case to update
         case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
                           to ignore case updates, leave this argument out
