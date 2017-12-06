@@ -487,6 +487,7 @@ class EpisodeAdherenceUpdate(object):
         )
 
         doses_per_week = self.get_doses_per_week()
+        update['doses_per_week'] = doses_per_week
 
         # the expected number of doses taken between the time the adherence
         # schedule started and the last valid date of the score

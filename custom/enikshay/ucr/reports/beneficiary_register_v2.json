@@ -3,9 +3,10 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
-    "data_source_table": "episode_v4",
+    "data_source_table": "episode_v3",
     "report_id": "beneficiary_register_v2",
     "config": {
         "description": "",
@@ -626,37 +627,6 @@
                 "column_id": "total_expected_doses_taken"
             },
             {
-                "expression": {
-                    "type": "switch",
-                    "switch_on": {
-                        "type": "property_name",
-                        "property_name": "adherence_schedule_id"
-                    },
-                    "cases": {
-                        "schedule_trs": {
-                          "type": "constant",
-                          "constant": 3
-                        },
-                        "schedule_mwf": {
-                          "type": "constant",
-                          "constant": 3
-                        },
-                        "schedule_daily": {
-                          "type": "constant",
-                          "constant": 7
-                        }
-                    },
-                    "default": {
-                        "type": "constant",
-                        "constant": 7
-                    }
-                },
-                "type": "expression",
-                "display": "doses_per_week",
-                "column_id": "doses_per_week",
-                "visible": false
-            },
-            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
@@ -675,11 +645,11 @@
                 "visible": false,
                 "transform": {},
                 "aggregation": "simple",
-                "field": "adherence_schedule_id",
+                "field": "doses_per_week",
                 "calculate_total": false,
-                "column_id": "adherence_schedule_id",
+                "column_id": "doses_per_week",
                 "type": "field",
-                "display": "adherence_schedule_id"
+                "display": "doses_per_week"
             },{
                 "sortable": false,
                 "description": null,
@@ -689,9 +659,9 @@
                 "aggregation": "simple",
                 "field": "adherence_schedule_date_start",
                 "calculate_total": false,
-                "column_id": "adherence_schedule_date_start",
+                "column_id": "adherence_schedule_id",
                 "type": "field",
-                "display": "adherence_schedule_date_start"
+                "display": "adherence_schedule_id"
             },
             {
                 "sortable": false,

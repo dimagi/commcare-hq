@@ -912,6 +912,21 @@
                 "column_id": "adherence_schedule_id"
             },
             {
+                "display_name": "doses_per_week",
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "integer",
+                    "type": "property_name",
+                    "property_name": "doses_per_week"
+                },
+                "column_id": "doses_per_week"
+            },
+            {
                 "display_name": "adherence_schedule_date_start",
                 "datatype": "date",
                 "type": "expression",
