@@ -19,24 +19,23 @@ hqDefine('analytix/js/google', [
     'use strict';
     var _get = initialAnalytics.getFn('google'),
         _logger = undefined,
-        _data = {},
         _gtag = function () {}, // TODO: log that nothing happened
         _ready = $.Deferred();
 
     $(function () {
         _logger = logging.getLoggerForApi('Google Analytics');
 
-        _data.apiId = _get('apiId');
-        _logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
+        var apiId = _get('apiId');
+        _logger.verbose.log(apiId || "NOT SET",["DATA", "API ID"]);
 
-        if (!_data.apiId || !initialAnalytics.getFn('global')(('isEnabled'))) {
+        if (!apiId || !initialAnalytics.getFn('global')(('isEnabled'))) {
             _logger.debug.log("Failed TODO");
             _ready.reject();
             return;
         }
 
-        _data.scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + _data.apiId;
-        $.getScript(_data.scriptUrl)
+        var scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
+        $.getScript(scriptUrl)
             .done(function() {
                 window.dataLayer = window.dataLayer || [];
                 _gtag = function () {
@@ -45,7 +44,7 @@ hqDefine('analytix/js/google', [
                 };
                 _gtag('js', new Date());
 
-                _data.user = {
+                var user = {
                     user_id: _get('userId', 'none'),
                     isDimagi: _get('userIsDimagi', 'no', 'yes'),
                     isCommCare: _get('userIsCommCare', 'no', 'yes'),
@@ -54,28 +53,28 @@ hqDefine('analytix/js/google', [
                 };
 
                 // Update User Data & Legacy "Dimensions"
-                _data.dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
-                if (_data.user.user_id !== 'none') {
-                    _data.user.daysOld = _get('userDaysSinceCreated');
-                    _data.user.isFirstDay = _data.user.daysOld < 1 ? 'yes' : 'no';
-                    _data.dimLabels.push('isFirstDay');
-                    _data.user.isFirstWeek = _data.user.daysOld >= 1 && _data.user.daysOld < 7 ? 'yes' : 'no';
-                    _data.dimLabels.push('isFirstWeek');
+                var dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
+                if (user.user_id !== 'none') {
+                    user.daysOld = _get('userDaysSinceCreated');
+                    user.isFirstDay = user.daysOld < 1 ? 'yes' : 'no';
+                    dimLabels.push('isFirstDay');
+                    user.isFirstWeek = user.daysOld >= 1 && user.daysOld < 7 ? 'yes' : 'no';
+                    dimLabels.push('isFirstWeek');
                 }
                 // Legacy Dimensions
-                _data.user.custom_map = {};
-                _.each(_data.dimLabels, function (val, ind) {
-                    _data.user.custom_map['dimension' + ind] = _data.user[val];
+                user.custom_map = {};
+                _.each(dimLabels, function (val, ind) {
+                    user.custom_map['dimension' + ind] = user[val];
                 });
 
                 // Configure Gtag with User Info
-                _gtag('config', _data.apiId, _data.user);
+                _gtag('config', apiId, user);
                 _ready.resolve();
 
                 _logger.debug.log('Initialized');
             })
             .fail(function() {
-                _logger.debug.log(_data.scriptUrl, "Failed to Load Script - Check Adblocker");
+                _logger.debug.log(scriptUrl, "Failed to Load Script - Check Adblocker");
                 _ready.reject();
             });
     });
