@@ -14,11 +14,14 @@ $("#{{ id }}").select2({
         quietMillis: 500,
         data: function (term, page) {
             return {
-                name: term
+                name: term,
+                page: page
             };
         },
         results: function (data, page) {
-            return {results: data, more: false};
+            // 10 results per query
+            var more = (page * 10) < data.total_count;
+            return {results: data.results, more: more};
         }
     },
     initSelection: function(element, callback) {
