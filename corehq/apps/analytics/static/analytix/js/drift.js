@@ -24,7 +24,7 @@ hqDefine('analytix/js/drift', [
         _logger;
 
     $(function () {
-        _logger = logging.getLoggerForApi('Drift'),
+        _logger = logging.getLoggerForApi('Drift');
         if (_global('isEnabled')) {
             _drift = window.driftt = window.drift = window.driftt || [];
             if (!_drift.init && !_drift.invoked ) {
