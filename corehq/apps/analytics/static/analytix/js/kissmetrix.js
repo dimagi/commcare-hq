@@ -55,45 +55,41 @@ hqDefine('analytix/js/kissmetrix', [
         utils.insertScript(srcUrl, logger.debug.log);
     };
 
-    var __init__ = function () {
-        _init.apiId = _get('apiId');
-        logger.verbose.log(_init.apiId || "NONE SET", "API ID");
-
-        // Initialize Kissmetrics
-        if (_init.apiId) {
-            _addKissmetricsScript('//i.kissmetrics.com/i.js');
-            _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
-        }
-
-        // Identify user and HQ instance
-        // This needs to happen before any events are sent or any traits are set
-        var username = _get('username');
-        if (username) {
-            identify(username);
-            var traits = {
-                'is_dimagi': _get('isDimagi'),
-                'hq_instance': _get('hqInstance'),
-            };
-            identifyTraits(traits);
-        }
-
-        // Initialize Kissmetrics AB Tests
-        var abTests = initialAnalytics.getAbTests('kissmetrics');
-        _.each(abTests, function (ab, testName) {
-            var test = {};
-            testName = _.last(testName.split('.'));
-            if (_.isObject(ab) && ab.version) {
-                test[ab.name || testName] = ab.version;
-                logger.debug.log(test, ["AB Test", "New Test: " + testName]);
-                _kmqPushCommand('set', test);
-                _.extend(_allAbTests, test);
-            }
-        });
-    };
-
-    $(function() {
+    $(function () {
         if (_global('isEnabled')) {
-            __init__();
+            _init.apiId = _get('apiId');
+            logger.verbose.log(_init.apiId || "NONE SET", "API ID");
+
+            // Initialize Kissmetrics
+            if (_init.apiId) {
+                _addKissmetricsScript('//i.kissmetrics.com/i.js');
+                _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
+            }
+
+            // Identify user and HQ instance
+            // This needs to happen before any events are sent or any traits are set
+            var username = _get('username');
+            if (username) {
+                identify(username);
+                var traits = {
+                    'is_dimagi': _get('isDimagi'),
+                    'hq_instance': _get('hqInstance'),
+                };
+                identifyTraits(traits);
+            }
+
+            // Initialize Kissmetrics AB Tests
+            _.each(_abTests, function (ab, testName) {
+                var test = {};
+                testName = _.last(testName.split('.'));
+                if (_.isObject(ab) && ab.version) {
+                    test[ab.name || testName] = ab.version;
+                    logger.debug.log(test, ["AB Test", "New Test: " + testName]);
+                    _kmqPushCommand('set', test);
+                    _.extend(_allAbTests, test);
+                }
+            });
+
             logger.debug.log("Initialized");
         }
     });
