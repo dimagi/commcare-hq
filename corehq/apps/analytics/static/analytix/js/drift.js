@@ -19,7 +19,6 @@ hqDefine('analytix/js/drift', [
     'use strict';
     var _get = initialAnalytics.getFn('drift'),
         _global = initialAnalytics.getFn('global'),
-        _data = {},
         _drift = {},
         _logger;
 
@@ -43,12 +42,12 @@ hqDefine('analytix/js/drift', [
             }
 
             _drift.SNIPPET_VERSION = '0.3.1';
-            _data.apiId = _get('apiId');
+            var apiId = _get('apiId');
 
-            if (_data.apiId) {
-                _data.scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + _data.apiId + '.js';
-                _logger.verbose.log(_data.scriptUrl, "Adding Script");
-                utils.insertScript(_data.scriptUrl, _logger.debug.log, {
+            if (apiId) {
+                var scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + apiId + '.js';
+                _logger.verbose.log(scriptUrl, "Adding Script");
+                utils.insertScript(scriptUrl, _logger.debug.log, {
                     crossorigin: 'anonymous',
                 });
             }

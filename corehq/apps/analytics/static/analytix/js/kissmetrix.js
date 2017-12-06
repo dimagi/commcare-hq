@@ -18,7 +18,6 @@ hqDefine('analytix/js/kissmetrix', [
         _global = initialAnalytics.getFn('global'),
         _abTests = initialAnalytics.getAbTests('kissmetrics'),
         _allAbTests = {},
-        _init = {},
         _logger;
 
     window.dataLayer = window.dataLayer || [];
@@ -59,13 +58,13 @@ hqDefine('analytix/js/kissmetrix', [
     $(function () {
         _logger = logging.getLoggerForApi('Kissmetrics');
         if (_global('isEnabled')) {
-            _init.apiId = _get('apiId');
-            _logger.verbose.log(_init.apiId || "NONE SET", "API ID");
+            var apiId = _get('apiId');
+            _logger.verbose.log(apiId || "NONE SET", "API ID");
 
             // Initialize Kissmetrics
-            if (_init.apiId) {
+            if (apiId) {
                 _addKissmetricsScript('//i.kissmetrics.com/i.js');
-                _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
+                _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + apiId + '.1.js');
             }
 
             // Initialize Kissmetrics AB Tests
