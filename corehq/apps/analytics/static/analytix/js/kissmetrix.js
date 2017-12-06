@@ -19,7 +19,7 @@ hqDefine('analytix/js/kissmetrix', [
         _abTests = initialAnalytics.getAbTests('kissmetrics'),
         _allAbTests = {},
         _init = {},
-        logger;
+        _logger;
 
     window.dataLayer = window.dataLayer || [];
 
@@ -41,7 +41,7 @@ hqDefine('analytix/js/kissmetrix', [
             if (eventName) data.km_event = eventName;
             if (properties) data.km_property = properties;
             window.dataLayer.push(data);
-            logger.verbose.log(command, ['window._kmq.push', 'window.dataLayer.push', '_kmqPushCommand', commandName]);
+            _logger.verbose.log(command, ['window._kmq.push', 'window.dataLayer.push', '_kmqPushCommand', commandName]);
         } else if (callbackFn) {
             callbackFn();
         }
@@ -53,14 +53,14 @@ hqDefine('analytix/js/kissmetrix', [
      * @private
      */
     var _addKissmetricsScript = function (srcUrl) {
-        utils.insertScript(srcUrl, logger.debug.log);
+        utils.insertScript(srcUrl, _logger.debug.log);
     };
 
     $(function () {
-        logger = logging.getLoggerForApi('Kissmetrics'),
+        _logger = logging.getLoggerForApi('Kissmetrics'),
         if (_global('isEnabled')) {
             _init.apiId = _get('apiId');
-            logger.verbose.log(_init.apiId || "NONE SET", "API ID");
+            _logger.verbose.log(_init.apiId || "NONE SET", "API ID");
 
             // Initialize Kissmetrics
             if (_init.apiId) {
@@ -86,13 +86,13 @@ hqDefine('analytix/js/kissmetrix', [
                 testName = _.last(testName.split('.'));
                 if (_.isObject(ab) && ab.version) {
                     test[ab.name || testName] = ab.version;
-                    logger.debug.log(test, ["AB Test", "New Test: " + testName]);
+                    _logger.debug.log(test, ["AB Test", "New Test: " + testName]);
                     _kmqPushCommand('set', test);
                     _.extend(_allAbTests, test);
                 }
             });
 
-            logger.debug.log("Initialized");
+            _logger.debug.log("Initialized");
         }
     });
 
@@ -102,7 +102,7 @@ hqDefine('analytix/js/kissmetrix', [
      */
     var identify = function (identity) {
         if (_global('isEnabled')) {
-            logger.debug.log(arguments, 'Identify');
+            _logger.debug.log(arguments, 'Identify');
             _kmqPushCommand('identify', identity);
         }
     };
@@ -114,7 +114,7 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {integer} timeout - (optional) timeout in milliseconds
      */
     var identifyTraits = function (traits, callbackFn, timeout) {
-        logger.debug.log(logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
+        _logger.debug.log(_logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
         callbackFn = utils.createSafeCallback(callbackFn, timeout);
         _kmqPushCommand('set', traits, callbackFn);
     };
@@ -127,7 +127,7 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {integer} timeout - (optional) Timeout for safe callback
      */
     var trackEvent = function (name, properties, callbackFn, timeout) {
-        logger.debug.log(arguments, 'RECORD EVENT');
+        _logger.debug.log(arguments, 'RECORD EVENT');
         callbackFn = utils.createSafeCallback(callbackFn, timeout);
         _kmqPushCommand('record', properties, callbackFn, name);
     };
@@ -139,7 +139,7 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var internalClick = function (selector, name, properties) {
-        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
+        _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
         _kmqPushCommand('trackClick', properties, undefined, name);
     };
 
@@ -150,7 +150,7 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var trackOutboundLink = function (selector, name, properties) {
-        logger.debug.log(logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
+        _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
         _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
     };
 
@@ -164,7 +164,6 @@ hqDefine('analytix/js/kissmetrix', [
     };
 
     return {
-        logger: logger,
         identify: identify,
         identifyTraits: identifyTraits,
         track: {

@@ -19,19 +19,19 @@ hqDefine('analytix/js/google', [
     'use strict';
     var _get = initialAnalytics.getFn('google'),
         _global = initialAnalytics.getFn('global'),
-        logger = undefined,
+        _logger = undefined,
         _data = {},
         module = {},
         _gtag = function () {},
         _ready = $.Deferred();
 
     $(function () {
-        logger = logging.getLoggerForApi('Google Analytics');
+        _logger = logging.getLoggerForApi('Google Analytics');
         _data.apiId = _get('apiId');
-        logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
+        _logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
 
         if (!_data.apiId || !_global('isEnabled')) {
-            logger.debug.log("Failed TODO");
+            _logger.debug.log("Failed TODO");
             _ready.reject();
             return;
         }
@@ -42,7 +42,7 @@ hqDefine('analytix/js/google', [
                 window.dataLayer = window.dataLayer || [];
                 _gtag = function () {
                     window.dataLayer.push(arguments);
-                    logger.verbose.log(arguments, 'gtag');
+                    _logger.verbose.log(arguments, 'gtag');
                 };
                 _gtag('js', new Date());
 
@@ -73,10 +73,10 @@ hqDefine('analytix/js/google', [
                 _gtag('config', _data.apiId, _data.user);
                 _ready.resove();
 
-                logger.debug.log('Initialized');
+                _logger.debug.log('Initialized');
             })
             .fail(function() {
-                logger.debug.log(_data.scriptUrl, "Failed to Load Script - Check Adblocker");
+                _logger.debug.log(_data.scriptUrl, "Failed to Load Script - Check Adblocker");
                 _ready.reject();
             });
     });
@@ -103,7 +103,7 @@ hqDefine('analytix/js/google', [
             if (_.isObject(eventParameters)) {
                 params = _.extend(params, eventParameters);
             }
-            logger.debug.log(logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
+            _logger.debug.log(_logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
             _gtag('event', eventAction, params);
         }).fail(function() {
             eventCallback();
@@ -130,13 +130,12 @@ hqDefine('analytix/js/google', [
                     trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);
                 }
             );
-            logger.debug.log(logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
+            _logger.debug.log(_logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
         });
     };
 
 
     module = {
-        logger: logger,
         track: {
             event: trackEvent,
             click: trackClick,
