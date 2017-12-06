@@ -15,23 +15,17 @@ hqDefine('analytix/js/hubspot', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
-        _global = initialAnalytics.getFn('global'),
-        _logger;
+        _logger,
+        _ready;
 
     var _hsq = window._hsq = window._hsq || [];
 
     $(function () {
+        var apiId = _get('apiId'),
+            scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
+
         _logger = logging.getLoggerForApi('Hubspot');
-        if (_global('isEnabled')) {
-            var apiId = _get('apiId');
-            if (apiId) {
-                var scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
-                utils.insertScript(scriptSrc, _logger.debug.log, {
-                    id: 'hs-analytics',
-                });
-            }
-            _logger.debug.log('Initialized');
-        }
+        _ready = utils.initApi(apiId, scriptUrl, _logger);
     });
 
     /**
@@ -39,8 +33,10 @@ hqDefine('analytix/js/hubspot', [
      * @param {object} data
      */
     var identify = function (data) {
-        _logger.debug.log(data, "Identify");
-        _hsq.push(['identify', data]);
+        _ready.done(function() {
+            _logger.debug.log(data, "Identify");
+            _hsq.push(['identify', data]);
+        });
     };
 
     /**
@@ -49,13 +45,13 @@ hqDefine('analytix/js/hubspot', [
      * @param {integer|float} value - This is an optional argument that can be used to track the revenue of an event.
      */
     var trackEvent = function (eventId, value) {
-        if (_global('isEnabled')) {
+        _ready.done(function() {
             _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], arguments), 'Track Event');
             _hsq.push(['trackEvent', {
                 id: eventId,
                 value: value,
             }]);
-        }
+        });
     };
 
     return {
