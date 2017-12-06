@@ -5,8 +5,7 @@
     "enikshay-performance-test"
   ],
   "server_environment": [
-    "enikshay",
-    "softlayer"
+    "enikshay"
   ],
   "data_source_table": "episode_2b_v5",
   "report_id": "summary_of_patients",
@@ -87,7 +86,6 @@
       }
     ],
     "columns": [
-      [
         {
           "sortable": false,
           "description": null,
@@ -298,6 +296,5 @@
           "display": "Adult DSTB - Intermitent Dose - Weight Category Above 60kg"
         }
       ]
-    ]
   }
 }
