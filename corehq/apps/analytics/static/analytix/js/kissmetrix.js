@@ -15,10 +15,10 @@ hqDefine('analytix/js/kissmetrix', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('kissmetrics'),
-        _global = initialAnalytics.getFn('global'),
         _abTests = initialAnalytics.getAbTests('kissmetrics'),
         _allAbTests = {},
-        _logger;
+        _logger,
+        _ready;
 
     window.dataLayer = window.dataLayer || [];
 
@@ -30,7 +30,7 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {string|undefined} eventName - optional
      */
     var _kmqPushCommand = function (commandName, properties, callbackFn, eventName) {
-        if (_global('isEnabled')) {
+        _ready.done(function() {
             var command, data;
             command = _.compact([commandName, eventName, properties, callbackFn]);
             _kmq.push(command);
@@ -41,32 +41,20 @@ hqDefine('analytix/js/kissmetrix', [
             if (properties) data.km_property = properties;
             window.dataLayer.push(data);
             _logger.verbose.log(command, ['window._kmq.push', 'window.dataLayer.push', '_kmqPushCommand', commandName]);
-        } else if (callbackFn) {
+        }).fail(function() {
             callbackFn();
-        }
-    };
-
-    /**
-     * Initialization function for kissmetrics libraries
-     * @param srcUrl
-     * @private
-     */
-    var _addKissmetricsScript = function (srcUrl) {
-        utils.insertScript(srcUrl, _logger.debug.log);
+        });
     };
 
     $(function () {
+        var apiId = _get('apiId'),
+            scriptUrls = [
+                '//i.kissmetrics.com/i.js',
+                '//doug1izaerwt3.cloudfront.net/' + apiId + '.1.js',
+            ];
+
         _logger = logging.getLoggerForApi('Kissmetrics');
-        if (_global('isEnabled')) {
-            var apiId = _get('apiId');
-            _logger.verbose.log(apiId || "NONE SET", "API ID");
-
-            // Initialize Kissmetrics
-            if (apiId) {
-                _addKissmetricsScript('//i.kissmetrics.com/i.js');
-                _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + apiId + '.1.js');
-            }
-
+        _ready = utils.initApi(apiId, scriptUrls, _logger, function() {
             // Initialize Kissmetrics AB Tests
             _.each(_abTests, function (ab, testName) {
                 var test = {};
@@ -78,9 +66,7 @@ hqDefine('analytix/js/kissmetrix', [
                     _.extend(_allAbTests, test);
                 }
             });
-
-            _logger.debug.log("Initialized");
-        }
+        });
     });
 
     /**
@@ -88,10 +74,10 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {string} identity - A unique ID to identify the session.
      */
     var identify = function (identity) {
-        if (_global('isEnabled')) {
+        _ready.done(function() {
             _logger.debug.log(arguments, 'Identify');
             _kmqPushCommand('identify', identity);
-        }
+        });
     };
 
     /**
@@ -101,9 +87,15 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {integer} timeout - (optional) timeout in milliseconds
      */
     var identifyTraits = function (traits, callbackFn, timeout) {
-        _logger.debug.log(_logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
-        callbackFn = utils.createSafeCallback(callbackFn, timeout);
-        _kmqPushCommand('set', traits, callbackFn);
+        _ready.done(function() {
+            _logger.debug.log(_logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
+            callbackFn = utils.createSafeCallback(callbackFn, timeout);
+            _kmqPushCommand('set', traits, callbackFn);
+        }).fail(function() {
+            if (_.isFunction(callbackFn)) {
+                callbackFn();
+            }
+        });
     };
 
     /**
@@ -114,9 +106,15 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {integer} timeout - (optional) Timeout for safe callback
      */
     var trackEvent = function (name, properties, callbackFn, timeout) {
-        _logger.debug.log(arguments, 'RECORD EVENT');
-        callbackFn = utils.createSafeCallback(callbackFn, timeout);
-        _kmqPushCommand('record', properties, callbackFn, name);
+        _ready.done(function() {
+            _logger.debug.log(arguments, 'RECORD EVENT');
+            callbackFn = utils.createSafeCallback(callbackFn, timeout);
+            _kmqPushCommand('record', properties, callbackFn, name);
+        }).fail(function() {
+            if (_.isFunction(callbackFn)) {
+                callbackFn();
+            }
+        });
     };
 
     /**
@@ -126,8 +124,10 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var internalClick = function (selector, name, properties) {
-        _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
-        _kmqPushCommand('trackClick', properties, undefined, name);
+        _ready.done(function() {
+            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Internal Click');
+            _kmqPushCommand('trackClick', properties, undefined, name);
+        });
     };
 
     /**
@@ -137,8 +137,10 @@ hqDefine('analytix/js/kissmetrix', [
      * @param {object} properties - optional Properties related to the event being recorded.
      */
     var trackOutboundLink = function (selector, name, properties) {
-        _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
-        _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
+        _ready.done(function() {
+            _logger.debug.log(_logger.fmt.labelArgs(["Selector", "Name", "Properties"], arguments), 'Track Click on Outbound Link');
+            _kmqPushCommand('trackClickOnOutboundLink', properties, undefined, name);
+        });
     };
 
     /**

@@ -119,7 +119,7 @@ hqDefine('analytix/js/utils', [
     /**
      * Initialize an API.
      * @param {string} apiId
-     * @param {string} scriptUrl
+     * @param {string/array} scriptUrls - Accepts string or array of strings
      * @param {Logger} logger
      * @param {function} initCallback - Logic to run once any scripts are loaded but before
         the promise this function returns is resolved.
@@ -127,10 +127,14 @@ hqDefine('analytix/js/utils', [
      *  This promise will be rejected if the API fails to initialize for any reason, most
      *  likely because analytics is disabled or because a script failed to load.
      */
-     var initApi = function(apiId, scriptUrl, logger, initCallback) {
+     var initApi = function(apiId, scriptUrls, logger, initCallback) {
         var ready = $.Deferred();
 
-        logger.verbose.log(apiId || "NOT SET",["DATA", "API ID"]);
+        logger.verbose.log(apiId || "NOT SET", ["DATA", "API ID"]);
+
+        if (_.isString(scriptUrls)) {
+            scriptUrls = [scriptUrls];
+        }
 
         if (!initialAnalytics.getFn('global')(('isEnabled'))) {
             logger.debug.log("Failed to initialize because analytics are disabled");
@@ -144,18 +148,17 @@ hqDefine('analytix/js/utils', [
             return ready;
         }
 
-        $.getScript(scriptUrl)
-            .done(function() {
+        $.when.apply($, _.map(scriptUrls, function(url) { return $.getScript(url); }))
+            .done(function(scriptUrl) {
                 if (_.isFunction(initCallback)) {
                     initCallback();
                 }
                 logger.debug.log('Initialized');
                 ready.resolve();
-            })
-            .fail(function() {
-                logger.debug.log(scriptUrl, "Failed to Load Script - Check Adblocker");
+            }).fail(function() {
+                logger.debug.log("Failed to Load Script - Check Adblocker");
                 ready.reject();
-            });
+        });
 
         return ready;
      };
