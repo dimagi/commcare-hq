@@ -137,6 +137,10 @@ class GenericReportView(object):
     # against.
     parent_report_class = None
 
+    is_deprecated = False
+    deprecation_email_message = None
+    deprecation_message = None
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
@@ -561,18 +565,25 @@ class GenericReportView(object):
         self.context.update(self._validate_context_dict(self.report_context))
 
     @property
+    def deprecate_response(self):
+        raise NotImplementedError
+
+    @property
     def view_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the general view of the report template.
         """
-        self.update_template_context()
-        template = self.template_base
-        if not self.asynchronous:
-            self.update_filter_context()
-            self.update_report_context()
-            template = self.template_report
-        return render(self.request, template, self.context)
+        if self.is_deprecated:
+            return self.deprecate_response
+        else:
+            self.update_template_context()
+            template = self.template_base
+            if not self.asynchronous:
+                self.update_filter_context()
+                self.update_report_context()
+                template = self.template_report
+            return render(self.request, template, self.context)
 
     @property
     @request_cache()

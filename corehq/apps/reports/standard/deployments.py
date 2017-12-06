@@ -291,14 +291,22 @@ class SyncHistoryReport(DeploymentsReport):
     # To be removed. Link deactivated on 6th Dec 2017.
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
+    is_deprecated = True
+    deprecation_email_message = ugettext_lazy(
+        "The Sync History report has been deprecated. You can use the Application Status report to identify "
+        "the last time a user synced. This saved email will stop working within the next two months. "
+        "Please update your saved reports email settings if needed.")
+    deprecation_message = ugettext_lazy(
+        "The Sync History report has been deprecated. "
+        "You can use the Application Status report to identify the last time a user synced."
+    )
 
     @property
-    def view_response(self):
+    def deprecate_response(self):
         from django.contrib import messages
-        messages.success(
+        messages.warning(
             self.request,
-            _('Sync History Report is not being maintained anymore and will be removed soon. '
-              'Please report an issue if you have any concerns regarding this.')
+            self.deprecation_message
         )
         return HttpResponseRedirect(
             reverse(ApplicationStatusReport.dispatcher.name(), args=[],
