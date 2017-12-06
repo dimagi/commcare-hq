@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 import datetime
 import json
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from StringIO import StringIO
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.db import transaction
@@ -559,7 +559,7 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     if app_id:
         try:
             log_accounting_info("Updating exchange rates...")
-            rates = json.load(urllib2.urlopen(
+            rates = json.load(six.moves.urllib.request.urlopen(
                 'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
             default_rate = float(rates[Currency.get_default().code])
             for code, rate in rates.items():

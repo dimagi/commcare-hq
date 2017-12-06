@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 
 import langcodes
 import logging
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.conf import settings
 from django.contrib import messages
@@ -1011,7 +1011,7 @@ def verify_phone_number(request, domain, couch_user_id):
     """
     if 'phone_number' not in request.GET:
         raise Http404('Must include phone number in request.')
-    phone_number = urllib.unquote(request.GET['phone_number'])
+    phone_number = six.moves.urllib.parse.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
     result = initiate_sms_verification_workflow(user, phone_number)

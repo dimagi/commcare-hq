@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from wsgiref.util import FileWrapper
 
 from django.urls import reverse
@@ -78,7 +78,7 @@ class CaseAttachmentAPI(View):
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
                         r.write('Filesize: %d<br>' % meta['content_length'])
 
-                        url_params = urllib.urlencode({
+                        url_params = six.moves.urllib.parse.urlencode({
                             "img": '1',
                             "size": fsize,
                             "max_size": max_filesize,

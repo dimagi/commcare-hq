@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from datetime import datetime
 import json
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -316,7 +316,7 @@ def get_filters_from_request_params(request_params, limit_top_level=None):
     """
     def _decode(thing):
         try:
-            return urllib.unquote(thing)
+            return six.moves.urllib.parse.unquote(thing)
         except Exception:
             return thing
     

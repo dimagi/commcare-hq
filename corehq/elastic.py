@@ -3,7 +3,7 @@ from collections import namedtuple
 import copy
 import logging
 import time
-from urllib import unquote
+from six.moves.urllib.parse import unquote
 
 from django.conf import settings
 from elasticsearch import Elasticsearch

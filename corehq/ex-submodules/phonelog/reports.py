@@ -27,7 +27,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 import six
 
 logger = logging.getLogger(__name__)
