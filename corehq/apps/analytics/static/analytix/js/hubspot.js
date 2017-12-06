@@ -21,19 +21,15 @@ hqDefine('analytix/js/hubspot', [
 
     var _hsq = window._hsq = window._hsq || [];
 
-    var __init__ = function () {
-        _data.apiId = _get('apiId');
-        if (_data.apiId) {
-            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId + '.js';
-            utils.insertScript(_data.scriptSrc, logger.debug.log, {
-                id: 'hs-analytics',
-            });
-        }
-    };
-
-    $(function() {
+    $(function () {
         if (_global('isEnabled')) {
-            __init__();
+            _data.apiId = _get('apiId');
+            if (_data.apiId) {
+                _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId;
+                utils.insertScript(_data.scriptSrc, logger.debug.log, {
+                    id: 'hs-analytics',
+                });
+            }
             logger.debug.log('Initialized');
         }
     });

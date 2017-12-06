@@ -23,42 +23,39 @@ hqDefine('analytix/js/drift', [
         _data = {},
         _drift = {};
 
-    var __init__ = function () {
-        _drift = window.driftt = window.drift = window.driftt || [];
-        if (!_drift.init && !_drift.invoked ) {
-            _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];
-            _drift.factory = function (methodName) {
-                return function() {
-                    var methodFn = Array.prototype.slice.call(arguments);
-                    methodFn.unshift(methodName);
-                    _drift.push(methodFn);
-                    return _drift;
-                };
-            };
-            _.each(_drift.methods, function (methodName) {
-                _drift[methodName] = _drift.factory(methodName);
-            });
-        }
-
-        _drift.SNIPPET_VERSION = '0.3.1';
-        _data.apiId = _get('apiId');
-
-        if (_data.apiId) {
-            _data.scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + _data.apiId + '.js';
-            logger.verbose.log(_data.scriptUrl, "Adding Script");
-            utils.insertScript(_data.scriptUrl, logger.debug.log, {
-                crossorigin: 'anonymous',
-            });
-        }
-        _drift.on('emailCapture',function(e){
-            hubspot.identify({email: e.data.email});
-            hubspot.trackEvent('Identified via Drift');
-        });
-    };
-
-    $(function() {
+    $(function () {
         if (_global('isEnabled')) {
-            __init__();
+            _drift = window.driftt = window.drift = window.driftt || [];
+            if (!_drift.init && !_drift.invoked ) {
+                _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];
+                _drift.factory = function (methodName) {
+                    return function() {
+                        var methodFn = Array.prototype.slice.call(arguments);
+                        methodFn.unshift(methodName);
+                        _drift.push(methodFn);
+                        return _drift;
+                    };
+                };
+                _.each(_drift.methods, function (methodName) {
+                    _drift[methodName] = _drift.factory(methodName);
+                });
+            }
+
+            _drift.SNIPPET_VERSION = '0.3.1';
+            _data.apiId = _get('apiId');
+
+            if (_data.apiId) {
+                _data.scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + _data.apiId + '.js';
+                logger.verbose.log(_data.scriptUrl, "Adding Script");
+                utils.insertScript(_data.scriptUrl, logger.debug.log, {
+                    crossorigin: 'anonymous',
+                });
+            }
+            _drift.on('emailCapture',function(e){
+                hubspot.identify({email: e.data.email});
+                hubspot.trackEvent('Identified via Drift');
+            });
+
             logger.debug.log("Initialized");
         }
     });

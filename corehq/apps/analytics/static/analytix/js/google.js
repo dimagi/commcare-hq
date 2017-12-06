@@ -25,7 +25,7 @@ hqDefine('analytix/js/google', [
         _gtag = function () {},
         _ready = $.Deferred();
 
-    var __init__ = function () {
+    $(function () {
         logger = logging.getLoggerForApi('Google Analytics');
         _data.apiId = _get('apiId');
         logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
@@ -79,10 +79,6 @@ hqDefine('analytix/js/google', [
                 logger.debug.log(_data.scriptUrl, "Failed to Load Script - Check Adblocker");
                 _ready.reject();
             });
-    };
-
-    $(function() {
-        __init__();
     });
 
     /**

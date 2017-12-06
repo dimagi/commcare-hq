@@ -56,32 +56,29 @@ hqDefine('analytix/js/kissmetrix', [
         utils.insertScript(srcUrl, logger.debug.log);
     };
 
-    var __init__ = function () {
-        _init.apiId = _get('apiId');
-        logger.verbose.log(_init.apiId || "NONE SET", "API ID");
-
-        // Initialize Kissmetrics
-        if (_init.apiId) {
-            _addKissmetricsScript('//i.kissmetrics.com/i.js');
-            _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
-        }
-
-        // Initialize Kissmetrics AB Tests
-        _.each(_abTests, function (ab, testName) {
-            var test = {};
-            testName = _.last(testName.split('.'));
-            if (_.isObject(ab) && ab.version) {
-                test[ab.name || testName] = ab.version;
-                logger.debug.log(test, ["AB Test", "New Test: " + testName]);
-                _kmqPushCommand('set', test);
-                _.extend(_allAbTests, test);
-            }
-        });
-    };
-
-    $(function() {
+    $(function () {
         if (_global('isEnabled')) {
-            __init__();
+            _init.apiId = _get('apiId');
+            logger.verbose.log(_init.apiId || "NONE SET", "API ID");
+
+            // Initialize Kissmetrics
+            if (_init.apiId) {
+                _addKissmetricsScript('//i.kissmetrics.com/i.js');
+                _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
+            }
+
+            // Initialize Kissmetrics AB Tests
+            _.each(_abTests, function (ab, testName) {
+                var test = {};
+                testName = _.last(testName.split('.'));
+                if (_.isObject(ab) && ab.version) {
+                    test[ab.name || testName] = ab.version;
+                    logger.debug.log(test, ["AB Test", "New Test: " + testName]);
+                    _kmqPushCommand('set', test);
+                    _.extend(_allAbTests, test);
+                }
+            });
+
             logger.debug.log("Initialized");
         }
     });
