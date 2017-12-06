@@ -17,21 +17,21 @@ hqDefine('analytix/js/hubspot', [
     var _get = initialAnalytics.getFn('hubspot'),
         _global = initialAnalytics.getFn('global'),
         _data = {},
-        logger;
+        _logger;
 
     var _hsq = window._hsq = window._hsq || [];
 
     $(function () {
-        logger = logging.getLoggerForApi('Hubspot');
+        _logger = logging.getLoggerForApi('Hubspot');
         if (_global('isEnabled')) {
             _data.apiId = _get('apiId');
             if (_data.apiId) {
                 _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId;
-                utils.insertScript(_data.scriptSrc, logger.debug.log, {
+                utils.insertScript(_data.scriptSrc, _logger.debug.log, {
                     id: 'hs-analytics',
                 });
             }
-            logger.debug.log('Initialized');
+            _logger.debug.log('Initialized');
         }
     });
 
@@ -40,7 +40,7 @@ hqDefine('analytix/js/hubspot', [
      * @param {object} data
      */
     var identify = function (data) {
-        logger.debug.log(data, "Identify");
+        _logger.debug.log(data, "Identify");
         _hsq.push(['identify', data]);
     };
 
@@ -51,7 +51,7 @@ hqDefine('analytix/js/hubspot', [
      */
     var trackEvent = function (eventId, value) {
         if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Event ID", "Value"], arguments), 'Track Event');
+            _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], arguments), 'Track Event');
             _hsq.push(['trackEvent', {
                 id: eventId,
                 value: value,
@@ -60,7 +60,6 @@ hqDefine('analytix/js/hubspot', [
     };
 
     return {
-        logger: logger,
         identify: identify,
         trackEvent: trackEvent,
     };

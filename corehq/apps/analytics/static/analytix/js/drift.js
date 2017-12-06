@@ -21,10 +21,10 @@ hqDefine('analytix/js/drift', [
         _global = initialAnalytics.getFn('global'),
         _data = {},
         _drift = {},
-        logger;
+        _logger;
 
     $(function () {
-        logger = logging.getLoggerForApi('Drift'),
+        _logger = logging.getLoggerForApi('Drift'),
         if (_global('isEnabled')) {
             _drift = window.driftt = window.drift = window.driftt || [];
             if (!_drift.init && !_drift.invoked ) {
@@ -47,8 +47,8 @@ hqDefine('analytix/js/drift', [
 
             if (_data.apiId) {
                 _data.scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + _data.apiId + '.js';
-                logger.verbose.log(_data.scriptUrl, "Adding Script");
-                utils.insertScript(_data.scriptUrl, logger.debug.log, {
+                _logger.verbose.log(_data.scriptUrl, "Adding Script");
+                utils.insertScript(_data.scriptUrl, _logger.debug.log, {
                     crossorigin: 'anonymous',
                 });
             }
@@ -57,12 +57,10 @@ hqDefine('analytix/js/drift', [
                 hubspot.trackEvent('Identified via Drift');
             });
 
-            logger.debug.log("Initialized");
+            _logger.debug.log("Initialized");
         }
     });
 
     // no methods just yet
-    return {
-        logger: logger,
-    };
+    return 1;
 });
