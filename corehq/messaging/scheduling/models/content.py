@@ -75,10 +75,10 @@ class SMSContent(Content):
         if not phone_number:
             return
 
-        language_code = recipient.get_language_code()
-        message = (
-            self.message.get(language_code) or
-            self.message.get(schedule_instance.memoized_schedule.default_language_code)
+        message = self.get_translation_from_message_dict(
+            self.message,
+            schedule_instance.memoized_schedule,
+            recipient.get_language_code()
         )
         message = self.render_message(message, schedule_instance)
 
