@@ -18,9 +18,14 @@ hqDefine('analytix/js/google', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('google'),
-        _logger = undefined,
-        _gtag = function () {}, // TODO: log that nothing happened
+        _logger,
         _ready = $.Deferred();
+
+    var _gtag = function () {
+        // This should never run, because all calls to _gtag should be
+        // inside done handlers for ready, but just in case...
+        _logger.warning.log(arguments, 'skipped gtag');
+    };
 
     $(function () {
         _logger = logging.getLoggerForApi('Google Analytics');
