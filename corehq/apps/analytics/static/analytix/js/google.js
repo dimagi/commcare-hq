@@ -20,9 +20,7 @@ hqDefine('analytix/js/google', [
     var _get = initialAnalytics.getFn('google'),
         _logger = undefined,
         _data = {},
-        module = {},
         _gtag = function () {}, // TODO: log that nothing happened
-        _logger,
         _ready = $.Deferred();
 
     $(function () {
@@ -137,14 +135,6 @@ hqDefine('analytix/js/google', [
         });
     };
 
-
-    module = {
-        track: {
-            event: trackEvent,
-            click: trackClick,
-        },
-    };
-
     /**
      * Helper function that pre-fills the eventCategory field for all the
      * tracking helper functions. Useful if you want to track a lot of items
@@ -163,7 +153,7 @@ hqDefine('analytix/js/google', [
              * @param {function} eventCallback - (optional) Event callback fn
              */
             event: function (eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-                module.track.event(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
+                trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
             },
             /**
              * @param {(object|string)} element - The element (or a selector) whose clicks you want to track.
@@ -175,11 +165,16 @@ hqDefine('analytix/js/google', [
             click: function (element, eventAction, eventLabel, eventValue, eventParameters) {
                 // directly reference what the module returns instead of the private function,
                 // as some mocha tests will want to replace the module's returned functions
-                module.track.click(element, eventCategory, eventLabel, eventValue, eventParameters);
+                trackClick(element, eventCategory, eventLabel, eventValue, eventParameters);
             },
         };
     };
 
-    module.trackCategory = trackCategory;
-    return module;
+    return {
+        track: {
+            event: trackEvent,
+            click: trackClick,
+        },
+        trackCategory: trackCategory,
+    };
 });
