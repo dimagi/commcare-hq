@@ -57,7 +57,7 @@ hqDefine('analytix/js/kissmetrix', [
     };
 
     $(function () {
-        _logger = logging.getLoggerForApi('Kissmetrics'),
+        _logger = logging.getLoggerForApi('Kissmetrics');
         if (_global('isEnabled')) {
             _init.apiId = _get('apiId');
             _logger.verbose.log(_init.apiId || "NONE SET", "API ID");
