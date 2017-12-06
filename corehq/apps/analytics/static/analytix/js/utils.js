@@ -68,34 +68,6 @@ hqDefine('analytix/js/utils', [
         }
     };
 
-    /**
-     * Inserts a <script src="srcUrl" type="text/javascript"></script>
-     * tag into the DOM.
-     * @param {string} scriptSrc
-     * @param {function} loggingFn - logs on success or failure of script
-     * @param {object} options - (optional) options added on to the script
-     */
-    var insertScript = function (scriptSrc, loggingFn, options) {
-        setTimeout(function(){
-            var doc = document,
-                firstScriptTag = doc.getElementsByTagName('script')[0],
-                script = doc.createElement('script');
-            script.type = 'text/javascript';
-            script.async = true;
-            script.src = scriptSrc;
-            _.each(options || {}, function(val, key) {
-                script[key] = val;
-            });
-            script.addEventListener('error', function () {
-                loggingFn(scriptSrc, "Failed to Load Script - Check Adblocker");
-            });
-            script.addEventListener('load', function () {
-                loggingFn(scriptSrc, "Loaded Script");
-            });
-            firstScriptTag.parentNode.insertBefore(script, firstScriptTag);
-        }, 1);
-    };
-
     var getDateHash = function () {
         var e = 3e5;
         return Math.ceil(new Date() / e) * e;
@@ -165,7 +137,6 @@ hqDefine('analytix/js/utils', [
 
     return {
         trackClickHelper: trackClickHelper,
-        insertScript: insertScript,
         createSafeCallback: createSafeCallback,
         getDateHash: getDateHash,
         initApi: initApi,
