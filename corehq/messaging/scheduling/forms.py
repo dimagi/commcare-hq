@@ -290,10 +290,6 @@ class ScheduleForm(Form):
 
         return result
 
-    @property
-    def readonly_mode(self):
-        return False
-
     def __init__(self, domain, schedule, *args, **kwargs):
         self.domain = domain
         self.initial_schedule = schedule
@@ -317,10 +313,6 @@ class ScheduleForm(Form):
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
         self.add_content_fields()
-
-        if self.readonly_mode:
-            for field_name, field in self.fields.items():
-                field.disabled = True
 
         self.helper.layout = crispy.Layout(*self.get_layout_fields())
 
@@ -889,16 +881,15 @@ class BroadcastForm(ScheduleForm):
 
     def get_layout_fields(self):
         result = super(BroadcastForm, self).get_layout_fields()
-        if not self.readonly_mode:
-            result.append(
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _("Save"),
-                        css_class='btn-primary',
-                        type='submit',
-                    ),
-                )
+        result.append(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
             )
+        )
         return result
 
     def get_timing_layout_fields(self):
@@ -940,10 +931,6 @@ class BroadcastForm(ScheduleForm):
                 result['start_date'] = self.initial_broadcast.start_date.strftime('%Y-%m-%d')
 
         return result
-
-    @property
-    def readonly_mode(self):
-        return isinstance(self.initial_broadcast, ImmediateBroadcast)
 
     def clean_start_date(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
@@ -1074,6 +1061,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
         self.update_recipient_types_choices()
+
+    @cached_property
+    def requires_system_admin_to_edit(self):
+        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
 
     def update_recipient_types_choices(self):
         new_choices = [

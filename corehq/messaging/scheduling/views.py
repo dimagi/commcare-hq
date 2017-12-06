@@ -135,6 +135,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     page_title = _('Schedule a Message')
     template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
+    read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -173,6 +174,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     def page_context(self):
         return {
             'schedule_form': self.schedule_form,
+            'read_only_mode': self.read_only_mode,
         }
 
     def post(self, request, *args, **kwargs):
@@ -233,6 +235,10 @@ class EditScheduleView(CreateScheduleView):
             raise Http404()
 
         return broadcast
+
+    @property
+    def read_only_mode(self):
+        return isinstance(self.broadcast, ImmediateBroadcast)
 
     @property
     def schedule(self):
@@ -317,6 +323,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
             'schedule_form': self.schedule_form,
+            'read_only_mode': self.read_only_mode,
         }
 
     @cached_property
@@ -339,7 +346,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     def read_only_mode(self):
         return (
             not self.is_system_admin and
-            self.criteria_form.requires_system_admin_to_edit
+            (
+                self.criteria_form.requires_system_admin_to_edit or
+                self.schedule_form.requires_system_admin_to_edit
+            )
         )
 
     @cached_property
