@@ -39,8 +39,38 @@ class Command(BaseModelReconciliationCommand):
         self.email_report()
 
     def reconcile_cases(self, referral_cases, occurrence_case_id):
-        retain_case = self.get_first_opened_case(referral_cases)
+        retain_case = self.get_case_to_be_retained(referral_cases, occurrence_case_id)
         self.close_cases(referral_cases, occurrence_case_id, retain_case)
+
+    def get_case_to_be_retained(self, referral_cases, occurrence_case_id):
+        """
+        Use the following priority order to identify which case (single) to keep:
+        Referral.referral_reason = enrolment if person.@owner_id = '-' OR person.@owner_id = ''
+        Referral.referral_reason != enrollment if person.@owner_id != '-' AND person.@owner_id != ''
+        @date_opened (earliest)
+        """
+        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
+
+        relevant_cases = []
+
+        for referral_case in referral_cases:
+            if person_case.owner_id in ['-', '']:
+                if referral_case.get_case_property('referral_reason') == 'enrolment':
+                    relevant_cases.append(referral_case)
+
+        if not relevant_cases:
+            for referral_case in referral_cases:
+                if person_case.owner_id not in ['-', '']:
+                    if referral_case.get_case_property('referral_reason') != 'enrollment':
+                        relevant_cases.append(referral_case)
+
+        if relevant_cases:
+            if len(relevant_cases) > 1:
+                return self.get_first_opened_case(relevant_cases)
+            else:
+                return relevant_cases[0]
+
+        return self.get_first_opened_case(referral_cases)
 
     def public_app_case(self, occurrence_case_id):
         try:
