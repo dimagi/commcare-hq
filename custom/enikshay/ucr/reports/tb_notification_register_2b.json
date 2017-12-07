@@ -105,28 +105,37 @@
                 "pre_value": "invalid_episode",
                 "datatype": "string",
                 "pre_operator": "distinct from",
-                "slug": "close_reason1",
+                "display": null,
                 "field": "close_reason",
                 "type": "pre",
-                "display": null
+                "slug": "close_reason1"
             },
             {
                 "pre_value": "duplicate",
                 "datatype": "string",
                 "pre_operator": "distinct from",
-                "slug": "close_reason2",
+                "display": null,
                 "field": "close_reason",
                 "type": "pre",
-                "display": null
+                "slug": "close_reason2"
             },
             {
                 "pre_value": "invalid_registration",
                 "datatype": "string",
                 "pre_operator": "distinct from",
-                "slug": "close_reason3",
+                "display": null,
                 "field": "close_reason",
                 "type": "pre",
-                "display": null
+                "slug": "close_reason3"
+            },
+            {
+                "pre_value": "duplicate_reconciliation",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason4"
             }
         ],
         "columns": [
