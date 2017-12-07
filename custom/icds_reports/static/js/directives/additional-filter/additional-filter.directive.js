@@ -49,13 +49,12 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
     var filtersObjects = [];
-    if (vm.filters.indexOf('gender') === -1) {
+    if (vm.filters && vm.filters.indexOf('gender') === -1) {
         filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
     }
-    if (vm.filters.indexOf('age') === -1) {
+    if (vm.filters && vm.filters.indexOf('age') === -1) {
         filtersObjects.push({ label: 'Age', value: vm.selectedAge });
     }
-
 
     vm.getPlaceholder = function() {
         var placeholder = '';
