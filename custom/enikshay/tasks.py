@@ -383,9 +383,11 @@ class EpisodeAdherenceUpdate(object):
 
         adherence_cases = self.get_valid_adherence_cases()
         dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
+        doses_per_week = self.get_doses_per_week()
 
         update = {
             'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
+            'doses_per_week': doses_per_week
         }
         update.update(self.get_adherence_scores(dose_status_by_date))
         update.update(self.get_aggregated_scores(
@@ -487,7 +489,6 @@ class EpisodeAdherenceUpdate(object):
         )
 
         doses_per_week = self.get_doses_per_week()
-        update['doses_per_week'] = doses_per_week
 
         # the expected number of doses taken between the time the adherence
         # schedule started and the last valid date of the score

@@ -6,7 +6,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode_v3",
+    "data_source_table": "episode_v4",
     "report_id": "beneficiary_register_v2",
     "config": {
         "description": "",
