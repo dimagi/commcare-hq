@@ -13,7 +13,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
-def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
+def send_openmrs_data(domain, requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
     provider_uuid = getattr(openmrs_config, 'openmrs_provider', None)
     problem_log = []
     person_uuids = []
@@ -21,7 +21,7 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
         # todo: create patient if it doesn't exist?
-        person_uuid = sync_openmrs_patient(requests, info, openmrs_config, problem_log)
+        person_uuid = sync_openmrs_patient(domain, requests, info, openmrs_config, problem_log)
         person_uuids.append(person_uuid)
 
     logger.debug('OpenMRS patient(s) found: ', person_uuids)
@@ -54,8 +54,8 @@ def send_openmrs_visit(requests, info, form_config, person_uuid, provider_uuid, 
     )
 
 
-def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
-    patient = get_patient(requests, info, openmrs_config, problem_log)
+def sync_openmrs_patient(domain, requests, info, openmrs_config, problem_log):
+    patient = get_patient(domain, requests, info, openmrs_config, problem_log)
     if patient is None:
         raise ValueError('CommCare patient was not found in OpenMRS')
     person_uuid = patient['person']['uuid']

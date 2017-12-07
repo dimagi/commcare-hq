@@ -226,8 +226,19 @@ def get_subresource_instances(requests, person_uuid, subresource):
     )).json()['results']
 
 
-def get_patient(requests, info, openmrs_config, problem_log):
-    patient = None
+def guess_patients(domain, requests, case_id, case_config):
+    guessers = get_patient_guessers(domain)
+    if not guessers:
+        return []
+
+    case = CaseAccessors(domain).get_case(case_id)
+    patients = []
+    for guesser in guessers:
+        patients.extend(guesser.guess_patients(requests, case, case_config))
+    return patients
+
+
+def get_patient(domain, requests, info, openmrs_config, problem_log):
     for id_matcher in openmrs_config.case_config.id_matchers:
         assert isinstance(id_matcher, IdMatcher)
         if id_matcher.case_property in info.extra_fields:
@@ -236,6 +247,10 @@ def get_patient(requests, info, openmrs_config, problem_log):
                 info.extra_fields[id_matcher.case_property])
             if patient:
                 break
+    else:
+        # ID matchers did not match a patient in OpenMRS. Search for patients based on other case properties
+        patients = guess_patients(domain, requests, info.case_id, openmrs_config.case_config)
+        patient = patients[0] if len(patients) == 1 else None
 
     if not patient:
         problem_log.append("Could not find patient matching case")
