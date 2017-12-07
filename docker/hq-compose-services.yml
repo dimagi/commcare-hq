@@ -1,3 +1,19 @@
+formplayer:
+  extends:
+    file: hq-compose.yml
+    service: formplayer
+  environment:
+    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
+    WEB_HOST: "dockerhost"
+  links:
+    - postgres
+    - couch
+    - redis
+  expose:
+    - 8010
+  ports:
+    - "8010:8010"
+
 postgres:
   extends:
     file: hq-compose.yml

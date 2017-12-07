@@ -244,6 +244,8 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     TOUCHFORMS_API_USER = 'admin@example.com'
     TOUCHFORMS_API_PASSWORD = 'password'
 
+    FORMPLAYER_URL = 'http://formplayer:8010'
+
     CCHQ_API_THROTTLE_REQUESTS = 200
     CCHQ_API_THROTTLE_TIMEFRAME = 10
 
