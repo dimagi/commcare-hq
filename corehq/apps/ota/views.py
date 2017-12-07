@@ -8,10 +8,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from iso8601 import iso8601
 
-from casexml.apps.phone.exceptions import InvalidSyncLogException
+
+from corehq.apps.domain.auth import BASIC
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.utils import bucket_value
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -44,7 +43,7 @@ from corehq.apps.users.util import update_device_meta, update_latest_builds, upd
 
 @location_safe
 @handle_401_response
-@login_or_digest_or_basic_or_apikey_or_token()
+@login_or_digest_or_basic_or_apikey_or_token(default=BASIC)
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
