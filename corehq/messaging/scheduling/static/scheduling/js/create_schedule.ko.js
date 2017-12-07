@@ -1,4 +1,47 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
+    var MessageViewModel = function(language_code, message) {
+        var self = this;
+
+        self.language_code = ko.observable(language_code);
+        self.message = ko.observable(message);
+    };
+
+    var TranslationViewModel = function(language_codes, translations) {
+        var self = this;
+
+        if(typeof translations === 'string') {
+            translations = JSON.parse(translations);
+        }
+        translations = translations || {};
+        var initial_translate = !($.isEmptyObject(translations) || '*' in translations);
+
+        self.translate = ko.observable(initial_translate);
+        self.nonTranslatedMessage = ko.observable(translations['*'])
+        self.translatedMessages = ko.observableArray();
+
+        self.messagesJSONString = ko.computed(function() {
+            result = {};
+            if(self.translate()) {
+                for(var i = 0; i < self.translatedMessages().length; i++) {
+                    var messageModel = self.translatedMessages()[i];
+                    result[messageModel.language_code()] = messageModel.message();
+                }
+            } else {
+                result['*'] = self.nonTranslatedMessage();
+            }
+            return JSON.stringify(result);
+        });
+
+        self.loadInitialTranslatedMessages = function() {
+            for(var i = 0; i < language_codes.length; i++) {
+                var language_code = language_codes[i];
+                self.translatedMessages.push(new MessageViewModel(language_code, translations[language_code]));
+            }
+        };
+
+        self.loadInitialTranslatedMessages();
+    };
+
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
             select2_user_group_recipients, select2_user_organization_recipients,
             select2_case_group_recipients) {
@@ -30,7 +73,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
-        self.translate = ko.observable(initial_values.translate);
+        self.message = new TranslationViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            initial_values.message
+        );
 
         self.create_day_of_month_choice = function(value) {
             if(value === '-1') {

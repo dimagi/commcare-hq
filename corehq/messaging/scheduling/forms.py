@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import json
 import re
 from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
 from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
@@ -19,14 +20,14 @@ from django.forms.fields import (
     IntegerField,
 )
 from django.forms.forms import Form
-from django.forms.widgets import Textarea, CheckboxSelectMultiple
+from django.forms.widgets import Textarea, CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
 from corehq.messaging.scheduling.models import (
@@ -183,9 +184,9 @@ class ScheduleForm(Form):
             # (CONTENT_IVR_SURVEY, _('IVR Survey')),
         )
     )
-    translate = BooleanField(
-        label=_("Translate this message"),
-        required=False
+    message = CharField(
+        required=False,
+        widget=HiddenInput,
     )
 
     def update_send_frequency_choices(self, initial_value):
@@ -254,10 +255,7 @@ class ScheduleForm(Form):
         content = self.initial_schedule.memoized_events[0].content
         if isinstance(content, SMSContent):
             result['content'] = self.CONTENT_SMS
-            result['translate'] = '*' not in content.message
-            result['non_translated_message'] = content.message.get('*', '')
-            for lang in self.project_languages:
-                result['message_%s' % lang] = content.message.get(lang, '')
+            result['message'] = content.message
 
     def compute_initial(self):
         result = {}
@@ -312,7 +310,6 @@ class ScheduleForm(Form):
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
-        self.add_content_fields()
 
         self.helper.layout = crispy.Layout(*self.get_layout_fields())
 
@@ -437,35 +434,33 @@ class ScheduleForm(Form):
         ]
 
     def get_content_layout_fields(self):
-        result = [
+        return [
             crispy.Field('content'),
-            crispy.Field('translate', data_bind='checked: translate'),
-            crispy.Div(
-                crispy.Field('non_translated_message'),
-                data_bind='visible: !translate()',
+            hqcrispy.B3MultiField(
+                ugettext("Message"),
+                crispy.Field(
+                    'message',
+                    data_bind='value: message.messagesJSONString',
+                ),
+                crispy.Div(
+                    crispy.Div(template='scheduling/partial/message_configuration.html'),
+                    data_bind='with: message',
+                ),
             ),
         ]
 
-        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
-        result.append(
-            crispy.Div(*translated_fields, data_bind='visible: translate()')
-        )
-
-        return result
-
     @cached_property
-    def project_languages(self):
-        doc = StandaloneTranslationDoc.get_obj(self.domain, 'sms')
-        return getattr(doc, 'langs', ['en'])
+    def language_list(self):
+        tdoc = get_or_create_translation_doc(self.domain)
+        result = set(tdoc.langs)
 
-    def add_content_fields(self):
-        self.fields['non_translated_message'] = CharField(label=_("Message"), required=False, widget=Textarea)
+        if self.initial_schedule:
+            result |= self.initial_schedule.memoized_language_set
 
-        for lang in self.project_languages:
-            # TODO support RTL languages
-            self.fields['message_%s' % lang] = CharField(
-                label="{} ({})".format(_("Message"), lang), required=False, widget=Textarea
-            )
+        if '*' in result:
+            result.remove('*')
+
+        return list(result)
 
     @property
     def current_values(self):
@@ -691,19 +686,26 @@ class ScheduleForm(Form):
 
         return occurrences
 
-    def distill_content(self):
-        form_data = self.cleaned_data
-        if form_data['translate']:
-            messages = {}
-            for lang in self.project_languages:
-                key = 'message_%s' % lang
-                if key in form_data:
-                    messages[lang] = form_data[key]
-            content = SMSContent(message=messages)
-        else:
-            content = SMSContent(message={'*': form_data['non_translated_message']})
+    def clean_message(self):
+        value = json.loads(self.cleaned_data['message'])
+        cleaned_value = {k: v.strip() for k, v in value.items()}
 
-        return content
+        if '*' in cleaned_value:
+            return cleaned_value
+
+        if len(cleaned_value) == 0:
+            raise ValidationError(ugettext("This field is required"))
+
+        for expected_language_code in self.language_list:
+            if not cleaned_value.get(expected_language_code):
+                raise ValidationError(ugettext("Please fill out all translations"))
+
+        return cleaned_value
+
+    def distill_content(self):
+        return SMSContent(
+            message=self.cleaned_data['message']
+        )
 
     def distill_recipients(self):
         form_data = self.cleaned_data

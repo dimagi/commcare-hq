@@ -67,6 +67,22 @@ class Schedule(models.Model):
         for k, v in options.items():
             setattr(self, k, v)
 
+    @property
+    @memoized
+    def memoized_language_set(self):
+        from corehq.messaging.scheduling.models import SMSContent, EmailContent
+
+        result = set()
+        for event in self.memoized_events:
+            content = event.memoized_content
+            if isinstance(content, SMSContent):
+                result |= set(content.message.keys())
+            elif isinstance(content, EmailContent):
+                result |= set(content.subject.keys())
+                result |= set(content.message.keys())
+
+        return result
+
 
 class ContentForeignKeyMixin(models.Model):
     sms_content = models.ForeignKey('scheduling.SMSContent', null=True, on_delete=models.CASCADE)
