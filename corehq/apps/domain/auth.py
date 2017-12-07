@@ -44,28 +44,14 @@ def determine_authtype_from_request(request, default=DIGEST):
     headers found in the request.
     """
     user_agent = request.META.get('HTTP_USER_AGENT')
-    type_to_auth_map = {
-        J2ME: DIGEST,
-        ANDROID: BASIC,
-    }
-    user_type = guess_phone_type_from_user_agent(user_agent)
-    if user_type is not None:
-        return type_to_auth_map.get(user_type, default)
-    else:
-        return determine_authtype_from_header(request, default)
+    if is_probably_j2me(user_agent):
+        return DIGEST
+    return determine_authtype_from_header(request, default)
 
 
-def guess_phone_type_from_user_agent(user_agent):
-    """
-    A really dumb utility that guesses the phone type based on the user-agent header.
-    """
+def is_probably_j2me(user_agent):
     j2me_pattern = '[Nn]okia|NOKIA|CLDC|cldc|MIDP|midp|Series60|Series40|[Ss]ymbian|SymbOS|[Mm]aemo'
-    if user_agent:
-        if re.search(j2me_pattern, user_agent):
-            return J2ME
-        elif 'Android' in user_agent:
-            return ANDROID
-    return None
+    return user_agent and re.search(j2me_pattern, user_agent)
 
 
 def get_username_and_password_from_request(request):

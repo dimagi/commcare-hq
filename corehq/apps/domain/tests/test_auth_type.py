@@ -5,7 +5,7 @@ from ..auth import (
     J2ME,
     ANDROID,
     determine_authtype_from_request,
-    guess_phone_type_from_user_agent,
+    is_probably_j2me,
 )
 
 
@@ -116,33 +116,11 @@ class TestPhoneType(SimpleTestCase):
             'NokiaN-Gage/1.0 SymbianOS/6.1 Series60/1.2 Profile/MIDP-1.0 Configuration/CLDC-1.0',
         ]
         for java_agent in corpus:
-            self.assertEqual(J2ME, guess_phone_type_from_user_agent(java_agent), 'j2me user agent detection failed for {}'.format(java_agent))
+            self.assertTrue(is_probably_j2me(java_agent), 'j2me user agent detection failed for {}'.format(java_agent))
 
-    def test_android_user_agents(self):
-        corpus = [
-            # http://www.zytrax.com/tech/web/mobile_ids.html
-            # android like things
-            'Mozilla/5.0 (Linux; Android 4.1.1; Transformer Prime TF201 Build/JRO03C) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166  Safari/535.19',
-            'Mozilla/5.0 (Linux; U; Android 4.0.4; en-us; Transformer TF101 Build/IMM76I) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Safari/534.30',
-            'Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; VS840 4G Build/GRK39F) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-            'Mozilla/5.0 (Linux; U; Android 2.2.1; en-us; MB525 Build/3.4.2-107_JDN-9) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-            'Mozilla/5.0 (Linux; U; Android 2.1-update1-1.0.19; en-us; NXM736 Build/ECLAIR) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17',
-            'Mozilla/5.0 (Linux; U; Android 2.2; de-de; U0101HA Build/FRF85B) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-            'Mozilla/5.0 (Linux; U; Android 2.2.1; de-de; SP-60 Build/MASTER) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-            'Mozilla/5.0 (Linux; U; Android 2.2; en-gb; ViewPad7 Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-            'Mozilla/5.0 (Linux; U; Android 2.1-2010.11.4; de-de; XST2 Build/ECLAIR) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17',
-            'Mozilla/5.0 (Linux; U; Android 1.0.3; de-de; A80KSC Build/ECLAIR) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17',
-            'Mozilla/5.0 (Linux; U; Android 2.2.1; en-au; eeepc Build/MASTER) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-            'Mozilla/5.0 (Linux; U; Android 1.6; en-us; xpndr_ihome Build/DRD35) AppleWebKit/528.5+ (KHTML, like Gecko) Version/3.1.2 Mobile Safari/525.20.1',
-            'Mozilla/5.0 (Linux; U; Android 2.2.1; fr-ch; A43 Build/FROYO) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-            'Mozilla/5.0 (Linux; U; Android 2.2.1; de-de; X2 Build/FRG83) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
-        ]
-        for android_agent in corpus:
-            self.assertEqual(ANDROID, guess_phone_type_from_user_agent(android_agent), 'android user agent detection failed for {}'.format(android_agent))
-
-    def test_default_is_none(self):
-        for empty in [None, '']:
-            self.assertEqual(None, guess_phone_type_from_user_agent(empty))
+    def test_non_j2me_user_agents(self):
+        for agent in [None, '', 'Something arbitrary']:
+            self.assertFalse(is_probably_j2me(agent))
 
 
 class TestDetermineAuthType(SimpleTestCase):
@@ -166,10 +144,6 @@ class TestDetermineAuthType(SimpleTestCase):
     def test_override_default(self):
         self.assertEqual('digest', determine_authtype_from_request(self._mock_request()))
 
-    def test_digest_header_overrides_default(self):
-        self.assertEqual('digest',
-                         determine_authtype_from_request(self._mock_request(auth_header='Digest whatever')))
-
     def test_basic_header_overrides_default(self):
         self.assertEqual('basic',
                          determine_authtype_from_request(self._mock_request(auth_header='Basic whatever')))
@@ -177,9 +151,9 @@ class TestDetermineAuthType(SimpleTestCase):
     def test_user_agent_beats_header(self):
         # todo: we may want to change the behavior of this test and have the header win.
         # this is currently just to make sure we don't change existing behavior
-        self.assertEqual('basic',
-                         determine_authtype_from_request(self._mock_request(user_agent='Android',
-                                                                            auth_header='Digest whatever')))
+        self.assertEqual('digest',
+                         determine_authtype_from_request(self._mock_request(user_agent='NokiaC2',
+                                                                            auth_header='Basic whatever')))
 
 
 class TestDetermineAuthTypeFromRequest(SimpleTestCase):
