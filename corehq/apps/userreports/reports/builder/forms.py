@@ -56,6 +56,7 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -73,6 +74,9 @@ STATIC_CASE_PROPS = [
     "owner_id",
     "user_id",
 ]
+
+# PostgreSQL limit = 1600. Sane limit = 500?
+MAX_COLUMNS = 500
 
 
 class FilterField(JsonField):
@@ -395,44 +399,31 @@ class DataSourceBuilder(object):
             Each object has a "property" and "aggregation" key
         :param filters: A list of filter configuration objects
         """
-        indicators = []
+
+        def get_key(i):
+            return i['column_id'], i['type']
+
+        indicators = OrderedDict()
         for column in columns:
             column_option = self.report_column_options[column['property']]
-            indicators.extend(column_option.get_indicators(column['aggregation'], is_multiselect_chart_report))
+            for indicator in column_option.get_indicators(column['aggregation'], is_multiselect_chart_report):
+                indicators.setdefault(get_key(indicator), indicator)
 
-        for filter in filters:
-            property = self.data_source_properties[filter['property']]
-            indicator = property.to_report_filter_indicator(filter)
-            indicators.append(indicator)
+        for filter_ in filters:
+            property_ = self.data_source_properties[filter_['property']]
+            indicator = property_.to_report_filter_indicator(filter_)
+            indicators.setdefault(get_key(indicator), indicator)
 
-        # remove duplicates
-        # There can be duplicates because filters and columns could be based on the same property
-        indicators_without_dups = []
-        seen_indicator_ids = set()
-        for i in indicators:
-            if (i['column_id'], i['type']) not in seen_indicator_ids:
-                indicators_without_dups.append(i)
-                seen_indicator_ids.add((i['column_id'], i['type']))
-        indicators = indicators_without_dups
-
-        return indicators
+        return list(indicators.values())
 
     def all_possible_indicators(self):
-        indicators = []
+        indicators = OrderedDict()
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
-                indicators.extend(column_option.get_indicators(agg))
+                for indicator in column_option.get_indicators(agg):
+                    indicators.setdefault(str(indicator), indicator)
 
-        # Remove duplicates
-        return_list = []
-        return_list_set = set()
-        for indicator in indicators:
-            as_hashable = str(indicator)
-            if as_hashable not in return_list_set:
-                return_list.append(indicator)
-                return_list_set.add(as_hashable)
-
-        return return_list
+        return list(indicators.values())[:MAX_COLUMNS]
 
     @property
     @memoized
@@ -580,7 +571,7 @@ class DataSourceBuilder(object):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in self.data_source_properties.iteritems():
+        for id_, prop in six.iteritems(self.data_source_properties):
             options[id_] = prop.to_report_column_option()
 
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
@@ -689,7 +680,7 @@ class DataSourceForm(forms.Form):
         cleaned_data = super(DataSourceForm, self).clean()
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
-        builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
+        builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
         if has_report_builder_access(self.domain) and len(builder_reports) >= self.max_allowed_reports:
             # Don't show the warning when domain does not have report buidler access, because this is just a
             # preview and the report will not be saved.
@@ -935,7 +926,7 @@ class ConfigureNewReportBase(forms.Form):
                 self._is_multiselect_chart_report,
             )
             if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
+                for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
                     setattr(data_source, property_name, value)
                 data_source.save()
                 tasks.rebuild_indicators.delay(data_source._id)
@@ -1515,62 +1506,6 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @property
     def _group_by_choices(self):
         return [(p.get_id(), p.get_text()) for p in self.data_source_properties.values()]
-
-
-class ConfigureWorkerReportForm(ConfigureTableReportForm):
-    # This is a ConfigureTableReportForm, but with a predetermined aggregation
-    report_type = 'worker'
-    column_legend_fine_print = ugettext_noop(
-        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
-        u'that property. For example, if you add a column for a yes or no question, the report will show a column '
-        u'for "yes" and a column for "no".'
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
-        self.fields.pop('group_by')
-
-    @property
-    def aggregation_field(self):
-        if self.source_type == "form":
-            return "username"
-        if self.source_type == "case":
-            return COMPUTED_USER_NAME_PROPERTY_ID
-
-    @property
-    @memoized
-    def _default_case_report_filters(self):
-        return [
-            UserFilterViewModel(
-                exists_in_current_version=True,
-                property='closed',
-                data_source_field=None,
-                display_text='closed',
-                format='Choice',
-            ),
-            UserFilterViewModel(
-                exists_in_current_version=True,
-                property=COMPUTED_USER_NAME_PROPERTY_ID,
-                data_source_field=None,
-                display_text='user name',
-                format='Choice',
-            ),
-        ]
-
-    @property
-    def container_fieldset(self):
-        return crispy.Div(
-            crispy.Fieldset(
-                _legend(
-                    _("Rows"),
-                    _('This report will show one row for each mobile worker'),
-                )
-            ),
-            self.column_fieldset,
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
 
 
 class ConfigureMapReportForm(ConfigureListReportForm):

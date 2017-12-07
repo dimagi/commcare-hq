@@ -174,13 +174,15 @@ class DetailContributor(SectionContributor):
                 d.fields.extend(fields)
 
             # Add actions
-            if module.case_list_form.form_id and detail_type.endswith('short')\
-                    and not module.put_in_root:
-                target_form = self.app.get_form(module.case_list_form.form_id)
-                if target_form.is_registration_form(module.case_type):
-                    d.actions.append(self._get_reg_form_action(module))
-            if module_offers_search(module) and detail_type.endswith('short') and not module.put_in_root:
-                d.actions.append(self._get_case_search_action(module))
+            if detail_type.endswith('short') and not module.put_in_root:
+                if module.case_list_form.form_id:
+                    target_form = self.app.get_form(module.case_list_form.form_id)
+                    if target_form.is_registration_form(module.case_type):
+                        d.actions.append(self._get_reg_form_action(module))
+
+                if module_offers_search(module) and "search" not in id:
+                    # Add the search action only if this isn't a search detail
+                    d.actions.append(self._get_case_search_action(module))
 
             try:
                 if not self.app.enable_multi_sort:
@@ -421,6 +423,7 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     """
     DetailColumnInfo = namedtuple('DetailColumnInfo',
                                   'column sort_element order')
+
     if not include_sort:
         return [DetailColumnInfo(column, None, None) for column in detail.get_columns()]
 
@@ -436,11 +439,17 @@ def get_detail_column_infos(detail_type, detail, include_sort):
     columns = []
     for column in detail.get_columns():
         sort_element, order = sort_columns.pop(column.field, (None, None))
-        columns.append(DetailColumnInfo(column, sort_element, order))
+        if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
+            columns.append(DetailColumnInfo(column, None, None))
+        else:
+            columns.append(DetailColumnInfo(column, sort_element, order))
 
     for field, sort_element, order in sort_only:
         column = create_temp_sort_column(sort_element, order)
-        columns.append(DetailColumnInfo(column, sort_element, order))
+        if getattr(sort_element, 'type', None) == 'index' and "search" in detail_type:
+            columns.append(DetailColumnInfo(column, None, None))
+        else:
+            columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
 
@@ -456,7 +465,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     detail_ids = [helper.get_detail_id_safe(module, detail_type)
                   for detail_type, detail, enabled in module.get_details()
                   if enabled]
-    detail_ids = filter(None, detail_ids)
+    detail_ids = [_f for _f in detail_ids if _f]
     xpaths = set()
 
     if additional_xpaths:

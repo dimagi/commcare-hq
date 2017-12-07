@@ -47,6 +47,7 @@ import re
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
+from six.moves import range
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -323,7 +324,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     @property
     def direct_properties(self):
-        result = self.fields.keys()
+        result = list(self.fields)
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
         if not self.set_email_opt_out:
@@ -361,13 +362,13 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     @property
     def direct_properties(self):
         indirect_props = ['role']
-        return [k for k in self.fields.keys() if k not in indirect_props]
+        return [k for k in self.fields if k not in indirect_props]
 
 
 class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('role_choices'):
+        if 'role_choices' in kwargs:
             role_choices = kwargs.pop('role_choices')
         else:
             role_choices = ()
@@ -980,7 +981,7 @@ class CommtrackUserForm(forms.Form):
         from corehq.apps.locations.util import get_locations_from_ids
 
         value = self.cleaned_data.get('assigned_locations')
-        if not isinstance(value, basestring) or value.strip() == '':
+        if not isinstance(value, six.string_types) or value.strip() == '':
             return []
 
         location_ids = [location_id.strip() for location_id in value.split(',')]

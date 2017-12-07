@@ -19,6 +19,7 @@ from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
+from corehq.messaging.smsbackends.ivory_coast_mtn.models import IvoryCoastMTNBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -39,7 +40,8 @@ from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from mock import patch
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
+from six.moves import range
 
 
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
@@ -174,6 +176,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.start_enterprise_backend.save()
 
+        cls.ivory_coast_mtn_backend = IvoryCoastMTNBackend(
+            name="IVORY_COAST_MTN",
+            is_global=True,
+            hq_api_id=IvoryCoastMTNBackend.get_api_id()
+        )
+        cls.ivory_coast_mtn_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
@@ -195,6 +204,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.icds_backend.delete()
         cls.vertext_backend.delete()
         cls.start_enterprise_backend.delete()
+        cls.ivory_coast_mtn_backend.delete()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -285,8 +295,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
+    @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     def test_outbound_sms(
             self,
+            ivory_coast_mtn_send,
             start_ent_send,
             vertex_send,
             icds_send,
@@ -321,6 +333,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
         self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
+        self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):

@@ -13,6 +13,7 @@ from django.utils.safestring import mark_safe
 from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
+import six
 
 Tag = namedtuple('Tag', 'name css_class description')
 TAG_CUSTOM = Tag(
@@ -199,7 +200,7 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
-    if isinstance(input_string, unicode):
+    if isinstance(input_string, six.text_type):
         input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
@@ -362,7 +363,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
-    'Show text area for entering custom case list xml',
+    'Allow custom XML to define case lists (ex. for case tiles)',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
@@ -378,8 +379,8 @@ CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
 
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
-    'Allow configuration of case list tiles',
-    TAG_SOLUTIONS,
+    'REC: Allow configuration of the REC case list tile',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -503,16 +504,6 @@ REPORT_BUILDER = StaticToggle(
     'Activate Report Builder for a project without setting up a subscription.',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
-)
-
-REPORT_BUILDER_V1 = StaticToggle(
-    "report_builder_v1",
-    "Report builder V1",
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        'Enables the old report builder. Note that the project must already have access to report builder.'
-    )
 )
 
 ASYNC_RESTORE = StaticToggle(
@@ -818,6 +809,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+AGGREGATE_USER_STATUS_REPORT = StaticToggle(
+    'aggregate_user_status_report',
+    'Show Aggregate User Status',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENCLINICA = StaticToggle(
     'openclinica',
     'KEMRI: Offer OpenClinica settings and CDISC ODM export',
@@ -877,6 +875,14 @@ BETS_INTEGRATION = StaticToggle(
     always_enabled={"enikshay"},
 )
 
+RETRY_SMS_INDEFINITELY = StaticToggle(
+    'retry_sms_indefinitely',
+    'Enikshay: Retry SMS indefinitely',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description='Leaves on the queue an SMS that has reached the maximum number of unsuccessful attempts.',
+)
+
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'FGH: Enable OpenMRS integration',
@@ -923,6 +929,13 @@ SUPPORT = StaticToggle(
     'General toggle for support features',
     TAG_INTERNAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
+)
+
+CASE_PROPERTY_HISTORY = StaticToggle(
+    'case_property_history',
+    'Shows a modal on the case property page allowing you to see the history of various case properties',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )
 
 BASIC_CHILD_MODULE = StaticToggle(
@@ -1113,7 +1126,7 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
-    'UPDATE: HQ will not automatically determine the case properties available for an export',
+    'Add user defined columns to exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
@@ -1157,7 +1170,7 @@ DATA_MIGRATION = StaticToggle(
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users or Locations (LocationRestrictedEMWF) filter',
+    'Make the Worker Activity Report use the Groups or Users or Locations filter',
     TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
@@ -1181,7 +1194,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'softlayer'},
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
     always_enabled={
         "icds-dashboard-qa",
         "icds-sql",
@@ -1357,13 +1370,6 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_NEW = StaticToggle(
-    'analytics_new',
-    "Use refactored analytics across all of HQ (for QA purposes).",
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )

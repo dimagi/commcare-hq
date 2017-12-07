@@ -8,7 +8,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND
+from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
@@ -17,12 +17,14 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
-from custom.icds_reports.utils import ICDSMixin, get_status, current_age
+from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
 from custom.utils.utils import clean_IN_filter_value
 from dimagi.utils.decorators.memoized import memoized
+import six
+from six.moves import range
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -138,7 +140,7 @@ class ExportableMixin(object):
         if not self.show_test:
             filters.append(NOT(IN('state_id', infilter_params)))
 
-        for key, value in self.config.iteritems():
+        for key, value in six.iteritems(self.config):
             if key == 'domain' or key in infilter_params or 'age' in key:
                 continue
             filters.append(EQ(key, key))
@@ -162,6 +164,18 @@ class ExportableMixin(object):
 
     def to_export(self, format, location):
         export_file = StringIO()
+        excel_data = self.get_excel_data(location)
+
+        export_from_tables(excel_data, export_file, format)
+        return export_response(export_file, format, self.title)
+
+    @property
+    def india_now(self):
+        utc_now = datetime.datetime.now(pytz.utc)
+        india_now = utc_now.astimezone(india_timezone)
+        return india_now.strftime("%H:%M:%S %d %B %Y")
+
+    def get_excel_data(self, location):
         excel_rows = []
         headers = []
         for column in self.columns:
@@ -182,11 +196,7 @@ class ExportableMixin(object):
                 else:
                     row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
-
-        utc_now = datetime.datetime.now(pytz.utc)
-        india_now = utc_now.astimezone(india_timezone)
-
-        filters = [['Generated at', india_now.strftime("%H:%M:%S %d %B %Y")]]
+        filters = [['Generated at', self.india_now]]
         if location:
             locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
             for loc in locs:
@@ -198,7 +208,7 @@ class ExportableMixin(object):
             date = self.config['month']
             filters.append(['Month', date.strftime("%B")])
             filters.append(['Year', date.year])
-        excel_data = [
+        return [
             [
                 self.title,
                 excel_rows
@@ -208,10 +218,6 @@ class ExportableMixin(object):
                 filters
             ]
         ]
-
-        export_from_tables(excel_data, export_file, format)
-        return export_response(export_file, format, self.title)
-
 
 class NationalAggregationDataSource(SqlData):
 
@@ -958,7 +964,7 @@ class ChildrenExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             AggregateColumn(
-                'Weighing efficiency',
+                'Weighing efficiency (in month)',
                 percent,
                 [
                     SumColumn('nutrition_status_weighed', filters=self.filters + [
@@ -971,7 +977,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_weight_efficiency'
             ),
             AggregateColumn(
-                'Height Measurement Efficiency',
+                'Height measurement efficiency (in month)',
                 percent,
                 [
                     SumColumn('height_measured_in_month'),
@@ -1599,7 +1605,7 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'beneficiary_persons'
             },
             {
-                'header': 'Percent Adhaar-seeded beneficaries',
+                'header': 'Percent Aadhaar-seeded beneficaries',
                 'slug': 'num_people_with_aadhar'
             },
             {
@@ -1845,11 +1851,37 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 group_by.append(column.slug)
         return group_by
 
+    def _map_filter_name_to_sql_filter(self, filter_name):
+        return {
+            'unweighed': RawFilter('recorded_weight IS NULL'),
+            'umeasured': RawFilter('recorded_height IS NULL'),
+            'severely_underweight': RawFilter("current_month_nutrition_status = 'severely_underweight'"),
+            'moderately_underweight': RawFilter("current_month_nutrition_status = 'moderately_underweight'"),
+            'normal_wfa': RawFilter("current_month_nutrition_status = 'normal'"),
+            'severely_stunted': RawFilter("current_month_stunting = 'severe'"),
+            'moderately_stunted': RawFilter("current_month_stunting = 'moderate'"),
+            'normal_hfa': RawFilter("current_month_stunting = 'normal'"),
+            'severely_wasted': RawFilter("current_month_wasting = 'severe'"),
+            'moderately_wasted': RawFilter("current_month_wasting = 'moderate'"),
+            'normal_wfh': RawFilter("current_month_wasting = 'normal'"),
+        }[filter_name]
+
+    def _build_additional_filters(self, filters):
+        if len(filters) == 1:
+            return self._map_filter_name_to_sql_filter(filters[0])
+        return ORFilter([
+            self._map_filter_name_to_sql_filter(filter_name)
+            for filter_name in filters
+        ])
+
     @property
     def filters(self):
         filters = []
-        for key, value in self.config.iteritems():
+        for key, value in six.iteritems(self.config):
             if key == 'domain':
+                continue
+            elif key == 'filters':
+                filters.append(self._build_additional_filters(value))
                 continue
             filters.append(EQ(key, key))
         return filters
@@ -1874,7 +1906,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Current Age (In years)',
                 AliasColumn('dob'),
-                format_fn=lambda x: current_age(x, self.config['month']),
+                format_fn=lambda x: calculate_date_for_age(x, self.config['month']),
                 slug='current_age'
             ),
             DatabaseColumn(
@@ -2327,7 +2359,7 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Percent Adhaar-seeded beneficiaries',
+                                'header': 'Percent Aadhaar-seeded beneficiaries',
                                 'slug': 'aadhar',
                                 'format': 'percent',
                                 'average': [],
@@ -2481,7 +2513,7 @@ class FactSheetsReport(object):
                     }
                 else:
                     sections_by_slug[slug]['rows_config'].extend(section['rows_config'])
-        return sorted(sections_by_slug.values(), key=lambda x: x['order'])
+        return sorted(list(sections_by_slug.values()), key=lambda x: x['order'])
 
     def _get_needed_data_sources(self, config):
         needed_data_sources = set()
@@ -2502,10 +2534,7 @@ class FactSheetsReport(object):
 
     @property
     def config_list(self):
-        return filter(
-            lambda c: c['category'] == self.config['category'] or self.config['category'] == 'all',
-            self.new_table_config
-        )
+        return [c for c in self.new_table_config if c['category'] == self.config['category'] or self.config['category'] == 'all']
 
     def get_data(self):
         config_list = self.config_list
@@ -2524,7 +2553,7 @@ class FactSheetsReport(object):
 
         data_sources = [
             data_source.get_data()
-            for k, data_source in self.data_sources.iteritems()
+            for k, data_source in six.iteritems(self.data_sources)
             if k in needed_data_sources
         ]
 

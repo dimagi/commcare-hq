@@ -13,6 +13,7 @@ from corehq import privileges
 from django.http import HttpResponse, Http404
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.validation import Validation
+import six
 
 
 FieldDefinition = namedtuple('FieldDefinition', 'name required type')
@@ -69,7 +70,7 @@ class SelfRegistrationReinstallInfo(object):
 
     def __init__(self, app_id, reinstall_message=None):
         self.app_id = app_id
-        if isinstance(reinstall_message, basestring):
+        if isinstance(reinstall_message, six.string_types):
             self.reinstall_message = reinstall_message.strip()
         else:
             self.reinstall_message = None
@@ -98,8 +99,19 @@ class BaseUserSelfRegistrationValidation(Validation):
 
             if field_def.name in data:
                 if not isinstance(data[field_def.name], field_def.type):
+                    if isinstance(field_def.type, tuple):
+                        if len(field_def.type) > 1:
+                            raise SelfRegistrationValidationException(
+                                {field_def.name: 'Expected type in {}'.format(
+                                    ', '.join(t.__name__ for t in field_def.type)
+                                )}
+                            )
+                        else:
+                            type_name = field_def.type[0].__name__
+                    else:
+                        type_name = field_def.type.__name__
                     raise SelfRegistrationValidationException(
-                        {field_def.name: 'Expected type: {}'.format(field_def.type.__name__)}
+                        {field_def.name: 'Expected type: {}'.format(type_name)}
                     )
 
     def _validate_app_id(self, domain, app_id):
@@ -117,7 +129,7 @@ class BaseUserSelfRegistrationValidation(Validation):
                 )
 
             self._validate_toplevel_fields(user_info, [
-                FieldDefinition('phone_number', True, basestring),
+                FieldDefinition('phone_number', True, six.string_types),
                 FieldDefinition('custom_user_data', False, dict),
             ])
 
@@ -140,11 +152,11 @@ class UserSelfRegistrationValidation(BaseUserSelfRegistrationValidation):
 
         try:
             self._validate_toplevel_fields(bundle.data, [
-                FieldDefinition('app_id', True, basestring),
+                FieldDefinition('app_id', True, six.string_types),
                 FieldDefinition('users', True, list),
                 FieldDefinition('android_only', False, bool),
                 FieldDefinition('require_email', False, bool),
-                FieldDefinition('custom_registration_message', False, basestring),
+                FieldDefinition('custom_registration_message', False, six.string_types),
             ])
 
             self._validate_app_id(request.domain, bundle.data['app_id'])
@@ -163,9 +175,9 @@ class UserSelfRegistrationReinstallValidation(BaseUserSelfRegistrationValidation
 
         try:
             self._validate_toplevel_fields(bundle.data, [
-                FieldDefinition('app_id', True, basestring),
+                FieldDefinition('app_id', True, six.string_types),
                 FieldDefinition('users', True, list),
-                FieldDefinition('reinstall_message', False, basestring),
+                FieldDefinition('reinstall_message', False, six.string_types),
             ])
 
             self._validate_app_id(request.domain, bundle.data['app_id'])
@@ -226,7 +238,7 @@ class UserSelfRegistrationResource(BaseUserSelfRegistrationResource):
         data = bundle.data
 
         custom_registration_message = data.get('custom_registration_message')
-        if isinstance(custom_registration_message, basestring):
+        if isinstance(custom_registration_message, six.string_types):
             custom_registration_message = custom_registration_message.strip()
             if not custom_registration_message:
                 custom_registration_message = None

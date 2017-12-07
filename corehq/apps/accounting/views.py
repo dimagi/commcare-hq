@@ -70,7 +70,7 @@ from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)

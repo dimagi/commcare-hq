@@ -17,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
+from corehq.apps.locations.models import LocationType
 from corehq.apps.users.forms import clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
@@ -28,6 +29,8 @@ from .const import (
     PRIVATE_SECTOR_WORKER_ROLE,
 )
 from .models import AgencyIdCounter, IssuerId
+from six.moves import range
+from six.moves import map
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -123,7 +126,7 @@ def get_site_code(name, nikshay_code, type_code, parent):
         return slugify(re.sub(r'\s+', '_', word))
 
     nikshay_code = code_ify(nikshay_code)
-    if nikshay_code in map(str, range(0, 10)):
+    if nikshay_code in list(map(str, list(range(0, 10)))):
         nikshay_code = "0{}".format(nikshay_code)
 
     parent_site_code = parent.site_code
@@ -270,9 +273,23 @@ def connect_signals():
 # pcc -> pharmacy / chemist
 # dto -> Field officer??
 
-def _make_field_visible_to(field, type_code):
-    # loc_type() is available because this is inside the location form
-    return crispy.Div(field, data_bind="visible: loc_type() === '{}'".format(type_code))
+
+def _make_fields_type_specific(domain, form, fields_to_loc_types):
+    """Make certain fields only appear for specified loctypes"""
+    fs = form.helper.layout[0]
+    assert isinstance(fs, crispy.Fieldset)
+    codes_to_names = dict(LocationType.objects
+                          .filter(domain=domain)
+                          .values_list('code', 'name'))
+    for i, field in enumerate(fs.fields):
+        if field in fields_to_loc_types:
+            loc_type_name = codes_to_names[fields_to_loc_types[field]]
+            # loc_type() is available because this is inside the location form
+            fs[i] = crispy.Div(
+                field,
+                data_bind="visible: loc_type() === '{}'".format(loc_type_name)
+            )
+    return form
 
 
 class ENikshayLocationUserDataEditor(CustomDataEditor):
@@ -290,9 +307,6 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
 
     def init_form(self, post_dict=None):
         form = super(ENikshayLocationUserDataEditor, self).init_form(post_dict)
-        fs = form.helper.layout[0]
-        assert isinstance(fs, crispy.Fieldset)
-
         fields_to_loc_types = {
             'pcp_professional_org_membership': 'pcp',
             'pac_qualification': 'pac',
@@ -301,16 +315,11 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             'plc_lab_or_collection_center': 'plc',
             'plc_accredidation': 'plc',
             'plc_tb_tests': 'plc',
-            'plc_hf_if_nikshay': 'plc',
             'pcc_pharmacy_name': 'pcc',
             'pcc_pharmacy_affiliation': 'pcc',
             'pcc_tb_drugs_in_stock': 'pcc',
         }
-
-        for i, field in enumerate(fs.fields):
-            if field in fields_to_loc_types:
-                fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
-        return form
+        return _make_fields_type_specific(self.domain, form, fields_to_loc_types)
 
     def _make_field(self, field):
         if field.slug == 'language_code':
@@ -363,6 +372,14 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
             field for field in self.model.get_fields(required_only=False)
             if field.is_required or field.slug in fields_to_include
         ]
+
+    def init_form(self, post_dict=None):
+        form = super(ENikshayUserLocationDataEditor, self).init_form(post_dict)
+        fields_to_loc_types = {
+            'facility_type': 'pcp',
+            'plc_hf_if_nikshay': 'plc',
+        }
+        return _make_fields_type_specific(self.domain, form, fields_to_loc_types)
 
     def _make_field(self, field):
         if field.slug == 'private_sector_org_id':

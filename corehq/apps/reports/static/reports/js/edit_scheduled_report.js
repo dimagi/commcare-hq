@@ -108,10 +108,8 @@ hqDefine("reports/js/edit_scheduled_report", function() {
     scheduled_report_form_helper.init();
 
     $('#id-scheduledReportForm').submit(function() {
-        ga_track_event('Scheduled Reports', 'Create a scheduled report', '-', {
-            'hitCallback': function () {
-                document.getElementById('id-scheduledReportForm').submit();
-            },
+        hqImport('analytix/js/google').track.event('Scheduled Reports', 'Create a scheduled report', '-', "", {}, function () {
+            document.getElementById('id-scheduledReportForm').submit();
         });
         return false;
     });

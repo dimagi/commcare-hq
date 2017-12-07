@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
+import six
 
 
-class PillowProcessor(object):
-    __metaclass__ = ABCMeta
-
+class PillowProcessor(six.with_metaclass(ABCMeta, object)):
     @abstractmethod
     def process_change(self, pillow_instance, change):
         pass

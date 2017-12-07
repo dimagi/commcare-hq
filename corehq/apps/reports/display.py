@@ -11,9 +11,10 @@ from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
+import six
 
 
-class StringWithAttributes(unicode):
+class StringWithAttributes(six.text_type):
 
     def replace(self, *args):
         string = super(StringWithAttributes, self).replace(*args)
@@ -97,7 +98,7 @@ class _FormType(object):
                     if lang and menu.get(lang):
                         return menu.get(lang)
                     else:
-                        for lang in langs + menu.keys():
+                        for lang in langs + list(menu):
                             menu_name = menu.get(lang)
                             if menu_name is not None:
                                 return menu_name

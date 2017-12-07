@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime, timedelta
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import urlparse
 import warnings
 
@@ -45,6 +45,7 @@ from .const import (
 )
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
+import six
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -319,7 +320,7 @@ class FormRepeater(Repeater):
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
-            url_parts[4] = urllib.urlencode(query)
+            url_parts[4] = six.moves.urllib.parse.urlencode(query)
             return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
@@ -526,12 +527,16 @@ class RepeatRecord(Document):
     @property
     @memoized
     def repeater(self):
-        return Repeater.get(self.repeater_id)
+        try:
+            return Repeater.get(self.repeater_id)
+        except ResourceNotFound:
+            return None
 
     @property
     def url(self):
         warnings.warn("RepeatRecord.url is deprecated. Use Repeater.get_url instead", DeprecationWarning)
-        return self.repeater.get_url(self)
+        if self.repeater:
+            return self.repeater.get_url(self)
 
     @property
     def state(self):
@@ -617,7 +622,7 @@ class RepeatRecord(Document):
         return RepeatRecordAttempt(
             cancelled=True,
             datetime=now,
-            failure_reason=unicode(exception),
+            failure_reason=six.text_type(exception),
             success_response=None,
             next_check=None,
             succeeded=False,
@@ -672,7 +677,7 @@ class RepeatRecord(Document):
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        return self._make_failure_attempt(unicode(exception), None)
+        return self._make_failure_attempt(six.text_type(exception), None)
 
     def _make_failure_attempt(self, reason, response):
         log_repeater_error_in_datadog(self.domain, response.status_code if response else None,

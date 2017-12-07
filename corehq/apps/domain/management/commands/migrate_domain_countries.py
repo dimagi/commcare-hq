@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 from django_countries.data import COUNTRIES
 from corehq.apps.domain.models import Domain
+import six
 
 
 class Command(BaseCommand):
@@ -11,7 +12,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         print("Migrating Domain countries")
 
-        country_lookup = {v.lower(): k for k, v in COUNTRIES.iteritems()}
+        country_lookup = {v.lower(): k for k, v in six.iteritems(COUNTRIES)}
         #Special cases
         country_lookup["USA"] = country_lookup["united states"]
         country_lookup["California"] = country_lookup["united states"]
@@ -38,7 +39,7 @@ class Command(BaseCommand):
                     abbr = []
                     for country in countries:
                         country = country.strip().lower()
-                        if country in country_lookup.keys():
+                        if country in country_lookup:
                             abbr.append(country_lookup[country])
 
                     domain.deployment.countries = abbr

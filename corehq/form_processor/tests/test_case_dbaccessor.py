@@ -13,7 +13,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
-from corehq.form_processor.tests.test_basic_cases import _submit_case_block
+from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
 DOMAIN = 'test-case-accessor'
@@ -64,7 +64,7 @@ class CaseAccessorTestsSQL(TestCase):
         traces = _create_case_transactions(case)
 
         self.assertEqual(
-            set([form_id1] + map(lambda t: t.form_id, filter(lambda t: t.include, traces))),
+            set([form_id1] + [t.form_id for t in [t for t in traces if t.include]]),
             set(CaseAccessorSQL.get_case_xform_ids(case.case_id))
         )
 
@@ -219,7 +219,7 @@ class CaseAccessorTestsSQL(TestCase):
         transactions = CaseAccessorSQL.get_transactions(case.case_id)
         self.assertEqual(6, len(transactions))
         self.assertEqual(
-            [form_id] + map(lambda trace: trace.form_id, traces),
+            [form_id] + [trace.form_id for trace in traces],
             [t.form_id for t in transactions],
         )
 
@@ -242,7 +242,7 @@ class CaseAccessorTestsSQL(TestCase):
         transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
         self.assertEqual(4, len(transactions))
         self.assertEqual(
-            [form_id] + map(lambda t: t.form_id, filter(lambda t: t.include, traces)),
+            [form_id] + [t.form_id for t in [t for t in traces if t.include]],
             [t.form_id for t in transactions],
         )
 
@@ -561,7 +561,7 @@ class CaseAccessorTestsSQL(TestCase):
         case1 = _create_case()
         _create_case_transactions(case1)
         self.assertTrue(
-            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 01, 30))
+            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 1, 30))
         )
         self.assertFalse(
             CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())

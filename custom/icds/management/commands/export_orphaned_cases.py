@@ -32,7 +32,7 @@ class Command(BaseCommand):
                                                                          '0ffe4a1f110ffc17bb9b749abdfd697c'])
         owners = SQLLocation.objects.get_queryset_descendants(relevant_districts, include_self=True)
         owner_name_mapping = {loc.location_id: loc.name for loc in owners}
-        hh_cases = self._get_closed_hh_cases(owner_name_mapping.keys())
+        hh_cases = self._get_closed_hh_cases(list(owner_name_mapping))
         with open(child_file, 'w') as child_csv:
             child_writer = csv.writer(child_csv)
             child_writer.writerow(CSV_HEADERS)

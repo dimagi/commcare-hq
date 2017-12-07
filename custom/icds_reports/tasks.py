@@ -18,6 +18,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
+from six.moves import range
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -30,7 +31,7 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='background_queue')
-def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
+def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
     monthly_date = date.replace(day=1)
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:

@@ -6,6 +6,7 @@ from custom.ilsgateway.models import SLABConfig
 from custom.ilsgateway.slab.messages import REMINDER_TRANS, SOH_OVERSTOCKED
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN
 from custom.ilsgateway.slab.utils import overstocked_products
+import six
 
 
 class SOHSLABTest(ILSTestScript):
@@ -31,8 +32,8 @@ class SOHSLABTest(ILSTestScript):
 
     def test_stock_on_hand_overstocked(self):
         with localize('sw'):
-            reminder_trans = unicode(REMINDER_TRANS)
-            soh_overstocked = unicode(SOH_OVERSTOCKED)
+            reminder_trans = six.text_type(REMINDER_TRANS)
+            soh_overstocked = six.text_type(SOH_OVERSTOCKED)
         script = """
             5551234 > Hmk Id 400 Dp 900 Ip 678
             5551234 < %(reminder_trans)s

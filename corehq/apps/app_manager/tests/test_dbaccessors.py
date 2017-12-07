@@ -200,15 +200,15 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         app_build_versions = get_all_built_app_ids_and_versions(self.domain)
 
         self.assertEqual(len(app_build_versions), 3)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == self.apps[0]._id, app_build_versions)), 2)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == '1234']), 1)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == self.apps[0]._id]), 2)
 
     def test_get_all_built_app_ids_and_versions_by_app(self):
         app_build_versions = get_all_built_app_ids_and_versions(self.domain, app_id='1234')
 
         self.assertEqual(len(app_build_versions), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id != '1234', app_build_versions)), 0)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == '1234']), 1)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id != '1234']), 0)
 
 
 class TestAppGetters(TestCase):

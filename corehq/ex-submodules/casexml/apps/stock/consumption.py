@@ -268,7 +268,7 @@ def compute_daily_consumption_from_transactions(transactions, window_start, conf
     periods = list(split_periods(transactions))
 
     # exclude periods that occur entirely before the averaging window
-    periods = filter(lambda period: period.normalized_length, periods)
+    periods = [period for period in periods if period.normalized_length]
     total_consumption = sum(period.normalized_consumption for period in periods)
     total_length = sum(period.normalized_length for period in periods)
     # check minimum statistical significance thresholds

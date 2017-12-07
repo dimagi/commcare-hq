@@ -12,6 +12,7 @@ from corehq.apps.reports.analytics.couchaccessors import (
     get_form_details_for_app_and_xmlns,
     get_form_details_for_app,
 )
+from six.moves import range
 
 
 class SetupSimpleAppMixin(object):

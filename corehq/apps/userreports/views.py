@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from collections import namedtuple, OrderedDict
 import datetime
 import functools
@@ -22,7 +22,7 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties
+from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES
@@ -487,24 +487,7 @@ class EditReportInBuilder(View):
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             try:
-                if toggle_enabled(request, toggles.REPORT_BUILDER_V1):
-                    from corehq.apps.userreports.v1.views import (
-                        ConfigureChartReport,
-                        ConfigureListReport,
-                        ConfigureMapReport,
-                        ConfigureWorkerReport,
-                        ConfigureTableReport,
-                    )
-                    view_class = {
-                        'chart': ConfigureChartReport,
-                        'list': ConfigureListReport,
-                        'worker': ConfigureWorkerReport,
-                        'table': ConfigureTableReport,
-                        'map': ConfigureMapReport,
-                    }[report.report_meta.builder_report_type]
-                    return view_class.as_view(existing_report=report)(request, *args, **kwargs)
-                else:
-                    return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
+                return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
@@ -732,6 +715,7 @@ class ConfigureReport(ReportBuilderView):
                     })
                     return self.get(request, domain, *args, **kwargs)
             self._delete_temp_data_source(report_data)
+            send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
                 'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,
@@ -794,7 +778,7 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(urllib.unquote(request.body))
+        report_data = json.loads(six.moves.urllib.parse.unquote(request.body))
         form_class = _get_form_type(report_data['report_type'])
 
         # ignore filters

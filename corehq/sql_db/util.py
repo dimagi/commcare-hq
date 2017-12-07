@@ -8,6 +8,7 @@ from django import db
 from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
+import six
 from corehq.sql_db.models import PartitionedModel
 
 
@@ -98,7 +99,7 @@ def new_id_in_same_dbalias(partition_value):
     new_db_name = None
     while old_db_name != new_db_name:
         # todo; guard against infinite recursion
-        new_partition_value = unicode(uuid.uuid4())
+        new_partition_value = six.text_type(uuid.uuid4())
         new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
     return new_partition_value
 

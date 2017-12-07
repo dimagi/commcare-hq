@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from corehq.motech.repeaters.const import RECORD_FAILURE_STATE, RECORD_PENDING_STATE
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
+from six.moves import map
 
 
 def get_bets_location_json(location):
@@ -56,7 +57,7 @@ def get_bets_user_json(domain, user):
         "last_name": user.last_name,
         "default_phone_number": get_national_number(user.user_data.get("contact_phone_number")),
         "id": user._id,
-        "phone_numbers": map(get_national_number, user.phone_numbers),
+        "phone_numbers": list(map(get_national_number, user.phone_numbers)),
         "email": user.email,
         "dtoLocation": district_location.location_id,
         "privateSectorOrgId": org_id,

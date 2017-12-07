@@ -236,11 +236,13 @@ class CachedResponse(object):
         get_blob_db().put(NoClose(fileobj), name, timeout=max(timeout // 60, 60))
         return cls(name)
 
-    def __nonzero__(self):
+    def __bool__(self):
         try:
             return bool(self.as_file())
         except NotFound:
             return False
+
+    __nonzero__ = __bool__
 
     def as_string(self):
         with self.as_file() as fileobj:
@@ -287,7 +289,7 @@ class RestoreParams(object):
         self.app = app
         self.device_id = device_id
         self.openrosa_version = (LooseVersion(openrosa_version)
-            if isinstance(openrosa_version, basestring) else openrosa_version)
+            if isinstance(openrosa_version, six.string_types) else openrosa_version)
 
     @property
     def app_id(self):

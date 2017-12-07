@@ -4,6 +4,7 @@ from datetime import datetime, time, date
 import xlrd
 from corehq.util.workbook_reading import Worksheet, Cell, Workbook, SpreadsheetFileInvalidError, \
     SpreadsheetFileNotFound, SpreadsheetFileEncrypted
+from six.moves import range
 
 
 @contextmanager

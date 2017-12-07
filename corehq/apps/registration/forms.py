@@ -42,6 +42,26 @@ class RegisterWebUserForm(forms.Form):
         label=_("Include area code or any other prefix"),
         required=False,
     )
+    persona = forms.ChoiceField(
+        label=_("I will primarily be using CommCare to..."),
+        required=False,
+        widget=forms.RadioSelect,
+        choices=(
+            (u"M&E", _("Monitor and evaluate a program")),
+            (u"Exit Polling", _("Conduct exit polling")),
+            (u"Improve Delivery", _("Improve delivery of services")),
+            (u"Census", _("Collect census data")),
+            (u"Research", _("Collect data for a research project")),
+            (u"Customer Relationship", _("Improve customer relationship management")),
+            (u"Logistics", _("Manage Logistics")),
+            (u"IT", _("Build a technology solution for my team/clients")),
+            (u"Other", _("Other")),
+        )
+    )
+    persona_other = forms.CharField(
+        required=False,
+        label=_("Please Specify"),
+    )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
@@ -55,6 +75,7 @@ class RegisterWebUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.show_phone_number = kwargs.pop('show_number', False)
+        self.show_persona_field = kwargs.pop('show_persona', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
 
         if not self.show_phone_number:
@@ -67,6 +88,30 @@ class RegisterWebUserForm(forms.Form):
                     css_class="input-lg",
                     data_bind="value: phoneNumber, "
                               "valueUpdate: 'keyup'"
+                ),
+            ]
+
+        if not self.show_persona_field:
+            del self.fields['persona']
+            persona_fields = []
+        else:
+            persona_fields = [
+                crispy.Div(
+                    hqcrispy.RadioSelect(
+                        'persona',
+                        css_class="input-lg",
+                        data_bind="checked: personaChoice, "
+                    ),
+                    data_bind="css: {"
+                              " 'has-success': isPersonaChoiceChosen, "
+                              " 'has-error': isPersonaChoiceNeeded"
+                              "}",
+                ),
+                hqcrispy.InlineField(
+                    'persona_other',
+                    css_class="input-lg",
+                    data_bind="value: personaOther, "
+                              "visible: isPersonaChoiceOther",
                 ),
             ]
 
@@ -138,6 +183,7 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: projectName "
                                   "}",
                     ),
+                    crispy.Div(*persona_fields),
                     hqcrispy.InlineField(
                         'eula_confirmed',
                         css_class="input-lg",
@@ -200,7 +246,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -236,7 +282,7 @@ class DomainRegistrationForm(forms.Form):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -307,7 +353,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 
@@ -327,7 +373,7 @@ class _BaseForm(object):
 
     def clean(self):
         for field in self.cleaned_data:
-            if isinstance(self.cleaned_data[field], basestring):
+            if isinstance(self.cleaned_data[field], six.string_types):
                 self.cleaned_data[field] = self.cleaned_data[field].strip()
         return self.cleaned_data
 

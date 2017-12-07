@@ -802,7 +802,8 @@ Operator   | Description  | Value type | Example
 `eq`       | is equal     | constant   | `doc["age"] == 21`
 `not_eq`   | is not equal | constant   | `doc["age"] != 21`
 `in`       | single value is in a list | list | `doc["color"] in ["red", "blue"]`
-`in_multi` | multiselect value is in a list | list | `selected(doc["color"], ["red", "blue"])`
+`in_multi` | a value is in a multi select | list | `selected(doc["color"], "red")`
+`any_in_multi` | one of a list of values in in a multiselect | list | `selected(doc["color"], ["red", "blue"])`
 `lt`       | is less than | number | `doc["age"] < 21`
 `lte`      | is less than or equal | number | `doc["age"] <= 21`
 `gt`       | is greater than | number | `doc["age"] > 21`
@@ -2065,3 +2066,13 @@ This can be done by runnning `./manage.py dbshell` or using `psql`.
 The naming convention for tables is: `config_report_[domain name]_[table id]_[hash]`.
 
 In postgres, you can see all tables by typing `\dt` and use sql commands to inspect the appropriate tables.
+
+## ElasticSearch
+
+Optionally you can use ElasticSearch as a data source. ElasticSearch settings
+can be modified using es_index_settings.
+
+Using ES has the following drawbacks:
+
+- Results will be sorted by the first aggregate column when using aggregations
+- You cannot aggregate reports based on month or year

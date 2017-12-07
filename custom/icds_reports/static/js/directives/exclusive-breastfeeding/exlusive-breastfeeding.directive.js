@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -10,8 +10,9 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+    vm.userLocationId = userLocationId;
 
-    var genderIndex = genders.findIndex(function (x) {
+    var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
     if (genderIndex !== -1) {
@@ -30,6 +31,8 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age'];
@@ -37,6 +40,16 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         info: '"Percentage of infants 0-6 months of age who are fed exclusively with breast milk. An infant is exclusively breastfed if they recieve only breastmilk with no additional food, liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"',
     };
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -107,13 +120,16 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -126,7 +142,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -135,7 +151,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -194,15 +210,8 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></p>";
-                    tooltip_content += "<p>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, dataInMonth);
                 });
                 return chart;
             },
@@ -218,6 +227,13 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
+            + "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
+            + "<p>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
     };
 
     vm.resetAdditionalFilter = function() {

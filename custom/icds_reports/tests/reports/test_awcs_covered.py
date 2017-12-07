@@ -40,6 +40,7 @@ class TestAWCSCovered(TestCase):
                         "awcs": 8,
                         "states": 1,
                         "supervisors": 4,
+                        'original_name': [],
                         "fillKey": "Launched"
                     },
                     "st2": {
@@ -48,7 +49,49 @@ class TestAWCSCovered(TestCase):
                         "awcs": 11,
                         "states": 1,
                         "supervisors": 4,
+                        'original_name': [],
                         "fillKey": "Launched"
+                    }
+                },
+                "slug": "awc_covered",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_awcs_covered_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": (
+                        'Total AWCs that have launched ICDS CAS <br />'
+                        'Number of AWCs launched: 8 <br />'
+                        'Number of Blocks launched: 2'
+                    )
+                },
+                "fills": {
+                    "Launched": "#fee0d2",
+                    "Not launched": "#9D9D9D",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'states': 1,
+                        'blocks': 2,
+                        'awcs': 8,
+                        'original_name': [],
+                        'districts': 1,
+                        'supervisors': 4,
+                        'fillKey': 'Launched'
                     }
                 },
                 "slug": "awc_covered",
@@ -153,17 +196,17 @@ class TestAWCSCovered(TestCase):
                 ),
                 "tooltips_data": {
                     "s2": {
-                        "districts": 1, 
-                        "states": 1, 
-                        "supervisors": 1, 
-                        "blocks": 1, 
+                        "districts": 1,
+                        "states": 1,
+                        "supervisors": 1,
+                        "blocks": 1,
                         "awcs": 1
                     }, 
                     "s1": {
-                        "districts": 1, 
-                        "states": 1, 
-                        "supervisors": 1, 
-                        "blocks": 1, 
+                        "districts": 1,
+                        "states": 1,
+                        "supervisors": 1,
+                        "blocks": 1,
                         "awcs": 2
                     }
                 },

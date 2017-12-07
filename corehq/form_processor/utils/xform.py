@@ -3,12 +3,14 @@ from datetime import datetime
 
 import iso8601
 import pytz
+import six
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
+import six
 
 # The functionality below to create a simple wrapped XForm is used in production code (repeaters) and so is
 # not in the test utils
@@ -121,6 +123,14 @@ def convert_xform_to_json(xml_string):
     return json_form
 
 
+def adjust_text_to_datetime(text):
+    matching_datetime = iso8601.parse_date(text)
+    if phone_timezones_should_be_processed():
+        return matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
+    else:
+        return matching_datetime.replace(tzinfo=None)
+
+
 def adjust_datetimes(data, parent=None, key=None):
     """
     find all datetime-like strings within data (deserialized json)
@@ -137,20 +147,13 @@ def adjust_datetimes(data, parent=None, key=None):
     """
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, basestring) and jsonobject.re_loose_datetime.match(data):
+    if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
         try:
-            matching_datetime = iso8601.parse_date(data)
+            parent[key] = six.text_type(json_format_datetime(
+                adjust_text_to_datetime(data)
+            ))
         except iso8601.ParseError:
             pass
-        else:
-            if phone_timezones_should_be_processed():
-                parent[key] = unicode(json_format_datetime(
-                    matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
-                ))
-            else:
-                parent[key] = unicode(json_format_datetime(
-                    matching_datetime.replace(tzinfo=None)))
-
     elif isinstance(data, dict):
         for key, value in data.items():
             adjust_datetimes(value, parent=data, key=key)

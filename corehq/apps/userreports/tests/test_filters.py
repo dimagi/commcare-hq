@@ -4,6 +4,7 @@ from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
+from six.moves import filter  # keep unused import so py3 conversion scripts don't rewrite file
 
 
 class PropertyMatchFilterTest(SimpleTestCase):
@@ -160,6 +161,16 @@ class BooleanExpressionFilterTest(SimpleTestCase):
         self.assertTrue(filter({'foo': 'a b c'}))
         self.assertTrue(filter({'foo': 'b c a'}))
         self.assertFalse(filter({'foo': 'b'}))
+        self.assertFalse(filter({'foo': 'abc'}))
+        self.assertFalse(filter({'foo': 'ab cd'}))
+        self.assertFalse(filter({'foo': 'd e f'}))
+
+    def test_any_in_multi(self):
+        filter = self.get_filter('any_in_multi', ['a', 'b'])
+        self.assertTrue(filter({'foo': 'a'}))
+        self.assertTrue(filter({'foo': 'a b c'}))
+        self.assertTrue(filter({'foo': 'b c a'}))
+        self.assertTrue(filter({'foo': 'b'}))
         self.assertFalse(filter({'foo': 'abc'}))
         self.assertFalse(filter({'foo': 'ab cd'}))
         self.assertFalse(filter({'foo': 'd e f'}))

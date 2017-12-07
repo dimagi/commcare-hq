@@ -19,6 +19,8 @@ from corehq.util import reverse
 from custom.common import ALL_OPTION
 from corehq.apps.domain.models import Domain
 from custom.ewsghana.utils import ews_date_format, calculate_last_period
+import six
+from six.moves import range
 
 
 class ProductByProgramFilter(BaseSingleOptionFilter):
@@ -159,7 +161,7 @@ class EWSDateFilter(BaseReportFilter):
     @property
     def select_options(self):
         start_year = getattr(settings, 'START_YEAR', 2008)
-        years = [dict(val=unicode(y), text=y) for y in range(start_year, datetime.utcnow().year + 1)]
+        years = [dict(val=six.text_type(y), text=y) for y in range(start_year, datetime.utcnow().year + 1)]
         years.reverse()
         months = [dict(val="%02d" % m, text=calendar.month_name[m]) for m in range(1, 13)]
         now = datetime.now()
@@ -231,7 +233,7 @@ class LocationTypeFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return [
-            (unicode(loc_type.pk), loc_type.name) for loc_type in
+            (six.text_type(loc_type.pk), loc_type.name) for loc_type in
             LocationType.objects.filter(
                 domain=self.domain, administrative=False
             )

@@ -171,7 +171,7 @@ class ProjectReportParametersMixin(object):
 
     @property
     def case_group_ids(self):
-        return filter(None, self.request.GET.getlist('case_group'))
+        return [_f for _f in self.request.GET.getlist('case_group') if _f]
 
     @property
     @memoized

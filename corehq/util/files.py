@@ -1,7 +1,8 @@
 # encoding: utf-8
 from __future__ import absolute_import
 from unidecode import unidecode
-from urllib import quote
+from six.moves.urllib.parse import quote
+import six
 
 
 def file_extention_from_filename(filename):
@@ -20,7 +21,7 @@ def safe_filename(filename, extension=None):
     >>> safe_filename(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
     u'spam 𐍃𐍀𐌰𐌼-&.txt'
     """
-    filename = filename if isinstance(filename, unicode) else filename.decode('utf8')
+    filename = filename if isinstance(filename, six.text_type) else filename.decode('utf8')
     if extension is not None:
         filename = u"{}.{}".format(filename, extension)
     unsafe_chars = u':*?"<>|/\\\r\n'

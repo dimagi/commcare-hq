@@ -13,6 +13,7 @@ from auditcare.views import (
     model_instance_history,
     single_model_history,
 )
+from six.moves import filter
 
 
 def is_test_trace(item):
@@ -24,7 +25,7 @@ def is_test_trace(item):
 
 
 traces = traceback.format_stack(limit=5)
-is_tests = filter(is_test_trace, traces)
+is_tests = list(filter(is_test_trace, traces))
 
 
 urlpatterns = [

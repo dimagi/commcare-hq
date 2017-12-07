@@ -37,6 +37,10 @@ ENIKSHAY_ID = 'person_id'
 PERSON_FIRST_NAME = 'first_name'
 PERSON_LAST_NAME = 'last_name'
 
+PRIVATE_SECTOR = 'private'
+PUBLIC_SECTOR = 'public'
+SECTORS = (PRIVATE_SECTOR, PUBLIC_SECTOR)
+
 TREATMENT_START_DATE = 'treatment_initiation_date'
 TREATMENT_SUPPORTER_FIRST_NAME = 'treatment_supporter_first_name'
 TREATMENT_SUPPORTER_LAST_NAME = 'treatment_supporter_last_name'
@@ -140,13 +144,10 @@ AGENCY_USER_FIELDS = [
                                                                   "Government lab/DMC"]),
     ('plc_accredidation', "Lab Accredidation", ["NABL", "NABH", "BIS", "RNTCP", "Others", "None", "COPA"]),
     ('plc_tb_tests', "TB Tests", []),  # TODO Same lab option as investigations master
-    ('plc_hf_if_nikshay', "HF-ID Nikshay", []),
     ('pcc_pharmacy_name', "Pharmacy Name", []),
     ('pcc_pharmacy_affiliation', "Pharmacy Affiliation", ["IPA", "AIOCD"]),
     ('pcc_tb_drugs_in_stock', "TB Drugs in Stock", ["Private drugs only", "Goverment drugs (FDCs)",
                                                      "Private and government drugs"]),
-    ('agency_status', "Status", ["Registered", "Mapped", "Mapped and Targeted", "engaged- state scheme",
-                                 "dropped"]),
     ('gender', "Gender", ["Male", "Female", "Transgender"]),
     ('registration_number', "Registration Number", []),
     ('date_of_birth', "Date of Birth", []),
@@ -191,8 +192,13 @@ AGENCY_USER_FIELDS = [
 ]
 
 AGENCY_LOCATION_FIELDS = [
+    ('nikshay_code', "Nikshay Code", []),
     ('private_sector_org_id', "Private Sector Org ID", []),
     ('nikshay_tu_id', "Nikshay TU id", []),
+    ('facility_type', "Facility type", ["Hospital", "Doctor"]),
+    ('plc_hf_if_nikshay', "HF-ID Nikshay", []),
+    ('agency_status', "Status", ["Registered", "Mapped", "Mapped and Targeted",
+                                 "engaged- state scheme", "dropped"]),
 ]
 
 DSTB_EPISODE_TYPE = "confirmed_tb"

@@ -3,8 +3,7 @@ from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunting_data_map, \
-    get_prevalence_of_stunting_data_chart
-from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_sector_data
+    get_prevalence_of_stunting_data_chart, get_prevalence_of_stunting_sector_data
 from django.test import TestCase
 
 
@@ -43,6 +42,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "normal": 2,
                         "total_measured": 7,
                         "total": 449,
+                        'original_name': [],
                         "fillKey": "0%-25%"
                     },
                     "st2": {
@@ -51,7 +51,51 @@ class TestPrevalenceOfStunting(TestCase):
                         "normal": 13,
                         "total_measured": 25,
                         "total": 490,
+                        'original_name': [],
                         "fillKey": "0%-25%"
+                    }
+                },
+                "slug": "severe",
+                "label": "Percent of Children Stunted (6 - 60 months)"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_prevalence_of_stunting_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of children (6-60 months) enrolled for ICDS services with "
+                            "height-for-age below -2Z standard deviations of "
+                            "the WHO Child Growth Standards median.<br/><br/>Stunting "
+                            "is a sign of chronic undernutrition and has long "
+                            "lasting harmful consequences on the growth of a child",
+                    "average": "1.78"
+                },
+                "fills": {
+                    "0%-25%": "#fee0d2",
+                    "25%-38%": "#fc9272",
+                    "38%-100%": "#de2d26",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'moderate': 5,
+                        'total_measured': 7,
+                        'normal': 2,
+                        'original_name': ['b1', 'b2'],
+                        'severe': 3,
+                        'total': 449,
+                        'fillKey': '0%-25%'
                     }
                 },
                 "slug": "severe",
@@ -192,7 +236,7 @@ class TestPrevalenceOfStunting(TestCase):
 
     def test_sector_data(self):
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_sector_data(
+            get_prevalence_of_stunting_sector_data(
                 'icds-cas',
                 config={
                     'month': (2017, 5, 1),
@@ -205,22 +249,24 @@ class TestPrevalenceOfStunting(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children between 0-5 years enrolled for ICDS services"
-                        " with weight-for-age less than -2 standard deviations"
-                        " of the WHO Child Growth Standards median. <br/><br/>"
-                        "Children who are moderately or severely underweight have a higher risk of mortality",
+                "info": "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below"
+                        " -2Z standard deviations of the WHO Child Growth Standards median."
+                        "<br/><br/>Stunting is a sign of chronic undernutrition "
+                        "and has long lasting harmful consequences on the growth of a child",
                 "tooltips_data": {
                     "s2": {
-                        "total": 163,
-                        "severely_underweight": 2,
-                        "moderately_underweight": 37,
-                        "normal": 118
+                        "total": 150,
+                        "severe": 0,
+                        "moderate": 2,
+                        "total_measured": 4,
+                        "normal": 2
                     },
                     "s1": {
-                        "total": 72,
-                        "severely_underweight": 4,
-                        "moderately_underweight": 21,
-                        "normal": 46
+                        "total": 70,
+                        "severe": 0,
+                        "moderate": 0,
+                        "total_measured": 0,
+                        "normal": 0
                     }
                 },
                 "chart_data": [
@@ -231,11 +277,11 @@ class TestPrevalenceOfStunting(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.3472222222222222
+                                0.0
                             ],
                             [
                                 "s2",
-                                0.2392638036809816
+                                0.013333333333333334
                             ]
                         ],
                         "key": ""

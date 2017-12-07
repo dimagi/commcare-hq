@@ -65,7 +65,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "search_text": params.search,
                 "menu_session_id": params.sessionId,
                 "query_dictionary": params.queryDict,
-                "previewCommand": params.previewCommand,
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                 "isPersistent": params.isPersistent,

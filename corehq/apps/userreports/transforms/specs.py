@@ -16,6 +16,7 @@ from corehq.apps.userreports.transforms.custom.users import (
     get_owner_display,
     get_user_without_domain_display,
 )
+import six
 
 
 class Transform(JsonObject):
@@ -76,7 +77,7 @@ class NumberFormatTransform(Transform):
 
         def transform_function(value):
             try:
-                if isinstance(value, basestring):
+                if isinstance(value, six.string_types):
                     value = Decimal(value)
                 return self.format_string.format(value)
             except Exception:

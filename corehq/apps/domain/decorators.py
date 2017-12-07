@@ -21,8 +21,8 @@ from django.utils.translation import ugettext as _
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
-    BASIC, DIGEST, API_KEY, TOKEN
-)
+    BASIC, DIGEST, API_KEY, TOKEN,
+    get_username_and_password_from_request)
 from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
@@ -88,11 +88,7 @@ def login_and_domain_required(view_func):
                     ).format(domain=domain_name))
                     messages.info(req, msg)
                     return HttpResponseRedirect(reverse("domain_select"))
-                if hasattr(req, "couch_user"):
-                    couch_user = req.couch_user # set by user middleware
-                else:
-                    # some views might not have this set
-                    couch_user = CouchUser.from_django_user(user)
+                couch_user = _ensure_request_couch_user(req)
                 if couch_user.is_member_of(domain):
                     if domain.two_factor_auth and not user.is_verified() and not couch_user.two_factor_disabled:
                         return TemplateResponse(
@@ -128,7 +124,15 @@ def login_and_domain_required(view_func):
         else:
             msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
             raise Http404(msg)
+
     return _inner
+
+
+def _ensure_request_couch_user(request):
+    couch_user = getattr(request, 'couch_user', None)
+    if not couch_user and hasattr(request, 'user'):
+        request.couch_user = couch_user = CouchUser.from_django_user(request.user)
+    return couch_user
 
 
 def domain_required(view_func):
@@ -186,7 +190,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
                 @challenge_fn
                 @two_factor_check(api_key)
                 def _inner(request, domain, *args, **kwargs):
-                    request.couch_user = couch_user = CouchUser.from_django_user(request.user)
+                    couch_user = _ensure_request_couch_user(request)
                     if (
                         couch_user
                         and (allow_cc_users or couch_user.is_web_user())
@@ -210,7 +214,7 @@ def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_digest_or_basic_or_apikey(default=BASIC):
+def login_or_digest_or_basic_or_apikey():
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
@@ -218,7 +222,7 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True)
-            }[determine_authtype_from_request(request, default=default)]
+            }[determine_authtype_from_request(request)]
             if not function_wrapper:
                 return HttpResponseForbidden()
             return function_wrapper(fn)(request, *args, **kwargs)
@@ -226,7 +230,7 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
     return decorator
 
 
-def login_or_digest_or_basic_or_apikey_or_token(default=BASIC):
+def login_or_digest_or_basic_or_apikey_or_token():
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
@@ -235,7 +239,7 @@ def login_or_digest_or_basic_or_apikey_or_token(default=BASIC):
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
                 TOKEN: login_or_token_ex(allow_cc_users=True),
-            }[determine_authtype_from_request(request, default=default)]
+            }[determine_authtype_from_request(request)]
             if not function_wrapper:
                 return HttpResponseForbidden()
             return function_wrapper(fn)(request, *args, **kwargs)
@@ -314,7 +318,7 @@ def api_domain_view(view):
     @login_and_domain_required
     def _inner(request, domain, *args, **kwargs):
         if request.user.is_authenticated:
-            request.couch_user = CouchUser.from_django_user(request.user)
+            _ensure_request_couch_user(request)
             return view(request, domain, *args, **kwargs)
         else:
             return HttpResponseForbidden()
@@ -338,7 +342,10 @@ def login_required(view_func):
 def check_lockout(fn):
     @wraps(fn)
     def _inner(request, *args, **kwargs):
-        username = _get_username_from_request(request)
+        username, password = get_username_and_password_from_request(request)
+        if not username or username.endswith('.commcarehq.org'):
+            return fn(request, *args, **kwargs)
+
         user = CouchUser.get_by_username(username)
         if user and user.is_web_user() and user.is_locked_out():
             return json_response({_("error"): _("maximum password attempts exceeded")}, status_code=401)
@@ -346,19 +353,6 @@ def check_lockout(fn):
             return fn(request, *args, **kwargs)
     return _inner
 
-
-def _get_username_from_request(request):
-    auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    username = None
-    if auth_header.startswith('digest '):
-        digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
-        username = digest.username
-    elif auth_header.startswith('basic '):
-        try:
-            username = b64decode(request.META['HTTP_AUTHORIZATION'].split()[1]).split(':')[0]
-        except IndexError:
-            pass
-    return username
 
 ########################################################################################################
 #

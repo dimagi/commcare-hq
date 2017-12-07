@@ -14,6 +14,7 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 import corehq.apps.hqwebapp.crispy as hqcrispy
+import six
 
 
 class PerformanceFormMixin(object):
@@ -31,7 +32,7 @@ class PerformanceFormMixin(object):
         try:
             config.validate()
         except InvalidParameterException as e:
-            raise forms.ValidationError(unicode(e))
+            raise forms.ValidationError(six.text_type(e))
 
         return cleaned_data
 
@@ -79,7 +80,7 @@ class PerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
         self.fields.update(data_source_fields)
 
         self.helper = _get_default_form_helper()
-        form_layout = self.fields.keys()
+        form_layout = list(self.fields)
         form_layout.append(
             hqcrispy.FormActions(
                 StrictButton(
@@ -133,7 +134,7 @@ def _clean_template(template):
     try:
         parser.validate(template)
     except InvalidParameterException as e:
-        raise forms.ValidationError(unicode(e))
+        raise forms.ValidationError(six.text_type(e))
     return template
 
 
@@ -151,7 +152,7 @@ class AdvancedPerformanceMessageEditForm(PerformanceFormMixin, forms.Form):
         self.fields['recipient_id'] = GroupField(domain=domain, label=_('Recipient Group'))
 
         self.helper = _get_default_form_helper()
-        form_layout = self.fields.keys()
+        form_layout = list(self.fields)
         form_layout.append(
             hqcrispy.FormActions(
                 StrictButton(

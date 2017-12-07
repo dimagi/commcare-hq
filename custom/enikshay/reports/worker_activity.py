@@ -70,7 +70,7 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
 
     @property
     def user_ids(self):
-        return map(lambda u: u['user_id'], self.users)
+        return [u['user_id'] for u in self.users]
 
     @property
     def rows(self):

@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.hqadmin.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
@@ -94,6 +95,7 @@ from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
+import six
 
 
 # Tuple of (description, days in the past)
@@ -236,7 +238,7 @@ def send_to_recipients(request, domain):
                     keys=[recipient, recipient[1:]], include_docs=True,
                     wrapper=wrap_user_by_type).all()
 
-                phone_users = filter(lambda u: u.is_member_of(domain), phone_users)
+                phone_users = [u for u in phone_users if u.is_member_of(domain)]
                 if len(phone_users) > 0:
                     phone_numbers.append((phone_users[0], recipient))
                 else:
@@ -709,7 +711,18 @@ def get_contact_info(domain):
     case_ids = []
     mobile_worker_ids = []
     data = []
-    for p in PhoneNumber.by_domain(domain).filter(is_two_way=True):
+
+    if toggles.INBOUND_SMS_LENIENCY.enabled(domain):
+        phone_numbers_seen = set()
+        phone_numbers = []
+        for p in PhoneNumber.by_domain(domain).order_by('phone_number', '-is_two_way', 'created_on', 'couch_id'):
+            if p.phone_number not in phone_numbers_seen:
+                phone_numbers.append(p)
+                phone_numbers_seen.add(p.phone_number)
+    else:
+        phone_numbers = PhoneNumber.by_domain(domain).filter(is_two_way=True)
+
+    for p in phone_numbers:
         if p.owner_doc_type == 'CommCareCase':
             case_ids.append(p.owner_id)
             data.append([
@@ -772,7 +785,7 @@ def chat_contact_list(request, domain):
 
     if sSearch:
         regex = re.compile('^.*%s.*$' % sSearch)
-        data = filter(lambda row: regex.match(row[0]) or regex.match(row[2]), data)
+        data = [row for row in data if regex.match(row[0]) or regex.match(row[2])]
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])
@@ -1770,7 +1783,7 @@ def upload_sms_translations(request, domain):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
                             val = row[lang]
-                            if not isinstance(val, basestring):
+                            if not isinstance(val, six.string_types):
                                 val = str(val)
                             val = val.strip()
                             result[lang][msg_id] = val

@@ -175,7 +175,7 @@ def save_custom_fields(domain, definition_name, custom_fields):
             name = custom_field.get('name')
             label = custom_field.get('label')
             choices = custom_field.get('choices') or []
-            existing_fields = filter(lambda field: field.slug == name, fields_definitions.fields)
+            existing_fields = [field for field in fields_definitions.fields if field.slug == name]
             if not existing_fields:
                 need_save = True
                 fields_definitions.fields.append(

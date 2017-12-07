@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import requests
 
 from dimagi.utils.logging import notify_exception
-from corehq.messaging.smsbackends.http.models import SQLSMSBackend
+from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.vertex.const import (
     TEXT_MSG_TYPE,
     UNICODE_MSG_TYPE,

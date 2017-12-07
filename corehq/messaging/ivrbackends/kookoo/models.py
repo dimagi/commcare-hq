@@ -7,8 +7,8 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base
 from django.conf import settings
 from django.urls import reverse
-from urllib import urlencode
-from urllib2 import urlopen
+from six.moves.urllib.parse import urlencode
+from six.moves.urllib.request import urlopen
 from xml.etree.cElementTree import XML
 from xml.sax.saxutils import escape
 

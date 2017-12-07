@@ -1,20 +1,26 @@
 from __future__ import absolute_import
+
+import functools
 import itertools
 import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
+from collections import namedtuple
 from datetime import datetime
 from itertools import groupby
 from uuid import UUID
 
 import csiphash
 import re
+
+import operator
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
-from django.db.models import Q
-from django.db.models.functions import Greatest
+from django.db.models import Q, F
+from django.db.models.functions import Greatest, Concat
+from django.db.models.expressions import Value
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
@@ -73,14 +79,28 @@ def iter_all_rows(reindex_accessor):
     reindex accessor
     """
     for db_alias in reindex_accessor.sql_db_aliases:
-        docs = reindex_accessor.get_docs(db_alias, reindex_accessor.startkey_min_value)
+        docs = reindex_accessor.get_docs(db_alias)
         while docs:
             for doc in docs:
                 yield doc
 
-            start_from_for_db = getattr(doc, reindex_accessor.startkey_attribute_name)
-            last_id = doc.id
-            docs = reindex_accessor.get_docs(db_alias, start_from_for_db, last_doc_pk=last_id)
+            last_id = getattr(doc, reindex_accessor.primary_key_field_name)
+            docs = reindex_accessor.get_docs(db_alias, last_doc_pk=last_id)
+
+
+def iter_all_ids(reindex_accessor):
+    for doc_id in iter_all_ids_chunked(reindex_accessor):
+        yield doc_id
+
+
+def iter_all_ids_chunked(reindex_accessor):
+    for db_alias in reindex_accessor.sql_db_aliases:
+        docs = list(reindex_accessor.get_doc_ids(db_alias))
+        while docs:
+            yield [d.doc_id for d in docs]
+
+            last_id = docs[-1].primary_key
+            docs = list(reindex_accessor.get_doc_ids(db_alias, last_doc_pk=last_id))
 
 
 class ShardAccessor(object):
@@ -132,7 +152,7 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
-        if isinstance(doc_id, unicode):
+        if isinstance(doc_id, six.text_type):
             doc_id = doc_id.encode('utf-8')
         elif isinstance(doc_id, UUID):
             # Hash the 16-byte string
@@ -181,8 +201,11 @@ class ShardAccessor(object):
         return ShardAccessor.get_shard_id_and_database_for_doc(doc_id)[1]
 
 
+DocIds = namedtuple('DocIds', 'doc_id primary_key')
+
+
 class ReindexAccessor(six.with_metaclass(ABCMeta)):
-    startkey_min_value = datetime.min
+    primary_key_field_name = 'id'
 
     def __init__(self, limit_db_aliases=None):
         self.limit_db_aliases = limit_db_aliases
@@ -213,9 +236,10 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractproperty
-    def startkey_attribute_name(self):
+    def id_field(self):
         """
-        :return: The name of the attribute to filter successive batches by e.g. 'received_on'
+        :return: The name of the model field to return when calling ``get_doc_ids``. Return a string
+                 or a dict mapping an alias to a SQL expression
         """
         raise NotImplementedError
 
@@ -234,46 +258,69 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         return doc.to_json()
 
-    @abstractmethod
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
+    def filters(self, last_doc_pk=None, for_count=False):
+        filters = []
+        if last_doc_pk is not None:
+            filters.append(Q(**{self.primary_key_field_name + "__gt": last_doc_pk}))
+        filters.extend(self.extra_filters(for_count=for_count))
+        return functools.reduce(operator.and_, filters) if filters else None
+
+    def query(self, from_db, last_doc_pk=None, for_count=False):
+        filters = self.filters(last_doc_pk, for_count)
+        query = self.model_class.objects.using(from_db)
+        if filters:
+            query = query.filter(filters)
+        return query
+
+    def get_doc_ids(self, from_db, last_doc_pk=None, limit=500):
+        """
+        :param from_db: The DB alias to query
+        :param last_doc_pk: The primary key of the last doc from the previous batch
+        :param limit: Desired batch size
+        :return: Generator of DocIds namedtuple
+        """
+        query = self.query(from_db, last_doc_pk)
+        field = self.id_field
+        if isinstance(field, dict):
+            query = query.annotate(**field)
+            field = list(field)[0]
+        query = query.values(self.primary_key_field_name, field)
+        for row in query.order_by(self.primary_key_field_name)[:limit]:
+            yield DocIds(row[field], row[self.primary_key_field_name])
+
+    def get_docs(self, from_db, last_doc_pk=None, limit=500):
         """Get a batch of
         :param from_db: The DB alias to query
-        :param startkey: The filter value to start from e.g. form.received_on
         :param last_doc_pk: The primary key of the last doc from the previous batch
         :param limit: Desired batch size
         :return: List of documents
         """
-        raise NotImplementedError
+        query = self.query(from_db, last_doc_pk)
+        return query.order_by(self.primary_key_field_name)[:limit]
 
-    @property
-    def count_query(self):
-        """Define a custom query to use to get the doc count (only used for filtered reindex).
-        :returns: tuple('query_string', [query values])
+    def extra_filters(self, for_count=False):
         """
-        return
+        :param for_count: True if only filters required for the count query. Only simple filters
+                          should be included for the count query.
+        :return: list of sql filters
+        """
+        return []
 
-    def get_doc_count(self, from_db):
-        """Get the doc count from the given DB
+    def get_approximate_doc_count(self, from_db):
+        """Get the approximate doc count from the given DB
         :param from_db: The DB alias to query
         """
-        if self.count_query:
-            query, values = self.count_query
-            query = 'EXPLAIN {}'.format(query)
-            db_cursor = connections[from_db].cursor()
-            with db_cursor as cursor:
-                cursor.execute(query, values)
-                for row in cursor.fetchall():
-                    search = re.search(r' rows=(\d+)', row[0])
-                    if search:
-                        return int(search.group(1))
-            return 0
-        else:
-            from_db = 'default' if from_db is None else from_db
-            sql_query = "SELECT reltuples FROM pg_class WHERE oid = '{}'::regclass"
-            db_cursor = connections[from_db].cursor()
-            with db_cursor as cursor:
-                cursor.execute(sql_query.format(self.model_class._meta.db_table))
-                return int(fetchone_as_namedtuple(cursor).reltuples)
+        query = self.query(from_db, for_count=True)
+        sql, params = query.query.sql_with_params()
+        explain_query = 'EXPLAIN {}'.format(sql)
+        db_cursor = connections[from_db].cursor()
+        with db_cursor as cursor:
+            cursor.execute(explain_query, params)
+            for row in cursor.fetchall():
+                search = re.search(r' rows=(\d+)', row[0])
+                if search:
+                    return int(search.group(1))
+        return 0
 
 
 class FormReindexAccessor(ReindexAccessor):
@@ -288,8 +335,8 @@ class FormReindexAccessor(ReindexAccessor):
         return XFormInstanceSQL
 
     @property
-    def startkey_attribute_name(self):
-        return 'received_on'
+    def id_field(self):
+        return 'form_id'
 
     def get_doc(self, doc_id):
         try:
@@ -300,38 +347,15 @@ class FormReindexAccessor(ReindexAccessor):
     def doc_to_json(self, doc):
         return doc.to_json(include_attachments=self.include_attachments)
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        received_on_since = startkey or datetime.min
-        last_id = last_doc_pk or -1
-
-        domain_clause = "form_table.domain = %s AND" if self.domain else ""
-        values = [received_on_since, last_id, limit]
+    def extra_filters(self, for_count=False):
+        filters = []
+        if not for_count:
+            # don't inlucde in count query since the query planner can't account for it
+            # hack for django: 'state & DELETED = 0' so 'state = state + state & DELETED'
+            filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
         if self.domain:
-            values = [self.domain] + values
-
-        # using raw query to avoid having to expand the tuple comparison
-        results = XFormInstanceSQL.objects.using(from_db).raw(
-            """SELECT * FROM {table} as form_table
-        WHERE {domain_clause}
-        state & {deleted_state} = 0 AND
-        (form_table.received_on, form_table.id) > (%s, %s)
-        ORDER BY form_table.received_on, form_table.id
-        LIMIT %s;""".format(
-                table=XFormInstanceSQL._meta.db_table,
-                domain_clause=domain_clause,
-                deleted_state=XFormInstanceSQL.DELETED
-            ),
-            values
-        )
-        return list(results)
-
-    @property
-    def count_query(self):
-        # deletion clause left out on purpose since it throws off the count estimate
-        if self.domain:
-            return """SELECT * FROM {table} WHERE domain = %s""".format(
-                table=XFormInstanceSQL._meta.db_table,
-            ), [self.domain]
+            filters.append(Q(domain=self.domain))
+        return filters
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -629,6 +653,10 @@ class FormAccessorSQL(AbstractFormAccessor):
 
         form.clear_tracked_models()
 
+        # keep these around since we might need them still e.g publishing changes to kafka
+        form.cached_attachments = unsaved_attachments
+
+
     @staticmethod
     def update_form(form, publish_changes=True):
         from corehq.form_processor.change_publishers import publish_form_saved
@@ -727,8 +755,8 @@ class CaseReindexAccessor(ReindexAccessor):
         return CommCareCaseSQL
 
     @property
-    def startkey_attribute_name(self):
-        return 'server_modified_on'
+    def id_field(self):
+        return 'case_id'
 
     def get_doc(self, doc_id):
         try:
@@ -736,34 +764,11 @@ class CaseReindexAccessor(ReindexAccessor):
         except CaseNotFound:
             pass
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        server_modified_on_since = startkey or datetime.min
-        last_id = last_doc_pk or -1
-        domain_clause = "case_table.domain = %s AND" if self.domain else ""
-        values = [False, server_modified_on_since, last_id, limit]
+    def extra_filters(self, for_count=False):
+        filters = [Q(deleted=False)]
         if self.domain:
-            values = [self.domain] + values
-
-        # using raw query to avoid having to expand the tuple comparison
-        results = CommCareCaseSQL.objects.using(from_db).raw(
-            """SELECT * FROM {table} as case_table
-            WHERE {domain_clause}
-            deleted = %s AND
-            (case_table.server_modified_on, case_table.id) > (%s, %s)
-            ORDER BY case_table.server_modified_on, case_table.id
-            LIMIT %s;""".format(
-                table=CommCareCaseSQL._meta.db_table, domain_clause=domain_clause
-            ),
-            values
-        )
-        return list(results)
-
-    @property
-    def count_query(self):
-        if self.domain:
-            return """SELECT * FROM {table} WHERE domain = %s AND deleted = %s""".format(
-                    table=CommCareCaseSQL._meta.db_table
-            ), [self.domain, False]
+            filters.append(Q(domain=self.domain))
+        return filters
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -874,7 +879,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         cases_by_id = {case.case_id: case for case in cases}
         indices = list(CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-            [domain, cases_by_id.keys()])
+            [domain, list(cases_by_id)])
         )
         _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases
@@ -1201,8 +1206,11 @@ class LedgerReindexAccessor(ReindexAccessor):
         return LedgerValue
 
     @property
-    def startkey_attribute_name(self):
-        return 'last_modified'
+    def id_field(self):
+        slash = Value('/')
+        return {
+            'ledger_reference': Concat('case_id', slash, 'section_id', slash, 'entry_id')
+        }
 
     def get_doc(self, doc_id):
         from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
@@ -1212,39 +1220,15 @@ class LedgerReindexAccessor(ReindexAccessor):
         except CaseNotFound:
             pass
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        modified_since = startkey or datetime.min
-        last_id = last_doc_pk or -1
-
-        domain_clause = "domain = %s AND" if self.domain else ""
-        values = [modified_since, last_id, limit]
+    def extra_filters(self, for_count=False):
         if self.domain:
-            values = [self.domain] + values
-
-        results = LedgerValue.objects.using(from_db).raw(
-            """SELECT * FROM {table}
-        WHERE {domain_clause}
-        (last_modified, id) > (%s, %s)
-        ORDER BY last_modified, id
-        LIMIT %s""".format(
-                table=LedgerValue._meta.db_table,
-                domain_clause=domain_clause
-            ),
-            values,
-        )
-        return list(results)
+            return [Q(domain=self.domain)]
+        return []
 
     def doc_to_json(self, doc):
         json_doc = doc.to_json()
         json_doc['_id'] = doc.ledger_reference.as_id()
         return json_doc
-
-    @property
-    def count_query(self):
-        if self.domain:
-            return """SELECT * FROM {table} WHERE domain = %s""".format(
-                table=LedgerValue._meta.db_table,
-            ), [self.domain]
 
 
 class LedgerAccessorSQL(AbstractLedgerAccessor):

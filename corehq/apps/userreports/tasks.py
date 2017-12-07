@@ -49,6 +49,7 @@ from corehq.util.view_utils import reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+import six
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -376,7 +377,7 @@ def async_indicators_metrics():
         lag = (datetime.utcnow() - indicator.date_created).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 
-    for config_id, metrics in _indicator_metrics().iteritems():
+    for config_id, metrics in six.iteritems(_indicator_metrics()):
         tags = ["config_id:{}".format(config_id)]
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
         datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
@@ -424,7 +425,7 @@ def _indicator_metrics(date_created=None):
 @task
 def export_ucr_async(export_table, download_id, title, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = u'{}.xlsx'.format(title)
+    filename = u'{}.xlsx'.format(title.replace(u'/', u'?'))
     file_path = get_download_file_path(use_transfer, filename)
     export_from_tables(export_table, file_path, Format.XLS_2007)
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')

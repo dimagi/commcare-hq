@@ -14,7 +14,7 @@ from corehq.apps.app_manager.remote_link_accessors import _convert_app_from_remo
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.remote_linked_apps import _convert_app_for_remote_linking
-from corehq.apps.app_manager.views.utils import overwrite_app
+from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 
 
@@ -58,6 +58,21 @@ class TestLinkedApps(BaseLinkedAppsTest):
         overwrite_app(self.linked_app, self.master_app_with_report_modules, report_map)
         linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
+
+    def test_overwrite_app_maintain_ids(self):
+        module = self.plain_master_app.add_module(Module.new_module('M1', None))
+        module.new_form('f1', None, self.get_xml('very_simple_form'))
+
+        module = self.linked_app.add_module(Module.new_module('M1', None))
+        module.new_form('f1', None, self.get_xml('very_simple_form'))
+
+        id_map_before = _get_form_id_map(self.linked_app)
+
+        overwrite_app(self.linked_app, self.plain_master_app, {})
+        self.assertEqual(
+            id_map_before,
+            _get_form_id_map(LinkedApplication.get(self.linked_app._id))
+        )
 
     def test_get_master_version(self):
         self.linked_app.master = self.plain_master_app.get_id
@@ -155,7 +170,14 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         linked_app = _mock_pull_remote_master(
             self.master_app_with_report_modules, self.linked_app, {'id': 'mapped_id'}
         )
-        self.assertEqual(self.master_app_with_report_modules.get_attachments(), linked_app.get_attachments())
+        master_id_map = _get_form_id_map(self.master_app_with_report_modules)
+        linked_id_map = _get_form_id_map(linked_app)
+        for xmlns, master_form_id in master_id_map.items():
+            linked_form_id = linked_id_map[xmlns]
+            self.assertEqual(
+                self.master_app_with_report_modules.get_form(master_form_id).source,
+                linked_app.get_form(linked_form_id).source
+            )
 
     def test_get_missing_media_list(self):
         image_path = 'jr://file/commcare/case_list_image.jpg'

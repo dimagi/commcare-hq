@@ -11,6 +11,8 @@ import sqlalchemy
 from django.test.testcases import TestCase, override_settings
 
 from corehq.sql_db.connections import connection_manager
+from six.moves import zip
+from six.moves import range
 
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')

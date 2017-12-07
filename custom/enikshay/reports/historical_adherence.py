@@ -27,6 +27,8 @@ from django.utils.translation import ugettext_lazy
 from custom.enikshay.tasks import EpisodeAdherenceUpdate, calculate_dose_status_by_day
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
+import six
+from six.moves import range
 
 Schedule = namedtuple("Schedule", ['days_dose_expected', 'mark_expected', 'title'])
 india_timezone = pytz.timezone(ENIKSHAY_TIMEZONE)
@@ -129,7 +131,7 @@ class HistoricalAdherenceReport(EnikshayReport):
 
     def get_doses(self):
         adherence_cases = []
-        for day, cases in self.get_adherence_cases_dict().iteritems():
+        for day, cases in six.iteritems(self.get_adherence_cases_dict()):
             adherence_cases.extend(cases)
 
         doses_taken_by_date = calculate_dose_status_by_day(
@@ -210,7 +212,6 @@ class HistoricalAdherenceReport(EnikshayReport):
                         date,
                         self.get_adherence_image_key(cases_for_date, date),
                         self.show_unexpected_image(cases_for_date, date),
-                        len(cases_for_date) > 1,
                         self.is_treatment_start_date(date),
                         force_month_label=date == first_date,
                     ))
@@ -323,12 +324,11 @@ class Week(object):
 
 class Day(object):
 
-    def __init__(self, date, adherence_image_key, show_unexpected_image, show_conflicting_data,
+    def __init__(self, date, adherence_image_key, show_unexpected_image,
                  show_treatment_start_date, force_month_label=False):
         self.date = date
         self.month_string = self.date.strftime("%b") if self.date.day == 1 or force_month_label else ""
         self.day_string = self.date.day
         self.adherence_image_key = adherence_image_key
         self.show_unexpected_image = show_unexpected_image
-        self.show_conflicting_data = show_conflicting_data
         self.show_treatment_start_date = show_treatment_start_date

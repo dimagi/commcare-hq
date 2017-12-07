@@ -101,16 +101,27 @@
                 "slug": "close_reason3"
             },
             {
-                "pre_value": "pmdt_excel",
+                "pre_value": "duplicate_reconciliation",
                 "datatype": "string",
                 "pre_operator": "distinct from",
                 "display": null,
-                "field": "migration_type",
+                "field": "close_reason",
                 "type": "pre",
-                "slug": "migration_type"
+                "slug": "close_reason4"
             }
         ],
         "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "beneficiary_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "eNikshay ID"
+            },
             {
                 "sortable": false,
                 "description": null,

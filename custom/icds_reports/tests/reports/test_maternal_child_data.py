@@ -22,7 +22,7 @@ class TestMaternalChildData(TestCase):
                         {
                             "redirect": "underweight_children",
                             "color": "red",
-                            "all": 939,
+                            "all": 989,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of children between 0-5 years enrolled for ICDS services"
@@ -30,7 +30,7 @@ class TestMaternalChildData(TestCase):
                                          " of the WHO Child Growth Standards median. "
                                          "Children who are moderately or severely underweight"
                                          " have a higher risk of mortality.",
-                            "percent": 2.6624068157614627,
+                            "percent": 3.336703741152685,
                             "value": 196,
                             "label": "Underweight (Weight-for-Age)"
                         },

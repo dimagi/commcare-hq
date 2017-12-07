@@ -108,6 +108,7 @@ from corehq.apps.case_importer.tracking.filestorage import BUCKET as CASE_UPLOAD
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from couchexport.models import SavedBasicExport
 import corehq.form_processor.models as sql_xform
+import six
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -144,7 +145,7 @@ the total number of migrated blobs were not found.
 
 
 def encode_content(data):
-    if isinstance(data, unicode):
+    if isinstance(data, six.text_type):
         data = data.encode("utf-8")
     return b64encode(data)
 
@@ -239,7 +240,7 @@ class CouchAttachmentMigrator(BaseDocMigrator):
         obj = self.blob_helper(doc, self.couchdb)
         try:
             with obj.atomic_blobs():
-                for name, data in list(attachments.iteritems()):
+                for name, data in list(six.iteritems(attachments)):
                     if name in external_blobs:
                         continue  # skip attachment already in blob db
                     obj.put_attachment(name=name, **data)
@@ -285,7 +286,7 @@ class BlobDbBackendMigrator(BaseDocMigrator):
                 "doc_id": obj._id,
                 "error": "blobs != external_blobs",
             })
-        for name, meta in obj.external_blobs.iteritems():
+        for name, meta in six.iteritems(obj.external_blobs):
             self.total_blobs += 1
             try:
                 content = self.db.old_db.get(meta.id, bucket)
@@ -341,7 +342,7 @@ class BlobDbBackendExporter(BaseDocProcessor):
         bucket = obj._blobdb_bucket()
         assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
         from_db = get_blob_db()
-        for name, meta in obj.blobs.iteritems():
+        for name, meta in six.iteritems(obj.blobs):
             self.total_blobs += 1
             try:
                 content = from_db.get(meta.id, bucket)
@@ -466,8 +467,9 @@ def sql_blob_helper(id_attr, bucket):
 
 
 class PkReindexAccessor(ReindexAccessor):
-    startkey_min_value = -1
-    startkey_attribute_name = 'id'
+    @property
+    def id_field(self):
+        return 'id'
 
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
@@ -475,14 +477,6 @@ class PkReindexAccessor(ReindexAccessor):
 
     def doc_to_json(self, obj):
         return {"_id": obj.id, "_obj_not_json": obj}
-
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        params = {self.startkey_attribute_name + "__gt":
-            startkey or self.startkey_min_value}
-        return (self.model_class.objects
-            .using(from_db)
-            .filter(**params)
-            .order_by(self.startkey_attribute_name)[:limit])
 
 
 class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):

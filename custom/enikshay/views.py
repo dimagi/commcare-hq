@@ -30,7 +30,7 @@ class EpisodeTaskDebugView(View):
         try:
             episode = CaseAccessors(domain).get_case(episode_id)
             return JsonResponse(EpisodeAdherenceUpdate(domain, episode).update_json())
-        except EnikshayTaskException, e:
+        except EnikshayTaskException as e:
             return HttpResponse(e)
 
 

@@ -36,12 +36,51 @@ class TestAWCDailyStatus(TestCase):
                     "st1": {
                         "in_day": 0,
                         "all": 8,
+                        'original_name': [],
                         "fillKey": "0%-50%"
                     },
                     "st2": {
                         "in_day": 0,
                         "all": 11,
+                        'original_name': [],
                         "fillKey": "0%-50%"
+                    }
+                },
+                "slug": "awc_daily_statuses",
+                "label": "Percent AWCs Open Yesterday"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_awc_daily_status_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 28),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "average": 0.0,
+                    "period": "Daily"
+                },
+                "fills": {
+                    "0%-50%": "#de2d26",
+                    "50%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                },
+                'data': {
+                    'block_map': {
+                        'in_day': 0,
+                        'all': 8,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': '0%-50%'
                     }
                 },
                 "slug": "awc_daily_statuses",
@@ -61,8 +100,6 @@ class TestAWCDailyStatus(TestCase):
             ),
             {
                 "location_type": "State",
-                "bottom_five": [],
-                "top_five": [],
                 "chart_data": [
                     {
                         "color": ChartColors.PINK,
@@ -388,10 +425,39 @@ class TestAWCDailyStatus(TestCase):
                                 "all": 0
                             }
                         ],
-                        "key": "Total AWCs open yesterday"
+                        "key": "Total AWCs open"
                     }
                 ],
-                "all_locations": []
+                "top_five": [
+                    {
+                        'loc_name': 'st1',
+                        'value': 0
+                    },
+                    {
+                        'loc_name': 'st2',
+                        'value': 0
+                    }
+                ],
+                "all_locations": [
+                    {
+                        "loc_name": "st1",
+                        "value": 0
+                    },
+                    {
+                        "loc_name": "st2",
+                        "value": 0
+                    }
+                ],
+                "bottom_five": [
+                    {
+                        'loc_name': 'st1',
+                        'value': 0
+                    },
+                    {
+                        'loc_name': 'st2',
+                        'value': 0
+                    }
+                ]
             }
         )
 

@@ -33,11 +33,47 @@ class TestRegisteredHousehold(TestCase):
                 "data": {
                     "st1": {
                         "household": 3633,
+                        'original_name': [],
                         "fillKey": "Household"
                     },
                     "st2": {
                         "household": 3331,
+                        'original_name': [],
                         "fillKey": "Household"
+                    }
+                },
+                "slug": "registered_household",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_registered_household_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Total number of households registered",
+                    "average": 1816.5,
+                    "average_format": "number"
+                },
+                "fills": {
+                    "Household": "#006fdf",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'household': 3633,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Household'
                     }
                 },
                 "slug": "registered_household",

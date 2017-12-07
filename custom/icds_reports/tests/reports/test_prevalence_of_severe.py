@@ -45,6 +45,7 @@ class TestPrevalenceOfSevere(TestCase):
                         "normal": 5,
                         "total_measured": 7,
                         "total": 449,
+                        'original_name': [],
                         "fillKey": "0%-5%"
                     },
                     "st2": {
@@ -53,7 +54,54 @@ class TestPrevalenceOfSevere(TestCase):
                         "normal": 16,
                         "total_measured": 25,
                         "total": 490,
+                        'original_name': [],
                         "fillKey": "0%-5%"
+                    }
+                },
+                "slug": "severe",
+                "label": "Percent of Children Wasted (6 - 60 months)"
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_prevalence_of_severe_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+                            "weight-for-height below -2 standard deviations of the WHO Child Growth Standards "
+                            "median. <br/><br/>Wasting in children is a symptom of acute undernutrition "
+                            "usually as a consequence of insufficient food intake or a high incidence "
+                            "of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional "
+                            "status for a child who has severe wasting (weight-for-height) below -3 "
+                            "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
+                            "that has moderate wasting (weight-for-height) below -2Z.",
+                    "average": "0.89"
+                },
+                "fills": {
+                    "0%-5%": "#fee0d2",
+                    "5%-7%": "#fc9272",
+                    "7%-100%": "#de2d26",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'moderate': 4,
+                        'total_measured': 7,
+                        'normal': 5,
+                        'original_name': ['b1', 'b2'],
+                        'severe': 0,
+                        'total': 449,
+                        'fillKey': '0%-5%'
                     }
                 },
                 "slug": "severe",

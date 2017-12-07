@@ -46,7 +46,7 @@ describe("DrilldownToFormController - Initialization", function () {
             controller._select2Test.form.placeholder,
             response.placeholders.form
         );
-        assert.deepEqual(controller._select2Test.case_type.data, []);
+        assert.isUndefined(controller._select2Test.case_type.data);
         assert.equal(controller._select2Test.case_type.defaults, '');
         assert.isUndefined(controller._select2Test.case_type.placeholder);
     });
@@ -95,7 +95,7 @@ describe("DrilldownToFormController - Initialization", function () {
             controller._select2Test.form.placeholder,
             response.placeholders.form
         );
-        assert.deepEqual(controller._select2Test.case_type.data, []);
+        assert.isUndefined(controller._select2Test.case_type.data);
         assert.equal(controller._select2Test.case_type.defaults, '');
         assert.isUndefined(controller._select2Test.case_type.placeholder);
     });
@@ -139,8 +139,7 @@ describe("DrilldownToFormController - Initialization", function () {
         assert.isUndefined(controller._select2Test.form.data);
         assert.equal(controller._select2Test.module.defaults, '');
         assert.isUndefined(controller._select2Test.form.placeholder);
-        assert.deepEqual(controller._select2Test.case_type.data,
-                         [{id: 'case', text: "Case"}]);
+        assert.isUndefined(controller._select2Test.case_type.data);
         assert.equal(controller._select2Test.case_type.defaults, '');
         assert.equal(
             controller._select2Test.case_type.placeholder,

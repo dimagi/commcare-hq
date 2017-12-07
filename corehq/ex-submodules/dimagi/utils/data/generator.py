@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import random
 import uuid
+from six.moves import range
 
 # these lists arbitrarily generated once from http://www.generatedata.com/
 
@@ -56,7 +57,7 @@ def username_from_name(name):
 
 
 def random_phonenumber(numdigits=11):
-    return "+" + "".join(str(random.randint(0,9)) for i in range(numdigits))
+    return "+" + "".join(str(random.randint(0, 9)) for i in range(numdigits))
 
 
 def instantiate(generator_or_value):

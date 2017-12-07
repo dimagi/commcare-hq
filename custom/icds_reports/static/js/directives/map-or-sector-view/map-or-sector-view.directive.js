@@ -8,11 +8,11 @@ function MapOrSectorController($location, storageService, locationsService) {
 
         chart: {
             type: 'multiBarHorizontalChart',
-            width: 1000,
+            width: 1400,
             height: 550,
             margin: {
                 bottom: 40,
-                left: 220,
+                left: 350,
             },
             x: function (d) {
                 return d[0];

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 
 from django.core.management.base import BaseCommand
@@ -24,11 +25,11 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
         )
 
     def handle(self, domain, **options):
-        print "Running {}".format(self.updater.__name__)
+        print("Running {}".format(self.updater.__name__))
         if options['commit']:
-            print "Committing changes"
+            print("Committing changes")
         else:
-            print "Dry Run"
+            print("Dry Run")
 
         batch_size = 100
         updates = []

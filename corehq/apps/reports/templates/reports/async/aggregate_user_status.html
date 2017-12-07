@@ -1,0 +1,34 @@
+{% extends report_base|default:"reports/async/default.html" %}
+
+{% load report_tags %}
+{% load i18n %}
+
+{% block reportcontent %}
+<div class="container-fluid">
+      <div class="row text-center">
+          <div class="col-sm-4 text-center">
+              <h4>{% trans "Total Mobile Workers" %}</h4>
+              <h2>{{ total_users }}</h2>
+          </div>
+          <div class="col-sm-4 text-center">
+              <h4>{% trans "Mobile Workers that have Ever Submitted Data" %}</h4>
+              <h2>{{ ever_submitted }}</h2>
+          </div>
+          <div class="col-sm-4 text-center">
+              <h4>{% trans "Mobile Workers that have Ever Synced" %}</h4>
+              <h2>{{ ever_synced }}</h2>
+          </div>
+      </div>
+      <div class="panel panel-default">
+          {% with submission_series as series %}
+          {% include "reports/async/partials/aggregate_user_status/chart_panel.html" %}
+          {% endwith %}
+
+      </div>
+      <div class="panel panel-default">
+          {% with sync_series as series %}
+          {% include "reports/async/partials/aggregate_user_status/chart_panel.html" %}
+          {% endwith %}
+      </div>
+</div>
+{% endblock reportcontent %}

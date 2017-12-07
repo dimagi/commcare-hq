@@ -4,6 +4,7 @@ from django.test import TestCase
 from corehq.apps.toggle_ui.migration_helpers import move_toggles
 from couchdbkit import ResourceNotFound
 from toggle.models import Toggle
+from six.moves import range
 
 
 class MigrationHelperTest(TestCase):

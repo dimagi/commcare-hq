@@ -8,6 +8,7 @@ from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.util import random_url_id
 from corehq.blobs.exceptions import NotFound
 from corehq.util.quickcache import quickcache
+import six
 
 
 class DemoUserRestore(models.Model):
@@ -76,7 +77,7 @@ class DemoUserRestore(models.Model):
 
     def _write_restore_blob(self, restore, db):
 
-        if isinstance(restore, unicode):
+        if isinstance(restore, six.text_type):
             restore = StringIO(restore.encode("utf-8"))
         elif isinstance(restore, bytes):
             restore = StringIO(restore)

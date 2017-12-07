@@ -10,7 +10,6 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
 from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
@@ -25,11 +24,19 @@ from corehq.util.view_utils import set_file_download
 from dimagi.utils.web import json_response
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
+import six
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
                       "If error persists, please contact us at commcarehq-support@dimagi.com")
 
+
+def _get_profile(request):
+    profile = request.GET.get('profile')
+    if profile in request.app.build_profiles:
+        return profile
+    else:
+        return None
 
 @safe_download
 def download_odk_profile(request, domain, app_id):
@@ -42,8 +49,9 @@ def download_odk_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = _get_profile(request)
     return HttpResponse(
-        request.app.create_profile(is_odk=True),
+        request.app.create_profile(is_odk=True, build_profile_id=profile),
         content_type="commcare/profile"
     )
 
@@ -55,8 +63,9 @@ def download_odk_media_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = _get_profile(request)
     return HttpResponse(
-        request.app.create_profile(is_odk=True, with_media=True),
+        request.app.create_profile(is_odk=True, with_media=True, build_profile_id=profile),
         content_type="commcare/profile"
     )
 
@@ -70,8 +79,9 @@ def download_suite(request, domain, app_id):
     if not request.app.copy_of:
         previous_version = request.app.get_latest_app(released_only=False)
         request.app.set_form_versions(previous_version)
+    profile = _get_profile(request)
     return HttpResponse(
-        request.app.create_suite()
+        request.app.create_suite(build_profile_id=profile)
     )
 
 
@@ -84,8 +94,9 @@ def download_media_suite(request, domain, app_id):
     if not request.app.copy_of:
         previous_version = request.app.get_latest_app(released_only=False)
         request.app.set_media_versions(previous_version)
+    profile = _get_profile(request)
     return HttpResponse(
-        request.app.create_media_suite()
+        request.app.create_media_suite(build_profile_id=profile)
     )
 
 
@@ -95,8 +106,9 @@ def download_app_strings(request, domain, app_id, lang):
     See Application.create_app_strings
 
     """
+    profile = _get_profile(request)
     return HttpResponse(
-        request.app.create_app_strings(lang)
+        request.app.create_app_strings(lang, build_profile_id=profile)
     )
 
 
@@ -106,9 +118,10 @@ def download_xform(request, domain, app_id, module_id, form_id):
     See Application.fetch_xform
 
     """
+    profile = _get_profile(request)
     try:
         return HttpResponse(
-            request.app.fetch_xform(module_id, form_id)
+            request.app.fetch_xform(module_id, form_id, build_profile_id=profile)
         )
     except (IndexError, ModuleNotFoundException):
         raise Http404()
@@ -263,7 +276,7 @@ def download_file(request, domain, app_id, path):
                 payload = request.app.fetch_attachment(full_path)
             else:
                 raise
-        if type(payload) is unicode:
+        if type(payload) is six.text_type:
             payload = payload.encode('utf-8')
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
@@ -296,9 +309,6 @@ def download_file(request, domain, app_id, path):
                     resolve_path(path)
                 except Resolver404:
                     # ok this was just a url that doesn't exist
-                    # todo: log since it likely exposes a mobile bug
-                    # logging was removed because such a mobile bug existed
-                    # and was spamming our emails
                     pass
                 else:
                     # this resource should exist but doesn't
@@ -324,8 +334,9 @@ def download_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = _get_profile(request)
     return HttpResponse(
-        request.app.create_profile()
+        request.app.create_profile(build_profile_id=profile)
     )
 
 
@@ -336,8 +347,9 @@ def download_media_profile(request, domain, app_id):
         make_async_build.delay(request.app, username)
     else:
         request._always_allow_browser_caching = True
+    profile = _get_profile(request)
     return HttpResponse(
-        request.app.create_profile(with_media=True)
+        request.app.create_profile(with_media=True, build_profile_id=profile)
     )
 
 

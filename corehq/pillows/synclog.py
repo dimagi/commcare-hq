@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
-from corehq.apps.users.models import LastSync, CouchUser, CommCareUser, WebUser
-from corehq.pillows.utils import update_latest_builds, filter_by_app
+from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
+from corehq.apps.users.util import update_latest_builds, update_last_sync
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
@@ -37,14 +38,6 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
     )
 
 
-def _last_sync_needs_update(last_sync, sync_datetime):
-    if not (last_sync and last_sync.sync_date):
-        return True
-    if sync_datetime > last_sync.sync_date:
-        return True
-    return False
-
-
 class UserSyncHistoryProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
@@ -66,23 +59,10 @@ class UserSyncHistoryProcessor(PillowProcessor):
 
         if user_id:
             user = CouchUser.get_by_user_id(user_id)
-
-            last_sync = filter_by_app(user.reporting_metadata.last_syncs, app_id)
-
-            if _last_sync_needs_update(last_sync, sync_date):
-                if last_sync is None:
-                    last_sync = LastSync()
-                    user.reporting_metadata.last_syncs.append(last_sync)
-                last_sync.sync_date = sync_date
-                last_sync.build_version = version
-                last_sync.app_id = app_id
-
-                if _last_sync_needs_update(user.reporting_metadata.last_sync_for_user, sync_date):
-                    user.reporting_metadata.last_sync_for_user = last_sync
-
-                if version:
-                    update_latest_builds(user, app_id, sync_date, version)
-
+            save = update_last_sync(user, app_id, sync_date, version)
+            if version:
+                save |= update_latest_builds(user, app_id, sync_date, version)
+            if save:
                 user.save()
 
 

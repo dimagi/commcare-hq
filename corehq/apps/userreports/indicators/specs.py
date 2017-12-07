@@ -97,7 +97,7 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
 
 class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('choice_list')
-    choices = ListProperty(required=True)
+    choices = ListProperty()
     select_style = StringProperty(choices=['single', 'multiple'])
 
     def get_operator(self):

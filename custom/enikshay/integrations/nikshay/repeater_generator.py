@@ -59,6 +59,7 @@ from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
 from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
@@ -147,7 +148,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
                 external_id=nikshay_id,
             )
         except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+            _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
         if response.status_code == 409:  # Conflict
@@ -160,11 +161,11 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
                 },
             )
         else:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+            _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()))
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": six.text_type(exception)})
 
 
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
@@ -195,12 +196,12 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
         })
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
 
@@ -244,12 +245,12 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
 
@@ -317,7 +318,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         return interval_id, lab_serial_number, result_grade, dmc_code
 
     def get_result_grade(self, test_result_grade, bacilli_count):
-        if test_result_grade in smear_result_grade.keys():
+        if test_result_grade in smear_result_grade:
             return smear_result_grade.get(test_result_grade)
         elif test_result_grade == 'scanty':
             return smear_result_grade.get("SC-{b_count}".format(b_count=bacilli_count), None)
@@ -358,7 +359,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
                     location_id=dmc_location_id, test_case_id=test_case.get_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
-        if not nikshay_code or (isinstance(nikshay_code, basestring) and not nikshay_code.isdigit()):
+        if not nikshay_code or (isinstance(nikshay_code, six.string_types) and not nikshay_code.isdigit()):
             raise NikshayRequiredValueMissing("Inappropriate value for dmc, got value: {}".format(nikshay_code))
         return dmc.metadata.get('nikshay_code')
 
@@ -373,12 +374,12 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "followup_nikshay_registered", "followup_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "followup_nikshay_registered", "followup_nikshay_error")
 
 
@@ -464,7 +465,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             response,
             verify=repeat_record.repeater.verify,
         )
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(message),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(message),
                             "private_nikshay_registered", "private_nikshay_error"
                             )
 
@@ -474,7 +475,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
                 repeat_record.domain,
                 repeat_record.payload_id,
                 {
-                    "private_nikshay_error": unicode(exception)
+                    "private_nikshay_error": six.text_type(exception)
                 }
             )
 
@@ -656,7 +657,7 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
         case_id,
         {
             reg_field: "false",
-            error_field: unicode(error),
+            error_field: six.text_type(error),
         },
     )
 

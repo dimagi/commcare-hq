@@ -5,7 +5,7 @@ import requests
 from dimagi.utils.logging import notify_exception
 from django.db import models
 from django.db import IntegrityError
-from corehq.messaging.smsbackends.http.models import SQLSMSBackend
+from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.start_enterprise.const import (
     SINGLE_SMS_URL,
     LONG_TEXT_MSG_TYPE,

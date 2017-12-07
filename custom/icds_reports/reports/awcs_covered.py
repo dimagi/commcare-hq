@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -12,6 +12,7 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude
+import six
 
 
 RED = '#de2d26'
@@ -30,36 +31,60 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             states=Sum('num_launched_states') if level <= 1 else Max('num_launched_states'),
             districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
             supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
+    data_for_map = defaultdict(lambda: {
+        'awcs': [],
+        'supervisors': [],
+        'blocks': [],
+        'districts': [],
+        'states': [],
+        'original_name': []
+    })
+
     for row in get_data_for(config):
         name = row['%s_name' % loc_level]
-        awcs = row['awcs']
-        supervisors = row['supervisors']
-        blocks = row['blocks']
-        districts = row['districts']
-        states = row['states']
-        row_values = {
-            'awcs': awcs,
-            'supervisors': supervisors,
-            'blocks': blocks,
-            'districts': districts,
-            'states': states,
-            'fillKey': 'Launched' if awcs > 0 else 'Not launched',
-        }
-        map_data.update({name: row_values})
+        on_map_name = row['%s_map_location_name' % loc_level] or name
+        awcs = row['awcs'] or 0
+        supervisors = row['supervisors'] or 0
+        blocks = row['blocks'] or 0
+        districts = row['districts'] or 0
+        states = row['states'] or 0
+
+        data_for_map[on_map_name]['awcs'].append(awcs)
+        data_for_map[on_map_name]['supervisors'].append(supervisors)
+        data_for_map[on_map_name]['blocks'].append(blocks)
+        data_for_map[on_map_name]['districts'].append(districts)
+        data_for_map[on_map_name]['states'].append(states)
+
+    for data_for_location in six.itervalues(data_for_map):
+        data_for_location['awcs'] = (
+            sum(data_for_location['awcs']) if level <= 5 else max(data_for_location['awcs'])
+        )
+        data_for_location['supervisors'] = (
+            sum(data_for_location['supervisors']) if level <= 4 else max(data_for_location['supervisors'])
+        )
+        data_for_location['blocks'] = (
+            sum(data_for_location['blocks']) if level <= 3 else max(data_for_location['blocks'])
+        )
+        data_for_location['districts'] = (
+            sum(data_for_location['districts']) if level <= 2 else max(data_for_location['districts'])
+        )
+        data_for_location['states'] = (
+            sum(data_for_location['states']) if level <= 1 else max(data_for_location['states'])
+        )
+        data_for_location.update({'fillKey': 'Launched' if data_for_location['awcs'] > 0 else 'Not launched'})
 
     if level == 1:
         prop = 'states'
@@ -72,8 +97,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), map_data.values()))
-    total = sum(map(lambda x: (x[prop] or 0), map_data.values()))
+    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(data_for_map)])
+    total = sum([(x[prop] or 0) for x in six.itervalues(data_for_map)])
 
     fills = OrderedDict()
     fills.update({'Launched': PINK})
@@ -99,7 +124,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
             "rightLegend": {
                 "info": info
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
@@ -143,11 +168,11 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
 
     for row in data:
         name = row['%s_name' % loc_level]
-        awcs = row['awcs']
-        supervisors = row['supervisors']
-        blocks = row['blocks']
-        districts = row['districts']
-        states = row['states']
+        awcs = row['awcs'] or 0
+        supervisors = row['supervisors'] or 0
+        blocks = row['blocks'] or 0
+        districts = row['districts'] or 0
+        states = row['states'] or 0
         result_set.add(name)
 
         row_values = {
@@ -157,10 +182,10 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
             'districts': districts,
             'states': states,
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += (value or 0)
 
-    for name, value_dict in tooltips_data.iteritems():
+    for name, value_dict in six.iteritems(tooltips_data):
         chart_data['blue'].append([name, value_dict['awcs']])
 
     for sql_location in loc_children:
@@ -180,8 +205,8 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     else:
         prop = 'awcs'
 
-    total_awcs = sum(map(lambda x: (x['awcs'] or 0), tooltips_data.values()))
-    total = sum(map(lambda x: (x[prop] or 0), tooltips_data.values()))
+    total_awcs = sum([(x['awcs'] or 0) for x in six.itervalues(tooltips_data)])
+    total = sum([(x[prop] or 0) for x in six.itervalues(tooltips_data)])
 
     info = _(
         "Total AWCs that have launched ICDS CAS <br />" +
@@ -246,7 +271,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
         awcs = (row['awcs'] or 0)
         location = row['%s_name' % loc_level]
 
-        if date.month == (month - relativedelta(months=1)).month:
+        if date.month == month.month:
             if location in best_worst:
                 best_worst[location].append(awcs)
             else:
@@ -257,7 +282,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
         data['pink'][date_in_miliseconds]['y'] += awcs
 
     top_locations = sorted(
-        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, value=sum(value) / len(value)) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['value'],
         reverse=True
     )
@@ -270,7 +295,7 @@ def get_awcs_covered_data_chart(domain, config, loc_level, show_test=False):
                         'x': key,
                         'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
-                    } for key, value in data['pink'].iteritems()
+                    } for key, value in six.iteritems(data['pink'])
                 ],
                 "key": "Number of AWCs Launched",
                 "strokeWidth": 2,

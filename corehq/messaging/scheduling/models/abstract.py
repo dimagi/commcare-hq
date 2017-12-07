@@ -59,6 +59,13 @@ class Schedule(models.Model):
         while instance.active and instance.next_event_due < util.utcnow():
             self.move_to_next_event(instance)
 
+    def set_extra_scheduling_options(self, options):
+        if not options:
+            return
+
+        for k, v in options.items():
+            setattr(self, k, v)
+
 
 class ContentForeignKeyMixin(models.Model):
     sms_content = models.ForeignKey('scheduling.SMSContent', null=True, on_delete=models.CASCADE)

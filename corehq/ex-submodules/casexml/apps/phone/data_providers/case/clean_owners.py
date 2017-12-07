@@ -15,6 +15,8 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.apps.users.cases import get_owner_id
 from dimagi.utils.decorators.memoized import memoized
+import six
+from six.moves import range
 
 
 PotentialSyncElement = namedtuple("PotentialSyncElement", ['case_stub', 'sync_xml_items'])
@@ -165,7 +167,7 @@ class CleanOwnerSyncPayload(object):
     def compile_response(self, irrelevant_cases, response):
         relevant_sync_elements = [
             potential_sync_element
-            for syncable_case_id, potential_sync_element in self.potential_elements_to_sync.iteritems()
+            for syncable_case_id, potential_sync_element in six.iteritems(self.potential_elements_to_sync)
             if syncable_case_id not in irrelevant_cases
         ]
 

@@ -1,28 +1,38 @@
 from __future__ import absolute_import
 import json
+
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.decorators.http import require_http_methods
+
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
+from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
 from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
+from corehq.motech.openmrs.models import ColumnMapping
 from corehq.motech.openmrs.repeater_helpers import (
     Requests,
     get_patient_identifier_types,
     get_person_attribute_types,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.utils import b64_aes_encrypt
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.web import json_response
+from six.moves import map
+
+
+PASSWORD_PLACEHOLDER = '*' * 16
 
 
 class OpenmrsRepeaterView(AddCaseRepeaterView):
@@ -43,7 +53,7 @@ def openmrs_edit_config(request, domain, repeater_id):
             data = form.cleaned_data
             repeater.openmrs_config.openmrs_provider = data['openmrs_provider']
             repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
-            repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
+            repeater.openmrs_config.form_configs = list(map(OpenmrsFormConfig.wrap, data['form_configs']))
             repeater.save()
 
     else:
@@ -143,29 +153,60 @@ class OpenmrsImporterView(BaseProjectSettingsView):
     page_title = ugettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'
 
-    def post(self, request, *args, **kwargs):
-        form = self.openmrs_importer_form
-        if form.is_valid():
-            form.save(self.domain)
-            get_openmrs_importers_by_domain.clear(request.domain)
-            return HttpResponseRedirect(self.page_url)
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
+    def _update_importer(self, importer, data):
+        for key, value in data.items():
+            if key == 'password' and value != PASSWORD_PLACEHOLDER:
+                value = b64_aes_encrypt(value)
+            elif key == 'report_params':
+                value = json.loads(value)
+            elif key == 'column_map':
+                list_of_dicts = json.loads(value)
+                value = [ColumnMapping(**d) for d in list_of_dicts]
+            setattr(importer, key, value)
+        importer.save()
 
-    @property
-    @memoized
-    def openmrs_importer_form(self):
-        importers = get_openmrs_importers_by_domain(self.request.domain)
-        if importers:
-            initial = dict(importers[0])  # TODO: Support multiple
-            initial['column_map'] = [{k: v for k, v in dict(m).items() if k != 'doc_type'}  # Just for the pretty
-                                     for m in initial['column_map']]
-        else:
-            initial = {}
-        if self.request.method == 'POST':
-            return OpenmrsImporterForm(self.request.POST, initial=initial)
-        return OpenmrsImporterForm(initial=initial)
+    def post(self, request, *args, **kwargs):
+        try:
+            new_openmrs_importers = json.loads(request.POST['openmrs_importers'])
+            current_openmrs_importers = get_openmrs_importers_by_domain(request.domain)
+            i = -1
+            for i, openmrs_importer in enumerate(current_openmrs_importers):
+                if i < len(new_openmrs_importers):
+                    self._update_importer(openmrs_importer, new_openmrs_importers[i])
+                else:
+                    # Delete removed OpenMRS Importers
+                    openmrs_importer.delete()
+            if i + 1 < len(new_openmrs_importers):
+                # Insert new OpenMRS Importers
+                for j in range(i + 1, len(new_openmrs_importers)):
+                    openmrs_importer = OpenmrsImporter(domain=request.domain)
+                    self._update_importer(openmrs_importer, new_openmrs_importers[j])
+            get_openmrs_importers_by_domain.clear(request.domain)
+            return json_response({'message': _('OpenMRS Importers saved'), 'error': None})
+        except Exception as err:
+            return json_response({'message': None, 'error': str(err)}, status_code=500)
 
     @property
     def page_context(self):
-        return {'openmrs_importer_form': self.openmrs_importer_form}
+        # TODO: JsonField fields must render with CodeMirror
+        # TODO: Look up locations for location_id field.
+
+        openmrs_importers = []
+        for importer in get_openmrs_importers_by_domain(self.request.domain):
+            dict_ = dict(importer)
+            dict_['password'] = PASSWORD_PLACEHOLDER
+            dict_['report_params'] = json.dumps(dict_['report_params'], indent=2)
+            dict_['column_map'] = json.dumps([
+                {k: v for k, v in dict(m).items() if not (
+                    # Drop '"doc_type": ColumnMapping' from each column mapping.
+                    k == 'doc_type' or
+                    # Drop "data_type" if it's not specified
+                    (k == 'data_type' and v is None)
+                )}
+                for m in dict_['column_map']
+            ], indent=2)
+            openmrs_importers.append(dict_)
+        return {
+            'openmrs_importers': openmrs_importers,
+            'form': OpenmrsImporterForm(),  # Use an unbound form to render openmrs_importer_template.html
+        }

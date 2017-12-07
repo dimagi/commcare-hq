@@ -93,6 +93,7 @@ for each case, then convert these to CaseStructure objects.
 """
 
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import decimal
 import logging
@@ -113,13 +114,16 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.ota.utils import update_device_id
+from corehq.apps.users.util import update_device_meta
 from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
 from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
 from custom.enikshay.user_setup import compress_nikshay_id
 from dimagi.utils.decorators.memoized import memoized
+import six
+from six.moves import filter
+from six.moves import range
 
 logger = logging.getLogger('two_b_datamigration')
 
@@ -769,7 +773,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None, c
     if not case_id:
         case_id = uuid.uuid4().hex
     owner_id = properties.pop("owner_id")
-    props = {k: v for k, v in properties.iteritems() if v is not None}
+    props = {k: v for k, v in six.iteritems(properties) if v is not None}
     props['created_by_migration'] = migration_identifier
     props['migration_data_source'] = "excel_document"
     props['migration_type'] = "pmdt_excel"
@@ -1074,7 +1078,7 @@ def get_key_populations(column_mapping, row):
 
 def get_disease_site_properties_for_person(column_mapping, row):
     props = get_disease_site_properties(column_mapping, row)
-    return {"current_{}".format(k): v for k, v in props.iteritems()}
+    return {"current_{}".format(k): v for k, v in six.iteritems(props)}
 
 
 def get_prev_person_case_properties(property_list, case_properties):
@@ -1528,7 +1532,7 @@ def get_drug_resistance_case_properties(column_mapping, row, test_cases):
                 continue
             dr_cases[drug_id]['sensitivity'] = convert_sensitivity(value)
 
-    return dr_cases.values()
+    return list(dr_cases.values())
 
 
 def convert_sensitivity(sensitivity_value):
@@ -1731,7 +1735,7 @@ def clean_phone_number(value):
     if not value:
         return None
 
-    if not isinstance(value, (basestring, int)):
+    if not isinstance(value, six.string_types + (int,)):
         raise FieldValidationFailure(value, "phone number")
 
     try:
@@ -2145,7 +2149,7 @@ class _PersonIdGenerator(object):
     @classmethod
     def id_device_body(cls, user, commit):
         script_device_id = "drtb-case-import-script"
-        update_device_id(user, script_device_id)
+        update_device_meta(user, script_device_id)
         if commit:
             user.save()
         index = [x.device_id for x in user.devices].index(script_device_id)
@@ -2230,7 +2234,7 @@ class Command(BaseCommand):
                         extra_cols = ["original import row number", "error message"]
                     else:
                         extra_cols = [None, None]
-                    bad_rows_file_writer.writerow(extra_cols + [unicode(c.value).encode('utf-8') for c in row])
+                    bad_rows_file_writer.writerow(extra_cols + [six.text_type(c.value).encode('utf-8') for c in row])
                     continue
 
                 row_contains_data = any(cell.value for cell in row)
@@ -2257,9 +2261,9 @@ class Command(BaseCommand):
                         exception_as_string = traceback.format_exc()
                     import_log_writer.writerow([i, "", exception_as_string])
                     bad_rows_file_writer.writerow([i, exception_as_string] +
-                                                  [unicode(c.value).encode('utf-8') for c in row])
+                                                  [six.text_type(c.value).encode('utf-8') for c in row])
 
-        print "{} rows with unknown exceptions".format(rows_with_unknown_exceptions)
+        print("{} rows with unknown exceptions".format(rows_with_unknown_exceptions))
 
     def generate_id(self):
         now = datetime.datetime.now()

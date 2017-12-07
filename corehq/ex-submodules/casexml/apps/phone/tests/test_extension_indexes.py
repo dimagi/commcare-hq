@@ -11,6 +11,7 @@ from casexml.apps.phone.restore import LIVEQUERY
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
+import six
 
 
 @nottest
@@ -89,7 +90,7 @@ class TestSequenceMeta(type):
     def __new__(mcs, name, bases, dict):
         tests_to_run = get_test_file_json('case_relationship_tests')
         assert_each_test_is_unique(tests_to_run)
-        run_single_tests = filter(lambda t: t.get('only', False), tests_to_run)
+        run_single_tests = [t for t in tests_to_run if t.get('only', False)]
         if run_single_tests:
             tests_to_run = run_single_tests
 
@@ -102,7 +103,7 @@ class TestSequenceMeta(type):
         return type.__new__(mcs, name, bases, dict)
 
 
-class IndexTreeTest(BaseSyncTest):
+class IndexTreeTest(six.with_metaclass(TestSequenceMeta, BaseSyncTest)):
     """Fetch all testcases from data/case_relationship_tests.json and run them
 
     Each testcase is structured as follows:
@@ -116,7 +117,6 @@ class IndexTreeTest(BaseSyncTest):
         "only": For debugging purposes, run a single test by adding 'only': true to those tests,
     }
     """
-    __metaclass__ = TestSequenceMeta
 
     def get_all_case_names(self, test):
         case_names = set([])

@@ -220,6 +220,7 @@ nvd3 > svg {
     font-size: 14px;
     padding-right: 0;
     padding-left: 0;
+    z-index: 1;
 }
 
 .navbar-default {
@@ -676,16 +677,9 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-    position: relative;
-    top: 20%;
-    left: 50%;
-    width: 100%;
+    left: 80%;
+    width: 40%;
     height: 40px;
-    margin-left: -50%;
-    margin-top: -25px;
-    padding-top: 20px;
-    text-align: center;
-    font-size: 1.2em;
 }
 
 #beneficiariesTable {
@@ -699,4 +693,54 @@ table.no-footer {
 .chart-dot {
     stroke-opacity: 1 !important;
     fill-opacity: 1 !important;
+}
+
+
+table.dataTable.fixedHeader-floating,
+table.dataTable.fixedHeader-locked {
+    background-color: white;
+    top: 110px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+table.dataTable.fixedHeader-floating {
+    position: fixed !important;
+}
+
+table.dataTable.fixedHeader-locked {
+    position: absolute !important;
+}
+
+@media print {
+  table.fixedHeader-floating {
+    display: none;
+  }
+}
+
+.locPopup {
+    position: fixed;
+    display:none;
+    z-index: 90000;
+    background-color: white;
+    border: 1px solid #a9a9a9;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.locPopup > .row {
+    width: 100%;
+}
+
+.locPopup > button {
+    display: block;
+    margin: 5px auto;
+}
+
+table.dataTable,
+table.dataTable th,
+table.dataTable td {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
 }
