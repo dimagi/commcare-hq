@@ -259,13 +259,6 @@ def heartbeat(request, domain, app_build_id):
 
     app_id = request.GET.get('app_id', '')
 
-    app_version = _safe_int(request.GET.get('app_version', ''))
-    device_id = request.GET.get('device_id', '')
-    last_sync_time = request.GET.get('last_sync_time', '')
-    num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
-    num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
-    commcare_version = request.GET.get('cc_version', '')
-
     info = {"app_id": app_id}
     try:
         # mobile will send brief_app_id
@@ -280,6 +273,13 @@ def heartbeat(request, domain, app_build_id):
     # disable this for now since it's causing doc update conflicts
     # https://sentry.io/dimagi/commcarehq/issues/410593323/?environment=icds
     # else:
+    #     app_version = _safe_int(request.GET.get('app_version', ''))
+    #     device_id = request.GET.get('device_id', '')
+    #     last_sync_time = request.GET.get('last_sync_time', '')
+    #     num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
+    #     num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
+    #     commcare_version = request.GET.get('cc_version', '')
+    #
     #     couch_user = request.couch_user
     #     save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
     #     try:
