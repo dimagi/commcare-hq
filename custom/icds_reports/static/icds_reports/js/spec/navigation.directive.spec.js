@@ -8,7 +8,7 @@ describe('NavigationDirective', function () {
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
-    var $rootScope, $compile, controller, $httpBackend;
+    var $rootScope, $compile, $httpBackend;
 
     var myScope;
     beforeEach(module('icdsApp'));
@@ -24,7 +24,6 @@ describe('NavigationDirective', function () {
 
         $httpBackend.flush();
         $rootScope.$digest();
-        controller = compiled.controller("navigation", {$scope: $rootScope});
         myScope = element.isolateScope();
     }));
 

@@ -61,7 +61,7 @@ describe('Month modal controller', function () {
 
     beforeEach(module('icdsApp'));
 
-    var scope, modalInstance, controller
+    var scope, modalInstance, controller;
 
     beforeEach(function () {
         inject(function ($rootScope, $controller) {
