@@ -491,8 +491,7 @@ class ScheduleForm(Form):
         if self.initial_schedule:
             result |= self.initial_schedule.memoized_language_set
 
-        if '*' in result:
-            result.remove('*')
+        result.discard('*')
 
         return list(result)
 
