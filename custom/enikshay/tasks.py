@@ -11,6 +11,7 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_datetime, parse_date
+from django.core.management import call_command
 from soil import MultipleTaskDownload
 
 from corehq import toggles
@@ -768,6 +769,13 @@ def get_updated_fields(existing_properties, new_properties):
         if existing_value != new_value:
             updated_fields[prop] = value
     return updated_fields
+
+
+@task(queue='background_queue', ignore_result=True)
+def run_model_reconciliation(command_name, email, commit=False):
+    call_command(command_name,
+                 recipient=email,
+                 commit=commit)
 
 
 @task
