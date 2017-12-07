@@ -308,6 +308,8 @@ def heartbeat(request, domain, app_build_id):
     #
     #     if save_user:
     #         couch_user.save(fire_signals=False)
+    from corehq.apps.users.models import log_user_save
+    log_user_save('single', request.couch_user)
 
     return JsonResponse(info)
 
