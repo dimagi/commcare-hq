@@ -3,6 +3,8 @@ from celery.task import task
 from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
     ScheduledBroadcast,
+    AlertSchedule,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
@@ -30,12 +32,13 @@ import six
 
 
 @task(ignore_result=True)
-def refresh_alert_schedule_instances(schedule, recipients):
+def refresh_alert_schedule_instances(schedule_id, recipients):
     """
-    :param schedule: the AlertSchedule
+    :param schedule_id: the AlertSchedule schedule_id
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
+    schedule = AlertSchedule.objects.get(schedule_id=schedule_id)
 
     existing_instances = {
         (instance.recipient_type, instance.recipient_id): instance
@@ -59,13 +62,14 @@ def refresh_alert_schedule_instances(schedule, recipients):
 
 
 @task(ignore_result=True)
-def refresh_timed_schedule_instances(schedule, recipients, start_date=None):
+def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
     """
-    :param schedule: the TimedSchedule
+    :param schedule_id: the TimedSchedule schedule_id
     :param start_date: the date to start the TimedSchedule
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
+    schedule = TimedSchedule.objects.get(schedule_id=schedule_id)
 
     existing_instances = {
         (instance.recipient_type, instance.recipient_id): instance
