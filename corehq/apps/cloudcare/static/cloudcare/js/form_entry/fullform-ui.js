@@ -278,7 +278,7 @@ function Form(json) {
 
     self.afterRender = function() {
         // Override with any logic that comes after rendering the form
-        $(".help-text-trigger").click(function() {
+        $(".help-text-trigger").click(function(event) {
             var container = $(event.target).closest(".caption");
             container.find("#help-text-modal").modal('show');
         });
