@@ -1,7 +1,9 @@
 {% load hq_shared_tags %}
-{% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-  {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
-    {# This was already publicly visible, best practice: todo get into settings #}
-    {% initial_analytics_data 'drift.apiId' '7456r8nz2u34' %}
+{% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
+  {% if is_saas_environment or ANALYTICS_CONFIG.DEBUG %}
+    {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 or ANALYTICS_CONFIG.DEBUG %}
+      {# This was already publicly visible, best practice: todo get into settings #}
+       {% initial_analytics_data 'drift.apiId' '7456r8nz2u34' %}
+    {% endif %}
   {% endif %}
 {% endif %}

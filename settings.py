@@ -728,6 +728,7 @@ ANALYTICS_IDS = {
 
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
+    "DEBUG": False,
 }
 
 GREENHOUSE_API_KEY = ''

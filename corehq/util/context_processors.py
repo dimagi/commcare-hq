@@ -77,6 +77,7 @@ def js_api_keys(request):
         return {}  # disable js analytics
     return {
         'ANALYTICS_IDS': settings.ANALYTICS_IDS,
+        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
 
