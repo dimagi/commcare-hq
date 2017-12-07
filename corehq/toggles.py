@@ -1394,3 +1394,10 @@ ANALYTICS_WARNING = StaticToggle(
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )
+
+CUSTOM_ICON_BADGES = StaticToggle(
+    'custom_icon_badges',
+    'eNikshay: Custom Icon Badges for modules and forms',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)

@@ -615,7 +615,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'form_icon': None,
     }
 
-    if add_ons.show("custom_icon_badges", request, form.get_app()):
+    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
