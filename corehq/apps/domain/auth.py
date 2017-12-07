@@ -19,7 +19,7 @@ API_KEY = 'api_key'
 TOKEN = 'token'
 
 
-def determine_authtype_from_header(request, default=None):
+def determine_authtype_from_header(request, default=DIGEST):
     """
     Guess the auth type, based on the headers found in the request.
     """
@@ -35,12 +35,10 @@ def determine_authtype_from_header(request, default=None):
 
     # If there is no HTTP_AUTHORIZATION header, we return a 401 along with the necessary
     # headers for digest auth
-    if default is None:
-        default = DIGEST
     return default
 
 
-def determine_authtype_from_request(request, default=None):
+def determine_authtype_from_request(request, default=DIGEST):
     """
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
@@ -51,8 +49,6 @@ def determine_authtype_from_request(request, default=None):
         ANDROID: BASIC,
     }
     user_type = guess_phone_type_from_user_agent(user_agent)
-    if default is None:
-        default = DIGEST
     if user_type is not None:
         return type_to_auth_map.get(user_type, default)
     else:

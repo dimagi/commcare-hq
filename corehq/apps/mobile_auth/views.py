@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import datetime
 
+from corehq.apps.domain.auth import BASIC
 from corehq.util.datadog.utils import count_by_response_code
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
@@ -61,7 +62,7 @@ class FetchKeyRecords(object):
         )
 
 
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey(default=BASIC)
 @require_GET
 @count_by_response_code('commcare.auth_keys.fetch.count')
 def fetch_key_records(request, domain):
