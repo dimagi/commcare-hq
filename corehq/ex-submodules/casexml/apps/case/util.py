@@ -193,7 +193,7 @@ def property_changed_in_action(case_transaction, case_id, case_property_name):
     for update in case_updates:
         if update.id == case_id:
             actions.append((update.modified_on_str, update.get_update_action(), case_transaction))
-            if include_create_fields:
+            if include_create_fields and case_transaction.action_type == CASE_ACTION_CREATE:
                 actions.append((update.modified_on_str, update.get_create_action(), case_transaction))
 
     for (modified_on, action, case_transaction) in actions:
@@ -231,7 +231,7 @@ def get_datetime_case_property_changed(case, case_property_name, value):
 
 def get_all_changes_to_case_property(case, case_property_name):
     case_property_changes = []
-    case_transactions = [a for a in case.actions if a.action_type == 'update']
+    case_transactions = case.actions
     for transaction in case_transactions:
         property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
         if property_changed_info:
