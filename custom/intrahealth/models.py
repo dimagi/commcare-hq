@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from django.conf import settings
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from fluff.pillow import get_multi_fluff_pillow
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
@@ -45,7 +46,7 @@ def _get_all_forms():
 
 
 class CouvertureFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL if settings.SERVER_ENVIRONMENT == 'pna' else XFormInstance
     document_filter = ORFilter([
         FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
         FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1]),
@@ -67,7 +68,7 @@ class CouvertureFluff(fluff.IndicatorDocument):
 
 
 class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL if settings.SERVER_ENVIRONMENT == 'pna' else XFormInstance
     document_filter = ORFilter([
         FormPropertyFilter(xmlns=COMMANDE_XMLNSES[0]),
         FormPropertyFilter(xmlns=COMMANDE_XMLNSES[1]),
@@ -86,7 +87,7 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
 
 
 class IntraHealthFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL if settings.SERVER_ENVIRONMENT == 'pna' else XFormInstance
     document_filter = ORFilter(
         [
             ANDFilter([
@@ -127,7 +128,7 @@ class IntraHealthFluff(fluff.IndicatorDocument):
 
 
 class RecapPassageFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL if settings.SERVER_ENVIRONMENT == 'pna' else XFormInstance
     document_filter = ANDFilter([
         ORFilter(
             [FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]), FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1])]
@@ -154,7 +155,7 @@ class RecapPassageFluff(fluff.IndicatorDocument):
 
 
 class TauxDeRuptureFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL if settings.SERVER_ENVIRONMENT == 'pna' else XFormInstance
     document_filter = ANDFilter([
         FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0]),
         IsExistFormPropertyFilter(xmlns=RAPTURE_XMLNSES[0], property_path="form", property_value='district')
@@ -173,7 +174,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
 
 
 class LivraisonFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL if settings.SERVER_ENVIRONMENT == 'pna' else XFormInstance
     document_filter = FormPropertyFilter(xmlns=LIVRAISON_XMLNSES[0])
 
     domains = INTRAHEALTH_DOMAINS
@@ -189,7 +190,7 @@ class LivraisonFluff(fluff.IndicatorDocument):
 
 
 class RecouvrementFluff(fluff.IndicatorDocument):
-    document_class = CommCareCase
+    document_class = CommCareCaseSQL if settings.SERVER_ENVIRONMENT == 'pna' else CommCareCase
     kafka_topic = CASE_SQL if settings.SERVER_ENVIRONMENT == 'pna' else CASE
 
     document_filter = ANDFilter([
