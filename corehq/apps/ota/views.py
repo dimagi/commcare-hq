@@ -276,35 +276,38 @@ def heartbeat(request, domain, app_build_id):
         app = get_app(domain, app_build_id)
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
-    else:
-        couch_user = request.couch_user
-        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
-        try:
-            last_sync = adjust_text_to_datetime(last_sync_time)
-        except iso8601.ParseError:
-            last_sync = None
-        else:
-            save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
 
-        app_meta = DeviceAppMeta(
-            app_id=app_id,
-            build_id=app_build_id,
-            build_version=app_version,
-            last_heartbeat=datetime.utcnow(),
-            last_sync=last_sync,
-            num_unsent_forms=num_unsent_forms,
-            num_quarantined_forms=num_quarantined_forms
-        )
-        save_user |= update_device_meta(
-            couch_user,
-            device_id,
-            commcare_version=commcare_version,
-            device_app_meta=app_meta,
-            save=False
-        )
-
-        if save_user:
-            couch_user.save(fire_signals=False)
+    # disable this for now since it's causing doc update conflicts
+    # https://sentry.io/dimagi/commcarehq/issues/410593323/?environment=icds
+    # else:
+    #     couch_user = request.couch_user
+    #     save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
+    #     try:
+    #         last_sync = adjust_text_to_datetime(last_sync_time)
+    #     except iso8601.ParseError:
+    #         last_sync = None
+    #     else:
+    #         save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
+    #
+    #     app_meta = DeviceAppMeta(
+    #         app_id=app_id,
+    #         build_id=app_build_id,
+    #         build_version=app_version,
+    #         last_heartbeat=datetime.utcnow(),
+    #         last_sync=last_sync,
+    #         num_unsent_forms=num_unsent_forms,
+    #         num_quarantined_forms=num_quarantined_forms
+    #     )
+    #     save_user |= update_device_meta(
+    #         couch_user,
+    #         device_id,
+    #         commcare_version=commcare_version,
+    #         device_app_meta=app_meta,
+    #         save=False
+    #     )
+    #
+    #     if save_user:
+    #         couch_user.save(fire_signals=False)
 
     return JsonResponse(info)
 
