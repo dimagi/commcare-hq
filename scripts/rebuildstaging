@@ -46,7 +46,7 @@ do
 done
 
 function rebuildstaging() {
-    python -m scripts.rebuildstaging scripts/rebuildstaging.py < scripts/staging.yaml "$@"
+    python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
 }
 
 args=''
