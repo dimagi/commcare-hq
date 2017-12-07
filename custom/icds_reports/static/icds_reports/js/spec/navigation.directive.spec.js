@@ -24,6 +24,7 @@ describe('NavigationDirective', function () {
 
         $httpBackend.flush();
         $rootScope.$digest();
+        compiled.controller("navigation", {$scope: $rootScope});
         myScope = element.isolateScope();
     }));
 
