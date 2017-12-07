@@ -16,7 +16,7 @@
 ├─┬ jstree#3.3.4
 │ └── jquery#3.2.1
 ├── jstree-actions#0.1.4
-├── langcodes#0e6ac35560
+├── langcodes#f5bdde56a7
 ├── markdown-it#8.4.0
 ├── require-css#0.1.10
 ├── require-less#0.1.5
