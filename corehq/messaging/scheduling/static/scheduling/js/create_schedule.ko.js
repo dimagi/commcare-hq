@@ -16,7 +16,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         var initial_translate = !($.isEmptyObject(translations) || '*' in translations);
 
         self.translate = ko.observable(initial_translate);
-        self.nonTranslatedMessage = ko.observable(translations['*'])
+        self.nonTranslatedMessage = ko.observable(translations['*']);
         self.translatedMessages = ko.observableArray();
 
         self.translate.subscribe(function(newValue) {
@@ -32,7 +32,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         });
 
         self.messagesJSONString = ko.computed(function() {
-            result = {};
+            var result = {};
             if(self.translate()) {
                 self.translatedMessages().forEach(function(messageModel) {
                     result[messageModel.language_code()] = messageModel.message();

@@ -20,7 +20,7 @@ from django.forms.fields import (
     IntegerField,
 )
 from django.forms.forms import Form
-from django.forms.widgets import Textarea, CheckboxSelectMultiple, HiddenInput
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext_lazy as _, ugettext
