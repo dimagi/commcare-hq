@@ -19,26 +19,35 @@ API_KEY = 'api_key'
 TOKEN = 'token'
 
 
-def determine_authtype_from_header(request, default=DIGEST):
+def determine_authtype_from_header(request, support_non_j2me_digest=True):
     """
     Guess the auth type, based on the headers found in the request.
+
+    CommCare mobile typically sends an unauthenticated request first, and
+    expects a basic auth challenge in response. This is at odds with the spec
+    for digest auth, in which the client sends an unauthenticated response and
+    receives a digest auth challenge. This means we can't support both CommCare
+    mobile and digest auth at the same endpoint.
+
+    For non-mobile endpoints (such as APIs), we can support basic, digest,
+    token, and apikey by defaulting to digest, since in all other cases, the
+    client should send the initial request with an Authorization header.
     """
     auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
     if auth_header.startswith('basic '):
         return BASIC
-    elif auth_header.startswith('digest '):
-        return DIGEST
     elif auth_header.startswith('token '):
         return TOKEN
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
 
-    # If there is no HTTP_AUTHORIZATION header, we return a 401 along with the necessary
-    # headers for digest auth
-    return default
+    if support_non_j2me_digest:
+        # return a 401 along with the necessary headers for digest auth
+        return DIGEST
+    return BASIC
 
 
-def determine_authtype_from_request(request, default=DIGEST):
+def determine_authtype_from_request(request, support_non_j2me_digest=True):
     """
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
@@ -46,7 +55,7 @@ def determine_authtype_from_request(request, default=DIGEST):
     user_agent = request.META.get('HTTP_USER_AGENT')
     if is_probably_j2me(user_agent):
         return DIGEST
-    return determine_authtype_from_header(request, default)
+    return determine_authtype_from_header(request, support_non_j2me_digest)
 
 
 def is_probably_j2me(user_agent):

@@ -43,7 +43,7 @@ from corehq.apps.users.util import update_device_meta, update_latest_builds, upd
 
 @location_safe
 @handle_401_response
-@login_or_digest_or_basic_or_apikey_or_token(default=BASIC)
+@login_or_digest_or_basic_or_apikey_or_token(support_non_j2me_digest=False)
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """

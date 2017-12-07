@@ -62,7 +62,7 @@ class FetchKeyRecords(object):
         )
 
 
-@login_or_digest_or_basic_or_apikey(default=BASIC)
+@login_or_digest_or_basic_or_apikey(support_non_j2me_digest=False)
 @require_GET
 @count_by_response_code('commcare.auth_keys.fetch.count')
 def fetch_key_records(request, domain):
