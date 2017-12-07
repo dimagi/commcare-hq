@@ -1,21 +1,24 @@
 from __future__ import absolute_import
-import uuid
+
 import json
-import phonenumbers
+import uuid
+
 import jsonobject
+import phonenumbers
+import six
 from django.utils.dateparse import parse_date
 
-from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator
 from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator
 from custom.enikshay.case_utils import (
-    get_person_case,
-    get_occurrence_case_from_episode,
-    get_person_case_from_occurrence,
-    get_open_episode_case_from_person,
-    update_case,
-    get_person_locations,
-    CASE_TYPE_PERSON,
     CASE_TYPE_EPISODE,
+    CASE_TYPE_PERSON,
+    get_occurrence_case_from_episode,
+    get_open_episode_case_from_person,
+    get_person_case,
+    get_person_case_from_occurrence,
+    get_person_locations,
+    update_case,
 )
 from custom.enikshay.const import (
     CURRENT_ADDRESS,
@@ -31,6 +34,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     WEIGHT_BAND,
 )
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.integrations.ninetyninedots.const import (
     MERM_DAILY_REMINDER_STATUS,
     MERM_DAILY_REMINDER_TIME,
@@ -41,8 +45,6 @@ from custom.enikshay.integrations.ninetyninedots.const import (
     MERM_RT_HOURS,
     NINETYNINEDOTS_NUMBERS,
 )
-from custom.enikshay.exceptions import ENikshayCaseNotFound
-import six
 
 
 class MermParams(jsonobject.JsonObject):
