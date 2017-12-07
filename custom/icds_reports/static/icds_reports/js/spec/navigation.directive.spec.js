@@ -8,16 +8,15 @@ describe('NavigationDirective', function () {
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
-    var $rootScope, $compile, $location, controller, $httpBackend;
+    var $rootScope, $compile, controller, $httpBackend;
 
     var myScope;
     beforeEach(module('icdsApp'));
 
-    beforeEach(inject(function (_$rootScope_, _$compile_, _$location_, _$httpBackend_) {
+    beforeEach(inject(function (_$rootScope_, _$compile_, _$httpBackend_) {
         $compile = _$compile_;
         $httpBackend = _$httpBackend_;
         $rootScope = _$rootScope_.$new();
-        $location = _$location_;
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         var element = window.angular.element("<navigation></navigation>");

@@ -1,4 +1,4 @@
-/* global module, inject, _, moment */
+/* global module, inject, _, moment, chai, MonthFilterController, MonthModalController */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -8,7 +8,7 @@ describe('Month filter controller', function () {
 
     beforeEach(module('icdsApp'));
 
-    var scope, modalInstance, controller, $uibModal, $location, storageService;
+    var scope, controller, $uibModal, $location, storageService;
 
     pageData.registerUrl('icds_locations', 'icds_locations');
 
@@ -61,25 +61,23 @@ describe('Month modal controller', function () {
 
     beforeEach(module('icdsApp'));
 
-    var scope, modalInstance, controller, $uibModal, $location;
+    var scope, modalInstance, controller
 
     beforeEach(function () {
-        inject(function ($rootScope, $controller, _$uibModal_, _$location_) {
-            $uibModal = _$uibModal_;
-            $location = _$location_;
+        inject(function ($rootScope, $controller) {
             scope = $rootScope.$new();
 
             modalInstance = {
                 close: sinon.spy(),
                 dismiss: sinon.spy(),
                 result: {
-                    then: sinon.spy()
-                }
+                    then: sinon.spy(),
+                },
             };
 
             controller = $controller(MonthModalController, {
                 $scope: scope,
-                $uibModalInstance: modalInstance
+                $uibModalInstance: modalInstance,
             });
         });
     });

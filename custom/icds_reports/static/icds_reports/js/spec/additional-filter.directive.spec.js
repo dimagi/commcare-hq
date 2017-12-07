@@ -1,4 +1,4 @@
-/* global module, inject */
+/* global module, inject, chai, AdditionalFilterController, AdditionalModalController */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -8,7 +8,7 @@ describe('Additional filter controller', function () {
 
     beforeEach(module('icdsApp'));
 
-    var scope, modalInstance, controller, $uibModal, $location, storageService;
+    var scope, controller, $uibModal, $location, storageService;
 
     pageData.registerUrl('icds_locations', 'icds_locations');
 
@@ -85,8 +85,8 @@ describe('Additional modal controller', function () {
                 close: sinon.spy(),
                 dismiss: sinon.spy(),
                 result: {
-                    then: sinon.spy()
-                }
+                    then: sinon.spy(),
+                },
             };
 
             $location.search('gender', 'M');
