@@ -34,10 +34,9 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.messagesJSONString = ko.computed(function() {
             result = {};
             if(self.translate()) {
-                for(var i = 0; i < self.translatedMessages().length; i++) {
-                    var messageModel = self.translatedMessages()[i];
+                self.translatedMessages().forEach(function(messageModel) {
                     result[messageModel.language_code()] = messageModel.message();
-                }
+                });
             } else {
                 result['*'] = self.nonTranslatedMessage();
             }
@@ -45,10 +44,9 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         });
 
         self.loadInitialTranslatedMessages = function() {
-            for(var i = 0; i < language_codes.length; i++) {
-                var language_code = language_codes[i];
+            language_codes.forEach(function(language_code) {
                 self.translatedMessages.push(new MessageViewModel(language_code, translations[language_code]));
-            }
+            });
         };
 
         self.loadInitialTranslatedMessages();
