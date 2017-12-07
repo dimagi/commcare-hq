@@ -405,7 +405,8 @@ def _get_private_locations(person_case, episode_case=None):
                     pcp_location = None
     if not pcp_location:
         try:
-            pcp_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
+            pcp_location = SQLLocation.active_objects.get(
+                domain=person_case.domain, location_id=person_case.owner_id)
         except SQLLocation.DoesNotExist:
             raise NikshayLocationNotFound(
                 "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
