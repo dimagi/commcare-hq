@@ -123,7 +123,10 @@
                                 <p align="left" data-bind="text: help"></p>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                <!-- This needs to be a <span> instead of a <button> because (inexplicably) making it
+                                a button causes it to get clicked automatically when the modal opens, thus closing
+                                the modal immediately after it opens. We have yet to figure out why this is so. -->
+                                <span class="btn btn-default help-modal-close" data-dismiss="modal">Close</span>
                             </div>
                         </div>
                     </div>
