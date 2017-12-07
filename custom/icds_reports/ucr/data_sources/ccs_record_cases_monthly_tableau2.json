@@ -3110,6 +3110,24 @@
         ]
       }
     },
+    "related_docs": {
+      "person_case_id": {
+        "comment": "parent of this case",
+        "rebuild": false
+      },
+      "household_case_id": {
+        "comment": "parent of the person case",
+        "rebuild": false
+      },
+      "child_person_cases_id": {
+        "comment": "all person cases under household case",
+        "rebuild": false
+      },
+      "child_health_cases_id": {
+        "comment": "all child_health cases under all child_person_cases. This could be a custom expression in custom/icds_reports and remove the other definitions",
+        "rebuild": true
+      }
+    },
     "asynchronous": true,
     "engine_id": "icds-ucr",
     "sql_column_indexes": [

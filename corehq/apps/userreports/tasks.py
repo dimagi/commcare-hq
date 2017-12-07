@@ -265,6 +265,7 @@ def _queue_indicators(indicators):
     to_queue = []
     for indicator in indicators:
         to_queue.append(indicator)
+        # This chunk size should be reduced drastically if rebuilding multiple docs per indicator
         if len(to_queue) >= ASYNC_INDICATOR_CHUNK_SIZE:
             _queue_chunk(to_queue)
             to_queue = []
@@ -289,6 +290,9 @@ def save_document(doc_ids):
     timer = TimingContext()
     with CriticalSection(lock_keys):
         indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
+        # proactive method: also grab related doc ids from AsyncIndicator and get their locks
+        # note: these only be rebuilt if they are also in the queue
+        # question: What happens if these child docs are being processed by another queue?
         if not indicators:
             return
 
@@ -306,6 +310,9 @@ def save_document(doc_ids):
 
         with timer:
             for doc in doc_store.iter_documents(doc_ids):
+                # reactive method: grab the related docs here and get their locks
+                # note: these only be rebuilt if they are also in the queue
+                # question: What happens if these child docs are being processed by another queue?
                 indicator = indicator_by_doc_id[doc['_id']]
                 successfully_processed, to_remove = _save_document_helper(indicator, doc)
                 if successfully_processed:
@@ -313,6 +320,7 @@ def save_document(doc_ids):
                 else:
                     failed_indicators.append((indicator, to_remove))
 
+        # remove/update any indicators including related docs that succeeded/failed
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         with transaction.atomic():
             for indicator, to_remove in failed_indicators:

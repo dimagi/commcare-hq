@@ -111,6 +111,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     configured_indicators = ListProperty()
     named_expressions = DictProperty()
     named_filters = DictProperty()
+    related_docs = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
@@ -818,15 +819,24 @@ class AsyncIndicator(models.Model):
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     date_queued = models.DateTimeField(null=True, db_index=True)
     unsuccessful_attempts = models.IntegerField(default=0)
+    # for proactive method
+    related_docs = ArrayField(
+        models.CharField(max_length=126, null=True, blank=True),
+        null=False
+    )
 
     class Meta(object):
         ordering = ["date_created"]
 
     @classmethod
     def update_record(cls, doc_id, doc_type, domain, config_ids):
+        # proactive method: pass full config here  instead of ids
         if not isinstance(config_ids, list):
             config_ids = list(config_ids)
         config_ids = sorted(config_ids)
+
+        # proactive method: for every config are there related documents to retrieve?
+        # proactive method: if yes retrieve them and insert into related_docs array field
 
         indicator, created = cls.objects.get_or_create(
             doc_id=doc_id, doc_type=doc_type, domain=domain,
