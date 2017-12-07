@@ -1050,6 +1050,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
+    # Ensure that send_time_type is ordered before send_time so that send_time can use
+    # the value of send_time_type in its clean method
+    field_order = ['send_time_type', 'send_time']
+
     send_time_type = ChoiceField(
         required=True,
         choices=(
