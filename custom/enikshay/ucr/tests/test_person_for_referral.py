@@ -79,6 +79,10 @@ class TestPersonForReferralDataSource(TestDataSourceExpressions):
         )
 
         with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
+            self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), '')
+
+        episode_case['treatment_regimen'] = 'yes_phi'
+        with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
             self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), 'New')
 
     def test_regimen_property_private_treatment(self):
@@ -149,6 +153,10 @@ class TestPersonForReferralDataSource(TestDataSourceExpressions):
         )
 
         with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
+            self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), '')
+
+        episode_case['treatment_regimen'] = 'yes_phi'
+        with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
             self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), 'Previously Treated')
 
     def test_person_properties(self):
@@ -197,7 +205,12 @@ class TestPersonForReferralDataSource(TestDataSourceExpressions):
             'referral_initiated_date': '2017-12-01',
             'referral_closed_date': '2017-12-30',
             'location_type': 'sto',
-            'location_id': 'location_id'
+            'location_id': 'location_id',
+            'referred_by_name': 'by name',
+            'referred_to_name': 'to name',
+            'referral_closed_reason': 'close reason',
+            'referral_status': 'some status',
+            'referral_reason': 'reason'
         }
 
         self.database.mock_docs = {
@@ -208,11 +221,26 @@ class TestPersonForReferralDataSource(TestDataSourceExpressions):
         referred_to = self.get_expression('referred_to', 'string')
         date_of_referral = self.get_expression('date_of_referral', 'date')
         date_of_acceptance = self.get_expression('date_of_acceptance', 'date')
+        referred_by_name = self.get_expression('referred_by_name', 'string')
+        referred_to_name = self.get_expression('referred_to_name', 'string')
+        referral_id = self.get_expression('referral_id', 'string')
+        referral_closed_reason = self.get_expression('referral_closed_reason', 'string')
+        referral_status = self.get_expression('referral_status', 'string')
+        referral_reason = self.get_expression('referral_reason', 'string')
 
         with mock.patch.object(MostRecentReferralCaseFromPerson, '__call__', lambda *args: referrer_case):
             self.assertEqual(referred_to(person_case, EvaluationContext(person_case, 0)), 'owner')
             self.assertEqual(date_of_referral(person_case, EvaluationContext(person_case, 0)), '2017-12-01')
             self.assertEqual(date_of_acceptance(person_case, EvaluationContext(person_case, 0)), '2017-12-30')
+            self.assertEqual(referred_by_name(person_case, EvaluationContext(person_case, 0)), 'by name')
+            self.assertEqual(referred_to_name(person_case, EvaluationContext(person_case, 0)), 'to name')
+            self.assertEqual(referral_id(person_case, EvaluationContext(person_case, 0)), 'referrer-case-id')
+            self.assertEqual(
+                referral_closed_reason(person_case, EvaluationContext(person_case, 0)),
+                'close reason'
+            )
+            self.assertEqual(referral_status(person_case, EvaluationContext(person_case, 0)), 'some status')
+            self.assertEqual(referral_reason(person_case, EvaluationContext(person_case, 0)), 'reason')
 
     def test_episode_properties(self):
         person_case = {
