@@ -99,7 +99,7 @@ hqDefine('analytix/js/utils', [
      *  This promise will be rejected if the API fails to initialize for any reason, most
      *  likely because analytics is disabled or because a script failed to load.
      */
-     var initApi = function(apiId, scriptUrls, logger, initCallback) {
+    var initApi = function(apiId, scriptUrls, logger, initCallback) {
         var ready = $.Deferred();
 
         logger.verbose.log(apiId || "NOT SET", ["DATA", "API ID"]);
@@ -121,7 +121,7 @@ hqDefine('analytix/js/utils', [
         }
 
         $.when.apply($, _.map(scriptUrls, function(url) { return $.getScript(url); }))
-            .done(function(scriptUrl) {
+            .done(function() {
                 if (_.isFunction(initCallback)) {
                     initCallback();
                 }
@@ -130,10 +130,10 @@ hqDefine('analytix/js/utils', [
             }).fail(function() {
                 logger.debug.log("Failed to Load Script - Check Adblocker");
                 ready.reject();
-        });
+            });
 
         return ready;
-     };
+    };
 
     return {
         trackClickHelper: trackClickHelper,
