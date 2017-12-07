@@ -58,12 +58,8 @@ def location_parent_id(spec, context):
         "related_doc_type": "Location",
         "doc_id_expression": spec['location_id_expression'],
         "value_expression": {
-            "type": "array_index",
-            'array_expression': {
-                'type': 'property_name',
-                'property_name': 'lineage'
-            },
-            'index_expression': 0,
+            "type": "property_name",
+            "property_name": "parent_location_id",
         }
     }
     return ExpressionFactory.from_spec(spec, context)
