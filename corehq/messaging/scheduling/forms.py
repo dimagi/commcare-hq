@@ -1451,3 +1451,10 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
     @property
     def allow_date_case_property_filter(self):
         return False
+
+    def __init__(self, *args, **kwargs):
+        super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+        if self.initial.get('case_type'):
+            # Django also handles keeping the field's value to its initial value no matter what is posted
+            # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+            self.fields['case_type'].disabled = True
