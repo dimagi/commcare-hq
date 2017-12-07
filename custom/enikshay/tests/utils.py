@@ -19,7 +19,6 @@ from custom.enikshay.case_utils import CASE_TYPE_REFERRAL, CASE_TYPE_TRAIL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
-    MERM_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -31,6 +30,7 @@ from custom.enikshay.const import (
     OTHER_NUMBER,
     TREATMENT_INITIATED_IN_PHI,
 )
+from custom.enikshay.integrations.ninetyninedots.const import MERM_ID
 from corehq.apps.users.models import CommCareUser
 
 

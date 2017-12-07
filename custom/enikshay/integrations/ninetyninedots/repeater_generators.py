@@ -14,31 +14,32 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     update_case,
     get_person_locations,
-    get_episode_case_from_adherence,
     CASE_TYPE_PERSON,
     CASE_TYPE_EPISODE,
 )
 from custom.enikshay.const import (
-    NINETYNINEDOTS_NUMBERS,
+    CURRENT_ADDRESS,
     ENIKSHAY_ID,
+    ENROLLED_IN_PRIVATE,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
+    TREATMENT_OUTCOME,
+    TREATMENT_OUTCOME_DATE,
     TREATMENT_START_DATE,
     TREATMENT_SUPPORTER_FIRST_NAME,
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
-    TREATMENT_OUTCOME,
-    TREATMENT_OUTCOME_DATE,
     WEIGHT_BAND,
-    CURRENT_ADDRESS,
-    ENROLLED_IN_PRIVATE,
-    MERM_ID,
+)
+from custom.enikshay.integrations.ninetyninedots.const import (
     MERM_DAILY_REMINDER_STATUS,
     MERM_DAILY_REMINDER_TIME,
-    MERM_REFILL_REMINDER_STATUS,
+    MERM_ID,
     MERM_REFILL_REMINDER_DATE,
+    MERM_REFILL_REMINDER_STATUS,
     MERM_REFILL_REMINDER_TIME,
     MERM_RT_HOURS,
+    NINETYNINEDOTS_NUMBERS,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 import six

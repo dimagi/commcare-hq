@@ -24,8 +24,8 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     CASE_TYPE_PERSON,
 )
-from custom.enikshay.const import (
-    TREATMENT_OUTCOME,
+from custom.enikshay.const import TREATMENT_OUTCOME
+from custom.enikshay.integrations.ninetyninedots.const import (
     NINETYNINEDOTS_EPISODE_PROPERTIES,
     NINETYNINEDOTS_PERSON_PROPERTIES,
 )
