@@ -378,8 +378,14 @@ class LocationView(View):
                 domain=self.kwargs['domain'],
                 location_id=location_id
             )
+
+            map_location_name = location.name
+            if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
+                map_location_name = location.metadata['map_location_name']
+
             return JsonResponse({
                 'name': location.name,
+                'map_location_name': map_location_name,
                 'location_type': location.location_type.code,
                 'location_type_name': location.location_type_name
             })
