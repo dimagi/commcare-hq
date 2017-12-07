@@ -38,11 +38,6 @@ hqDefine('analytix/js/initial', [
      * @private
      */
     var _getNamespacedData = function (apiName, key) {
-        // TODO: re-enable this
-        /*if (document.readyState !== "complete") {
-            throw new Error("Attempt to call _getNamespacedData before document is ready");
-        }*/
-
         var slug = _getSlug(apiName, key);
         if (_initData[slug] === undefined) {
             _initData = _gather(_selector, _initData);
