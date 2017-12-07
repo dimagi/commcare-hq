@@ -45,7 +45,7 @@ class UpdateTreatmentOutcomeRepeaterView(AddCaseRepeaterView):
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @require_POST
 @csrf_exempt
 @check_domain_migration
@@ -78,7 +78,7 @@ def update_patient_adherence(request, domain):
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @require_POST
 @csrf_exempt
 @check_domain_migration
@@ -110,7 +110,7 @@ def update_adherence_confidence(request, domain):
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @require_POST
 @csrf_exempt
 @check_domain_migration

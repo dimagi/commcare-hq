@@ -534,7 +534,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
@@ -544,7 +544,7 @@ def hq_download_saved_export(req, domain, export_id):
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):

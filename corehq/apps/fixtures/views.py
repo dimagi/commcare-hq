@@ -403,7 +403,7 @@ class UploadFixtureAPIResponse(object):
 
 @csrf_exempt
 @require_POST
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @require_can_edit_fixtures
 def upload_fixture_api(request, domain, **kwargs):
     """

@@ -26,7 +26,7 @@ from six.moves import map
 
 
 @json_error
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 def list_apps(request, domain):
     def app_to_json(app):
         return {

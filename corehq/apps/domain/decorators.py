@@ -214,33 +214,28 @@ def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_digest_or_basic_or_apikey(support_non_j2me_digest=True):
+def _get_multi_auth_decorator(support_non_j2me_digest=True, allow_token=False):
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
-            function_wrapper = {
-                BASIC: login_or_basic_ex(allow_cc_users=True),
-                DIGEST: login_or_digest_ex(allow_cc_users=True),
-                API_KEY: login_or_api_key_ex(allow_cc_users=True)
-            }[determine_authtype_from_request(request, support_non_j2me_digest=False)]
-            return function_wrapper(fn)(request, *args, **kwargs)
-        return _inner
-    return decorator
-
-
-def login_or_digest_or_basic_or_apikey_or_token(support_non_j2me_digest=True):
-    def decorator(fn):
-        @wraps(fn)
-        def _inner(request, *args, **kwargs):
+            authtype = determine_authtype_from_request(request, support_non_j2me_digest)
+            if authtype == TOKEN and not allow_token:
+                return HttpResponseForbidden()
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
                 TOKEN: login_or_token_ex(allow_cc_users=True),
-            }[determine_authtype_from_request(request, support_non_j2me_digest)]
+            }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
+
+
+login_or_digest_or_basic_or_apikey = _get_multi_auth_decorator()
+login_or_mobile_or_basic_or_apikey = _get_multi_auth_decorator(support_non_j2me_digest=False)
+login_or_mobile_or_basic_or_apikey_or_token = _get_multi_auth_decorator(
+    support_non_j2me_digest=False, allow_token=True)
 
 
 def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):

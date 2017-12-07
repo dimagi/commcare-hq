@@ -18,7 +18,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cach
 
 class CaseAttachmentAPI(View):
 
-    @method_decorator(login_or_digest_or_basic_or_apikey())
+    @method_decorator(login_or_digest_or_basic_or_apikey)
     def get(self, request, domain, case_id=None, attachment_id=None):
         """
         https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
@@ -120,7 +120,7 @@ class CaseAttachmentAPI(View):
 @location_safe
 class FormAttachmentAPI(View):
 
-    @method_decorator(login_or_digest_or_basic_or_apikey())
+    @method_decorator(login_or_digest_or_basic_or_apikey)
     @method_decorator(require_form_view_permission)
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:

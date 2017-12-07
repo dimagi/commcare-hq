@@ -184,7 +184,7 @@ def _validate_updates_exist(domain, updates):
 
 @require_POST
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @toggles.ENIKSHAY_API.required_decorator()
 def payment_confirmation(request, domain):
     try:

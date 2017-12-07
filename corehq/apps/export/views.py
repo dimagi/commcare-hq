@@ -2478,7 +2478,7 @@ def can_download_daily_saved_export(export, domain, couch_user):
 
 @location_safe
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
     with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
