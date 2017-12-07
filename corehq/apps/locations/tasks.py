@@ -2,15 +2,19 @@ from __future__ import absolute_import
 import uuid
 
 from celery.task import task
+from django.conf import settings
 
 from dimagi.utils.couch.database import iter_docs
 
 from soil import DownloadBase
 
+from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.util import dump_locations
 from corehq.util.couch import IterDB, iter_update, DocUpdate
 from corehq.util.decorators import serial_task
+from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 from corehq.apps.commtrack.models import StockState, sync_supply_point
+from corehq.apps.locations.bulk_management import new_locations_import
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.es.users import UserES
 from corehq.apps.users.forms import generate_strong_password
@@ -142,3 +146,15 @@ def download_locations_async(domain, download_id, include_consumption=False):
     DownloadBase.set_progress(download_locations_async, 0, 100)
     dump_locations(domain, download_id, include_consumption=include_consumption)
     DownloadBase.set_progress(download_locations_async, 100, 100)
+
+
+@serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
+             queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
+def import_locations_async(domain, file_ref_id):
+    importer = MultiExcelImporter(import_locations_async, file_ref_id)
+    results = new_locations_import(domain, importer)
+    importer.mark_complete()
+
+    return {
+        'messages': results
+    }
