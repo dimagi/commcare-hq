@@ -10,16 +10,19 @@ from soil import DownloadBase
 
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.util import dump_locations
-from corehq.util.couch import IterDB, iter_update, DocUpdate
-from corehq.util.decorators import serial_task
-from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 from corehq.apps.commtrack.models import StockState, sync_supply_point
+from corehq.apps.es.users import UserES
 from corehq.apps.locations.bulk_management import new_locations_import
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.es.users import UserES
+from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.tasks import rebuild_indicators_in_place
 from corehq.apps.users.forms import generate_strong_password
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
+from corehq.toggles import LOCATIONS_IN_UCR
+from corehq.util.couch import IterDB, iter_update, DocUpdate
+from corehq.util.decorators import serial_task
+from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
 
 @serial_task("{location_type.domain}-{location_type.pk}",
@@ -154,6 +157,11 @@ def import_locations_async(domain, file_ref_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
     results = new_locations_import(domain, importer)
     importer.mark_complete()
+
+    if LOCATIONS_IN_UCR.enabled(domain):
+        datasources = get_datasources_for_domain(domain, "Location")
+        for datasource in datasources:
+            rebuild_indicators_in_place.delay(datasource.get_id)
 
     return {
         'messages': results
