@@ -19,6 +19,18 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.nonTranslatedMessage = ko.observable(translations['*'])
         self.translatedMessages = ko.observableArray();
 
+        self.translate.subscribe(function(newValue) {
+            // Automatically copy the non-translated message to any blank
+            // translated messages when enabling the "translate" option
+            if(newValue) {
+                self.translatedMessages().forEach(function(messageModel) {
+                    if(!messageModel.message()) {
+                        messageModel.message(self.nonTranslatedMessage());
+                    }
+                });
+            }
+        });
+
         self.messagesJSONString = ko.computed(function() {
             result = {};
             if(self.translate()) {
