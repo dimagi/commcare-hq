@@ -76,10 +76,10 @@ class Schedule(models.Model):
         for event in self.memoized_events:
             content = event.memoized_content
             if isinstance(content, SMSContent):
-                result |= set(content.message.keys())
+                result |= set(content.message)
             elif isinstance(content, EmailContent):
-                result |= set(content.subject.keys())
-                result |= set(content.message.keys())
+                result |= set(content.subject)
+                result |= set(content.message)
 
         return result
 
