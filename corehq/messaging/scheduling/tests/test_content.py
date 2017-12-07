@@ -28,6 +28,13 @@ class TestContent(TestCase):
         super(TestContent, cls).setUpClass()
         cls.domain = 'test-content'
         cls.user = CommCareUser(phone_numbers=['9990000000000'], language='es')
+        cls.translation_doc = StandaloneTranslationDoc(domain=cls.domain, area='sms', langs=['en', 'es'])
+        cls.translation_doc.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.translation_doc.delete()
+        super(TestContent, cls).tearDownClass()
 
     @override_settings(AVAILABLE_CUSTOM_SCHEDULING_CONTENT=AVAILABLE_CUSTOM_SCHEDULING_CONTENT)
     def test_custom_content(self):
@@ -45,11 +52,10 @@ class TestContent(TestCase):
                     call(schedule_instance, self.user, '9990000000000', 'Message 2'),
                 ])
 
-    def test_get_translation_from_message_dict(self):
+    def test_get_translation_empty_message(self):
         message_dict = {}
         schedule = Schedule(domain=self.domain)
 
-        # Empty message dict results in no message
         self.assertEqual(
             Content.get_translation_from_message_dict(
                 message_dict,
@@ -59,8 +65,12 @@ class TestContent(TestCase):
             ''
         )
 
-        # Non-translated message is the most general default
-        message_dict['*'] = 'non-translated message'
+    def test_get_translation_general_default(self):
+        message_dict = {
+            '*': 'non-translated message',
+        }
+        schedule = Schedule(domain=self.domain)
+
         self.assertEqual(
             Content.get_translation_from_message_dict(
                 message_dict,
@@ -70,12 +80,13 @@ class TestContent(TestCase):
             message_dict['*']
         )
 
-        # Domain default language override
-        translation_doc = StandaloneTranslationDoc(domain=self.domain, area='sms', langs=['en', 'es'])
-        translation_doc.save()
-        self.addCleanup(translation_doc.delete)
+    def test_get_translation_domain_default(self):
+        message_dict = {
+            '*': 'non-translated message',
+            'en': 'english message',
+        }
+        schedule = Schedule(domain=self.domain)
 
-        message_dict['en'] = 'english message'
         self.assertEqual(
             Content.get_translation_from_message_dict(
                 message_dict,
@@ -85,10 +96,14 @@ class TestContent(TestCase):
             message_dict['en']
         )
 
-        # Schedule default language override
-        schedule.default_language_code = 'hin'
+    def test_get_translation_schedule_default(self):
+        message_dict = {
+            '*': 'non-translated message',
+            'en': 'english message',
+            'hin': 'hindi message',
+        }
+        schedule = Schedule(domain=self.domain, default_language_code='hin')
 
-        message_dict['hin'] = 'hindi message'
         self.assertEqual(
             Content.get_translation_from_message_dict(
                 message_dict,
@@ -98,8 +113,15 @@ class TestContent(TestCase):
             message_dict['hin']
         )
 
-        # User-preferred language override
-        message_dict['es'] = 'spanish message'
+    def test_get_translation_user_preferred(self):
+        message_dict = {
+            '*': 'non-translated message',
+            'en': 'english message',
+            'hin': 'hindi message',
+            'es': 'spanish message',
+        }
+        schedule = Schedule(domain=self.domain, default_language_code='hin')
+
         self.assertEqual(
             Content.get_translation_from_message_dict(
                 message_dict,
