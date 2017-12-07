@@ -40,6 +40,7 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
+from langcodes import get_name as get_language_name
 import six
 from six.moves import range
 
@@ -96,6 +97,8 @@ class ScheduleForm(Form):
     CONTENT_EMAIL = 'email'
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
+
+    LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
     send_frequency = ChoiceField(
         required=True,
@@ -188,6 +191,10 @@ class ScheduleForm(Form):
         required=False,
         widget=HiddenInput,
     )
+    default_language_code = ChoiceField(
+        required=True,
+        label=_("Default Language"),
+    )
 
     def update_send_frequency_choices(self, initial_value):
         def filter_function(two_tuple):
@@ -199,6 +206,18 @@ class ScheduleForm(Form):
         self.fields['send_frequency'].choices = [
             c for c in self.fields['send_frequency'].choices if filter_function(c)
         ]
+
+    def set_default_language_code_choices(self):
+        choices = [
+            (self.LANGUAGE_PROJECT_DEFAULT, ugettext("Project Default")),
+        ]
+
+        choices.extend([
+            (language_code, ugettext(get_language_name(language_code)))
+            for language_code in self.language_list
+        ])
+
+        self.fields['default_language_code'].choices = choices
 
     def add_intial_for_immediate_schedule(self, initial):
         initial['send_frequency'] = self.SEND_IMMEDIATELY
@@ -261,6 +280,11 @@ class ScheduleForm(Form):
         result = {}
         schedule = self.initial_schedule
         if schedule:
+            result['default_language_code'] = (
+                schedule.default_language_code
+                if schedule.default_language_code
+                else self.LANGUAGE_PROJECT_DEFAULT
+            )
             if isinstance(schedule, AlertSchedule):
                 if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
                     self.add_intial_for_immediate_schedule(result)
@@ -302,6 +326,7 @@ class ScheduleForm(Form):
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
 
+        self.set_default_language_code_choices()
         if initial.get('send_frequency'):
             self.update_send_frequency_choices(initial.get('send_frequency'))
 
@@ -326,7 +351,11 @@ class ScheduleForm(Form):
             crispy.Fieldset(
                 ugettext("Content"),
                 *self.get_content_layout_fields()
-            )
+            ),
+            crispy.Fieldset(
+                ugettext("Advanced"),
+                *self.get_advanced_layout_fields()
+            ),
         ]
 
     def get_timing_layout_fields(self):
@@ -447,6 +476,11 @@ class ScheduleForm(Form):
                     data_bind='with: message',
                 ),
             ),
+        ]
+
+    def get_advanced_layout_fields(self):
+        return [
+            crispy.Field('default_language_code'),
         ]
 
     @cached_property
@@ -727,9 +761,17 @@ class ScheduleForm(Form):
 
         return form_data['occurrences']
 
+    def distill_default_language_code(self):
+        value = self.cleaned_data['default_language_code']
+        if value == self.LANGUAGE_PROJECT_DEFAULT:
+            return None
+        else:
+            return value
+
     def distill_extra_scheduling_options(self):
         form_data = self.cleaned_data
         return {
+            'default_language_code': self.distill_default_language_code(),
             'include_descendant_locations': (
                 ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
                 form_data['include_descendant_locations']
