@@ -22,7 +22,9 @@ class Command(BaseModelReconciliationCommand):
         "retain_case_id",
         "closed_case_ids",
         "closed_extension_case_ids",
-        "notes"
+        "notes",
+        "person_case_version",
+        "person_case_dataset",
     ]
 
     def handle(self, *args, **options):
@@ -52,18 +54,16 @@ class Command(BaseModelReconciliationCommand):
         Referral.referral_reason != enrollment if person.@owner_id != '-' AND person.@owner_id != ''
         @date_opened (earliest)
         """
-        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
-
         relevant_cases = []
 
         for referral_case in referral_cases:
-            if person_case.owner_id in ['-', '']:
+            if self.person_case.owner_id in ['-', '']:
                 if referral_case.get_case_property('referral_reason') == 'enrolment':
                     relevant_cases.append(referral_case)
 
         if not relevant_cases:
             for referral_case in referral_cases:
-                if person_case.owner_id not in ['-', '']:
+                if self.person_case.owner_id not in ['-', '']:
                     if referral_case.get_case_property('referral_reason') != 'enrollment':
                         relevant_cases.append(referral_case)
 
@@ -77,10 +77,10 @@ class Command(BaseModelReconciliationCommand):
 
     def public_app_case(self, occurrence_case_id):
         try:
-            person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
+            self.person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         except ENikshayCaseNotFound:
             return False
-        return super(Command, self).public_app_case(person_case)
+        return super(Command, self).public_app_case(self.person_case)
 
     def _get_open_occurrence_case_ids_to_process(self):
         if self.person_case_ids:
@@ -124,7 +124,9 @@ class Command(BaseModelReconciliationCommand):
             "occurrence_case_id": occurrence_case_id,
             "retain_case_id": retain_case_id,
             "closed_case_ids": ','.join(map(str, case_ids_to_close)),
-            "closed_extension_case_ids": ','.join(map(str, closing_extension_case_ids))
+            "closed_extension_case_ids": ','.join(map(str, closing_extension_case_ids)),
+            "person_case_version": self.person_case.get_case_property('case_version'),
+            "person_case_dataset": self.person_case.get_case_property('dataset')
         })
         if self.commit:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
