@@ -1,16 +1,50 @@
 ---
 api_params:
-- api_param_name: sex
-  required: true
-  choices:
-    both:
-      - female
-      - male
-      - transgender
+- api_param_name: beneficiary_id
   case_type:
     both: person
   case_property:
-    both: sex
+    both: case_id
+- api_param_name: enikshay_id
+  case_type:
+    both: person
+  case_property:
+    both: person_id
+- api_param_name: first_name
+  case_type:
+    both: person
+  case_property:
+    both: first_name
+- api_param_name: last_name
+  case_type:
+    both: person
+  case_property:
+    both: last_name
+- api_param_name: treatment_start_date
+  case_type:
+    both: episode
+  case_property:
+    both: treatment_initiation_date
+- api_param_name: weight_band
+  case_type:
+    both: episode
+  case_property:
+    both: weight_band
+- api_param_name: address
+  case_type:
+    both: person
+  case_property:
+    both: current_address
+# - api_param_name: sex
+#   choices:
+#     both:
+#       - female
+#       - male
+#       - transgender
+#   case_type:
+#     both: person
+#   case_property:
+#     both: sex
 - api_param_name: language_code
   choices:
     public:
@@ -29,3 +63,4 @@ api_params:
     both: person
   case_property:
     both: language_code
+# phone_numbers
