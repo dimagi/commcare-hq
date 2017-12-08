@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import json
 import re
-from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
+from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
 from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -1049,6 +1049,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
+    YES = 'Y'
+    NO = 'N'
+
     # Ensure that field order is correct based on clean_* method dependencies
     field_order = ['send_frequency', 'send_time_type', 'send_time']
 
@@ -1100,6 +1103,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             (k, v[1])
             for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()
         )
+    )
+
+    reset_case_property_enabled = ChoiceField(
+        required=True,
+        choices=(
+            (NO, _("Disabled")),
+            (YES, _("Restart schedule when this case property takes any new value: ")),
+        ),
+    )
+
+    reset_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
     )
 
     def __init__(self, domain, schedule, rule, criteria_form, *args, **kwargs):
@@ -1158,7 +1174,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     result['start_day_of_week'] = str(schedule.start_day_of_week)
 
         if self.initial_rule:
-            self.add_initial_recipients(self.initial_rule.memoized_actions[0].definition.recipients, result)
+            action_definition = self.initial_rule.memoized_actions[0].definition
+            self.add_initial_recipients(action_definition.recipients, result)
+            if action_definition.reset_case_property_name:
+                result['reset_case_property_enabled'] = self.YES
+                result['reset_case_property_name'] = action_definition.reset_case_property_name
+            else:
+                result['reset_case_property_enabled'] = self.NO
 
         return result
 
@@ -1232,6 +1254,30 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ])
         return result
 
+    def get_advanced_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_advanced_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                ugettext("Restart Schedule"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_enabled',
+                        data_bind='value: reset_case_property_enabled',
+                    ),
+                    css_class='col-sm-8',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_name',
+                        placeholder=ugettext("case property"),
+                    ),
+                    data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
+                    css_class='col-sm-4',
+                ),
+            ),
+        ])
+        return result
+
     def get_system_admin_label(self):
         return crispy.HTML("""
             <label class="col-xs-1 control-label">
@@ -1291,6 +1337,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return custom_recipient
 
+    def clean_reset_case_property_name(self):
+        if self.cleaned_data.get('reset_case_property_enabled') == self.NO:
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('reset_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1337,7 +1392,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def create_rule_action(self, rule, schedule):
         fields = {
             'recipients': self.distill_recipients(),
-            'reset_case_property_name': None,
+            'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
             'scheduler_module_info': self.distill_scheduler_module_info(),
         }
 
@@ -1356,7 +1411,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         self.validate_existing_action_definition(action_definition, schedule)
 
         action_definition.recipients = self.distill_recipients()
-        action_definition.reset_case_property_name = None
+        action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
         action_definition.scheduler_module_info = self.distill_scheduler_module_info()
         action_definition.save()
 
