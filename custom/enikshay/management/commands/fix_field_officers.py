@@ -44,6 +44,6 @@ class Command(BaseCommand):
                 field_officer_location.user_id = nonarchiveable_users[0]._id
                 # field_officer_location.save()
                 print('set location user to: %s' % nonarchiveable_users[0]._id)
-            else:
+            elif len(nonarchiveable_users) > 1:
                 print('multiple nonarchiveable users for %s: %s' % (field_officer_location.location_id, user_ids))
 
