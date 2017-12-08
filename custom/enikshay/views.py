@@ -7,7 +7,7 @@ from django.views.generic.base import View, TemplateView
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq import toggles
-from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.domain.decorators import domain_admin_required, require_superuser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from soil import MultipleTaskDownload
@@ -54,7 +54,7 @@ class EpisodeTaskStatusView(TemplateView):
 class ReconciliationTaskView(TemplateView):
     template_name = "enikshay/reconciliation_tasks.html"
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_superuser)
     def get(self, request, *args, **kwargs):
         return super(ReconciliationTaskView, self).get(request, *args, **kwargs)
 
@@ -87,7 +87,7 @@ class ReconciliationTaskView(TemplateView):
                 parsed_person_case_ids.append(person_case.case_id)
         return parsed_person_case_ids
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_superuser)
     def post(self, request, *args, **kwargs):
         def run_task(task_name):
             run_model_reconciliation.delay(
