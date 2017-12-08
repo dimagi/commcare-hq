@@ -47,6 +47,16 @@ def _recipient_instance_dict(instances):
     }
 
 
+def get_reset_case_property_value(case, action_definition):
+    # Only allow dynamic case properties here since the formatting of
+    # the value is very important if we're comparing from one time to
+    # the next
+    if action_definition.reset_case_property_name:
+        return case.dynamic_case_properties().get(action_definition.reset_case_property_name, '')
+
+    return None
+
+
 @task(ignore_result=True)
 def refresh_alert_schedule_instances(schedule_id, recipients):
     """
@@ -129,6 +139,15 @@ def convert_to_tuple_of_tuples(list_of_lists):
     return tuple(list_of_tuples)
 
 
+def handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value):
+    if instance.last_reset_case_property_value != reset_case_property_value:
+        instance.reset_schedule(schedule)
+        instance.last_reset_case_property_value = reset_case_property_value
+        return True
+
+    return False
+
+
 def refresh_case_alert_schedule_instances(case, schedule, action_definition, rule):
     """
     :param case: the CommCareCase/SQL
@@ -143,24 +162,37 @@ def refresh_case_alert_schedule_instances(case, schedule, action_definition, rul
         get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
     )
     model_instance = _get_any_value_or_none(existing_instances)
+    reset_case_property_value = get_reset_case_property_value(case, action_definition)
 
     recipients = set(convert_to_tuple_of_tuples(action_definition.recipients))
-    for recipient_type, recipient_id in recipients:
-        if (recipient_type, recipient_id) in existing_instances:
-            continue
+    for recipient_type_and_id in recipients:
+        recipient_type, recipient_id = recipient_type_and_id
 
-        if model_instance:
-            instance = CaseAlertScheduleInstance.copy_for_recipient(model_instance, recipient_type, recipient_id)
+        if recipient_type_and_id in existing_instances:
+            instance = existing_instances[recipient_type_and_id]
+            if (
+                action_definition.reset_case_property_name and
+                handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value)
+            ):
+                save_case_schedule_instance(instance)
         else:
-            instance = CaseAlertScheduleInstance.create_for_recipient(
-                schedule,
-                recipient_type,
-                recipient_id,
-                move_to_next_event_not_in_the_past=False,
-                case_id=case.case_id,
-                rule_id=rule.pk
-            )
-        save_case_schedule_instance(instance)
+            if model_instance:
+                instance = CaseAlertScheduleInstance.copy_for_recipient(model_instance, recipient_type,
+                    recipient_id)
+                if action_definition.reset_case_property_name:
+                    handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value)
+                save_case_schedule_instance(instance)
+            else:
+                instance = CaseAlertScheduleInstance.create_for_recipient(
+                    schedule,
+                    recipient_type,
+                    recipient_id,
+                    move_to_next_event_not_in_the_past=False,
+                    case_id=case.case_id,
+                    rule_id=rule.pk,
+                    last_reset_case_property_value=reset_case_property_value,
+                )
+                save_case_schedule_instance(instance)
 
     for recipient_type_and_id, instance in six.iteritems(existing_instances):
         if recipient_type_and_id not in recipients:
@@ -186,13 +218,7 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
     recipients = convert_to_tuple_of_tuples(action_definition.recipients)
     new_recipients = set(recipients)
 
-    # Only allow dynamic case properties here since the formatting of
-    # the value is very important if we're comparing from one time to
-    # the next
-    reset_case_property_value = (
-        case.dynamic_case_properties().get(action_definition.reset_case_property_name, '')
-        if action_definition.reset_case_property_name else None
-    )
+    reset_case_property_value = get_reset_case_property_value(case, action_definition)
 
     for recipient_type, recipient_id in new_recipients:
         if (recipient_type, recipient_id) not in existing_instances:

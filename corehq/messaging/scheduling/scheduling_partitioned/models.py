@@ -226,6 +226,17 @@ class AbstractAlertScheduleInstance(ScheduleInstance):
 
         return new_instance
 
+    def reset_schedule(self, schedule=None):
+        """
+        Resets this alert schedule instance and puts it into a state which
+        is the same as if it had just spawned now.
+        """
+        schedule = schedule or self.memoized_schedule
+        self.current_event_num = 0
+        self.schedule_iteration_num = 1
+        self.active = True
+        schedule.set_first_event_due_timestamp(self)
+
 
 class AbstractTimedScheduleInstance(ScheduleInstance):
     timed_schedule_id = models.UUIDField()
