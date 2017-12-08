@@ -78,10 +78,6 @@ class Command(BaseModelReconciliationCommand):
         try:
             person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         except ENikshayCaseNotFound:
-            self.writerow({
-                "occurrence_case_id": occurrence_case_id,
-                "notes": "person case not found",
-            })
             return False
         return super(Command, self).public_app_case(person_case)
 
