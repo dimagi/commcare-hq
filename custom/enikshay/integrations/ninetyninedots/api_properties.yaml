@@ -1,0 +1,31 @@
+---
+api_params:
+- api_param_name: sex
+  required: true
+  choices:
+    both:
+      - female
+      - male
+      - transgender
+  case_type:
+    both: person
+  case_property:
+    both: sex
+- api_param_name: language_code
+  choices:
+    public:
+    - en
+    - hin
+    - bho
+    - mar
+    - guj
+    private:
+    - en
+    - hin
+    - bho
+    - mar
+    - guj
+  case_type:
+    both: person
+  case_property:
+    both: language_code
