@@ -12,6 +12,8 @@ class ReconciliationTaskForm(forms.Form):
                        ]
     email = forms.EmailField(label='Your email')
     commit = forms.BooleanField(label='Commit Changes', required=False)
+    person_case_ids = forms.CharField(label='Person Case Ids', required=False,
+                                        help_text="Comma separated person case ids to process")
     task = forms.ChoiceField(label='Task', choices=(
         [('all', 'All')] + [(choice, choice.capitalize().replace('_', ' ')) for choice in permitted_tasks]
     ))
@@ -28,6 +30,7 @@ class ReconciliationTaskForm(forms.Form):
                 crispy.Field('email'),
                 crispy.Field('commit'),
                 crispy.Field('task'),
+                crispy.Field('person_case_ids'),
             ),
             ButtonHolder(
                 Submit(

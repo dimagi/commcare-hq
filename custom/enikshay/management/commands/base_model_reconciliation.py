@@ -6,6 +6,8 @@ from django.core.mail import EmailMessage
 
 from django.conf import settings
 
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.case_utils import CASE_TYPE_OCCURRENCE
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 
 DOMAIN = "enikshay"
@@ -67,3 +69,9 @@ class BaseModelReconciliationCommand(BaseCommand):
     @staticmethod
     def get_first_opened_case(all_cases):
         return sorted(all_cases, key=lambda x: x.opened_on)[0]
+
+
+def get_all_occurrence_case_ids_from_person(person_case_id):
+    case_accessor = CaseAccessors(DOMAIN)
+    all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    return [case.case_id for case in all_cases if case.type == CASE_TYPE_OCCURRENCE]

@@ -8,6 +8,7 @@ from django.views.generic.base import View, TemplateView
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq import toggles
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from soil import MultipleTaskDownload
 
@@ -65,16 +66,42 @@ class ReconciliationTaskView(TemplateView):
         kwargs['reconciliation_form'] = ReconciliationTaskForm()
         return super(ReconciliationTaskView, self).get_context_data(**kwargs)
 
+    @staticmethod
+    def parse_person_case_ids(person_case_ids, domain):
+        """
+        ensure case ids are open person cases
+        :param person_case_ids: comma separated case id
+        :return: parsed case ids or return None in case unable to
+        """
+        person_case_ids = person_case_ids.split(',')
+        case_accessor = CaseAccessors(domain)
+        try:
+            person_cases = case_accessor.get_cases(person_case_ids)
+        except CaseNotFound:
+            return None
+        parsed_person_case_ids = []
+        for person_case in person_cases:
+            if not person_case or person_case.type != 'person' or person_case.closed:
+                return None
+            else:
+                parsed_person_case_ids.append(person_case.case_id)
+        return parsed_person_case_ids
+
     @method_decorator(domain_admin_required)
     def post(self, request, *args, **kwargs):
         def run_task(task_name):
             run_model_reconciliation.delay(
                 task_name,
                 request.POST.get('email'),
-                (request.POST.get('commit') == 'on')
+                person_case_ids,
+                (request.POST.get('commit') == 'on'),
             )
-
         task_requested = request.POST.get('task')
+        person_case_ids = None
+        if request.POST.get('person_case_ids'):
+            person_case_ids = self.parse_person_case_ids(request.POST.get('person_case_ids'), request.domain)
+            if not person_case_ids:
+                return JsonResponse({'message': 'Please check person ids. They should be open person cases'})
         if task_requested == 'all':
             for task_to_run in ReconciliationTaskForm.permitted_tasks:
                 run_task(task_to_run)
