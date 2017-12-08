@@ -29,6 +29,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
+from dimagi.utils.couch import CriticalSection
 import six
 
 
@@ -53,30 +54,31 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
-    schedule = AlertSchedule.objects.get(schedule_id=schedule_id)
+    with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
+        schedule = AlertSchedule.objects.get(schedule_id=schedule_id)
 
-    existing_instances = _recipient_instance_dict(get_alert_schedule_instances_for_schedule(schedule))
-    model_instance = _get_any_value_or_none(existing_instances)
+        existing_instances = _recipient_instance_dict(get_alert_schedule_instances_for_schedule(schedule))
+        model_instance = _get_any_value_or_none(existing_instances)
 
-    recipients = set(convert_to_tuple_of_tuples(recipients))
-    for recipient_type, recipient_id in recipients:
-        if (recipient_type, recipient_id) in existing_instances:
-            continue
+        recipients = set(convert_to_tuple_of_tuples(recipients))
+        for recipient_type, recipient_id in recipients:
+            if (recipient_type, recipient_id) in existing_instances:
+                continue
 
-        if model_instance:
-            instance = AlertScheduleInstance.copy_for_recipient(model_instance, recipient_type, recipient_id)
-        else:
-            instance = AlertScheduleInstance.create_for_recipient(
-                schedule,
-                recipient_type,
-                recipient_id,
-                move_to_next_event_not_in_the_past=False,
-            )
-        save_alert_schedule_instance(instance)
+            if model_instance:
+                instance = AlertScheduleInstance.copy_for_recipient(model_instance, recipient_type, recipient_id)
+            else:
+                instance = AlertScheduleInstance.create_for_recipient(
+                    schedule,
+                    recipient_type,
+                    recipient_id,
+                    move_to_next_event_not_in_the_past=False,
+                )
+            save_alert_schedule_instance(instance)
 
-    for recipient_type_and_id, instance in six.iteritems(existing_instances):
-        if recipient_type_and_id not in recipients:
-            delete_alert_schedule_instance(instance)
+        for recipient_type_and_id, instance in six.iteritems(existing_instances):
+            if recipient_type_and_id not in recipients:
+                delete_alert_schedule_instance(instance)
 
 
 @task(ignore_result=True)
@@ -87,38 +89,39 @@ def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
-    schedule = TimedSchedule.objects.get(schedule_id=schedule_id)
+    with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
+        schedule = TimedSchedule.objects.get(schedule_id=schedule_id)
 
-    existing_instances = {
-        (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_timed_schedule_instances_for_schedule(schedule)
-    }
+        existing_instances = {
+            (instance.recipient_type, instance.recipient_id): instance
+            for instance in get_timed_schedule_instances_for_schedule(schedule)
+        }
 
-    recipients = convert_to_tuple_of_tuples(recipients)
-    new_recipients = set(recipients)
+        recipients = convert_to_tuple_of_tuples(recipients)
+        new_recipients = set(recipients)
 
-    for recipient_type, recipient_id in new_recipients:
-        if (recipient_type, recipient_id) not in existing_instances:
-            instance = TimedScheduleInstance.create_for_recipient(
-                schedule,
-                recipient_type,
-                recipient_id,
-                start_date=start_date,
-                move_to_next_event_not_in_the_past=True,
-                schedule_revision=schedule.memoized_schedule_revision,
-            )
-            save_timed_schedule_instance(instance)
+        for recipient_type, recipient_id in new_recipients:
+            if (recipient_type, recipient_id) not in existing_instances:
+                instance = TimedScheduleInstance.create_for_recipient(
+                    schedule,
+                    recipient_type,
+                    recipient_id,
+                    start_date=start_date,
+                    move_to_next_event_not_in_the_past=True,
+                    schedule_revision=schedule.memoized_schedule_revision,
+                )
+                save_timed_schedule_instance(instance)
 
-    for key, schedule_instance in six.iteritems(existing_instances):
-        if key not in new_recipients:
-            delete_timed_schedule_instance(schedule_instance)
-        elif (
-            (start_date and start_date != schedule_instance.start_date) or
-            (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
-        ):
-            new_start_date = start_date or schedule_instance.start_date
-            schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)
-            save_timed_schedule_instance(schedule_instance)
+        for key, schedule_instance in six.iteritems(existing_instances):
+            if key not in new_recipients:
+                delete_timed_schedule_instance(schedule_instance)
+            elif (
+                (start_date and start_date != schedule_instance.start_date) or
+                (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
+            ):
+                new_start_date = start_date or schedule_instance.start_date
+                schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)
+                save_timed_schedule_instance(schedule_instance)
 
 
 def convert_to_tuple_of_tuples(list_of_lists):
