@@ -57,6 +57,9 @@ class PropertyNameGetterSpec(JsonObject):
     property_name = DefaultProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
+    def __str__(self):
+        return "Case's {property_name} property with a datatype of {datatype}".format(property_name=self.property_name, datatype=self.datatype)
+
     def configure(self, property_name_expression):
         self._property_name_expression = property_name_expression
 
