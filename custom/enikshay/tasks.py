@@ -518,7 +518,9 @@ class EpisodeAdherenceUpdate(object):
 
     def get_ip_followup_test_threshold_dates(self, dose_status_by_date):
         ip_dosage_threshold = self.get_dose_count_ip() - self.get_doses_per_week()
-        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(ip_dosage_threshold, dose_status_by_date)
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            ip_dosage_threshold, dose_status_by_date
+        )
         return {
             'adherence_ip_date_followup_test_expected': date_expected,
             'adherence_ip_date_threshold_crossed': date_crossed or '',
@@ -526,7 +528,9 @@ class EpisodeAdherenceUpdate(object):
 
     def get_cp_followup_test_threshold_dates(self, dose_status_by_date):
         cp_dosage_threshold = self.get_dose_count_cp() - self.get_doses_per_week()
-        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(cp_dosage_threshold, dose_status_by_date)
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            cp_dosage_threshold, dose_status_by_date
+        )
         return {
             'adherence_cp_date_followup_test_expected': date_expected,
             'adherence_cp_date_threshold_crossed': date_crossed or '',
@@ -534,7 +538,9 @@ class EpisodeAdherenceUpdate(object):
 
     def get_outcome_due_threshold_dates(self, dose_status_by_date):
         outcome_due_dosage_threshold = self.get_dose_count_outcome_due() - self.get_doses_per_week()
-        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(outcome_due_dosage_threshold, dose_status_by_date)
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            outcome_due_dosage_threshold, dose_status_by_date
+        )
         return {
             'adherence_date_outcome_due': date_expected,
         }

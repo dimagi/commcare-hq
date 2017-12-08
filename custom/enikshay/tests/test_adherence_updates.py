@@ -149,7 +149,12 @@ class TestAdherenceUpdater(TestCase):
         self.data_store.adapter.clear_table()
         FormProcessorTestUtils.delete_all_cases()
 
-    def _create_episode_case(self, adherence_schedule_date_start=None, adherence_schedule_id=None, extra_properties=None):
+    def _create_episode_case(
+            self,
+            adherence_schedule_date_start=None,
+            adherence_schedule_id=None,
+            extra_properties=None,
+    ):
         person = get_person_case_structure(
             self.person_id,
             self.user.user_id,
@@ -200,7 +205,8 @@ class TestAdherenceUpdater(TestCase):
             for adherence_case in adherence_cases
         ]
         episode = self.create_episode_case(
-            adherence_schedule_date_start, adherence_schedule_id, adherence_cases, extra_properties=episode_properties,
+            adherence_schedule_date_start, adherence_schedule_id, adherence_cases,
+            extra_properties=episode_properties,
         )
 
         updater = EpisodeAdherenceUpdate(self.domain, episode)
