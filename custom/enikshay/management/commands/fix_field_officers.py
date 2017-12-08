@@ -12,7 +12,7 @@ def looks_archiveable(user):
     return (
         user.created_on.date() == date(2017, 11, 6)
         and user.user_data.get('contact_phone_number') is None
-        and user._get_form_ids() == 0
+        and len(user._get_form_ids()) == 0
     )
 
 
