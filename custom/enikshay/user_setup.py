@@ -357,7 +357,7 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
         return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
 
-class ENikshayUserLocationDataEditor(CustomDataEditor):
+class ENikshayLocationDataEditor(CustomDataEditor):
     """Custom Location Data on Virtual Location User (agency) creation"""
 
     @property
@@ -374,7 +374,10 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
         ]
 
     def init_form(self, post_dict=None):
-        form = super(ENikshayUserLocationDataEditor, self).init_form(post_dict)
+        form = super(ENikshayLocationDataEditor, self).init_form(post_dict)
+        if not self.required_only:
+            # This is an edit page, not an agency creation page
+            return form
         fields_to_loc_types = {
             'facility_type': 'pcp',
             'plc_hf_if_nikshay': 'plc',
@@ -408,7 +411,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
                     ('18', "WHP-AMC"),
                 ],
             )
-        return super(ENikshayUserLocationDataEditor, self)._make_field(field)
+        return super(ENikshayLocationDataEditor, self)._make_field(field)
 
 
 class ENikshayLocationForm(LocationForm):
@@ -444,7 +447,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = ENikshayLocationForm
-    _location_data_editor = ENikshayUserLocationDataEditor
+    _location_data_editor = ENikshayLocationDataEditor
     _user_data_editor = ENikshayLocationUserDataEditor
 
     @property
