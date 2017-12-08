@@ -172,7 +172,7 @@ def get_multi_fluff_pillow(indicator_classes, name, kafka_topic, delete_filtered
         for cls in indicator_classes
     ]
     domains = list(set(d for cls in indicator_classes for d in cls.domains))
-    doc_types = list(set(cls.wrapper._doc_type for cls in indicator_classes))
+    doc_types = list(set(cls.document_class.doc_type for cls in indicator_classes))
     assert len(doc_types) == 1
 
     return FluffPillow(
