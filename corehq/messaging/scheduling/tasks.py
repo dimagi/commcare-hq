@@ -13,6 +13,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    delete_alert_schedule_instance,
     delete_timed_schedule_instance,
     get_alert_schedule_instances_for_schedule,
     get_timed_schedule_instances_for_schedule,
@@ -31,6 +32,20 @@ from datetime import datetime
 import six
 
 
+def _get_any_value_or_none(from_dict):
+    if from_dict:
+        return six.next(six.itervalues(from_dict))
+
+    return None
+
+
+def _recipient_instance_dict(instances):
+    return {
+        (instance.recipient_type, instance.recipient_id): instance
+        for instance in instances
+    }
+
+
 @task(ignore_result=True)
 def refresh_alert_schedule_instances(schedule_id, recipients):
     """
@@ -40,25 +55,28 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
     """
     schedule = AlertSchedule.objects.get(schedule_id=schedule_id)
 
-    existing_instances = {
-        (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_alert_schedule_instances_for_schedule(schedule)
-    }
-
-    if existing_instances:
-        # Don't refresh AlertSchedules that have already been sent
-        # to avoid sending old alerts to new recipients
-        return
+    existing_instances = _recipient_instance_dict(get_alert_schedule_instances_for_schedule(schedule))
+    model_instance = _get_any_value_or_none(existing_instances)
 
     recipients = set(convert_to_tuple_of_tuples(recipients))
     for recipient_type, recipient_id in recipients:
-        instance = AlertScheduleInstance.create_for_recipient(
-            schedule,
-            recipient_type,
-            recipient_id,
-            move_to_next_event_not_in_the_past=False,
-        )
+        if (recipient_type, recipient_id) in existing_instances:
+            continue
+
+        if model_instance:
+            instance = AlertScheduleInstance.copy_for_recipient(model_instance, recipient_type, recipient_id)
+        else:
+            instance = AlertScheduleInstance.create_for_recipient(
+                schedule,
+                recipient_type,
+                recipient_id,
+                move_to_next_event_not_in_the_past=False,
+            )
         save_alert_schedule_instance(instance)
+
+    for recipient_type_and_id, instance in six.iteritems(existing_instances):
+        if recipient_type_and_id not in recipients:
+            delete_alert_schedule_instance(instance)
 
 
 @task(ignore_result=True)
@@ -118,27 +136,32 @@ def refresh_case_alert_schedule_instances(case, schedule, action_definition, rul
     to be refreshed
     """
 
-    existing_instances = {
-        (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
-    }
-
-    if existing_instances:
-        # Don't refresh AlertSchedules that have already been sent
-        # to avoid sending old alerts to new recipients
-        return
+    existing_instances = _recipient_instance_dict(
+        get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
+    )
+    model_instance = _get_any_value_or_none(existing_instances)
 
     recipients = set(convert_to_tuple_of_tuples(action_definition.recipients))
     for recipient_type, recipient_id in recipients:
-        instance = CaseAlertScheduleInstance.create_for_recipient(
-            schedule,
-            recipient_type,
-            recipient_id,
-            move_to_next_event_not_in_the_past=False,
-            case_id=case.case_id,
-            rule_id=rule.pk
-        )
+        if (recipient_type, recipient_id) in existing_instances:
+            continue
+
+        if model_instance:
+            instance = CaseAlertScheduleInstance.copy_for_recipient(model_instance, recipient_type, recipient_id)
+        else:
+            instance = CaseAlertScheduleInstance.create_for_recipient(
+                schedule,
+                recipient_type,
+                recipient_id,
+                move_to_next_event_not_in_the_past=False,
+                case_id=case.case_id,
+                rule_id=rule.pk
+            )
         save_case_schedule_instance(instance)
+
+    for recipient_type_and_id, instance in six.iteritems(existing_instances):
+        if recipient_type_and_id not in recipients:
+            delete_case_schedule_instance(instance)
 
 
 def refresh_case_timed_schedule_instances(case, schedule, action_definition, rule, start_date=None):
