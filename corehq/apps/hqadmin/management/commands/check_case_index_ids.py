@@ -108,7 +108,7 @@ class Command(BaseCommand):
 
             for case_to_resync in exists:
                 # if the case actually exists resync it to fix the es search
-                resave_case(domain, case_to_resync)
+                resave_case(domain, case_to_resync, send_post_save_signal=False)
 
             if exists:
                 print('resynced {} cases that were actually not deleted'.format(len(exists)))
