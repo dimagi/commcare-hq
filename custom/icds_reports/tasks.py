@@ -36,20 +36,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     monthly_date = date.replace(day=1)
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
         with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
-
-            path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
-            celery_task_logger.info("Starting icds reports create_functions")
-            with open(path, "r") as sql_file:
-                sql_to_execute = sql_file.read()
-                cursor.execute(sql_to_execute)
-            celery_task_logger.info("Ended icds reports create_functions")
-
-            path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
-            celery_task_logger.info("Starting icds reports update_location_tables")
-            with open(path, "r") as sql_file:
-                sql_to_execute = sql_file.read()
-                cursor.execute(sql_to_execute)
-            celery_task_logger.info("Ended icds reports update_location_tables_sql")
+            _create_aggregate_functions(cursor)
+            _update_aggregate_locations_tables(cursor)
 
         aggregation_tasks = []
 
@@ -59,6 +47,24 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
         aggregation_tasks.append(UCRAggregationTask('daily', date.strftime('%Y-%m-%d')))
         aggregate_tables.delay(aggregation_tasks[0], aggregation_tasks[1:])
+
+
+def _create_aggregate_functions(cursor):
+    path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
+    celery_task_logger.info("Starting icds reports create_functions")
+    with open(path, "r") as sql_file:
+        sql_to_execute = sql_file.read()
+        cursor.execute(sql_to_execute)
+    celery_task_logger.info("Ended icds reports create_functions")
+
+
+def _update_aggregate_locations_tables(cursor):
+    path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
+    celery_task_logger.info("Starting icds reports update_location_tables")
+    with open(path, "r") as sql_file:
+        sql_to_execute = sql_file.read()
+        cursor.execute(sql_to_execute)
+    celery_task_logger.info("Ended icds reports update_location_tables_sql")
 
 
 @task(queue='background_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
