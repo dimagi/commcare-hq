@@ -24,6 +24,8 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'lbagnoli', 'ssrikrishnan']
+
 
 @periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
@@ -113,7 +115,9 @@ def aggregate_tables(self, current_task, future_tasks):
         aggregate_tables.delay(future_tasks[0], future_tasks[1:])
     else:
         # temporary soft assert to verify it's completing
-        _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+        _soft_assert = soft_assert(to=[
+            '{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS
+        ])
         _soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
         celery_task_logger.info("Aggregation has completed")
 
