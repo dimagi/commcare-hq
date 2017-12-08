@@ -13,7 +13,7 @@ class ReconciliationTaskForm(forms.Form):
     email = forms.EmailField(label='Your email')
     commit = forms.BooleanField(label='Commit Changes', required=False)
     person_case_ids = forms.CharField(label='Person Case Ids', required=False,
-                                        help_text="Comma separated person case ids to process")
+                                      help_text="Comma separated person case ids to process")
     task = forms.ChoiceField(label='Task', choices=(
         [('all', 'All')] + [(choice, choice.capitalize().replace('_', ' ')) for choice in permitted_tasks]
     ))

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
