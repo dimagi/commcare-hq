@@ -1456,6 +1456,10 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
 
     def __init__(self, *args, **kwargs):
         super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+
+        # Prevent case_type from being changed when we are using the form to edit
+        # an existing conditional alert. Being allowed to assume that case_type
+        # doesn't change makes it easier to run the rule for this alert.
         if self.initial.get('case_type'):
             # Django also handles keeping the field's value to its initial value no matter what is posted
             # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
