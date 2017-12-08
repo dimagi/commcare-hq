@@ -577,7 +577,7 @@ class EpisodeAdherenceUpdate(object):
                 False,
                 "No fixture item found with schedule_id {}".format(adherence_schedule_id)
             )
-            return sys.maxint
+            return sys.maxsize
         return dose_count
 
     @memoized
