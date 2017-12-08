@@ -184,9 +184,9 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.schedule_form.is_valid():
             broadcast, schedule = self.schedule_form.save_broadcast_and_schedule()
             if isinstance(schedule, AlertSchedule):
-                refresh_alert_schedule_instances.delay(schedule, broadcast.recipients)
+                refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
             elif isinstance(schedule, TimedSchedule):
-                refresh_timed_schedule_instances.delay(schedule, broadcast.recipients,
+                refresh_timed_schedule_instances.delay(schedule.schedule_id, broadcast.recipients,
                     start_date=broadcast.start_date)
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")

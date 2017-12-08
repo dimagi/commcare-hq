@@ -1859,19 +1859,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Group.bulk_save(touched)
 
     def get_time_zone(self):
-        try:
-            time_zone = self.user_data["time_zone"]
-        except Exception as e:
-            # Gracefully handle when user_data is None, or does not have a "time_zone" entry
-            time_zone = None
-        return time_zone
+        if self.memoized_usercase:
+            return self.memoized_usercase.get_time_zone()
+
+        return None
 
     def get_language_code(self):
-        if self.user_data and "language_code" in self.user_data:
-            # Old way
-            return self.user_data["language_code"]
-        else:
+        if self.language:
             return self.language
+
+        if self.memoized_usercase:
+            return self.memoized_usercase.get_language_code()
+
+        return None
 
     @property
     @memoized

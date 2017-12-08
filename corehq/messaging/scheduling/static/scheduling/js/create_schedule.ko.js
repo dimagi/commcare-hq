@@ -1,5 +1,58 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
-    var CreateMessageViewModel = function (initial_values, select2_user_recipients,
+    var MessageViewModel = function(language_code, message) {
+        var self = this;
+
+        self.language_code = ko.observable(language_code);
+        self.message = ko.observable(message);
+    };
+
+    var TranslationViewModel = function(language_codes, translations) {
+        var self = this;
+
+        if(typeof translations === 'string') {
+            translations = JSON.parse(translations);
+        }
+        translations = translations || {};
+        var initial_translate = !($.isEmptyObject(translations) || '*' in translations);
+
+        self.translate = ko.observable(initial_translate);
+        self.nonTranslatedMessage = ko.observable(translations['*']);
+        self.translatedMessages = ko.observableArray();
+
+        self.translate.subscribe(function(newValue) {
+            // Automatically copy the non-translated message to any blank
+            // translated messages when enabling the "translate" option
+            if(newValue) {
+                self.translatedMessages().forEach(function(messageModel) {
+                    if(!messageModel.message()) {
+                        messageModel.message(self.nonTranslatedMessage());
+                    }
+                });
+            }
+        });
+
+        self.messagesJSONString = ko.computed(function() {
+            var result = {};
+            if(self.translate()) {
+                self.translatedMessages().forEach(function(messageModel) {
+                    result[messageModel.language_code()] = messageModel.message();
+                });
+            } else {
+                result['*'] = self.nonTranslatedMessage();
+            }
+            return JSON.stringify(result);
+        });
+
+        self.loadInitialTranslatedMessages = function() {
+            language_codes.forEach(function(language_code) {
+                self.translatedMessages.push(new MessageViewModel(language_code, translations[language_code]));
+            });
+        };
+
+        self.loadInitialTranslatedMessages();
+    };
+
+    var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
             select2_user_group_recipients, select2_user_organization_recipients,
             select2_case_group_recipients) {
         var self = this;
@@ -30,7 +83,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
-        self.translate = ko.observable(initial_values.translate);
+        self.message = new TranslationViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            initial_values.message
+        );
 
         self.create_day_of_month_choice = function(value) {
             if(value === '-1') {
@@ -209,14 +265,14 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     RecipientsSelect2Handler.prototype.constructor = RecipientsSelect2Handler;
 
     $(function () {
-        var cmvm = new CreateMessageViewModel(
+        var scheduleViewModel = new CreateScheduleViewModel(
             hqImport("hqwebapp/js/initial_page_data").get("current_values"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients")
         );
-        $('#create-schedule-form').koApplyBindings(cmvm);
-        cmvm.init();
+        $('#create-schedule-form').koApplyBindings(scheduleViewModel);
+        scheduleViewModel.init();
     });
 });
