@@ -2,9 +2,9 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
     var vm = this;
     vm.filters = filters;
 
-    vm.genders = genders.slice();
+    vm.genders = window.angular.copy(genders);
 
-    vm.ages = ages.slice();
+    vm.ages = window.angular.copy(ages);
 
     var path = $location.path();
     if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
