@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
@@ -383,7 +384,7 @@ def async_indicators_metrics():
             (now - indicator.date_created).total_seconds()
             for indicator in oldest_100_indicators
         ]
-        avg_lag = float(sum(lags)) / len(lags)
+        avg_lag = sum(lags) / len(lags)
         datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
 
     for config_id, metrics in six.iteritems(_indicator_metrics()):
