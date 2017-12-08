@@ -67,11 +67,11 @@ class Command(BaseModelReconciliationCommand):
                     investigations_to_be_reconciled = self.episode_case_needs_reconciliation(episode_case)
                     if investigations_to_be_reconciled:
                         for interval_type, investigation_cases in investigations_to_be_reconciled.items():
-                            self.reconcile_investigation_cases(episode_case_id, investigation_cases, csvfile)
+                            self.reconcile_investigation_cases(episode_case_id, investigation_cases)
 
         self.email_report()
 
-    def reconcile_investigation_cases(self, episode_case_id, investigation_cases, csvfile):
+    def reconcile_investigation_cases(self, episode_case_id, investigation_cases):
         # fetch latest investigation case which would retain final values
         latest_investigation_case = sorted(investigation_cases, key=lambda x: x.modified_on)[0]
         retain_case_id = latest_investigation_case.case_id
