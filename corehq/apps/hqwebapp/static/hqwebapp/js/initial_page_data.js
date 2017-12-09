@@ -17,7 +17,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
      */
     var gather = function(selector, existing) {
         if (document.readyState !== "complete") {
-            console.assert(false, "Attempt to call initial_page_data.gather before document is ready");
+            console.assert(false, "Attempt to call initial_page_data.gather before document is ready"); // eslint-disable no-console
             $.get('/assert/initial_page_data/');
         }
 
