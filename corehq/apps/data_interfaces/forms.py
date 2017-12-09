@@ -661,9 +661,9 @@ class CaseRuleCriteriaForm(forms.Form):
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
 
-        rule = kwargs.pop('rule', None)
-        if rule:
-            kwargs['initial'] = self.compute_initial(rule)
+        self.initial_rule = kwargs.pop('rule', None)
+        if self.initial_rule:
+            kwargs['initial'] = self.compute_initial(self.initial_rule)
 
         super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
 

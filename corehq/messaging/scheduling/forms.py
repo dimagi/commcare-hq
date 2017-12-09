@@ -1122,7 +1122,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         self.initial_rule = rule
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()
         self.update_recipient_types_choices()
+
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+
+        # Don't allow the reset_case_property_name to change values after being initially set.
+        # The framework doesn't account for this option being enabled, disabled, or changing
+        # after being initially set.
+        self.fields['reset_case_property_enabled'].disabled = True
+        self.fields['reset_case_property_name'].disabled = True
 
     @cached_property
     def requires_system_admin_to_edit(self):
@@ -1509,13 +1521,16 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
     def allow_date_case_property_filter(self):
         return False
 
-    def __init__(self, *args, **kwargs):
-        super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
 
         # Prevent case_type from being changed when we are using the form to edit
         # an existing conditional alert. Being allowed to assume that case_type
         # doesn't change makes it easier to run the rule for this alert.
-        if self.initial.get('case_type'):
-            # Django also handles keeping the field's value to its initial value no matter what is posted
-            # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
-            self.fields['case_type'].disabled = True
+        self.fields['case_type'].disabled = True
+
+    def __init__(self, *args, **kwargs):
+        super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()
