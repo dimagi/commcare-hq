@@ -54,16 +54,15 @@ class _RestoreCache(_CacheAccessor):
 
     @classmethod
     def _make_cache_key(cls, domain, user_id, sync_log_id, device_id):
-        # to invalidate all restore cache keys, increment the number below
-        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor},{fixture_freshness_token}'.format(
-            domain=domain,
-            prefix=cls.prefix,
-            user=user_id,
-            sync_log_id=sync_log_id or '',
-            device_id=device_id or '',
-            loadtest_factor=get_loadtest_factor_for_user(domain, user_id),
-            fixture_freshness_token=get_fixture_freshness_token(domain, user_id),
-        )
+        hashable_key = ','.join([unicode(part) for part in [
+            domain,
+            cls.prefix,
+            user_id,
+            sync_log_id or '',
+            device_id or '',
+            get_loadtest_factor_for_user(domain, user_id),
+            get_fixture_freshness_token(domain, user_id),
+        ]])
         return hashlib.md5(hashable_key).hexdigest()
 
 
