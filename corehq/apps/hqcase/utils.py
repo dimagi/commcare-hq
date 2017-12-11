@@ -263,4 +263,7 @@ def resave_case(domain, case, send_post_save_signal=True):
     if should_use_sql_backend(domain):
         publish_case_saved(case, send_post_save_signal)
     else:
-        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+        if send_post_save_signal:
+            case.save()
+        else:
+            CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
