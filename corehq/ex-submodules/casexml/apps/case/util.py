@@ -193,7 +193,7 @@ def property_changed_in_action(case_transaction, case_id, case_property_name):
     for update in case_updates:
         if update.id == case_id:
             actions.append((update.modified_on_str, update.get_update_action(), case_transaction))
-            if include_create_fields and case_transaction.action_type == CASE_ACTION_CREATE:
+            if include_create_fields and case_transaction.is_case_create:
                 actions.append((update.modified_on_str, update.get_create_action(), case_transaction))
 
     for (modified_on, action, case_transaction) in actions:
