@@ -1069,7 +1069,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     start_date_type = ChoiceField(
         required=True,
         choices=(
-            (START_DATE_RULE_TRIGGER, ugettext_lazy("The date the rule is satisfied")),
+            (START_DATE_RULE_TRIGGER, ugettext_lazy("The first available time after the rule is satisfied")),
             (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property: ")),
         )
     )
