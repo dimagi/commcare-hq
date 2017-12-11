@@ -38,10 +38,10 @@ class Command(BaseCommand):
                 if len(nonarchiveable_users) == 1:
                     for archiveable_user in archiveable_users:
                         archiveable_user.is_active = False
-                        # archiveable_user.save()
+                        archiveable_user.save()
                         f.write('archived %s\n' % archiveable_user._id)
                     field_officer_location.user_id = nonarchiveable_users[0]._id
-                    # field_officer_location.save()
+                    field_officer_location.save()
                     f.write('set location user to: %s\n' % nonarchiveable_users[0]._id)
                 elif len(nonarchiveable_users) > 1:
                     f.write(
