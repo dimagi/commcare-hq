@@ -15,6 +15,7 @@ from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
+import six
 
 
 def _topic_for_ddog(topic):
@@ -37,12 +38,11 @@ class PillowRuntimeContext(object):
         self.changes_seen = changes_seen
 
 
-class PillowBase(object):
+class PillowBase(six.with_metaclass(ABCMeta, object)):
     """
     This defines the external pillowtop API. Everything else should be considered a specialization
     on top of it.
     """
-    __metaclass__ = ABCMeta
 
     # set to true to disable saving pillow retry errors
     retry_errors = True
@@ -172,7 +172,7 @@ class PillowBase(object):
             'pillow_name:{}'.format(self.get_name()),
         ])
         checkpoint_sequence = self._normalize_checkpoint_sequence()
-        for topic, value in checkpoint_sequence.iteritems():
+        for topic, value in six.iteritems(checkpoint_sequence):
             datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(topic),
@@ -206,11 +206,10 @@ class PillowBase(object):
                 datadog_histogram('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
-class ChangeEventHandler(object):
+class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):
     """
     A change-event-handler object used in constructed pillows.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def fire_change_processed(self, change, context):

@@ -23,7 +23,7 @@ FormplayerFrontend.module("Users.Models", function(Models, FormplayerFrontend, B
         },
 
         trackVersionChange: function(model) {
-            window.analytics.workflow(
+            hqImport('analytix/js/kissmetrix').track.event(
                 '[app-preview] App version changed',
                 {
                     previousVersion: model.previous('versionInfo'),

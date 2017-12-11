@@ -50,24 +50,24 @@ class TestLactatingEnrolledWomen(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
-                                "y": 159.0,
+                                "y": 159,
                                 "x": 1491004800000,
-                                "all": 0
+                                "all": 159
                             },
                             {
-                                "y": 166.0,
+                                "y": 166,
                                 "x": 1493596800000,
-                                "all": 0
+                                "all": 166
                             }
                         ],
                         "key": "Total number of lactating women who are enrolled for ICDS services"
@@ -104,10 +104,12 @@ class TestLactatingEnrolledWomen(TestCase):
                 "info": "Lactating Mothers enrolled for ICDS services.",
                 "tooltips_data": {
                     "s2": {
-                        "valid": 24
+                        "valid": 24,
+                        "all": 24
                     },
                     "s1": {
-                        "valid": 19
+                        "valid": 19,
+                        "all": 19
                     }
                 },
                 "chart_data": [
@@ -155,11 +157,50 @@ class TestLactatingEnrolledWomen(TestCase):
                 "data": {
                     "st1": {
                         "valid": 87,
+                        "all": 87,
+                        'original_name': [],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 79,
+                        "all": 79,
+                        'original_name': [],
                         "fillKey": "Women"
+                    }
+                },
+                "slug": "lactating_enrolled_women",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_lactating_enrolled_women_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Lactating Mothers enrolled for ICDS services.",
+                    "average": 43.5,
+                    "average_format": "number"
+                },
+                "fills": {
+                    "Women": "#006fdf",
+                    "defaultFill": "#9D9D9D"
+                },
+                "data": {
+                    'block_map': {
+                        'valid': 87,
+                        'all': 87,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Women'
                     }
                 },
                 "slug": "lactating_enrolled_women",

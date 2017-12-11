@@ -54,7 +54,8 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    DEFAULT, CUSTOM, SendRegistrationInvitationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
+from corehq.apps.sms.util import (get_contact, get_sms_backend_classes, ContactNotFoundException,
+    get_or_create_translation_doc)
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
@@ -95,6 +96,7 @@ from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
+import six
 
 
 # Tuple of (description, days in the past)
@@ -237,7 +239,7 @@ def send_to_recipients(request, domain):
                     keys=[recipient, recipient[1:]], include_docs=True,
                     wrapper=wrap_user_by_type).all()
 
-                phone_users = filter(lambda u: u.is_member_of(domain), phone_users)
+                phone_users = [u for u in phone_users if u.is_member_of(domain)]
                 if len(phone_users) > 0:
                     phone_numbers.append((phone_users[0], recipient))
                 else:
@@ -784,7 +786,7 @@ def chat_contact_list(request, domain):
 
     if sSearch:
         regex = re.compile('^.*%s.*$' % sSearch)
-        data = filter(lambda row: regex.match(row[0]) or regex.match(row[2]), data)
+        data = [row for row in data if regex.match(row[0]) or regex.match(row[2])]
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])
@@ -1683,11 +1685,7 @@ class SMSLanguagesView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        with StandaloneTranslationDoc.get_locked_obj(self.domain, "sms", create=True) as tdoc:
-            if len(tdoc.langs) == 0:
-                tdoc.langs = ["en"]
-                tdoc.translations["en"] = {}
-                tdoc.save()
+        tdoc = get_or_create_translation_doc(self.domain)
         context = {
             "domain": self.domain,
             "sms_langs": tdoc.langs,
@@ -1782,7 +1780,7 @@ def upload_sms_translations(request, domain):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
                             val = row[lang]
-                            if not isinstance(val, basestring):
+                            if not isinstance(val, six.string_types):
                                 val = str(val)
                             val = val.strip()
                             result[lang][msg_id] = val

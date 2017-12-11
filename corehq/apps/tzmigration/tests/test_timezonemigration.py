@@ -17,6 +17,8 @@ from corehq.apps.tzmigration.timezonemigration import \
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from couchforms.dbaccessors import get_forms_by_type
 from couchforms.models import XFormInstance
+from six.moves import zip
+import six
 
 
 class TimeZoneMigrationTest(TestCase, TestFileMixin):
@@ -60,12 +62,13 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
         expected_json.update({
             'domain': self.domain,
             'received_on': actual_json['received_on'],
+            'server_modified_on': actual_json['server_modified_on'],
             '_rev': actual_json['_rev'],
             'initial_processing_complete': True,
             '#export_tag': actual_json['#export_tag'],
             'auth_context': actual_json['auth_context'],
         })
-        for name, meta in actual_json.get("external_blobs", {}).iteritems():
+        for name, meta in six.iteritems(actual_json.get("external_blobs", {})):
             expected_json["external_blobs"][name]["id"] = meta["id"]
         expected_json = XFormInstance.wrap(expected_json).to_json()
         self.assertDictEqual(actual_json, expected_json, msg)

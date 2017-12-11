@@ -112,10 +112,7 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
         )
         self.assertTrue(isinstance(stock_column, StockFormExportColumn))
 
-        selected = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
+        selected = [column for column in instance.tables[0].columns + instance.tables[1].columns if column.selected]
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
         self.assertEqual(len(selected), 2 + selected_system_props)
 
@@ -125,14 +122,8 @@ class TestFormExportInstanceGeneration(SimpleTestCase):
 
         self.assertEqual(len(instance.tables), 2)
 
-        selected = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
-        shown = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
+        selected = [column for column in instance.tables[0].columns + instance.tables[1].columns if column.selected]
+        shown = [column for column in instance.tables[0].columns + instance.tables[1].columns if column.selected]
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
         self.assertEqual(len(selected), 0 + selected_system_props)
         self.assertEqual(len(shown), 0 + selected_system_props)
@@ -365,14 +356,8 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
-        selected = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
-        is_advanced = filter(
-            lambda column: column.is_advanced,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
+        selected = [column for column in instance.tables[0].columns + instance.tables[1].columns if column.selected]
+        is_advanced = [column for column in instance.tables[0].columns + instance.tables[1].columns if column.is_advanced]
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
         advanced_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])
         self.assertEqual(len(selected), 1 + selected_system_props)
@@ -389,14 +374,8 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
                 return_value=build_ids_and_versions):
             instance = FormExportInstance.generate_instance_from_schema(self.schema)
 
-        selected = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
-        shown = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
+        selected = [column for column in instance.tables[0].columns + instance.tables[1].columns if column.selected]
+        shown = [column for column in instance.tables[0].columns + instance.tables[1].columns if column.selected]
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
         self.assertEqual(len(selected), 0 + selected_system_props)
         self.assertEqual(len(shown), 0 + selected_system_props)
@@ -598,7 +577,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertEqual(len(instance.tables), 2)
         self.assertEqual(len(instance.tables[0].columns), 4 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertEqual(
-            len(filter(lambda c: c.is_advanced, instance.tables[0].columns)),
+            len([c for c in instance.tables[0].columns if c.is_advanced]),
             len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced]) + 2  # + @case_id, case_name
         )
 

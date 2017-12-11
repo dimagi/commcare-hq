@@ -59,7 +59,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         )
 
         if self.program_id:
-            products = filter(lambda c: c.program_id == self.program_id, products)
+            products = [c for c in products if c.program_id == self.program_id]
         for p in products:
             col_id = lambda c: '%s-%s' % (p._id, c)
 

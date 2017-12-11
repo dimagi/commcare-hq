@@ -14,6 +14,7 @@ from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
 from corehq.util.translation import localize
 from custom.intrahealth import PRODUCT_MAPPING, PRODUCT_NAMES
+import six
 
 
 def get_products(form, property):
@@ -83,7 +84,7 @@ def _get_location(form):
         except SQLLocation.DoesNotExist:
             logging.info('Location %s Not Found.' % loc_id)
     else:
-        user_id = form['auth_context']['user_id']
+        user_id = form.user_id
         if not user_id:
             return None
         try:
@@ -133,7 +134,7 @@ def get_location_by_type(form, type):
             return loc
     for loc_id in loc.lineage:
         loc = get_location(loc_id)
-        if unicode(loc.location_type_name).lower().replace(" ", "") == type:
+        if six.text_type(loc.location_type_name).lower().replace(" ", "") == type:
             return loc
 
 

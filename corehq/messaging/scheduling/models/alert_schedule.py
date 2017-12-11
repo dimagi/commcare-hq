@@ -43,25 +43,36 @@ class AlertSchedule(Schedule):
             # AlertSchedules do not repeat
             instance.active = False
 
+    def delete_related_events(self):
+        for event in self.alertevent_set.all():
+            event.content.delete()
+
+        self.alertevent_set.all().delete()
+
     @classmethod
-    def create_simple_alert(cls, domain, content):
+    def create_simple_alert(cls, domain, content, extra_options=None):
+        schedule = cls(domain=domain)
+        schedule.set_simple_alert(content, extra_options=extra_options)
+        return schedule
+
+    def set_simple_alert(self, content, extra_options=None):
         with transaction.atomic():
-            schedule = cls(domain=domain)
-            schedule.ui_type = Schedule.UI_TYPE_IMMEDIATE
-            schedule.save()
+            self.ui_type = Schedule.UI_TYPE_IMMEDIATE
+            self.set_extra_scheduling_options(extra_options)
+            self.save()
+
+            self.delete_related_events()
 
             if content.pk is None:
                 content.save()
 
             event = AlertEvent(
                 order=1,
-                schedule=schedule,
+                schedule=self,
                 time_to_wait=time(0, 0),
             )
             event.content = content
             event.save()
-
-        return schedule
 
 
 class AlertEvent(Event):

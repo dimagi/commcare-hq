@@ -706,7 +706,7 @@ class StaticReportConfiguration(JsonObject):
         metadata = mapping.get(config_id, None)
         if not metadata:
             raise BadSpecError(_('The report configuration referenced by this report could '
-                                 'not be found: %(report_id)S') % {'report_id': config_id})
+                                 'not be found: %(report_id)s') % {'report_id': config_id})
 
         config = cls._get_from_metadata(metadata)
         if domain and config.domain != domain:
@@ -829,6 +829,7 @@ class AsyncIndicator(models.Model):
         new_indicators = set(self.indicator_config_ids) - set(to_remove)
         self.indicator_config_ids = sorted(list(new_indicators))
         self.unsuccessful_attempts += 1
+        self.date_queued = None
 
 
 def get_datasource_config(config_id, domain):

@@ -3,13 +3,14 @@ from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm
+from six.moves import range
 
 
 class PasswordLockoutTest(TestCase):
 
     def setUp(self):
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        self.username = 'auser@qwerty.commcarehq.org'
+        self.username = 'auser@qwerty.com'
         self.password = 'apassword'
         self.user = WebUser.create(self.domain.name, self.username, self.password)
 

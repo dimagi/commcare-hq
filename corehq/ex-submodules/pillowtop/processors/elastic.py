@@ -105,7 +105,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, r
                 name,
                 ex.error or "No error message",
                 index, doc_type, doc_id,
-                data.keys())
+                list(data))
 
             if except_on_failure:
                 raise PillowtopIndexingError(error_message)

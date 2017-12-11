@@ -3,7 +3,7 @@ import json
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug
+from django.core.validators import RegexValidator, validate_slug
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, CustomDataField,
                      validate_reserved_words)
+import six
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -56,6 +57,7 @@ class XmlSlugField(forms.SlugField):
     default_validators = [
         validate_slug,
         validate_reserved_words,
+        RegexValidator(r'^[a-zA-Z]', ''),
     ]
 
 
@@ -71,8 +73,8 @@ class CustomDataFieldForm(forms.Form):
         required=True,
         error_messages={
             'required': ugettext_lazy('All fields are required'),
-            'invalid': ugettext_lazy('Key fields must consist only of letters, numbers, '
-                         'underscores or hyphens.'),
+            'invalid': ugettext_lazy('Properties must start with a letter and '
+                         'consist only of letters, numbers, underscores or hyphens.'),
         }
     )
     is_required = forms.BooleanField(required=False)
@@ -83,7 +85,7 @@ class CustomDataFieldForm(forms.Form):
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
         # serializes the list and you can't get it
-        self._raw_choices = filter(None, raw.get('choices', []))
+        self._raw_choices = [_f for _f in raw.get('choices', []) if _f]
         super(CustomDataFieldForm, self).__init__(raw, *args, **kwargs)
 
     def clean_choices(self):
@@ -114,7 +116,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def page_name(cls):
-        return _("Edit {} Fields").format(unicode(cls.entity_string))
+        return _("Edit {} Fields").format(six.text_type(cls.entity_string))
 
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain,
@@ -174,7 +176,7 @@ class CustomDataModelMixin(object):
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             msg = _(u"{} fields saved successfully").format(
-                unicode(self.entity_string)
+                six.text_type(self.entity_string)
             )
             messages.success(request, msg)
             return self.get(request, success=True, *args, **kwargs)

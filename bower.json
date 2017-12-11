@@ -54,7 +54,7 @@
     "xpath": "dimagi/js-xpath#f4f0c78",
     "blazy": "1.6.2",
     "datatables": "1.10.9",
-    "datatables-bootstrap3": "0.1",
+    "datatables-bootstrap3": "*",
     "datatables-fixedcolumns": "3.2.0",
     "datatables-fixedheader": "^3.1.3",
     "nprogress": "0.2.0",
@@ -75,7 +75,8 @@
     "intl-tel-input": "9.0.7",
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
-    "topojson": "^3.0.0"
+    "topojson": "^3.0.0",
+    "r.js": "^2.3.5"
   },
   "devDependencies": {
     "chai": "3.3.0",

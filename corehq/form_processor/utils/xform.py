@@ -163,3 +163,13 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def resave_form(domain, form):
+    from corehq.form_processor.utils import should_use_sql_backend
+    from corehq.form_processor.change_publishers import publish_form_saved
+    from couchforms.models import XFormInstance
+    if should_use_sql_backend(domain):
+        publish_form_saved(form)
+    else:
+        XFormInstance.get_db().save_doc(form.to_json())

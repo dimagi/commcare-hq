@@ -126,16 +126,27 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         };
 
         vm.updateMap = function (geography) {
-            locationsService.getLocationByNameAndParent(geography.id, location_id).then(function(locations) {
-                var location = locations[0];
-                if (!location) {
-                    return;
-                }
-                $location.search('location_name', geography.id);
-                $location.search('location_id', location.location_id);
-                storageService.setKey('search', $location.search());
-            });
-
+            if (geography.id !== void(0) && vm.data[0].data[geography.id] && vm.data[0].data[geography.id].original_name.length > 0) {
+                var html = "";
+                window.angular.forEach(vm.data[0].data['test1'].original_name, function(value) {
+                    html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\''+value+'\')">' + value + '</button>';
+                });
+                var css = 'display: block; left: ' + event.clientX + 'px; top: ' + event.clientY + 'px;';
+                var ele = d3.select('#locPopup')
+                    .attr('style', css)
+                    .html(html);
+                $compile(ele[0])($scope);
+            } else {
+                locationsService.getLocationByNameAndParent((geography.id || geography), location_id).then(function(locations) {
+                    var location = locations[0];
+                    if (!location) {
+                        return;
+                    }
+                    $location.search('location_name', (geography.id || geography));
+                    $location.search('location_id', location.location_id);
+                    storageService.setKey('search', $location.search());
+                });
+            }
         };
 
         vm.mapPlugins = {
@@ -237,7 +248,7 @@ window.angular.module('icdsApp').directive('indieMap', function() {
             bubbles: '=?',
             templatePopup: '&',
         },
-        template: '<div class="indie-map-directive"><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
+        template: '<div class="indie-map-directive"><div id="locPopup" class="locPopup"></div><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',

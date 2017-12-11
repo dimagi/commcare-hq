@@ -1,0 +1,13 @@
+{% load hq_shared_tags %}
+
+{# TODO: API id was already publicly visible, but it should be moved into settings #}
+{% if ANALYTICS_CONFIG.DEBUG %}
+    {# Developer is working on analytics #}
+    {% initial_analytics_data 'drift.apiId' '7456r8nz2u34' %}
+{% elif not is_saas_environment %}
+    {# Don't include: this is an enterprise environment #}
+{% elif request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
+    {# Don't include: this is a user test and the Drift popup would be a distraction #}
+{% elif not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
+    {% initial_analytics_data 'drift.apiId' '7456r8nz2u34' %}
+{% endif %}

@@ -50,7 +50,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sql_cases(cls, domain=None):
         logger.debug("Deleting all SQL cases for domain %s", domain)
-        cls._delete_all_sql_sharded_modesl(CommCareCaseSQL, domain)
+        cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
 
     @staticmethod
     def delete_all_ledgers(domain=None):
@@ -97,7 +97,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sql_forms(cls, domain=None):
         logger.debug("Deleting all SQL xforms for domain %s", domain)
-        cls._delete_all_sql_sharded_modesl(XFormInstanceSQL, domain)
+        cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
 
     @classmethod
     @unit_testing_only
@@ -107,7 +107,7 @@ class FormProcessorTestUtils(object):
 
     @staticmethod
     @unit_testing_only
-    def _delete_all_sql_sharded_modesl(model_class, domain=None):
+    def _delete_all_sql_sharded_models(model_class, domain=None):
         assert issubclass(model_class, PartitionedModel)
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
@@ -234,10 +234,7 @@ def create_form_for_test(
     )
 
     attachments = attachments or {}
-    attachment_tuples = map(
-        lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
-        attachments.items()
-    )
+    attachment_tuples = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
     attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)

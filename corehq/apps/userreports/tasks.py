@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
@@ -49,6 +50,7 @@ from corehq.util.view_utils import reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+import six
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -366,17 +368,26 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
+    now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
-        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
+        lag = (now - oldest_indicator.date_queued).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
-    indicator = AsyncIndicator.objects.first()
-    if indicator:
-        lag = (datetime.utcnow() - indicator.date_created).total_seconds()
+    oldest_100_indicators = AsyncIndicator.objects.all()[:100]
+    oldest_indicator = oldest_100_indicators[0]
+    if oldest_indicator:
+        lag = (now - oldest_indicator.date_created).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 
-    for config_id, metrics in _indicator_metrics().iteritems():
+        lags = [
+            (now - indicator.date_created).total_seconds()
+            for indicator in oldest_100_indicators
+        ]
+        avg_lag = sum(lags) / len(lags)
+        datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
+
+    for config_id, metrics in six.iteritems(_indicator_metrics()):
         tags = ["config_id:{}".format(config_id)]
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
         datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)

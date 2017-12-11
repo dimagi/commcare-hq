@@ -11,11 +11,9 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
-from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.users.permissions import get_extra_permissions
-from corehq.form_processor.change_publishers import publish_case_saved
-from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
+from corehq.form_processor.utils import use_new_exports
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
@@ -39,6 +37,9 @@ from .analytics.esaccessors import (
     get_all_user_ids_submitted,
     get_username_in_last_form_user_id_submitted,
 )
+import six
+from six.moves import range
+from six.moves import map
 
 DEFAULT_CSS_LABEL_CLASS_REPORT_FILTER = 'col-xs-4 col-md-3 col-lg-2 control-label'
 DEFAULT_CSS_FIELD_CLASS_REPORT_FILTER = 'col-xs-8 col-md-8 col-lg-9'
@@ -95,7 +96,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         return None
 
     user_ids = user_ids or []
-    user_ids = filter(None, user_ids)  # remove empty strings if any
+    user_ids = [_f for _f in user_ids if _f]  # remove empty strings if any
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -169,7 +170,7 @@ def namedtupledict(name, fields):
     cls = namedtuple(name, fields)
 
     def __getitem__(self, item):
-        if isinstance(item, basestring):
+        if isinstance(item, six.string_types):
             warnings.warn(
                 "namedtuple fields should be accessed as attributes",
                 DeprecationWarning,
@@ -249,7 +250,7 @@ def get_simplified_users(user_es_query):
     """
     fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
     users = user_es_query.fields(fields).run().hits
-    users = map(_report_user_dict, users)
+    users = list(map(_report_user_dict, users))
     return sorted(users, key=lambda u: u['username_in_report'])
 
 
@@ -264,9 +265,9 @@ def format_datatables_data(text, sort_key, raw=None):
 
 def app_export_filter(doc, app_id):
     if app_id:
-        return (doc['app_id'] == app_id) if doc.has_key('app_id') else False
+        return (doc['app_id'] == app_id) if 'app_id' in doc else False
     elif app_id == '':
-        return (not doc['app_id']) if doc.has_key('app_id') else True
+        return (not doc['app_id']) if 'app_id' in doc else True
     else:
         return True
 
@@ -473,13 +474,6 @@ def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
 
 
-def resync_case_to_es(domain, case):
-    if should_use_sql_backend(domain):
-        publish_case_saved(case)
-    else:
-        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
-
-
 def validate_xform_for_edit(xform):
     for node in xform.bind_nodes:
         if '@case_id' in node.attrib.get('nodeset') and node.attrib.get('calculate') == 'uuid()':
@@ -489,12 +483,13 @@ def validate_xform_for_edit(xform):
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
-def is_query_too_big(domain, mobile_user_and_group_slugs):
+def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
     user_es_query = ExpandedMobileWorkerFilter.user_es_query(
         domain,
         mobile_user_and_group_slugs,
+        request_user,
     )
     return user_es_query.count() > USER_QUERY_LIMIT
 

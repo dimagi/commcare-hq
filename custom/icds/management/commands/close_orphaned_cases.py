@@ -11,6 +11,7 @@ from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.util.log import with_progress_bar
+import six
 
 
 class Command(BaseCommand):
@@ -40,11 +41,11 @@ class Command(BaseCommand):
                     fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
                     print('submission error')
-                    print(unicode(e))
+                    print(six.text_type(e))
                     failed_updates.extend(related_cases)
                 except Exception as e:
                     print('unexpected error')
-                    print(unicode(e))
+                    print(six.text_type(e))
                     failed_updates.extend(related_cases)
             fh.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:

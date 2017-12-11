@@ -343,10 +343,10 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
         var simulationOn = false;
         var controlButton = $('#controlButton');
         function setPauseButton() {
-            controlButton.children('span').removeClass('glyphicon-play').addClass('glyphicon-pause');
+            controlButton.children('span').removeClass('fa-play').addClass('fa-pause');
         }
         function setPlayButton() {
-            controlButton.children('span').removeClass('glyphicon-pause').addClass('glyphicon-play');
+            controlButton.children('span').removeClass('fa-pause').addClass('fa-play');
         }
         function simulateForms() {
             if (simulationOn) {

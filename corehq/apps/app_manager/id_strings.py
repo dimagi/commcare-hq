@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import re
+from six.moves import zip
 
 ROOT = u'root'
 

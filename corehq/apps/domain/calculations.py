@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
+from corehq.apps.users.models import UserRole
 from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -25,7 +26,15 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import es_query, ADD_TO_ES_FILTER
 from dimagi.utils.parsing import json_format_datetime
-
+from corehq.apps.userreports.util import number_of_report_builder_reports, number_of_ucr_reports
+from corehq.apps.sms.models import SQLMobileBackend
+from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.locations.models import LocationType
+from corehq.apps.groups.models import Group
+from corehq.motech.repeaters.models import Repeater
+from corehq.apps.export.dbaccessors import get_form_exports_by_domain, get_case_exports_by_domain
+from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.hqmedia.models import HQMediaMixin
 
 def num_web_users(domain, *args):
     return get_web_user_count(domain, include_inactive=False)
@@ -79,7 +88,7 @@ def cases(domain, *args):
     return get_number_of_cases_in_domain(domain)
 
 
-def cases_in_last(domain, days):
+def cases_in_last(domain, days, case_type=None):
     """
     Returns the number of open cases that have been modified in the last <days> days
     """
@@ -92,7 +101,10 @@ def cases_in_last(domain, days):
             "modified_on": {
                 "from": then,
                 "to": now}}}}
-    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
+    query_params = {"domain.exact": domain, 'closed': False}
+    if case_type:
+        query_params["type.exact"] = case_type
+    data = es_query(params=query_params, q=q, es_index='cases', size=1)
     return data['hits']['total'] if data.get('hits') else 0
 
 
@@ -217,10 +229,13 @@ def has_app(domain, *args):
     return domain_has_apps(domain)
 
 
+def _get_domain_apps(domain):
+    return Domain.get_by_name(domain).applications()
+
+
 def app_list(domain, *args):
-    domain = Domain.get_by_name(domain)
-    apps = domain.applications()
-    return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain.name})
+    apps = _get_domain_apps(domain)
+    return render_to_string("domain/partials/app_list.html", {"apps": apps, "domain": domain})
 
 
 def uses_reminders(domain, *args):
@@ -374,7 +389,24 @@ def calced_props(dom, id, all_stats):
         "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
         "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
         "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
-        "cp_300th_form": CALC_FNS["300th_form_submission"](dom)
+        "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
+        "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
+        "cp_n_trivet_backends": num_telerivet_backends(dom),
+        "cp_use_domain_security": use_domain_security_settings(dom),
+        "cp_n_custom_roles": num_custom_roles(dom),
+        "cp_using_locations": users_have_locations(dom),
+        "cp_n_loc_restricted_roles": num_location_restricted_roles(dom),
+        "cp_n_case_sharing_olevels": num_case_sharing_loc_types(dom),
+        "cp_n_case_sharing_groups": num_case_sharing_groups(dom),
+        "cp_n_repeaters": num_repeaters(dom),
+        "cp_n_case_exports": num_exports(dom),
+        "cp_n_deid_exports": num_deid_exports(dom),
+        "cp_n_saved_exports": num_saved_exports(dom),
+        "cp_n_rb_reports": number_of_report_builder_reports(dom),
+        "cp_n_ucr_reports": number_of_ucr_reports(dom),
+        "cp_n_lookup_tables": num_lookup_tables(dom),
+        "cp_has_project_icon": has_domain_icon(dom),
+        "cp_n_apps_with_icon": num_apps_with_icon(dom),
     }
 
 
@@ -389,3 +421,75 @@ def total_distinct_users(domain):
     }
     user_ids = terms.intersection(set(CouchUser.ids_by_domain(domain)))
     return len(user_ids)
+
+
+def num_telerivet_backends(domain):
+    from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+    backends = SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, domain)
+    return len([b for b in backends if isinstance(b, SQLTelerivetBackend)])
+
+
+def use_domain_security_settings(domain):
+    domain = Domain.get_by_name(domain)
+    return domain.two_factor_auth or domain.secure_sessions or domain.strong_mobile_passwords
+
+
+def num_custom_roles(domain):
+    custom_roles = [r for r in UserRole.get_custom_roles_by_domain(domain) if not r.is_archived]
+    return len(custom_roles)
+
+
+def num_location_restricted_roles(domain):
+    roles = [r for r in UserRole.by_domain(domain)
+             if not r.permissions.access_all_locations]
+    return len(roles)
+
+
+def num_case_sharing_loc_types(domain):
+    loc_types = [l for l in LocationType.objects.by_domain(domain) if l.shares_cases]
+    return len(loc_types)
+
+
+def num_case_sharing_groups(domain):
+    groups = [g for g in Group.by_domain(domain) if g.case_sharing]
+    return len(groups)
+
+
+def num_repeaters(domain):
+    return len(Repeater.by_domain(domain))
+
+
+def _get_domain_exports(domain):
+    return get_form_exports_by_domain(domain, True) + get_case_exports_by_domain(domain, True)
+
+
+def num_deid_exports(domain):
+    return len([e for e in _get_domain_exports(domain) if e.is_safe])
+
+
+def num_exports(domain):
+    return len(_get_domain_exports(domain))
+
+
+def num_saved_exports(domain):
+    return len([e for e in _get_domain_exports(domain)
+                if hasattr(e, "is_daily_saved_export") and e.is_daily_saved_export])
+
+
+def num_lookup_tables(domain):
+    return len(FixtureDataType.by_domain(domain))
+
+
+def has_domain_icon(domain):
+    domain = Domain.get_by_name(domain)
+    return domain.has_custom_logo
+
+
+def num_apps_with_icon(domain):
+    apps = _get_domain_apps(domain)
+    return len([a for a in apps if isinstance(a, HQMediaMixin) and a.logo_refs])
+
+
+def num_apps_with_profile(domain):
+    apps = _get_domain_apps(domain)
+    return len([a for a in apps if a.build_profiles])

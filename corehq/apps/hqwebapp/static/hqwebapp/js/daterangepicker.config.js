@@ -37,7 +37,8 @@
             timePicker: false,
             locale: {
                 format: 'YYYY-MM-DD',
-                separator: separator
+                separator: separator,
+                cancelLabel: gettext('Clear'),
             }
         };
         var hasStartAndEndDate = !_.isEmpty(startdate) && !_.isEmpty(enddate);
@@ -46,7 +47,11 @@
             config.endDate = getLocalDate(enddate);
         }
 
-        $(this).daterangepicker(config);
+        var $el = $(this);
+        $el.daterangepicker(config);
+        $el.on('cancel.daterangepicker', function() {
+            $el.val('');
+        });
 
         if (! hasStartAndEndDate){
             $(this).val("");

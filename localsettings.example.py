@@ -160,10 +160,12 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
+    'FULLSTORY_ID': '',
 }
 
 ANALYTICS_CONFIG = {
-    "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
+    "HQ_INSTANCE": '',  # e.g. "www", or "india", or "staging"
+    "DEBUG": DEBUG,
 }
 
 # Green house api key

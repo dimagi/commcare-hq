@@ -17,13 +17,14 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.util.timezones.conversions import ServerTime
 import langcodes
 import os
 import pytz
 import re
 from StringIO import StringIO
 import tempfile
-from urllib2 import URLError
+from six.moves.urllib.error import URLError
 
 from django.conf import settings
 from django.contrib import messages
@@ -61,13 +62,14 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
+from casexml.apps.case.util import get_all_changes_to_case_property
 from casexml.apps.stock.models import StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
-from corehq.form_processor.utils import should_use_sql_backend
+
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
@@ -79,7 +81,6 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
-from couchforms.models import XFormDeprecated, XFormInstance
 
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
@@ -167,13 +168,17 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    resync_case_to_es)
+)
+from corehq.form_processor.utils.xform import resave_form
+from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
     use_datatables,
     use_multiselect,
 )
+import six
+from six.moves import range
 
 
 datespan_default = datespan_in_request(
@@ -638,7 +643,7 @@ def export_all_form_metadata_async(req, domain):
         simplified=True,
         include_inactive=True
     )
-    user_ids = filter(None, [u["user_id"] for u in users])
+    user_ids = [_f for _f in [u["user_id"] for u in users] if _f]
     format = req.GET.get("format", Format.XLS_2007)
     filename = "%s_forms" % domain
 
@@ -1297,11 +1302,38 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.urlname, args=[self.domain, case_id]),
                 "show_transaction_export": toggles.COMMTRACK.enabled(
                     self.request.user.username),
+                "property_details_enabled": (
+                    toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request)
+                    or toggles.SUPPORT.enabled_for_request(self.request)
+                ),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": self.request.couch_user.can_edit_data,
             'is_usercase': self.case_instance.type == USERCASE_TYPE,
         }
+
+
+def form_to_json(domain, form, timezone=None):
+    form_name = xmlns_to_name(
+        domain,
+        form.xmlns,
+        app_id=form.app_id,
+        lang=get_language(),
+    )
+    if timezone is None:
+        received_on = json_format_datetime(form.received_on)
+    else:
+        received_on = ServerTime(form.received_on).user_time(timezone).done().strftime("%Y-%m-%d %H:%M")
+
+    return {
+        'id': form.form_id,
+        'received_on': received_on,
+        'user': {
+            "id": form.user_id or '',
+            "username": form.metadata.username if form.metadata else '',
+        },
+        'readable_name': form_name,
+    }
 
 
 @location_safe
@@ -1319,28 +1351,35 @@ def case_forms(request, domain, case_id):
     except (KeyError, ValueError):
         return HttpResponseBadRequest()
 
-    def form_to_json(form):
-        form_name = xmlns_to_name(
-            domain,
-            form.xmlns,
-            app_id=form.app_id,
-            lang=get_language(),
-        )
-        return {
-            'id': form.form_id,
-            'received_on': json_format_datetime(form.received_on),
-            'user': {
-                "id": form.user_id or '',
-                "username": form.metadata.username if form.metadata else '',
-            },
-            'readable_name': form_name,
-        }
-
     slice = list(reversed(case.xform_ids))[start_range:end_range]
     forms = FormAccessors(domain).get_forms(slice, ordered=True)
     return json_response([
-        form_to_json(form) for form in forms
+        form_to_json(domain, form) for form in forms
     ])
+
+
+@location_safe
+@require_case_view_permission
+@login_and_domain_required
+@require_GET
+def case_property_changes(request, domain, case_id, case_property_name):
+    """Returns all changes to a case property
+    """
+    case = _get_case_or_404(domain, case_id)
+    changes = []
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    for change in reversed(get_all_changes_to_case_property(case, case_property_name)):
+        change_json = form_to_json(domain, change.transaction.form, timezone=timezone)
+        change_json['new_value'] = change.new_value
+        changes.append(change_json)
+
+    context = {
+        'domain': domain,
+        'timezone': timezone.localize(datetime.utcnow()).tzname(),
+        'property_name': case_property_name,
+        'changes': changes,
+    }
+    return render(request, "case/partials/case_property_modal.html", context)
 
 
 @location_safe
@@ -1385,11 +1424,11 @@ def rebuild_case_view(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-def resave_case(request, domain, case_id):
+def resave_case_view(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
     case = _get_case_or_404(domain, case_id)
-    resync_case_to_es(domain, case)
+    resave_case(domain, case)
     messages.success(
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
@@ -1805,7 +1844,7 @@ class EditFormInstance(View):
             # any other path associated with it. This allows us to differentiate from parent cases.
             # You might think that you need to populate other session variables like parent_id, but those
             # are never actually used in the form.
-            non_parents = filter(lambda cb: cb.path == [], case_blocks)
+            non_parents = [cb for cb in case_blocks if cb.path == []]
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
                 case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
@@ -1982,25 +2021,22 @@ def unarchive_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 @location_safe
-def resave_form(request, domain, instance_id):
+def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
     from corehq.form_processor.change_publishers import publish_form_saved
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    if should_use_sql_backend(domain):
-        publish_form_saved(instance)
-    else:
-        XFormInstance.get_db().save_doc(instance.to_json())
+    resave_form(domain, instance)
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
     return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
 # Weekly submissions by xmlns
 def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
-    if isinstance(end, basestring):
+    if isinstance(end, six.string_types):
         end = parse_date(end)
-    if isinstance(start, basestring):
+    if isinstance(start, six.string_types):
         start = parse_date(start)
     if not end:
         end = datetime.utcnow()

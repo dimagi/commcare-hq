@@ -207,7 +207,7 @@
             var reqStr = location_url + "?name=" + query;
             $http.get(reqStr).then(
                 function (response) {
-                    $scope.availableLocations = response.data;
+                    $scope.availableLocations = response.data.results;
                 }
             );
         };
@@ -225,7 +225,7 @@
                 last_name: 'User',
                 is_anonymous: true,
             });
-            ga_track_event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
         };
 
         $scope.initializeMobileWorker = function (mobileWorker) {
@@ -246,7 +246,7 @@
                     generateStrongPasswords: generateStrongPasswords,
                 });
             }
-            ga_track_event('Manage Mobile Workers', 'New Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         $scope.submitNewMobileWorker = function () {

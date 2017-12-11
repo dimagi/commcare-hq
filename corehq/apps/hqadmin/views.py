@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import HTMLParser
+import six.moves.html_parser
 import json
 import socket
 import uuid
@@ -39,6 +39,7 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
@@ -101,6 +102,7 @@ from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
+import six
 
 
 @require_superuser
@@ -116,7 +118,7 @@ datespan_default = datespan_in_request(
 
 def get_rabbitmq_management_url():
     if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         return "http://%s" % mq_management_url.split('@')[-1]
     else:
@@ -271,7 +273,7 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     if type == "_active_tasks":
         try:
-            tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+            tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
         except Unauthorized:
             return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
 
@@ -531,7 +533,11 @@ class AdminRestoreView(TemplateView):
             report_row_counts = {
                 report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
                 for report in reports
+                if 'report_id' in report.attrib
             }
+            num_ledger_entries = len(xml_payload.findall(
+                "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
+            ))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -551,6 +557,7 @@ class AdminRestoreView(TemplateView):
             location_type_counts = {}
             num_reports = 0
             report_row_counts = {}
+            num_ledger_entries = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
@@ -565,6 +572,7 @@ class AdminRestoreView(TemplateView):
             'case_type_counts': case_type_counts,
             'location_type_counts': location_type_counts,
             'report_row_counts': report_row_counts,
+            'num_ledger_entries': num_ledger_entries,
         })
         return context
 
@@ -628,7 +636,7 @@ def stats_data(request):
     datefield = request.GET.get("datefield")
     get_request_params_json = request.GET.get("get_request_params", None)
     get_request_params = (
-        json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
+        json.loads(six.moves.html_parser.HTMLParser().unescape(get_request_params_json))
         if get_request_params_json is not None else {}
     )
 
@@ -660,7 +668,7 @@ def stats_data(request):
     except HistoTypeNotFoundException:
         return HttpResponseBadRequest(
             'histogram_type param must be one of <ul><li>{}</li></ul>'
-            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC.keys())))
+            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC)))
 
 
 @require_superuser
@@ -977,7 +985,7 @@ def doc_in_es(request):
 
 @require_superuser
 def raw_couch(request):
-    get_params = dict(request.GET.iteritems())
+    get_params = dict(six.iteritems(request.GET))
     return HttpResponseRedirect(reverse("raw_doc", params=get_params))
 
 
@@ -996,8 +1004,8 @@ def raw_doc(request):
             return HttpResponse(json.dumps({"status": "missing"}),
                                 content_type="application/json", status=404)
 
-    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
+    other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + list(_SQL_DBS)
     context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)
 
@@ -1046,7 +1054,7 @@ def callcenter_test(request):
 
     def view_data(case_id, indicators):
         new_dict = OrderedDict()
-        key_list = sorted(indicators.keys())
+        key_list = sorted(indicators)
         for key in key_list:
             new_dict[key] = indicators[key]
         return {

@@ -27,6 +27,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from gevent import monkey
+import six
 monkey.patch_all(time=False, select=False)
 
 import os
@@ -37,8 +38,8 @@ import contextlib
 import gevent
 
 from fabric.colors import red
-from .sh_verbose import ShVerbose
-from .gitutils import (
+from sh_verbose import ShVerbose
+from gitutils import (
     OriginalBranch,
     get_git,
     has_merge_conflict,
@@ -49,7 +50,7 @@ from .gitutils import (
 class BranchConfig(jsonobject.JsonObject):
     trunk = jsonobject.StringProperty()
     name = jsonobject.StringProperty()
-    branches = jsonobject.ListProperty(unicode)
+    branches = jsonobject.ListProperty(six.text_type)
     submodules = jsonobject.DictProperty(lambda: BranchConfig)
 
     def normalize(self):

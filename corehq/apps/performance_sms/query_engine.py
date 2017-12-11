@@ -55,7 +55,7 @@ class QueryEngine(object):
 
     @memoized
     def get_template_variable(self, slug):
-        matches = filter(lambda var: var.slug == slug, self.template_vars)
+        matches = [var for var in self.template_vars if var.slug == slug]
         if len(matches) == 1:
             return matches[0]
         else:

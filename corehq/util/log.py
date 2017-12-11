@@ -23,6 +23,7 @@ from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
+from six.moves import range
 
 
 def clean_exception(exception):
@@ -128,12 +129,12 @@ class HqAdminEmailHandler(AdminEmailHandler):
     def emit(self, record):
         context = self.get_context(record)
 
-        message = "\n\n".join(filter(None, [
+        message = "\n\n".join([_f for _f in [
             context['message'],
             self.format_details(context['details']),
             context['stack_trace'],
             context['request_repr'],
-        ]))
+        ] if _f])
         html_message = render_to_string('hqadmin/email/error_email.html', context)
         mail.mail_admins(self._clean_subject(context['subject']), message, fail_silently=True,
                          html_message=html_message)

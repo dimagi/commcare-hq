@@ -7,6 +7,8 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from requests.exceptions import RequestException
 from time import sleep
+import six
+from six.moves import range
 
 
 class DocTypeMismatchException(Exception):
@@ -148,7 +150,7 @@ class SafeSaveDocument(Document):
 
 
 def safe_delete(db, doc_or_id):
-    if not isinstance(doc_or_id, basestring):
+    if not isinstance(doc_or_id, six.string_types):
         doc_or_id = doc_or_id._id
     db.delete_doc(doc_or_id, **get_safe_write_kwargs())
 

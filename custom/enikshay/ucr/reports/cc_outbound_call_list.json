@@ -7,7 +7,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode_for_cc_outbound",
+    "data_source_table": "episode_for_cc_outbound_v2",
     "report_id": "cc_outbound_call_list",
     "config": {
         "description": "",

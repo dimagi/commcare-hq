@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import argparse
 import yaml
+import six
 
 parser = argparse.ArgumentParser(
     description='''
@@ -51,7 +52,7 @@ if __name__ == "__main__":
     for entry in doc:
         for key, value in entry.iteritems():
             if key in fields:
-                if not isinstance(value, basestring):
+                if not isinstance(value, six.string_types):
                     for v in value:
                         output.append(format_string(v, prefix))
                 else:

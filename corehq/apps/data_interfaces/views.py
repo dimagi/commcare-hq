@@ -55,6 +55,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
+from six.moves import map
 
 
 @login_and_domain_required
@@ -528,8 +529,8 @@ class XFormManagementView(DataInterfaceSection):
         if 'select_all' in self.request.POST:
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in an async task instead
-            import urllib
-            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
+            import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+            form_query_string = six.moves.urllib.parse.unquote(self.request.POST.get('select_all'))
             from django.http import HttpRequest, QueryDict
 
             _request = HttpRequest()
@@ -670,7 +671,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
 
         return {
             'response': {
-                'itemList': map(self._format_rule, rule_page),
+                'itemList': list(map(self._format_rule, rule_page)),
                 'total': total,
                 'page': page,
             },

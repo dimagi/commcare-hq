@@ -7,7 +7,7 @@ from datetime import datetime
 import functools
 import json
 import logging
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -67,6 +67,9 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
+import six
+from six.moves import range
+from six.moves import map
 
 
 class HQUserType(object):
@@ -115,7 +118,7 @@ class HQUserType(object):
 
     @classmethod
     def use_filter(cls, ufilter):
-        return [HQUserToggle(i, unicode(i) in ufilter) for i in range(cls.count)]
+        return [HQUserToggle(i, six.text_type(i) in ufilter) for i in range(cls.count)]
 
 
 class HQToggle(object):
@@ -1023,7 +1026,7 @@ def _apply_mapping(export_tables, mapping_dict):
         def _clean_tablename(tablename):
             return mapping_dict.get(tablename, tablename)
         return (_clean_tablename(tabledata[0]), tabledata[1])
-    return map(_clean, export_tables)
+    return list(map(_clean, export_tables))
 
 
 def _apply_removal(export_tables, removal_list):
@@ -1122,12 +1125,12 @@ def ordering_config_validator(value):
     for group in value:
         if not isinstance(group, list) or len(group) != 2:
             raise error
-        if not isinstance(group[0], basestring):
+        if not isinstance(group[0], six.string_types):
             raise error
         if not isinstance(group[1], list):
             raise error
         for report in group[1]:
-            if not isinstance(report, basestring):
+            if not isinstance(report, six.string_types):
                 raise error
 
 

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.mail import send_mail, mail_admins
 from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
+import six
 
 
 @task(queue="email_queue",
@@ -27,7 +28,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
         }
     )
 
-    recipient_list = filter(None, recipient_list)
+    recipient_list = [_f for _f in recipient_list if _f]
     if not recipient_list:
         return
     try:
@@ -64,7 +65,7 @@ def send_html_email_async(self, subject, recipient, html_content,
                         file_attachments=file_attachments, bcc=bcc, ga_track=ga_track,
                         ga_tracking_info=ga_tracking_info)
     except Exception as e:
-        recipient = list(recipient) if not isinstance(recipient, basestring) else [recipient]
+        recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
         notify_exception(
             None,
             message="Encountered error while sending email",

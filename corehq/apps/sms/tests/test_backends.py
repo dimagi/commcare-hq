@@ -40,7 +40,8 @@ from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from mock import patch
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
+from six.moves import range
 
 
 class AllBackendTest(DomainSubscriptionMixin, TestCase):

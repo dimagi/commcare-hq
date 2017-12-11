@@ -147,6 +147,8 @@ from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+import six
+from six.moves import map
 
 
 PAYMENT_ERROR_MESSAGES = {
@@ -817,7 +819,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 )),
             }
 
-        return map(_get_feature_info, plan_version.feature_rates.all())
+        return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
     @property
     def page_context(self):
@@ -1805,6 +1807,29 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
+class EmailOnDowngradeView(View):
+    urlname = "email_on_downgrade"
+
+    def post(self, request, *args, **kwargs):
+        message = '\n'.join([
+            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}.',
+            '',
+            'Note from user: {note}',
+        ]).format(
+            user=request.couch_user.username,
+            domain=request.domain,
+            old_plan=request.POST.get('old_plan', 'unknown'),
+            new_plan=request.POST.get('new_plan', 'unknown'),
+            note=request.POST.get('note', 'none'),
+        )
+
+        send_mail_async.delay(
+            'Subscription downgrade for {}'.format(request.domain),
+            message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
+        return json_response({'success': True})
+
+
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     template_name = 'domain/snapshot_settings.html'
     urlname = 'domain_snapshot_settings'
@@ -2015,7 +2040,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 share_reminders = True
 
             copy_by_id = set()
-            for k in request.POST.keys():
+            for k in request.POST:
                 if k.endswith("-publish"):
                     copy_by_id.add(k[:-len("-publish")])
 
@@ -2178,7 +2203,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         enable = request_json.get('enable')
         fuzzies_by_casetype = request_json.get('fuzzy_properties')
         updated_fuzzies = []
-        for case_type, properties in fuzzies_by_casetype.iteritems():
+        for case_type, properties in six.iteritems(fuzzies_by_casetype):
             fp, created = FuzzyProperties.objects.get_or_create(
                 domain=self.domain,
                 case_type=case_type
@@ -2188,7 +2213,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             updated_fuzzies.append(fp)
 
         unneeded_fuzzies = FuzzyProperties.objects.filter(domain=self.domain).exclude(
-            case_type__in=fuzzies_by_casetype.keys()
+            case_type__in=list(fuzzies_by_casetype)
         )
         unneeded_fuzzies.delete()
 
@@ -2443,7 +2468,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def _make_row(self, record):
         row = [
             self._make_state_label(record),
-            record.url if record.url else _(u'Unable to generate url for record'),
+            record.repeater.get_url(record) if record.repeater else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
             render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),
@@ -2503,6 +2528,8 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return {
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
+            'gefingerpoken': self.request.couch_user.is_superuser or
+                             toggles.IS_DEVELOPER.enabled(self.request.couch_user.username)
         }
 
 
@@ -2542,7 +2569,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, get_all_repeater_types().keys()
+                    self.repeater_type, list(get_all_repeater_types())
                 )
             )
 
@@ -2814,7 +2841,7 @@ def calculated_properties(request, domain):
     extra_arg = calc_tag[1] if len(calc_tag) > 1 else ''
     calc_tag = calc_tag[0]
 
-    if not calc_tag or calc_tag not in CALC_FNS.keys():
+    if not calc_tag or calc_tag not in list(CALC_FNS):
         data = {"error": 'This tag does not exist'}
     else:
         data = {"value": dom_calc(calc_tag, domain, extra_arg)}

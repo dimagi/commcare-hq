@@ -78,11 +78,11 @@ def catch_signal(sender, **kwargs):
     engine = connection_manager.get_engine('default')
 
     with engine.begin() as connection:
-        migration_context = get_migration_context(connection, table_pillow_map.keys())
+        migration_context = get_migration_context(connection, list(table_pillow_map))
         raw_diffs = compare_metadata(migration_context, fluff_metadata)
 
     diffs = reformat_alembic_diffs(raw_diffs)
-    tables_to_rebuild = get_tables_to_rebuild(diffs, table_pillow_map.keys())
+    tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_pillow_map))
 
     for table in tables_to_rebuild:
         info = table_pillow_map[table]

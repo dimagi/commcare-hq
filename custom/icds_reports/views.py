@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse
+from django.http.response import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
@@ -268,8 +268,13 @@ class ProgramSummaryView(View):
         step = kwargs.get('step')
 
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
+
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
 
         include_test = request.GET.get('include_test', False)
 
@@ -316,16 +321,22 @@ class PrevalenceOfUndernutritionView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+
+        selected_month = datetime(year, month, 1)
 
         include_test = request.GET.get('include_test', False)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -412,7 +423,7 @@ class LocationAncestorsView(View):
         parents = list(SQLLocation.objects.get_queryset_ancestors(
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
         ).distinct()) + list(selected_location.get_ancestors())
-        parent_ids = map(lambda x: x.pk, parents)
+        parent_ids = [x.pk for x in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(
@@ -446,8 +457,14 @@ class AwcReportsView(View):
         include_test = request.GET.get('include_test', False)
 
         now = datetime.utcnow()
+
         month_param = int(request.GET.get('month', now.month))
         year_param = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month_param and now.year == year_param:
+            month_param = (now - relativedelta(months=1)).month
+            year_param = now.year
+
         month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
         two_before = month - relativedelta(months=2)
@@ -513,9 +530,9 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary':
             if 'awc_id' in config:
-                start = request.GET.get('start', 0)
-                length = request.GET.get('length', 10)
-                draw = request.GET.get('draw', 0)
+                start = int(request.GET.get('start', 0))
+                length = int(request.GET.get('length', 10))
+                draw = int(request.GET.get('draw', 0))
 
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
@@ -535,8 +552,7 @@ class AwcReportsView(View):
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id'),
-                tuple(month.timetuple())[:3]
+                self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
 
@@ -555,7 +571,7 @@ class ExportIndicatorView(View):
             'aggregation_level': aggregation_level,
             'domain': self.kwargs['domain']
         }
-        beneficiary_config = {'domain': self.kwargs['domain']}
+        beneficiary_config = {'domain': self.kwargs['domain'], 'filters': request.POST.getlist('filter[]')}
 
         if month and year:
             beneficiary_config['month'] = date(year, month, 1)
@@ -564,6 +580,8 @@ class ExportIndicatorView(View):
             })
 
         location = request.POST.get('location', '')
+
+        sql_location = None
 
         if location:
             try:
@@ -574,10 +592,9 @@ class ExportIndicatorView(View):
                     config.update({
                         location_key: loc.location_id,
                     })
-                    if location_key == 'awc_id':
-                        beneficiary_config.update({
-                            location_key: loc.location_id
-                        })
+                    beneficiary_config.update({
+                        location_key: loc.location_id
+                    })
             except SQLLocation.DoesNotExist:
                 pass
 
@@ -612,11 +629,13 @@ class ExportIndicatorView(View):
                 show_test=include_test
             ).to_export(export_format, location)
         elif indicator == 6:
+            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
+                return HttpResponseBadRequest()
             return BeneficiaryExport(
                 config=beneficiary_config,
                 loc_level=aggregation_level,
                 show_test=include_test
-            ).to_export(export_format, location)
+            ).to_export('csv', location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -626,6 +645,11 @@ class FactSheetsView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+
         location = request.GET.get('location_id', None)
         aggregation_level = 1
 
@@ -657,14 +681,18 @@ class PrevalenceOfSevereView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -701,14 +729,18 @@ class PrevalenceOfStuntingView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -745,15 +777,19 @@ class NewbornsWithLowBirthWeightView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'month': tuple(selected_month.timetuple())[:3],
+            'aggregation_level': 1,
         }
 
         gender = self.request.GET.get('gender', None)
@@ -786,14 +822,18 @@ class EarlyInitiationBreastfeeding(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -825,14 +865,18 @@ class ExclusiveBreastfeedingView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -864,14 +908,18 @@ class ChildrenInitiatedView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -903,14 +951,18 @@ class InstitutionalDeliveriesView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -942,14 +994,18 @@ class ImmunizationCoverageView(View):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
         now = datetime.utcnow()
-        month = int(self.request.GET.get('month', now.month))
-        year = int(self.request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         gender = self.request.GET.get('gender', None)
@@ -979,7 +1035,7 @@ class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
         include_test = request.GET.get('include_test', False)
         step = kwargs.get('step')
-        now = datetime.utcnow() - relativedelta(day=1)
+        now = datetime.utcnow() - relativedelta(days=1)
 
         domain = self.kwargs['domain']
 
@@ -1013,12 +1069,16 @@ class AWCsCoveredView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1046,12 +1106,16 @@ class RegisteredHouseholdView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1079,12 +1143,16 @@ class EnrolledChildrenView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -1123,12 +1191,16 @@ class EnrolledWomenView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
@@ -1157,12 +1229,16 @@ class LactatingEnrolledWomenView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1190,12 +1266,16 @@ class AdolescentGirlsView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1223,12 +1303,16 @@ class AdhaarBeneficiariesView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1257,11 +1341,15 @@ class CleanWaterView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1290,12 +1378,16 @@ class FunctionalToiletView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1324,12 +1416,16 @@ class MedicineKitView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1358,12 +1454,16 @@ class InfantsWeightScaleView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
@@ -1392,12 +1492,16 @@ class AdultWeightScaleView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        test_date = datetime(year, month, 1)
+
+        if now.day == 1 and now.month == month and now.year == year:
+            month = (now - relativedelta(months=1)).month
+            year = now.year
+        selected_month = datetime(year, month, 1)
 
         domain = self.kwargs['domain']
 
         config = {
-            'month': tuple(test_date.timetuple())[:3],
+            'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')

@@ -10,6 +10,7 @@ from restkit import Resource
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.utils import force_seq_int
+from six.moves import filter
 
 EPSILON = 10000000
 
@@ -81,9 +82,9 @@ def get_celery_stats():
 def parse_celery_pings(worker_responses):
     pings = {}
     for worker in worker_responses:
-        assert len(worker.keys()) == 1
+        assert len(list(worker)) == 1
 
-        worker_fullname = worker.keys()[0]
+        worker_fullname = list(worker)[0]
         pings[worker_fullname] = worker[worker_fullname].get('ok') == 'pong'
     return pings
 
@@ -94,15 +95,15 @@ def parse_celery_workers(celery_workers):
     we expect to be running and a list of hosts we expect to be stopped
     """
     expect_stopped = []
-    expect_running = filter(
+    expect_running = list(filter(
         lambda hostname: not hostname.endswith('_timestamp'),
-        celery_workers.keys(),
-    )
+        celery_workers,
+    ))
 
-    timestamped_workers = filter(
+    timestamped_workers = list(filter(
         lambda hostname: hostname.endswith('_timestamp'),
-        celery_workers.keys(),
-    )
+        celery_workers,
+    ))
 
     def _strip_timestamp(hostname):
         return '.'.join(hostname.split('.')[:-1])

@@ -9,10 +9,7 @@
         {% compress css %}
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
         {% endcompress %}
-        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        {% include "hqwebapp/includes/jquery.html" %}
-        {% include 'hqwebapp/includes/core_libraries.html' %}
-        {% include "hqwebapp/includes/ko.html" %}
+        {% javascript_libraries ko=True %}
         <style>
             html, body {
                 height: 100%;

@@ -37,6 +37,10 @@ ENIKSHAY_ID = 'person_id'
 PERSON_FIRST_NAME = 'first_name'
 PERSON_LAST_NAME = 'last_name'
 
+PRIVATE_SECTOR = 'private'
+PUBLIC_SECTOR = 'public'
+SECTORS = (PRIVATE_SECTOR, PUBLIC_SECTOR)
+
 TREATMENT_START_DATE = 'treatment_initiation_date'
 TREATMENT_SUPPORTER_FIRST_NAME = 'treatment_supporter_first_name'
 TREATMENT_SUPPORTER_LAST_NAME = 'treatment_supporter_last_name'
@@ -188,6 +192,7 @@ AGENCY_USER_FIELDS = [
 ]
 
 AGENCY_LOCATION_FIELDS = [
+    ('nikshay_code', "Nikshay Code", []),
     ('private_sector_org_id', "Private Sector Org ID", []),
     ('nikshay_tu_id', "Nikshay TU id", []),
     ('facility_type', "Facility type", ["Hospital", "Doctor"]),
@@ -213,3 +218,7 @@ USERTYPE_DISPLAYS = {
 
 FDC_PRESCRIPTION_DAYS_THRESHOLD = 168
 NON_FDC_PRESCRIPTION_DAYS_THRESHOLD = 180
+
+DRUG_RESISTANCE_SENSITIVITY = "sensitivity"
+DRUG_RESISTANCE_SENSITIVITY_RESISTANT = "resistant"
+DRUG_RESISTANCE_SENSITIVITY_SENSITIVE = "sensitive"

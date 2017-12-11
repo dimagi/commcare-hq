@@ -131,7 +131,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             yield facet_dict.get(row_field_dict['_id'], 0)
 
         res = self.es_results
-        if res.has_key('error'):
+        if 'error' in res:
             pass
         else:
             #hack, do a facet query here

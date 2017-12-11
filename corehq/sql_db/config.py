@@ -6,7 +6,10 @@ from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
 
 from dimagi.utils.decorators.memoized import memoized
-from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError
+from six.moves import zip
+from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError, \
+    NoSuchShardDatabaseError
+from six.moves import range
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
@@ -88,6 +91,12 @@ class PartitionConfig(object):
         if not _is_power_of_2(num_shards):
             raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
 
+        self._num_shards = num_shards
+
+    @property
+    def num_shards(self):
+        return self._num_shards
+
     @property
     def partition_config(self):
         return settings.PARTITION_DATABASE_CONFIG
@@ -126,6 +135,16 @@ class PartitionConfig(object):
         host_map = self.partition_config.get('host_map', {})
         db_shards = self._get_django_shards()
         return [shard.to_shard_meta(host_map) for shard in db_shards]
+
+    @memoized
+    def get_shards_on_db(self, db):
+        """Given a database name, returns a list of the shard ids that are on that database"""
+        try:
+            shard_range = self.partition_config['shards'][db]
+        except KeyError:
+            raise NoSuchShardDatabaseError('No database {} found in shard config'.format(db))
+        else:
+            return list(range(shard_range[0], shard_range[1] + 1))
 
     @memoized
     def get_django_shard_map(self):

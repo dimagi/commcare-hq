@@ -6,6 +6,7 @@ from casexml.apps.case.mock import CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from ..tasks import EpisodeVoucherUpdate, EpisodeUpdater
 from .utils import ENikshayCaseStructureMixin, get_voucher_case_structure
+import six
 
 
 @patch('corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider', MagicMock())
@@ -107,7 +108,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             EpisodeUpdater(self.domain).run()
 
             episode = CaseAccessors(self.domain).get_case(self.cases['episode'].case_id)
-            self.assertEqual(episode.get_case_property("prescription_total_days"), unicode(29 + 11))
+            self.assertEqual(episode.get_case_property("prescription_total_days"), six.text_type(29 + 11))
 
             # test that a subsequent update performs a noop
             self.assertEqual(

@@ -123,6 +123,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                     placeholder: django.gettext('Calculation'),
                     duplicated: django.gettext('Calculation is duplicated'),
                     addButton: django.gettext('Add Image'),
+                    badXML: django.gettext('Calculation contains an invalid character.'),
                 };
             }
             else if (this.values_are_conditions()) {
@@ -130,6 +131,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                     placeholder: django.gettext('Calculation'),
                     duplicated: django.gettext('Calculation is duplicated'),
                     addButton: django.gettext('Add Key, Value Mapping'),
+                    badXML: django.gettext('Calculation contains an invalid character.'),
                 };
             }
             else {
@@ -137,6 +139,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                     placeholder: django.gettext('Key'),
                     duplicated: django.gettext('Key is duplicated'),
                     addButton: django.gettext('Add Key, Value Mapping'),
+                    badXML: django.gettext('Key contains an invalid character.'),
                 };
             }
         }, this);
@@ -191,6 +194,25 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
 
         self.isItemDuplicated = function(key) {
             return self.duplicatedItems.indexOf(key) !== -1;
+        };
+
+        self.hasBadXML = function(key) {
+            if (self.values_are_icons() || self.values_are_conditions()) {
+                // Expressions can contain whatever
+                return false;
+            }
+
+            // IDs shouldn't have invalid XML characters
+            return key.match(/[&<>"']/);
+        };
+
+        self.keyHasError = function(key) {
+            return self.isItemDuplicated(key) || self.hasBadXML(key);
+        };
+
+        self.hasError = function() {
+            return self.duplicatedItems().length > 0
+                || _.find(self.items(), function(i) { return self.hasBadXML(i.key()); });
         };
 
         self.getItems = function () {

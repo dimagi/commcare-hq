@@ -87,6 +87,8 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
+import six
+from six.moves import zip
 
 
 @no_conflict_require_POST
@@ -194,7 +196,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         form.actions.load_from_form = old_load_from_form
 
     for condition in (form.actions.open_case.condition, form.actions.close_case.condition):
-        if isinstance(condition.answer, basestring):
+        if isinstance(condition.answer, six.string_types):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
     if actions_use_usercase(form.actions):
@@ -236,7 +238,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form = app.get_form(form_unique_id)
     except FormNotFoundException as e:
         if ajax:
-            return HttpResponseBadRequest(unicode(e))
+            return HttpResponseBadRequest(six.text_type(e))
         else:
             messages.error(request, _("There was an error saving, please try again!"))
             return back_to_main(request, domain, app_id=app_id)
@@ -265,7 +267,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 xform = request.POST.get('xform')
             else:
                 try:
-                    xform = unicode(xform, encoding="utf-8")
+                    xform = six.text_type(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
             if request.POST.get('cleanup', False):
@@ -284,9 +286,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
             if ajax:
-                return HttpResponseBadRequest(unicode(e))
+                return HttpResponseBadRequest(six.text_type(e))
             else:
-                messages.error(request, unicode(e))
+                messages.error(request, six.text_type(e))
     if should_edit("references") or should_edit("case_references"):
         form.case_references = _get_case_references(request.POST)
     if should_edit("show_count"):
@@ -536,11 +538,11 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             except CaseError as e:
                 messages.error(request, u"Error in Case Management: %s" % e)
             except XFormException as e:
-                messages.error(request, unicode(e))
+                messages.error(request, six.text_type(e))
             except Exception as e:
                 if settings.DEBUG:
                     raise
-                logging.exception(unicode(e))
+                logging.exception(six.text_type(e))
                 messages.error(request, u"Unexpected Error: %s" % e)
 
     try:
@@ -613,7 +615,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'form_icon': None,
     }
 
-    if add_ons.show("custom_icon_badges", request, form.get_app()):
+    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
@@ -623,7 +625,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             star = '* ' if auto_link else '  '
             return u"{}{} -> {}".format(star, module_name, form_name)
 
-        modules = filter(lambda m: m.case_type == module.case_type, all_modules)
+        modules = [m for m in all_modules if m.case_type == module.case_type]
         if getattr(module, 'root_module_id', None) and module.root_module not in modules:
             modules.append(module.root_module)
         auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))

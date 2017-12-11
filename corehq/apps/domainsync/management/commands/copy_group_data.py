@@ -155,7 +155,7 @@ class Command(BaseCommand):
         ).all()
 
         role_ids = set([])
-        for user in filter(lambda u: u is not None, users):
+        for user in [u for u in users if u is not None]:
             # if we use bulk save, django user doesn't get sync'd
             domain_membership = user.get_domain_membership(domain.name)
             if domain_membership and domain_membership.role_id:

@@ -26,13 +26,16 @@ def get_report_configs_for_domain(domain):
     )
 
 
-def get_datasources_for_domain(domain):
+def get_datasources_for_domain(domain, referenced_doc_type=None):
     from corehq.apps.userreports.models import DataSourceConfiguration
+    key = [domain]
+    if referenced_doc_type:
+        key.append(referenced_doc_type)
     return sorted(
         DataSourceConfiguration.view(
             'userreports/data_sources_by_build_info',
-            start_key=[domain],
-            end_key=[domain, {}],
+            start_key=key,
+            end_key=key + [{}],
             reduce=False,
             include_docs=True
         ),

@@ -6,10 +6,11 @@ from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequ
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
+from iso8601 import iso8601
 
-from casexml.apps.phone.exceptions import InvalidSyncLogException
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.utils import bucket_value
+
+from corehq.apps.domain.auth import BASIC
+from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -28,7 +29,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
@@ -36,12 +37,13 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from .models import SerialIdBucket
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
-    handle_401_response, update_device_id)
+    handle_401_response)
+from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
 
 
 @location_safe
 @handle_401_response
-@login_or_digest_or_basic_or_apikey_or_token()
+@login_or_digest_or_basic_or_apikey_or_token(default=BASIC)
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
@@ -193,14 +195,21 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse(message, status=401), None
 
     couch_restore_user = as_user_obj if uses_login_as else couch_user
-    update_device_id(couch_restore_user, device_id)
+    app = app_meta = None
+    if app_id:
+        app = get_app(domain, app_id)
+        app_meta = DeviceAppMeta(
+            app_id=app.master_id,
+            build_id=app_id if app.copy_of else None,
+            last_sync=datetime.utcnow(),
+        )
+    update_device_meta(couch_restore_user, device_id, device_app_meta=app_meta)
 
     restore_user = get_restore_user(domain, couch_user, as_user_obj)
     if not restore_user:
         return HttpResponse('Could not find user', status=404), None
 
     project = Domain.get_by_name(domain)
-    app = get_app(domain, app_id) if app_id else None
     async_restore_enabled = (
         toggles.ASYNC_RESTORE.enabled(domain)
         and openrosa_version
@@ -226,51 +235,80 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         async=async_restore_enabled,
         case_sync=case_sync,
     )
-    _log_time_since_last_sync(restore_config)
     return restore_config.get_response(), restore_config.timing_context
-
-
-def _log_time_since_last_sync(restore_config):
-    try:
-        last_sync = restore_config.restore_state.last_sync_log
-    except InvalidSyncLogException:
-        return
-
-    if not last_sync or not last_sync.date:
-        bucket = 'initial'
-    else:
-        time_since = datetime.utcnow() - last_sync.date
-        days_since = time_since.total_seconds() / 86400.0
-        bucket = bucket_value(days_since, buckets=(2, 7, 14, 28), unit='d')
-
-    datadog_counter('commcare.restore.sync_interval', tags=[
-        'days_since_last:%s' % bucket
-    ])
 
 
 @login_or_digest_or_basic_or_apikey()
 @require_GET
-def heartbeat(request, domain, hq_app_id):
+def heartbeat(request, domain, app_build_id):
     """
     An endpoint for CommCare mobile to get latest CommCare APK and app version
         info. (Should serve from cache as it's going to be busy view)
 
-    'hq_app_id' (that comes from URL) can be id of any version of the app
+    'app_build_id' (that comes from URL) can be id of any version of the app
     'app_id' (urlparam) is usually id of an app that is not a copy
         mobile simply needs it to be resent back in the JSON, and doesn't
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
-    url_param_app_id = request.GET.get('app_id', '')
-    info = {"app_id": url_param_app_id}
+    def _safe_int(val):
+        try:
+            return int(val)
+        except:
+            pass
+
+    app_id = request.GET.get('app_id', '')
+
+    info = {"app_id": app_id}
     try:
         # mobile will send brief_app_id
-        info.update(LatestAppInfo(url_param_app_id, domain).get_info())
+        info.update(LatestAppInfo(app_id, domain).get_info())
     except (Http404, AssertionError):
         # If it's not a valid 'brief' app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
-        app = get_app(domain, hq_app_id)
+        app = get_app(domain, app_build_id)
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
+
+    # disable this for now since it's causing doc update conflicts
+    # https://sentry.io/dimagi/commcarehq/issues/410593323/?environment=icds
+    # else:
+    #     app_version = _safe_int(request.GET.get('app_version', ''))
+    #     device_id = request.GET.get('device_id', '')
+    #     last_sync_time = request.GET.get('last_sync_time', '')
+    #     num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
+    #     num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
+    #     commcare_version = request.GET.get('cc_version', '')
+    #
+    #     couch_user = request.couch_user
+    #     save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
+    #     try:
+    #         last_sync = adjust_text_to_datetime(last_sync_time)
+    #     except iso8601.ParseError:
+    #         last_sync = None
+    #     else:
+    #         save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
+    #
+    #     app_meta = DeviceAppMeta(
+    #         app_id=app_id,
+    #         build_id=app_build_id,
+    #         build_version=app_version,
+    #         last_heartbeat=datetime.utcnow(),
+    #         last_sync=last_sync,
+    #         num_unsent_forms=num_unsent_forms,
+    #         num_quarantined_forms=num_quarantined_forms
+    #     )
+    #     save_user |= update_device_meta(
+    #         couch_user,
+    #         device_id,
+    #         commcare_version=commcare_version,
+    #         device_app_meta=app_meta,
+    #         save=False
+    #     )
+    #
+    #     if save_user:
+    #         couch_user.save(fire_signals=False)
+    from corehq.apps.users.models import log_user_save
+    log_user_save('single', request.couch_user)
 
     return JsonResponse(info)
 

@@ -29,6 +29,8 @@ from .const import (
     PRIVATE_SECTOR_WORKER_ROLE,
 )
 from .models import AgencyIdCounter, IssuerId
+from six.moves import range
+from six.moves import map
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -124,7 +126,7 @@ def get_site_code(name, nikshay_code, type_code, parent):
         return slugify(re.sub(r'\s+', '_', word))
 
     nikshay_code = code_ify(nikshay_code)
-    if nikshay_code in map(str, range(0, 10)):
+    if nikshay_code in list(map(str, list(range(0, 10)))):
         nikshay_code = "0{}".format(nikshay_code)
 
     parent_site_code = parent.site_code
@@ -355,7 +357,7 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
         return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
 
-class ENikshayUserLocationDataEditor(CustomDataEditor):
+class ENikshayLocationDataEditor(CustomDataEditor):
     """Custom Location Data on Virtual Location User (agency) creation"""
 
     @property
@@ -372,7 +374,10 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
         ]
 
     def init_form(self, post_dict=None):
-        form = super(ENikshayUserLocationDataEditor, self).init_form(post_dict)
+        form = super(ENikshayLocationDataEditor, self).init_form(post_dict)
+        if not self.required_only:
+            # This is an edit page, not an agency creation page
+            return form
         fields_to_loc_types = {
             'facility_type': 'pcp',
             'plc_hf_if_nikshay': 'plc',
@@ -406,7 +411,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
                     ('18', "WHP-AMC"),
                 ],
             )
-        return super(ENikshayUserLocationDataEditor, self)._make_field(field)
+        return super(ENikshayLocationDataEditor, self)._make_field(field)
 
 
 class ENikshayLocationForm(LocationForm):
@@ -442,7 +447,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = ENikshayLocationForm
-    _location_data_editor = ENikshayUserLocationDataEditor
+    _location_data_editor = ENikshayLocationDataEditor
     _user_data_editor = ENikshayLocationUserDataEditor
 
     @property

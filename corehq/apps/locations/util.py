@@ -15,6 +15,7 @@ from couchexport.writers import Excel2007ExportWriter
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 
 from soil.util import get_download_file_path, expose_download
+import six
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         user=None, only_administrative=False):
@@ -107,7 +108,7 @@ def parent_child(domain):
     child types
     """
     return map_reduce(lambda k_v: [(p, k_v[0]) for p in k_v[1]],
-                      data=dict(location_hierarchy_config(domain)).iteritems())
+                      data=six.iteritems(dict(location_hierarchy_config(domain))))
 
 
 @quickcache(['domain'], timeout=60)
@@ -187,7 +188,7 @@ class LocationExporter(object):
             model_data, uncategorized_data = \
                 self.data_model.get_model_and_uncategorized(loc.metadata)
 
-            uncategorized_keys.update(uncategorized_data.keys())
+            uncategorized_keys.update(uncategorized_data)
 
             loc_dict = {
                 'location_id': loc.location_id,

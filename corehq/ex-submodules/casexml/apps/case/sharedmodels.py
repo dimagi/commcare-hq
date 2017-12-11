@@ -6,6 +6,7 @@ from dimagi.ext.couchdbkit import StringProperty, IntegerProperty, DictProperty
 
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+import six
 
 
 """
@@ -56,7 +57,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
         ).format(index=self)
 
     def __cmp__(self, other):
-        return cmp(unicode(self), unicode(other))
+        return cmp(six.text_type(self), six.text_type(other))
 
     def __repr__(self):
         return str(self)
@@ -105,14 +106,14 @@ class IndexHoldingMixIn(object):
         return id in (i.identifier for i in self.indices)
     
     def get_index(self, id):
-        found = filter(lambda i: i.identifier == id, self.indices)
+        found = [i for i in self.indices if i.identifier == id]
         if found:
             assert(len(found) == 1)
             return found[0]
         return None
     
     def get_index_by_ref_id(self, doc_id):
-        found = filter(lambda i: i.referenced_id == doc_id, self.indices)
+        found = [i for i in self.indices if i.referenced_id == doc_id]
         if found:
             assert(len(found) == 1)
             return found[0]

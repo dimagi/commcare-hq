@@ -7,6 +7,8 @@ from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.util import format_datatables_data
 import six
+from functools import reduce
+from six.moves import range
 
 __all__ = ['Column', 'BasicTabularReport']
 
@@ -103,8 +105,7 @@ class ColumnCollector(type):
         return super(ColumnCollector, cls).__new__(cls, name, bases, attrs)
 
 
-class BasicTabularReport(GenericTabularReport):
-    __metaclass__ = ColumnCollector
+class BasicTabularReport(six.with_metaclass(ColumnCollector, GenericTabularReport)):
     update_after = False
 
     @property

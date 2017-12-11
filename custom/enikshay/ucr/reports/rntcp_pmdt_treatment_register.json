@@ -99,6 +99,15 @@
                 "field": "close_reason",
                 "type": "pre",
                 "slug": "close_reason3"
+            },
+            {
+                "pre_value": "duplicate_reconciliation",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason4"
             }
         ],
         "columns": [

@@ -11,6 +11,7 @@ from corehq.const import USER_MONTH_FORMAT
 from dimagi.utils.decorators.memoized import memoized
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
+from six.moves import range
 
 
 class HealthCoordinatorReport(MVPIndicatorReport):
