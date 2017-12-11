@@ -10,7 +10,6 @@ from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
-import six
 
 # The functionality below to create a simple wrapped XForm is used in production code (repeaters) and so is
 # not in the test utils
@@ -164,3 +163,13 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def resave_form(domain, form):
+    from corehq.form_processor.utils import should_use_sql_backend
+    from corehq.form_processor.change_publishers import publish_form_saved
+    from couchforms.models import XFormInstance
+    if should_use_sql_backend(domain):
+        publish_form_saved(form)
+    else:
+        XFormInstance.get_db().save_doc(form.to_json())
