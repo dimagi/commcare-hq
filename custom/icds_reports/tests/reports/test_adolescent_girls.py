@@ -11,6 +11,14 @@ from django.test import TestCase
 class TestAdolescentGirls(TestCase):
 
     def test_map_data(self):
+        print get_adolescent_girls_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
+                },
+                loc_level='state'
+            )[0]
         self.assertDictEqual(
             get_adolescent_girls_data_map(
                 'icds-cas',
@@ -24,7 +32,26 @@ class TestAdolescentGirls(TestCase):
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
                     "average": 23.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': (
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                            ),
+                            'value': 47
+                        },
+                        {
+                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
+                            'value': 47
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered adolescent girls (11 - 18 years) '
+                                'who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Adolescent Girls": "#006fdf",
@@ -65,7 +92,26 @@ class TestAdolescentGirls(TestCase):
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
                     "average": 11.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': (
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                            ),
+                            'value': 22
+                        },
+                        {
+                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
+                            'value': 22
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered adolescent girls (11 - 18 years) '
+                                'who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Adolescent Girls": "#006fdf",

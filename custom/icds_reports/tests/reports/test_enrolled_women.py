@@ -24,7 +24,23 @@ class TestEnrolledWomen(TestCase):
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
                     "average": 77.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': 155
+                        },
+                        {
+                            'indicator': 'Total number of pregnant women who are registered:',
+                            'value': 155
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",
@@ -65,7 +81,23 @@ class TestEnrolledWomen(TestCase):
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
                     "average": 35.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': 70
+                        },
+                        {
+                            'indicator': 'Total number of pregnant women who are registered:',
+                            'value': 70
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",

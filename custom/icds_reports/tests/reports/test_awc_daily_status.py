@@ -24,7 +24,12 @@ class TestAWCDailyStatus(TestCase):
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",
                     "average": 0.0,
-                    "period": "Daily"
+                    "period": "Daily",
+                    'extended_info': [
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': 19},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': 0},
+                        {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
+                    ]
                 },
                 "fills": {
                     "0%-50%": "#de2d26",
@@ -67,7 +72,12 @@ class TestAWCDailyStatus(TestCase):
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",
                     "average": 0.0,
-                    "period": "Daily"
+                    "period": "Daily",
+                    'extended_info': [
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': 8},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': 0},
+                        {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
+                    ]
                 },
                 "fills": {
                     "0%-50%": "#de2d26",
