@@ -463,11 +463,14 @@ h4 {
     align-content: center;
 }
 
-.kpi-percents {
+.kpi-justify-center {
     width: 100%;
     display: flex;
-    position: relative;
     justify-content: center;
+}
+
+.kpi-percents {
+    position: relative;
     align-items: center;
 }
 
@@ -475,12 +478,6 @@ h4 {
     display: flex;
     position: absolute;
     align-items: center;
-}
-
-.kpi-justify-center {
-    width: 100%;
-    display: flex;
-    justify-content: center;
 }
 
 .kpi-numbers-format {
