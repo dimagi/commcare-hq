@@ -16,9 +16,6 @@ from custom.enikshay.const import (
     PRIVATE_SECTOR,
     PUBLIC_SECTOR,
     SECTORS,
-    TREATMENT_SUPPORTER_FIRST_NAME,
-    TREATMENT_SUPPORTER_LAST_NAME,
-    TREATMENT_SUPPORTER_PHONE,
 )
 from custom.enikshay.integrations.ninetyninedots.const import (
     MERM_DAILY_REMINDER_STATUS,
