@@ -290,9 +290,6 @@ def save_document(doc_ids):
     timer = TimingContext()
     with CriticalSection(lock_keys):
         indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
-        # proactive method: also grab related doc ids from AsyncIndicator and get their locks
-        # note: these only be rebuilt if they are also in the queue
-        # question: What happens if these child docs are being processed by another queue?
         if not indicators:
             return
 
