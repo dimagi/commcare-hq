@@ -20,7 +20,7 @@ hqDefine('analytix/js/drift', [
     var _get = initialAnalytics.getFn('drift'),
         _drift = {},
         _logger,
-        _ready;
+        _ready; // eslint-disable-line no-unused-vars
 
     $(function () {
         var apiId = _get('apiId'),
