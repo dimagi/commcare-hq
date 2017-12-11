@@ -32,7 +32,6 @@ class Command(BaseCommand):
         print("Top 50 functions by cumulative time\n")
         p.print_stats(50)
 
-        p.sort_stats('time')
         print("Specs timing\n")
         p.print_stats('userreports.*specs.*\(__call__\)')
 
