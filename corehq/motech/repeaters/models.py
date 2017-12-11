@@ -602,6 +602,11 @@ class RepeatRecord(Document):
         for i, attempt in enumerate(self.attempts):
             yield i + 1, attempt
 
+    def postpone_by(self, duration):
+        self.last_checked = datetime.utcnow()
+        self.next_check = self.last_checked + duration
+        self.save()
+
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.

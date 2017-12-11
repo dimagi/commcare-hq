@@ -853,26 +853,28 @@ class TestRepeaterPause(BaseRepeaterTest):
     def test_trigger_when_paused(self):
         # not paused
         with patch.object(RepeatRecord, 'fire') as mock_fire:
-            process_repeat_record(self.repeat_record)
-            self.assertEqual(mock_fire.call_count, 1)
+            with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
+                process_repeat_record(self.repeat_record)
+                self.assertEqual(mock_fire.call_count, 1)
+                self.assertEqual(mock_postpone_fire.call_count, 0)
 
-        # paused
-        self.repeater.pause()
-        # re fetch repeat record
-        repeat_record_id = self.repeat_record.get_id
-        self.repeat_record = RepeatRecord.get(repeat_record_id)
-        with patch.object(RepeatRecord, 'fire') as mock_fire:
-            process_repeat_record(self.repeat_record)
-            self.assertEqual(mock_fire.call_count, 0)
+                # paused
+                self.repeater.pause()
+                # re fetch repeat record
+                repeat_record_id = self.repeat_record.get_id
+                self.repeat_record = RepeatRecord.get(repeat_record_id)
+                process_repeat_record(self.repeat_record)
+                self.assertEqual(mock_fire.call_count, 1)
+                self.assertEqual(mock_postpone_fire.call_count, 1)
 
-        # resumed
-        self.repeater.resume()
-        # re fetch repeat record
-        repeat_record_id = self.repeat_record.get_id
-        self.repeat_record = RepeatRecord.get(repeat_record_id)
-        with patch.object(RepeatRecord, 'fire') as mock_fire:
-            process_repeat_record(self.repeat_record)
-            self.assertEqual(mock_fire.call_count, 1)
+                # resumed
+                self.repeater.resume()
+                # re fetch repeat record
+                repeat_record_id = self.repeat_record.get_id
+                self.repeat_record = RepeatRecord.get(repeat_record_id)
+                process_repeat_record(self.repeat_record)
+                self.assertEqual(mock_fire.call_count, 2)
+                self.assertEqual(mock_postpone_fire.call_count, 1)
 
     def tearDown(self):
         self.domain.delete()

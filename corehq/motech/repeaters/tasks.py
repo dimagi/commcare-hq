@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from datetime import datetime
+from datetime import datetime, timedelta
 from celery.schedules import crontab
 from couchdbkit import ResourceNotFound
 
@@ -77,6 +77,9 @@ def process_repeat_record(repeat_record):
 
     try:
         if repeat_record.repeater.paused:
+            # postpone repeat record by 1 hour so that these don't get picked in each cycle and
+            # thus clogging the queue with repeat records with paused repeater
+            repeat_record.postpone_by(timedelta(hours=1))
             return
         if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
