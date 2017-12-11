@@ -5,7 +5,8 @@ from django.test import override_settings
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 
 from ..const import UCR_SQL_BACKEND
-from ..models import DataSourceConfiguration, ReportConfiguration
+from ..models import (DataSourceConfiguration, ReportConfiguration,
+                      DynamicAggregation, DynamicAggregationColumn)
 from ..reports.view import ConfigurableReport
 from ..tasks import rebuild_indicators
 from ..tests.test_view import ConfigurableReportTestMixin
@@ -130,7 +131,15 @@ class TestReportLocationAggregationSQL(ConfigurableReportTestMixin, LocationHier
             domain=self.domain,
             config_id=self.data_source._id,
             title='foo',
-            aggregation_columns=["county_id"],
+            aggregation_columns=["doc_id"],
+            dynamic_aggregation=DynamicAggregation(
+                display="Select a location to group by",
+                fields=[
+                    DynamicAggregationColumn(display="State", field='state_id'),
+                    DynamicAggregationColumn(display="County", field='county_id'),
+                    DynamicAggregationColumn(display="City", field='city_id'),
+                ],
+            ),
             columns=[
                 {
                     "type": "field",

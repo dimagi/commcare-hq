@@ -394,6 +394,16 @@ class ReportMeta(DocumentSchema):
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
 
 
+class DynamicAggregationColumn(DocumentSchema):
+    display = StringProperty()
+    field = StringProperty(required=True)
+
+
+class DynamicAggregation(DocumentSchema):
+    display = StringProperty()
+    fields = SchemaListProperty(DynamicAggregationColumn)
+
+
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     A report configuration. These map 1:1 with reports that show up in the UI.
@@ -404,6 +414,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
+    dynamic_aggregation = SchemaProperty(DynamicAggregation)
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
