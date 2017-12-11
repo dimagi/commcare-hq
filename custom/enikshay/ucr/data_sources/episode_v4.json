@@ -913,7 +913,7 @@
             },
             {
                 "display_name": "doses_per_week",
-                "datatype": "date",
+                "datatype": "integer",
                 "type": "expression",
                 "is_primary_key": false,
                 "transform": {
