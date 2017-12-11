@@ -5,8 +5,7 @@ from corehq.apps.domain.auth import BASIC
 from corehq.util.datadog.utils import count_by_response_code
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
-from corehq.apps.domain.decorators import (login_or_digest_or_basic_or_apikey, domain_admin_required,
-                                           login_or_mobile_or_basic_or_apikey)
+from corehq.apps.domain.decorators import api_auth, domain_admin_required, mobile_auth
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload, bump_expiry
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
 from corehq.apps.users.util import update_device_meta
@@ -63,7 +62,7 @@ class FetchKeyRecords(object):
         )
 
 
-@login_or_mobile_or_basic_or_apikey
+@mobile_auth
 @require_GET
 @count_by_response_code('commcare.auth_keys.fetch.count')
 def fetch_key_records(request, domain):
@@ -76,7 +75,7 @@ def fetch_key_records(request, domain):
     return HttpResponse(payload)
 
 
-@login_or_digest_or_basic_or_apikey
+@api_auth
 @domain_admin_required
 @require_GET
 def admin_fetch_key_records(request, domain):

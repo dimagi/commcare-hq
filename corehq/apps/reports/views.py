@@ -107,7 +107,7 @@ from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    login_or_digest_or_basic_or_apikey,
+    api_auth,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
@@ -534,7 +534,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey
+@api_auth
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
@@ -544,7 +544,7 @@ def hq_download_saved_export(req, domain, export_id):
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey
+@api_auth
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):
