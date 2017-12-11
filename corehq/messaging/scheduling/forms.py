@@ -23,7 +23,7 @@ from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
 from dimagi.utils.django.fields import TrimmedCharField
-from django.utils.translation import ugettext_lazy as _, ugettext
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
@@ -102,31 +102,31 @@ class ScheduleForm(Form):
 
     send_frequency = ChoiceField(
         required=True,
-        label=_('Send'),
+        label=ugettext_lazy('Send'),
         choices=(
-            (SEND_IMMEDIATELY, _('Immediately')),
-            (SEND_DAILY, _('Daily')),
-            (SEND_WEEKLY, _('Weekly')),
-            (SEND_MONTHLY, _('Monthly')),
+            (SEND_IMMEDIATELY, ugettext_lazy('Immediately')),
+            (SEND_DAILY, ugettext_lazy('Daily')),
+            (SEND_WEEKLY, ugettext_lazy('Weekly')),
+            (SEND_MONTHLY, ugettext_lazy('Monthly')),
         )
     )
     weekdays = MultipleChoiceField(
         required=False,
-        label=_('On'),
+        label=ugettext_lazy('On'),
         choices=(
-            ('6', _('Sunday')),
-            ('0', _('Monday')),
-            ('1', _('Tuesday')),
-            ('2', _('Wednesday')),
-            ('3', _('Thursday')),
-            ('4', _('Friday')),
-            ('5', _('Saturday')),
+            ('6', ugettext_lazy('Sunday')),
+            ('0', ugettext_lazy('Monday')),
+            ('1', ugettext_lazy('Tuesday')),
+            ('2', ugettext_lazy('Wednesday')),
+            ('3', ugettext_lazy('Thursday')),
+            ('4', ugettext_lazy('Friday')),
+            ('5', ugettext_lazy('Saturday')),
         ),
         widget=CheckboxSelectMultiple()
     )
     days_of_month = MultipleChoiceField(
         required=False,
-        label=_('On Days'),
+        label=ugettext_lazy('On Days'),
         choices=(
             # The actual choices are rendered by a template
             tuple((str(x), '') for x in range(-3, 0)) +
@@ -139,7 +139,7 @@ class ScheduleForm(Form):
         choices=(
             # The text for STOP_AFTER_OCCURRENCES gets set dynamically
             (STOP_AFTER_OCCURRENCES, ''),
-            (STOP_NEVER, _('Never')),
+            (STOP_NEVER, ugettext_lazy('Never')),
         )
     )
     occurrences = IntegerField(
@@ -149,42 +149,41 @@ class ScheduleForm(Form):
     )
     recipient_types = MultipleChoiceField(
         required=True,
-        label=_('Recipient(s)'),
+        label=ugettext_lazy('Recipient(s)'),
         choices=(
-            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, _("Users")),
-            (ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
-            (ScheduleInstance.RECIPIENT_TYPE_LOCATION, _("User Organizations")),
-            (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, ugettext_lazy("Users")),
+            (ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, ugettext_lazy("User Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_LOCATION, ugettext_lazy("User Organizations")),
+            (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, ugettext_lazy("Case Groups")),
         )
     )
     user_recipients = RecipientField(
         required=False,
-        label=_("User Recipient(s)"),
+        label=ugettext_lazy("User Recipient(s)"),
     )
     user_group_recipients = RecipientField(
         required=False,
-        label=_("User Group Recipient(s)"),
+        label=ugettext_lazy("User Group Recipient(s)"),
     )
     user_organization_recipients = RecipientField(
         required=False,
-        label=_("User Organization Recipient(s)"),
+        label=ugettext_lazy("User Organization Recipient(s)"),
     )
     include_descendant_locations = BooleanField(
         required=False,
-        label=_("Also send to users at child locations"),
+        label=ugettext_lazy("Also send to users at child locations"),
     )
     case_group_recipients = RecipientField(
         required=False,
-        label=_("Case Group Recipient(s)"),
+        label=ugettext_lazy("Case Group Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
-        label=_("What to send"),
+        label=ugettext_lazy("What to send"),
         choices=(
-            (CONTENT_SMS, _('SMS')),
-            # (CONTENT_EMAIL, _('Email')),
-            # (CONTENT_SMS_SURVEY, _('SMS Survey')),
-            # (CONTENT_IVR_SURVEY, _('IVR Survey')),
+            (CONTENT_SMS, ugettext_lazy('SMS')),
+            # (CONTENT_EMAIL, ugettext_lazy('Email')),
+            # (CONTENT_SMS_SURVEY, ugettext_lazy('SMS Survey')),
         )
     )
     message = CharField(
@@ -193,7 +192,7 @@ class ScheduleForm(Form):
     )
     default_language_code = ChoiceField(
         required=True,
-        label=_("Default Language"),
+        label=ugettext_lazy("Default Language"),
     )
 
     def update_send_frequency_choices(self, initial_value):
@@ -209,11 +208,11 @@ class ScheduleForm(Form):
 
     def set_default_language_code_choices(self):
         choices = [
-            (self.LANGUAGE_PROJECT_DEFAULT, ugettext("Project Default")),
+            (self.LANGUAGE_PROJECT_DEFAULT, _("Project Default")),
         ]
 
         choices.extend([
-            (language_code, ugettext(get_language_name(language_code)))
+            (language_code, _(get_language_name(language_code)))
             for language_code in self.language_list
         ])
 
@@ -341,19 +340,19 @@ class ScheduleForm(Form):
     def get_layout_fields(self):
         return [
             crispy.Fieldset(
-                ugettext("Scheduling"),
+                _("Scheduling"),
                 *self.get_scheduling_layout_fields()
             ),
             crispy.Fieldset(
-                ugettext("Recipients"),
+                _("Recipients"),
                 *self.get_recipients_layout_fields()
             ),
             crispy.Fieldset(
-                ugettext("Content"),
+                _("Content"),
                 *self.get_content_layout_fields()
             ),
             crispy.Fieldset(
-                ugettext("Advanced"),
+                _("Advanced"),
                 *self.get_advanced_layout_fields()
             ),
         ]
@@ -375,7 +374,7 @@ class ScheduleForm(Form):
                 data_bind='visible: showWeekdaysInput',
             ),
             hqcrispy.B3MultiField(
-                ugettext("On Days"),
+                _("On Days"),
                 crispy.Field(
                     'days_of_month',
                     template='scheduling/partial/days_of_month_picker.html',
@@ -388,7 +387,7 @@ class ScheduleForm(Form):
 
         result.extend([
             hqcrispy.B3MultiField(
-                ugettext("Stop"),
+                _("Stop"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'stop_type',
@@ -410,7 +409,7 @@ class ScheduleForm(Form):
                 "",
                 crispy.HTML(
                     '<span>%s</span> <span data-bind="text: computedEndDate"></span>'
-                    % ugettext("Date of final occurrence:"),
+                    % _("Date of final occurrence:"),
                 ),
                 data_bind="visible: computedEndDate() !== ''",
             ),
@@ -421,7 +420,7 @@ class ScheduleForm(Form):
     def get_recipients_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
-                ugettext("Recipient(s)"),
+                _("Recipient(s)"),
                 crispy.Field(
                     'recipient_types',
                     template='scheduling/partial/recipient_types_picker.html',
@@ -466,7 +465,7 @@ class ScheduleForm(Form):
         return [
             crispy.Field('content'),
             hqcrispy.B3MultiField(
-                ugettext("Message"),
+                _("Message"),
                 crispy.Field(
                     'message',
                     data_bind='value: message.messagesJSONString',
@@ -727,11 +726,11 @@ class ScheduleForm(Form):
             return cleaned_value
 
         if len(cleaned_value) == 0:
-            raise ValidationError(ugettext("This field is required"))
+            raise ValidationError(_("This field is required"))
 
         for expected_language_code in self.language_list:
             if not cleaned_value.get(expected_language_code):
-                raise ValidationError(ugettext("Please fill out all translations"))
+                raise ValidationError(_("Please fill out all translations"))
 
         return cleaned_value
 
@@ -909,7 +908,7 @@ class BroadcastForm(ScheduleForm):
 
     schedule_name = CharField(
         required=True,
-        label=_('Schedule Name'),
+        label=ugettext_lazy('Schedule Name'),
         max_length=1000,
     )
 
@@ -938,7 +937,7 @@ class BroadcastForm(ScheduleForm):
     def get_timing_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
-                ugettext("At"),
+                _("At"),
                 crispy.Field(
                     'send_time',
                     template='scheduling/partial/time_picker.html',
@@ -946,7 +945,7 @@ class BroadcastForm(ScheduleForm):
                 data_bind='visible: showTimeInput',
             ),
             hqcrispy.B3MultiField(
-                ugettext("Start"),
+                _("Start"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'start_date',
@@ -1059,15 +1058,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     send_time_type = ChoiceField(
         required=True,
         choices=(
-            (SEND_TIME_SPECIFIC_TIME, _("A specific time")),
+            (SEND_TIME_SPECIFIC_TIME, ugettext_lazy("A specific time")),
         )
     )
 
     start_date_type = ChoiceField(
         required=True,
         choices=(
-            (START_DATE_RULE_TRIGGER, _("The date the rule is satisfied")),
-            (START_DATE_CASE_PROPERTY, _("The date from case property: ")),
+            (START_DATE_RULE_TRIGGER, ugettext_lazy("The date the rule is satisfied")),
+            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property: ")),
         )
     )
 
@@ -1079,9 +1078,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     start_offset_type = ChoiceField(
         required=False,
         choices=(
-            (START_OFFSET_ZERO, _("Exactly on the start date")),
-            (START_OFFSET_NEGATIVE, _("Before the start date by")),
-            (START_OFFSET_POSITIVE, _("After the start date by")),
+            (START_OFFSET_ZERO, ugettext_lazy("Exactly on the start date")),
+            (START_OFFSET_NEGATIVE, ugettext_lazy("Before the start date by")),
+            (START_OFFSET_POSITIVE, ugettext_lazy("After the start date by")),
         )
     )
 
@@ -1094,13 +1093,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     start_day_of_week = ChoiceField(
         required=False,
         choices=(
-            ('6', _('The first Sunday that occurs on or after the start date')),
-            ('0', _('The first Monday that occurs on or after the start date')),
-            ('1', _('The first Tuesday that occurs on or after the start date')),
-            ('2', _('The first Wednesday that occurs on or after the start date')),
-            ('3', _('The first Thursday that occurs on or after the start date')),
-            ('4', _('The first Friday that occurs on or after the start date')),
-            ('5', _('The first Saturday that occurs on or after the start date')),
+            ('6', ugettext_lazy('The first Sunday that occurs on or after the start date')),
+            ('0', ugettext_lazy('The first Monday that occurs on or after the start date')),
+            ('1', ugettext_lazy('The first Tuesday that occurs on or after the start date')),
+            ('2', ugettext_lazy('The first Wednesday that occurs on or after the start date')),
+            ('3', ugettext_lazy('The first Thursday that occurs on or after the start date')),
+            ('4', ugettext_lazy('The first Friday that occurs on or after the start date')),
+            ('5', ugettext_lazy('The first Saturday that occurs on or after the start date')),
         ),
     )
 
@@ -1115,8 +1114,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     reset_case_property_enabled = ChoiceField(
         required=True,
         choices=(
-            (NO, _("Disabled")),
-            (YES, _("Restart schedule when this case property takes any new value: ")),
+            (NO, ugettext_lazy("Disabled")),
+            (YES, ugettext_lazy("Restart schedule when this case property takes any new value: ")),
         ),
     )
 
@@ -1212,7 +1211,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def get_timing_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
-                ugettext("At"),
+                _("At"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'send_time_type',
@@ -1230,7 +1229,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 data_bind="visible: showTimeInput",
             ),
             hqcrispy.B3MultiField(
-                ugettext("Start Date"),
+                _("Start Date"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'start_date_type',
@@ -1248,7 +1247,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 data_bind='visible: showStartDateInput',
             ),
             hqcrispy.B3MultiField(
-                ugettext("Begin"),
+                _("Begin"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'start_offset_type',
@@ -1262,13 +1261,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
                 crispy.Div(
-                    crispy.HTML("<span>%s</span>" % ugettext("days(s)")),
+                    crispy.HTML("<span>%s</span>" % _("days(s)")),
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
                 data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
             ),
             hqcrispy.B3MultiField(
-                ugettext("Begin"),
+                _("Begin"),
                 twbscrispy.InlineField('start_day_of_week'),
                 data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
             ),
@@ -1278,7 +1277,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         result = super(ConditionalAlertScheduleForm, self).get_recipients_layout_fields()
         result.extend([
             hqcrispy.B3MultiField(
-                ugettext("Custom Recipient"),
+                _("Custom Recipient"),
                 twbscrispy.InlineField('custom_recipient'),
                 self.get_system_admin_label(),
                 data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
@@ -1290,7 +1289,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         result = super(ConditionalAlertScheduleForm, self).get_advanced_layout_fields()
         result.extend([
             hqcrispy.B3MultiField(
-                ugettext("Restart Schedule"),
+                _("Restart Schedule"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'reset_case_property_enabled',
@@ -1301,7 +1300,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 crispy.Div(
                     twbscrispy.InlineField(
                         'reset_case_property_name',
-                        placeholder=ugettext("case property"),
+                        placeholder=_("case property"),
                     ),
                     data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
                     css_class='col-sm-4',
@@ -1315,7 +1314,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             <label class="col-xs-1 control-label">
                 <span class="label label-primary">%s</span>
             </label>
-        """ % ugettext("Requires System Admin"))
+        """ % _("Requires System Admin"))
 
     def clean_send_time(self):
         if self.cleaned_data.get('send_time_type') == self.SEND_TIME_SPECIFIC_TIME:
@@ -1330,13 +1329,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         value = self.cleaned_data.get('start_offset_type')
 
         if not value:
-            raise ValidationError(ugettext("This field is required"))
+            raise ValidationError(_("This field is required"))
 
         if (
             value == self.START_OFFSET_NEGATIVE and
             self.cleaned_data.get('start_date_type') == self.START_DATE_RULE_TRIGGER
         ):
-            raise ValidationError(ugettext("You may not start sending before the day that the rule triggers."))
+            raise ValidationError(_("You may not start sending before the day that the rule triggers."))
 
         return value
 
@@ -1345,7 +1344,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             return TimedSchedule.ANY_DAY
 
         value = self.cleaned_data.get('start_day_of_week')
-        error = ValidationError(ugettext("Invalid choice selected"))
+        error = ValidationError(_("Invalid choice selected"))
 
         try:
             value = int(value)
@@ -1365,7 +1364,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             return None
 
         if not custom_recipient:
-            raise ValidationError(ugettext("This field is required"))
+            raise ValidationError(_("This field is required"))
 
         return custom_recipient
 
@@ -1412,7 +1411,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             start_offset = self.cleaned_data.get('start_offset')
 
             if start_offset is None:
-                raise ValidationError(ugettext("This field is required"))
+                raise ValidationError(_("This field is required"))
 
             if start_offset_type == self.START_OFFSET_NEGATIVE:
                 return -1 * start_offset
@@ -1505,7 +1504,7 @@ class ConditionalAlertForm(Form):
     prefix = "conditional-alert"
 
     name = TrimmedCharField(
-        label=_("Name"),
+        label=ugettext_lazy("Name"),
         required=True,
     )
 
