@@ -31,11 +31,14 @@ class TestEnrolledChildren(TestCase):
                             'indicator': 'Number of lactating women who are enrolled for ICDS services:',
                             'value': 1287
                         },
-                        {'indicator': 'Total number of lactating women who are registered: ', 'value': 1287},
+                        {
+                            'indicator': 'Total number of lactating women who are registered: ',
+                            'value': 1287
+                        },
                         {
                             'indicator': (
-                                'Percentage of registered lactating women who are enrolled for ICDS services:')
-                            ,
+                                'Percentage of registered lactating women who are enrolled for ICDS services:'
+                            ),
                             'value': '100.00%'
                         }
                     ]

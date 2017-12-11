@@ -82,7 +82,9 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
                 )),
                 "extended_info": [
                     {
-                        'indicator': 'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:',
+                        'indicator': (
+                            'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                        ),
                         'value': total_valid
                     },
                     {

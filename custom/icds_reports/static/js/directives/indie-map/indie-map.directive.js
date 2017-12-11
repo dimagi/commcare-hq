@@ -160,7 +160,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null) {
-                        var html = ['<div class="map-kpi" style="width: 310px;">', '<div class="row no-margin">', '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',];
+                        var html = [
+                            '<div class="map-kpi" style="width: 310px;">',
+                            '<div class="row no-margin">',
+                            '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',
+                        ];
                         for (var fillKey in this.options.fills) {
                             if (fillKey === 'defaultFill') continue;
                             html.push(
@@ -192,14 +196,14 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                                 '<div class="row no-margin">',
                                 this.options.rightLegend['info'],
                                 '</div>'
-                            )
+                            );
                         }
                         if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
-                            html.push('<hr/><div class="row  no-margin">')
+                            html.push('<hr/><div class="row  no-margin">');
                             window.angular.forEach(this.options.rightLegend.extended_info, function(info) {
                                 html.push(
                                     '<div>' + info.indicator+ ' <strong>' + info.value + '</strong></div>'
-                                )
+                                );
                             });
                             html.push('</div>');
                         }

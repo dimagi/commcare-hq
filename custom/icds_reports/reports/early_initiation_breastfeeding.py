@@ -70,7 +70,9 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                 "extended_info": [
                     {'indicator': 'Total Number of Children born in the given month:', 'value': in_month_total},
                     {
-                        'indicator': 'Total Number of Children who were put to the breast within one hour of birth:',
+                        'indicator': (
+                            'Total Number of Children who were put to the breast within one hour of birth:'
+                        ),
                         'value': birth_total
                     },
                     {

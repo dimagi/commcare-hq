@@ -13,13 +13,6 @@ from django.test import TestCase
 class TestPrevalenceOfUndernutrition(TestCase):
 
     def test_map_data(self):
-        print get_prevalence_of_undernutrition_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1)
-                },
-                loc_level='state'
-            )[0]
         self.assertDictEqual(
             get_prevalence_of_undernutrition_data_map(
                 'icds-cas',

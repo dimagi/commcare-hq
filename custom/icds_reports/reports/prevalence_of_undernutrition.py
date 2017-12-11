@@ -99,7 +99,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
     sum_of_indicators = moderately_underweight_total + severely_underweight_total + normal_total
     percent_unweighed = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
-    
+
     return [
         {
             "slug": "moderately_underweight",

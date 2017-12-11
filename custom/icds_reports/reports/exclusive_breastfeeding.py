@@ -74,7 +74,9 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
                         'value': valid_total
                     },
                     {
-                        'indicator': 'Total number of children (0-6 months) exclusively breastfed in the given month:',
+                        'indicator': (
+                            'Total number of children (0-6 months) exclusively breastfed in the given month:'
+                        ),
                         'value': in_month_total
                     },
                     {
