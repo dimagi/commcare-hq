@@ -16,22 +16,20 @@
         "description": "",
         "base_item_expression": {
         },
-        "table_id": "episode_v3",
-        "display_name": "Episode v3",
+        "table_id": "episode_v3_1",
+        "display_name": "Episode v3.1",
         "configured_filter": {
             "type": "and",
-            "filters": [
-                {
-                    "operator": "eq",
-                    "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "type"
-                    },
-                    "type": "boolean_expression",
-                    "property_value": "episode"
-                }
-            ]
+            "filters": {
+                "operator": "eq",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "type"
+                },
+                "type": "boolean_expression",
+                "property_value": "episode"
+            }
         },
         "configured_indicators": [
             {
@@ -854,6 +852,36 @@
                     "property_name": "adherence_schedule_id"
                 },
                 "column_id": "adherence_schedule_id"
+            },
+            {
+                "display_name": "doses_per_week",
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "integer",
+                    "type": "property_name",
+                    "property_name": "doses_per_week"
+                },
+                "column_id": "doses_per_week"
+            },
+            {
+                "display_name": "adherence_schedule_date_start",
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "adherence_schedule_date_start"
+                },
+                "column_id": "adherence_schedule_date_start"
             },
             {
                 "display_name": "not_microbiological_basis_of_diagnosis",
@@ -8502,19 +8530,6 @@
                 "display_name": "is_enrolled_in_private",
                 "comment": null,
                 "column_id": "is_enrolled_in_private"
-            },
-            {
-                "display_name": "total_expected_doses_taken",
-                "transform": {},
-                "datatype": "integer",
-                "type": "expression",
-                "is_primary_key": false,
-                "is_nullable": true,
-                "column_id": "total_expected_doses_taken",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "total_expected_doses_taken"
-                }
             },
             {
                 "display_name": "adherence_total_doses_taken",
