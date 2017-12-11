@@ -6,7 +6,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.apps.domain.auth import determine_authtype_from_request
+from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
 )
@@ -275,7 +275,7 @@ def secure_post(request, domain, app_id=None):
     if request.GET.get('authtype'):
         authtype = request.GET['authtype']
     else:
-        authtype = determine_authtype_from_request(request, support_non_j2me_digest=False)
+        authtype = determine_authtype_from_request(request, default=BASIC)
 
     try:
         decorated_view = authtype_map[authtype]
