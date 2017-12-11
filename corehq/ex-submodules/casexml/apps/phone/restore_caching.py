@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import hashlib
 import logging
+import uuid
 from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.util.quickcache import quickcache
@@ -39,6 +40,11 @@ def get_loadtest_factor_for_user(domain, user_id):
     return 1
 
 
+@quickcache(['domain', 'user_id'], timeout=5 * 24 * 60 * 60)
+def get_fixture_freshness_token(domain, user_id):
+    return uuid.uuid4().hex
+
+
 class RestorePayloadPathCache(_CacheAccessor):
     timeout = 24 * 60 * 60
 
@@ -49,13 +55,14 @@ class RestorePayloadPathCache(_CacheAccessor):
     @staticmethod
     def _make_cache_key(domain, user_id, sync_log_id, device_id):
         # to invalidate all restore cache keys, increment the number below
-        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor}'.format(
+        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor},{fixture_freshness_token}'.format(
             domain=domain,
             prefix=RESTORE_CACHE_KEY_PREFIX,
             user=user_id,
             sync_log_id=sync_log_id or '',
             device_id=device_id or '',
             loadtest_factor=get_loadtest_factor_for_user(domain, user_id),
+            fixture_freshness_token=get_fixture_freshness_token(domain, user_id),
         )
         return hashlib.md5(hashable_key).hexdigest()
 
@@ -70,12 +77,13 @@ class AsyncRestoreTaskIdCache(_CacheAccessor):
     @staticmethod
     def _make_cache_key(domain, user_id, sync_log_id, device_id):
         # to invalidate all restore cache keys, increment the number below
-        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor}'.format(
+        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor},{fixture_freshness_token}'.format(
             domain=domain,
             prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
             user=user_id,
             sync_log_id=sync_log_id or '',
             device_id=device_id or '',
             loadtest_factor=get_loadtest_factor_for_user(domain, user_id),
+            fixture_freshness_token=get_fixture_freshness_token(domain, user_id),
         )
         return hashlib.md5(hashable_key).hexdigest()
