@@ -190,7 +190,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                                  '<div class="row no-margin">',
                                  this.options.rightLegend['info'],
                                 '</div>'
-                            )
+                            );
                         } else {
                             html.push(
                                 '<div class="row no-margin">',
