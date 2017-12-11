@@ -337,10 +337,14 @@ class ScheduleForm(Form):
 
         self.helper.layout = crispy.Layout(*self.get_layout_fields())
 
+    @property
+    def scheduling_fieldset_legend(self):
+        return _("Scheduling")
+
     def get_layout_fields(self):
         return [
             crispy.Fieldset(
-                _("Scheduling"),
+                self.scheduling_fieldset_legend,
                 *self.get_scheduling_layout_fields()
             ),
             crispy.Fieldset(
@@ -1131,6 +1135,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.initial_rule:
             self.set_read_only_fields_during_editing()
         self.update_recipient_types_choices()
+
+    @property
+    def scheduling_fieldset_legend(self):
+        return ''
 
     def set_read_only_fields_during_editing(self):
         # Django also handles keeping the field's value to its initial value no matter what is posted
