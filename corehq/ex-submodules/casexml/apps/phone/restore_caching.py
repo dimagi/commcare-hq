@@ -73,7 +73,7 @@ class _RestoreCache(_CacheAccessor):
 
     @classmethod
     def _make_cache_key(cls, domain, user_id, sync_log_id, device_id):
-        hashable_key = ','.join([unicode(part) for part in [
+        hashable_key = ','.join([str(part) for part in [
             domain,
             cls.prefix,
             user_id,
