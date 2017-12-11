@@ -1044,6 +1044,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     SEND_TIME_SPECIFIC_TIME = 'SPECIFIC_TIME'
 
     START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
+    START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
 
     START_OFFSET_ZERO = 'ZERO'
     START_OFFSET_NEGATIVE = 'NEGATIVE'
@@ -1066,7 +1067,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=True,
         choices=(
             (START_DATE_RULE_TRIGGER, _("The date the rule is satisfied")),
+            (START_DATE_CASE_PROPERTY, _("The date from case property: ")),
         )
+    )
+
+    start_date_case_property = TrimmedCharField(
+        label='',
+        required=False,
     )
 
     start_offset_type = ChoiceField(
@@ -1194,6 +1201,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             else:
                 result['reset_case_property_enabled'] = self.NO
 
+            if action_definition.start_date_case_property:
+                result['start_date_type'] = self.START_DATE_CASE_PROPERTY
+                result['start_date_case_property'] = action_definition.start_date_case_property
+            else:
+                result['start_date_type'] = self.START_DATE_RULE_TRIGGER
+
         return result
 
     def get_timing_layout_fields(self):
@@ -1223,6 +1236,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                         'start_date_type',
                         data_bind='value: start_date_type',
                     ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date_case_property',
+                    ),
+                    data_bind="visible: start_date_type() === '%s'" % self.START_DATE_CASE_PROPERTY,
                     css_class='col-sm-4',
                 ),
                 data_bind='visible: showStartDateInput',
@@ -1358,6 +1378,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             allow_parent_case_references=False,
         )
 
+    def clean_start_date_case_property(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('start_date_type') != self.START_DATE_CASE_PROPERTY
+        ):
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('start_date_case_property'),
+            allow_parent_case_references=False,
+        )
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1406,6 +1438,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             'recipients': self.distill_recipients(),
             'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
             'scheduler_module_info': self.distill_scheduler_module_info(),
+            'start_date_case_property': self.cleaned_data['start_date_case_property'],
         }
 
         if isinstance(schedule, AlertSchedule):
@@ -1425,6 +1458,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         action_definition.recipients = self.distill_recipients()
         action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
         action_definition.scheduler_module_info = self.distill_scheduler_module_info()
+        action_definition.start_date_case_property = self.cleaned_data['start_date_case_property']
         action_definition.save()
 
     def validate_existing_action_definition(self, action_definition, schedule):
