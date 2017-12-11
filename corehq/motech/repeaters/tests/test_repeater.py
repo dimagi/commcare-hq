@@ -17,7 +17,7 @@ from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, Ign
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.motech.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, RegisterGenerator, \
     BasePayloadGenerator
-from corehq.motech.repeaters.tasks import check_repeaters
+from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     FormRepeater,
@@ -833,3 +833,49 @@ class LocationRepeaterTest(TestCase):
                 'site_code': location.site_code,
             }
         )
+
+
+class TestRepeaterPause(BaseRepeaterTest):
+    def setUp(self):
+        super(TestRepeaterPause, self).setUp()
+        self.domain_name = "test-domain"
+        self.domain = create_domain(self.domain_name)
+
+        self.repeater = CaseRepeater(
+            domain=self.domain_name,
+            url='case-repeater-url',
+        )
+        self.repeater.save()
+        self.post_xml(self.xform_xml, self.domain_name)
+        self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+
+    @run_with_all_backends
+    def test_trigger_when_paused(self):
+        # not paused
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            process_repeat_record(self.repeat_record)
+            self.assertEqual(mock_fire.call_count, 1)
+
+        # paused
+        self.repeater.pause()
+        # re fetch repeat record
+        repeat_record_id = self.repeat_record.get_id
+        self.repeat_record = RepeatRecord.get(repeat_record_id)
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            process_repeat_record(self.repeat_record)
+            self.assertEqual(mock_fire.call_count, 0)
+
+        # resumed
+        self.repeater.resume()
+        # re fetch repeat record
+        repeat_record_id = self.repeat_record.get_id
+        self.repeat_record = RepeatRecord.get(repeat_record_id)
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            process_repeat_record(self.repeat_record)
+            self.assertEqual(mock_fire.call_count, 1)
+
+    def tearDown(self):
+        self.domain.delete()
+        self.repeater.delete()
+        delete_all_repeat_records()
+        super(TestRepeaterPause, self).tearDown()
