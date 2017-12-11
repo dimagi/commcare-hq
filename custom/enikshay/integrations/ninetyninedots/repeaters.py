@@ -27,10 +27,6 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.const import TREATMENT_OUTCOME
 from custom.enikshay.integrations.ninetyninedots.api_spec import load_api_spec
-from custom.enikshay.integrations.ninetyninedots.const import (
-    NINETYNINEDOTS_EPISODE_PROPERTIES,
-    NINETYNINEDOTS_PERSON_PROPERTIES,
-)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
