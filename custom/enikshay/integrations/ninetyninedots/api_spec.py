@@ -88,6 +88,16 @@ class DotsApiParams(StrictJsonObject):
         return [param for param in self.api_params
                 if param.get_by_sector('case_type', sector) == case_type]
 
+    def case_properties_by_case_type(self, sector, case_type):
+        params = self.params_by_case_type(sector, case_type)
+        case_properties = []
+        for param in params:
+            if param.get_by_sector("case_property", sector):
+                case_properties.append(param.get_by_sector("case_property", sector))
+            if param.get_by_sector("case_properties", sector):
+                case_properties += param.get_by_sector("case_properties", sector)
+        return case_properties
+
 
 @memoized
 def load_api_spec():

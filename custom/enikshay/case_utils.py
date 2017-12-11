@@ -586,6 +586,14 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
+def get_sector(episode_case):
+    if episode_case.type != CASE_TYPE_EPISODE:
+        raise ValueError('Must pass in an episode case')
+    if episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
+        return PRIVATE_SECTOR
+    return PUBLIC_SECTOR
+
+
 def iter_all_active_person_episode_cases(domain, case_ids, sector=None):
     """From a list of case_ids, return all the active episodes and associate person case
     """
