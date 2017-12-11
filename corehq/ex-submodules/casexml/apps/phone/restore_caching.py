@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import hashlib
 import logging
-import uuid
+import datetime
 from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX, ASYNC_RESTORE_CACHE_KEY_PREFIX
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.util.quickcache import quickcache
@@ -40,9 +40,28 @@ def get_loadtest_factor_for_user(domain, user_id):
     return 1
 
 
-@quickcache(['domain', 'user_id'], timeout=5 * 24 * 60 * 60)
-def get_fixture_freshness_token(domain, user_id):
-    return uuid.uuid4().hex
+def _get_new_arbitrary_value():
+    # a random value would work here, but this leaves a more useful trail for debugging
+    return datetime.datetime.utcnow().isoformat()
+
+
+@quickcache(['domain'], timeout=60 * 24 * 60 * 60)
+def _get_domain_freshness_token(domain):
+    return _get_new_arbitrary_value()
+
+
+@quickcache(['domain', 'user_id'], timeout=60 * 24 * 60 * 60)
+def _get_user_freshness_token(domain, user_id):
+    return _get_new_arbitrary_value()
+
+
+def invalidate_restore_cache(domain, user_id=Ellipsis):
+    assert domain
+    if user_id is not Ellipsis:
+        assert user_id
+        _get_user_freshness_token.clear(domain, user_id)
+    else:
+        _get_domain_freshness_token.clear(domain)
 
 
 class _RestoreCache(_CacheAccessor):
@@ -61,7 +80,8 @@ class _RestoreCache(_CacheAccessor):
             sync_log_id or '',
             device_id or '',
             get_loadtest_factor_for_user(domain, user_id),
-            get_fixture_freshness_token(domain, user_id),
+            _get_domain_freshness_token(domain),
+            _get_user_freshness_token(domain, user_id),
         ]])
         return hashlib.md5(hashable_key).hexdigest()
 
