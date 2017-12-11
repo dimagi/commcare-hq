@@ -160,7 +160,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null) {
-                        var html = ['<div class="map-kpi" style="width: 300px;">', '<div class="row no-margin">', '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',];
+                        var html = ['<div class="map-kpi" style="width: 310px;">', '<div class="row no-margin">', '<div class="row no-margin" style="font-size: 15px;">' + this.options.label + '</div>',];
                         for (var fillKey in this.options.fills) {
                             if (fillKey === 'defaultFill') continue;
                             html.push(
@@ -194,10 +194,20 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                                 '</div>'
                             )
                         }
+                        if (this.options.rightLegend.extended_info && this.options.rightLegend.extended_info.length > 0) {
+                            html.push('<hr/><div class="row  no-margin">')
+                            window.angular.forEach(this.options.rightLegend.extended_info, function(info) {
+                                html.push(
+                                    '<div>' + info.indicator+ ' <strong>' + info.value + '</strong></div>'
+                                )
+                            });
+                            html.push('</div>');
+                        }
+
                         html.push('</div>');
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
-                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1;')
+                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1; margin-bottom: 80px')
                             .html(html.join(''));
                     }
                 },
@@ -224,7 +234,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 },
             });
         }
-
         $scope.$apply();
     }, 500);
 

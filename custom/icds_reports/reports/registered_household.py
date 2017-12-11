@@ -68,7 +68,7 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
-                "info": _("Total number of households registered")
+                "info": _("Total number of households registered: %d" % sum(average))
             },
             "data": dict(data_for_map),
         }

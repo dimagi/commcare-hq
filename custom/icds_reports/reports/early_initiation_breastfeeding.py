@@ -66,7 +66,18 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                     "<br/><br/>"
                     "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
                     "nutrients and encourages exclusive breastfeeding practice"
-                ))
+                )),
+                "extended_info": [
+                    {'indicator': 'Total Number of Children born in the given month:', 'value': in_month_total},
+                    {
+                        'indicator': 'Total Number of Children who were put to the breast within one hour of birth:',
+                        'value': birth_total
+                    },
+                    {
+                        'indicator': '% children who were put to the breast within one hour of birth:',
+                        'value': '%.2f%%' % (birth_total * 100 / float(in_month_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

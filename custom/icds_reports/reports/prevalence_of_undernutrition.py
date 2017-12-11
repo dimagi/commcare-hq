@@ -54,6 +54,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
     moderately_underweight_total = 0
     severely_underweight_total = 0
+    normal_total = 0
     valid_total = 0
 
     for row in get_data_for(config):
@@ -66,6 +67,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
         moderately_underweight_total += moderately_underweight
         severely_underweight_total += severely_underweight_total
+        normal_total += normal
         valid_total += valid
 
         data_for_map[on_map_name]['severely_underweight'] += severely_underweight
@@ -95,6 +97,9 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         (moderately_underweight_total or 0) + (severely_underweight_total or 0)
     ) * 100 / float(valid_total or 1)
 
+    sum_of_indicators = moderately_underweight_total + severely_underweight_total + normal_total
+    percent_unweighed = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
+    
     return [
         {
             "slug": "moderately_underweight",
@@ -107,9 +112,22 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                     "less than -2 standard deviations of the WHO Child Growth Standards median. "
                     "<br/><br/>"
                     "Children who are moderately or severely underweight have a higher risk of mortality"
-                ))
+                )),
+                "extended_info": [
+                    {'indicator': 'Total Children weighed in given month:', 'value': valid_total},
+                    {'indicator': '% Unweighed:', 'value': '%.2f%%' % percent_unweighed},
+                    {'indicator': '% Severely Underweight:', 'value': '%.2f%%' % (
+                        severely_underweight_total * 100 / float(valid_total)
+                    )},
+                    {'indicator': '% Moderately Underweight:', 'value': '%.2f%%' % (
+                        moderately_underweight_total * 100 / float(valid_total)
+                    )},
+                    {'indicator': '% Normal:', 'value': '%.2f%%' % (
+                        normal_total * 100 / float(valid_total)
+                    )}
+                ]
             },
-            "data": dict(data_for_map),
+            "data": dict(data_for_map)
         }
     ]
 

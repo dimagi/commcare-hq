@@ -63,7 +63,21 @@ def get_clean_water_data_map(domain, config, loc_level, show_test=False):
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a source of clean drinking water"
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': (
+                            'Total number of AWCs with a source of clean drinking water:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': (
+                            '% of AWCs with a source of clean drinking water:'
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

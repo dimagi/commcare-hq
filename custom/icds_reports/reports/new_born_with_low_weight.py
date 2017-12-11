@@ -67,7 +67,18 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                     "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
                     "mortality and morbidity, inhibited growth and cognitive development, and chronic "
                     "diseases later in life"
-                ))
+                )),
+                "extended_info": [
+                    {'indicator': 'Total Number of Newborns born in given month:', 'value': in_month_total},
+                    {'indicator': 'Number of Newborns with LBW in given month:', 'value': low_birth_total},
+                    {'indicator': '% newborns with LBW in given month:', 'value': '%.2f%%' % (
+                        low_birth_total * 100 / float(in_month_total or 1)
+                    )},
+                    {'indicator': '% Unweighed:', 'value': '%.2f%%' % (
+                        (in_month_total - low_birth_total) * 100 / float(in_month_total or 1)
+                    )}
+                ]
+
             },
             "data": dict(data_for_map),
         }
