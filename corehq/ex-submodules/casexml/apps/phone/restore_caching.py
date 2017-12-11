@@ -45,19 +45,19 @@ def get_fixture_freshness_token(domain, user_id):
     return uuid.uuid4().hex
 
 
-class RestorePayloadPathCache(_CacheAccessor):
-    timeout = 24 * 60 * 60
+class _RestoreCache(_CacheAccessor):
+    prefix = None
 
     def __init__(self, domain, user_id, sync_log_id, device_id):
         self.cache_key = self._make_cache_key(domain, user_id, sync_log_id, device_id)
-        self.debug_info = ('RestorePayloadPathCache', domain, user_id, sync_log_id, device_id)
+        self.debug_info = (self.__class__.__name__, domain, user_id, sync_log_id, device_id)
 
-    @staticmethod
-    def _make_cache_key(domain, user_id, sync_log_id, device_id):
+    @classmethod
+    def _make_cache_key(cls, domain, user_id, sync_log_id, device_id):
         # to invalidate all restore cache keys, increment the number below
         hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor},{fixture_freshness_token}'.format(
             domain=domain,
-            prefix=RESTORE_CACHE_KEY_PREFIX,
+            prefix=cls.prefix,
             user=user_id,
             sync_log_id=sync_log_id or '',
             device_id=device_id or '',
@@ -67,23 +67,11 @@ class RestorePayloadPathCache(_CacheAccessor):
         return hashlib.md5(hashable_key).hexdigest()
 
 
-class AsyncRestoreTaskIdCache(_CacheAccessor):
+class RestorePayloadPathCache(_RestoreCache):
     timeout = 24 * 60 * 60
+    prefix = RESTORE_CACHE_KEY_PREFIX
 
-    def __init__(self, domain, user_id, sync_log_id, device_id):
-        self.cache_key = self._make_cache_key(domain, user_id, sync_log_id, device_id)
-        self.debug_info = ('AsyncRestoreTaskIdCache', domain, user_id, sync_log_id, device_id)
 
-    @staticmethod
-    def _make_cache_key(domain, user_id, sync_log_id, device_id):
-        # to invalidate all restore cache keys, increment the number below
-        hashable_key = '0,{prefix},{domain},{user},{sync_log_id},{device_id},{loadtest_factor},{fixture_freshness_token}'.format(
-            domain=domain,
-            prefix=ASYNC_RESTORE_CACHE_KEY_PREFIX,
-            user=user_id,
-            sync_log_id=sync_log_id or '',
-            device_id=device_id or '',
-            loadtest_factor=get_loadtest_factor_for_user(domain, user_id),
-            fixture_freshness_token=get_fixture_freshness_token(domain, user_id),
-        )
-        return hashlib.md5(hashable_key).hexdigest()
+class AsyncRestoreTaskIdCache(_RestoreCache):
+    timeout = 24 * 60 * 60
+    prefix = ASYNC_RESTORE_CACHE_KEY_PREFIX
