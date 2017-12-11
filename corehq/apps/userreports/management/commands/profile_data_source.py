@@ -29,8 +29,8 @@ class Command(BaseCommand):
         p = pstats.Stats('ucr_stats.log')
         p.sort_stats('cumulative')
 
-        print("Top 20 functions by cumulative time\n")
-        p.print_stats(20)
+        print("Top 50 functions by cumulative time\n")
+        p.print_stats(50)
 
         p.sort_stats('time')
         print("Specs timing\n")
