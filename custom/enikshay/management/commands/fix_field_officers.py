@@ -31,7 +31,7 @@ class Command(BaseCommand):
                     field_officer_location.location_id
                 ).fields(['_id'])
                 user_ids = [u['_id'] for u in user_query.run().hits]
-                f.write('user_ids with %s: %s' % (field_officer_location.location_id, user_ids))
+                f.write('user_ids with %s: %s\n' % (field_officer_location.location_id, user_ids))
                 users = map(CommCareUser.get, user_ids)
                 archiveable_users = [u for u in users if looks_archiveable(u)]
                 nonarchiveable_users = [u for u in users if not looks_archiveable(u)]
@@ -39,12 +39,12 @@ class Command(BaseCommand):
                     for archiveable_user in archiveable_users:
                         archiveable_user.is_active = False
                         # archiveable_user.save()
-                        f.write('archived %s' % archiveable_user._id)
+                        f.write('archived %s\n' % archiveable_user._id)
                     field_officer_location.user_id = nonarchiveable_users[0]._id
                     # field_officer_location.save()
-                    f.write('set location user to: %s' % nonarchiveable_users[0]._id)
+                    f.write('set location user to: %s\n' % nonarchiveable_users[0]._id)
                 elif len(nonarchiveable_users) > 1:
                     f.write(
-                        'multiple nonarchiveable users for %s: %s' %
+                        'multiple nonarchiveable users for %s: %s\n' %
                         (field_officer_location.location_id, user_ids)
                     )
