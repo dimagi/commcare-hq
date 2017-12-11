@@ -733,3 +733,20 @@ def get_app_version(spec, context):
 
 def datetime_now(spec, context):
     return DateTimeNow.wrap(spec)
+
+
+def get_related_docs_ids(case_id):
+    db = CaseAccessors('icds-cas')
+    current_case = db.get_case(case_id)
+    person_case = db.get_case(current_case.indices[0].referenced_id)
+    house_case = db.get_case(person_case.indices[0].referenced_id)
+    person_case_ids = [
+        case.case_id
+        for case in db.get_reverse_indexed_cases([house_case.case_id])
+        if case.type == 'person'
+    ]
+    return [
+        case.case_id
+        for case in db.get_reverse_indexed_cases(person_case_ids)
+        if case.type in ('ccs_record', 'child_health')
+    ]
