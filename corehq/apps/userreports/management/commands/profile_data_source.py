@@ -27,9 +27,9 @@ class Command(BaseCommand):
 
         cProfile.runctx('config.get_all_values(doc)', {}, local_variables, 'ucr_stats.log')
         p = pstats.Stats('ucr_stats.log')
-        p.sort_stats('time')
+        p.sort_stats('cumulative')
 
-        print("Top 10 functions by time\n")
+        print("Top 10 functions by cumulative time\n")
         p.print_stats(10)
 
         print("Specs timing\n")
