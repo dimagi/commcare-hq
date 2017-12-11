@@ -63,4 +63,53 @@ api_params:
     both: person
   case_property:
     both: language_code
-# phone_numbers
+- api_param_name: phone_numbers
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.concat_phone_numbers
+  exclude_if_none: false
+  case_type:
+    both: person
+  case_properties:
+    both:
+      - phone_number
+      - secondary_contact_phone_number
+      - secondary_phone
+      - phone_number_alternate_1
+      - phone_number_alternate_2
+      - phone_number_alternate_3
+      - phone_number_other
+- api_param_name: merm_params
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.get_merm_params
+  payload_object: custom.enikshay.integrations.ninetyninedots.api_spec.MermParams
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - merm_id
+      - merm_alarm_enabled
+      - merm_daily_reminder_time
+      - merm_refill_reminder_status
+      - merm_refill_reminder_date
+      - merm_refill_reminder_time
+      - merm_rt_hours
+- api_param_name: treatment_supporter_name
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.concat_properties
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - treatment_supporter_first_name
+      - treatment_supporter_last_name
+- api_param_name: treatment_supporter_phone_number
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.concat_phone_numbers
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - treatment_supporter_mobile_number
+- api_param_name: none
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.noop
+  case_type:
+    both: person
+  case_properties:
+    both:
+      - owner_id

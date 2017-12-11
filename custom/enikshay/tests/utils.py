@@ -335,6 +335,7 @@ class ENikshayCaseStructureMixin(object):
                 extra_update={
                     PRIMARY_PHONE_NUMBER: self.primary_phone_number,
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                    OTHER_NUMBER: self.other_number,
                     ENROLLED_IN_PRIVATE: 'false',
                 }
             )
@@ -354,7 +355,6 @@ class ENikshayCaseStructureMixin(object):
                 self.episode_id,
                 self.occurrence,
                 extra_update={
-                    OTHER_NUMBER: self.other_number,
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
                     WEIGHT_BAND: "adult_55-69"
                 }

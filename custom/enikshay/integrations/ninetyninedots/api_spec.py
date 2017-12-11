@@ -28,10 +28,10 @@ from custom.enikshay.integrations.ninetyninedots.const import (
     MERM_REFILL_REMINDER_STATUS,
     MERM_REFILL_REMINDER_TIME,
     MERM_RT_HOURS,
-    NINETYNINEDOTS_NUMBERS,
 )
 from dimagi.ext.jsonobject import StrictJsonObject
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.modules import to_function
 
 
 class DotsApiSectorParam(StrictJsonObject):
@@ -64,9 +64,14 @@ class DotsApiParamChoices(DotsApiSectorParam):
 class DotsApiParam(StrictJsonObject):
     api_param_name = jsonobject.StringProperty(required=True)
     required_ = jsonobject.BooleanProperty(default=False, name='required')
+    exclude_if_none = jsonobject.BooleanProperty(default=True)
     choices = jsonobject.ObjectProperty(DotsApiParamChoices)
     case_type = jsonobject.ObjectProperty(DotsApiSectorParam)
     case_property = jsonobject.ObjectProperty(DotsApiSectorParam)
+
+    getter = jsonobject.StringProperty()
+    payload_object = jsonobject.StringProperty()
+    case_properties = jsonobject.ObjectProperty(DotsApiParamChoices)
 
     def get_by_sector(self, prop, sector):
         prop = getattr(self, prop)
@@ -94,6 +99,66 @@ def load_api_spec():
     return spec
 
 
+class BasePatientPayload(StrictJsonObject):
+    sector = jsonobject.StringProperty(required=True)
+    state_code = jsonobject.StringProperty(required=False)
+    district_code = jsonobject.StringProperty(required=False)
+    tu_code = jsonobject.StringProperty(required=False)
+
+    @classmethod
+    def create(cls, person_case, episode_case):
+        payload_kwargs = {
+            "sector": cls._sector,
+        }
+        api_spec = load_api_spec()
+        cases = {CASE_TYPE_EPISODE: episode_case, CASE_TYPE_PERSON: person_case}
+        for case_type in [CASE_TYPE_EPISODE, CASE_TYPE_PERSON]:
+            case = cases[case_type]
+            for spec_property in api_spec.params_by_case_type(cls._sector, case_type):
+                if spec_property.getter:
+                    payload_kwargs[spec_property.api_param_name] = to_function(spec_property.getter)(
+                        case.dynamic_case_properties(),
+                        spec_property.get_by_sector('case_properties', cls._sector)
+                    )
+                else:
+                    payload_kwargs[spec_property.api_param_name] = case.get_case_property(
+                        spec_property.get_by_sector('case_property', cls._sector)
+                    )
+
+        payload_kwargs.update(cls.get_locations(person_case, episode_case))
+        return cls(payload_kwargs)
+
+
+def concat_properties(episode_case_properties, case_properties):
+    return " ".join(episode_case_properties.get(prop, '') for prop in case_properties)
+
+
+def concat_phone_numbers(case_properties, case_properties_to_check):
+    numbers = []
+    for potential_number in case_properties_to_check:
+        number = _parse_number(case_properties.get(potential_number))
+        if number:
+            numbers.append(_format_number(number))
+    return ", ".join(numbers) if numbers else None
+
+
+def _parse_number(number):
+    if number:
+        return phonenumbers.parse(number, "IN")
+
+
+def _format_number(phonenumber):
+    if phonenumber:
+        return phonenumbers.format_number(
+            phonenumber,
+            phonenumbers.PhoneNumberFormat.INTERNATIONAL
+        ).replace(" ", "")
+
+
+def noop(*args, **kwargs):
+    return None
+
+
 class MermParams(StrictJsonObject):
     IMEI = jsonobject.StringProperty(required=False, exclude_if_none=True)
     daily_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)
@@ -109,61 +174,10 @@ class MermParams(StrictJsonObject):
     )  # 1 = 12 hours; i.e. for 3 days - RT_hours = 6
 
 
-class BasePatientPayload(StrictJsonObject):
-    sector = jsonobject.StringProperty(required=True)
-    state_code = jsonobject.StringProperty(required=False)
-    district_code = jsonobject.StringProperty(required=False)
-    tu_code = jsonobject.StringProperty(required=False)
-    phone_numbers = jsonobject.StringProperty(required=False)
-    treatment_supporter_name = jsonobject.StringProperty(required=False)
-    treatment_supporter_phone_number = jsonobject.StringProperty(required=False)
-    merm_params = jsonobject.ObjectProperty(MermParams, exclude_if_none=True)
+def get_merm_params(episode_case_properties, properties_to_check):
+    if not episode_case_properties.get(MERM_ID):
+        return {}
 
-    @classmethod
-    def create(cls, person_case, episode_case):
-        payload_kwargs = {
-            "sector": cls._sector,
-        }
-        api_spec = load_api_spec()
-        person_properties = api_spec.params_by_case_type(cls._sector, CASE_TYPE_PERSON)
-        episode_properties = api_spec.params_by_case_type(cls._sector, CASE_TYPE_EPISODE)
-
-        for episode_property in episode_properties:
-            case_property = episode_property.get_by_sector('case_property', cls._sector)
-            payload_kwargs[episode_property.api_param_name] = episode_case.get_case_property(case_property)
-        for person_property in person_properties:
-            case_property = person_property.get_by_sector('case_property', cls._sector)
-            payload_kwargs[person_property.api_param_name] = person_case.get_case_property(case_property)
-
-        person_case_properties = person_case.dynamic_case_properties()
-        episode_case_properties = episode_case.dynamic_case_properties()
-        all_properties = episode_case_properties.copy()
-        all_properties.update(person_case_properties)  # items set on person trump items set on episode
-        payload_kwargs['phone_numbers'] = _get_phone_numbers(all_properties)
-        if episode_case_properties.get(MERM_ID, '') != '':
-            payload_kwargs.update(get_merm_params(episode_case_properties))
-
-        payload_kwargs.update(get_treatment_supporter_info(episode_case_properties))
-        payload_kwargs.update(cls.get_locations(person_case, episode_case))
-
-        return cls(payload_kwargs)
-
-
-def get_treatment_supporter_info(episode_case_properties):
-    return {
-        "treatment_supporter_name": u"{} {}".format(
-            episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
-            episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
-        ),
-        "treatment_supporter_phone_number": (
-            _format_number(
-                _parse_number(episode_case_properties.get(TREATMENT_SUPPORTER_PHONE))
-            )
-        )
-    }
-
-
-def get_merm_params(episode_case_properties):
     refill_reminder_date = episode_case_properties.get(MERM_REFILL_REMINDER_DATE, None)
     refill_reminder_time = episode_case_properties.get(MERM_REFILL_REMINDER_TIME, None)
     if refill_reminder_time and refill_reminder_date:
@@ -171,15 +185,15 @@ def get_merm_params(episode_case_properties):
     else:
         refill_reminder_datetime = None
 
-    return {"merm_params": {
+    params = MermParams({
         "IMEI": episode_case_properties.get(MERM_ID, None),
         "daily_reminder_status": episode_case_properties.get(MERM_DAILY_REMINDER_STATUS, None),
         "daily_reminder_time": episode_case_properties.get(MERM_DAILY_REMINDER_TIME, None),
         "refill_reminder_status": episode_case_properties.get(MERM_REFILL_REMINDER_STATUS, None),
         "refill_reminder_datetime": refill_reminder_datetime,
         "RT_hours": episode_case_properties.get(MERM_RT_HOURS, None),
-    }}
-
+    })
+    return params.to_json()
 
 
 class BasePublicPatientPayload(BasePatientPayload):
@@ -219,11 +233,18 @@ def get_payload_properties(sector):
     properties = {}
     spec = load_api_spec()
     for param in spec.api_params:
-        properties[param.api_param_name] = jsonobject.StringProperty(
-            choices=param.get_by_sector('choices', sector),
-            required=param.required_,
-            exclude_if_none=True,
-        )
+        if param.payload_object:
+            properties[param.api_param_name] = jsonobject.ObjectProperty(
+                to_function(param.payload_object),
+                required=param.required_,
+                exclude_if_none=param.exclude_if_none,
+            )
+        else:
+            properties[param.api_param_name] = jsonobject.StringProperty(
+                choices=param.get_by_sector('choices', sector),
+                required=param.required_,
+                exclude_if_none=param.exclude_if_none,
+            )
     return properties
 
 
@@ -239,25 +260,3 @@ def get_patient_payload(person_case, episode_case):
         return PrivatePatientPayload.create(person_case, episode_case)
     else:
         return PublicPatientPayload.create(person_case, episode_case)
-
-
-def _get_phone_numbers(case_properties):
-    numbers = []
-    for potential_number in NINETYNINEDOTS_NUMBERS:
-        number = _parse_number(case_properties.get(potential_number))
-        if number:
-            numbers.append(_format_number(number))
-    return ", ".join(numbers) if numbers else None
-
-
-def _parse_number(number):
-    if number:
-        return phonenumbers.parse(number, "IN")
-
-
-def _format_number(phonenumber):
-    if phonenumber:
-        return phonenumbers.format_number(
-            phonenumber,
-            phonenumbers.PhoneNumberFormat.INTERNATIONAL
-        ).replace(" ", "")
