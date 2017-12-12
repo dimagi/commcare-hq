@@ -70,6 +70,8 @@ class DotsApiParam(StrictJsonObject):
     payload_object = jsonobject.StringProperty()
     case_properties = jsonobject.ObjectProperty(DotsApiParamChoices)
 
+    setter = jsonobject.StringProperty()
+
     def get_by_sector(self, prop, sector):
         prop = getattr(self, prop)
         if isinstance(prop, DotsApiSectorParam):
@@ -80,6 +82,19 @@ class DotsApiParam(StrictJsonObject):
 
 class DotsApiParams(StrictJsonObject):
     api_params = jsonobject.ListProperty(DotsApiParam)
+
+    def get_param(self, param):
+        try:
+            return next(p for p in self.api_params if p.api_param_name == param)
+        except StopIteration:
+            raise KeyError("{} not in spec".format(param))
+
+    @property
+    def required_params(self):
+        return [param.api_param_name for param in self.api_params if param.required_]
+
+    def params_with_choices(self, sector):
+        return [param.api_param_name for param in self.api_params if param.get_by_sector('choices', sector)]
 
     def params_by_case_type(self, sector, case_type):
         return [param for param in self.api_params
@@ -97,11 +112,12 @@ class DotsApiParams(StrictJsonObject):
 
 
 @memoized
-def load_api_spec():
+def load_api_spec(filepath=None):
     """Loads API spec from api_properties.yaml and validates that the spec is correct
     """
-    filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'api_properties.yaml')
-    with open(filename, 'r') as f:
+    if filepath is None:
+        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'api_properties.yaml')
+    with open(filepath, 'r') as f:
         spec = DotsApiParams(yaml.load(f))
     return spec
 

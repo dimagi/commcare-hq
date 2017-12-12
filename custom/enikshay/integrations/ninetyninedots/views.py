@@ -14,6 +14,7 @@ from corehq.motech.repeaters.views import AddCaseRepeaterView
 from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     AdherenceCaseFactory,
+    PatientDetailsUpdater,
     update_adherence_confidence_level,
     update_default_confidence_level,
 )
@@ -75,6 +76,25 @@ def update_patient_adherence(request, domain):
                      "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
 
     return json_response({"success": "Patient adherences updated."})
+
+
+@toggles.NINETYNINE_DOTS.required_decorator()
+@login_or_digest_or_basic_or_apikey()
+@require_POST
+@csrf_exempt
+@check_domain_migration
+def update_patient_details(request, domain):
+    try:
+        request_json = json.loads(request.body)
+    except ValueError:
+        return json_response({"error": "Malformed JSON"}, status_code=400)
+
+    try:
+        PatientDetailsUpdater(domain, request_json).update_cases()
+    except NinetyNineDotsException as e:
+        return json_response({"error": six.text_type(e)}, status_code=400)
+
+    return json_response({"success": "Patient details updated."})
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
