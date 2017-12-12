@@ -304,7 +304,7 @@ def save_document(doc_ids):
         indicator_config_ids = first_indicator.indicator_config_ids
 
         with timer:
-            processed_indicators, failed_indicators = _save_document_helper_helper(
+            processed_indicators, failed_indicators = _save_document_helper(
                 doc_ids, indicator_by_doc_id, doc_store)
 
         # remove/update any indicators including related docs that succeeded/failed
