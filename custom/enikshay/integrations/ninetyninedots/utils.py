@@ -97,7 +97,10 @@ class PatientDetailsUpdater(BaseNinetyNineDotsUpdater):
     def _validate_choices(self):
         sector = get_sector(self._person_case)
         for param_name, value in six.iteritems(self.request_json):
-            choices = self.api_spec.get_param(param_name).get_by_sector('choices', sector)
+            try:
+                choices = self.api_spec.get_param(param_name).get_by_sector('choices', sector)
+            except KeyError:
+                raise NinetyNineDotsException("{} is not a valid parameter to update".format(param_name))
             if choices and value not in choices:
                 raise NinetyNineDotsException(
                     "{} is not a valid value for {}.".format(value, param_name)
@@ -110,7 +113,7 @@ class PatientDetailsUpdater(BaseNinetyNineDotsUpdater):
             try:
                 param = self.api_spec.get_param(prop)
             except KeyError:
-                raise NinetyNineDotsException("{} is not a valid parameter to update")
+                raise NinetyNineDotsException("{} is not a valid parameter to update".format(param))
 
             case_type = param.get_by_sector('case_type', sector)
             case_id = self.case_types_to_cases[case_type].case_id
