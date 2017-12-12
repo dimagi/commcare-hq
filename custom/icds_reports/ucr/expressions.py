@@ -738,13 +738,21 @@ def datetime_now(spec, context):
 def get_related_docs_ids(case_id):
     db = CaseAccessors('icds-cas')
     current_case = db.get_case(case_id)
+    if not current_case or not current_case.indices:
+        return []
     person_case = db.get_case(current_case.indices[0].referenced_id)
+    if not person_case or not person_case.indices:
+        return []
     house_case = db.get_case(person_case.indices[0].referenced_id)
+    if not house_case:
+        return []
     person_case_ids = [
         case.case_id
         for case in db.get_reverse_indexed_cases([house_case.case_id])
         if case.type == 'person'
     ]
+    if not person_case_ids:
+        return []
     return [
         case.case_id
         for case in db.get_reverse_indexed_cases(person_case_ids)
