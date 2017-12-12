@@ -550,7 +550,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-4 col-lg-4'
+        self.helper.field_class = 'col-sm-8 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -621,10 +621,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_property',
-                            css_class="input-xlarge",
                             data_bind="autocompleteSelect2: getAvailableCaseProperties",
                         ),
-                        css_class='col-sm-6'
+                        css_class='col-sm-4'
                     ),
                     crispy.Div(
                         InlineField(
@@ -636,12 +635,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_value',
-                            style="margin-left: 5px;",
                             data_bind="visible: isStartMatchValueVisible",
                         ),
-                        css_class='col-sm-2'
+                        css_class='col-sm-4'
                     ),
-                    field_class='col-md-8 col-sm-8'
                 ),
                 data_bind="visible: isStartReminderCaseProperty",
             ),
@@ -693,21 +690,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_date_offset_type',
-                            css_class="input-xlarge",
                         ),
-                        css_class='col-sm-4'
+                        css_class='col-sm-6'
                     ),
                     crispy.Div(
                         InlineField(
                             'start_date_offset',
-                            css_class='input-mini',
-
                         ),
                         crispy.HTML('<p class="help-inline">day(s)</p>'),
                         style='display: inline; margin-left: 5px;',
-                        css_class='col-sm-2'
+                        css_class='col-sm-4'
                     ),
-                    field_class='col-lg-8 col-md-8'
                 ),
                 data_bind="visible: isStartReminderCaseDate"
             ),
