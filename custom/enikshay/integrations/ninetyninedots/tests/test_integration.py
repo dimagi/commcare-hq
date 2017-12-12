@@ -111,6 +111,16 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
         episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(episode_case.get_case_property('has_choices'), 'foo')
 
+    def test_split_name(self):
+        fake_request = self._get_fake_request()
+
+        fake_request['split_name'] = 'Arya Horseface Stark'
+        PatientDetailsUpdater(self.domain, fake_request).update_cases()
+
+        person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self.assertEqual(person_case.get_case_property('foo'), 'Arya')
+        self.assertEqual(person_case.get_case_property('bar'), 'Horseface Stark')
+
     def test_validate_patient_adherence_data(self):
         with self.assertRaises(NinetyNineDotsException) as e:
             validate_beneficiary_id(None)

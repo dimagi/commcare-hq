@@ -199,6 +199,15 @@ def concat_properties(episode_case_properties, case_properties):
     return " ".join(episode_case_properties.get(prop, '') for prop in case_properties)
 
 
+def split_name(param, val, sector):
+    case_properties = param.get_by_sector("case_properties", sector)
+    vals = val.split(" ", len(case_properties) - 1)
+    output = {}
+    for i, val in enumerate(vals):
+        output[case_properties[i]] = val
+    return output
+
+
 def concat_phone_numbers(case_properties, case_properties_to_check):
     numbers = []
     for potential_number in case_properties_to_check:
