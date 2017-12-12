@@ -188,7 +188,7 @@ class ReferredBy(ReferralExpressionBase):
     type = TypeProperty("enikshay_referred_by")
 
     def _handle_referral_case(self, referral):
-        return referral.opened_by
+        return referral.referred_by_user
 
 
 def referred_by_expression(spec, context):
