@@ -216,7 +216,7 @@ class FormsInDateExpressionSpec(JsonObject):
         return xform_ids
 
     def _get_form_json(self, form, context):
-        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
+        cache_key = (XFORM_CACHE_KEY_PREFIX, form.form_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
