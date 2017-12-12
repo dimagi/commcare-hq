@@ -215,14 +215,19 @@ class FormsInDateExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, xform_ids)
         return xform_ids
 
-    def _get_form_json(self, form, context):
-        cache_key = (XFORM_CACHE_KEY_PREFIX, form.form_id)
+    @staticmethod
+    def _get_form_json(form, context):
+        cache_key = FormsInDateExpressionSpec._get_form_json_cache_key(form)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
         form_json = form.to_json()
         context.set_cache_value(cache_key, form_json)
         return form_json
+
+    @staticmethod
+    def _get_form_json_cache_key(form):
+        return (XFORM_CACHE_KEY_PREFIX, form.form_id)
 
     def __str__(self):
         value = "case_forms[{case_id}]".format(case_id=self._case_id_expression)
