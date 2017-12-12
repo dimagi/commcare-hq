@@ -133,6 +133,12 @@ class ScheduleForm(Form):
             tuple((str(x), '') for x in range(1, 29))
         )
     )
+    send_time_type = ChoiceField(
+        required=True,
+        choices=(
+            (TimedSchedule.EVENT_SPECIFIC_TIME, ugettext_lazy("A specific time")),
+        )
+    )
     send_time = CharField(required=False)
     stop_type = ChoiceField(
         required=False,
@@ -235,7 +241,12 @@ class ScheduleForm(Form):
         initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
 
     def add_initial_for_timed_schedule(self, initial):
-        initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+        if self.initial_schedule.event_type == TimedSchedule.EVENT_SPECIFIC_TIME:
+            initial['send_time_type'] = self.initial_schedule.event_type
+            initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+        else:
+            raise ValueError("Unexpected event_type: %s" % self.initial_schedule.event_type)
+
         if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
             initial['stop_type'] = self.STOP_NEVER
         else:
@@ -384,6 +395,24 @@ class ScheduleForm(Form):
                     template='scheduling/partial/days_of_month_picker.html',
                 ),
                 data_bind='visible: showDaysOfMonthInput',
+            ),
+            hqcrispy.B3MultiField(
+                _("At"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'send_time_type',
+                        data_bind='value: send_time_type',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'send_time',
+                        template='scheduling/partial/time_picker.html',
+                    ),
+                    data_bind="visible: send_time_type() === '%s'" % TimedSchedule.EVENT_SPECIFIC_TIME,
+                ),
+                data_bind="visible: showTimeInput",
             ),
         ]
 
@@ -687,7 +716,10 @@ class ScheduleForm(Form):
         return [int(i) for i in days_of_month]
 
     def clean_send_time(self):
-        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_SPECIFIC_TIME
+        ):
             return None
 
         return validate_time(self.cleaned_data.get('send_time'))
@@ -941,14 +973,6 @@ class BroadcastForm(ScheduleForm):
     def get_timing_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
-                _("At"),
-                crispy.Field(
-                    'send_time',
-                    template='scheduling/partial/time_picker.html',
-                ),
-                data_bind='visible: showTimeInput',
-            ),
-            hqcrispy.B3MultiField(
                 _("Start"),
                 crispy.Div(
                     twbscrispy.InlineField(
@@ -1043,9 +1067,6 @@ class BroadcastForm(ScheduleForm):
 
 
 class ConditionalAlertScheduleForm(ScheduleForm):
-
-    SEND_TIME_SPECIFIC_TIME = 'SPECIFIC_TIME'
-
     START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
     START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
 
@@ -1055,16 +1076,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     YES = 'Y'
     NO = 'N'
-
-    # Ensure that field order is correct based on clean_* method dependencies
-    field_order = ['send_frequency', 'send_time_type', 'send_time']
-
-    send_time_type = ChoiceField(
-        required=True,
-        choices=(
-            (SEND_TIME_SPECIFIC_TIME, ugettext_lazy("A specific time")),
-        )
-    )
 
     start_date_type = ChoiceField(
         required=True,
@@ -1219,24 +1230,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def get_timing_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
-                _("At"),
-                crispy.Div(
-                    twbscrispy.InlineField(
-                        'send_time_type',
-                        data_bind='value: send_time_type',
-                    ),
-                    css_class='col-sm-4',
-                ),
-                crispy.Div(
-                    twbscrispy.InlineField(
-                        'send_time',
-                        template='scheduling/partial/time_picker.html',
-                    ),
-                    data_bind="visible: send_time_type() === '%s'" % self.SEND_TIME_SPECIFIC_TIME,
-                ),
-                data_bind="visible: showTimeInput",
-            ),
-            hqcrispy.B3MultiField(
                 _("Start Date"),
                 crispy.Div(
                     twbscrispy.InlineField(
@@ -1323,12 +1316,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 <span class="label label-primary">%s</span>
             </label>
         """ % _("Requires System Admin"))
-
-    def clean_send_time(self):
-        if self.cleaned_data.get('send_time_type') == self.SEND_TIME_SPECIFIC_TIME:
-            return super(ConditionalAlertScheduleForm, self).clean_send_time()
-
-        return None
 
     def clean_start_offset_type(self):
         if self.cleaned_data.get('send_frequency') != self.SEND_DAILY:

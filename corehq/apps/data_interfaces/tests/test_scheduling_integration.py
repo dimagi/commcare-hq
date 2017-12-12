@@ -616,7 +616,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].current_event_num, 0)
             self.assertEqual(instances[0].schedule_iteration_num, 1)
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 3, 13, 0))
-            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
 
             # Change the schedule's start offset and force a case update to reprocess the schedule instance.
@@ -641,7 +641,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].current_event_num, 0)
             self.assertEqual(instances[0].schedule_iteration_num, 1)
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
-            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
 
             # Making another arbitrary update doesn't cause any recalculating to happen
@@ -662,7 +662,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].current_event_num, 0)
             self.assertEqual(instances[0].schedule_iteration_num, 1)
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
-            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
 
 
