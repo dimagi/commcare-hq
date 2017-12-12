@@ -1415,7 +1415,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return custom_recipient
 
     def clean_reset_case_property_enabled(self):
+        value = self.cleaned_data['reset_case_property_enabled']
         if (
+            value == self.YES and
             self.cleaned_data.get('send_frequency') != self.SEND_IMMEDIATELY and
             self.cleaned_data.get('start_date_type') != self.START_DATE_RULE_TRIGGER
         ):
@@ -1423,6 +1425,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 _("This option can only be enabled when the schedule's start "
                   "date is the date that the rule triggers.")
             )
+
+        return value
 
     def clean_reset_case_property_name(self):
         if self.cleaned_data.get('reset_case_property_enabled') == self.NO:
