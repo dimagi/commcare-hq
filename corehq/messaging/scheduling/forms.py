@@ -35,6 +35,7 @@ from corehq.messaging.scheduling.models import (
     AlertSchedule,
     TimedSchedule,
     TimedEvent,
+    RandomTimedEvent,
     ImmediateBroadcast,
     ScheduledBroadcast,
     SMSContent,
@@ -138,9 +139,16 @@ class ScheduleForm(Form):
         required=True,
         choices=(
             (TimedSchedule.EVENT_SPECIFIC_TIME, ugettext_lazy("A specific time")),
+            (TimedSchedule.EVENT_RANDOM_TIME, ugettext_lazy("A random time")),
         )
     )
     send_time = CharField(required=False)
+    window_length = IntegerField(
+        required=False,
+        min_value=1,
+        max_value=1439,
+        label='',
+    )
     stop_type = ChoiceField(
         required=False,
         choices=(
@@ -242,9 +250,13 @@ class ScheduleForm(Form):
         initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
 
     def add_initial_for_timed_schedule(self, initial):
+        initial['send_time_type'] = self.initial_schedule.event_type
+
         if self.initial_schedule.event_type == TimedSchedule.EVENT_SPECIFIC_TIME:
-            initial['send_time_type'] = self.initial_schedule.event_type
             initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+        elif self.initial_schedule.event_type == TimedSchedule.EVENT_RANDOM_TIME:
+            initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+            initial['window_length'] = self.initial_schedule.memoized_events[0].window_length
         else:
             raise ValueError("Unexpected event_type: %s" % self.initial_schedule.event_type)
 
@@ -411,9 +423,18 @@ class ScheduleForm(Form):
                         'send_time',
                         template='scheduling/partial/time_picker.html',
                     ),
-                    data_bind="visible: send_time_type() === '%s'" % TimedSchedule.EVENT_SPECIFIC_TIME,
+                    data_bind=("visible: send_time_type() === '%s' || send_time_type() === '%s'"
+                               % (TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME)),
                 ),
                 data_bind="visible: showTimeInput",
+            ),
+            hqcrispy.B3MultiField(
+                _("Random Window Length (minutes)"),
+                crispy.Div(
+                    crispy.Field('window_length'),
+                ),
+                data_bind=("visible: showTimeInput() && send_time_type() === '%s'"
+                           % TimedSchedule.EVENT_RANDOM_TIME),
             ),
         ]
 
@@ -719,11 +740,26 @@ class ScheduleForm(Form):
     def clean_send_time(self):
         if (
             self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
-            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_SPECIFIC_TIME
+            self.cleaned_data.get('send_time_type') not in [
+                TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME
+            ]
         ):
             return None
 
         return validate_time(self.cleaned_data.get('send_time'))
+
+    def clean_window_length(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_RANDOM_TIME
+        ):
+            return None
+
+        value = self.cleaned_data.get('window_length')
+        if value is None:
+            raise ValidationError(_("This field is required."))
+
+        return value
 
     def clean_stop_type(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
@@ -819,6 +855,20 @@ class ScheduleForm(Form):
     def distill_start_day_of_week(self):
         raise NotImplementedError()
 
+    def distill_model_timed_event(self):
+        event_type = self.cleaned_data['send_time_type']
+        if event_type == TimedSchedule.EVENT_SPECIFIC_TIME:
+            return TimedEvent(
+                time=self.cleaned_data['send_time'],
+            )
+        elif event_type == TimedSchedule.EVENT_RANDOM_TIME:
+            return RandomTimedEvent(
+                time=self.cleaned_data['send_time'],
+                window_length=self.cleaned_data['window_length'],
+            )
+        else:
+            raise ValueError("Unexpected send_time_type: %s" % event_type)
+
     def assert_alert_schedule(self, schedule):
         if not isinstance(schedule, AlertSchedule):
             raise TypeError("Expected AlertSchedule")
@@ -851,7 +901,7 @@ class ScheduleForm(Form):
             schedule = self.initial_schedule
             self.assert_timed_schedule(schedule)
             schedule.set_simple_daily_schedule(
-                TimedEvent(time=form_data['send_time']),
+                self.distill_model_timed_event(),
                 content,
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
@@ -860,7 +910,7 @@ class ScheduleForm(Form):
         else:
             schedule = TimedSchedule.create_simple_daily_schedule(
                 self.domain,
-                TimedEvent(time=form_data['send_time']),
+                self.distill_model_timed_event(),
                 content,
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
@@ -879,7 +929,7 @@ class ScheduleForm(Form):
             schedule = self.initial_schedule
             self.assert_timed_schedule(schedule)
             schedule.set_simple_weekly_schedule(
-                TimedEvent(time=form_data['send_time']),
+                self.distill_model_timed_event(),
                 content,
                 form_data['weekdays'],
                 self.distill_start_day_of_week(),
@@ -889,7 +939,7 @@ class ScheduleForm(Form):
         else:
             schedule = TimedSchedule.create_simple_weekly_schedule(
                 self.domain,
-                TimedEvent(time=form_data['send_time']),
+                self.distill_model_timed_event(),
                 content,
                 form_data['weekdays'],
                 self.distill_start_day_of_week(),
@@ -913,7 +963,7 @@ class ScheduleForm(Form):
             schedule = self.initial_schedule
             self.assert_timed_schedule(schedule)
             schedule.set_simple_monthly_schedule(
-                TimedEvent(time=form_data['send_time']),
+                self.distill_model_timed_event(),
                 sorted_days_of_month,
                 content,
                 total_iterations=total_iterations,
@@ -922,7 +972,7 @@ class ScheduleForm(Form):
         else:
             schedule = TimedSchedule.create_simple_monthly_schedule(
                 self.domain,
-                TimedEvent(time=form_data['send_time']),
+                self.distill_model_timed_event(),
                 sorted_days_of_month,
                 content,
                 total_iterations=total_iterations,
