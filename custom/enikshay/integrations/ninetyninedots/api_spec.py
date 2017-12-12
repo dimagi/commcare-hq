@@ -217,6 +217,12 @@ def concat_phone_numbers(case_properties, case_properties_to_check):
     return ", ".join(numbers) if numbers else None
 
 
+def unwrap_phone_number(param, val, sector):
+    number = _format_number(_parse_number(val))
+    case_properties = param.get_by_sector('case_properties', sector)
+    return {p: number.replace("+", "") for p in case_properties}
+
+
 def _parse_number(number):
     if number:
         return phonenumbers.parse(number, "IN")

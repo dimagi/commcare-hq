@@ -48,3 +48,10 @@ api_params:
     both:
       - foo
       - bar
+- api_param_name: unwrap_number
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.unwrap_phone_number
+  case_type:
+    both: person
+  case_properties:
+    both:
+      - foo

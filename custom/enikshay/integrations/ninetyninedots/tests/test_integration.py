@@ -121,6 +121,15 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(person_case.get_case_property('foo'), 'Arya')
         self.assertEqual(person_case.get_case_property('bar'), 'Horseface Stark')
 
+    def test_unwrap_number(self):
+        fake_request = self._get_fake_request()
+
+        fake_request['unwrap_number'] = '+91123456789'
+        PatientDetailsUpdater(self.domain, fake_request).update_cases()
+
+        person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self.assertEqual(person_case.get_case_property('foo'), '91123456789')
+
     def test_validate_patient_adherence_data(self):
         with self.assertRaises(NinetyNineDotsException) as e:
             validate_beneficiary_id(None)
