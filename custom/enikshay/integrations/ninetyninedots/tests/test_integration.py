@@ -130,6 +130,12 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
         person_case = CaseAccessors(self.domain).get_case(self.person_id)
         self.assertEqual(person_case.get_case_property('foo'), '91123456789')
 
+    def test_private_only(self):
+        fake_request = self._get_fake_request()
+
+        fake_request['private_only'] = 'so private'
+        PatientDetailsUpdater(self.domain, fake_request).update_cases()
+
     def test_validate_patient_adherence_data(self):
         with self.assertRaises(NinetyNineDotsException) as e:
             validate_beneficiary_id(None)

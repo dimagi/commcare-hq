@@ -55,3 +55,8 @@ api_params:
   case_properties:
     both:
       - foo
+- api_param_name: private_only
+  case_type:
+    both: person
+  case_property:
+    private: foo

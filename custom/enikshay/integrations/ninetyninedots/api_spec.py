@@ -50,8 +50,6 @@ class DotsApiSectorParam(StrictJsonObject):
         if _obj:
             if "both" in _obj and ("public" in _obj or "private" in _obj):
                 raise ValueError("Can't define 'public' or 'private' options with 'both'")
-            if "both" not in _obj and len(set(("public", "private")) - set(_obj.keys())) > 0:
-                raise ValueError("Must contain both public and private options")
 
         return super(DotsApiSectorParam, self).__init__(*args, **kwargs)
 
@@ -117,9 +115,14 @@ class DotsApiParam(StrictJsonObject):
 class DotsApiParams(StrictJsonObject):
     api_params = jsonobject.ListProperty(DotsApiParam)
 
-    def get_param(self, param):
+    def get_param(self, param, sector):
         try:
-            return next(p for p in self.api_params if p.api_param_name == param)
+            return next(
+                p for p in self.api_params
+                if p.api_param_name == param
+                and (getattr(p.case_properties, sector) or getattr(p.case_properties, 'both')
+                     or getattr(p.case_property, sector) or getattr(p.case_property, 'both'))
+            )
         except StopIteration:
             raise KeyError("{} not in spec".format(param))
 
