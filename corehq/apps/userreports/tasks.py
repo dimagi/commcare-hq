@@ -306,7 +306,6 @@ def save_document(doc_ids):
             processed_indicators, failed_indicators = _save_document_helper(
                 doc_ids, indicator_by_doc_id, doc_store)
 
-        # remove/update any indicators including related docs that succeeded/failed
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         with transaction.atomic():
             for indicator, to_remove in failed_indicators:
@@ -322,6 +321,7 @@ def save_document(doc_ids):
 
 
 def _save_document_helper(doc_ids, indicator_by_doc_id, doc_store):
+    # don't think I need doc_ids. can get them from the dictionary
     from custom.icds_reports.ucr.expressions import get_related_docs_ids
     processed_indicators = []
     failed_indicators = []
@@ -336,6 +336,11 @@ def _save_document_helper(doc_ids, indicator_by_doc_id, doc_store):
         else:
             failed_indicators.append((indicator, to_remove))
 
+    # remove any related docs that were just rebuilt
+    related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
+
+    # need to add/change locking for these docs
+    # also need to get indicators for these docs as they won't be in the inciator_by_doc_id dict passed in
     for doc in doc_store.iter_documents(list(related_docs_to_rebuild)):
         if related_docs_to_rebuild in indicator_by_doc_id:
             # don't process docs already processed
