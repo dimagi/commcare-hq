@@ -82,6 +82,15 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
+FormplayerFrontend.reqres.setHandler('lastRecordedLocation', function() {
+    if (typeof sessionStorage.locationLat == "undefined") {
+        return null;
+    } else {
+        var locationComponents = [sessionStorage.locationLat, sessionStorage.locationLon, sessionStorage.locationAltitude, sessionStorage.locationAccuracy];
+        return locationComponents.join();
+    }
+});
+
 FormplayerFrontend.on('clearBreadcrumbs', function () {
     $('#persistent-case-tile').html("");
 });
@@ -120,9 +129,9 @@ FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
 });
 
 FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
-    if(notification.error){
+    if (notification.error){
         FormplayerFrontend.request('showError', notification.message);
-    } else{
+    } else {
         FormplayerFrontend.request('showSuccess', notification.message);
     }
 });

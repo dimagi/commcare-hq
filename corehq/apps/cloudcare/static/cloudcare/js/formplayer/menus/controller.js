@@ -14,10 +14,17 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
-
                 // show any notifications from Formplayer
                 if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
+                }
+
+                if (menuResponse.shouldRequestLocation) {
+                    console.log('requesting location from browser');
+                    Menus.Util.handleLocationRequest(options);
+                } else if (!menuResponse.shouldWatchLocation) {
+                    console.log('stopping location watching');
+                    Menus.Util.stopWatchingLocation();
                 }
 
                 // If redirect was set, clear and go home.
@@ -197,6 +204,40 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     Menus.Util = {
+        handleLocationRequest: function(optionsFromLastRequest) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    Menus.Util.recordPosition(position);
+                    Menus.Controller.selectMenu(optionsFromLastRequest);
+                });
+                Menus.Util.startWatchingLocation();
+            }
+        },
+
+        startWatchingLocation: function() {
+            if (navigator.geolocation) {
+                sessionStorage.lastLocationWatch = navigator.geolocation.watchPosition(function(position) {
+                    Menus.Util.recordPosition(position);
+                });
+            }
+        },
+
+        stopWatchingLocation: function() {
+            if (navigator.geolocation) {
+                if (typeof sessionStorage.lastLocationWatch != "undefined") {
+                    navigator.geolocation.clearWatch(sessionStorage.lastLocationWatch);
+                }
+                sessionStorage.clear();
+            }
+        },
+
+        recordPosition: function(position) {
+            sessionStorage.locationLat = position.coords.latitude;
+            sessionStorage.locationLon = position.coords.longitude;
+            sessionStorage.locationAltitude = position.coords.altitude;
+            sessionStorage.locationAccuracy = position.coords.accuracy;
+        },
+
         showBreadcrumbs: function (breadcrumbs) {
             var detailCollection,
                 breadcrumbModels;

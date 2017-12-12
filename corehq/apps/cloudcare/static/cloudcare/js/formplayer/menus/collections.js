@@ -33,6 +33,8 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'useUniformUnits',
             'hasInlineTile',
             'sortIndices',
+            'shouldWatchLocation',
+            'shouldRequestLocation'
         ],
 
         commandProperties: [
