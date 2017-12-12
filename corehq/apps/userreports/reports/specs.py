@@ -455,11 +455,12 @@ def _add_column_id_if_missing(obj):
         obj['column_id'] = obj.get('alias') or obj['field']
 
 
-class CalculatedColumn(namedtuple('CalculatedColumn', ['header', 'slug'])):
+class CalculatedColumn(namedtuple('CalculatedColumn', ['header', 'slug', 'visible', 'help_text'])):
 
     @property
     def data_tables_column(self):
-        return DataTablesColumn(self.header, sortable=False, data_slug=self.slug)
+        return DataTablesColumn(self.header, sortable=False, data_slug=self.slug,
+                                visible=self.visible, help_text=self.help_text)
 
 
 class ExpressionColumn(BaseReportColumn):
@@ -481,9 +482,10 @@ class ExpressionColumn(BaseReportColumn):
             CalculatedColumn(
                 header=self.get_header(lang),
                 slug=self.column_id,
+                visible=self.visible,
                 # todo: are these needed?
                 # format_fn=self.get_format_fn(),
-                # help_text=self.description
+                help_text=self.description
             )
         ])
 
