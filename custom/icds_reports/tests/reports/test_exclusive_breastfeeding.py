@@ -27,7 +27,23 @@ class TestExclusiveBreastfeeding(TestCase):
                             "if they recieve only breastmilk with "
                             "no additional food, liquids (even water) "
                             "ensuring optimal nutrition and growth between 0 - 6 months",
-                    "average": 56.0
+                    "average": 56.0,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of children between ages 0 - 6 months:',
+                            'value': 50
+                        },
+                        {
+                            'indicator': (
+                                'Total number of children (0-6 months) exclusively breastfed in the given month:'
+                            ),
+                            'value': 28
+                        },
+                        {
+                            'indicator': '% children (0-6 months) exclusively in_month_total in the given month:',
+                            'value': '56.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",
@@ -73,7 +89,23 @@ class TestExclusiveBreastfeeding(TestCase):
                             "if they recieve only breastmilk with "
                             "no additional food, liquids (even water) "
                             "ensuring optimal nutrition and growth between 0 - 6 months",
-                    "average": 65.38461538461539
+                    "average": 65.38461538461539,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of children between ages 0 - 6 months:',
+                            'value': 26
+                        },
+                        {
+                            'indicator': (
+                                'Total number of children (0-6 months) exclusively breastfed in the given month:'
+                            ),
+                            'value': 17
+                        },
+                        {
+                            'indicator': '% children (0-6 months) exclusively in_month_total in the given month:',
+                            'value': '65.38%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",

@@ -25,7 +25,27 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     "info": "Percentage of pregnant women who delivered in a public or "
                             "private medical facility in the last month. <br/><br/>Delivery in medical"
                             " instituitions is associated with a decrease in maternal mortality rate",
-                    "average": 76.92307692307692
+                    "average": 76.92307692307692,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of pregnant women who delivered in the last month:',
+                            'value': 26
+                        },
+                        {
+                            'indicator': (
+                                'Total number of pregnant women who delivered in a public/private '
+                                'medical facilitiy in the last month:'
+                            ),
+                            'value': 20
+                        },
+                        {
+                            'indicator': (
+                                '% pregnant women who delivered in a '
+                                'public or private medical facility in the last month:'
+                            ),
+                            'value': '76.92%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",
@@ -69,7 +89,27 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     "info": "Percentage of pregnant women who delivered in a public or "
                             "private medical facility in the last month. <br/><br/>Delivery in medical"
                             " instituitions is associated with a decrease in maternal mortality rate",
-                    "average": 69.23076923076923
+                    "average": 69.23076923076923,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of pregnant women who delivered in the last month:',
+                            'value': 13
+                        },
+                        {
+                            'indicator': (
+                                'Total number of pregnant women who delivered in a public/private '
+                                'medical facilitiy in the last month:'
+                            ),
+                            'value': 9
+                        },
+                        {
+                            'indicator': (
+                                '% pregnant women who delivered in a '
+                                'public or private medical facility in the last month:'
+                            ),
+                            'value': '69.23%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",

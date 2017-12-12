@@ -28,7 +28,13 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
                             u' have a higher risk of mortality',
-                    'average': 17.593528816986854
+                    'average': 17.593528816986854,
+                    'extended_info': [
+                        {'indicator': 'Total Children weighed in given month:', 'value': 4945},
+                        {'indicator': '% Unweighed:', 'value': '5.66%'},
+                        {'indicator': '% Severely Underweight:', 'value': '0.00%'},
+                        {'indicator': '% Moderately Underweight:', 'value': '17.59%'},
+                        {'indicator': '% Normal:', 'value': '76.74%'}]
                 },
                 'fills': OrderedDict(
                     [
@@ -80,7 +86,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
                             u' have a higher risk of mortality',
-                    'average': 18.94736842105263
+                    'average': 18.94736842105263,
+                    'extended_info': [
+                        {'indicator': 'Total Children weighed in given month:', 'value': 475},
+                        {'indicator': '% Unweighed:', 'value': '4.42%'},
+                        {'indicator': '% Severely Underweight:', 'value': '0.00%'},
+                        {'indicator': '% Moderately Underweight:', 'value': '18.95%'},
+                        {'indicator': '% Normal:', 'value': '76.63%'}
+                    ]
                 },
                 'fills': OrderedDict(
                     [

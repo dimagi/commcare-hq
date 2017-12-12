@@ -28,6 +28,20 @@ from six.moves import range
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
+FILTER_BY_LIST = {
+    'unweighed': 'Data not Entered for weight (Unweighed)',
+    'umeasured': 'Data not Entered for height (Unmeasured)',
+    'severely_underweight': 'Severely Underweight',
+    'moderately_underweight': 'Moderately Underweight',
+    'normal_wfa': 'Normal (weight-for-age)',
+    'severely_stunted': 'Severely Stunted',
+    'moderately_stunted': 'Moderately Stunted',
+    'normal_hfa': 'Normal (height-for-age)',
+    'severely_wasted': 'Severely Wasted',
+    'moderately_wasted': 'Moderately Wasted',
+    'normal_wfh': 'Normal (weight-for-height)'
+}
+
 
 class BaseIdentification(object):
 
@@ -208,16 +222,22 @@ class ExportableMixin(object):
             date = self.config['month']
             filters.append(['Month', date.strftime("%B")])
             filters.append(['Year', date.year])
+        if 'filters' in self.config:
+            filter_values = []
+            for filter_by in self.config['filters']:
+                filter_values.append(FILTER_BY_LIST[filter_by])
+            filters.append(['Filtered By', ', '.join(filter_values)])
         return [
             [
                 self.title,
                 excel_rows
             ],
             [
-                'Filters',
+                'Export Info',
                 filters
             ]
         ]
+
 
 class NationalAggregationDataSource(SqlData):
 
@@ -1892,9 +1912,10 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
     @property
     def get_columns_by_loc_level(self):
+        selected_month = self.config['month']
         columns = [
             DatabaseColumn(
-                'Name',
+                'Child Name',
                 SimpleColumn('person_name'),
                 slug='person_name'
             ),
@@ -1904,7 +1925,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='dob'
             ),
             DatabaseColumn(
-                'Current Age (In years)',
+                'Current Age (as of {})'.format(selected_month.isoformat()),
                 AliasColumn('dob'),
                 format_fn=lambda x: calculate_date_for_age(x, self.config['month']),
                 slug='current_age'
@@ -1925,19 +1946,19 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='month'
             ),
             DatabaseColumn(
-                'Weight recorded',
+                'Weight Recorded (in Month)',
                 SimpleColumn('recorded_weight'),
-                format_fn=lambda x: "%.2f" % x,
+                format_fn=lambda x: "%.2f" % x if x else "Data Not Entered",
                 slug='recorded_weight'
             ),
             DatabaseColumn(
-                'Height recorded',
+                'Height Recorded (in Month)',
                 SimpleColumn('recorded_height'),
-                format_fn=lambda x: "%.2f" % x,
+                format_fn=lambda x: "%.2f" % x if x else "Data Not Entered",
                 slug='recorded_height'
             ),
             DatabaseColumn(
-                'Weight-for-Age Status',
+                'Weight-for-Age Status (in Month)',
                 SimpleColumn('current_month_nutrition_status'),
                 format_fn=lambda x: get_status(
                     x,
@@ -1948,29 +1969,29 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='current_month_nutrition_status'
             ),
             DatabaseColumn(
-                'Weight-for-Height Status',
+                'Weight-for-Height Status (in Month)',
                 SimpleColumn('current_month_wasting'),
                 format_fn=lambda x: get_status(
                     x,
                     'wasted',
-                    'Normal height for age',
+                    'Normal weight for height',
                     True
                 ),
                 slug="current_month_wasting"
             ),
             DatabaseColumn(
-                'Height-for-Age status',
+                'Height-for-Age status (in Month)',
                 SimpleColumn('current_month_stunting'),
                 format_fn=lambda x: get_status(
                     x,
                     'stunted',
-                    'Normal weight for height',
+                    'Normal height for age',
                     True
                 ),
                 slug="current_month_stunting"
             ),
             DatabaseColumn(
-                'PSE Attendance (Days)',
+                'Days attended PSE (as of {})'.format(selected_month.isoformat()),
                 SimpleColumn('pse_days_attended'),
                 slug="pse_days_attended"
             ),

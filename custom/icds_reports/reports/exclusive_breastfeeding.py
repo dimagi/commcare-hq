@@ -67,7 +67,23 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
                     "<br/><br/>"
                     "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
                     "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of children between ages 0 - 6 months:',
+                        'value': valid_total
+                    },
+                    {
+                        'indicator': (
+                            'Total number of children (0-6 months) exclusively breastfed in the given month:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': '% children (0-6 months) exclusively in_month_total in the given month:',
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

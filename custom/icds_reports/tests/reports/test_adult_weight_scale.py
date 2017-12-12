@@ -23,7 +23,14 @@ class TestAdultWeightScale(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with weighing scale for mother and child",
-                    "average": 18.0
+                    "average": 18.0,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of AWCs with a weighing scale for mother and child:',
+                            'value': 9
+                        },
+                        {'indicator': '% of AWCs with a weighing scale for mother and child:', 'value': '18.00%'}
+                    ]
                 },
                 "fills": {
                     "0%-25%": "#de2d26",
@@ -65,7 +72,14 @@ class TestAdultWeightScale(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with weighing scale for mother and child",
-                    "average": 19.23076923076923
+                    "average": 19.23076923076923,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of AWCs with a weighing scale for mother and child:',
+                            'value': 5
+                        },
+                        {'indicator': '% of AWCs with a weighing scale for mother and child:', 'value': '19.23%'}
+                    ]
                 },
                 "fills": {
                     "0%-25%": "#de2d26",

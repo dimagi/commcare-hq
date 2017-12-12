@@ -22,7 +22,7 @@ class TestRegisteredHousehold(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Total number of households registered",
+                    "info": "Total number of households registered: 6964",
                     "average": 3482.0,
                     "average_format": "number"
                 },
@@ -48,6 +48,7 @@ class TestRegisteredHousehold(TestCase):
         )
 
     def test_map_name_is_different_data(self):
+        self.maxDiff = None
         self.assertDictEqual(
             get_registered_household_data_map(
                 'icds-cas',
@@ -61,7 +62,7 @@ class TestRegisteredHousehold(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Total number of households registered",
+                    "info": "Total number of households registered: 3633",
                     "average": 1816.5,
                     "average_format": "number"
                 },

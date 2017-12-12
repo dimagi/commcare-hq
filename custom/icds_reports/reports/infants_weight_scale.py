@@ -64,7 +64,21 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for infants"
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': (
+                            'Total number of AWCs with a weighing scale for infants:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': (
+                            '% of AWCs with a weighing scale for infants:'
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }
