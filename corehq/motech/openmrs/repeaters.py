@@ -58,8 +58,14 @@ class OpenmrsRepeater(CaseRepeater):
                           for id_matcher in self.openmrs_config.case_config.id_matchers])
         form_question_values = get_form_question_values(form_json)
 
-        send_openmrs_data(Requests(self.url, self.username, self.password), form_json, self.openmrs_config,
-                          case_trigger_infos, form_question_values)
+        send_openmrs_data(
+            self.domain,
+            Requests(self.url, self.username, self.password),
+            form_json,
+            self.openmrs_config,
+            case_trigger_infos,
+            form_question_values
+        )
 
         return repeat_record.handle_success(None)
 
