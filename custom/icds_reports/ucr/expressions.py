@@ -222,12 +222,16 @@ class FormsInDateExpressionSpec(JsonObject):
             return cached_form
 
         form_json = form.to_json()
-        context.set_cache_value(FormsInDateExpressionSpec._get_form_json_cache_key(), form_json)
+        FormsInDateExpressionSpec._set_cached_form_json(form, form_json, context)
         return form_json
 
     @staticmethod
     def _get_cached_form_json(form, context):
         return context.get_cache_value(FormsInDateExpressionSpec._get_form_json_cache_key(form))
+
+    @staticmethod
+    def _set_cached_form_json(form, context, form_json):
+        context.set_cache_value(FormsInDateExpressionSpec._get_form_json_cache_key(form), form_json)
 
     @staticmethod
     def _get_form_json_cache_key(form):
