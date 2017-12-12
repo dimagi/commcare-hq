@@ -205,7 +205,7 @@ class AdherenceCaseFactory(BaseNinetyNineDotsUpdater):
         try:
             adherence_cases = get_adherence_cases_between_dates(self.domain, self.person_id, start_date, end_date)
         except ENikshayCaseNotFound as e:
-            raise NinetyNineDotsException(e.message)
+            raise NinetyNineDotsException(six.text_type(e))
         adherence_case_ids = [case.case_id for case in adherence_cases]
         return self.case_factory.create_or_update_cases([
             CaseStructure(
