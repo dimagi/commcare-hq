@@ -34,6 +34,7 @@ from corehq.messaging.scheduling.models import (
     Schedule,
     AlertSchedule,
     TimedSchedule,
+    TimedEvent,
     ImmediateBroadcast,
     ScheduledBroadcast,
     SMSContent,
@@ -850,7 +851,7 @@ class ScheduleForm(Form):
             schedule = self.initial_schedule
             self.assert_timed_schedule(schedule)
             schedule.set_simple_daily_schedule(
-                form_data['send_time'],
+                TimedEvent(time=form_data['send_time']),
                 content,
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
@@ -859,7 +860,7 @@ class ScheduleForm(Form):
         else:
             schedule = TimedSchedule.create_simple_daily_schedule(
                 self.domain,
-                form_data['send_time'],
+                TimedEvent(time=form_data['send_time']),
                 content,
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
@@ -878,7 +879,7 @@ class ScheduleForm(Form):
             schedule = self.initial_schedule
             self.assert_timed_schedule(schedule)
             schedule.set_simple_weekly_schedule(
-                form_data['send_time'],
+                TimedEvent(time=form_data['send_time']),
                 content,
                 form_data['weekdays'],
                 self.distill_start_day_of_week(),
@@ -888,7 +889,7 @@ class ScheduleForm(Form):
         else:
             schedule = TimedSchedule.create_simple_weekly_schedule(
                 self.domain,
-                form_data['send_time'],
+                TimedEvent(time=form_data['send_time']),
                 content,
                 form_data['weekdays'],
                 self.distill_start_day_of_week(),
@@ -912,7 +913,7 @@ class ScheduleForm(Form):
             schedule = self.initial_schedule
             self.assert_timed_schedule(schedule)
             schedule.set_simple_monthly_schedule(
-                form_data['send_time'],
+                TimedEvent(time=form_data['send_time']),
                 sorted_days_of_month,
                 content,
                 total_iterations=total_iterations,
@@ -921,7 +922,7 @@ class ScheduleForm(Form):
         else:
             schedule = TimedSchedule.create_simple_monthly_schedule(
                 self.domain,
-                form_data['send_time'],
+                TimedEvent(time=form_data['send_time']),
                 sorted_days_of_month,
                 content,
                 total_iterations=total_iterations,

@@ -13,6 +13,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     TimedSchedule,
+    TimedEvent,
     SMSContent,
 )
 from corehq.messaging.scheduling.tasks import (
@@ -70,7 +71,7 @@ class DailyScheduleTest(BaseScheduleTest):
         super(DailyScheduleTest, cls).setUpClass()
         cls.schedule = TimedSchedule.create_simple_daily_schedule(
             cls.domain,
-            time(12, 0),
+            TimedEvent(time=time(12, 0)),
             SMSContent(),
             total_iterations=2,
         )
@@ -197,7 +198,7 @@ class StartDayOfWeekTest(BaseScheduleTest):
         super(StartDayOfWeekTest, cls).setUpClass()
         cls.schedule = TimedSchedule.create_simple_daily_schedule(
             cls.domain,
-            time(12, 0),
+            TimedEvent(time=time(12, 0)),
             SMSContent(),
             total_iterations=2,
             start_day_of_week=TimedSchedule.MONDAY,
@@ -316,7 +317,7 @@ class StartDayOfWeekWithStartOffsetTest(BaseScheduleTest):
         super(StartDayOfWeekWithStartOffsetTest, cls).setUpClass()
         cls.schedule = TimedSchedule.create_simple_daily_schedule(
             cls.domain,
-            time(12, 0),
+            TimedEvent(time=time(12, 0)),
             SMSContent(),
             total_iterations=2,
             start_offset=3,
@@ -375,7 +376,7 @@ class MonthlyScheduleTest(TestCase):
         cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password')
         cls.schedule = TimedSchedule.create_simple_monthly_schedule(
             cls.domain,
-            time(12, 0),
+            TimedEvent(time=time(12, 0)),
             [1, 15],
             SMSContent(),
             total_iterations=2,
@@ -497,7 +498,7 @@ class EndOfMonthScheduleTest(TestCase):
         cls.user1 = CommCareUser.create(cls.domain, 'user1', 'password')
         cls.schedule = TimedSchedule.create_simple_monthly_schedule(
             cls.domain,
-            time(12, 0),
+            TimedEvent(time=time(12, 0)),
             [-1],
             SMSContent(),
             total_iterations=2,

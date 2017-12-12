@@ -20,7 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.scheduling.const import VISIT_WINDOW_START, VISIT_WINDOW_END, VISIT_WINDOW_DUE_DATE
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, SMSContent
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, TimedEvent, SMSContent
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule,
     get_case_timed_schedule_instances_for_schedule,
@@ -101,7 +101,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     def test_timed_schedule_instance_creation(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
 
@@ -291,7 +291,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     def test_timed_schedule_reset(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
 
@@ -370,7 +370,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     def test_timed_schedule_start_date_case_property(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
 
@@ -452,7 +452,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     def test_visit_scheduler_integration(self, utcnow_patch, module_and_form_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'}),
             total_iterations=1,
         )
@@ -586,7 +586,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     def test_start_offset(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'}),
             start_offset=2,
         )
