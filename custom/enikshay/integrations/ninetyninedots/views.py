@@ -11,7 +11,7 @@ from dimagi.utils.web import json_response
 from dimagi.utils.logging import notify_exception
 
 from corehq.motech.repeaters.views import AddCaseRepeaterView
-from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
+from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     AdherenceCaseFactory,
     update_adherence_confidence_level,
@@ -63,12 +63,12 @@ def update_patient_adherence(request, domain):
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
         factory.create_adherence_cases(adherence_values)
-    except AdherenceException as e:
+    except NinetyNineDotsException as e:
         return json_response({"error": six.text_type(e)}, status_code=400)
 
     try:
         factory.update_episode_adherence_properties()
-    except AdherenceException as e:
+    except NinetyNineDotsException as e:
         notify_exception(
             request,
             message=("An error occurred updating the episode case after receiving a 99DOTS"
@@ -103,7 +103,7 @@ def update_adherence_confidence(request, domain):
             end_date=parse_datetime(end_date),
             new_confidence=confidence_level
         )
-    except AdherenceException as e:
+    except NinetyNineDotsException as e:
         return json_response({"error": e.message}, status_code=400)
 
     return json_response({"success": "Patient adherences updated."})
@@ -127,7 +127,7 @@ def update_default_confidence(request, domain):
         validate_beneficiary_id(beneficiary_id)
         validate_confidence_level(confidence_level)
         update_default_confidence_level(domain, beneficiary_id, confidence_level)
-    except AdherenceException as e:
+    except NinetyNineDotsException as e:
         return json_response({"error": e.message}, status_code=400)
 
     return json_response({"success": "Default Confidence Updated"})
@@ -135,32 +135,32 @@ def update_default_confidence(request, domain):
 
 def validate_beneficiary_id(beneficiary_id):
     if beneficiary_id is None:
-        raise AdherenceException("Beneficiary ID is null")
+        raise NinetyNineDotsException("Beneficiary ID is null")
     if not isinstance(beneficiary_id, six.string_types):
-        raise AdherenceException("Beneficiary ID should be a string")
+        raise NinetyNineDotsException("Beneficiary ID should be a string")
 
 
 def validate_dates(start_date, end_date):
     if start_date is None:
-        raise AdherenceException("start_date is null")
+        raise NinetyNineDotsException("start_date is null")
     if end_date is None:
-        raise AdherenceException("end_date is null")
+        raise NinetyNineDotsException("end_date is null")
     try:
         parse_datetime(start_date).astimezone(pytz.UTC)
         parse_datetime(end_date).astimezone(pytz.UTC)
     except:
-        raise AdherenceException("Malformed Date")
+        raise NinetyNineDotsException("Malformed Date")
 
 
 def validate_adherence_values(adherence_values):
     if adherence_values is None or not isinstance(adherence_values, list):
-        raise AdherenceException("Adherences invalid")
+        raise NinetyNineDotsException("Adherences invalid")
 
 
 def validate_confidence_level(confidence_level):
     valid_confidence_levels = ['low', 'medium', 'high']
     if confidence_level not in valid_confidence_levels:
-        raise AdherenceException(
+        raise NinetyNineDotsException(
             message="New confidence level invalid. Should be one of {}".format(
                 valid_confidence_levels
             )

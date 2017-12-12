@@ -17,17 +17,17 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
     update_adherence_confidence_level,
     update_default_confidence_level,
 )
-from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
+from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 
 
 class Receiver99DotsTests(SimpleTestCase):
     def test_validate_patient_adherence_data(self):
-        with self.assertRaises(AdherenceException) as e:
+        with self.assertRaises(NinetyNineDotsException) as e:
             validate_beneficiary_id(None)
             self.assertEqual(e.message, "Beneficiary ID is null")
 
-        with self.assertRaises(AdherenceException) as e:
+        with self.assertRaises(NinetyNineDotsException) as e:
             validate_adherence_values(u'123')
             self.assertEqual(e.message, "Adherences invalid")
 

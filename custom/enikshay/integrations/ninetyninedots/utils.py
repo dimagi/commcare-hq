@@ -10,7 +10,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from custom.enikshay.const import ENIKSHAY_TIMEZONE
-from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
+from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_all_episode_cases_from_person,
@@ -43,7 +43,7 @@ class AdherenceCaseFactory(object):
         try:
             return self.case_accessor.get_case(self.person_id)
         except CaseNotFound:
-            raise AdherenceException("No patient exists with this beneficiary ID")
+            raise NinetyNineDotsException("No patient exists with this beneficiary ID")
 
     @property
     @memoized
@@ -58,10 +58,10 @@ class AdherenceCaseFactory(object):
         try:
             episode_cases = get_all_episode_cases_from_person(self.domain, self._person_case.case_id)
         except ENikshayCaseNotFound as e:
-            raise AdherenceException(e)
+            raise NinetyNineDotsException(e)
 
         if not episode_cases:
-            raise AdherenceException("No episode cases found for {}".format(self._person_case.case_id))
+            raise NinetyNineDotsException("No episode cases found for {}".format(self._person_case.case_id))
 
         open_cases = [c for c in episode_cases if not c.closed]
         if open_cases:
@@ -113,7 +113,7 @@ class AdherenceCaseFactory(object):
             datetime_from_adherence = parser.parse(iso_datestring)
             datetime_in_india = datetime_from_adherence.astimezone(tz)
         except ValueError:
-            raise AdherenceException(
+            raise NinetyNineDotsException(
                 "Adherence date should be an ISO8601 formated string with timezone information."
             )
         return datetime_in_india.date()
@@ -122,7 +122,7 @@ class AdherenceCaseFactory(object):
         try:
             adherence_cases = get_adherence_cases_between_dates(self.domain, self.person_id, start_date, end_date)
         except ENikshayCaseNotFound as e:
-            raise AdherenceException(e.message)
+            raise NinetyNineDotsException(e.message)
         adherence_case_ids = [case.case_id for case in adherence_cases]
         return self.case_factory.create_or_update_cases([
             CaseStructure(
