@@ -122,7 +122,7 @@ class PatientDetailsUpdater(BaseNinetyNineDotsUpdater):
             case_id = self.case_types_to_cases[case_type].case_id
 
             if param.setter:
-                update = to_function(param.setter)(prop, value)
+                update = to_function(param.setter)(param, value, sector)
             else:
                 update = {param.get_by_sector('case_property', sector): value}
             case_updates.append((case_id, update, False))

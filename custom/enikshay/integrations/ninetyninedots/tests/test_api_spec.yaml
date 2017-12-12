@@ -34,3 +34,9 @@ api_params:
     both: person
   case_property:
     both: inbound_only
+- api_param_name: with_setter
+  setter: custom.enikshay.integrations.ninetyninedots.tests.test_integration.property_setter
+  case_type:
+    both: person
+  case_property:
+    both: inbound_only

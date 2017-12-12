@@ -25,6 +25,10 @@ from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDot
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 
 
+def property_setter(param, val, sector):
+    return {'property_set_with_setter': val}
+
+
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
     def setUp(self):
@@ -86,6 +90,15 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
         fake_request['inbound_only'] = 'bar'
         # shouldn't throw an exception
         PatientDetailsUpdater(self.domain, fake_request).update_cases()
+
+    def test_update_with_setter(self):
+        fake_request = self._get_fake_request()
+        fake_request['with_setter'] = 'foo'
+
+        PatientDetailsUpdater(self.domain, fake_request).update_cases()
+
+        person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        self.assertEqual(person_case.get_case_property('property_set_with_setter'), 'foo')
 
     def test_case_update(self):
         fake_request = self._get_fake_request()
