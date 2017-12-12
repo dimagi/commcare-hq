@@ -81,7 +81,7 @@ class TestPersonForReferralDataSource(TestDataSourceExpressions):
         with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
             self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), '')
 
-        episode_case['treatment_regimen'] = 'yes_phi'
+        episode_case['treatment_initiated'] = 'yes_phi'
         with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
             self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), 'New')
 
@@ -101,7 +101,8 @@ class TestPersonForReferralDataSource(TestDataSourceExpressions):
             'episode_type': 'confirmed_tb',
             'patient_type_choice': 'not_new',
             'treatment_regimen': 'test_regimen',
-            'treatment_status': 'yes_private'
+            'treatment_status': 'yes_private',
+            'treatment_initiated': 'yes_private'
         }
 
         self.database.mock_docs = {
@@ -155,7 +156,7 @@ class TestPersonForReferralDataSource(TestDataSourceExpressions):
         with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
             self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), '')
 
-        episode_case['treatment_regimen'] = 'yes_phi'
+        episode_case['treatment_initiated'] = 'yes_phi'
         with mock.patch.object(MostRecentEpisodeCaseFromPerson, '__call__', lambda *args: episode_case):
             self.assertEqual(expression(episode_case, EvaluationContext(episode_case, 0)), 'Previously Treated')
 
