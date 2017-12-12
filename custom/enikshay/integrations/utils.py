@@ -41,12 +41,22 @@ def is_invalid_person_submission(person_case):
 
 
 def is_valid_person_submission(person_case):
-    if (person_case.owner_id == ARCHIVED_CASE_OWNER_ID or
-            is_invalid_person_submission(person_case)):
+    """
+    just return if invalid person case
+    else check for dataset case property for 2B cases
+    else check for owner if being a test location
+    """
+    if is_invalid_person_submission(person_case):
         return False
     if person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION:
         return person_case.dynamic_case_properties().get('dataset') == REAL_DATASET_PROPERTY_VALUE
-    return not _is_submission_from_test_location(person_case.case_id, person_case.owner_id)
+
+    owner_id = person_case.owner_id
+    # use the last owner in case of archived cases to ensure valid cases where
+    # cases are archived after they are referred out
+    if person_case.owner_id == ARCHIVED_CASE_OWNER_ID:
+        owner_id = person_case.dynamic_case_properties().get('last_owner', None)
+    return not _is_submission_from_test_location(person_case.case_id, owner_id)
 
 
 def is_valid_episode_submission(episode_case):
