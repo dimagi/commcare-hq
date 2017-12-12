@@ -56,6 +56,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     health_establishment_sector,
     marital_status,
     key_population,
+    area,
 )
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
@@ -706,7 +707,9 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "p_district": _get_location_name(person_case_properties.get('current_address_district_choice')),
         "p_state": _get_location_name(person_case_properties.get('current_address_state_choice')),
         "socioeconomic_status": person_case_properties.get('socioeconomic_status', 'NA'),
-        "area": person_case_properties.get('area', 'NA'),
+        "area": area.get(
+            person_case_properties.get('area'),
+            area.get('not_known')),
         "marital_status": marital_status.get(
             person_case_properties.get('marital_status'),
             marital_status.get('unmarried'))

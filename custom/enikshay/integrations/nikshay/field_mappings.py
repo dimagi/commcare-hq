@@ -181,3 +181,11 @@ key_population = {
     'other': 10,  # Other
     # 'no mapping': 11,  # Not Applicable
 }
+
+area = {
+    'tribal': 'tribal',
+    'rural': 'rural',
+    'urban': 'urban',
+    'urban_slum': 'urban slum',
+    'not_known': 'not known',
+}
