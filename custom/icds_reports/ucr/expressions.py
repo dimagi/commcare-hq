@@ -188,20 +188,8 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        def _transform_time_end_and_filter_bad_data(xform):
-            xform = xform.get('_source', {})
-            if not xform.get('xmlns', None):
-                return None
-            try:
-                time = xform['form']['meta']['timeEnd']
-            except KeyError:
-                return None
-
-            xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
-            return xform
-
         forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = list(filter(None, map(_transform_time_end_and_filter_bad_data, forms)))
+        forms = list(filter(None, map(self._transform_time_end_and_filter_bad_data, forms)))
         context.set_cache_value(cache_key, forms)
         return forms
 
@@ -240,6 +228,19 @@ class FormsInDateExpressionSpec(JsonObject):
     @staticmethod
     def _get_form_json_cache_key(form):
         return (XFORM_CACHE_KEY_PREFIX, form.form_id)
+
+    @staticmethod
+    def _transform_time_end_and_filter_bad_data(xform):
+        xform = xform.get('_source', {})
+        if not xform.get('xmlns', None):
+            return None
+        try:
+            time = xform['form']['meta']['timeEnd']
+        except KeyError:
+            return None
+
+        xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        return xform
 
     def __str__(self):
         value = "case_forms[{case_id}]".format(case_id=self._case_id_expression)
