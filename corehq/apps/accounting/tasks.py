@@ -181,7 +181,8 @@ def warn_active_subscriptions_per_domain_not_one():
         if active_subscription_count > 1:
             log_accounting_error("Multiple active subscriptions found for domain %s" % domain_name)
         elif active_subscription_count == 0:
-            log_accounting_error("There is no active subscription for domain %s" % domain_name)
+            log_accounting_error("There is no active subscription for domain %s.  Creating one..." % domain_name)
+            ensure_explicit_community_subscription(domain_name, datetime.date.today())
 
 
 @periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
