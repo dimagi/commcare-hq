@@ -265,6 +265,43 @@ class PredictablyRandomToggle(StaticToggle):
             or super(PredictablyRandomToggle, self).enabled(item, namespace)
         )
 
+
+class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
+    """
+    A PredictablyRandomToggle whose randomness can be configured via the database/UI.
+    """
+    RANDOMNESS_KEY = 'hq_dynamic_randomness'
+
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces,
+        default_randomness=0,
+        help_link=None,
+        description=None,
+        always_disabled=None
+    ):
+        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
+                                                      help_link=help_link, description=description,
+                                                      always_disabled=always_disabled)
+        assert namespaces, 'namespaces must be defined!'
+        assert 0 <= default_randomness <= 1, 'default randomness must be between 0 and 1!'
+        self.default_randomness = default_randomness
+
+    @property
+    @quickcache(vary_on=['self.slug'])
+    def randomness(self):
+        from toggle.models import Toggle
+        # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return self.default_randomness
+        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+
+
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
