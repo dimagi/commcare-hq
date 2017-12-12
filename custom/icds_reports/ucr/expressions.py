@@ -183,7 +183,7 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        def _transform_time_end(xform):
+        def _transform_time_end_and_filter_bad_data(xform):
             xform = xform.get('_source', {})
             if not xform.get('xmlns', None):
                 return None
@@ -196,7 +196,7 @@ class FormsInDateExpressionSpec(JsonObject):
             return xform
 
         forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = list(filter(None, map(_transform_time_end, forms)))
+        forms = list(filter(None, map(_transform_time_end_and_filter_bad_data, forms)))
         context.set_cache_value(cache_key, forms)
         return forms
 
