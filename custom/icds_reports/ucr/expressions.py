@@ -188,8 +188,7 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = list(filter(None, map(self._transform_time_end_and_filter_bad_data, forms)))
+        forms = self._bulk_get_forms_from_elasticsearch(xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
         context.set_cache_value(cache_key, forms)
         return forms
 
@@ -228,6 +227,13 @@ class FormsInDateExpressionSpec(JsonObject):
     @staticmethod
     def _get_form_json_cache_key(form):
         return (XFORM_CACHE_KEY_PREFIX, form.form_id)
+
+    @staticmethod
+    def _bulk_get_forms_from_elasticsearch(form_ids, source):
+        forms = mget_query('forms', form_ids, source)
+        return list(filter(None, [
+            FormsInDateExpressionSpec._transform_time_end_and_filter_bad_data(f) for f in forms
+        ]))
 
     @staticmethod
     def _transform_time_end_and_filter_bad_data(xform):
