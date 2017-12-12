@@ -614,9 +614,9 @@ class AlertTest(TestCase):
         self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
         self.assertEqual(send_patch.call_count, 1)
 
-        # Once an alert has been sent, we don't allow scheduling new instances of old alerts
+        # Test copying of the alert schedule instance for a new recipient
         refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user2.get_id),))
         self.assertNumInstancesForSchedule(1)
         [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
-        self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
+        self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user2)
         self.assertEqual(send_patch.call_count, 1)

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import json
 
 import mock
-from datetime import datetime
+from datetime import date
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
@@ -297,7 +297,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -491,7 +491,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -742,7 +742,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -936,7 +936,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -1053,7 +1053,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -1074,7 +1074,7 @@ class TestExportData(TestCase):
                 BeneficiaryExport(
                     config={
                         'domain': 'icds-cas',
-                        'month': datetime(2017, 5, 1),
+                        'month': date(2017, 5, 1),
                         'awc_id': 'a7'
                     },
                     loc_level=5
@@ -1086,18 +1086,18 @@ class TestExportData(TestCase):
                     "Child Beneficiary",
                     [
                         [
-                            "Name",
+                            "Child Name",
                             "Date of Birth",
-                            "Current Age (In years)",
+                            "Current Age (as of 2017-05-01)",
                             "Sex ",
                             "1 Year Immunizations Complete",
                             "Month for data shown",
-                            "Weight recorded",
-                            "Height recorded",
-                            "Weight-for-Age Status",
-                            "Weight-for-Height Status",
-                            "Height-for-Age status",
-                            "PSE Attendance (Days)"
+                            "Weight Recorded (in Month)",
+                            "Height Recorded (in Month)",
+                            "Weight-for-Age Status (in Month)",
+                            "Weight-for-Height Status (in Month)",
+                            "Height-for-Age status (in Month)",
+                            "Days attended PSE (as of 2017-05-01)"
                         ],
                         [
                             "Name 1783",
@@ -1914,7 +1914,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",

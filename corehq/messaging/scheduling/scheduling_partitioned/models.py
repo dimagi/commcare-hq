@@ -205,6 +205,38 @@ class AbstractAlertScheduleInstance(ScheduleInstance):
 
         self.alert_schedule_id = value.schedule_id
 
+    @staticmethod
+    def copy_for_recipient(instance, recipient_type, recipient_id):
+        """
+        We can copy alert schedule instances for any recipient because the
+        recipient's time zone doesn't factor into the calculation of the
+        next event due timestamp as it does for timed schedule instances.
+        """
+        if not isinstance(instance, AbstractAlertScheduleInstance):
+            raise TypeError("Expected an alert schedule instance")
+
+        new_instance = type(instance)()
+
+        for field in instance._meta.fields:
+            if field.name not in ['schedule_instance_id', 'recipient_type', 'recipient_id']:
+                setattr(new_instance, field.name, getattr(instance, field.name))
+
+        new_instance.recipient_type = recipient_type
+        new_instance.recipient_id = recipient_id
+
+        return new_instance
+
+    def reset_schedule(self, schedule=None):
+        """
+        Resets this alert schedule instance and puts it into a state which
+        is the same as if it had just spawned now.
+        """
+        schedule = schedule or self.memoized_schedule
+        self.current_event_num = 0
+        self.schedule_iteration_num = 1
+        self.active = True
+        schedule.set_first_event_due_timestamp(self)
+
 
 class AbstractTimedScheduleInstance(ScheduleInstance):
     timed_schedule_id = models.UUIDField()

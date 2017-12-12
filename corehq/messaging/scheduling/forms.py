@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import json
 import re
-from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
+from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
 from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -1044,10 +1044,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     SEND_TIME_SPECIFIC_TIME = 'SPECIFIC_TIME'
 
     START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
+    START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
 
     START_OFFSET_ZERO = 'ZERO'
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
+
+    YES = 'Y'
+    NO = 'N'
 
     # Ensure that field order is correct based on clean_* method dependencies
     field_order = ['send_frequency', 'send_time_type', 'send_time']
@@ -1063,7 +1067,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=True,
         choices=(
             (START_DATE_RULE_TRIGGER, _("The date the rule is satisfied")),
+            (START_DATE_CASE_PROPERTY, _("The date from case property: ")),
         )
+    )
+
+    start_date_case_property = TrimmedCharField(
+        label='',
+        required=False,
     )
 
     start_offset_type = ChoiceField(
@@ -1102,11 +1112,36 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         )
     )
 
+    reset_case_property_enabled = ChoiceField(
+        required=True,
+        choices=(
+            (NO, _("Disabled")),
+            (YES, _("Restart schedule when this case property takes any new value: ")),
+        ),
+    )
+
+    reset_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
     def __init__(self, domain, schedule, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()
         self.update_recipient_types_choices()
+
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+
+        # Don't allow the reset_case_property_name to change values after being initially set.
+        # The framework doesn't account for this option being enabled, disabled, or changing
+        # after being initially set.
+        self.fields['reset_case_property_enabled'].disabled = True
+        self.fields['reset_case_property_name'].disabled = True
 
     @cached_property
     def requires_system_admin_to_edit(self):
@@ -1158,7 +1193,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     result['start_day_of_week'] = str(schedule.start_day_of_week)
 
         if self.initial_rule:
-            self.add_initial_recipients(self.initial_rule.memoized_actions[0].definition.recipients, result)
+            action_definition = self.initial_rule.memoized_actions[0].definition
+            self.add_initial_recipients(action_definition.recipients, result)
+            if action_definition.reset_case_property_name:
+                result['reset_case_property_enabled'] = self.YES
+                result['reset_case_property_name'] = action_definition.reset_case_property_name
+            else:
+                result['reset_case_property_enabled'] = self.NO
+
+            if action_definition.start_date_case_property:
+                result['start_date_type'] = self.START_DATE_CASE_PROPERTY
+                result['start_date_case_property'] = action_definition.start_date_case_property
+            else:
+                result['start_date_type'] = self.START_DATE_RULE_TRIGGER
 
         return result
 
@@ -1189,6 +1236,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                         'start_date_type',
                         data_bind='value: start_date_type',
                     ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date_case_property',
+                    ),
+                    data_bind="visible: start_date_type() === '%s'" % self.START_DATE_CASE_PROPERTY,
                     css_class='col-sm-4',
                 ),
                 data_bind='visible: showStartDateInput',
@@ -1228,6 +1282,30 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 twbscrispy.InlineField('custom_recipient'),
                 self.get_system_admin_label(),
                 data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+            ),
+        ])
+        return result
+
+    def get_advanced_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_advanced_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                ugettext("Restart Schedule"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_enabled',
+                        data_bind='value: reset_case_property_enabled',
+                    ),
+                    css_class='col-sm-8',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_name',
+                        placeholder=ugettext("case property"),
+                    ),
+                    data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
+                    css_class='col-sm-4',
+                ),
             ),
         ])
         return result
@@ -1291,6 +1369,37 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return custom_recipient
 
+    def clean_reset_case_property_enabled(self):
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_IMMEDIATELY and
+            self.cleaned_data.get('start_date_type') != self.START_DATE_RULE_TRIGGER
+        ):
+            raise ValidationError(
+                _("This option can only be enabled when the schedule's start "
+                  "date is the date that the rule triggers.")
+            )
+
+    def clean_reset_case_property_name(self):
+        if self.cleaned_data.get('reset_case_property_enabled') == self.NO:
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('reset_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
+    def clean_start_date_case_property(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('start_date_type') != self.START_DATE_CASE_PROPERTY
+        ):
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('start_date_case_property'),
+            allow_parent_case_references=False,
+        )
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1337,8 +1446,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def create_rule_action(self, rule, schedule):
         fields = {
             'recipients': self.distill_recipients(),
-            'reset_case_property_name': None,
+            'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
             'scheduler_module_info': self.distill_scheduler_module_info(),
+            'start_date_case_property': self.cleaned_data['start_date_case_property'],
         }
 
         if isinstance(schedule, AlertSchedule):
@@ -1356,8 +1466,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         self.validate_existing_action_definition(action_definition, schedule)
 
         action_definition.recipients = self.distill_recipients()
-        action_definition.reset_case_property_name = None
+        action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
         action_definition.scheduler_module_info = self.distill_scheduler_module_info()
+        action_definition.start_date_case_property = self.cleaned_data['start_date_case_property']
         action_definition.save()
 
     def validate_existing_action_definition(self, action_definition, schedule):
@@ -1454,13 +1565,16 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
     def allow_date_case_property_filter(self):
         return False
 
-    def __init__(self, *args, **kwargs):
-        super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
 
         # Prevent case_type from being changed when we are using the form to edit
         # an existing conditional alert. Being allowed to assume that case_type
         # doesn't change makes it easier to run the rule for this alert.
-        if self.initial.get('case_type'):
-            # Django also handles keeping the field's value to its initial value no matter what is posted
-            # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
-            self.fields['case_type'].disabled = True
+        self.fields['case_type'].disabled = True
+
+    def __init__(self, *args, **kwargs):
+        super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()

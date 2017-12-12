@@ -54,7 +54,9 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
 
     moderate_total = 0
     severe_total = 0
+    normal_total = 0
     valid_total = 0
+    measured_total = 0
 
     for row in get_data_for(config):
         valid = row['valid'] or 0
@@ -67,7 +69,9 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
 
         severe_total += severe
         moderate_total += moderate
+        normal_total += normal
         valid_total += valid
+        measured_total += total_measured
 
         data_for_map[on_map_name]['severe'] += severe
         data_for_map[on_map_name]['moderate'] += moderate
@@ -93,6 +97,9 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     fills.update({'38%-100%': RED})
     fills.update({'defaultFill': GREY})
 
+    sum_of_indicators = moderate_total + severe_total + normal_total
+    percent_unmeasured = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
+
     return [
         {
             "slug": "severe",
@@ -106,7 +113,21 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
                     "<br/><br/>"
                     "Stunting is a sign of chronic undernutrition and has long lasting harmful "
                     "consequences on the growth of a child"
-                ))
+                )),
+                "extended_info": [
+                    {'indicator': 'Total Children weighed in given month:', 'value': valid_total},
+                    {'indicator': 'Total Children with height measured in given month:', 'value': measured_total},
+                    {'indicator': '% Unmeasured:', 'value': '%.2f%%' % percent_unmeasured},
+                    {'indicator': '% Severely stunted:', 'value': '%.2f%%' % (
+                        severe_total * 100 / float(valid_total)
+                    )},
+                    {'indicator': '% Moderately stunted:', 'value': '%.2f%%' % (
+                        moderate_total * 100 / float(valid_total)
+                    )},
+                    {'indicator': '% Normal:', 'value': '%.2f%%' % (
+                        normal_total * 100 / float(valid_total)
+                    )}
+                ]
             },
             "data": dict(data_for_map),
         }

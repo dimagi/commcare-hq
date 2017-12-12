@@ -64,7 +64,21 @@ def get_medicine_kit_data_map(domain, config, loc_level, show_test=False):
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with a Medicine Kit"
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': (
+                            'Total number of AWCs with a Medicine Kit:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': (
+                            '% of AWCs with a Medicine Kit:'
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

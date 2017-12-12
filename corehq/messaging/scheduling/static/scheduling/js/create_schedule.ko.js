@@ -80,6 +80,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.case_group_recipients = new RecipientsSelect2Handler(select2_case_group_recipients,
             initial_values.case_group_recipients, 'schedule-case_group_recipients');
         self.case_group_recipients.init();
+        self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;

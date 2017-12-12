@@ -957,7 +957,7 @@
                                               },
                                              "value_expression": {
                                                  "type": "property_name",
-                                                 "property_name": "treatment_regimen"
+                                                 "property_name": "treatment_initiated"
                                              }
                                          },
                                          "property_value": ["yes_phi", "yes_private"]
@@ -1036,7 +1036,7 @@
                                                      },
                                                      "value_expression": {
                                                          "type": "property_name",
-                                                         "property_name": "treatment_regimen"
+                                                         "property_name": "treatment_initiated"
                                                      }
                                                  },
                                                  "property_value": ["yes_phi", "yes_private"]

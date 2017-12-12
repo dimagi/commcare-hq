@@ -24,7 +24,24 @@ class TestChildrenInitiated(TestCase):
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 8 months"
                             " given timely introduction to solid, semi-solid or soft food.",
-                    "average": 85.0
+                    "average": 85.0,
+                    'extended_info': [
+                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': 40},
+                        {
+                            'indicator': (
+                                'Total number of children (6-8 months) given timely introduction '
+                                'to sold or semi-solid food in the given month:'
+                            ),
+                            'value': 34
+                        },
+                        {
+                            'indicator': (
+                                '% children (6-8 months) given timely introduction '
+                                'to solid or semi-solid food in the given month:'
+                            ),
+                            'value': '85.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",
@@ -67,7 +84,24 @@ class TestChildrenInitiated(TestCase):
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 8 months"
                             " given timely introduction to solid, semi-solid or soft food.",
-                    "average": 82.3529411764706
+                    "average": 82.3529411764706,
+                    'extended_info': [
+                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': 17},
+                        {
+                            'indicator': (
+                                'Total number of children (6-8 months) given timely introduction '
+                                'to sold or semi-solid food in the given month:'
+                            ),
+                            'value': 14
+                        },
+                        {
+                            'indicator': (
+                                '% children (6-8 months) given timely introduction '
+                                'to solid or semi-solid food in the given month:'
+                            ),
+                            'value': '82.35%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",

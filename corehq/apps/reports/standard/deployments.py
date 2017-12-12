@@ -703,13 +703,13 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
         submission_series = SeriesData(
             id='submission',
-            title=_('Mobile Workers who have Submitted'),
+            title=_('Users who have Submitted'),
             chart_color='#004abf',
             bucket_series=_buckets_to_series(last_submission_buckets)
         )
         sync_series = SeriesData(
             id='sync',
-            title=_('Mobile Workers who have Synced'),
+            title=_('Users who have Synced'),
             chart_color='#f58220',
             bucket_series=_buckets_to_series(last_sync_buckets),
         )

@@ -9,10 +9,10 @@
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
-            <strong>Please fix following errors before you can export:</strong>
+            <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="$ctrl.selectedFilterOptions().length === 0">You must choose at least one filter</li>
-                <li ng-if="!$ctrl.isDistrictOrBelowSelected()">You have to select at least district</li>
+                <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
+                <li ng-if="$ctrl.selectedFilterOptions().length === 0" style="padding: 5px;">Select at least one filter</li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -108,6 +108,10 @@
                 <div class="row">
                     <label class="control-label col-sm-2" for="">
                         Filter List By
+                        <i class="fa fa-info-circle"
+                            uib-popover="Select at least one filter before you can export. The list of child beneficiaries will be filtered based on the filter(s) selected."
+                            popover-placement="top-right"
+                            popover-trigger="'mouseenter'"></i>
                     </label>
                     <div class="col-sm-6">
                         <div class="checkbox" ng-repeat="option in $ctrl.filterOptions">
