@@ -22,3 +22,15 @@ api_params:
       - bar
       - baz
       - buzz
+- api_param_name: outbound_only
+  direction: 1                  # Outbound
+  case_type:
+    both: person
+  case_property:
+    both: outbound_only
+- api_param_name: inbound_only
+  direction: 2                  # Inbound
+  case_type:
+    both: person
+  case_property:
+    both: inbound_only

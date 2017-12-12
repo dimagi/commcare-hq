@@ -12,7 +12,7 @@ from dimagi.utils.modules import to_function
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from custom.enikshay.const import ENIKSHAY_TIMEZONE
-from custom.enikshay.integrations.ninetyninedots.api_spec import load_api_spec
+from custom.enikshay.integrations.ninetyninedots.api_spec import load_api_spec, DIRECTION_INBOUND
 from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
@@ -113,7 +113,10 @@ class PatientDetailsUpdater(BaseNinetyNineDotsUpdater):
             try:
                 param = self.api_spec.get_param(prop)
             except KeyError:
-                raise NinetyNineDotsException("{} is not a valid parameter to update".format(param))
+                raise NinetyNineDotsException("{} is not a valid parameter to update".format(prop))
+
+            if not param.direction & DIRECTION_INBOUND:
+                raise NinetyNineDotsException("{} is not a valid parameter to update".format(prop))
 
             case_type = param.get_by_sector('case_type', sector)
             case_id = self.case_types_to_cases[case_type].case_id

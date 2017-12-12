@@ -26,7 +26,7 @@ from custom.enikshay.case_utils import (
     get_sector,
 )
 from custom.enikshay.const import TREATMENT_OUTCOME
-from custom.enikshay.integrations.ninetyninedots.api_spec import load_api_spec
+from custom.enikshay.integrations.ninetyninedots.api_spec import load_api_spec, DIRECTION_OUTBOUND
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
@@ -116,7 +116,7 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
 
         sector = get_sector(episode_case)
         api_spec = load_api_spec()
-        properties_to_check = api_spec.case_properties_by_case_type(sector, case.type)
+        properties_to_check = api_spec.case_properties_by_case_type(sector, case.type, DIRECTION_OUTBOUND)
         props_changed = case_properties_changed(case, properties_to_check)
 
         return (

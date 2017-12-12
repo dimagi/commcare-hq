@@ -75,6 +75,18 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
             PatientDetailsUpdater(None, fake_request)
         self.assertEqual(str(e.exception), "biff is not a valid value for has_choices.")
 
+    def test_wrong_direction(self):
+        fake_request = self._get_fake_request()
+        fake_request['outbound_only'] = 'foo'
+        with self.assertRaises(NinetyNineDotsException) as e:
+            PatientDetailsUpdater(self.domain, fake_request).update_cases()
+        self.assertEqual(str(e.exception), "outbound_only is not a valid parameter to update")
+
+        fake_request = self._get_fake_request()
+        fake_request['inbound_only'] = 'bar'
+        # shouldn't throw an exception
+        PatientDetailsUpdater(self.domain, fake_request).update_cases()
+
     def test_case_update(self):
         fake_request = self._get_fake_request()
         fake_request['has_choices'] = 'foo'

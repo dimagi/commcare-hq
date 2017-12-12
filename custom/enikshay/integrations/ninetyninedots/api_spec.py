@@ -30,6 +30,10 @@ from dimagi.ext.jsonobject import StrictJsonObject
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 
+DIRECTION_OUTBOUND = 1
+DIRECTION_INBOUND = 2
+DIRECTION_BOTH = DIRECTION_INBOUND + DIRECTION_OUTBOUND
+
 
 class DotsApiSectorParam(StrictJsonObject):
     public = jsonobject.StringProperty()
@@ -98,6 +102,10 @@ class DotsApiParam(StrictJsonObject):
     # return a dict of case properties to update
     setter = jsonobject.StringProperty()
 
+    # whether we should send, receive, or both.
+    direction = jsonobject.IntegerProperty(default=DIRECTION_BOTH,
+                                           choices=[DIRECTION_INBOUND, DIRECTION_OUTBOUND, DIRECTION_BOTH])
+
     def get_by_sector(self, prop, sector):
         prop = getattr(self, prop)
         if isinstance(prop, DotsApiSectorParam):
@@ -126,14 +134,15 @@ class DotsApiParams(StrictJsonObject):
         return [param for param in self.api_params
                 if param.get_by_sector('case_type', sector) == case_type]
 
-    def case_properties_by_case_type(self, sector, case_type):
+    def case_properties_by_case_type(self, sector, case_type, direction=DIRECTION_BOTH):
         params = self.params_by_case_type(sector, case_type)
         case_properties = []
         for param in params:
-            if param.get_by_sector("case_property", sector):
-                case_properties.append(param.get_by_sector("case_property", sector))
-            if param.get_by_sector("case_properties", sector):
-                case_properties += param.get_by_sector("case_properties", sector)
+            if param.direction & direction:
+                if param.get_by_sector("case_property", sector):
+                    case_properties.append(param.get_by_sector("case_property", sector))
+                if param.get_by_sector("case_properties", sector):
+                    case_properties += param.get_by_sector("case_properties", sector)
         return case_properties
 
 
