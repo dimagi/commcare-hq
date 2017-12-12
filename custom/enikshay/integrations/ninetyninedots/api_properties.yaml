@@ -1,6 +1,7 @@
 ---
 api_params:
 - api_param_name: beneficiary_id
+  required: true
   case_type:
     both: person
   case_property:

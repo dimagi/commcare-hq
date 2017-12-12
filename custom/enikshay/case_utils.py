@@ -586,10 +586,11 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def get_sector(episode_case):
-    if episode_case.type != CASE_TYPE_EPISODE:
-        raise ValueError('Must pass in an episode case')
-    if episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
+def get_sector(case):
+    valid_types = [CASE_TYPE_EPISODE, CASE_TYPE_PERSON]
+    if case.type not in valid_types:
+        raise ValueError('Must pass in an {} case'.format(", ".join(valid_types)))
+    if case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
         return PRIVATE_SECTOR
     return PUBLIC_SECTOR
 

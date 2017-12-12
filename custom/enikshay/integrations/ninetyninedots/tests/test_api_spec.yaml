@@ -1,0 +1,24 @@
+api_params:
+- api_param_name: beneficiary_id
+  required: true
+  case_type:
+    both: person
+  case_property:
+    both: case_id
+- api_param_name: required_param
+  required: true
+  case_type:
+    both: person
+  case_property:
+    both: required_param
+- api_param_name: has_choices
+  case_type:
+    both: episode
+  case_property:
+    both: has_choices
+  choices:
+    both:
+      - foo
+      - bar
+      - baz
+      - buzz
