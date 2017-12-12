@@ -178,7 +178,7 @@ class FormsInDateExpressionSpec(JsonObject):
 
         form_ids = [x['_id'] for x in xforms]
         xforms = FormAccessors(domain).get_forms(form_ids)
-        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
+        xforms = self._get_form_json_list(xforms, context, domain)
 
         context.set_cache_value(cache_key, xforms)
         return xforms
@@ -214,6 +214,10 @@ class FormsInDateExpressionSpec(JsonObject):
         xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
         context.set_cache_value(cache_key, xform_ids)
         return xform_ids
+
+    @staticmethod
+    def _get_form_json_list(xforms, context, domain):
+        return [FormsInDateExpressionSpec._get_form_json(f, context) for f in xforms if f.domain == domain]
 
     @staticmethod
     def _get_form_json(form, context):
