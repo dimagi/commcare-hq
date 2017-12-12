@@ -27,7 +27,7 @@ treatment_support_designation = {
     'asha_or_other_phi_hw': '3',  # ASHA
     'aww': '4',  # AWW
     'ngo_volunteer': '5',  # NGO VOLUNTEER
-    'private_medical_pracitioner': '6',  # PRIVATE PRACTICENER
+    'private_medical_pracitioner': '6',  # PRIVATE PRACTITIONER
     'other_community_volunteer': '7',  # OTHER COMMUNITY VOLUNTEERS
     'patient_family_member': '7',  # OTHER COMMUNITY VOLUNTEERS
 }
