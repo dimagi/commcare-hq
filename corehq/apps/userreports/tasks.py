@@ -397,7 +397,7 @@ def _save_document_helper_helper(indicator, doc):
         else:
             configs_to_remove.append(config_id)
 
-    rebuild_related_docs = any(config.rebuild_related_docs for config in configs)
+    rebuild_related_docs = any(config.rebuild_related_docs for config in six.itervalues(configs) if config)
     return (not something_failed, configs_to_remove, rebuild_related_docs)
 
 
