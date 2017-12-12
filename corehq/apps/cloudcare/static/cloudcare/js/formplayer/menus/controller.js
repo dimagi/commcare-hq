@@ -22,10 +22,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 if (menuResponse.shouldRequestLocation) {
                     console.log('requesting location from browser');
                     Menus.Util.handleLocationRequest(options);
-                } else if (!menuResponse.shouldWatchLocation) {
-                    console.log('stopping location watching');
-                    Menus.Util.stopWatchingLocation();
                 }
+                Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
 
                 // If redirect was set, clear and go home.
                 if (menuResponse.clearSession) {
@@ -210,28 +208,25 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     Menus.Util.recordPosition(position);
                     Menus.Controller.selectMenu(optionsFromLastRequest);
                 });
-                Menus.Util.startWatchingLocation();
             }
         },
 
-        startWatchingLocation: function() {
+        startOrStopLocationWatching: function(shouldWatchLocation) {
             if (navigator.geolocation) {
-                sessionStorage.lastLocationWatch = navigator.geolocation.watchPosition(function(position) {
-                    Menus.Util.recordPosition(position);
-                });
-            }
-        },
-
-        stopWatchingLocation: function() {
-            if (navigator.geolocation) {
-                if (typeof sessionStorage.lastLocationWatch != "undefined") {
-                    navigator.geolocation.clearWatch(sessionStorage.lastLocationWatch);
+                var notWatching = typeof sessionStorage.lastLocationWatchId == "undefined" || sessionStorage.lastLocationWatchId === '';
+                if (notWatching && shouldWatchLocation) {
+                    console.log('starting location watch');
+                    sessionStorage.lastLocationWatchId = navigator.geolocation.watchPosition(Menus.Util.recordPosition);
+                } else if (!notWatching && !shouldWatchLocation) {
+                    console.log('clearing location watch');
+                    navigator.geolocation.clearWatch(sessionStorage.lastLocationWatchId);
+                    sessionStorage.lastLocationWatchId = '';
                 }
-                sessionStorage.clear();
             }
         },
 
         recordPosition: function(position) {
+            console.log('recording position');
             sessionStorage.locationLat = position.coords.latitude;
             sessionStorage.locationLon = position.coords.longitude;
             sessionStorage.locationAltitude = position.coords.altitude;
