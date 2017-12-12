@@ -36,6 +36,7 @@ function ServiceUptakeController(reportsDataService, filtersService) {
         {id: '', value: 'All'},
         {id: 'FSW', value: 'FSW'},
         {id: 'MSM', value: 'MSM'},
+        {id: 'client_fsw', value: 'Client FSW'},
     ];
 
     vm.organizations = [];

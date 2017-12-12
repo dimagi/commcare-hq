@@ -23,7 +23,17 @@ class TestAdhaar(TestCase):
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
                             "whose Aadhaar identification has been captured",
-                    "average": 26.2
+                    "average": 26.2,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
+                            'value': 131
+                        },
+                        {
+                            'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
+                            'value': '26.20%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-25%": "#de2d26",
@@ -66,7 +76,17 @@ class TestAdhaar(TestCase):
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
                             "whose Aadhaar identification has been captured",
-                    "average": 28.959276018099548
+                    "average": 28.959276018099548,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
+                            'value': 64
+                        },
+                        {
+                            'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
+                            'value': '28.96%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-25%": "#de2d26",

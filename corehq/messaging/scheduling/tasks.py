@@ -1,5 +1,11 @@
 from __future__ import absolute_import
 from celery.task import task
+from corehq.messaging.scheduling.models import (
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    AlertSchedule,
+    TimedSchedule,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
     TimedScheduleInstance,
@@ -7,6 +13,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    delete_alert_schedule_instance,
     delete_timed_schedule_instance,
     get_alert_schedule_instances_for_schedule,
     get_timed_schedule_instances_for_schedule,
@@ -22,82 +29,123 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
+from dimagi.utils.couch import CriticalSection
 import six
 
 
+def _get_any_value_or_none(from_dict):
+    if from_dict:
+        return six.next(six.itervalues(from_dict))
+
+    return None
+
+
+def _recipient_instance_dict(instances):
+    return {
+        (instance.recipient_type, instance.recipient_id): instance
+        for instance in instances
+    }
+
+
+def get_reset_case_property_value(case, action_definition):
+    # Only allow dynamic case properties here since the formatting of
+    # the value is very important if we're comparing from one time to
+    # the next
+    if action_definition.reset_case_property_name:
+        return case.dynamic_case_properties().get(action_definition.reset_case_property_name, '')
+
+    return None
+
+
 @task(ignore_result=True)
-def refresh_alert_schedule_instances(schedule, recipients):
+def refresh_alert_schedule_instances(schedule_id, recipients):
     """
-    :param schedule: the AlertSchedule
+    :param schedule_id: the AlertSchedule schedule_id
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
+    with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
+        schedule = AlertSchedule.objects.get(schedule_id=schedule_id)
 
-    existing_instances = {
-        (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_alert_schedule_instances_for_schedule(schedule)
-    }
+        existing_instances = _recipient_instance_dict(get_alert_schedule_instances_for_schedule(schedule))
+        model_instance = _get_any_value_or_none(existing_instances)
 
-    if existing_instances:
-        # Don't refresh AlertSchedules that have already been sent
-        # to avoid sending old alerts to new recipients
-        return
+        recipients = set(convert_to_tuple_of_tuples(recipients))
+        for recipient_type, recipient_id in recipients:
+            if (recipient_type, recipient_id) in existing_instances:
+                continue
 
-    recipients = set(convert_to_tuple_of_tuples(recipients))
-    for recipient_type, recipient_id in recipients:
-        instance = AlertScheduleInstance.create_for_recipient(
-            schedule,
-            recipient_type,
-            recipient_id,
-            move_to_next_event_not_in_the_past=False,
-        )
-        save_alert_schedule_instance(instance)
+            if model_instance:
+                instance = AlertScheduleInstance.copy_for_recipient(model_instance, recipient_type, recipient_id)
+            else:
+                instance = AlertScheduleInstance.create_for_recipient(
+                    schedule,
+                    recipient_type,
+                    recipient_id,
+                    move_to_next_event_not_in_the_past=False,
+                )
+            save_alert_schedule_instance(instance)
+
+        for recipient_type_and_id, instance in six.iteritems(existing_instances):
+            if recipient_type_and_id not in recipients:
+                delete_alert_schedule_instance(instance)
 
 
 @task(ignore_result=True)
-def refresh_timed_schedule_instances(schedule, recipients, start_date=None):
+def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
     """
-    :param schedule: the TimedSchedule
+    :param schedule_id: the TimedSchedule schedule_id
     :param start_date: the date to start the TimedSchedule
     :param recipients: a list of (recipient_type, recipient_id) tuples; the
     recipient type should be one of the values checked in ScheduleInstance.recipient
     """
+    with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_id.hex], timeout=5 * 60):
+        schedule = TimedSchedule.objects.get(schedule_id=schedule_id)
 
-    existing_instances = {
-        (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_timed_schedule_instances_for_schedule(schedule)
-    }
+        existing_instances = {
+            (instance.recipient_type, instance.recipient_id): instance
+            for instance in get_timed_schedule_instances_for_schedule(schedule)
+        }
 
-    recipients = convert_to_tuple_of_tuples(recipients)
-    new_recipients = set(recipients)
+        recipients = convert_to_tuple_of_tuples(recipients)
+        new_recipients = set(recipients)
 
-    for recipient_type, recipient_id in new_recipients:
-        if (recipient_type, recipient_id) not in existing_instances:
-            instance = TimedScheduleInstance.create_for_recipient(
-                schedule,
-                recipient_type,
-                recipient_id,
-                start_date=start_date,
-                move_to_next_event_not_in_the_past=True,
-                schedule_revision=schedule.memoized_schedule_revision,
-            )
-            save_timed_schedule_instance(instance)
+        for recipient_type, recipient_id in new_recipients:
+            if (recipient_type, recipient_id) not in existing_instances:
+                instance = TimedScheduleInstance.create_for_recipient(
+                    schedule,
+                    recipient_type,
+                    recipient_id,
+                    start_date=start_date,
+                    move_to_next_event_not_in_the_past=True,
+                    schedule_revision=schedule.memoized_schedule_revision,
+                )
+                save_timed_schedule_instance(instance)
 
-    for key, schedule_instance in six.iteritems(existing_instances):
-        if key not in new_recipients:
-            delete_timed_schedule_instance(schedule_instance)
-        elif (
-            (start_date and start_date != schedule_instance.start_date) or
-            (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
-        ):
-            new_start_date = start_date or schedule_instance.start_date
-            schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)
-            save_timed_schedule_instance(schedule_instance)
+        for key, schedule_instance in six.iteritems(existing_instances):
+            if key not in new_recipients:
+                delete_timed_schedule_instance(schedule_instance)
+            elif (
+                (start_date and start_date != schedule_instance.start_date) or
+                (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
+            ):
+                new_start_date = start_date or schedule_instance.start_date
+                schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)
+                save_timed_schedule_instance(schedule_instance)
 
 
 def convert_to_tuple_of_tuples(list_of_lists):
     list_of_tuples = [tuple(item) for item in list_of_lists]
     return tuple(list_of_tuples)
+
+
+def handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value):
+    if instance.last_reset_case_property_value != reset_case_property_value:
+        instance.reset_schedule(schedule)
+        instance.last_reset_case_property_value = reset_case_property_value
+        return True
+
+    return False
 
 
 def refresh_case_alert_schedule_instances(case, schedule, action_definition, rule):
@@ -110,27 +158,45 @@ def refresh_case_alert_schedule_instances(case, schedule, action_definition, rul
     to be refreshed
     """
 
-    existing_instances = {
-        (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
-    }
-
-    if existing_instances:
-        # Don't refresh AlertSchedules that have already been sent
-        # to avoid sending old alerts to new recipients
-        return
+    existing_instances = _recipient_instance_dict(
+        get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
+    )
+    model_instance = _get_any_value_or_none(existing_instances)
+    reset_case_property_value = get_reset_case_property_value(case, action_definition)
 
     recipients = set(convert_to_tuple_of_tuples(action_definition.recipients))
-    for recipient_type, recipient_id in recipients:
-        instance = CaseAlertScheduleInstance.create_for_recipient(
-            schedule,
-            recipient_type,
-            recipient_id,
-            move_to_next_event_not_in_the_past=False,
-            case_id=case.case_id,
-            rule_id=rule.pk
-        )
-        save_case_schedule_instance(instance)
+    for recipient_type_and_id in recipients:
+        recipient_type, recipient_id = recipient_type_and_id
+
+        if recipient_type_and_id in existing_instances:
+            instance = existing_instances[recipient_type_and_id]
+            if (
+                action_definition.reset_case_property_name and
+                handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value)
+            ):
+                save_case_schedule_instance(instance)
+        else:
+            if model_instance:
+                instance = CaseAlertScheduleInstance.copy_for_recipient(model_instance, recipient_type,
+                    recipient_id)
+                if action_definition.reset_case_property_name:
+                    handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value)
+                save_case_schedule_instance(instance)
+            else:
+                instance = CaseAlertScheduleInstance.create_for_recipient(
+                    schedule,
+                    recipient_type,
+                    recipient_id,
+                    move_to_next_event_not_in_the_past=False,
+                    case_id=case.case_id,
+                    rule_id=rule.pk,
+                    last_reset_case_property_value=reset_case_property_value,
+                )
+                save_case_schedule_instance(instance)
+
+    for recipient_type_and_id, instance in six.iteritems(existing_instances):
+        if recipient_type_and_id not in recipients:
+            delete_case_schedule_instance(instance)
 
 
 def refresh_case_timed_schedule_instances(case, schedule, action_definition, rule, start_date=None):
@@ -152,13 +218,7 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
     recipients = convert_to_tuple_of_tuples(action_definition.recipients)
     new_recipients = set(recipients)
 
-    # Only allow dynamic case properties here since the formatting of
-    # the value is very important if we're comparing from one time to
-    # the next
-    reset_case_property_value = (
-        case.dynamic_case_properties().get(action_definition.reset_case_property_name, '')
-        if action_definition.reset_case_property_name else None
-    )
+    reset_case_property_value = get_reset_case_property_value(case, action_definition)
 
     for recipient_type, recipient_id in new_recipients:
         if (recipient_type, recipient_id) not in existing_instances:
@@ -211,9 +271,19 @@ def delete_broadcast(broadcast):
 
 
 def _handle_schedule_instance(instance, save_function):
+    """
+    :return: True if the event was handled, otherwise False
+    """
     if instance.active and instance.next_event_due < datetime.utcnow():
         instance.handle_current_event()
         save_function(instance)
+        return True
+
+    return False
+
+
+def update_broadcast_last_sent_timestamp(broadcast_class, schedule_id):
+    broadcast_class.objects.filter(schedule_id=schedule_id).update(last_sent_timestamp=datetime.utcnow())
 
 
 @no_result_task(queue='reminder_queue')
@@ -223,7 +293,8 @@ def handle_alert_schedule_instance(schedule_instance_id):
     except AlertScheduleInstance.DoesNotExist:
         return
 
-    _handle_schedule_instance(instance, save_alert_schedule_instance)
+    if _handle_schedule_instance(instance, save_alert_schedule_instance):
+        update_broadcast_last_sent_timestamp(ImmediateBroadcast, instance.alert_schedule_id)
 
 
 @no_result_task(queue='reminder_queue')
@@ -233,7 +304,8 @@ def handle_timed_schedule_instance(schedule_instance_id):
     except TimedScheduleInstance.DoesNotExist:
         return
 
-    _handle_schedule_instance(instance, save_timed_schedule_instance)
+    if _handle_schedule_instance(instance, save_timed_schedule_instance):
+        update_broadcast_last_sent_timestamp(ScheduledBroadcast, instance.timed_schedule_id)
 
 
 @no_result_task(queue='reminder_queue')

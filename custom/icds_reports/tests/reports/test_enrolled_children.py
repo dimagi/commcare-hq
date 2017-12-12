@@ -25,7 +25,23 @@ class TestEnrolledChildren(TestCase):
                     "info": "Total number of children between the age "
                             "of 0 - 6 years who are enrolled for ICDS services",
                     "average": 643.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of lactating women who are enrolled for ICDS services:',
+                            'value': 1287
+                        },
+                        {
+                            'indicator': 'Total number of lactating women who are registered: ',
+                            'value': 1287
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered lactating women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Children": "#006fdf",
@@ -67,7 +83,20 @@ class TestEnrolledChildren(TestCase):
                     "info": "Total number of children between the age "
                             "of 0 - 6 years who are enrolled for ICDS services",
                     "average": 309.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of lactating women who are enrolled for ICDS services:',
+                            'value': 618
+                        },
+                        {'indicator': 'Total number of lactating women who are registered: ', 'value': 618},
+                        {
+                            'indicator': (
+                                'Percentage of registered lactating women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Children": "#006fdf",

@@ -109,10 +109,10 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     is_phone_submission = fields.BooleanField(readonly=True)
 
     def dehydrate_is_phone_submission(self, bundle):
-        return (
-            getattr(bundle.obj, 'openrosa_headers', None)
-            and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
-        )
+        headers = getattr(bundle.obj, 'openrosa_headers', None)
+        if not headers:
+            return False
+        return headers.get('HTTP_X_OPENROSA_VERSION') is not None
 
     edited_by_user_id = fields.CharField(readonly=True, null=True)
 

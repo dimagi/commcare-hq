@@ -34,6 +34,7 @@ CASE_TYPE_PRESCRIPTION_ITEM = "prescription_item"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
+CASE_TYPE_INVESTIGATION = "investigation"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -221,11 +222,11 @@ def get_open_referral_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_REFERRAL
     ]
-    occurrence_cases = [
+    occurrence_case_ids = [
         case.case_id for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_OCCURRENCE
     ]
-    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
     open_referral_cases.extend(
         case for case in reversed_indexed_occurrence
         if not case.closed and case.type == CASE_TYPE_REFERRAL
@@ -637,7 +638,7 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     open_referral_cases = [
         case for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     ]
     occurrence_cases = [
         case.case_id for case in reverse_indexed_cases
@@ -646,11 +647,10 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
     reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
     open_referral_cases.extend(
         case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     )
     valid_referral_cases = [
         case for case in open_referral_cases if (
-            case.dynamic_case_properties().get('referral_status') != 'rejected' and
             case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
         )
     ]

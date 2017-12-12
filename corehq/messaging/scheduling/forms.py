@@ -1,6 +1,7 @@
 from __future__ import absolute_import
+import json
 import re
-from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm
+from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
 from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -19,14 +20,14 @@ from django.forms.fields import (
     IntegerField,
 )
 from django.forms.forms import Form
-from django.forms.widgets import Textarea, CheckboxSelectMultiple
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext_lazy as _, ugettext
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
 from corehq.messaging.scheduling.models import (
@@ -39,6 +40,7 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
+from langcodes import get_name as get_language_name
 import six
 from six.moves import range
 
@@ -95,6 +97,8 @@ class ScheduleForm(Form):
     CONTENT_EMAIL = 'email'
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
+
+    LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
     send_frequency = ChoiceField(
         required=True,
@@ -183,9 +187,13 @@ class ScheduleForm(Form):
             # (CONTENT_IVR_SURVEY, _('IVR Survey')),
         )
     )
-    translate = BooleanField(
-        label=_("Translate this message"),
-        required=False
+    message = CharField(
+        required=False,
+        widget=HiddenInput,
+    )
+    default_language_code = ChoiceField(
+        required=True,
+        label=_("Default Language"),
     )
 
     def update_send_frequency_choices(self, initial_value):
@@ -198,6 +206,18 @@ class ScheduleForm(Form):
         self.fields['send_frequency'].choices = [
             c for c in self.fields['send_frequency'].choices if filter_function(c)
         ]
+
+    def set_default_language_code_choices(self):
+        choices = [
+            (self.LANGUAGE_PROJECT_DEFAULT, ugettext("Project Default")),
+        ]
+
+        choices.extend([
+            (language_code, ugettext(get_language_name(language_code)))
+            for language_code in self.language_list
+        ])
+
+        self.fields['default_language_code'].choices = choices
 
     def add_intial_for_immediate_schedule(self, initial):
         initial['send_frequency'] = self.SEND_IMMEDIATELY
@@ -254,15 +274,17 @@ class ScheduleForm(Form):
         content = self.initial_schedule.memoized_events[0].content
         if isinstance(content, SMSContent):
             result['content'] = self.CONTENT_SMS
-            result['translate'] = '*' not in content.message
-            result['non_translated_message'] = content.message.get('*', '')
-            for lang in self.project_languages:
-                result['message_%s' % lang] = content.message.get(lang, '')
+            result['message'] = content.message
 
     def compute_initial(self):
         result = {}
         schedule = self.initial_schedule
         if schedule:
+            result['default_language_code'] = (
+                schedule.default_language_code
+                if schedule.default_language_code
+                else self.LANGUAGE_PROJECT_DEFAULT
+            )
             if isinstance(schedule, AlertSchedule):
                 if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
                     self.add_intial_for_immediate_schedule(result)
@@ -304,6 +326,7 @@ class ScheduleForm(Form):
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
 
+        self.set_default_language_code_choices()
         if initial.get('send_frequency'):
             self.update_send_frequency_choices(initial.get('send_frequency'))
 
@@ -312,7 +335,6 @@ class ScheduleForm(Form):
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
-        self.add_content_fields()
 
         self.helper.layout = crispy.Layout(*self.get_layout_fields())
 
@@ -329,7 +351,11 @@ class ScheduleForm(Form):
             crispy.Fieldset(
                 ugettext("Content"),
                 *self.get_content_layout_fields()
-            )
+            ),
+            crispy.Fieldset(
+                ugettext("Advanced"),
+                *self.get_advanced_layout_fields()
+            ),
         ]
 
     def get_timing_layout_fields(self):
@@ -437,35 +463,37 @@ class ScheduleForm(Form):
         ]
 
     def get_content_layout_fields(self):
-        result = [
+        return [
             crispy.Field('content'),
-            crispy.Field('translate', data_bind='checked: translate'),
-            crispy.Div(
-                crispy.Field('non_translated_message'),
-                data_bind='visible: !translate()',
+            hqcrispy.B3MultiField(
+                ugettext("Message"),
+                crispy.Field(
+                    'message',
+                    data_bind='value: message.messagesJSONString',
+                ),
+                crispy.Div(
+                    crispy.Div(template='scheduling/partial/message_configuration.html'),
+                    data_bind='with: message',
+                ),
             ),
         ]
 
-        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
-        result.append(
-            crispy.Div(*translated_fields, data_bind='visible: translate()')
-        )
-
-        return result
+    def get_advanced_layout_fields(self):
+        return [
+            crispy.Field('default_language_code'),
+        ]
 
     @cached_property
-    def project_languages(self):
-        doc = StandaloneTranslationDoc.get_obj(self.domain, 'sms')
-        return getattr(doc, 'langs', ['en'])
+    def language_list(self):
+        tdoc = get_or_create_translation_doc(self.domain)
+        result = set(tdoc.langs)
 
-    def add_content_fields(self):
-        self.fields['non_translated_message'] = CharField(label=_("Message"), required=False, widget=Textarea)
+        if self.initial_schedule:
+            result |= self.initial_schedule.memoized_language_set
 
-        for lang in self.project_languages:
-            # TODO support RTL languages
-            self.fields['message_%s' % lang] = CharField(
-                label="{} ({})".format(_("Message"), lang), required=False, widget=Textarea
-            )
+        result.discard('*')
+
+        return list(result)
 
     @property
     def current_values(self):
@@ -691,19 +719,26 @@ class ScheduleForm(Form):
 
         return occurrences
 
-    def distill_content(self):
-        form_data = self.cleaned_data
-        if form_data['translate']:
-            messages = {}
-            for lang in self.project_languages:
-                key = 'message_%s' % lang
-                if key in form_data:
-                    messages[lang] = form_data[key]
-            content = SMSContent(message=messages)
-        else:
-            content = SMSContent(message={'*': form_data['non_translated_message']})
+    def clean_message(self):
+        value = json.loads(self.cleaned_data['message'])
+        cleaned_value = {k: v.strip() for k, v in value.items()}
 
-        return content
+        if '*' in cleaned_value:
+            return cleaned_value
+
+        if len(cleaned_value) == 0:
+            raise ValidationError(ugettext("This field is required"))
+
+        for expected_language_code in self.language_list:
+            if not cleaned_value.get(expected_language_code):
+                raise ValidationError(ugettext("Please fill out all translations"))
+
+        return cleaned_value
+
+    def distill_content(self):
+        return SMSContent(
+            message=self.cleaned_data['message']
+        )
 
     def distill_recipients(self):
         form_data = self.cleaned_data
@@ -725,9 +760,17 @@ class ScheduleForm(Form):
 
         return form_data['occurrences']
 
+    def distill_default_language_code(self):
+        value = self.cleaned_data['default_language_code']
+        if value == self.LANGUAGE_PROJECT_DEFAULT:
+            return None
+        else:
+            return value
+
     def distill_extra_scheduling_options(self):
         form_data = self.cleaned_data
         return {
+            'default_language_code': self.distill_default_language_code(),
             'include_descendant_locations': (
                 ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
                 form_data['include_descendant_locations']
@@ -1001,10 +1044,17 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     SEND_TIME_SPECIFIC_TIME = 'SPECIFIC_TIME'
 
     START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
+    START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
 
     START_OFFSET_ZERO = 'ZERO'
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
+
+    YES = 'Y'
+    NO = 'N'
+
+    # Ensure that field order is correct based on clean_* method dependencies
+    field_order = ['send_frequency', 'send_time_type', 'send_time']
 
     send_time_type = ChoiceField(
         required=True,
@@ -1017,7 +1067,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=True,
         choices=(
             (START_DATE_RULE_TRIGGER, _("The date the rule is satisfied")),
+            (START_DATE_CASE_PROPERTY, _("The date from case property: ")),
         )
+    )
+
+    start_date_case_property = TrimmedCharField(
+        label='',
+        required=False,
     )
 
     start_offset_type = ChoiceField(
@@ -1056,11 +1112,36 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         )
     )
 
+    reset_case_property_enabled = ChoiceField(
+        required=True,
+        choices=(
+            (NO, _("Disabled")),
+            (YES, _("Restart schedule when this case property takes any new value: ")),
+        ),
+    )
+
+    reset_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
     def __init__(self, domain, schedule, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
         super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()
         self.update_recipient_types_choices()
+
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+
+        # Don't allow the reset_case_property_name to change values after being initially set.
+        # The framework doesn't account for this option being enabled, disabled, or changing
+        # after being initially set.
+        self.fields['reset_case_property_enabled'].disabled = True
+        self.fields['reset_case_property_name'].disabled = True
 
     @cached_property
     def requires_system_admin_to_edit(self):
@@ -1112,7 +1193,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     result['start_day_of_week'] = str(schedule.start_day_of_week)
 
         if self.initial_rule:
-            self.add_initial_recipients(self.initial_rule.memoized_actions[0].definition.recipients, result)
+            action_definition = self.initial_rule.memoized_actions[0].definition
+            self.add_initial_recipients(action_definition.recipients, result)
+            if action_definition.reset_case_property_name:
+                result['reset_case_property_enabled'] = self.YES
+                result['reset_case_property_name'] = action_definition.reset_case_property_name
+            else:
+                result['reset_case_property_enabled'] = self.NO
+
+            if action_definition.start_date_case_property:
+                result['start_date_type'] = self.START_DATE_CASE_PROPERTY
+                result['start_date_case_property'] = action_definition.start_date_case_property
+            else:
+                result['start_date_type'] = self.START_DATE_RULE_TRIGGER
 
         return result
 
@@ -1143,6 +1236,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                         'start_date_type',
                         data_bind='value: start_date_type',
                     ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date_case_property',
+                    ),
+                    data_bind="visible: start_date_type() === '%s'" % self.START_DATE_CASE_PROPERTY,
                     css_class='col-sm-4',
                 ),
                 data_bind='visible: showStartDateInput',
@@ -1182,6 +1282,30 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 twbscrispy.InlineField('custom_recipient'),
                 self.get_system_admin_label(),
                 data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+            ),
+        ])
+        return result
+
+    def get_advanced_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_advanced_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                ugettext("Restart Schedule"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_enabled',
+                        data_bind='value: reset_case_property_enabled',
+                    ),
+                    css_class='col-sm-8',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_name',
+                        placeholder=ugettext("case property"),
+                    ),
+                    data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
+                    css_class='col-sm-4',
+                ),
             ),
         ])
         return result
@@ -1245,6 +1369,37 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return custom_recipient
 
+    def clean_reset_case_property_enabled(self):
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_IMMEDIATELY and
+            self.cleaned_data.get('start_date_type') != self.START_DATE_RULE_TRIGGER
+        ):
+            raise ValidationError(
+                _("This option can only be enabled when the schedule's start "
+                  "date is the date that the rule triggers.")
+            )
+
+    def clean_reset_case_property_name(self):
+        if self.cleaned_data.get('reset_case_property_enabled') == self.NO:
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('reset_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
+    def clean_start_date_case_property(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('start_date_type') != self.START_DATE_CASE_PROPERTY
+        ):
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('start_date_case_property'),
+            allow_parent_case_references=False,
+        )
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1291,8 +1446,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def create_rule_action(self, rule, schedule):
         fields = {
             'recipients': self.distill_recipients(),
-            'reset_case_property_name': None,
+            'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
             'scheduler_module_info': self.distill_scheduler_module_info(),
+            'start_date_case_property': self.cleaned_data['start_date_case_property'],
         }
 
         if isinstance(schedule, AlertSchedule):
@@ -1310,8 +1466,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         self.validate_existing_action_definition(action_definition, schedule)
 
         action_definition.recipients = self.distill_recipients()
-        action_definition.reset_case_property_name = None
+        action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
         action_definition.scheduler_module_info = self.distill_scheduler_module_info()
+        action_definition.start_date_case_property = self.cleaned_data['start_date_case_property']
         action_definition.save()
 
     def validate_existing_action_definition(self, action_definition, schedule):
@@ -1407,3 +1564,17 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
     @property
     def allow_date_case_property_filter(self):
         return False
+
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+
+        # Prevent case_type from being changed when we are using the form to edit
+        # an existing conditional alert. Being allowed to assume that case_type
+        # doesn't change makes it easier to run the rule for this alert.
+        self.fields['case_type'].disabled = True
+
+    def __init__(self, *args, **kwargs):
+        super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()

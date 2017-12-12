@@ -22,7 +22,9 @@
             </div>
             {% if doc_id %}
                 <h3>Doc {{ doc_id }} {{ es_info.status }}</h3>
-                <p>Doc type: {{ couch_info.doc_type }}</p>
+                <p>Doc type: {{ couch_info.doc_type }}
+                    (<a href="{% url 'global_quick_find' %}?q={{ doc_id }}">View on CommCareHQ</a>)
+                </p>
                 {% for index, es_doc in es_info.found_indices.items %}
                     <p>Found in index: {{ index }}</p>
                     <div class="row">

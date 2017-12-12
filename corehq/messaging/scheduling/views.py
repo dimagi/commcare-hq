@@ -184,9 +184,9 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
         if self.schedule_form.is_valid():
             broadcast, schedule = self.schedule_form.save_broadcast_and_schedule()
             if isinstance(schedule, AlertSchedule):
-                refresh_alert_schedule_instances.delay(schedule, broadcast.recipients)
+                refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
             elif isinstance(schedule, TimedSchedule):
-                refresh_timed_schedule_instances.delay(schedule, broadcast.recipients,
+                refresh_timed_schedule_instances.delay(schedule.schedule_id, broadcast.recipients,
                     start_date=broadcast.start_date)
             else:
                 raise TypeError("Expected AlertSchedule or TimedSchedule")
@@ -324,6 +324,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'criteria_form': self.criteria_form,
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
+            'criteria_form_active': self.criteria_form.errors or not self.schedule_form.errors,
+            'schedule_form_active': self.schedule_form.errors and not self.criteria_form.errors,
         }
 
     @cached_property

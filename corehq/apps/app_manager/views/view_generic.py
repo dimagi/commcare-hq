@@ -245,7 +245,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             }
         })
         context['module_icon'] = None
-        if add_ons.show("custom_icon_badges", request, module.get_app()):
+        if toggles.CUSTOM_ICON_BADGES.enabled(domain):
             context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
         try:
             context['multimedia']['references'] = app.get_references()

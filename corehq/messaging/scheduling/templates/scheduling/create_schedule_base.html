@@ -24,11 +24,15 @@
     .day-of-month-choices-cell {
         width: 14%;
     }
+    .translation-controls {
+        margin-bottom: 15px;
+    };
 </style>
 {% endblock %}
 
 {% block page_content %}
     {% initial_page_data 'current_values' schedule_form.current_values %}
+    {% initial_page_data 'language_list' schedule_form.language_list %}
     {% initial_page_data 'current_select2_user_recipients' schedule_form.current_select2_user_recipients %}
     {% initial_page_data 'current_select2_user_group_recipients' schedule_form.current_select2_user_group_recipients %}
     {% initial_page_data 'current_select2_user_organization_recipients' schedule_form.current_select2_user_organization_recipients %}

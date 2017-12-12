@@ -49,31 +49,41 @@ def remove_quotes(value):
     return value
 
 
+def validate_case_property_characters(value):
+    if not re.match('^[a-zA-Z0-9_-]+$', value):
+        raise ValidationError(
+            _("Property names should only contain alphanumeric characters, underscore, or hyphen.")
+        )
+
+
 def validate_case_property_name(value, allow_parent_case_references=True):
     if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property name."))
 
     value = value.strip()
-    property_name = re.sub('^(parent/|host/)+', '', value)
-    if not property_name:
+
+    if not value:
         raise ValidationError(_("Please specify a case property name."))
 
-    if '/' in property_name:
-        if not allow_parent_case_references:
+    if not allow_parent_case_references:
+        if '/' in value:
             raise ValidationError(
                 _("Invalid character '/' in case property name: '{}'. "
                   "Parent or host case references are not allowed.").format(value)
             )
+        validate_case_property_characters(value)
+    else:
+        property_name = re.sub('^(parent/|host/)+', '', value)
+        if not property_name:
+            raise ValidationError(_("Please specify a case property name."))
 
-        raise ValidationError(
-            _("Case property reference cannot contain '/' unless referencing the parent "
-              "or host case with 'parent/' or 'host/'")
-        )
+        if '/' in property_name:
+            raise ValidationError(
+                _("Case property reference cannot contain '/' unless referencing the parent "
+                  "or host case with 'parent/' or 'host/'")
+            )
 
-    if not re.match('^[a-zA-Z0-9_-]+$', property_name):
-        raise ValidationError(
-            _("Property names should only contain alphanumeric characters, underscore, or hyphen.")
-        )
+        validate_case_property_characters(property_name)
 
     return value
 
@@ -651,9 +661,9 @@ class CaseRuleCriteriaForm(forms.Form):
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
 
-        rule = kwargs.pop('rule', None)
-        if rule:
-            kwargs['initial'] = self.compute_initial(rule)
+        self.initial_rule = kwargs.pop('rule', None)
+        if self.initial_rule:
+            kwargs['initial'] = self.compute_initial(self.initial_rule)
 
         super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
 

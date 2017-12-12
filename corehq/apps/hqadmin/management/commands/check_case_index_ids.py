@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import csv
 from django.core.management import BaseCommand, call_command
 from corehq.apps.receiverwrapper.util import get_app_version_info
-from corehq.apps.reports.util import resync_case_to_es
+from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
@@ -108,7 +108,7 @@ class Command(BaseCommand):
 
             for case_to_resync in exists:
                 # if the case actually exists resync it to fix the es search
-                resync_case_to_es(domain, case_to_resync)
+                resave_case(domain, case_to_resync, send_post_save_signal=False)
 
             if exists:
                 print('resynced {} cases that were actually not deleted'.format(len(exists)))

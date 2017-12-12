@@ -38,8 +38,8 @@ import contextlib
 import gevent
 
 from fabric.colors import red
-from .sh_verbose import ShVerbose
-from .gitutils import (
+from sh_verbose import ShVerbose
+from gitutils import (
     OriginalBranch,
     get_git,
     has_merge_conflict,

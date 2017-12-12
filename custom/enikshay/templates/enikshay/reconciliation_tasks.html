@@ -1,0 +1,45 @@
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+<html>
+    <head>
+        <link type="text/css" rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
+        <script src="{% static 'jquery/dist/jquery.min.js' %}" ></script>
+        <title>eNikshay Reconciliation Tasks</title>
+    </head>
+    <body>
+
+        <h1>eNikshay Reconciliation Tasks</h1>
+
+        <div class="container">
+            <div class="row">
+                <form id="reconciliation-task-form" method="post" class="form-horizontal">
+                    {% crispy reconciliation_form %}
+                </form>
+                <div id="post-message">
+
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            $(function() {
+                var frm = $('#reconciliation-task-form');
+                frm.submit(function () {
+                    $.ajax({
+                        type: frm.attr('method'),
+                        url: frm.attr('action'),
+                        data: frm.serialize(),
+                        success: function (data) {
+                            $("#post-message").html(data.message);
+                        },
+                        error: function(data) {
+                            $("#post-message").html("Something went wrong!");
+                        }
+                    });
+                    return false;
+                });
+            });
+        </script>
+    </body>
+</html>

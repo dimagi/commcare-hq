@@ -16,7 +16,6 @@ hqDefine('analytix/js/kissmetrix', [
     'use strict';
     var _get = initialAnalytics.getFn('kissmetrics'),
         _global = initialAnalytics.getFn('global'),
-        _abTests = initialAnalytics.getAbTests('kissmetrics'),
         logger = logging.getLoggerForApi('Kissmetrics'),
         _allAbTests = {},
         _init = {};
@@ -66,8 +65,21 @@ hqDefine('analytix/js/kissmetrix', [
             _addKissmetricsScript('//doug1izaerwt3.cloudfront.net/' + _init.apiId + '.1.js');
         }
 
+        // Identify user and HQ instance
+        // This needs to happen before any events are sent or any traits are set
+        var username = _get('username');
+        if (username) {
+            identify(username);
+            var traits = {
+                'is_dimagi': _get('isDimagi'),
+                'hq_instance': _get('hqInstance'),
+            };
+            identifyTraits(traits);
+        }
+
         // Initialize Kissmetrics AB Tests
-        _.each(_abTests, function (ab, testName) {
+        var abTests = initialAnalytics.getAbTests('kissmetrics');
+        _.each(abTests, function (ab, testName) {
             var test = {};
             testName = _.last(testName.split('.'));
             if (_.isObject(ab) && ab.version) {
@@ -88,7 +100,7 @@ hqDefine('analytix/js/kissmetrix', [
 
     /**
      * Identifies the current user
-     * @param {string} identity - A unique ID to identify the session.
+     * @param {string} identity - A unique ID to identify the session. Typically the user's email address.
      */
     var identify = function (identity) {
         if (_global('isEnabled')) {

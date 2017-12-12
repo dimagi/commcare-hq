@@ -21,6 +21,7 @@ class TestVoucher(TestDataSourceExpressions):
             'voucher_issued_by_login_name': 'login_name',
             'voucher_issued_by_name': 'name',
             'voucher_issued_by_phone_number': '123456',
+            'voucher_issued_by_type': 'issued type',
             'voucher_id': 'voucher_case_id',
             'date_issued': '2017-09-28',
             'state': 'test_state',
@@ -44,6 +45,7 @@ class TestVoucher(TestDataSourceExpressions):
         voucher_fulfilled_by_name = self.get_expression('voucher_fulfilled_by_name', 'string')
         voucher_fulfilled_by_phone_number = self.get_expression('voucher_fulfilled_by_phone_number', 'string')
         investigation_type_name = self.get_expression('investigation_type_name', 'string')
+        voucher_issued_by_type = self.get_expression('voucher_issued_by_type', 'string')
 
         self.assertEqual(
             date_fulfilled(voucher_case, EvaluationContext(voucher_case, 0)),
@@ -93,6 +95,10 @@ class TestVoucher(TestDataSourceExpressions):
             investigation_type_name(voucher_case, EvaluationContext(voucher_case, 0)),
             'type'
         )
+        self.assertEqual(
+            voucher_issued_by_type(voucher_case, EvaluationContext(voucher_case, 0)),
+            'issued type'
+        )
 
     def test_person_properties(self):
         voucher_case = {
@@ -110,7 +116,6 @@ class TestVoucher(TestDataSourceExpressions):
             'phone_number': '123432',
             'owner_id': 'owner-id',
             'date_of_registration': '2017-09-28',
-            'private_sector_organization_name': 'organization_name'
         }
 
         investigation_form = {
@@ -130,7 +135,6 @@ class TestVoucher(TestDataSourceExpressions):
             'investigation_form_id': investigation_form
         }
         person_owner_id = self.get_expression('person_owner_id', 'string')
-        private_sector_organization_name = self.get_expression('private_sector_organization_name', 'string')
         person_id = self.get_expression('person_id', 'string')
         person_name = self.get_expression('name', 'string')
         phone_number = self.get_expression('phone_number', 'string')
@@ -139,10 +143,6 @@ class TestVoucher(TestDataSourceExpressions):
             self.assertEqual(
                 person_owner_id(voucher_case, EvaluationContext(voucher_case, 0)),
                 'owner-id'
-            )
-            self.assertEqual(
-                private_sector_organization_name(voucher_case, EvaluationContext(voucher_case, 0)),
-                'organization_name'
             )
             self.assertEqual(
                 person_id(voucher_case, EvaluationContext(voucher_case, 0)),
@@ -229,7 +229,9 @@ class TestVoucher(TestDataSourceExpressions):
             'domain': 'enikshay-test',
             'purpose_of_test': 'diagnosis',
             'date_reported': '2017-09-28',
-            'case_id': 'case ID'
+            'case_id': 'case ID',
+            'result_label': 'result label',
+            'grade_label': 'grade label'
         }
 
         self.database.mock_docs = {
@@ -240,6 +242,8 @@ class TestVoucher(TestDataSourceExpressions):
         purpose_of_test = self.get_expression('purpose_of_test', 'string')
         date_reported = self.get_expression('date_reported', 'date')
         test_id = self.get_expression('test_id', 'string')
+        result_label = self.get_expression('result_label', 'string')
+        grade_label = self.get_expression('grade_label', 'string')
         self.assertEqual(
             purpose_of_test(voucher_case, EvaluationContext(voucher_case, 0)),
             'diagnosis'
@@ -251,4 +255,12 @@ class TestVoucher(TestDataSourceExpressions):
         self.assertEqual(
             test_id(voucher_case, EvaluationContext(voucher_case, 0)),
             'case ID'
+        )
+        self.assertEqual(
+            result_label(voucher_case, EvaluationContext(voucher_case, 0)),
+            'result label'
+        )
+        self.assertEqual(
+            grade_label(voucher_case, EvaluationContext(voucher_case, 0)),
+            'grade label'
         )

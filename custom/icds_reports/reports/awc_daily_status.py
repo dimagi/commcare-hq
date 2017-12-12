@@ -67,7 +67,20 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
                 "info": _((
                     "Percentage of Angwanwadi Centers that were open yesterday."
                 )),
-                'period': 'Daily'
+                'period': 'Daily',
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of AWCs that were open yesterday:',
+                        'value': valid_total},
+                    {
+                        'indicator': 'Total number of AWCs that have been launched:',
+                        'value': in_day_total
+                    },
+                    {
+                        'indicator': '% of AWCs open yesterday:',
+                        'value': '%.2f%%' % (in_day_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

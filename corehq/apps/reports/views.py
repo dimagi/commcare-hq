@@ -69,7 +69,7 @@ import couchexport
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
-from corehq.form_processor.utils import should_use_sql_backend
+
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
@@ -81,7 +81,6 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
-from couchforms.models import XFormDeprecated, XFormInstance
 
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
@@ -169,7 +168,9 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    resync_case_to_es)
+)
+from corehq.form_processor.utils.xform import resave_form
+from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
@@ -1423,11 +1424,11 @@ def rebuild_case_view(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-def resave_case(request, domain, case_id):
+def resave_case_view(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
     case = _get_case_or_404(domain, case_id)
-    resync_case_to_es(domain, case)
+    resave_case(domain, case)
     messages.success(
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
@@ -2020,16 +2021,13 @@ def unarchive_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 @location_safe
-def resave_form(request, domain, instance_id):
+def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
     from corehq.form_processor.change_publishers import publish_form_saved
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    if should_use_sql_backend(domain):
-        publish_form_saved(instance)
-    else:
-        XFormInstance.get_db().save_doc(instance.to_json())
+    resave_form(domain, instance)
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
     return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 

@@ -4,6 +4,7 @@ import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
     NoAvailableContent,
@@ -65,6 +66,22 @@ class Schedule(models.Model):
 
         for k, v in options.items():
             setattr(self, k, v)
+
+    @property
+    @memoized
+    def memoized_language_set(self):
+        from corehq.messaging.scheduling.models import SMSContent, EmailContent
+
+        result = set()
+        for event in self.memoized_events:
+            content = event.memoized_content
+            if isinstance(content, SMSContent):
+                result |= set(content.message)
+            elif isinstance(content, EmailContent):
+                result |= set(content.subject)
+                result |= set(content.message)
+
+        return result
 
 
 class ContentForeignKeyMixin(models.Model):
@@ -154,6 +171,25 @@ class Content(models.Model):
             return None
 
         return phone_number
+
+    @staticmethod
+    def get_cleaned_message(message_dict, language_code):
+        return message_dict.get(language_code, '').strip()
+
+    @staticmethod
+    def get_translation_from_message_dict(message_dict, schedule, preferred_language_code):
+        """
+        :param message_dict: a dictionary of {language code: message}
+        :param schedule: an instance of corehq.messaging.scheduling.models.Schedule
+        :param preferred_language_code: the language code of the user's preferred language
+        """
+        lang_doc = StandaloneTranslationDoc.get_obj(schedule.domain, 'sms')
+        return (
+            Content.get_cleaned_message(message_dict, preferred_language_code) or
+            Content.get_cleaned_message(message_dict, schedule.default_language_code) or
+            (Content.get_cleaned_message(message_dict, lang_doc.default_lang) if lang_doc else None) or
+            Content.get_cleaned_message(message_dict, '*')
+        )
 
     def send(self, recipient, schedule_instance):
         """
