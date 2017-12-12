@@ -59,17 +59,43 @@ class DotsApiParamChoices(DotsApiSectorParam):
 
 
 class DotsApiParam(StrictJsonObject):
+    """99DOTS <-> eNikshay API Parameter Definition
+
+    This class defines api parameters for the patient details API between
+    99DOTS and eNikshay.
+
+    For incoming api requests from 99DOTS, it defines where and how to save
+    parameters.
+
+    For outgoing api requests to 99DOTS, it defines which properties to watch
+    for changes to and how they are compiled.
+
+    """
+
+    # the parameter name for the json sent and received
     api_param_name = jsonobject.StringProperty(required=True)
+
+    # whether this parameter is required when receiving and API request
     required_ = jsonobject.BooleanProperty(default=False, name='required')
     exclude_if_none = jsonobject.BooleanProperty(default=True)
     choices = jsonobject.ObjectProperty(DotsApiParamChoices)
+
+    # the case type to save or get this property from
     case_type = jsonobject.ObjectProperty(DotsApiSectorParam)
+    # the case property to save to or get
     case_property = jsonobject.ObjectProperty(DotsApiSectorParam)
 
+    # path to a function to get the value of this property
     getter = jsonobject.StringProperty()
+
+    # path to a jsonObject that will wrap the value from the getter
     payload_object = jsonobject.StringProperty()
+
+    # if using a custom getter, the case properties to watch for changes to send outwards
     case_properties = jsonobject.ObjectProperty(DotsApiParamChoices)
 
+    # path to a function to set the case property for incoming requests. Should
+    # return a dict of case properties to update
     setter = jsonobject.StringProperty()
 
     def get_by_sector(self, prop, sector):
@@ -123,6 +149,14 @@ def load_api_spec(filepath=None):
 
 
 class BasePatientPayload(StrictJsonObject):
+    """The payload to send to 99DOTS
+
+    The final payload class is generated programatically from the api_properties.yaml file.
+
+    Location properties are included in the base classes as these cannot
+    efficiently be expressed in the yaml definition.
+
+    """
     sector = jsonobject.StringProperty(required=True)
     state_code = jsonobject.StringProperty(required=False)
     district_code = jsonobject.StringProperty(required=False)
