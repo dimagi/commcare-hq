@@ -111,12 +111,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     configured_indicators = ListProperty()
     named_expressions = DictProperty()
     named_filters = DictProperty()
-    related_docs = DictProperty()
     meta = SchemaProperty(DataSourceMeta)
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
+    rebuild_related_docs = BooleanProperty(default=False)  # Only used for ICDS
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.

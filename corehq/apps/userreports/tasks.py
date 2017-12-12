@@ -294,8 +294,6 @@ def save_document(doc_ids):
             return
 
         first_indicator = indicators[0]
-        processed_indicators = []
-        failed_indicators = []
 
         for i in indicators:
             assert i.domain == first_indicator.domain
@@ -306,16 +304,8 @@ def save_document(doc_ids):
         indicator_config_ids = first_indicator.indicator_config_ids
 
         with timer:
-            for doc in doc_store.iter_documents(doc_ids):
-                # reactive method: grab the related docs here and get their locks
-                # note: these only be rebuilt if they are also in the queue
-                # question: What happens if these child docs are being processed by another queue?
-                indicator = indicator_by_doc_id[doc['_id']]
-                successfully_processed, to_remove = _save_document_helper(indicator, doc)
-                if successfully_processed:
-                    processed_indicators.append(indicator.pk)
-                else:
-                    failed_indicators.append((indicator, to_remove))
+            processed_indicators, failed_indicators = _save_document_helper_helper(
+                doc_ids, indicator_by_doc_id, doc_store)
 
         # remove/update any indicators including related docs that succeeded/failed
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
@@ -332,14 +322,44 @@ def save_document(doc_ids):
     )
 
 
-def _save_document_helper(indicator, doc):
+def _save_document_helper(doc_ids, indicator_by_doc_id, doc_store):
+    from custom.icds_reports.ucr.expressions import get_related_docs_ids
+    processed_indicators = []
+    failed_indicators = []
+    related_docs_to_rebuild = set()
+    for doc in doc_store.iter_documents(doc_ids):
+        indicator = indicator_by_doc_id[doc['_id']]
+        successfully_processed, to_remove, rebuild_related_docs = _save_document_helper_helper(indicator, doc)
+        if rebuild_related_docs:
+            related_docs_to_rebuild = related_docs_to_rebuild.union(get_related_docs_ids(doc['_id']))
+        if successfully_processed:
+            processed_indicators.append(indicator.pk)
+        else:
+            failed_indicators.append((indicator, to_remove))
+
+    for doc in doc_store.iter_documents(list(related_docs_to_rebuild)):
+        if related_docs_to_rebuild in indicator_by_doc_id:
+            # don't process docs already processed
+            continue
+        indicator = indicator_by_doc_id[doc['_id']]
+        # intentionally ignoring any docs to rebuild because don't want to get in infinite loop
+        successfully_processed, to_remove, ignored = _save_document_helper_helper(indicator, doc)
+        if successfully_processed:
+            processed_indicators.append(indicator.pk)
+        else:
+            failed_indicators.append((indicator, to_remove))
+
+    return processed_indicators, failed_indicators
+
+
+def _save_document_helper_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
     something_failed = False
     configs_to_remove = []
+    configs = dict()
     for config_id in indicator.indicator_config_ids:
-        adapter = None
         try:
-            config = _get_config(config_id)
+            configs[config_id] = _get_config(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             configs_to_remove.append(config_id)
@@ -348,6 +368,9 @@ def _save_document_helper(indicator, doc):
             celery_task_logger.info("ES errored when trying to retrieve config")
             something_failed = True
             continue
+
+    for config_id, config in six.iteritems(configs):
+        adapter = None
         try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
@@ -374,7 +397,8 @@ def _save_document_helper(indicator, doc):
         else:
             configs_to_remove.append(config_id)
 
-    return (not something_failed, configs_to_remove)
+    rebuild_related_docs = any(config.rebuild_related_docs for config in configs)
+    return (not something_failed, configs_to_remove, rebuild_related_docs)
 
 
 @periodic_task(
