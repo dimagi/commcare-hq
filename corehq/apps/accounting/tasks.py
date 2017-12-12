@@ -589,7 +589,7 @@ def assign_explicit_community_subscription(domain_name, start_date, account=None
         subscriber__domain=domain_name,
     )
     if future_subscriptions.exists():
-        end_date = future_subscriptions.latest('date_start').date_start
+        end_date = future_subscriptions.earliest('date_start').date_start
     else:
         end_date = None
 
