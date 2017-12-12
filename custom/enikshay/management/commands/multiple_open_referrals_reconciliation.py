@@ -76,6 +76,9 @@ class Command(BaseModelReconciliationCommand):
         return self.get_first_opened_case(referral_cases)
 
     def public_app_case(self, occurrence_case_id):
+        # set person case as None to make sure its fetched each time and not
+        # carry forwarded from a previous call
+        self.person_case = None
         try:
             self.person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         except ENikshayCaseNotFound:
