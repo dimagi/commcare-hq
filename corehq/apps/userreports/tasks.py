@@ -265,7 +265,6 @@ def _queue_indicators(indicators):
     to_queue = []
     for indicator in indicators:
         to_queue.append(indicator)
-        # This chunk size should be reduced drastically if rebuilding multiple docs per indicator
         if len(to_queue) >= ASYNC_INDICATOR_CHUNK_SIZE:
             _queue_chunk(to_queue)
             to_queue = []
