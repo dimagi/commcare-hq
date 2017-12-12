@@ -548,10 +548,11 @@ class TableConfiguration(DocumentSchema):
             doc = row_doc.doc
             row_index = row_doc.row
 
-            try:
+            if isinstance(doc, dict):
                 next_doc = doc.get(path[0].name, {})
-            except AttributeError:
-                raise PossibleHeterogenousDataException(doc, path[0].name)
+            else:
+                # https://manage.dimagi.com/default.asp?264884
+                next_doc = {}
             if path[0].is_repeat:
                 if type(next_doc) != list:
                     # This happens when a repeat group has a single repeat iteration
