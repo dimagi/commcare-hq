@@ -3,7 +3,6 @@ from collections import namedtuple
 from datetime import datetime
 from jsonobject.base_properties import DefaultProperty
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.es.forms import FormES
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -223,13 +222,14 @@ class FormsInDateExpressionSpec(JsonObject):
             if form is None:
                 needed_forms.append(FormAndIndex(xforms[i], i))
 
-        # then get the required forms in bulk from elastic
-        forms_from_es = FormsInDateExpressionSpec._bulk_get_form_json_from_es([fi.form for fi in needed_forms])
-        # and insert them in the list and cache
-        for needed_form in needed_forms:
-            form_json = forms_from_es[needed_form.form.form_id]
-            FormsInDateExpressionSpec._set_cached_form_json(needed_form.form, form_json, context)
-            forms_from_cache[needed_form.index] = form_json
+        if needed_forms:
+            # then get the required forms in bulk from elastic
+            forms_from_es = FormsInDateExpressionSpec._bulk_get_form_json_from_es([fi.form for fi in needed_forms])
+            # and insert them in the list and cache
+            for needed_form in needed_forms:
+                form_json = forms_from_es[needed_form.form.form_id]
+                FormsInDateExpressionSpec._set_cached_form_json(needed_form.form, form_json, context)
+                forms_from_cache[needed_form.index] = form_json
 
         return [f for f in forms_from_cache]
 
