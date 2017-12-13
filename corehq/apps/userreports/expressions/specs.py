@@ -305,7 +305,7 @@ class NestedExpressionSpec(JsonObject):
         return self._value_expression(argument, context)
 
     def __str__(self):
-        return "{} in {}".format(str(self._value_expression), str(self._argument_expression))
+        return "{arg}/{val}".format(str(val=self._value_expression), arg=str(self._argument_expression))
 
 
 class DictExpressionSpec(JsonObject):
