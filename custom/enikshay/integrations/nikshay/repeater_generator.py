@@ -501,20 +501,26 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             raise NikshayHealthEstablishmentInvalidUpdate("Multiple location users found")
         return user_with_user_type_as_loc[0]
 
+    @staticmethod
+    def _get_establishment_type(location):
+        if location.location_type.name == "Private Lab":
+            return health_establishment_type.get('lab')
+        if location.location_type.name == "MBBS Provider":
+            return health_establishment_type.get(
+                location.metadata.get('facility_type')
+            )
+
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
         location_user = self.get_location_user(location)
         location_user_data = location_user.user_data
         return {
-            # ToDo: Currently not available and needs to be set or an alternate way needed
-            'ESTABLISHMENT_TYPE': health_establishment_type.get(
-                location.metadata.get('establishment_type', ''), ''),
+            'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
             'ESTABLISHMENT_NAME': location.name,
             'MCI_HR_NO': location_user_data.get('registration_number'),
             'CONTACT_PNAME': location_user.full_name,
-            # ToDo: No field in UI for this as of now. Needs to be added or alternate way needed
-            'CONTACT_PDESIGNATION': location.metadata.get('contact_designation'),
+            'CONTACT_PDESIGNATION': location_user_data.get('pcp_qualification'),
             'TELEPHONE_NO': location_user_data.get('landline_no'),
             'MOBILE_NO': location_user_data.get('contact_phone_number'),
             'COMPLETE_ADDRESS': (u"%s %s" % (
@@ -523,7 +529,7 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             'EMAILID': location_user_data.get('email'),
             'STATE_CODE': location_hierarchy_codes.stcode,
             'DISTRICT_CODE': location_hierarchy_codes.dtcode,
-            'TBU_CODE': location.metadata.get('tbu_code', ''),
+            'TBU_CODE': location.metadata.get('nikshay_tu_id'),
             'MUST_CREATE_NEW': 'N',
             'USER_ID': settings.ENIKSHAY_PRIVATE_API_USERS.get(location_hierarchy_codes.stcode, ''),
             'PASSWORD': settings.ENIKSHAY_PRIVATE_API_PASSWORD,
