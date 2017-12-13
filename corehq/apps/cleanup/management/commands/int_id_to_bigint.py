@@ -8,10 +8,11 @@ from django.db import connections
 from corehq.form_processor.utils.sql import fetchone_as_namedtuple
 from corehq.util.django_migrations import add_if_not_exists_raw
 from corehq.util.log import with_progress_bar
+from six.moves import input
 
 
 def confirm(table_name):
-    return raw_input(
+    return input(
         u"""
         Are you sure you want to modify the {} table? [y/N]
         """.format(table_name)
