@@ -117,13 +117,13 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                     {'indicator': 'Total Children weighed in given month:', 'value': valid_total},
                     {'indicator': '% Unweighed:', 'value': '%.2f%%' % percent_unweighed},
                     {'indicator': '% Severely Underweight:', 'value': '%.2f%%' % (
-                        severely_underweight_total * 100 / float(valid_total)
+                        severely_underweight_total * 100 / float(valid_total or 1)
                     )},
                     {'indicator': '% Moderately Underweight:', 'value': '%.2f%%' % (
-                        moderately_underweight_total * 100 / float(valid_total)
+                        moderately_underweight_total * 100 / float(valid_total or 1)
                     )},
                     {'indicator': '% Normal:', 'value': '%.2f%%' % (
-                        normal_total * 100 / float(valid_total)
+                        normal_total * 100 / float(valid_total or 1)
                     )}
                 ]
             },
