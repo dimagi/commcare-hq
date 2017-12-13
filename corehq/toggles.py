@@ -254,7 +254,7 @@ class PredictablyRandomToggle(StaticToggle):
                 )
             )
 
-        if settings.UNIT_TESTING:
+        if settings.DISABLE_RANDOM_TOGGLES:
             return False
         elif item in self.always_disabled:
             return False

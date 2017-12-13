@@ -30,6 +30,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
+DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
 ADMINS = ()
 MANAGERS = ADMINS
