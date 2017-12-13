@@ -63,7 +63,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent',
                                        SimpleFilter('randomtimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent',
-                                       SimpleFilter('casepropetytimedevent__schedule__domain')),
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.AlertSchedule', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling.AlertEvent', SimpleFilter('schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.ImmediateBroadcast', SimpleFilter('domain')),
