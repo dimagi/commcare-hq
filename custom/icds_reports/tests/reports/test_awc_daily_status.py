@@ -558,7 +558,7 @@ class TestAWCDailyStatus(TestCase):
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
-                            ["s1",  0.0],
+                            ["s1", 0.0],
                             ["s2", 0.0]
                         ],
                         "key": ""
