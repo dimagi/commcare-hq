@@ -12,6 +12,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
+from django.conf import settings
 import sys
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
@@ -166,7 +167,8 @@ class SubmissionPost(object):
 
             with case_db_cache as case_db:
                 instance = xforms[0]
-                if instance.xmlns == DEVICE_LOG_XMLNS:
+                ignore_device_logs = settings.SERVER_ENVIRONMENT == 'icds'
+                if not ignore_device_logs and instance.xmlns == DEVICE_LOG_XMLNS:
                     submission_type = 'device_log'
                     try:
                         process_device_log(self.domain, instance)
