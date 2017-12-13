@@ -5534,10 +5534,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        if toggles.PHONE_HEARTBEAT.enabled(self.domain):
-            apk_heartbeat_url = self.heartbeat_url
-        else:
-            apk_heartbeat_url = None
+        apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -5593,8 +5590,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def enable_update_prompts(self):
         return (
             # custom for ICDS until ICDS users are > 2.38
-            (self.supports_update_prompts or toggles.ICDS.enabled(self.domain)) and
-            toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts or toggles.ICDS.enabled(self.domain)
         )
 
     @memoized
