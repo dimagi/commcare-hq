@@ -6,10 +6,15 @@
 			<column id="owner_id">AWC1</column>
 			<column id="visit_on_time">2</column>
 		</row>
-		<row index="9" is_total_row="True">
-			<column id="count">269</column>
+		<row index="1" is_total_row="False">
+			<column id="count">39</column>
+			<column id="owner_id">AWC2</column>
+			<column id="visit_on_time">14</column>
+		</row>
+		<row index="2" is_total_row="True">
+			<column id="count">45</column>
 			<column id="owner_id">Total</column>
-			<column id="visit_on_time">22</column>
+			<column id="visit_on_time">16</column>
 		</row>
 	</rows>
 </report>
