@@ -20,6 +20,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_PERSON,
     get_sector,
     get_all_episode_cases_from_person,
+    get_occurrence_case_from_episode,
     get_adherence_cases_between_dates,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
@@ -38,7 +39,7 @@ class BaseNinetyNineDotsUpdater(object):
     def case_types_to_cases(self):
         return {
             CASE_TYPE_PERSON: self._person_case,
-            # CASE_TYPE_OCCURRENCE: self._occurrence_case,
+            CASE_TYPE_OCCURRENCE: self._occurrence_case,
             CASE_TYPE_EPISODE: self._episode_case,
         }
 
@@ -49,6 +50,15 @@ class BaseNinetyNineDotsUpdater(object):
             return self.case_accessor.get_case(self.person_id)
         except CaseNotFound:
             raise NinetyNineDotsException("No patient exists with this beneficiary ID")
+
+    @property
+    @memoized
+    def _occurrence_case(self):
+        try:
+            return get_occurrence_case_from_episode(self.domain, self._episode_case)
+
+        except ENikshayCaseNotFound as e:
+            raise NinetyNineDotsException(e)
 
     @property
     @memoized

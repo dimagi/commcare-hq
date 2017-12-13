@@ -9,6 +9,7 @@ import yaml
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
+    CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
     get_person_locations,
 )
@@ -178,13 +179,17 @@ class BasePatientPayload(StrictJsonObject):
     tu_code = jsonobject.StringProperty(required=False)
 
     @classmethod
-    def create(cls, person_case, episode_case):
+    def create(cls, person_case, occurrence_case, episode_case):
         payload_kwargs = {
             "sector": cls._sector,
         }
         api_spec = load_api_spec()
-        cases = {CASE_TYPE_EPISODE: episode_case, CASE_TYPE_PERSON: person_case}
-        for case_type in [CASE_TYPE_EPISODE, CASE_TYPE_PERSON]:
+        cases = {
+            CASE_TYPE_EPISODE: episode_case,
+            CASE_TYPE_OCCURRENCE: occurrence_case,
+            CASE_TYPE_PERSON: person_case
+        }
+        for case_type in cases:
             case = cases[case_type]
             for spec_property in api_spec.params_by_case_type(cls._sector, case_type):
                 if spec_property.getter:
@@ -366,8 +371,8 @@ PrivatePatientPayload = type('PublicPatientPayload', (BasePrivatePatientPayload,
                              get_payload_properties('private'))
 
 
-def get_patient_payload(person_case, episode_case):
+def get_patient_payload(person_case, occurrence_case, episode_case):
     if person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
-        return PrivatePatientPayload.create(person_case, episode_case)
+        return PrivatePatientPayload.create(person_case, occurrence_case, episode_case)
     else:
-        return PublicPatientPayload.create(person_case, episode_case)
+        return PublicPatientPayload.create(person_case, occurrence_case, episode_case)
