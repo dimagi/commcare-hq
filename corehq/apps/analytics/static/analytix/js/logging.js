@@ -126,8 +126,8 @@ hqDefine('analytix/js/logging', [
 
     var levels = ['warning', 'debug', 'verbose'];
     var Level = function (_levelSlug, _levelPrefix, _logger) {
-        var logLevel = initialAnalytics.getFn('global')('logLevel'),
-            isVisible = levels.indexOf(_levelSlug) <= levels.indexOf(logLevel),
+        var globalLevel = initialAnalytics.getFn('global')('globalLevel'),
+            isVisible = levels.indexOf(_levelSlug) <= levels.indexOf(globalLevel),
             _levelData = {
                 slug: _levelSlug,
                 prefix: _levelPrefix,
