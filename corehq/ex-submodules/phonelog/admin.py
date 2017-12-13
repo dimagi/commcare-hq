@@ -20,6 +20,8 @@ class DeviceReportEntryAdmin(admin.ModelAdmin):
         'date',
         'username',
     ]
+    # postgres SQL count query takes long time on big tables
+    show_full_result_count = False
 
 
 class UserErrorEntryAdmin(admin.ModelAdmin):
