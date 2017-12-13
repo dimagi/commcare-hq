@@ -291,6 +291,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return [
             {
                 "name": name,
+                "comment": self.named_filters[name].get('comment'),
                 "readable_output": str(filter)
             }
             for name, filter in self.named_filter_objects.items()

@@ -46,15 +46,18 @@
 <table class="table">
     <colgroup>
         <col width="10%">
-        <col width="90%">
+        <col width="30%">
+        <col width="60%">
     </colgroup>
     <tr>
         <th>Filter</th>
+        <th>Comment</th>
         <th>Summary</th>
     </tr>
 {% for filter in named_filter_summary %}
     <tr>
         <td id="NamedF:{{ filter.name }}">{{ filter.name }}</td>
+        <td>{{ filter.comment }}</td>
         <td><pre>{{ filter.readable_output|safe }}</pre></td>
     </tr>
 {% endfor %}
