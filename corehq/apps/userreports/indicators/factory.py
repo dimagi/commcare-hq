@@ -94,7 +94,8 @@ def _build_choice_list_indicator(spec, context):
                 expression=wrapped_spec.getter,
                 operator=wrapped_spec.get_operator(),
                 reference_expression=ExpressionFactory.from_spec(choice),
-            )
+            ),
+            wrapped_spec=None,
         ) for choice in spec['choices']
     ]
     return CompoundIndicator(base_display_name, choice_indicators, wrapped_spec)
