@@ -92,7 +92,9 @@ class SinglePropertyValueFilter(Filter):
         return self.operator(self.expression(item, context), self.reference_expression(item, context))
 
     def __str__(self):
-        return "{} {} '{}'".format(str(self.expression), OPERATOR_DISPLAY[self.operator.func_name], str(self.reference_expression))
+        return "{} {} '{}'".format(str(self.expression),
+                                   OPERATOR_DISPLAY[self.operator.func_name],
+                                   str(self.reference_expression))
 
 
 class NamedFilter(Filter):

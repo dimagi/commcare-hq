@@ -138,4 +138,3 @@ class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
 
     def readable_output(self, context):
         return "Ledgers from {}".format(str(self.get_case_id_expression(context)))
-

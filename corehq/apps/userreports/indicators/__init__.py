@@ -69,7 +69,9 @@ class BooleanIndicator(SingleColumnIndicator):
     """
 
     def __init__(self, display_name, column_id, filter, wrapped_spec):
-        super(BooleanIndicator, self).__init__(display_name, Column(column_id, datatype=TYPE_INTEGER), wrapped_spec)
+        super(BooleanIndicator, self).__init__(display_name,
+                                               Column(column_id, datatype=TYPE_INTEGER),
+                                               wrapped_spec)
         self.filter = filter
 
     def get_values(self, item, context=None):
