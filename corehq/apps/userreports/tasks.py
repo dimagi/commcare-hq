@@ -155,8 +155,8 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
         resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
 
+    resume_helper.clear_resume_info()
     if not id_is_static(indicator_config_id):
-        resume_helper.clear_resume_info()
         if in_place:
             config.meta.build.finished_in_place = True
         else:
