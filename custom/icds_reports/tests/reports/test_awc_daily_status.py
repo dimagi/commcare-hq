@@ -67,33 +67,47 @@ class TestAWCDailyStatus(TestCase):
                 loc_level='state'
             )[0],
             {
-                'rightLegend': {
-                    'info': 'Percentage of Angwanwadi Centers that were open yesterday.',
-                    'average': 0.0,
-                    'period': 'Daily'
+                "rightLegend": {
+                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "average": 0.0,
+                    "extended_info": [
+                        {
+                            "indicator": "Total number of AWCs that were open yesterday:",
+                            "value": 19
+                        },
+                        {
+                            "indicator": "Total number of AWCs that have been launched:",
+                            "value": 0
+                        },
+                        {
+                            "indicator": "% of AWCs open yesterday:",
+                            "value": "0.00%"
+                        }
+                    ],
+                    "period": "Daily"
                 },
-                'fills': {
-                    "0%-50%": "#de2d26",
-                    "50%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
-                },
-                'data': {
+                "label": "Percent AWCs Open Yesterday",
+                "data": {
                     "st1": {
                         "in_day": 0,
                         "all": 8,
-                        'original_name': [],
+                        "original_name": [],
                         "fillKey": "0%-50%"
                     },
                     "st2": {
                         "in_day": 0,
                         "all": 11,
-                        'original_name': [],
+                        "original_name": [],
                         "fillKey": "0%-50%"
                     }
                 },
-                'slug': 'awc_daily_statuses',
-                'label': 'Percent AWCs Open Yesterday'
+                "slug": "awc_daily_statuses",
+                "fills": {
+                    "0%-50%": "#de2d26",
+                    "50%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                }
             }
         )
 
