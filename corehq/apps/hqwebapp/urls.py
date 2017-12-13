@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
     yui_crossdomain, password_change, no_permissions, login, logout, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
-    retrieve_download, toggles_js, couch_doc_counts, server_up, BugReportView)
+    assert_initial_page_data, retrieve_download, toggles_js, couch_doc_counts, server_up, BugReportView)
 from corehq.apps.hqwebapp.session_details_endpoint.views import SessionDetailsView
 
 urlpatterns = [
@@ -29,6 +29,7 @@ urlpatterns = [
     url(r'^reports/$', redirect_to_default),
     url(r'^bug_report/$', BugReportView.as_view(), name='bug_report'),
     url(r'^debug/notify/$', debug_notify, name='debug_notify'),
+    url(r'^assert/initial_page_data/$', assert_initial_page_data, name='assert_initial_page_data'),
     url(r'^search/$', quick_find, name="global_quick_find"),
     url(r'^searchDescription.xml$', osdd, name="osdd"),
     url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
