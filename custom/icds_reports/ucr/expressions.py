@@ -7,6 +7,7 @@ from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.util import add_tabbed_text
 from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
@@ -96,6 +97,10 @@ class GetCaseHistorySpec(JsonObject):
                          if case_block['@case_id'] == case_id))
         context.set_cache_value(cache_key, case_history)
         return case_history
+
+    def __str__(self):
+        return "case_history(\n{cases}\n)".format(cases=add_tabbed_text(str(self._case_forms_expression)))
+
 
 
 class GetCaseHistoryByDateSpec(JsonObject):
@@ -219,6 +224,19 @@ class FormsInDateExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, form_json)
         return form_json
 
+    def __str__(self):
+        value = "case_forms[{case_id}]".format(case_id=self._case_id_expression)
+        if self.from_date_expression or self.to_date_expression:
+            value = "{value}[date={start} to {end}]".format(value=value,
+                                                            start=self._from_date_expression,
+                                                            end=self._to_date_expression)
+        if self.xmlns:
+            value = "{value}[xmlns=\n{xmlns}\n]".format(value=value,
+                                                    xmlns=add_tabbed_text("\n".join(self.xmlns)))
+        if self.count:
+            value = "count({value})".format(value=value)
+        return value
+
 
 class GetAppVersion(JsonObject):
     type = TypeProperty('icds_get_app_version')
@@ -231,12 +249,18 @@ class GetAppVersion(JsonObject):
         app_version_string = self._app_version_string(item, context)
         return get_version_from_appversion_text(app_version_string)
 
+    def __str__(self):
+        return "Application Version"
+
 
 class DateTimeNow(JsonObject):
     type = TypeProperty('icds_datetime_now')
 
     def __call__(self, item, context=None):
         return _datetime_now()
+
+    def __str__(self):
+        return "datetime.now"
 
 
 def _datetime_now():
