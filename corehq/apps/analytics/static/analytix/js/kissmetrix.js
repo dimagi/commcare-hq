@@ -18,7 +18,7 @@ hqDefine('analytix/js/kissmetrix', [
         _global = initialAnalytics.getFn('global'),
         _allAbTests = {},
         _init = {},
-        logger;
+        logger = logging.getLoggerForApi('Kissmetrics');
 
     window.dataLayer = window.dataLayer || [];
 

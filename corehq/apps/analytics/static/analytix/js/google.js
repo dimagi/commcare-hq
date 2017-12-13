@@ -22,7 +22,7 @@ hqDefine('analytix/js/google', [
         _data = {},
         module = {},
         _gtag = function () {},
-        logger;
+        logger = logging.getLoggerForApi('Google Analytics');
 
     var __init__ = function () {
         _data.apiId = _get('apiId');

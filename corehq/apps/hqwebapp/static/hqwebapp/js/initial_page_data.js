@@ -16,10 +16,10 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
      *  Find any unregistered data. Error on any duplicates.
      */
     var gather = function(selector, existing) {
-        if (document.readyState !== "complete") {
+        /*if (document.readyState !== "complete") {
             console.assert(false, "Attempt to call initial_page_data.gather before document is ready"); // eslint-disable-line no-console
             $.get('/assert/initial_page_data/');
-        }
+        }*/
 
         existing = existing || {};
         $(selector).each(function() {
