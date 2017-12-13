@@ -81,6 +81,7 @@ api_params:
 - api_param_name: merm_params
   getter: custom.enikshay.integrations.ninetyninedots.api_spec.get_merm_params
   payload_object: custom.enikshay.integrations.ninetyninedots.api_spec.MermParams
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.set_merm_params
   case_type:
     both: episode
   case_properties:

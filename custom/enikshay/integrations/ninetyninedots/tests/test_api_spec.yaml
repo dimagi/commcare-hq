@@ -60,3 +60,17 @@ api_params:
     both: person
   case_property:
     private: foo
+- api_param_name: merm_params
+  payload_object: custom.enikshay.integrations.ninetyninedots.api_spec.MermParams
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.set_merm_params
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - merm_id
+      - merm_alarm_enabled
+      - merm_daily_reminder_time
+      - merm_refill_reminder_status
+      - merm_refill_reminder_date
+      - merm_refill_reminder_time
+      - merm_rt_hours

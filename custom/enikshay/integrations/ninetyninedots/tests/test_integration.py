@@ -134,7 +134,23 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
         fake_request = self._get_fake_request()
 
         fake_request['private_only'] = 'so private'
+        with self.assertRaises(NinetyNineDotsException) as e:
+            PatientDetailsUpdater(self.domain, fake_request).update_cases()
+
+    def test_merm_params(self):
+        fake_request = self._get_fake_request()
+
+        fake_request['merm_params'] = {
+            "IMEI": "1321",
+            "daily_reminder_status": "1",
+            "daily_reminder_time": "12:00",
+            "refill_reminder_status": "1",
+            "refill_reminder_datetime": "2017/12/12 15:54:00",
+            "RT_hours": "1",
+        }
         PatientDetailsUpdater(self.domain, fake_request).update_cases()
+        person_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        self.assertEqual(person_case.get_case_property('merm_id'), '1321')
 
     def test_validate_patient_adherence_data(self):
         with self.assertRaises(NinetyNineDotsException) as e:

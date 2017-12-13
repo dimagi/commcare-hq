@@ -26,6 +26,7 @@ from custom.enikshay.integrations.ninetyninedots.const import (
     MERM_REFILL_REMINDER_TIME,
     MERM_RT_HOURS,
 )
+from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
 from dimagi.ext.jsonobject import StrictJsonObject
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
@@ -278,6 +279,20 @@ def get_merm_params(episode_case_properties, properties_to_check):
         "RT_hours": episode_case_properties.get(MERM_RT_HOURS, None),
     })
     return params.to_json()
+
+
+def set_merm_params(param, val, sector):
+    try:
+        params = MermParams(val)
+    except AttributeError as e:
+        raise NinetyNineDotsException("Invalid MERM params sent. Full error was: {}".format(e))
+    return {
+        MERM_ID: params.IMEI,
+        MERM_DAILY_REMINDER_STATUS: params.daily_reminder_status,
+        MERM_DAILY_REMINDER_TIME: params.daily_reminder_time,
+        MERM_REFILL_REMINDER_STATUS: params.refill_reminder_datetime,
+        MERM_RT_HOURS: params.RT_hours,
+    }
 
 
 class BasePublicPatientPayload(BasePatientPayload):
