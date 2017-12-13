@@ -292,8 +292,6 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             not location.metadata.get('is_test', "yes") == "yes" and
             location.location_type.code in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
             location.metadata.get('sector') == PRIVATE_HEALTH_ESTABLISHMENT_SECTOR and
-            # ToDo: Confirm if its okay to just check for nikshay code and not check if the
-            # notification has been triggered earlier in case the code was removed after being added
             not location.metadata.get('nikshay_code')
         )
         if not _allowed_to_forward:
