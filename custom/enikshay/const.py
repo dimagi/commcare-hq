@@ -211,3 +211,10 @@ FDC_PRESCRIPTION_DAYS_THRESHOLD = 168
 NON_FDC_PRESCRIPTION_DAYS_THRESHOLD = 180
 
 PRIVATE_HEALTH_ESTABLISHMENT_SECTOR = "private"
+NOT_AVAILABLE_VALUE = "NA"
+DUMMY_VALUES = {
+    'registration_number': '12345',
+    'phone_number': '9999999999',
+    'pincode': '888888',
+    'email': 'abc@xyz.com'
+}

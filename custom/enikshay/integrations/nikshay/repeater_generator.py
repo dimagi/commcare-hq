@@ -21,6 +21,8 @@ from custom.enikshay.const import (
     DSTB_EPISODE_TYPE,
     PERSON_CASE_2B_VERSION,
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
+    NOT_AVAILABLE_VALUE,
+    DUMMY_VALUES,
 )
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
@@ -510,6 +512,14 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
                 location.metadata.get('facility_type')
             )
 
+    @staticmethod
+    def _get_address(location_user_data):
+        if location_user_data.get('address_line_1') or location_user_data.get('address_line_2'):
+            return (u"%s %s" % (
+                location_user_data.get('address_line_1'), location_user_data.get('address_line_2'))).strip()
+        else:
+            return NOT_AVAILABLE_VALUE
+
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
         location_user = self.get_location_user(location)
@@ -518,15 +528,14 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
             'ESTABLISHMENT_NAME': location.name,
-            'MCI_HR_NO': location_user_data.get('registration_number'),
+            'MCI_HR_NO': (location_user_data.get('registration_number') or DUMMY_VALUES['registration_number']),
             'CONTACT_PNAME': location_user.full_name,
-            'CONTACT_PDESIGNATION': location_user_data.get('pcp_qualification'),
-            'TELEPHONE_NO': location_user_data.get('landline_no'),
-            'MOBILE_NO': location_user_data.get('contact_phone_number'),
-            'COMPLETE_ADDRESS': (u"%s %s" % (
-                location_user_data.get('address_line_1'), location_user_data.get('address_line_2'))).strip(),
-            'PINCODE': location_user_data.get('pincode'),
-            'EMAILID': location_user_data.get('email'),
+            'CONTACT_PDESIGNATION': (location_user_data.get('pcp_qualification') or NOT_AVAILABLE_VALUE),
+            'TELEPHONE_NO': (location_user_data.get('landline_no') or DUMMY_VALUES['phone_number']),
+            'MOBILE_NO': (location_user_data.get('contact_phone_number') or DUMMY_VALUES['phone_number']),
+            'COMPLETE_ADDRESS': self._get_address(location_user_data),
+            'PINCODE': (location_user_data.get('pincode') or DUMMY_VALUES['pincode']),
+            'EMAILID': (location_user_data.get('email') or DUMMY_VALUES['email']),
             'STATE_CODE': location_hierarchy_codes.stcode,
             'DISTRICT_CODE': location_hierarchy_codes.dtcode,
             'TBU_CODE': location.metadata.get('nikshay_tu_id'),
