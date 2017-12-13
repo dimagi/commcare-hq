@@ -71,6 +71,7 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
 DELETED = "-Deleted"
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
+OAUTH1 = "oauth1"
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
@@ -84,10 +85,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH), required=False)
+    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
+    paused = BooleanProperty(default=False)
 
     payload_generator_classes = ()
 
@@ -161,6 +163,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     def clear_caches(self):
         super(Repeater, self).clear_caches()
+        # Also expire for cases repeater is fetched using Repeater class.
+        # The quick cache called in clear_cache also check on relies of doc class
+        # so in case the class is set as Repeater it is not expired like in edit forms.
+        # So expire it explicitly here with Repeater class as well.
+        Repeater.get.clear(Repeater, self._id)
         if self.__class__ == Repeater:
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
@@ -224,6 +231,14 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['base_doc'] += DELETED
         self.save()
 
+    def pause(self):
+        self.paused = True
+        self.save()
+
+    def resume(self):
+        self.paused = False
+        self.save()
+
     def get_url(self, repeat_record):
         # to be overridden
         return self.url
@@ -284,6 +299,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             attempt = repeat_record.handle_failure(result)
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
+
+    @property
+    def is_form_repeater(self):
+        # check if any of parent class is FormRepeater
+        return bool(filter(lambda parent_class: parent_class.__name__ == "FormRepeater", self.__class__.__mro__))
+
+    @property
+    def is_case_repeater(self):
+        # check if any of parent class is CaseRepeater
+        return bool(filter(lambda parent_class: parent_class.__name__ == "CaseRepeater", self.__class__.__mro__))
 
 
 class FormRepeater(Repeater):
@@ -581,6 +606,11 @@ class RepeatRecord(Document):
     def get_numbered_attempts(self):
         for i, attempt in enumerate(self.attempts):
             yield i + 1, attempt
+
+    def postpone_by(self, duration):
+        self.last_checked = datetime.utcnow()
+        self.next_check = self.last_checked + duration
+        self.save()
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
