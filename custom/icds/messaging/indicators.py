@@ -210,6 +210,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
 
         visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
+        on_time_visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'visit_on_time')
         thr_gte_21 = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_ccs_thr_gte_21')
         thr_count = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_count')
         num_weigh = self.get_value_from_fixture(agg_perf.weighed_fixture, 'open_weighed')
@@ -218,6 +219,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
 
         context = {
             "visits": visits,
+            "on_time_visits": on_time_visits,
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
             "days_open": num_days_open,
@@ -394,7 +396,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
             ))
 
     def get_messages(self, language_code=None):
-        visit_on_time = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
+        on_time_visits = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
         visits = self.get_value_from_fixture(self.visits_fixture, 'count')
         thr_gte_21 = self.get_value_from_fixture(self.thr_fixture, 'open_ccs_thr_gte_21')
         thr_count = self.get_value_from_fixture(self.thr_fixture, 'open_count')
@@ -409,7 +411,9 @@ class LSAggregatePerformanceIndicator(LSIndicator):
             avg_days_open = 0
 
         context = {
-            "visits": "{} / {}".format(visit_on_time, visits),
+            "on_time_visits": on_time_visits,
+            "visits": visits,
+            "visits_goal": num_awc_locations * 65,
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
             "days_open": "{}".format(avg_days_open),
