@@ -291,9 +291,10 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         self.default_randomness = default_randomness
 
     @property
-    @quickcache(vary_on=['self.slug'])
+    # @quickcache(vary_on=['self.slug'])
     def randomness(self):
         # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
+        return self.default_randomness
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
