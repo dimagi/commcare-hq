@@ -106,10 +106,6 @@ from six.moves import map
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
 
-class PossibleHeterogenousDataException(AttributeError):
-    pass
-
-
 class PathNode(DocumentSchema):
     """
     A PathNode represents a portion of a path to value in a document.
@@ -464,15 +460,7 @@ class TableConfiguration(DocumentSchema):
         """
         document_id = document.get('_id')
 
-        try:
-            sub_documents = self._get_sub_documents(document, row_number)
-        except PossibleHeterogenousDataException as e:
-            doc = e.args[0]
-            path_name = e.args[1]
-            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-            _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
-                document_id, doc, path_name))
-            raise
+        sub_documents = self._get_sub_documents(document, row_number, document_id=document_id)
 
         domain = document.get('domain')
 
@@ -524,11 +512,12 @@ class TableConfiguration(DocumentSchema):
                 return index, column
         return None, None
 
-    def _get_sub_documents(self, document, row_number):
-        return self._get_sub_documents_helper(self.path, [DocRow(row=(row_number,), doc=document)])
+    def _get_sub_documents(self, document, row_number, document_id=None):
+        return self._get_sub_documents_helper(document_id, self.path,
+                                              [DocRow(row=(row_number,), doc=document)])
 
     @staticmethod
-    def _get_sub_documents_helper(path, row_docs):
+    def _get_sub_documents_helper(document_id, path, row_docs):
         """
         Return each instance of a repeat group at the path from the given docs.
         If path is [], just return the docs
@@ -547,11 +536,16 @@ class TableConfiguration(DocumentSchema):
         for row_doc in row_docs:
             doc = row_doc.doc
             row_index = row_doc.row
+            path_name = path[0].name
 
-            try:
-                next_doc = doc.get(path[0].name, {})
-            except AttributeError:
-                raise PossibleHeterogenousDataException(doc, path[0].name)
+            if isinstance(doc, dict):
+                next_doc = doc.get(path_name, {})
+            else:
+                # https://manage.dimagi.com/default.asp?264884
+                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+                _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
+                    document_id, doc, path_name))
+                next_doc = {}
             if path[0].is_repeat:
                 if type(next_doc) != list:
                     # This happens when a repeat group has a single repeat iteration
@@ -562,7 +556,7 @@ class TableConfiguration(DocumentSchema):
                 ])
             elif next_doc:
                 new_docs.append(DocRow(row=row_index, doc=next_doc))
-        return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
+        return TableConfiguration._get_sub_documents_helper(document_id, path[1:], new_docs)
 
 
 class DatePeriod(DocumentSchema):

@@ -155,8 +155,8 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
         resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
 
+    resume_helper.clear_resume_info()
     if not id_is_static(indicator_config_id):
-        resume_helper.clear_resume_info()
         if in_place:
             config.meta.build.finished_in_place = True
         else:
@@ -347,10 +347,19 @@ def _save_document_helper(indicator, doc):
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
-        except (DatabaseError, ESError, InternalError, RequestError,
-                ConnectionTimeout, ProtocolError, ReadTimeout):
+        except (ProtocolError, ReadTimeout):
+            celery_task_logger.info("Riak error when saving config: {}".format(config_id))
+            something_failed = True
+        except RequestError:
+            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
+            something_failed = True
+        except (ESError, ConnectionTimeout):
             # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("DB error when saving config: {}".format(config_id))
+            celery_task_logger.info("ES error when saving config: {}".format(config_id))
+            something_failed = True
+        except (DatabaseError, InternalError):
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("psql error when saving config: {}".format(config_id))
             something_failed = True
         except Exception as e:
             # getting the config could fail before the adapter is set

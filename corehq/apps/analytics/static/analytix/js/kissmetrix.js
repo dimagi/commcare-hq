@@ -15,7 +15,6 @@ hqDefine('analytix/js/kissmetrix', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('kissmetrics'),
-        _abTests = initialAnalytics.getAbTests('kissmetrics'),
         _allAbTests = {},
         _logger,
         _ready;
@@ -68,7 +67,8 @@ hqDefine('analytix/js/kissmetrix', [
             }
 
             // Initialize Kissmetrics AB Tests
-            _.each(_abTests, function (ab, testName) {
+            var abTests = initialAnalytics.getAbTests('kissmetrics');
+            _.each(abTests, function (ab, testName) {
                 var test = {};
                 testName = _.last(testName.split('.'));
                 if (_.isObject(ab) && ab.version) {

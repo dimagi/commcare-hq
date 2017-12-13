@@ -63,7 +63,21 @@ def get_adult_weight_scale_data_map(domain, config, loc_level, show_test=False):
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of AWCs with weighing scale for mother and child"
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': (
+                            'Total number of AWCs with a weighing scale for mother and child:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': (
+                            '% of AWCs with a weighing scale for mother and child:'
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
@@ -8,6 +9,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.management.commands.base_model_reconciliation import (
     BaseModelReconciliationCommand,
     DOMAIN,
+    get_all_occurrence_case_ids_from_person,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
@@ -20,7 +22,9 @@ class Command(BaseModelReconciliationCommand):
         "retain_case_id",
         "closed_case_ids",
         "closed_extension_case_ids",
-        "notes"
+        "notes",
+        "person_case_version",
+        "person_case_dataset",
     ]
 
     def handle(self, *args, **options):
@@ -30,6 +34,7 @@ class Command(BaseModelReconciliationCommand):
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
         self.result_file_name = self.setup_result_file()
+        self.person_case_ids = options.get('person_case_ids')
         # iterate all occurrence cases
         for occurrence_case_id in self._get_open_occurrence_case_ids_to_process():
             if self.public_app_case(occurrence_case_id):
@@ -49,18 +54,16 @@ class Command(BaseModelReconciliationCommand):
         Referral.referral_reason != enrollment if person.@owner_id != '-' AND person.@owner_id != ''
         @date_opened (earliest)
         """
-        person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
-
         relevant_cases = []
 
         for referral_case in referral_cases:
-            if person_case.owner_id in ['-', '']:
+            if self.person_case.owner_id in ['-', '']:
                 if referral_case.get_case_property('referral_reason') == 'enrolment':
                     relevant_cases.append(referral_case)
 
         if not relevant_cases:
             for referral_case in referral_cases:
-                if person_case.owner_id not in ['-', '']:
+                if self.person_case.owner_id not in ['-', '']:
                     if referral_case.get_case_property('referral_reason') != 'enrollment':
                         relevant_cases.append(referral_case)
 
@@ -73,33 +76,41 @@ class Command(BaseModelReconciliationCommand):
         return self.get_first_opened_case(referral_cases)
 
     def public_app_case(self, occurrence_case_id):
+        # set person case as None to make sure its fetched each time and not
+        # carry forwarded from a previous call
+        self.person_case = None
         try:
-            person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
+            self.person_case = get_person_case_from_occurrence(DOMAIN, occurrence_case_id)
         except ENikshayCaseNotFound:
-            self.writerow({
-                "occurrence_case_id": occurrence_case_id,
-                "notes": "person case not found",
-            })
             return False
-        return super(Command, self).public_app_case(person_case)
+        return super(Command, self).public_app_case(self.person_case)
 
     def _get_open_occurrence_case_ids_to_process(self):
-        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-        dbs = get_db_aliases_for_partitioned_query()
-        for db in dbs:
-            case_ids = (
-                CommCareCaseSQL.objects
-                .using(db)
-                .filter(domain=DOMAIN, type="occurrence", closed=False)
-                .values_list('case_id', flat=True)
-            )
-            num_case_ids = len(case_ids)
-            if self.log_progress:
-                print("processing %d docs from db %s" % (num_case_ids, db))
-            for i, case_id in enumerate(case_ids):
-                yield case_id
+        if self.person_case_ids:
+            num_case_ids = len(self.person_case_ids)
+            for i, case_id in enumerate(self.person_case_ids):
+                occurrence_case_ids = get_all_occurrence_case_ids_from_person(case_id)
+                for occurrence_case_id in occurrence_case_ids:
+                    yield occurrence_case_id
                 if i % 1000 == 0 and self.log_progress:
-                    print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
+                    print("processed %d / %d docs" % (i, num_case_ids))
+        else:
+            from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+            dbs = get_db_aliases_for_partitioned_query()
+            for db in dbs:
+                case_ids = (
+                    CommCareCaseSQL.objects
+                    .using(db)
+                    .filter(domain=DOMAIN, type="occurrence", closed=False)
+                    .values_list('case_id', flat=True)
+                )
+                num_case_ids = len(case_ids)
+                if self.log_progress:
+                    print("processing %d docs from db %s" % (num_case_ids, db))
+                for i, case_id in enumerate(case_ids):
+                    yield case_id
+                    if i % 1000 == 0 and self.log_progress:
+                        print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
     def close_cases(self, all_cases, occurrence_case_id, retain_case):
         # remove duplicates in case ids to remove so that we dont retain and close
@@ -116,7 +127,9 @@ class Command(BaseModelReconciliationCommand):
             "occurrence_case_id": occurrence_case_id,
             "retain_case_id": retain_case_id,
             "closed_case_ids": ','.join(map(str, case_ids_to_close)),
-            "closed_extension_case_ids": ','.join(map(str, closing_extension_case_ids))
+            "closed_extension_case_ids": ','.join(map(str, closing_extension_case_ids)),
+            "person_case_version": self.person_case.get_case_property('case_version'),
+            "person_case_dataset": self.person_case.get_case_property('dataset')
         })
         if self.commit:
             updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)

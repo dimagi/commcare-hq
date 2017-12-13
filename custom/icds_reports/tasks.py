@@ -156,10 +156,8 @@ def aggregate_tables(self, current_task, future_tasks):
 def recalculate_stagnant_cases():
     domain = 'icds-cas'
     config_ids = [
-        'static-icds-cas-static-ccs_record_cases_monthly',
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
         'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
-        'static-icds-cas-static-child_cases_monthly',
         'static-icds-cas-static-child_cases_monthly_v2',
         'static-icds-cas-static-child_cases_monthly_tableau_v2',
     ]

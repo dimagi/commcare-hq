@@ -84,7 +84,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         query = (
             ScheduledBroadcast.objects
             .filter(domain=self.domain)
-            .order_by('-last_sent_timestamp')
+            .order_by('-last_sent_timestamp', 'id')
         )
         total_records = query.count()
         query = query.select_related('schedule')
@@ -106,7 +106,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         query = (
             ImmediateBroadcast.objects
             .filter(domain=self.domain)
-            .order_by('-last_sent_timestamp')
+            .order_by('-last_sent_timestamp', 'id')
         )
         total_records = query.count()
         broadcasts = query[self.display_start:self.display_start + self.display_length]
@@ -264,7 +264,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             AutomaticUpdateRule
             .objects
             .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING)
-            .order_by('case_type', 'name')
+            .order_by('case_type', 'name', 'id')
         )
 
     def get_conditional_alerts_ajax_response(self):
@@ -324,6 +324,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'criteria_form': self.criteria_form,
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
+            'criteria_form_active': self.criteria_form.errors or not self.schedule_form.errors,
+            'schedule_form_active': self.schedule_form.errors and not self.criteria_form.errors,
         }
 
     @cached_property

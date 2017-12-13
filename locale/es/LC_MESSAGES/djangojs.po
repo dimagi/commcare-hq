@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-11-28 19:48+0000\n"
+"POT-Creation-Date: 2017-12-12 20:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -384,8 +384,8 @@ msgstr "Tiene cambios sin guardar en su perfil de la aplicación"
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:45
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:236
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:102
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:246
 msgid "There was an error saving"
 msgstr "Ocurrió un error al guardar"
 
@@ -512,7 +512,7 @@ msgid "Change Question Type To"
 msgstr "Cambiar el Tipo de Pregunta a"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:240
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:250
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:38
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
 msgid "Delete"
@@ -1085,7 +1085,7 @@ msgstr "Agregue Expresión"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:541
 #: corehq/apps/export/static/export/js/models.js:213
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:232
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:242
 #: corehq/apps/users/static/users/js/web_users.js:46
 msgid "Save"
 msgstr "Guardar"
@@ -1322,7 +1322,6 @@ msgstr ""
 "Analizando Error. Por favor verifique que su formulario sea un XML válido."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:24
 msgid "OK"
 msgstr "SÍ"
@@ -1560,6 +1559,7 @@ msgstr "No se encontró la Tabla de búsqueda en el proyecto."
 msgid "Loading..."
 msgstr "Cargando..."
 
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Lookup Table"
 msgstr "Tabla de Búsqueda"
@@ -2109,11 +2109,11 @@ msgstr "Reemplazar"
 msgid "No Reference"
 msgstr "Sin Referencia"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Advanced: Show Path"
 msgstr "Avanzada: Muestre la Ruta"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "Hide Path"
 msgstr "Oculte la Ruta"
 
@@ -2354,7 +2354,7 @@ msgstr ""
 "Lo sentimos, ocurrió un problema al contactar el servidor para recuperar los "
 "datos. Por favor, intente otra vez más tarde."
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:58
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:71
 msgid "You have unsaved changes to your data dictionary."
 msgstr "Usted tiene cambios sin guardar en su diccionario de datos."
 
@@ -2511,29 +2511,33 @@ msgstr "Cargar"
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:233
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:41
+msgid "Clear"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
 msgid "Saving..."
 msgstr "Guardando..."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:234
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:244
 #: corehq/apps/users/static/users/js/web_users.js:55
 msgid "Saved"
 msgstr "Guardado"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:235
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:245
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:253
 msgid "Try Again"
 msgstr "Intente otra vez"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:241
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:251
 msgid "Deleting..."
 msgstr "Borrando..."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:242
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:252
 msgid "Deleted"
 msgstr "Eliminado"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:244
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:254
 msgid "There was an error deleting"
 msgstr "Ocurrió un error al borrar"
 
@@ -2599,10 +2603,8 @@ msgstr "Agregar Imagen"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:126
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:134
-#, fuzzy
-#| msgid "Calculation is duplicated"
 msgid "Calculation contains an invalid character."
-msgstr "El cálculo está duplicado"
+msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:133
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-mapping.js:141
@@ -2629,27 +2631,27 @@ msgstr "No es un correo electrónico válido"
 msgid "Error saving user"
 msgstr "Error al guardar el usuario"
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:89
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:100
 msgid "Please enter your name."
 msgstr "Por favor ingrese su nombre."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:98
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:109
 msgid "Please specify an email."
 msgstr "Por favor especifique un correo electrónico."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:136
 msgid "There is already a user with this email."
 msgstr "Ya existe un usuario con ese correo electrónico."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:133
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:144
 msgid "Checking email..."
 msgstr "Revisando correo electrónico..."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:143
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:154
 msgid "Please specify a password."
 msgstr "Por favor especifique una contraseña."
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:163
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:174
 msgid "Please specify a project name."
 msgstr "Por favor especifique un nombre de proyecto."
 
@@ -2712,21 +2714,21 @@ msgstr ""
 "Usted puede enviar por correo electrónico una versión guardada <br />de este "
 "reporte. "
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:17
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:23
 msgid "Loading"
 msgstr "Cargando"
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:24
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:30
 msgid "No data available to display. Please try changing your filters."
 msgstr ""
 "No hay datos disponibles para mostrar. Por favor intente cambiar sus filtros."
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:26
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:29
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
 msgid "Sorry!"
 msgstr "¡Lo sentimos!"
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:27
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:33
 msgid ""
 "There was an error with your query, it has been logged, please try another "
 "query."
@@ -2734,7 +2736,7 @@ msgstr ""
 "Ocurrió un error con su consulta, ya ha sido ingresada, por favor intente "
 "con otra consulta."
 
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:30
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:36
 msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
@@ -2859,12 +2861,12 @@ msgstr ""
 "El reporte de Excel que solicitó será enviado al correo electrónico definido "
 "en la configuración de su cuenta."
 
-#: corehq/apps/reports/static/reports/js/standard_hq_report.js:31
+#: corehq/apps/reports/static/reports/js/standard_hq_report.js:39
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js:68
 msgid "Report successfully emailed"
 msgstr "Reporte enviado por correo electrónico exitosamente"
 
-#: corehq/apps/reports/static/reports/js/standard_hq_report.js:32
+#: corehq/apps/reports/static/reports/js/standard_hq_report.js:40
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js:69
 msgid "An error occurred emailing you report. Please try again."
 msgstr ""
@@ -2890,10 +2892,6 @@ msgstr "Calles"
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:30
 msgid "Satellite"
 msgstr "Satélite"
-
-#: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
-msgid "Show All Dates"
-msgstr "Mostrar Todas las Fechas"
 
 #: corehq/apps/sms/static/sms/js/phone_number_filter.js:3
 msgid "That have phone numbers"
@@ -3152,10 +3150,12 @@ msgid "Loading messages..."
 msgstr "Cargando mensajes..."
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:45
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:42
 msgid "Active"
 msgstr "Activo"
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:45
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:42
 msgid "Inactive"
 msgstr "Inactivo"
 
@@ -3171,30 +3171,80 @@ msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_ de mensajes"
 msgid "(filtered from _MAX_ total messages)"
 msgstr "(filtrado del _MAX_total de mensajes)"
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:35
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:19
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:20
+#, fuzzy
+#| msgid "There are no messages to display."
+msgid "There are no alerts to display."
+msgstr "No hay mensajes que mostrar."
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:21
+#, fuzzy
+#| msgid "Loading messages..."
+msgid "Loading alerts..."
+msgstr "Cargando mensajes..."
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:22
+#, fuzzy
+#| msgid "Showing _START_ to _END_ of _TOTAL_ entries"
+msgid "Showing _START_ to _END_ of _TOTAL_ alerts"
+msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_de entradas"
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:94
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:37
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:96
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:39
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:98
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:68
-msgid "After days:"
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:127
+msgid "After occurrences:"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:70
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:129
 msgid "After weeks:"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:72
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:131
 msgid "After months:"
 msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:134
 msgid "Unable to save DataSet maps"
 msgstr "No es posible guardar los mapas DataSet"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:32
+msgid "Weekly"
+msgstr ""
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:33
+msgid "Monthly"
+msgstr ""
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:36
+#, fuzzy
+#| msgid "Disable Text Formatting"
+msgid "Disable logging"
+msgstr "Desactive el Formato de Texto"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:96
+#, fuzzy
+#| msgid "Unable to save DataSet maps"
+msgid "Unable to save OpenMRS Importers"
+msgstr "No es posible guardar los mapas DataSet"
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:101
+msgid "Importing from OpenMRS will begin shortly."
+msgstr ""
+
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:103
+msgid "Failed to schedule task to import from OpenMRS."
+msgstr ""
+
+#~ msgid "Show All Dates"
+#~ msgstr "Mostrar Todas las Fechas"

@@ -306,7 +306,7 @@ def get_latest_issue_tracker_build_id():
 
 
 def get_status(value, second_part='', normal_value='', exportable=False):
-    status = ''
+    status = DATA_NOT_ENTERED
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
         status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
@@ -315,8 +315,6 @@ def get_status(value, second_part='', normal_value='', exportable=False):
         status = {'value': 'Moderately ' + second_part, 'color': 'black'}
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
-    else:
-        return ''
     return status if not exportable else status['value']
 
 

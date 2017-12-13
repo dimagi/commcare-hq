@@ -1068,7 +1068,7 @@
                 "comment": null,
                 "create_index": false,
                 "display_name": "private_sector_organization_id",
-                "datatype": "integer",
+                "datatype": "string",
                 "expression": {
                     "value_expression": {
                         "type": "property_path",

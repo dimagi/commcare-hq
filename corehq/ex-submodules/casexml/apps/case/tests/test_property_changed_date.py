@@ -1,12 +1,18 @@
 from __future__ import absolute_import
-from datetime import datetime
-import pytz
 
+from datetime import datetime
+
+import pytz
 from django.test import TestCase
+
 from casexml.apps.case.mock import CaseFactory, CaseStructure
-from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
-from casexml.apps.case.util import get_datetime_case_property_changed, get_all_changes_to_case_property
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from casexml.apps.case.util import (
+    get_all_changes_to_case_property,
+    get_datetime_case_property_changed,
+)
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class TestCasePropertyChanged(TestCase):
@@ -19,6 +25,7 @@ class TestCasePropertyChanged(TestCase):
         delete_all_xforms()
         delete_all_cases()
 
+    @run_with_all_backends
     def test_date_case_property_changed(self):
         updated_on = datetime(2015, 5, 3, 12, 11)
         # submit 2 updates
@@ -48,6 +55,7 @@ class TestCasePropertyChanged(TestCase):
             get_datetime_case_property_changed(case, "abc", "updated")
         )
 
+    @run_with_all_backends
     def test_multiple_cases_in_update(self):
         day_1 = datetime(2015, 5, 1, 12, 11)
         day_2 = datetime(2015, 5, 2, 12, 11)
@@ -91,6 +99,7 @@ class TestCasePropertyChanged(TestCase):
             get_datetime_case_property_changed(case, "relevant_property", "updated")
         )
 
+    @run_with_all_backends
     def test_owner_id_changed(self):
         changes = get_all_changes_to_case_property(self.case, 'owner_id')
         self.assertEqual(len(changes), 1)

@@ -11,11 +11,9 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
-from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.users.permissions import get_extra_permissions
-from corehq.form_processor.change_publishers import publish_case_saved
-from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
+from corehq.form_processor.utils import use_new_exports
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
@@ -474,13 +472,6 @@ def get_INFilter_element_bindparam(base_name, index):
 
 def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
-
-
-def resync_case_to_es(domain, case):
-    if should_use_sql_backend(domain):
-        publish_case_saved(case)
-    else:
-        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
 
 
 def validate_xform_for_edit(xform):
