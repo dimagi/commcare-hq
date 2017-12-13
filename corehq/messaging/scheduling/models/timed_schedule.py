@@ -417,7 +417,8 @@ class RandomTimedEvent(AbstractTimedEvent):
     window_length = models.PositiveIntegerField()
 
     def get_time(self, case=None):
-        minute_offset = random.choice(range(self.window_length))
+        choices = list(range(self.window_length))
+        minute_offset = random.choice(choices)
 
         # Create a dummy datetime so that we can use timedelta to add minutes
         dummy_date = date(2000, 1, 1)

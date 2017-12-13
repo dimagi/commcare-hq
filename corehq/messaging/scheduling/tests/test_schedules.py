@@ -254,7 +254,6 @@ class RandomTimedEventTest(BaseScheduleTest):
         self.assertEqual(send_patch.call_count, 2)
 
 
-
 @partitioned
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
