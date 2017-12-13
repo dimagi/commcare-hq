@@ -247,6 +247,9 @@ class FormsInDateExpressionSpec(JsonObject):
     def _bulk_get_form_json_from_es(forms):
         form_ids = [form.form_id for form in forms]
         es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids, source=True)
+        for f in es_forms:
+            # for parity with what comes out of Riak
+            del f['timeEnd']
         return {
             f['_id']: f for f in es_forms
         }
@@ -282,6 +285,7 @@ class FormsInDateExpressionSpec(JsonObject):
 
         xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
         return xform
+
 
 class GetAppVersion(JsonObject):
     type = TypeProperty('icds_get_app_version')
