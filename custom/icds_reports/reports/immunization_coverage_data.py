@@ -71,7 +71,24 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                     "This includes the following immunizations:<br/>"
                     "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
                     "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
+                        'value': valid_total},
+                    {
+                        'indicator': (
+                            'Total number of children who have recieved complete immunizations required by age 1:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': (
+                            '% of children who have recieved complete immunizations required by age 1:'
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

@@ -6,7 +6,12 @@
 			<column id="open_count">2</column>
 			<column id="owner_id">AWC1</column>
 		</row>
-		<row index="9" is_total_row="True">
+		<row index="1" is_total_row="False">
+			<column id="open_ccs_thr_gte_21">18</column>
+			<column id="open_count">32</column>
+			<column id="owner_id">AWC2</column>
+		</row>
+		<row index="2" is_total_row="True">
 			<column id="open_ccs_thr_gte_21">19</column>
 			<column id="open_count">34</column>
 			<column id="owner_id">Total</column>

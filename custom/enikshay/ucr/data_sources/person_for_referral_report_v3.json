@@ -957,7 +957,7 @@
                                               },
                                              "value_expression": {
                                                  "type": "property_name",
-                                                 "property_name": "treatment_regimen"
+                                                 "property_name": "treatment_initiated"
                                              }
                                          },
                                          "property_value": ["yes_phi", "yes_private"]
@@ -1036,7 +1036,7 @@
                                                      },
                                                      "value_expression": {
                                                          "type": "property_name",
-                                                         "property_name": "treatment_regimen"
+                                                         "property_name": "treatment_initiated"
                                                      }
                                                  },
                                                  "property_value": ["yes_phi", "yes_private"]
@@ -1154,26 +1154,42 @@
                 }
             },
             {
-                "display_name": "referral_id",
+                "type": "boolean",
+                "column_id": "have_referral",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "enikshay_most_recent_referral_from_person",
+                                "person_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "operator": "in",
+                        "property_value": ["", null]
+                    }
+                }
+            },
+            {
+                "display_name": "person_owner_id",
                 "transform": {},
                 "datatype": "string",
                 "type": "expression",
                 "is_primary_key": false,
                 "is_nullable": true,
-                "column_id": "referral_id",
+                "column_id": "person_owner_id",
                 "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "enikshay_most_recent_referral_from_person",
-                        "person_id_expression": {
-                            "type": "property_name",
-                            "property_name": "_id"
-                        }
-                    },
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "_id"
-                    }
+                    "type": "property_name",
+                    "property_name": "owner_id"
                 }
             },
             {

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
@@ -154,8 +155,8 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
         resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
 
+    resume_helper.clear_resume_info()
     if not id_is_static(indicator_config_id):
-        resume_helper.clear_resume_info()
         if in_place:
             config.meta.build.finished_in_place = True
         else:
@@ -346,10 +347,19 @@ def _save_document_helper(indicator, doc):
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
-        except (DatabaseError, ESError, InternalError, RequestError,
-                ConnectionTimeout, ProtocolError, ReadTimeout):
+        except (ProtocolError, ReadTimeout):
+            celery_task_logger.info("Riak error when saving config: {}".format(config_id))
+            something_failed = True
+        except RequestError:
+            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
+            something_failed = True
+        except (ESError, ConnectionTimeout):
             # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("DB error when saving config: {}".format(config_id))
+            celery_task_logger.info("ES error when saving config: {}".format(config_id))
+            something_failed = True
+        except (DatabaseError, InternalError):
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("psql error when saving config: {}".format(config_id))
             something_failed = True
         except Exception as e:
             # getting the config could fail before the adapter is set
@@ -367,15 +377,24 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
+    now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
-        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
+        lag = (now - oldest_indicator.date_queued).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
-    indicator = AsyncIndicator.objects.first()
-    if indicator:
-        lag = (datetime.utcnow() - indicator.date_created).total_seconds()
+    oldest_100_indicators = AsyncIndicator.objects.all()[:100]
+    oldest_indicator = oldest_100_indicators[0]
+    if oldest_indicator:
+        lag = (now - oldest_indicator.date_created).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+
+        lags = [
+            (now - indicator.date_created).total_seconds()
+            for indicator in oldest_100_indicators
+        ]
+        avg_lag = sum(lags) / len(lags)
+        datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
 
     for config_id, metrics in six.iteritems(_indicator_metrics()):
         tags = ["config_id:{}".format(config_id)]

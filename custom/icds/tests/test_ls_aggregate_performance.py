@@ -37,10 +37,11 @@ class TestLSAggregatePerformanceIndicator(SimpleTestCase, TestXmlMixin):
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
         indicator = LSAggregatePerformanceIndicator('domain', 'user')
         message = indicator.get_messages(language_code='en')[0]
-        self.assertIn('Home visits completed on time / Home visits completed: 22 / 269', message)
-        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 19 / 34', message)
-        self.assertIn('Children weighed under 3 years / Total children under 3 years: 30 / 33', message)
-        self.assertIn('Average days AWC open / Goal: 59 / 25', message)
+        self.assertIn('Number of visits / Number of desired visits: 45 / 130', message)
+        self.assertIn('Number of visits on time / Number of visits: 16 / 45', message)
+        self.assertIn('THR Distribution: 19 / 34', message)
+        self.assertIn('Number of children weighed: 30 / 33', message)
+        self.assertIn('Average no. of days AWC open / Goal: 4 / 25', message)
 
 
 class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
@@ -91,9 +92,10 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
         message = indicator.get_messages(language_code='en')[0]
-        self.assertIn('Home visits completed / Goal: 6 / 65', message)
-        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 1 / 2', message)
-        self.assertIn('Children weighed under 3 years / Total children under 3 years: 1 / 2', message)
+        self.assertIn('Number of visits / Number of desired visits: 6 / 65', message)
+        self.assertIn('Number of visits on time / Number of visits: 2 / 6', message)
+        self.assertIn('THR Distribution: 1 / 2', message)
+        self.assertIn('Number of children weighed: 1 / 2', message)
         self.assertIn('Days AWC open / Goal: 3 / 25', message)
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)

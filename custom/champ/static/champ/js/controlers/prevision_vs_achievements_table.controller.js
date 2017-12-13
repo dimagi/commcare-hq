@@ -43,6 +43,7 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         {id: '', value: 'All'},
         {id: 'FSW', value: 'FSW'},
         {id: 'MSM', value: 'MSM'},
+        {id: 'client_fsw', value: 'Client FSW'},
     ];
 
     vm.filters = {

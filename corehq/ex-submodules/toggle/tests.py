@@ -13,7 +13,7 @@ from corehq.toggles import (
     PredictablyRandomToggle,
     StaticToggle,
     deterministic_random,
-)
+    DynamicallyPredictablyRandomToggle)
 from toggle.shortcuts import (
     update_toggle_cache,
     namespaced_item,
@@ -253,6 +253,50 @@ class PredictablyRandomToggleTests(TestCase):
         )
         self.assertTrue(toggle.enabled('dc', namespace=NAMESPACE_DOMAIN))
         self.assertFalse(toggle.enabled('marvel', namespace=NAMESPACE_DOMAIN))
+
+
+class DyanmicPredictablyRandomToggleTests(TestCase):
+
+    def test_default_randomness_no_doc(self):
+        for randomness in [0, .5, 1]:
+            toggle = DynamicallyPredictablyRandomToggle(
+                'dynamic_toggle_no_doc{}'.format(randomness),
+                'A toggle for testing',
+                TAG_CUSTOM,
+                [NAMESPACE_USER],
+                default_randomness=randomness,
+            )
+            self.assertEqual(randomness, toggle.randomness)
+
+    def test_default_randomness_doc_but_no_value(self):
+        for randomness in [0, .5, 1]:
+            toggle = DynamicallyPredictablyRandomToggle(
+                'dynamic_toggle_no_value{}'.format(randomness),
+                'A toggle for testing',
+                TAG_CUSTOM,
+                [NAMESPACE_USER],
+                default_randomness=randomness,
+            )
+            db_toggle = Toggle(slug=toggle.slug)
+            db_toggle.save()
+            self.addCleanup(db_toggle.delete)
+            self.assertEqual(randomness, toggle.randomness)
+
+    def test_override_default_randomness(self):
+        randomness = 0
+        overridden_randomness = .5
+        toggle = DynamicallyPredictablyRandomToggle(
+            'override_dynamic_toggle{}'.format(randomness),
+            'A toggle for testing',
+            TAG_CUSTOM,
+            [NAMESPACE_USER],
+            default_randomness=randomness,
+        )
+        db_toggle = Toggle(slug=toggle.slug)
+        setattr(db_toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, overridden_randomness)
+        db_toggle.save()
+        self.addCleanup(db_toggle.delete)
+        self.assertEqual(overridden_randomness, toggle.randomness)
 
 
 class ShortcutTests(TestCase):

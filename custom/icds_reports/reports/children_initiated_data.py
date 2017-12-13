@@ -65,7 +65,27 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
                 "info": _((
                     "Percentage of children between 6 - 8 months given timely introduction to solid, "
                     "semi-solid or soft food."
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of children between age 6 - 8 months:',
+                        'value': valid_total
+                    },
+                    {
+                        'indicator': (
+                            'Total number of children (6-8 months) given timely introduction to sold or '
+                            'semi-solid food in the given month:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': (
+                            '% children (6-8 months) given timely introduction to solid or '
+                            'semi-solid food in the given month:'
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

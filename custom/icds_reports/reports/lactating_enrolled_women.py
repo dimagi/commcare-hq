@@ -45,6 +45,8 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
         'fillKey': 'Women'
     })
     average = []
+    total_valid = 0
+    total = 0
     for row in get_data_for(config):
         valid = row['valid'] or 0
         all_lactating = row['all'] or 0
@@ -52,6 +54,9 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
         on_map_name = row['%s_map_location_name' % loc_level] or name
 
         average.append(valid)
+
+        total_valid += valid
+        total += all_lactating
 
         data_for_map[on_map_name]['valid'] += valid
         data_for_map[on_map_name]['all'] += all_lactating
@@ -72,7 +77,25 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
                 "average_format": 'number',
                 "info": _((
                     "Lactating Mothers enrolled for ICDS services."
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                        'value': total_valid
+                    },
+                    {
+                        'indicator': (
+                            'Total number of pregnant women who are registered:'
+                        ),
+                        'value': total
+                    },
+                    {
+                        'indicator': (
+                            'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                        ),
+                        'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

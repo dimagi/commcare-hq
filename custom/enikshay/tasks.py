@@ -4,6 +4,7 @@ from cStringIO import StringIO
 from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
+import sys
 
 from celery import group
 from celery.task import periodic_task, task
@@ -286,15 +287,19 @@ class EpisodeAdherenceUpdate(object):
         self._cache_dose_taken_by_date = False
 
     @memoized
-    def get_doses_data(self):
+    def get_fixture_column(self, fixture_column_name):
         # return 'doses_per_week' by 'schedule_id' from the Fixture data
         fixtures = get_itemlist(self.domain)
         doses_per_week_by_schedule_id = {}
         for f in fixtures:
             schedule_id = f.fields[SCHEDULE_ID_FIXTURE].field_list[0].field_value
-            doses_per_week = int(f.fields["doses_per_week"].field_list[0].field_value)
+            doses_per_week = int(f.fields[fixture_column_name].field_list[0].field_value)
             doses_per_week_by_schedule_id[schedule_id] = doses_per_week
         return doses_per_week_by_schedule_id
+
+    @memoized
+    def get_doses_data(self):
+        return self.get_fixture_column('doses_per_week')
 
     @memoized
     def get_valid_adherence_cases(self):
@@ -384,10 +389,11 @@ class EpisodeAdherenceUpdate(object):
 
         adherence_cases = self.get_valid_adherence_cases()
         dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
+        doses_per_week = self.get_doses_per_week()
 
         update = {
-            'total_expected_doses_taken': self.get_total_expected_doses_taken(adherence_schedule_date_start),
             'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
+            'doses_per_week': doses_per_week
         }
         update.update(self.get_adherence_scores(dose_status_by_date))
         update.update(self.get_aggregated_scores(
@@ -395,6 +401,9 @@ class EpisodeAdherenceUpdate(object):
             adherence_schedule_date_start,
             dose_status_by_date
         ))
+        update.update(self.get_ip_followup_test_threshold_dates(dose_status_by_date))
+        update.update(self.get_cp_followup_test_threshold_dates(dose_status_by_date))
+        update.update(self.get_outcome_due_threshold_dates(dose_status_by_date))
 
         return self.check_and_return(update)
 
@@ -497,8 +506,53 @@ class EpisodeAdherenceUpdate(object):
         num_days = (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days + 1
         update['expected_doses_taken'] = int(doses_per_week * num_days / 7.0)
 
-        update['total_expected_doses_taken'] = self.get_total_expected_doses_taken(adherence_schedule_date_start)
         return update
+
+    def get_dates_threshold_crossed_and_expected(self, dosage_threshold, dose_status_by_date):
+        adherence_date_threshold_crossed = self.get_date_of_nth_dose(dosage_threshold, dose_status_by_date)
+        if adherence_date_threshold_crossed:
+            adherence_date_test_expected = adherence_date_threshold_crossed + datetime.timedelta(days=7)
+        else:
+            adherence_date_test_expected = ''
+        return adherence_date_threshold_crossed, adherence_date_test_expected
+
+    def get_ip_followup_test_threshold_dates(self, dose_status_by_date):
+        ip_dosage_threshold = self.get_dose_count_ip() - self.get_doses_per_week()
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            ip_dosage_threshold, dose_status_by_date
+        )
+        return {
+            'adherence_ip_date_followup_test_expected': date_expected,
+            'adherence_ip_date_threshold_crossed': date_crossed or '',
+        }
+
+    def get_cp_followup_test_threshold_dates(self, dose_status_by_date):
+        cp_dosage_threshold = self.get_dose_count_cp() - self.get_doses_per_week()
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            cp_dosage_threshold, dose_status_by_date
+        )
+        return {
+            'adherence_cp_date_followup_test_expected': date_expected,
+            'adherence_cp_date_threshold_crossed': date_crossed or '',
+        }
+
+    def get_outcome_due_threshold_dates(self, dose_status_by_date):
+        outcome_due_dosage_threshold = self.get_dose_count_outcome_due() - self.get_doses_per_week()
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            outcome_due_dosage_threshold, dose_status_by_date
+        )
+        return {
+            'adherence_date_outcome_due': date_expected,
+        }
+
+    @staticmethod
+    def get_date_of_nth_dose(dose_count, dose_status_by_date):
+        doses_to_date = 0
+        for dose_date in sorted(dose_status_by_date):
+            if dose_status_by_date[dose_date].taken:
+                doses_to_date += 1
+                if doses_to_date == dose_count:
+                    return dose_date
 
     @memoized
     def get_doses_per_week(self):
@@ -514,12 +568,41 @@ class EpisodeAdherenceUpdate(object):
             return 0
         return doses_per_week
 
-    def get_total_expected_doses_taken(self, adherence_schedule_date_start):
-        doses_per_week = self.get_doses_per_week()
-        today = self.date_today_in_india
-        total_expected_doses_taken = int(
-            round(((today - adherence_schedule_date_start).days / 7.0) * doses_per_week))
-        return total_expected_doses_taken
+    def get_dose_count_by_threshold(self, threshold):
+        dose_count_by_adherence_schedule = self.get_fixture_column(threshold)
+        adherence_schedule_id = self.episode.get_case_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
+        dose_count = dose_count_by_adherence_schedule.get(adherence_schedule_id)
+        if dose_count is None:
+            soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))(
+                False,
+                "No fixture item found with schedule_id {}".format(adherence_schedule_id)
+            )
+            return sys.maxsize
+        return dose_count
+
+    @memoized
+    def get_dose_count_ip(self):
+        threshold = (
+            'dose_count_ip_new_patient' if self.episode.get_case_property('patient_type_choice') == 'new'
+            else 'dose_count_ip_recurring_patient'
+        )
+        return self.get_dose_count_by_threshold(threshold)
+
+    @memoized
+    def get_dose_count_cp(self):
+        threshold = (
+            'dose_count_cp_new_patient' if self.episode.get_case_property('patient_type_choice') == 'new'
+            else 'dose_count_cp_recurring_patient'
+        )
+        return self.get_dose_count_by_threshold(threshold)
+
+    @memoized
+    def get_dose_count_outcome_due(self):
+        threshold = (
+            'dose_count_outcome_due_new_patient' if self.episode.get_case_property('patient_type_choice') == 'new'
+            else 'dose_count_outcome_due_recurring_patient'
+        )
+        return self.get_dose_count_by_threshold(threshold)
 
     def check_and_return(self, update_dict):
         """
@@ -772,9 +855,10 @@ def get_updated_fields(existing_properties, new_properties):
 
 
 @task(queue='background_queue', ignore_result=True)
-def run_model_reconciliation(command_name, email, commit=False):
+def run_model_reconciliation(command_name, email, person_case_ids=None, commit=False):
     call_command(command_name,
                  recipient=email,
+                 person_case_ids=person_case_ids,
                  commit=commit)
 
 

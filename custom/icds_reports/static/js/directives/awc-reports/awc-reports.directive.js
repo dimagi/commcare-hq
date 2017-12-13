@@ -1705,9 +1705,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.step = $routeParams.step;
     vm.data = null;
     vm.filters = ['gender', 'age'];
-
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
+    vm.userLocationId = userLocationId;
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -2382,7 +2382,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });

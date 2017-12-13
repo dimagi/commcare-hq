@@ -51,6 +51,8 @@ branches:
   - mk-search-under-location # Manish 4-Oct
   - es/loc-safe-reports  # Ethan 11/1
   - jls/analytics-improvements  # Jenny 12/6
+  - mk-265955-kill-user-sync-history # MK 8/Dec
+  - mk-hackathon-repeater-edit # MK 12/Dec
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

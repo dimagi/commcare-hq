@@ -10,7 +10,7 @@ from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.models import TimedSchedule, SMSContent, Content
+from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, Content
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from datetime import time
@@ -84,7 +84,7 @@ class SchedulingRecipientTest(TestCase):
     def test_expand_location_recipients(self):
         schedule_without_descendants = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
         schedule_without_descendants.include_descendant_locations = False
@@ -92,7 +92,7 @@ class SchedulingRecipientTest(TestCase):
 
         schedule_with_descendants = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
         schedule_with_descendants.include_descendant_locations = True

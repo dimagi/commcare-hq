@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 
 from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
+from toggle.models import Toggle
 from toggle.shortcuts import toggle_enabled, set_toggle
 import six
 
@@ -150,7 +151,6 @@ class StaticToggle(object):
         return decorator
 
     def get_enabled_domains(self):
-        from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -228,8 +228,8 @@ class PredictablyRandomToggle(StaticToggle):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description,
                                                       always_disabled=always_disabled)
-        assert namespaces, 'namespaces must be defined!'
-        assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(randomness)
         self.randomness = randomness
 
     @property
@@ -264,6 +264,42 @@ class PredictablyRandomToggle(StaticToggle):
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
             or super(PredictablyRandomToggle, self).enabled(item, namespace)
         )
+
+
+class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
+    """
+    A PredictablyRandomToggle whose randomness can be configured via the database/UI.
+    """
+    RANDOMNESS_KEY = 'hq_dynamic_randomness'
+
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces,
+        default_randomness=0,
+        help_link=None,
+        description=None,
+        always_disabled=None
+    ):
+        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
+                                                      help_link=help_link, description=description,
+                                                      always_disabled=always_disabled)
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(default_randomness)
+        self.default_randomness = default_randomness
+
+    @property
+    @quickcache(vary_on=['self.slug'])
+    def randomness(self):
+        # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return self.default_randomness
+        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+
 
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
@@ -334,6 +370,16 @@ def toggle_values_by_name(username=None, domain=None):
     return {toggle_name: (toggle.enabled(username, NAMESPACE_USER) or
                           toggle.enabled(domain, NAMESPACE_DOMAIN))
             for toggle_name, toggle in all_toggles_by_name().items()}
+
+
+def _ensure_valid_namespaces(namespaces):
+    if not namespaces:
+        raise Exception('namespaces must be defined!')
+
+
+def _ensure_valid_randomness(randomness):
+    if not 0 <= randomness <= 1:
+        raise Exception('randomness must be between 0 and 1!')
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
@@ -1370,27 +1416,6 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_DEBUG = StaticToggle(
-    'analytics_debug',
-    "Turn on DEBUG level output for debugging analytics.",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_VERBOSE = StaticToggle(
-    'analytics_verbose',
-    "Turn on VERBOSE level output for debugging analytics.",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_WARNING = StaticToggle(
-    'analytics_warning',
-    "Turn on WARNING level output for debugging analytics.",
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )

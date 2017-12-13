@@ -19,7 +19,7 @@ API_KEY = 'api_key'
 TOKEN = 'token'
 
 
-def determine_authtype_from_header(request):
+def determine_authtype_from_header(request, default=DIGEST):
     """
     Guess the auth type, based on the headers found in the request.
     """
@@ -35,10 +35,10 @@ def determine_authtype_from_header(request):
 
     # If there is no HTTP_AUTHORIZATION header, we return a 401 along with the necessary
     # headers for digest auth
-    return DIGEST
+    return default
 
 
-def determine_authtype_from_request(request):
+def determine_authtype_from_request(request, default=DIGEST):
     """
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
@@ -50,9 +50,9 @@ def determine_authtype_from_request(request):
     }
     user_type = guess_phone_type_from_user_agent(user_agent)
     if user_type is not None:
-        return type_to_auth_map.get(user_type, DIGEST)
+        return type_to_auth_map.get(user_type, default)
     else:
-        return determine_authtype_from_header(request)
+        return determine_authtype_from_header(request, default)
 
 
 def guess_phone_type_from_user_agent(user_agent):

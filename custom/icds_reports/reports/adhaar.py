@@ -64,7 +64,21 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
                 "average": (in_month_total * 100) / float(valid_total or 1),
                 "info": _((
                     "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
-                ))
+                )),
+                "extended_info": [
+                    {
+                        'indicator': (
+                            'Total number of ICDS beneficiaries whose Aadhaar has been captured:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': (
+                            '% of ICDS beneficiaries whose Aadhaar has been captured:'
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
             "data": dict(data_for_map),
         }

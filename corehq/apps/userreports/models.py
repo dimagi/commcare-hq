@@ -867,6 +867,7 @@ class AsyncIndicator(models.Model):
         new_indicators = set(self.indicator_config_ids) - set(to_remove)
         self.indicator_config_ids = sorted(list(new_indicators))
         self.unsuccessful_attempts += 1
+        self.date_queued = None
 
 
 def get_datasource_config(config_id, domain):

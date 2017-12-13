@@ -586,6 +586,14 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
+def get_sector(episode_case):
+    if episode_case.type != CASE_TYPE_EPISODE:
+        raise ValueError('Must pass in an episode case')
+    if episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
+        return PRIVATE_SECTOR
+    return PUBLIC_SECTOR
+
+
 def iter_all_active_person_episode_cases(domain, case_ids, sector=None):
     """From a list of case_ids, return all the active episodes and associate person case
     """
@@ -638,7 +646,7 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     open_referral_cases = [
         case for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     ]
     occurrence_cases = [
         case.case_id for case in reverse_indexed_cases
@@ -647,11 +655,10 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
     reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
     open_referral_cases.extend(
         case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     )
     valid_referral_cases = [
         case for case in open_referral_cases if (
-            case.dynamic_case_properties().get('referral_status') != 'rejected' and
             case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
         )
     ]

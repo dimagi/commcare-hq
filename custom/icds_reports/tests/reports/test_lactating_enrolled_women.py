@@ -148,7 +148,20 @@ class TestLactatingEnrolledWomen(TestCase):
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
                     "average": 83.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': 166
+                        },
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': 166},
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",
@@ -189,7 +202,20 @@ class TestLactatingEnrolledWomen(TestCase):
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
                     "average": 43.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': 87
+                        },
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': 87},
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",
