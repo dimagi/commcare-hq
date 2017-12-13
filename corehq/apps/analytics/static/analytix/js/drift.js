@@ -21,7 +21,7 @@ hqDefine('analytix/js/drift', [
         _global = initialAnalytics.getFn('global'),
         _data = {},
         _drift = {},
-        logger;
+        logger = logging.getLoggerForApi('Drift');
 
     var __init__ = function () {
         logger = logging.getLoggerForApi('Drift');
