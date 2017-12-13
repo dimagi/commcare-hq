@@ -24,10 +24,11 @@ GREY = '#9D9D9D'
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
+    date = datetime(*config['month'])
+    config['date'] = date
+    del config['month']
 
     def get_data_for(filters):
-        filters['date'] = datetime(*filters['month'])
-        del filters['month']
         queryset = AggAwcDailyView.objects.filter(
             **filters
         ).values(
@@ -42,8 +43,13 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
 
         return queryset
 
+    data = get_data_for(config)
+    if not data:
+        config['date'] = (date - relativedelta(days=1)).date()
+        data = get_data_for(config)
+
     data_for_map, valid_total, in_day_total = generate_data_for_map(
-        get_data_for(config),
+        data,
         loc_level,
         'in_day',
         'all',
@@ -189,19 +195,23 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
 def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
-    config['date'] = datetime(*config['month'])
+    date = datetime(*config['month'])
+    config['date'] = date
     del config['month']
-    data = AggAwcDailyView.objects.filter(
-        **config
-    ).values(
-        *group_by
-    ).annotate(
-        in_day=Sum('daily_attendance_open'),
-        all=Sum('num_launched_awcs'),
-    ).order_by('%s_name' % loc_level)
 
-    if not show_test:
-        data = apply_exclude(domain, data)
+    def get_data_for(filters):
+        queryset = AggAwcDailyView.objects.filter(
+            **filters
+        ).values(
+            *group_by
+        ).annotate(
+            in_day=Sum('daily_attendance_open'),
+            all=Sum('num_launched_awcs'),
+        ).order_by('%s_name' % loc_level)
+
+        if not show_test:
+            queryset = apply_exclude(domain, queryset)
+        return queryset
 
     chart_data = {
         'blue': [],
@@ -215,7 +225,12 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
     loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
     result_set = set()
 
-    for row in data:
+    sector_data = get_data_for(config)
+    if not sector_data:
+        config['date'] = (date - relativedelta(days=1)).date()
+        sector_data = get_data_for(config)
+
+    for row in sector_data:
         valid = row['all']
         name = row['%s_name' % loc_level]
         result_set.add(name)

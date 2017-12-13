@@ -714,10 +714,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
-@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
-def get_awc_report_demographics(domain, config, month, show_test=False):
+@quickcache(['domain', 'config', 'now_date', 'month', 'show_test'], timeout=30 * 60)
+def get_awc_report_demographics(domain, config, now_date, month, show_test=False):
     selected_month = datetime(*month)
-
+    now_date = datetime(*now_date)
     chart = AggChildHealthMonthly.objects.filter(
         month=selected_month, **config
     ).values(
@@ -771,15 +771,18 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    yesterday = datetime.now() - relativedelta(days=1)
+    yesterday = now_date - relativedelta(days=1)
     two_days_ago = yesterday - relativedelta(days=1)
-    now = datetime.utcnow()
     previous_month = selected_month - relativedelta(months=1)
-    if selected_month.month == now.month and selected_month.year == now.year:
+    if selected_month.month == now_date.month and selected_month.year == now_date.year:
         config['date'] = yesterday
         data = get_data_for(AggAwcDailyView, config)
         config['date'] = two_days_ago
         prev_data = get_data_for(AggAwcDailyView, config)
+        if not data:
+            data = prev_data
+            config['date'] = (two_days_ago - relativedelta(days=1)).date()
+            prev_data = get_data_for(AggAwcDailyView, config)
         frequency = 'day'
     else:
         config['month'] = selected_month
