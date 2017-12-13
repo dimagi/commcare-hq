@@ -304,7 +304,8 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
-ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
+NAMESPACE_OTHER = 'other'
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_OTHER]
 
 
 def any_toggle_enabled(*toggles):
@@ -1446,4 +1447,12 @@ CUSTOM_ICON_BADGES = StaticToggle(
     'eNikshay: Custom Icon Badges for modules and forms',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
+    'icds_ucr_elasticsearch_doc_loading',
+    'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
 )

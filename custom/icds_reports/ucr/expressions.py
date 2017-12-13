@@ -10,6 +10,7 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 from six.moves import filter
 from six.moves import map
@@ -200,7 +201,10 @@ class FormsInDateExpressionSpec(JsonObject):
 
     @staticmethod
     def _get_form_json_list(xforms, context, domain):
-        return [FormsInDateExpressionSpec._get_form_json(f, context) for f in xforms if f.domain == domain]
+        if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(context.root_doc.doc_id, NAMESPACE_OTHER):
+            return FormsInDateExpressionSpec._get_form_json_list_using_elasticsearch(xforms, context, domain)
+        else:
+            return [FormsInDateExpressionSpec._get_form_json(f, context) for f in xforms if f.domain == domain]
 
     @staticmethod
     def _get_form_json_list_using_elasticsearch(xforms, context, domain):
