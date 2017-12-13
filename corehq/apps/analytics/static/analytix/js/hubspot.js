@@ -15,28 +15,17 @@ hqDefine('analytix/js/hubspot', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
-        _global = initialAnalytics.getFn('global'),
-        _data = {},
-        logger;
+        _logger,
+        _ready;
 
     var _hsq = window._hsq = window._hsq || [];
 
-    var __init__ = function () {
-        logger = logging.getLoggerForApi('Hubspot');
-        _data.apiId = _get('apiId');
-        if (_data.apiId) {
-            _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId + '.js';
-            utils.insertScript(_data.scriptSrc, logger.debug.log, {
-                id: 'hs-analytics',
-            });
-        }
-    };
+    $(function () {
+        var apiId = _get('apiId'),
+            scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
 
-    $(function() {
-        if (_global('isEnabled')) {
-            __init__();
-            logger.debug.log('Initialized');
-        }
+        _logger = logging.getLoggerForApi('Hubspot');
+        _ready = utils.initApi(apiId, scriptUrl, _logger);
     });
 
     /**
@@ -44,8 +33,10 @@ hqDefine('analytix/js/hubspot', [
      * @param {object} data
      */
     var identify = function (data) {
-        logger.debug.log(data, "Identify");
-        _hsq.push(['identify', data]);
+        _ready.done(function() {
+            _logger.debug.log(data, "Identify");
+            _hsq.push(['identify', data]);
+        });
     };
 
     /**
@@ -54,17 +45,16 @@ hqDefine('analytix/js/hubspot', [
      * @param {integer|float} value - This is an optional argument that can be used to track the revenue of an event.
      */
     var trackEvent = function (eventId, value) {
-        if (_global('isEnabled')) {
-            logger.debug.log(logger.fmt.labelArgs(["Event ID", "Value"], arguments), 'Track Event');
+        _ready.done(function() {
+            _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], arguments), 'Track Event');
             _hsq.push(['trackEvent', {
                 id: eventId,
                 value: value,
             }]);
-        }
+        });
     };
 
     return {
-        logger: logger,
         identify: identify,
         trackEvent: trackEvent,
     };
