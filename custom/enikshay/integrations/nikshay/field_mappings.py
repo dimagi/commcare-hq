@@ -161,10 +161,10 @@ health_establishment_sector = {
 }
 
 marital_status = {
-    'unmarried': 'S',
-    'married': 'M',
-    'widowed': 'W',
-    'separated': 'Se'
+    'unmarried': 'S',  # Single
+    'married': 'M',  # Married
+    'widowed': 'O',  # Other
+    'separated': 'O'  # Other
 }
 
 key_population = {
@@ -183,9 +183,9 @@ key_population = {
 }
 
 area = {
-    'tribal': 'tribal',
-    'rural': 'rural',
-    'urban': 'urban',
-    'urban_slum': 'urban slum',
-    'not_known': 'not known',
+    'tribal': 'T',
+    'rural': 'R',
+    'urban': 'U',
+    'urban_slum': 'S',
+    'not_known': 'N',
 }
