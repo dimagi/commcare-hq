@@ -17,7 +17,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.icds_reports.queries import get_test_state_locations_id
-from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age
+from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, DATA_NOT_ENTERED
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -206,7 +206,7 @@ class ExportableMixin(object):
                 else:
                     cell = row[c['slug']]
                 if not isinstance(cell, dict):
-                    row_data.append(cell)
+                    row_data.append(cell if cell else DATA_NOT_ENTERED)
                 else:
                     row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
@@ -1913,6 +1913,10 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     @property
     def get_columns_by_loc_level(self):
         selected_month = self.config['month']
+
+        def test_fucntion(x):
+            return "%.2f" % x if x else "Data Not Entered"
+
         columns = [
             DatabaseColumn(
                 'Child Name',
@@ -1948,13 +1952,13 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             DatabaseColumn(
                 'Weight Recorded (in Month)',
                 SimpleColumn('recorded_weight'),
-                format_fn=lambda x: "%.2f" % x if x else "Data Not Entered",
+                format_fn=test_fucntion,
                 slug='recorded_weight'
             ),
             DatabaseColumn(
                 'Height Recorded (in Month)',
                 SimpleColumn('recorded_height'),
-                format_fn=lambda x: "%.2f" % x if x else "Data Not Entered",
+                format_fn=test_fucntion,
                 slug='recorded_height'
             ),
             DatabaseColumn(
