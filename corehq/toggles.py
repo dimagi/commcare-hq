@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 
 from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
+from toggle.models import Toggle
 from toggle.shortcuts import toggle_enabled, set_toggle
 import six
 
@@ -150,7 +151,6 @@ class StaticToggle(object):
         return decorator
 
     def get_enabled_domains(self):
-        from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -293,7 +293,6 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
     @property
     @quickcache(vary_on=['self.slug'])
     def randomness(self):
-        from toggle.models import Toggle
         # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
         try:
             toggle = Toggle.get(self.slug)
