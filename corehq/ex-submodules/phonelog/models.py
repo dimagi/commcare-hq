@@ -7,6 +7,7 @@ COUCH_UUID_MAX_LEN = 50
 
 @architect.install('partition', type='range', subtype='date', constraint='day', column='server_date')
 class DeviceReportEntry(models.Model):
+    id = models.BigAutoField(primary_key=True)
     xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     i = models.IntegerField()
     msg = models.TextField()
