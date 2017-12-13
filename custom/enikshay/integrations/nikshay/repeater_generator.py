@@ -24,6 +24,7 @@ from custom.enikshay.const import (
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
     NOT_AVAILABLE_VALUE,
     DUMMY_VALUES,
+    AGENCY_LOCATION_TYPES,
 )
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
@@ -510,9 +511,9 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
 
     @staticmethod
     def _get_establishment_type(location):
-        if location.location_type.name == "Private Lab":
+        if location.location_type.name == AGENCY_LOCATION_TYPES['plc']:
             return health_establishment_type.get('lab')
-        if location.location_type.name == "MBBS Provider":
+        if location.location_type.name == AGENCY_LOCATION_TYPES['pcp']:
             return health_establishment_type.get(
                 location.metadata.get('facility_type')
             )
