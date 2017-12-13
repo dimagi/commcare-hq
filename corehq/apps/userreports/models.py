@@ -255,7 +255,8 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
-            ]
+            ],
+            None,
         )
 
     @property
@@ -271,7 +272,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 "comment": wrapped.comment,
                 "readable_output": wrapped.readable_output(context)
             }
-            for wrapped in wrapped_specs
+            for wrapped in wrapped_specs if wrapped
         ]
 
     @property
