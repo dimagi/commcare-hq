@@ -34,6 +34,7 @@ from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
     PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
 )
+from custom.enikshay.integrations.nikshay.exceptions import NikshayHealthEstablishmentInvalidUpdate
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
     NikshayHIVTestPayloadGenerator,
@@ -42,6 +43,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPrivatePatientPayloadGenerator,
     NikshayHealthEstablishmentPayloadGenerator,
 )
+from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -286,7 +288,7 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         return reverse(RegisterNikshayHealthEstablishmentRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, location):
-        return (
+        _allowed_to_forward = (
             not location.metadata.get('is_test', "yes") == "yes" and
             location.location_type.code in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
             location.metadata.get('sector') == PRIVATE_HEALTH_ESTABLISHMENT_SECTOR and
@@ -294,6 +296,16 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             # notification has been triggered earlier in case the code was removed after being added
             not location.metadata.get('nikshay_code')
         )
+        if not _allowed_to_forward:
+            return False
+        try:
+            # confirm that there is a location user to get details for notification
+            get_location_user_for_notification(location)
+        except NikshayHealthEstablishmentInvalidUpdate:
+            return False
+        return True
+
+
 
     def handle_response(self, result, repeat_record):
         if isinstance(result, Exception):

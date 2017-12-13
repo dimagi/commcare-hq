@@ -5,7 +5,6 @@ import datetime
 import socket
 from django.conf import settings
 
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.integrations.bets.repeater_generators import LocationPayloadGenerator
 from corehq.motech.repeaters.exceptions import RequestConnectionError
@@ -38,7 +37,6 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.integrations.nikshay.exceptions import (
     NikshayResponseException,
-    NikshayHealthEstablishmentInvalidUpdate,
 )
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
@@ -65,6 +63,8 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
 )
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
+
+from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
 from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
 from dimagi.utils.decorators.memoized import memoized
 import six
@@ -493,23 +493,6 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
     format_label = 'XML'
 
     @staticmethod
-    def get_location_user(location):
-        all_users_assigned_to_location = get_all_users_by_location(
-            location.domain,
-            location.location_id
-        )
-        location_type_code = location.location_type.code
-        user_with_user_type_as_loc = []
-        for user in all_users_assigned_to_location:
-            if user.user_data.get('usertype') == location_type_code:
-                user_with_user_type_as_loc.append(user)
-        if len(user_with_user_type_as_loc) == 0:
-            raise NikshayHealthEstablishmentInvalidUpdate("Location user not found")
-        if len(user_with_user_type_as_loc) > 1:
-            raise NikshayHealthEstablishmentInvalidUpdate("Multiple location users found")
-        return user_with_user_type_as_loc[0]
-
-    @staticmethod
     def _get_establishment_type(location):
         if location.location_type.name == AGENCY_LOCATION_TYPES['plc']:
             return health_establishment_type.get('lab')
@@ -528,7 +511,7 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
 
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
-        location_user = self.get_location_user(location)
+        location_user = get_location_user_for_notification(location)
         location_user_data = location_user.user_data
         return {
             'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
