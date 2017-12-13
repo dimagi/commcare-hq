@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import (clean_phone_number,

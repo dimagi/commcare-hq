@@ -82,12 +82,14 @@ dcexpulmonory = {
 }
 
 treatment_outcome = {
-    'cured': '1',
-    'treatment_complete': '2',
-    'died': '3',
-    'failure': '4',
-    'regimen_changed': '7',
-    'loss_to_follow_up': '5',
+    'cured': '1',  # Cured
+    'treatment_complete': '2',  # Treatment Completed
+    'died': '3',  # Died
+    'failure': '4',  # Failure
+    'pediatric_failure_to_respond': '4',  # Failure
+    'loss_to_follow_up': '5',  # Defaulted
+    'not_evaluated': '6',  # Transferred Out
+    'regimen_changed': '7',  # Switched to Cat-IV
 }
 
 hiv_status = {

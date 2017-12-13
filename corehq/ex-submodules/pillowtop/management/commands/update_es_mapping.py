@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from copy import copy
 from datetime import datetime
 
@@ -6,6 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -36,7 +38,7 @@ class Command(BaseCommand):
 
 
 def _confirm(message):
-    if raw_input(
+    if input(
             '{} [y/n]'.format(message)
     ).lower() == 'y':
         return True

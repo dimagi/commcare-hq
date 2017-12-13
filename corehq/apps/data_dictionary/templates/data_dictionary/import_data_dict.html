@@ -3,6 +3,10 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
+{% endblock %}
+
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.sms.forms import BackendForm
 from corehq.util.validation import is_url_or_host_banned
 from dimagi.utils.django.fields import TrimmedCharField

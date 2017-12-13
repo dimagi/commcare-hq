@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpResponse
 from django.utils.translation import ugettext_noop
 from corehq.apps.styleguide.examples.simple_crispy_form.views import \

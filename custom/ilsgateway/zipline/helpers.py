@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pytz import timezone
 
 from corehq.util.timezones.conversions import ServerTime

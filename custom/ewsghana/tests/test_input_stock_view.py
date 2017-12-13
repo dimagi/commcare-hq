@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 from django.urls import reverse
 from django.test import TestCase
@@ -16,7 +17,7 @@ from django.test.client import Client
 from custom.ewsghana.models import EWSExtension
 from custom.ewsghana.reports.specific_reports.stock_status_report import StockStatus
 from custom.ewsghana.utils import make_url
-import test_utils
+from . import test_utils
 from dimagi.utils.couch.database import get_db
 
 TEST_DOMAIN = 'ewsghana-test-input-stock'

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import math
 from django.db import models
 from corehq.apps.products.models import SQLProduct

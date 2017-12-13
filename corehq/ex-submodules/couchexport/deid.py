@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from datetime import timedelta
 from dimagi.utils.data.deid_generator import DeidGenerator
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
+from functools import reduce
 
 
 def deid_ID(val, doc):

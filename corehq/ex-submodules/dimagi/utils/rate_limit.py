@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 

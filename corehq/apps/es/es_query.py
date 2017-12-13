@@ -98,6 +98,7 @@ Language
     Add esquery.iter() method
 """
 from __future__ import print_function
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import deepcopy
 import json
@@ -119,6 +120,7 @@ from . import aggregations
 from . import filters
 from . import queries
 from .utils import values_list, flatten_field_dict
+import six
 
 
 class ESQuery(object):
@@ -156,7 +158,7 @@ class ESQuery(object):
         self.index = index if index is not None else self.index
         if self.index not in ES_META and not is_ucr_table(self.index):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
-                index, ', '.join(ES_META.keys()))
+                index, ', '.join(ES_META))
             raise IndexError(msg)
 
         self.debug_host = debug_host
@@ -206,7 +208,7 @@ class ESQuery(object):
         raise AttributeError("There is no builtin filter named %s" % attr)
 
     def __getitem__(self, sliced_or_int):
-        if isinstance(sliced_or_int, (int, long)):
+        if isinstance(sliced_or_int, six.integer_types):
             start = sliced_or_int
             size = 1
         else:

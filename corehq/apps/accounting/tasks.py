@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 import datetime
 import json
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from StringIO import StringIO
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.db import transaction
@@ -12,6 +12,7 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
+from couchdbkit import ResourceConflict
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
@@ -558,7 +559,7 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
     if app_id:
         try:
             log_accounting_info("Updating exchange rates...")
-            rates = json.load(urllib2.urlopen(
+            rates = json.load(six.moves.urllib.request.urlopen(
                 'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
             default_rate = float(rates[Currency.get_default().code])
             for code, rate in rates.items():
@@ -676,6 +677,7 @@ def _send_downgrade_notice(invoice, context):
         render_to_string('accounting/downgrade.html', context),
         render_to_string('accounting/downgrade.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
+        bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email()
     )
 
@@ -700,6 +702,7 @@ def _send_downgrade_warning(invoice, context):
         render_to_string('accounting/downgrade_warning.html', context),
         render_to_string('accounting/downgrade_warning.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
+        bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
 
 
@@ -710,6 +713,7 @@ def _send_overdue_notice(invoice, context):
         render_to_string('accounting/30_days.html', context),
         render_to_string('accounting/30_days.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
+        bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
 
 
@@ -723,14 +727,17 @@ def _create_overdue_notification(invoice, context):
     note.activate()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
-def archive_logos(domain_name):
+@task(queue='background_queue', ignore_result=True, acks_late=True,
+      default_retry_delay=10, max_retries=10, bind=True)
+def archive_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
             if isinstance(app, HQMediaMixin):
                 has_archived = app.archive_logos()
                 if has_archived:
                     app.save()
+    except ResourceConflict as e:
+        raise self.retry(exc=e)
     except Exception as e:
         log_accounting_error(
             "Failed to remove all commcare logos for domain %s." % domain_name,
@@ -739,14 +746,17 @@ def archive_logos(domain_name):
         raise e
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
-def restore_logos(domain_name):
+@task(queue='background_queue', ignore_result=True, acks_late=True,
+      default_retry_delay=10, max_retries=10, bind=True)
+def restore_logos(self, domain_name):
     try:
         for app in get_all_apps(domain_name):
             if isinstance(app, HQMediaMixin):
                 has_restored = app.restore_logos()
                 if has_restored:
                     app.save()
+    except ResourceConflict as e:
+        raise self.retry(exc=e)
     except Exception as e:
         log_accounting_error(
             "Failed to restore all commcare logos for domain %s." % domain_name,

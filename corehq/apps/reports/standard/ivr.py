@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import cgi
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
@@ -115,7 +116,7 @@ class CallReport(BaseCommConnectLogReport):
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(call.couch_recipient, doc_info),
                 self._fmt(phone_number),
-                self._fmt(direction_map.get(call.direction,"-")),
+                self._fmt(direction_map.get(call.direction, "-")),
                 self._fmt(form_name),
                 self._fmt("-"),
                 self._fmt(answered),
@@ -129,7 +130,7 @@ class CallReport(BaseCommConnectLogReport):
             
             result.append(row)
 
-        all_session_ids = xforms_sessions.keys()
+        all_session_ids = list(xforms_sessions)
         session_submission_map = dict(
             SQLXFormsSession.objects.filter(session_id__in=all_session_ids).values_list(
                 'session_id', 'submission_id'
@@ -189,9 +190,9 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
         result = []
         
         status_descriptions = {
-            CALLBACK_PENDING : _("Pending"),
-            CALLBACK_RECEIVED : _("Received"),
-            CALLBACK_MISSED : _("Missed"),
+            CALLBACK_PENDING: _("Pending"),
+            CALLBACK_RECEIVED: _("Received"),
+            CALLBACK_MISSED: _("Missed"),
         }
         
         # Store the results of lookups for faster loading

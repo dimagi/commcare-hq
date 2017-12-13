@@ -9,7 +9,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode_drtb",
+    "data_source_table": "episode_drtb_v2",
     "report_id": "rntcp_pmdt_treatment_register",
     "config": {
         "description": "",
@@ -72,9 +72,56 @@
                 "field": "is_enrolled_in_private",
                 "type": "pre",
                 "slug": "is_enrolled_in_private"
+            },
+            {
+                "pre_value": "invalid_episode",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason1"
+            },
+            {
+                "pre_value": "duplicate",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason2"
+            },
+            {
+                "pre_value": "invalid_registration",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason3"
+            },
+            {
+                "pre_value": "duplicate_reconciliation",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason4"
             }
         ],
         "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "beneficiary_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "eNikshay ID"
+            },
             {
                 "sortable": false,
                 "description": null,
@@ -134,9 +181,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "complete_address_and_mobile_number",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Complete Address and Mobile Number"
@@ -173,6 +222,7 @@
                 },
                 "aggregation": "simple",
                 "field": "person_owner_id",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of Health Facility"
@@ -184,6 +234,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "tu_name",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of TU"
@@ -195,6 +246,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "district_name",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of District"
@@ -209,6 +261,7 @@
                 },
                 "aggregation": "simple",
                 "field": "drtb_center",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "DRTB Centre"
@@ -223,8 +276,8 @@
                         "extra_pulmonary, lymph_node": " Extra Pulmonary, Lymph Node",
                         "extra_pulmonary, spine": "Extra Pulmonary, Spine",
                         "extra_pulmonary": "Extra Pulmonary",
-                        "extra_pulmonary_brain": "Extra Pulmonary, Brain",
                         "extra_pulmonary, other": "Extra Pulmonary, Other",
+                        "extra_pulmonary_brain": "Extra Pulmonary, Brain",
                         "pulmonary": "Pulmonary",
                         "extra_pulmonary, pleural_effusion": "Extra Pulmonary, Pleural Effusion"
                     },
@@ -252,6 +305,7 @@
                 },
                 "aggregation": "simple",
                 "field": "patient_type",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Patient Type"
@@ -262,12 +316,15 @@
                 "format": "default",
                 "transform": {
                     "translations": {
-                        "follow_up_sm_ve_ip": "Follow Up Sm+ve at end IP",
+                        "repeat_exam_for_diagnosis": "RE",
                         "extended_dst": "Extended DST",
                         "discordance_resolution": "Discordance Resolution",
                         "private_referral": "Private Referral",
+                        "presumptive_ntm": "Presumptive NTM",
+                        "follow_up_sm_ve_ip": "Follow Up Sm+ve at end IP",
                         "mdr_at_diagnosis": "MDR TB at Diagnosis",
-                        "contact_of_mdr_rr": "Contact of MDR/RR TB"
+                        "contact_of_mdr_rr": "Contact of MDR/RR TB",
+                        "presumptive_tb": "Presumptive TB"
                     },
                     "type": "translation"
                 },
@@ -461,9 +518,9 @@
                     "translations": {
                         "mdr": "Multi Drug Resistant",
                         "mr": "Mono Drug Resistance",
-                        "pdr": "Poly Drug Resistance",
+                        "xdr": "Extensive Drug Resistance",
                         "rr": "Rif Resistant",
-                        "xdr": "Extensive Drug Resistance"
+                        "pdr": "Poly Drug Resistance"
                     },
                     "type": "translation"
                 },
@@ -495,6 +552,7 @@
                 },
                 "aggregation": "simple",
                 "field": "treatment_regimen",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "DRTB Regimen"
@@ -506,6 +564,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "treatment_initiation_date",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Treatment Initiation"

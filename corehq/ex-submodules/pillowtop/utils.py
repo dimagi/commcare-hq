@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
@@ -14,6 +15,8 @@ from dimagi.utils.modules import to_function
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
 from pillowtop.dao.exceptions import DocumentMismatchError, DocumentMissingError
+import six
+from six.moves import map
 
 
 def _get_pillow_instance(full_class_str):
@@ -86,7 +89,7 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
 
 
 def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
-    if isinstance(pillow_config_string_or_dict, basestring):
+    if isinstance(pillow_config_string_or_dict, six.string_types):
         return PillowConfig(
             section,
             pillow_config_string_or_dict.rsplit('.', 1)[1],
@@ -107,7 +110,6 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
 
 
 def get_pillow_by_name(pillow_class_name, instantiate=True, **kwargs):
-    # todo(emord) get rid of instantiate (only needed in fluff reindex)
     config = get_pillow_config_by_name(pillow_class_name)
     return config.get_instance(**kwargs) if instantiate else config.get_class()
 
@@ -126,7 +128,7 @@ def force_seq_int(seq):
     elif isinstance(seq, dict):
         # multi-topic checkpoints don't support a single sequence id
         return None
-    elif isinstance(seq, basestring):
+    elif isinstance(seq, six.string_types):
         return int(seq.split('-')[0])
     else:
         assert isinstance(seq, int)
@@ -239,7 +241,7 @@ def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
         else:
             payloads[-1] = appended_payload
 
-    return filter(None, payloads)
+    return [_f for _f in payloads if _f]
 
 
 def ensure_matched_revisions(change):

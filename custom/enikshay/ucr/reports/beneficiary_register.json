@@ -6,7 +6,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode_v2",
+    "data_source_table": "episode_v3",
     "report_id": "beneficiary_register",
     "config": {
         "description": "",
@@ -110,6 +110,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "weight",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Weight"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "phone_number",
                 "calculate_total": false,
                 "type": "field",
@@ -172,6 +183,20 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Village / Town / City"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "current_address_block_taluka_mandal_choice",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Block / Taluka / Mandal"
             },
             {
                 "sortable": false,
@@ -287,18 +312,7 @@
                 "field": "registered_by",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Registered by Provider Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "registered_by_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Registered by Provider ID"
+                "display": "Registered by Provider Name - ID"
             },
             {
                 "sortable": false,
@@ -307,12 +321,14 @@
                 "transform": {
                     "type": "translation",
                     "translations": {
+                        "dto": "PPIA Admin",
                         "pcp": "MBBS",
-                        "pcc-chemist": "Chemist",
+                        "ppia-do": "PPIA Admin",
                         "pac": "Ayush",
                         "plc": "Lab",
                         "ps-fieldstaff": "Field Staff",
-                        "ppia-do": "PPIA Admin"
+                        "pcc-chemist": "Chemist",
+                        "fo": "Field Officer"
                     }
                 },
                 "aggregation": "simple",
@@ -436,6 +452,23 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "fdc": "FDC",
+                        "private_drugs": "Private Drugs"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "treatment_options",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Regimen"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "first_voucher_generation_date",
@@ -552,6 +585,79 @@
                 "display": "Adherence Mechanism Assigned"
             },
             {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "doses_per_week",
+                "calculate_total": false,
+                "column_id": "doses_per_week",
+                "type": "field",
+                "display": "doses_per_week"
+            },{
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "adherence_schedule_date_start",
+                "calculate_total": false,
+                "column_id": "adherence_schedule_date_start",
+                "type": "field",
+                "display": "adherence_schedule_date_start"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "adherence_total_doses_taken",
+                "calculate_total": false,
+                "column_id": "adherence_total_doses_taken",
+                "type": "field",
+                "display": "adherence_total_doses_taken"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "aggregated_score_count_taken",
+                "calculate_total": false,
+                "column_id": "aggregated_score_count_taken",
+                "type": "field",
+                "display": "aggregated_score_count_taken"
+            },
+            {
+                "expression": {
+                    "type": "evaluator",
+                    "context_variables": {
+                        "a": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "doses_per_week"
+                        },
+                        "b": {
+                            "datatype": "date",
+                            "type": "property_name",
+                            "property_name": "adherence_schedule_date_start"
+                        }
+                    },
+                    "statement": "int(round(((today - b).days / 7.0) * a))"
+                },
+                "type": "expression",
+                "display": "total_expected_doses_taken",
+                "column_id": "total_expected_doses_taken",
+                "visible": false
+            },
+            {
                 "expression": {
                     "type": "evaluator",
                     "context_variables": {
@@ -583,45 +689,6 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Treatment Outcome"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "visible": false,
-                "transform": {},
-                "aggregation": "simple",
-                "field": "total_expected_doses_taken",
-                "calculate_total": false,
-                "column_id": "total_expected_doses_taken",
-                "type": "field",
-                "display": "total_expected_doses_taken"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "visible": false,
-                "transform": {},
-                "aggregation": "simple",
-                "field": "adherence_total_doses_taken",
-                "calculate_total": false,
-                "column_id": "adherence_total_doses_taken",
-                "type": "field",
-                "display": "adherence_total_doses_taken"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "visible": false,
-                "transform": {},
-                "aggregation": "simple",
-                "field": "aggregated_score_count_taken",
-                "calculate_total": false,
-                "column_id": "aggregated_score_count_taken",
-                "type": "field",
-                "display": "aggregated_score_count_taken"
             },
             {
                 "sortable": false,

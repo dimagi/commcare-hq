@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from django.core.management.base import BaseCommand, CommandError
@@ -9,6 +10,8 @@ from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, g
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
+from six.moves import input
+import six
 
 types = [
     "feature_flags",
@@ -103,7 +106,7 @@ class Command(BaseCommand):
         from corehq.apps.domain.models import Domain
         new_domain_obj = Domain.get_by_name(self.new_domain)
         if new_domain_obj:
-            if raw_input(
+            if input(
                 '{} domain already exists. Do you still want to continue? [y/n]'.format(self.new_domain)
             ).lower() == 'y':
                 return
@@ -125,7 +128,7 @@ class Command(BaseCommand):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 
         for toggle in all_toggles():
-            if toggle.enabled(self.existing_domain):
+            if toggle.enabled(self.existing_domain, NAMESPACE_DOMAIN):
                 self.stdout.write('Setting flag: {}'.format(toggle.slug))
                 if not self.no_commit:
                     toggle.set(self.new_domain, True, NAMESPACE_DOMAIN)
@@ -318,7 +321,7 @@ class Command(BaseCommand):
         attachments = {}
         attachemnt_stubs = None
         if isinstance(doc, BlobMixin) and doc.blobs:
-            attachemnt_stubs = {k: v.to_json() for k, v in doc.blobs.iteritems()}
+            attachemnt_stubs = {k: v.to_json() for k, v in six.iteritems(doc.blobs)}
             doc['external_blobs'] = {}
             if doc._attachments:
                 del doc['_attachments']

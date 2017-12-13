@@ -1,28 +1,64 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
-from custom.icds_reports.utils import percent_diff, get_value, apply_exclude
+from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column
 
 
-# @quickcache(['config'], timeout=24 * 60 * 60)
+@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False):
 
     def get_data_for_child_health_monthly(date, filters):
+
+        moderately_underweight = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_moderately_underweight'
+        )
+        severely_underweight = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_severely_underweight'
+        )
+        wasting_moderate = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'wasting_moderate'
+        )
+        wasting_severe = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'wasting_severe'
+        )
+        stunting_moderate = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'stunting_moderate'
+        )
+        stunting_severe = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'stunting_severe'
+        )
+        wer_eligible = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'wer_eligible'
+        )
+        height_eligible = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'height_eligible'
+        )
+
         queryset = AggChildHealthMonthly.objects.filter(
             month=date, **filters
         ).values(
             'aggregation_level'
         ).annotate(
             underweight=(
-                Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
+                Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid=Sum('wer_eligible'),
-            wasting=Sum('wasting_moderate') + Sum('wasting_severe'),
-            stunting=Sum('stunting_moderate') + Sum('stunting_severe'),
-            height_eli=Sum('height_eligible'),
+            valid=Sum(wer_eligible),
+            wasting=Sum(wasting_moderate) + Sum(wasting_severe),
+            stunting=Sum(stunting_moderate) + Sum(stunting_severe),
+            height_eli=Sum(height_eligible),
             low_birth_weight=Sum('low_birth_weight_in_month'),
             bf_birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
@@ -120,8 +156,8 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
-                        "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
-                        "undernutrition and has long lasting harmful consequences on the growth of a child")
+                        "of the WHO Child Growth Standards median. Stunting is a sign of chronic undernutrition "
+                        "and has long lasting harmful consequences on the growth of a child")
                     ),
                     'percent': percent_diff(
                         'stunting',
@@ -139,7 +175,7 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'stunning'
+                    'redirect': 'stunting'
                 },
                 {
                     'label': _('Newborns with Low Birth Weight'),

@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from django import template
 from django.urls import reverse
 from datetime import datetime, timedelta
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
+from six.moves import range
 
 xmldate_format= '%Y-%m-%dT%H:%M:%S'
 output_format = SERVER_DATETIME_FORMAT_NO_SEC
@@ -12,7 +14,7 @@ register = template.Library()
 
 @register.simple_tag
 def get_daterange_links(view_name, args={}):
-    base_link = reverse(view_name,kwargs=args)
+    base_link = reverse(view_name, kwargs=args)
     return get_daterange_links_raw(base_link, args)
 
 
@@ -38,7 +40,7 @@ def get_daterange_links_raw(base_link, args={}):
 
 
 @register.simple_tag
-def get_daterange_links_basic(base_link, days=[0,7,30,90], args={}):
+def get_daterange_links_basic(base_link, days=[0, 7, 30, 90], args={}):
     '''Allows you to pass in a list of day counts representing how 
        far to go back for each link. For known links it will generate
        a pretty string to display the time, otherwise it will say
@@ -107,7 +109,7 @@ def aggregate_section_totals(section_name, results_arr, daily):
         if summation == []:
             summation = summation + itemarr[-1]
         else:
-            for i in range(0,len(itemarr[-1])):
+            for i in range(0, len(itemarr[-1])):
                 summation[i] += itemarr[-1][i]
                 
     ret = ''

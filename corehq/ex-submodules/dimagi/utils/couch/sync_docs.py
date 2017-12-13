@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import logging
 from collections import namedtuple
 
 from couchdbkit import push, RequestFailed
 from couchdbkit.exceptions import ResourceNotFound
+import settings
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
         index_design_docs(db, docid, design_name_)
 
 
-def index_design_docs(db, docid, design_name):
+def index_design_docs(db, docid, design_name, wait=True):
     # found in the innards of couchdbkit
     view_names = list(db[docid].get('views', {}))
     if view_names:
@@ -33,7 +35,10 @@ def index_design_docs(db, docid, design_name):
         view = '%s/%s' % (design_name, view_names[0])
         while True:
             try:
-                list(db.view(view, limit=0))
+                if wait:
+                    list(db.view(view, limit=0))
+                else:
+                    list(db.view(view, limit=0, stale=settings.COUCH_STALE_QUERY))
             except RequestFailed as e:
                 if 'timeout' not in e.message and e.status_int != 504:
                     raise

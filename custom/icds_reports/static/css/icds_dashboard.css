@@ -173,6 +173,13 @@ nvd3 > svg {
     color: #0a6aa1;
 }
 
+.breadcrump-element-with-pointer {
+    font-weight: bold;
+    font-size: 18px;
+    color: #0a6aa1;
+    cursor: pointer;
+}
+
 .less-padding {
     padding: 6px 2px;
 }
@@ -213,6 +220,7 @@ nvd3 > svg {
     font-size: 14px;
     padding-right: 0;
     padding-left: 0;
+    z-index: 1;
 }
 
 .navbar-default {
@@ -346,8 +354,9 @@ h4 {
 }
 
 .see-more {
-    float: right;
     margin-right: 40px;
+    flex: 0 1 auto;
+    margin-left: auto;
 }
 
 .see-more > a {
@@ -387,6 +396,11 @@ h4 {
 .number {
     font-weight: bold;
     font-size: 45px;
+}
+
+.string {
+    font-weight: bold;
+    font-size: 40px;
 }
 
 .second_number {
@@ -442,20 +456,38 @@ h4 {
 }
 
 .kpi-content {
-    position: relative;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-content: center;
 }
 
 .kpi-percents {
-    bottom: -10px;
     width: 100%;
-    position: absolute;
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
 }
 
-.kpi-numbers {
+.kpi-percents-text {
+    display: flex;
     position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
+    align-items: center;
+}
+
+.kpi-justify-center {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.kpi-numbers-format {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .small-table > .small-table-record {
@@ -637,4 +669,97 @@ table.no-footer {
     font-size: 14px;
     line-height: 1.42857143;
     color: #555;
+}
+
+#detailsChart .nv-series-0, #detailsChart .nv-series-1, #detailsChart .nv-series-2{
+    stroke-opacity: 0 !important;
+}
+
+#detailsChart .nv-area {
+    fill-opacity: 0.75;
+}
+
+#detailsChart line.nv-guideline {
+    stroke: #ccc;
+}
+
+.headers-overflow-unset .dataTables_scrollHead {
+    overflow: unset !important;
+}
+
+.scroller {
+    overflow-x: hidden;
+    position: relative; /* relative or absolute positioning required by Perfect Scrollbar */
+    max-height: 500px;  /* height must be limited to induce scrolling behavior */
+}
+
+#beneficiariesTable_processing {
+    position: fixed;
+    left: 85%;
+    width: 40%;
+    height: 40px;
+    top: 25%;
+}
+
+#beneficiariesTable {
+    width: 100%;
+}
+
+.tick line {
+    stroke-opacity: .1 !important;
+}
+
+.chart-dot {
+    stroke-opacity: 1 !important;
+    fill-opacity: 1 !important;
+}
+
+
+table.dataTable.fixedHeader-floating,
+table.dataTable.fixedHeader-locked {
+    background-color: white;
+    top: 110px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+table.dataTable.fixedHeader-floating {
+    position: fixed !important;
+}
+
+table.dataTable.fixedHeader-locked {
+    position: absolute !important;
+}
+
+@media print {
+  table.fixedHeader-floating {
+    display: none;
+  }
+}
+
+.locPopup {
+    position: fixed;
+    display:none;
+    z-index: 90000;
+    background-color: white;
+    border: 1px solid #a9a9a9;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.locPopup > .row {
+    width: 100%;
+}
+
+.locPopup > button {
+    display: block;
+    margin: 5px auto;
+}
+
+table.dataTable,
+table.dataTable th,
+table.dataTable td {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
 }

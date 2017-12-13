@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.ivr.models import Call
@@ -322,7 +323,6 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         entry.set_two_way()
         entry.set_verified()
         entry.save()
-        self.user.user_data['time_zone'] = 'Africa/Nairobi'
         self.user.save()
 
     def tearDown(self):
@@ -336,10 +336,32 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
             date
         )
 
+    def create_trigger_case(self):
+        return create_test_case(
+            self.domain,
+            self.case_type,
+            'test-case',
+            drop_signals=False,
+            user_id=self.user.get_id
+        )
+
+    def create_user_case(self):
+        return create_test_case(
+            self.domain,
+            'commcare-user',
+            self.user.username,
+            case_properties={
+                'hq_user_id': self.user.get_id,
+                'external_id': self.user.get_id,
+                'time_zone': 'Africa/Nairobi',
+            },
+            drop_signals=False,
+            owner_id=self.user.get_id,
+        )
+
     @run_with_all_backends
     def test_ok(self):
-        with create_test_case(self.domain, self.case_type, 'test-case', drop_signals=False,
-                user_id=self.user.get_id) as case:
+        with self.create_trigger_case() as case, self.create_user_case():
 
             self.assertIsNone(self.handler.get_reminder(case))
 

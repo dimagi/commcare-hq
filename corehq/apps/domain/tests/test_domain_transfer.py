@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+from __future__ import absolute_import
 from datetime import datetime
 from mock import patch
 

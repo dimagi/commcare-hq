@@ -4,7 +4,15 @@
             <div class="row">
                 <span id="reportTitle" class="breadcrump-element" ng-bind="$ctrl.label"></span>
                 <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
-                <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
+                <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element-with-pointer" ng-click="$ctrl.resetAdditionalFilter()" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
+                <span class="breadcrump-element-with-pointer" ng-if="$ctrl.filtersData.gender" ng-click="$ctrl.resetOnlyAgeAdditionalFilter()">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    <span>{$ $ctrl.genderLabel $}</span>
+                </span>
+                <span class="breadcrump-element" ng-if="$ctrl.filtersData.age">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                    <span>{$ $ctrl.ageLabel $}</span>
+                </span>
             </div>
             <div class="row">
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
@@ -12,6 +20,7 @@
                     <i class="fa fa-chevron-right" aria-hidden="true"></i>
                     <span id="locationName">{$ loc.name $}</span>
                 </span>
+
             </div>
         </div>
         <div class="col-md-7">
@@ -19,6 +28,9 @@
         </div>
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
+        <div class="alert alert-info" ng-if="$ctrl.showInfoMessage()">
+            <strong>Info!</strong> Data shown is for {$ $ctrl.prevDay $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning tomorrow.
+        </div>
         <div ng-if="$ctrl.message" class="alert alert-info">
             <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
         </div>
@@ -35,7 +47,7 @@
                 <div class="col-md-6">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>Top 5 {$ $ctrl.location_type $}s</span>
+                            <span>Top 5 {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -44,14 +56,15 @@
                             <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="top.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
+                            <span ng-if="top.value !== undefined" style="font-size: 30px;">{$ top.value $}</span>
+                            <span ng-if="top.percent !== undefined" style="font-size: 30px;">{$ top.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>Bottom 5 {$ $ctrl.location_type $}s</span>
+                            <span>Bottom 5 {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -60,7 +73,8 @@
                             <span class="circle-blue" ng-bind="$ctrl.bottom_five.length - $index"></span>
                             <span style="font-size: 30px;" ng-bind="bottom.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
+                            <span ng-if="bottom.value !== undefined" style="font-size: 30px;">{$ bottom.value $}</span>
+                            <span ng-if="bottom.percent !== undefined" style="font-size: 30px;">{$ bottom.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>
@@ -69,7 +83,7 @@
                 <div class="col-md-12">
                     <div class="small-table">
                         <div class="small-table-title">
-                            <span>{$ $ctrl.location_type $}s Ranking</span>
+                            <span>{$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking</span>
                             <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
                                 popover-placement="top"
                                 popover-trigger="'mouseenter'"></i>
@@ -78,7 +92,8 @@
                             <span class="circle-blue" ng-bind="$index + 1"></span>
                             <span style="font-size: 30px;" ng-bind="loc.loc_name"></span>
                             <span style="font-size: 30px;"> - </span>
-                            <span style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>
+                            <span ng-if="loc.value !== undefined" style="font-size: 30px;">{$ loc.value $}</span>
+                            <span ng-if="loc.percent !== undefined" style="font-size: 30px;">{$ loc.percent | number:2 $} %</span>
                         </div>
                     </div>
                 </div>

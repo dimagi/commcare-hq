@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import inspect
 import json
 import uuid
@@ -27,6 +28,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
+from six.moves import zip
 
 
 class BaseDumpLoadTest(TestCase):

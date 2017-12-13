@@ -12,6 +12,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
+from django.conf import settings
 import sys
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
@@ -38,6 +39,7 @@ from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log
 
 from celery.task.control import revoke as revoke_celery_task
+import six
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -88,7 +90,6 @@ class SubmissionPost(object):
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
         # used on forms and errors
-        xform.auth_context = self.auth_context.to_json()
         xform.submit_ip = self.submit_ip
         xform.path = self.path
 
@@ -138,7 +139,7 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-        result = process_xform_xml(self.domain, self.instance, self.attachments)
+        result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
         self._post_process_form(submitted_form)
@@ -166,7 +167,9 @@ class SubmissionPost(object):
 
             with case_db_cache as case_db:
                 instance = xforms[0]
-                if instance.xmlns == DEVICE_LOG_XMLNS:
+                # ignore temporarily till we migrate DeviceReportEntry id to bigint
+                ignore_device_logs = settings.SERVER_ENVIRONMENT == 'icds'
+                if not ignore_device_logs and instance.xmlns == DEVICE_LOG_XMLNS:
                     submission_type = 'device_log'
                     try:
                         process_device_log(self.domain, instance)
@@ -198,7 +201,7 @@ class SubmissionPost(object):
                         if existing_form.is_error:
                             response_nature = ResponseNature.PROCESSING_FAILURE
                         else:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
+                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
                     else:
                         self.interface.save_processed_models([instance])
                 elif not instance.is_error:
@@ -221,7 +224,7 @@ class SubmissionPost(object):
                         instance.initial_processing_complete = True
                         error_message = self.save_processed_models(case_db, xforms, case_stock_result)
                         if error_message:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILIRE
+                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
                 elif instance.is_error:
@@ -392,7 +395,7 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
+    error_message = u'{}: {}'.format(type(exception).__name__, six.text_type(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 

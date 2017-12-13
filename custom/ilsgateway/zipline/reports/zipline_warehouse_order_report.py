@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 
 from django.utils.translation import ugettext_lazy as _

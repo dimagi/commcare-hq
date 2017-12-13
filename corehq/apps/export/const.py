@@ -2,6 +2,7 @@
 Some of these constants correspond to constants set in corehq/apps/export/static/export/js/const.js
 so if changing a value, ensure that both places reflect the change
 """
+from __future__ import absolute_import
 from couchexport.deid import (
     deid_ID,
     deid_date

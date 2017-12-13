@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import logging
 from itertools import groupby
@@ -98,7 +99,7 @@ class CaseProcessingResult(object):
                 # only update the flags that are already in the database
                 flags_to_update = OwnershipCleanlinessFlag.objects.filter(
                     Q(domain=self.domain),
-                    Q(owner_id__in=flags_to_save.keys()),
+                    Q(owner_id__in=list(flags_to_save)),
                     Q(is_clean=True) | Q(hint__isnull=True)
                 )
                 for flag in flags_to_update:
@@ -278,8 +279,8 @@ def _validate_indices(case_db, cases):
                         if xform.metadata and xform.metadata.commcare_version:
                             commcare_version = xform.metadata.commcare_version
                             _soft_assert(
-                                commcare_version < LooseVersion("2.38"),
-                                "Invalid Case Index in CC version >= 2.38", {
+                                commcare_version < LooseVersion("2.39"),
+                                "Invalid Case Index in CC version >= 2.39", {
                                     'domain': case_db.domain,
                                     'xform_id': xform.form_id,
                                     'missing_case_id': index.referenced_id,
@@ -398,6 +399,8 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
 
 
 def get_case_updates(xform):
+    if not xform:
+        return []
     updates = sorted(
         [case_update_from_block(cb) for cb in extract_case_blocks(xform)],
         key=lambda update: update.id

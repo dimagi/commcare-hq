@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.toggles import NINETYNINE_DOTS
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -22,12 +23,10 @@ from custom.enikshay.case_utils import (
     get_episode_case_from_adherence,
     CASE_TYPE_EPISODE,
     CASE_TYPE_PERSON,
+    get_sector,
 )
-from custom.enikshay.const import (
-    TREATMENT_OUTCOME,
-    NINETYNINEDOTS_EPISODE_PROPERTIES,
-    NINETYNINEDOTS_PERSON_PROPERTIES,
-)
+from custom.enikshay.const import TREATMENT_OUTCOME
+from custom.enikshay.integrations.ninetyninedots.api_spec import load_api_spec
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
@@ -101,22 +100,24 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
     def allowed_to_forward(self, case):
         if not self._allowed_case_type(case) and self._allowed_user(case):
             return False
-
         try:
             if case.type == CASE_TYPE_PERSON:
                 person_case = case
                 episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
-                props_changed = case_properties_changed(person_case, NINETYNINEDOTS_PERSON_PROPERTIES)
                 registered_episode = episode_registered_with_99dots(episode_case)
             elif case.type == CASE_TYPE_EPISODE:
                 episode_case = case
-                props_changed = case_properties_changed(episode_case, NINETYNINEDOTS_EPISODE_PROPERTIES)
                 registered_episode = (episode_registered_with_99dots(episode_case)
                                       and not case_properties_changed(episode_case, 'dots_99_registered'))
             else:
                 return False
         except ENikshayCaseNotFound:
             return False
+
+        sector = get_sector(episode_case)
+        api_spec = load_api_spec()
+        properties_to_check = api_spec.case_properties_by_case_type(sector, case.type)
+        props_changed = case_properties_changed(case, properties_to_check)
 
         return (
             registered_episode
@@ -156,6 +157,8 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
 
         try:
             episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
+            if episode_case.closed:
+                return False
         except ENikshayCaseNotFound:
             return False
 

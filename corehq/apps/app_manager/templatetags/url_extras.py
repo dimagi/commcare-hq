@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from django import template
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+import six
 
 register = template.Library()
 
@@ -12,7 +14,7 @@ def urlencode(parser, token):
         path_var = tokens.pop()
         params_var = tokens.pop()
     except:
-        raise template.TemplateSyntaxError, "%r requires at least 2 parameters" % tag_name
+        raise template.TemplateSyntaxError("%r requires at least 2 parameters" % tag_name)
     params = {}
     delete = set()
     while(tokens):
@@ -23,15 +25,17 @@ def urlencode(parser, token):
                 assert(tokens.pop() == "as")
                 value = tokens.pop()
             except:
-                raise template.TemplateSyntaxError, "%r tag has incomplete 'with...as'" % tag_name
+                raise template.TemplateSyntaxError("%r tag has incomplete 'with...as'" % tag_name)
             params[key] = value
         elif cmd == "without":
             try:
                 delete.add(tokens.pop())
             except:
-                raise template.TemplateSyntaxError, "%r tag has incomplete 'without'" % tag_name
+                raise template.TemplateSyntaxError("%r tag has incomplete 'without'" % tag_name)
         else:
-            raise template.TemplateSyntaxError, "%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd)
+            raise template.TemplateSyntaxError(
+                "%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd)
+            )
 
     return URLEncodeNode(path_var, params_var, params, delete)
 
@@ -48,10 +52,10 @@ class URLEncodeNode(template.Node):
         path = self.path_var.resolve(context)
         params = {}
         for key, val in self.params_var.resolve(context).lists():
-            params[key] = [v.encode('utf-8') if isinstance(v, unicode) else v
+            params[key] = [v.encode('utf-8') if isinstance(v, six.text_type) else v
                            for v in val]
 
-        for key,val in self.extra_params.items():
+        for key, val in self.extra_params.items():
             key = template.Variable(key).resolve(context)
             val = template.Variable(val).resolve(context)
             params[key] = val
@@ -61,6 +65,6 @@ class URLEncodeNode(template.Node):
 
         # clean up
         for key in params:
-            if isinstance(params[key], unicode):
+            if isinstance(params[key], six.text_type):
                 params[key] = params[key].encode('utf-8')
-        return "%s?%s" % (path, urllib.urlencode(params, True)) if params else path
+        return "%s?%s" % (path, six.moves.urllib.parse.urlencode(params, True)) if params else path

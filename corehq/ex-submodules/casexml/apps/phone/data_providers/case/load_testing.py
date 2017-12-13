@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
 from casexml.apps.phone.xml import get_case_element, tostring

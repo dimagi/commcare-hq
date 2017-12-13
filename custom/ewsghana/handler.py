@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.sms.models import MessagingEvent
@@ -13,6 +14,7 @@ from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
+import six
 
 VERIFICATION_KEYWORDS = ['yes']
 
@@ -39,7 +41,7 @@ def handle(verified_contact, text, msg):
 
     args = text.split()
     if not args:
-        send_sms_to_verified_number(verified_contact, unicode(INVALID_MESSAGE))
+        send_sms_to_verified_number(verified_contact, six.text_type(INVALID_MESSAGE))
         return True
     keyword = args[0]
     args = args[1:]

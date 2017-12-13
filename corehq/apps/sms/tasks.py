@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import math
 from datetime import datetime, timedelta
 from celery.task import task
@@ -19,6 +20,7 @@ from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import RETRY_SMS_INDEFINITELY
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -47,6 +49,8 @@ def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
+    elif msg.direction == OUTGOING and RETRY_SMS_INDEFINITELY.enabled(msg.domain):
+        delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
         remove_from_queue(msg)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django import forms
@@ -17,6 +18,7 @@ from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import map
 
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
@@ -256,7 +258,7 @@ class FormListForm(object):
         return {
             'headers': self.get_header_json(),
             'row_spec': self.get_row_spec(),
-            'rows': map(self.form_to_json, self.child_forms),
+            'rows': list(map(self.form_to_json, self.child_forms)),
             'errors': getattr(self, 'errors', False),
             'csrf_token': get_token(self.request),
         }

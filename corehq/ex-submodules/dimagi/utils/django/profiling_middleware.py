@@ -2,6 +2,7 @@
 # Original author: udfalkso
 # Modified by: Shwagroo Team
 
+from __future__ import absolute_import
 import sys
 import os
 import re
@@ -84,8 +85,8 @@ class ProfileMiddleware(MiddlewareMixin):
                 mygroups[ group ] += time
 
         return "<pre>" + \
-               " ---- By file ----\n\n" + self.get_summary(mystats,sum) + "\n" + \
-               " ---- By group ---\n\n" + self.get_summary(mygroups,sum) + \
+               " ---- By file ----\n\n" + self.get_summary(mystats, sum) + "\n" + \
+               " ---- By group ---\n\n" + self.get_summary(mygroups, sum) + \
                "</pre>"
 
     def process_response(self, request, response):

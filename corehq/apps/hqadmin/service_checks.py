@@ -1,6 +1,7 @@
 """
 A collection of functions which test the most basic operations of various services.
 """
+from __future__ import absolute_import
 from collections import namedtuple
 import datetime
 import json
@@ -76,6 +77,9 @@ def check_kafka():
 
 
 def check_touchforms():
+    if not getattr(settings, 'XFORMS_PLAYER_URL', None):
+        return ServiceStatus(True, "Touchforms isn't needed for this cluster")
+
     try:
         res = requests.post(settings.XFORMS_PLAYER_URL,
                             data='{"action": "heartbeat"}',

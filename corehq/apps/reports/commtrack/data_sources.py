@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
@@ -22,6 +23,7 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, \
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
 from decimal import Decimal
+import six
 
 
 def format_decimal(d):
@@ -409,12 +411,12 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
 
         products = dict((r['product_id'], r['product_name']) for r in data)
-        product_ids = sorted(products.keys(), key=lambda e: products[e])
+        product_ids = sorted(products, key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = _location_map(by_supply_point.keys())
+        locs = _location_map(list(by_supply_point))
 
-        for loc_id, subcases in by_supply_point.iteritems():
+        for loc_id, subcases in six.iteritems(by_supply_point):
             if loc_id not in locs:
                 continue  # it's archived, skip
             loc = locs[loc_id]
@@ -441,14 +443,14 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
     @property
     def converted_start_datetime(self):
         start_date = self.start_date
-        if isinstance(start_date, unicode):
+        if isinstance(start_date, six.text_type):
             start_date = parser.parse(start_date)
         return start_date
 
     @property
     def converted_end_datetime(self):
         end_date = self.end_date
-        if isinstance(end_date, unicode):
+        if isinstance(end_date, six.text_type):
             end_date = parser.parse(end_date)
         return end_date
 

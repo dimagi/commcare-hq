@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 
 from django.core.management import BaseCommand
@@ -16,7 +18,7 @@ class BaseCleanupCSVCommand(BaseCommand):
         cleaned_rows = self.clean_rows(header, body)
         self.assert_rectangular_matrix(cleaned_rows)
         self.write_to_csv(cleaned_rows, new_filename)
-        print 'outputted to %s' % new_filename
+        print('outputted to %s' % new_filename)
 
     @staticmethod
     def get_rows_from_csv_file(filename):

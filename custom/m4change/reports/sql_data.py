@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 from sqlagg import SumColumn
 from sqlagg.columns import SimpleColumn
@@ -51,7 +52,7 @@ class AncHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ["domain","location_id"]
+        return ["domain", "location_id"]
 
 
 class ProjectIndicatorsCaseSqlData(SqlData):
@@ -103,7 +104,7 @@ class ProjectIndicatorsCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ["domain","mother_id","location_id"]
+        return ["domain", "mother_id", "location_id"]
 
 
 class LdHmisCaseSqlData(SqlData):
@@ -212,7 +213,7 @@ class ImmunizationHmisCaseSqlData(SqlData):
             DatabaseColumn(_("Location ID"), SimpleColumn("location_id")),
             DatabaseColumn(_("OPV0 - birth "), SumColumn("opv_0_total")),
             DatabaseColumn(_("Hep.B0 - birth"), SumColumn("hep_b_0_total")),
-            DatabaseColumn(_("BCG"),SumColumn("bcg_total")),
+            DatabaseColumn(_("BCG"), SumColumn("bcg_total")),
             DatabaseColumn(_("OPV1"), SumColumn("opv_1_total")),
             DatabaseColumn(_("HEP.B1"), SumColumn("hep_b_1_total")),
             DatabaseColumn(_("Penta.1"), SumColumn("penta_1_total")),
@@ -236,7 +237,7 @@ class ImmunizationHmisCaseSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ["domain","location_id"]
+        return ["domain", "location_id"]
 
 
 class McctMonthlyAggregateFormSqlData(SqlData):
@@ -293,7 +294,7 @@ class McctMonthlyAggregateFormSqlData(SqlData):
 
     @property
     def group_by(self):
-        return ["domain","location_id"]
+        return ["domain", "location_id"]
 
 
 class AllHmisCaseSqlData(SqlData):

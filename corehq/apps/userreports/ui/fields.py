@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 import json
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     StaticDataSourceConfiguration
 from corehq.apps.userreports.ui.widgets import JsonWidget
+import six
 
 
 class ReportDataSourceField(forms.ChoiceField):
@@ -30,7 +32,7 @@ class JsonField(forms.CharField):
         super(JsonField, self).__init__(*args, **kwargs)
 
     def prepare_value(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             try:
                 return json.loads(value)
             except ValueError:

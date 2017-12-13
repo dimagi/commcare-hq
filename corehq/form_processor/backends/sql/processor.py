@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import logging
 import uuid
@@ -19,10 +20,11 @@ from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
-    CommCareCaseSQL, FormEditRebuild, Attachment)
+    CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
+import six
 
 
 class FormProcessorSQL(object):
@@ -63,8 +65,15 @@ class FormProcessorSQL(object):
             ))
 
     @classmethod
+    def copy_form_operations(cls, from_form, to_form):
+        for op in from_form.history:
+            op.id = None
+            op.form = to_form
+            to_form.track_create(op)
+
+    @classmethod
     def new_xform(cls, form_data):
-        form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
+        form_id = extract_meta_instance_id(form_data) or six.text_type(uuid.uuid4())
 
         return XFormInstanceSQL(
             # other properties can be set post-wrap
@@ -146,6 +155,13 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
+        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        operation = XFormOperationSQL(
+            user_id=user_id,
+            date=new_xform.edited_on,
+            operation=XFormOperationSQL.EDIT
+        )
+        new_xform.track_create(operation)
         return existing_xform, new_xform
 
     @classmethod
@@ -162,7 +178,7 @@ class FormProcessorSQL(object):
             # avoid moving to a separate sharded db
             xform.form_id = new_id_in_same_dbalias(xform.form_id)
         else:
-            xform.form_id = unicode(uuid.uuid4())
+            xform.form_id = six.text_type(uuid.uuid4())
         return xform
 
     @classmethod

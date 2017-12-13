@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 from collections import OrderedDict
 
 from django.template.defaultfilters import slugify
@@ -17,6 +18,10 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
+import six
+from six.moves import zip
+from functools import reduce
+from six.moves import range
 
 
 class SqlReportException(Exception):
@@ -232,7 +237,7 @@ class SqlData(ReportDataSource):
     @property
     def wrapped_filters(self):
         def _wrap_if_necessary(string_or_filter):
-            if isinstance(string_or_filter, basestring):
+            if isinstance(string_or_filter, six.string_types):
                 filter = RawFilter(string_or_filter)
             else:
                 filter = string_or_filter
@@ -412,7 +417,7 @@ def calculate_total_row(rows):
         num_cols = len(rows[0])
         for i in range(num_cols):
             colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-            columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+            columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
             if len(columns):
                 total_row.append(reduce(lambda x, y: x + y, columns, 0))
             else:

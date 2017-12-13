@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.models import CommCareCase
 
 
@@ -30,7 +31,7 @@ def get_form(case, action_filter=lambda a: True, form_filter=lambda f: True, rev
     """
     gf = get_forms(case, action_filter=action_filter, form_filter=form_filter, reverse=reverse)
     try:
-        return gf.next()
+        return next(gf)
     except StopIteration:
         return None
 

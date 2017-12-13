@@ -9,23 +9,25 @@ from cStringIO import StringIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
+from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
 import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from couchdbkit import ResourceNotFound
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
-    BadStateException, RestoreException, DateOpenedBugException,
+    BadStateException, RestoreException
 )
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, ICDS_LIVEQUERY
+from casexml.apps.phone.utils import get_cached_items_with_count
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, ICDS_LIVEQUERY, NAMESPACE_USER
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
@@ -67,8 +69,8 @@ DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 def stream_response(payload, headers=None, status=200):
     try:
-        response = FileResponse(
-            payload,
+        response = StreamingHttpResponse(
+            FileWrapper(payload),
             content_type="text/xml; charset=utf-8",
             status=status
         )
@@ -123,6 +125,8 @@ class RestoreContent(object):
     def append(self, xml_element):
         self.num_items += 1
         if isinstance(xml_element, six.binary_type):
+            xml_element, num = get_cached_items_with_count(xml_element)
+            self.num_items += num - 1
             self.response_body.write(xml_element)
         else:
             self.response_body.write(xml_util.tostring(xml_element))
@@ -232,11 +236,13 @@ class CachedResponse(object):
         get_blob_db().put(NoClose(fileobj), name, timeout=max(timeout // 60, 60))
         return cls(name)
 
-    def __nonzero__(self):
+    def __bool__(self):
         try:
             return bool(self.as_file())
         except NotFound:
             return False
+
+    __nonzero__ = __bool__
 
     def as_string(self):
         with self.as_file() as fileobj:
@@ -283,7 +289,7 @@ class RestoreParams(object):
         self.app = app
         self.device_id = device_id
         self.openrosa_version = (LooseVersion(openrosa_version)
-            if isinstance(openrosa_version, basestring) else openrosa_version)
+            if isinstance(openrosa_version, six.string_types) else openrosa_version)
 
     @property
     def app_id(self):
@@ -337,7 +343,7 @@ class RestoreState(object):
             username = self.restore_user.username
             if LIVEQUERY_SYNC.enabled(self.domain):
                 case_sync = LIVEQUERY
-            elif self.domain == 'icds-cas' and ICDS_LIVEQUERY.enabled(username):
+            elif self.domain == 'icds-cas' and ICDS_LIVEQUERY.enabled(username, namespace=NAMESPACE_USER):
                 case_sync = LIVEQUERY
             else:
                 case_sync = DEFAULT_CASE_SYNC
@@ -374,8 +380,6 @@ class RestoreState(object):
             if self.params.sync_log_id:
                 try:
                     sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                    if settings.SERVER_ENVIRONMENT == "production":
-                        self._check_for_date_opened_bug(sync_log)
                 except ResourceNotFound:
                     # if we are in loose mode, return an HTTP 412 so that the phone will
                     # just force a fresh sync
@@ -395,26 +399,6 @@ class RestoreState(object):
             else:
                 self._last_sync_log = None
         return self._last_sync_log
-
-    def _check_for_date_opened_bug(self, sync_log):
-        introduced_date = datetime(2016, 7, 19, 19, 15)
-        reverted_date = datetime(2016, 7, 20, 9, 15)  # date bug was reverted on HQ
-        resolved_date = datetime(2016, 7, 21, 0, 0)  # approximate date this fix was deployed
-
-        if introduced_date < sync_log.date < reverted_date:
-            raise DateOpenedBugException(self.restore_user, sync_log._id)
-
-        # if the last synclog was before the time we pushed out this resolution,
-        # we also need to check that they don't have a bad sync
-        if reverted_date <= sync_log.date < resolved_date:
-            synclogs = SyncLog.view(
-                "phone/sync_logs_by_user",
-                reduce=True,
-                startkey=[sync_log.user_id, json_format_datetime(introduced_date), None],
-                endkey=[sync_log.user_id, json_format_datetime(reverted_date), {}],
-            ).first()
-            if synclogs and synclogs.get('value') != 0:
-                raise DateOpenedBugException(self.restore_user, sync_log._id)
 
     @property
     def is_initial(self):

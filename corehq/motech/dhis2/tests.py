@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.test import SimpleTestCase
 from mock import patch, Mock
@@ -7,6 +8,7 @@ from corehq.motech.dhis2.api import JsonApiRequest
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'
 TEST_API_PASSWORD = 'district'
+TEST_DOMAIN = 'test-domain'
 
 
 class JsonApiRequestTests(SimpleTestCase):
@@ -17,7 +19,7 @@ class JsonApiRequestTests(SimpleTestCase):
         get_dhis2_connection_mock.return_value = Mock(log_level=99)  # Don't log anything
         self.addCleanup(patcher.stop)
 
-        self.api = JsonApiRequest(TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+        self.api = JsonApiRequest(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
         self.org_unit_id = 'abc'
         self.data_element_id = '123'
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore

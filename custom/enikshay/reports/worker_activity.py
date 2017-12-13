@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.exceptions import PermissionDenied
 from corehq.apps.es import UserES
 from corehq.apps.es.users import mobile_users
@@ -69,7 +70,7 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
 
     @property
     def user_ids(self):
-        return map(lambda u: u['user_id'], self.users)
+        return [u['user_id'] for u in self.users]
 
     @property
     def rows(self):

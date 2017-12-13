@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
@@ -145,9 +146,14 @@ class FormattedDetailColumn(object):
         sort = None
 
         if self.sort_xpath_function:
+            if self.sort_element and self.sort_element.type == 'index':
+                sort_type = self.sort_element.type
+            else:
+                sort_type = self.SORT_TYPE
+
             sort = sx.Sort(
                 text=sx.Text(xpath_function=self.sort_xpath_function),
-                type=self.SORT_TYPE,
+                type=sort_type,
             )
 
         if self.sort_element:

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.files.uploadedfile import UploadedFile
 
 from corehq.apps.receiverwrapper.util import submit_form_locally

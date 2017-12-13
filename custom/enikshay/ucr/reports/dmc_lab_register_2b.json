@@ -7,7 +7,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "test_2b",
+    "data_source_table": "test_2b_v4",
     "report_id": "dmc_lab_register_2b",
     "config": {
         "description": "",
@@ -104,6 +104,40 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_tu_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "TU Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_district_name",
+                "width": "85px",
+                "calculate_total": false,
+                "type": "field",
+                "display": "District Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_state_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "State Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
                 "aggregation": "simple",
                 "column_id": "sample_receipt_date",
                 "field": "sample_receipt_date",
@@ -160,9 +194,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "person_current_address",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Complete Address"
@@ -172,16 +208,17 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
-                        "tribal_population": "Tribal population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "slum_dweller": "Slum dweller",
                         "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "slum_dweller": "Slum dweller",
                         "prison_inmate": "Prison inmate"
                     }
                 },
@@ -198,42 +235,10 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "referring_facility_name",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Name of Referring health facility"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "tu_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "TU Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "district_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "District Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "state_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "State Name"
             },
             {
                 "sortable": false,
@@ -272,6 +277,7 @@
                 },
                 "aggregation": "simple",
                 "field": "diagnostic_test_reason",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Presumptive TB /RE/  Presumptive NTM"
@@ -341,10 +347,7 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {
-                    "type": "custom",
-                    "custom_type": "month_display"
-                },
+                "transform": {},
                 "aggregation": "simple",
                 "field": "follow_up_treatment_initiation_date_month",
                 "calculate_total": false,
@@ -433,6 +436,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_reported",
+                "width": "75px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of result"
@@ -474,15 +478,14 @@
                 "display": "Diabetic status (Diabetic / Non Diabetic / Unknown)"
             },
             {
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "display": "DST result",
                 "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "rif_resistance_result",
-                "calculate_total": false,
-                "type": "field",
-                "display": "DST result"
+                "column_id": "DST result"
             },
             {
                 "sortable": false,
@@ -504,7 +507,7 @@
                 "field": "treatment_initiation_details",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Treatment Initiation details/Referral for treatment"
+                "display": "Treatment initiation details (TB No. & TU details) / Referral for Treatment"
             }
         ]
     }

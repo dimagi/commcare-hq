@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import copy
 from couchforms.models import XFormInstance

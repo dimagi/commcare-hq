@@ -1,4 +1,7 @@
+from __future__ import absolute_import
 import datetime
+
+from couchdbkit import ResourceNotFound
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -8,6 +11,7 @@ from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import DuplicateError, MissingXMLNSError
 from dimagi.utils.couch import LockManager, ReleaseOnError
+import six
 
 
 class MultiLockManager(list):
@@ -57,7 +61,7 @@ class LockedFormProcessingResult(FormProcessingResult):
         return MultiLockManager([LockManager(self.submitted_form, self.lock)])
 
 
-def process_xform_xml(domain, instance, attachments=None):
+def process_xform_xml(domain, instance, attachments=None, auth_context=None):
     """
     Create a new xform to ready to be saved to a database in a thread-safe manner
     Returns a LockManager containing the new XFormInstance(SQL) and its lock,
@@ -69,14 +73,14 @@ def process_xform_xml(domain, instance, attachments=None):
     attachments = attachments or {}
 
     try:
-        return _create_new_xform(domain, instance, attachments=attachments)
+        return _create_new_xform(domain, instance, attachments=attachments, auth_context=auth_context)
     except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance, e)
     except DuplicateError as e:
         return _handle_id_conflict(e.xform, domain)
 
 
-def _create_new_xform(domain, instance_xml, attachments=None):
+def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None):
     """
     create but do not save an XFormInstance from an xform payload (xml_string)
     optionally set the doc _id to a predefined value (_id)
@@ -102,12 +106,10 @@ def _create_new_xform(domain, instance_xml, attachments=None):
 
     xform = interface.new_xform(form_data)
     xform.domain = domain
+    xform.auth_context = auth_context
 
     # Maps all attachments to uniform format and adds form.xml to list before storing
-    attachments = map(
-        lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
-        attachments.items()
-    )
+    attachments = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
     attachments.append(Attachment(name='form.xml', raw_content=instance_xml, content_type='text/xml'))
     interface.store_attachments(xform, attachments)
 
@@ -125,9 +127,9 @@ def _get_submission_error(domain, instance, error):
     :returns: xform error instance with raw xml as attachment
     """
     try:
-        message = unicode(error)
+        message = six.text_type(error)
     except UnicodeDecodeError:
-        message = unicode(str(error), encoding='utf-8')
+        message = six.text_type(str(error), encoding='utf-8')
 
     xform = FormProcessorInterface(domain).submission_error_form_instance(instance, message)
     return FormProcessingResult(xform)
@@ -165,7 +167,16 @@ def _handle_duplicate(new_doc):
     """
     interface = FormProcessorInterface(new_doc.domain)
     conflict_id = new_doc.form_id
-    existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
+    try:
+        existing_doc = FormAccessors(new_doc.domain).get_with_attachments(conflict_id)
+    except ResourceNotFound:
+        # Original form processing failed but left behind a form doc with no
+        # attachments. It's safe to delete this now since we're going to re-process
+        # the form anyway.
+        # https://sentry.io/dimagi/commcarehq/issues/261297321
+        from couchforms.models import XFormInstance
+        XFormInstance.get_db().delete_doc(conflict_id)
+        return FormProcessingResult(new_doc)
 
     existing_md5 = existing_doc.xml_md5()
     new_md5 = new_doc.xml_md5()
@@ -209,6 +220,7 @@ def apply_deprecation(existing_xform, new_xform, interface=None):
 
     interface = interface or FormProcessorInterface(existing_xform.domain)
     interface.copy_attachments(existing_xform, new_xform)
+    interface.copy_form_operations(existing_xform, new_xform)
     new_xform.form_id = existing_xform.form_id
     existing_xform = interface.assign_new_id(existing_xform)
     existing_xform.orig_id = new_xform.form_id

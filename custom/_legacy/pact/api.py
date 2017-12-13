@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, time
 import logging
 import uuid
@@ -28,6 +29,7 @@ from pact.forms.weekly_schedule_form import ScheduleForm, DAYS_OF_WEEK
 from pact.tasks import set_schedule_case_properties
 from pact.utils import pact_script_fields, case_script_field, submit_xform, query_per_case_submissions_facet
 from corehq.apps.app_manager.dbaccessors import get_latest_build_id
+from six.moves import range
 
 PACT_CLOUD_APPNAME = "PACT Cloud"
 PACT_CLOUDCARE_MODULE = "PACT Cloudcare"
@@ -48,7 +50,7 @@ def get_cloudcare_app():
     app = api.get_cloudcare_app(PACT_DOMAIN, PACT_CLOUD_APPNAME)
     app_id = app['_id']
 
-    pact_cloudcare = filter(lambda x: x['name']['en'] == PACT_CLOUDCARE_MODULE, app['modules'])
+    pact_cloudcare = [x for x in app['modules'] if x['name']['en'] == PACT_CLOUDCARE_MODULE]
     forms = pact_cloudcare[0]['forms']
     ret = dict((f['name']['en'], ix) for (ix, f) in enumerate(forms))
 
@@ -183,7 +185,7 @@ def prepare_case_update_xml_block(casedoc, couch_user, update_dict, submit_date)
     case_nsmap = {'n1': 'http://commcarehq.org/case/transaction/v2'}
 
     def make_update(update_elem, updates):
-        for k,v in updates.items():
+        for k, v in updates.items():
             if v is not None:
                 sub_element(update_elem, '{%(ns)s}%(tag)s' % {'ns': case_nsmap['n1'], 'tag': k}, v)
 
@@ -340,7 +342,7 @@ class PactAPI(DomainAPI):
         pdoc = PactPatientCase.get(self.request.GET['case_id'])
         resp = HttpResponse()
         if self.method == "rm_schedule":
-            if self.request.POST.has_key('rm_schedule'):
+            if 'rm_schedule' in self.request.POST:
                 #hacky remove schedule method
                 pdoc.rm_last_schedule()
                 pdoc.save()

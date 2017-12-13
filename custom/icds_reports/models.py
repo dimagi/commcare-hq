@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import models
 
 
@@ -18,6 +19,9 @@ class AwcLocation(models.Model):
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
@@ -42,6 +46,9 @@ class AggAwcDailyView(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     date = models.DateField(blank=True, null=True)
     cases_household = models.IntegerField(blank=True, null=True)
@@ -91,6 +98,9 @@ class AggAwcMonthly(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     is_launched = models.TextField(blank=True, null=True)
@@ -233,6 +243,9 @@ class AggCcsRecordMonthly(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     ccs_status = models.TextField(blank=True, null=True)
@@ -306,6 +319,9 @@ class AggChildHealthMonthly(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     month_display = models.TextField(blank=True, null=True)
@@ -383,6 +399,9 @@ class AwcLocationMonths(models.Model):
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     month_display = models.TextField(blank=True, null=True)
 
@@ -408,6 +427,9 @@ class DailyAttendanceView(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     doc_id = models.TextField(blank=True, null=True)

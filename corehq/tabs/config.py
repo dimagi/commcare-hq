@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.styleguide.tabs import SGExampleTab, SimpleCrispyFormSGExample, \
     ControlsDemoSGExample
 from corehq.tabs.tabclasses import DashboardTab, ProjectReportsTab, ProjectInfoTab, SetupTab, \

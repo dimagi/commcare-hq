@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from couchdbkit.exceptions import BulkSaveError
 from django.test import TestCase, SimpleTestCase

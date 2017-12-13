@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import (INCOMING, OUTGOING,
@@ -13,6 +14,7 @@ from dimagi.utils.web import get_url_base
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.util import form_requires_input
+import six
 
 
 IVR_EVENT_NEW_CALL = "NEW_CALL"
@@ -57,7 +59,7 @@ def validate_answer(answer, question):
     else:
         try:
             assert answer is not None
-            if isinstance(answer, basestring):
+            if isinstance(answer, six.string_types):
                 assert len(answer.strip()) > 0
             return True
         except AssertionError:
@@ -66,8 +68,8 @@ def validate_answer(answer, question):
 
 def format_ivr_response(text, app):
     return {
-        "text_to_say" : text,
-        "audio_file_url" : convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
+        "text_to_say": text,
+        "audio_file_url": convert_media_path_to_hq_url(text, app) if text.startswith("jr://") else None,
     }
 
 
@@ -343,7 +345,7 @@ def get_ivr_backend(recipient, verified_number=None, unverified_number=None):
         phone_number = (verified_number.phone_number if verified_number
             else unverified_number)
         phone_number = strip_plus(str(phone_number))
-        prefixes = settings.IVR_BACKEND_MAP.keys()
+        prefixes = list(settings.IVR_BACKEND_MAP)
         prefixes = sorted(prefixes, key=lambda x: len(x), reverse=True)
         for prefix in prefixes:
             if phone_number.startswith(prefix):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.http import HttpResponseBadRequest, Http404, JsonResponse
 from django.utils.decorators import method_decorator

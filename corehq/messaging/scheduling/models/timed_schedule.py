@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 import hashlib
 import json
@@ -172,27 +173,32 @@ class TimedSchedule(Schedule):
         ):
             instance.active = False
 
+    def delete_related_events(self):
+        for event in self.timedevent_set.all():
+            event.content.delete()
+
+        self.timedevent_set.all().delete()
+
     @classmethod
     def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY,
-            start_offset=0, start_day_of_week=ANY_DAY):
+            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None):
         schedule = cls(domain=domain)
         schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations,
-            start_offset=start_offset, start_day_of_week=start_day_of_week)
+            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options)
         return schedule
 
     def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0,
-            start_day_of_week=ANY_DAY):
+            start_day_of_week=ANY_DAY, extra_options=None):
         with transaction.atomic():
             self.start_offset = start_offset
             self.start_day_of_week = start_day_of_week
             self.schedule_length = 1
             self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_DAILY
+            self.set_extra_scheduling_options(extra_options)
             self.save()
 
-            for event in self.timedevent_set.all():
-                event.content.delete()
-
-            self.timedevent_set.all().delete()
+            self.delete_related_events()
 
             if content.pk is None:
                 content.save()
@@ -206,22 +212,90 @@ class TimedSchedule(Schedule):
             event.content = content
             event.save()
 
+    def validate_day_of_week(self, day):
+        if not isinstance(day, int) or day < 0 or day > 6:
+            raise ValueError("Expected a value between 0 and 6")
+
     @classmethod
-    def create_simple_monthly_schedule(cls, domain, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+    def create_simple_weekly_schedule(cls, domain, time, content, days_of_week, start_day_of_week,
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
         schedule = cls(domain=domain)
-        schedule.set_simple_monthly_schedule(time, days, content, total_iterations=total_iterations)
+        schedule.set_simple_weekly_schedule(time, content, days_of_week, start_day_of_week,
+            total_iterations=total_iterations, extra_options=extra_options)
         return schedule
 
-    def set_simple_monthly_schedule(self, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+    def set_simple_weekly_schedule(self, time, content, days_of_week, start_day_of_week,
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
+        """
+        Sets this TimedSchedule to be a simple weekly schedule where you can choose
+        the days of the week on which to send.
+
+        :param time: The time (datetime.time object) at which to send each day
+        :param content: The content (corehq.messaging.scheduling.models.Content object) to send
+        :days_of_week: A list of integers representing the days of the week on which to send, with
+            0 being Monday and 6 being Sunday to match python's datetime.weekday() method
+        :start_day_of_week: The day of the week which will be considered the first day of the week for
+            scheduling purposes
+        :param total_iterations: The total number of weeks to send for
+        """
+        self.validate_day_of_week(start_day_of_week)
+
+        with transaction.atomic():
+            self.start_day_of_week = start_day_of_week
+            self.schedule_length = 7
+            self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_WEEKLY
+            self.start_offset = 0
+            self.set_extra_scheduling_options(extra_options)
+            self.save()
+
+            self.delete_related_events()
+
+            event_days = []
+            for day in days_of_week:
+                self.validate_day_of_week(day)
+                event_days.append((day - start_day_of_week + 7) % 7)
+
+            order = 1
+            for day in sorted(event_days):
+                event = TimedEvent(
+                    schedule=self,
+                    order=order,
+                    day=day,
+                    time=time
+                )
+
+                if order == 1:
+                    if content.pk is None:
+                        content.save()
+                else:
+                    # Create copies of the content on subsequent events
+                    content.pk = None
+                    content.save()
+
+                event.content = content
+                event.save()
+                order += 1
+
+    @classmethod
+    def create_simple_monthly_schedule(cls, domain, time, days, content, total_iterations=REPEAT_INDEFINITELY,
+            extra_options=None):
+        schedule = cls(domain=domain)
+        schedule.set_simple_monthly_schedule(time, days, content, total_iterations=total_iterations,
+            extra_options=extra_options)
+        return schedule
+
+    def set_simple_monthly_schedule(self, time, days, content, total_iterations=REPEAT_INDEFINITELY,
+            extra_options=None):
         with transaction.atomic():
             self.schedule_length = self.MONTHLY
             self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_MONTHLY
+            self.start_offset = 0
+            self.set_extra_scheduling_options(extra_options)
             self.save()
 
-            for event in self.timedevent_set.all():
-                event.content.delete()
-
-            self.timedevent_set.all().delete()
+            self.delete_related_events()
 
             if content.pk is None:
                 content.save()

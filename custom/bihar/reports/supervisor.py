@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from copy import copy
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from datetime import datetime, timedelta
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
 from dimagi.utils.couch.database import iter_docs
@@ -429,4 +430,4 @@ def get_awcc(group):
 def url_and_params(urlbase, params):
     assert "?" not in urlbase
     return "{url}?{params}".format(url=urlbase,
-                                   params=urllib.urlencode(params))
+                                   params=six.moves.urllib.parse.urlencode(params))

@@ -6,7 +6,8 @@
         <img src="{% static "img/logo.png" %}" alt="Logo" style="width: 60%;">
     </div>
     <div>
-        <ul class="nav nav-list" style="overflow-y: auto; overflow-x: hidden; height: 500px;">
+        <perfect-scrollbar class="scroller" suppress-scroll-x="true" wheel-propagation="true" wheel-speed="5" min-scrollbar-length="10" min-scrollbar-length="10">
+            <ul class="nav nav-list" >
             <li ng-class="{'active': $location.path().indexOf('/program_summary') !== -1}">
                 <a class="row pointer" href="{$ goToStep('', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true">
                     <div class="col-sm-1"><i class="fa fa-home" aria-hidden="true"></i></div>
@@ -27,8 +28,8 @@
                     <li ng-class="{'active': $location.path().indexOf('/wasting') !== -1}">
                         <a href="{$ goToStep('wasting', $location.search()) $}" >{% trans "Prevalence of Wasting (Weight-for-Height)" %}</a>
                     </li>
-                    <li ng-class="{'active': $location.path().indexOf('/stunning') !== -1}">
-                        <a href="{$ goToStep('stunning', $location.search()) $}" >{% trans "Prevalence of Stunting (Height-for-Age)" %}</a>
+                    <li ng-class="{'active': $location.path().indexOf('/stunting') !== -1}">
+                        <a href="{$ goToStep('stunting', $location.search()) $}" >{% trans "Prevalence of Stunting (Height-for-Age)" %}</a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/low_birth') !== -1}">
                         <a href="{$ goToStep('low_birth', $location.search()) $}" >{% trans "Newborns with Low Birth Weight" %}</a>
@@ -91,11 +92,11 @@
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/adolescent_girls') !== -1}">
-                        <a href="{$ goToStep('adolescent_girls', $location.search()) $}" >{% trans "Adolescent Girls (11-18 years)" %}
+                        <a href="{$ goToStep('adolescent_girls', $location.search()) $}" >{% trans "Adolescent Girls (11-18 Years) enrolled for ICDS Services" %}
                         </a>
                     </li>
                     <li ng-class="{'active': $location.path().indexOf('/adhaar') !== -1}">
-                        <a href="{$ goToStep('adhaar', $location.search()) $}" >{% trans "Percent Adhaar Seeded Beneficiaries" %}
+                        <a href="{$ goToStep('adhaar', $location.search()) $}" >{% trans "Percent Aadhaar-seeded Beneficiaries" %}
                         </a>
                     </li>
                 </ul>
@@ -136,8 +137,8 @@
                     <div class="col-sm-9">{% trans "AWC Report" %}</div>
                 </a>
             </li>
-            <li ng-class="{'active': $location.path().indexOf('/progress_report') !== -1}">
-                <a class="row pointer" href="{$ goToStep('progress_report', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
+            <li ng-class="{'active': $location.path().indexOf('/fact_sheets') !== -1}">
+                <a class="row pointer" href="{$ goToStep('fact_sheets', $location.search()) $}" style="width: 100%" ng-click="healthCollapsed = true; icdsCasReach = true; demographics = true; infrastructure = true;">
                     <div class="col-sm-1"><i class="fa fa-file-text-o" aria-hidden="true"></i></div>
                     <div class="col-sm-9">{% trans "ICDS-CAS Fact Sheets" %}</div>
                 </a>
@@ -161,6 +162,7 @@
                 </div>
             </li>
         </ul>
+        </perfect-scrollbar>
 
     <div style="padding: 5px; margin: 0 auto; text-align: center;">
         <img src="{% static "img/BBBP_Logo.png" %}" alt="Logo" style="width: 40%;">

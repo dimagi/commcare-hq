@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock

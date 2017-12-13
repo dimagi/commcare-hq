@@ -1,20 +1,22 @@
+from __future__ import absolute_import
 from collections import namedtuple
 
 import itertools
 from jsonobject import JsonObject, BooleanProperty, SetProperty, StringProperty, ListProperty, ObjectProperty
 
 from corehq.apps.callcenter import const
+import six
 
 TypeRange = namedtuple('TypeRange', 'type, range_slug')
 
 
 class BasicIndicator(JsonObject):
     enabled = BooleanProperty(default=False)
-    date_ranges = SetProperty(unicode)
+    date_ranges = SetProperty(six.text_type)
 
 
 class TypedIndicator(BasicIndicator):
-    type = StringProperty(unicode)
+    type = StringProperty(six.text_type)
 
 
 class ByTypeWithTotal(JsonObject):

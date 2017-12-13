@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.users.models import CommCareUser
 from custom.ewsghana.handlers import (STOP_MESSAGE, START_MESSAGE,
     DEACTIVATE_REMINDERS, REACTIVATE_REMINDERS)

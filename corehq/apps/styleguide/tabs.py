@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.tabs.uitab import UITab

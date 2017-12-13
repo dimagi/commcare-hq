@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from dimagi.utils.name_to_url import name_to_url
 

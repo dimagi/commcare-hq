@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime

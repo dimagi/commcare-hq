@@ -9,7 +9,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode_2b",
+    "data_source_table": "episode_2b_v5",
     "report_id": "tb_notification_register_2b",
     "config": {
         "description": "",
@@ -23,10 +23,10 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "slug": "date",
+                "display": "Date of Diagnosis",
                 "field": "date_of_diagnosis",
                 "type": "date",
-                "display": "Date of Diagnosis"
+                "slug": "date"
             },
             {
                 "compare_as_string": false,
@@ -35,22 +35,22 @@
                     "person_owner_id",
                     "diagnosing_facility_id"
                 ],
-                "slug": "village",
+                "display": "Location",
                 "field": "person_owner_id",
-                "type": "multi_field_dynamic_choice_list",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
                     "order_by_hierarchy": true,
                     "show_full_path": true
                 },
-                "display": "Location"
+                "type": "multi_field_dynamic_choice_list",
+                "slug": "village"
             },
             {
-                "slug": "is_migrated",
-                "required": false,
-                "datatype": "integer",
                 "show_all": true,
+                "display": "Filter migrated data",
+                "datatype": "integer",
+                "required": false,
                 "choices": [
                     {
                         "display": "Show only migrated from Nikshay",
@@ -63,7 +63,7 @@
                 ],
                 "field": "case_created_by_migration",
                 "type": "choice_list",
-                "display": "Filter migrated data"
+                "slug": "is_migrated"
             },
             {
                 "pre_value": [
@@ -91,6 +91,51 @@
                 "field": "not_dstb_to_drtb_transition_no_initiation",
                 "type": "pre",
                 "slug": "not_dstb_to_drtb_transition_no_initiation"
+            },
+            {
+                "pre_value": "_invalid_",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "slug": "owner_id",
+                "field": "person_owner_id",
+                "type": "pre",
+                "display": null
+            },
+            {
+                "pre_value": "invalid_episode",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason1"
+            },
+            {
+                "pre_value": "duplicate",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason2"
+            },
+            {
+                "pre_value": "invalid_registration",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason3"
+            },
+            {
+                "pre_value": "duplicate_reconciliation",
+                "datatype": "string",
+                "pre_operator": "distinct from",
+                "display": null,
+                "field": "close_reason",
+                "type": "pre",
+                "slug": "close_reason4"
             }
         ],
         "columns": [
@@ -101,6 +146,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "nikshay_id",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "TB Notification number/ Nikshay ID"
@@ -112,6 +158,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "person_id",
+                "width": "65px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "eNikshay ID"
@@ -153,9 +200,11 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "css_class": "text-sm",
                 "transform": {},
                 "aggregation": "simple",
                 "field": "current_address",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Complete Address"
@@ -198,16 +247,17 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
-                        "tribal_population": "Tribal population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "slum_dweller": "Slum dweller",
                         "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "slum_dweller": "Slum dweller",
                         "prison_inmate": "Prison inmate"
                     }
                 },
@@ -230,6 +280,7 @@
                 },
                 "aggregation": "simple",
                 "field": "episode_type",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Episode Type"
@@ -241,6 +292,7 @@
                 "transform": {
                     "type": "translation",
                     "translations": {
+                        "recurrent": "Recurrent",
                         "treatment_after_lfu": "Treatment After Loss to Follow-up",
                         "other_previously_treated": "Other Previously Treated",
                         "treatment_after_failure": "Treatment After Failure",
@@ -260,11 +312,17 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
                     "translations": {
-                        "pulmonary": "P",
-                        "extra_pulmonary": "EP"
-                    }
+                        "Extra Pulmonary, brain": "Extra Pulmonary, Brain",
+                        "Extra Pulmonary, pleural_effusion": "Extra Pulmonary, Pleural Effusion",
+                        "Extra Pulmonary, lymph_node": " Extra Pulmonary, Lymph Node",
+                        "Extra Pulmonary, abdominal": " Extra Pulmonary, Abdominal",
+                        "Extra Pulmonary, other": "Extra Pulmonary, Other",
+                        "Extra Pulmonary, spine": "Extra Pulmonary, Spine",
+                        "pulmonary": "Pulmonary",
+                        "Extra Pulmonary": "Extra Pulmonary"
+                    },
+                    "type": "translation"
                 },
                 "aggregation": "simple",
                 "field": "disease_classification",
@@ -279,6 +337,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "date_of_diagnosis",
+                "width": "60px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Diagnosis"
@@ -293,6 +352,7 @@
                 },
                 "aggregation": "simple",
                 "field": "diagnosing_facility_id",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Diagnosing Facility"
@@ -307,6 +367,7 @@
                 },
                 "aggregation": "simple",
                 "field": "health_facility_for_treatment",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Health Facility for Treatment"
@@ -321,6 +382,7 @@
                 },
                 "aggregation": "simple",
                 "field": "treating_phi",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Currently Treating PHI"
@@ -332,6 +394,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "tu_name",
+                "width": "70px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Currently Treating TU Name"
@@ -357,12 +420,18 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "microscopy-zn": "Microscopy-ZN",
+                        "microscopy-fluorescent": "Microscopy-Fluorescent"
+                    }
+                },
                 "aggregation": "simple",
-                "field": "microbiological_test_requested_date",
+                "field": "microscopy_test_type",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Microbiological Confirmation Test Results - Date"
+                "display": "Microbiological Confirmation SM - Test Type"
             },
             {
                 "sortable": false,
@@ -370,10 +439,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "microbiological_test_facility_referred_to",
+                "field": "microscopy_test_result_date",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Microbiological Confirmation Test Results - Lab Name"
+                "display": "Microbiological Confirmation SM - Test Result Date"
             },
             {
                 "sortable": false,
@@ -381,10 +450,76 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "microbiological_test_lab_serial_number",
+                "field": "microscopy_test_testing_facility_name",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Microbiological Confirmation Test Results - Lab No."
+                "display": "Microbiological Confirmation SM - Lab Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "microscopy_test_lab_serial_number",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Microbiological Confirmation SM - Lab No"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
+                    "translations": {
+                        "tb_detected": "TB Detected",
+                        "3+": "3plus",
+                        "scanty": "Scanty",
+                        "tb_not_detected": "TB Not Detected",
+                        "1+": "1plus",
+                        "2+": "2plus"
+                    }
+                },
+                "aggregation": "simple",
+                "field": "microscopy_test_result_summary_display",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Microbiological Confirmation SM - Test Results"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "cbnaat_test_result_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Microbiological Confirmation CBNAAT - Test Result Date"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "cbnaat_test_testing_facility_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Microbiological Confirmation CBNAAT - Lab Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "cbnaat_test_lab_serial_number",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Microbiological Confirmation CBNAAT - Lab No"
             },
             {
                 "sortable": false,
@@ -399,21 +534,10 @@
                     }
                 },
                 "aggregation": "simple",
-                "field": "microbiological_test_type",
+                "field": "cbnaat_test_result_summary_display",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Microbiological Confirmation Test Results - Test"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "microbiological_result",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Microbiological Confirmation Test Results - Results of Test"
+                "display": "Microbiological Confirmation CBNAAT - Test Results"
             },
             {
                 "sortable": false,
@@ -422,9 +546,10 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "not_microbiological_result",
+                "width": "100px",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Results of Other tests (XRay/Histopatho/FNAC/Clinical/Other,specify)"
+                "display": "Results of Other Tests (XRay, Histopatho, FNAC, Clinical, Other, Specify)"
             },
             {
                 "sortable": false,
@@ -479,6 +604,7 @@
                 "format": "default",
                 "transform": {
                     "translations": {
+                        "repeat_diagnosis": "Repeat Diagnosis",
                         "untraceable_incomplete_address": "Untraceable: incomplete/incorrect address",
                         "refuse_treatment": "Refused Treatment",
                         "initiated_second_line_treatment": "Initiated on second line treatment",
@@ -486,15 +612,16 @@
                         "referred_pending_feedback": "Referred Pending Feedback",
                         "other": "Other",
                         "untraceable_migrated": " Untraceable: migrated",
-                        "repeat_diagnosis": "Repeat Diagnosis",
+                        "initiated_outside_facility": "Initiated on treatment outside health facility",
                         "initiated_outside_rntcp": "Treatment initiated outside RNTCP",
                         "wrong_diagnosis": "Wrong diagnosis",
-                        "initiated_outside_facility": "Initiated on treatment outside health facility"
+                        "duplicated": "Duplicated"
                     },
                     "type": "translation"
                 },
                 "aggregation": "simple",
                 "field": "treatment_status_value",
+                "width": "200px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Status of Treatment"
@@ -506,6 +633,7 @@
                 "transform": {},
                 "aggregation": "simple",
                 "field": "treatment_initiation_date",
+                "width": "60px",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Date of Treatment Initiation"
@@ -576,7 +704,18 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
+                    "translations": {
+                        "tb_detected": "TB Detected",
+                        "3+": "3plus",
+                        "scanty": "Scanty",
+                        "tb_not_detected": "TB Not Detected",
+                        "1+": "1plus",
+                        "2+": "2plus"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "endofip_result",
                 "calculate_total": false,
@@ -609,7 +748,18 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {},
+                "transform": {
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
+                    "translations": {
+                        "tb_detected": "TB Detected",
+                        "3+": "3plus",
+                        "scanty": "Scanty",
+                        "tb_not_detected": "TB Not Detected",
+                        "1+": "1plus",
+                        "2+": "2plus"
+                    }
+                },
                 "aggregation": "simple",
                 "field": "endofcp_result",
                 "calculate_total": false,

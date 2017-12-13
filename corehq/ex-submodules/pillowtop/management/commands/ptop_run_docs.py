@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import datetime
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import CommandError, BaseCommand
@@ -35,7 +36,7 @@ class Command(BaseCommand):
         pillow = options.get('pillow', 'MISSING')
         if pillow not in FACTORIES_BY_SLUG:
             raise CommandError('--pillow must be specified and must be one of:\n{}'
-                               .format(', '.join(FACTORIES_BY_SLUG.keys())))
+                               .format(', '.join(FACTORIES_BY_SLUG)))
         reindexer = FACTORIES_BY_SLUG[pillow]().build()
         if not isinstance(reindexer.doc_provider, CouchDocumentProvider):
             raise CommandError("This command only works with couch pillows,"

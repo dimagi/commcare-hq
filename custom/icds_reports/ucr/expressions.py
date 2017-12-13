@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from jsonobject.base_properties import DefaultProperty
 from casexml.apps.case.xform import extract_case_blocks
@@ -9,6 +10,8 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
+from six.moves import filter
+from six.moves import map
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -24,6 +27,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
     ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
     ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
+    ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
 ]
 
 
@@ -192,7 +196,7 @@ class FormsInDateExpressionSpec(JsonObject):
             return xform
 
         forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = filter(None, map(_transform_time_end, forms))
+        forms = list(filter(None, map(_transform_time_end, forms)))
         context.set_cache_value(cache_key, forms)
         return forms
 
@@ -226,6 +230,18 @@ class GetAppVersion(JsonObject):
     def __call__(self, item, context=None):
         app_version_string = self._app_version_string(item, context)
         return get_version_from_appversion_text(app_version_string)
+
+
+class DateTimeNow(JsonObject):
+    type = TypeProperty('icds_datetime_now')
+
+    def __call__(self, item, context=None):
+        return _datetime_now()
+
+
+def _datetime_now():
+    return datetime.utcnow()
+
 
 def month_start(spec, context):
     # fix offset to 3 months in past
@@ -708,3 +724,7 @@ def get_app_version(spec, context):
         app_version_string=ExpressionFactory.from_spec(wrapped.app_version_string, context)
     )
     return wrapped
+
+
+def datetime_now(spec, context):
+    return DateTimeNow.wrap(spec)

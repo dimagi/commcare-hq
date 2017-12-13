@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime
 import hashlib
 from itertools import islice
 import os
 import tempfile
-from urllib2 import URLError
+from six.moves.urllib.error import URLError
 from dimagi.ext.couchdbkit import Document, DictProperty,\
     DocumentSchema, StringProperty, SchemaListProperty, ListProperty,\
     StringListProperty, DateTimeProperty, SchemaProperty, BooleanProperty, IntegerProperty
@@ -23,6 +24,9 @@ from soil import DownloadBase
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.properties import TimeStampProperty, JsonProperty
 from dimagi.utils.logging import notify_exception
+import six
+from six.moves import zip
+from six.moves import range
 
 
 ColumnType = namedtuple('ColumnType', 'cls label')
@@ -93,7 +97,7 @@ class Format(object):
 
     }
 
-    VALID_FORMATS = FORMAT_DICT.keys()
+    VALID_FORMATS = list(FORMAT_DICT)
 
     def __init__(self, slug, mimetype, extension, download):
         self.slug = slug
@@ -305,7 +309,7 @@ class SplitColumn(ComplexExportColumn):
         else:
             row = [None] * opts_len
 
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             return row if self.ignore_extras else row + [value]
 
         values = value.split(' ') if value else []
@@ -359,7 +363,7 @@ class ExportTable(DocumentSchema):
         for c in all_cols:
             if c not in selected_cols:
                 column = ExportColumn(index=c)
-                column.display = self.displays_by_index[c] if self.displays_by_index.has_key(c) else ''
+                column.display = self.displays_by_index[c] if c in self.displays_by_index else ''
                 yield column.to_config_format(selected=False)
 
     def get_headers_row(self):
@@ -373,7 +377,7 @@ class ExportTable(DocumentSchema):
                 display = col.get_display()
                 if col.index == 'id':
                     id_len = len(
-                        filter(lambda part: part == '#', self.index.split('.'))
+                        [part for part in self.index.split('.') if part == '#']
                     )
                     headers.append(display)
                     if id_len > 1:
@@ -386,7 +390,7 @@ class ExportTable(DocumentSchema):
     @property
     @memoized
     def row_positions_by_index(self):
-        return dict((h, i) for i, h in enumerate(self._headers) if self.displays_by_index.has_key(h))
+        return dict((h, i) for i, h in enumerate(self._headers) if h in self.displays_by_index)
 
     @property
     @memoized
@@ -647,7 +651,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
     def get_table_configuration(self, index):
         def column_configuration():
             columns = self.schema.get_columns(index)
-            if self.tables_by_index.has_key(index):
+            if index in self.tables_by_index:
                 return list(self.tables_by_index[index].get_column_configuration(columns))
             else:
                 return [
@@ -659,7 +663,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
                 ]
 
         def display():
-            if self.tables_by_index.has_key(index):
+            if index in self.tables_by_index:
                 return self.tables_by_index[index].display
             else:
                 return ''
@@ -791,7 +795,7 @@ class SavedExportSchema(BaseSavedExportSchema, UnicodeMixIn):
         # confusingly, the index isn't the actual index property,
         # but is the index appended with the id to this document.
         # this is to avoid conflicts among multiple exports
-        index = "%s-%s" % (self.index, self._id) if isinstance(self.index, basestring) else \
+        index = "%s-%s" % (self.index, self._id) if isinstance(self.index, six.string_types) else \
             self.index + [self._id] # self.index required to be a string or list
         return ExportConfiguration(index=index, name=self.name,
                                    format=self.default_format)
@@ -936,7 +940,7 @@ class GroupExportConfiguration(Document):
         and an ExportSchema-like document that can be used to get at
         the data.
         """
-        return zip(self.all_configs, self.all_export_schemas)
+        return list(zip(self.all_configs, self.all_export_schemas))
 
 
 class SavedBasicExport(BlobMixin, Document):
@@ -961,7 +965,7 @@ class SavedBasicExport(BlobMixin, Document):
 
     def get_attachment_name(self):
         # obfuscate this because couch doesn't like attachments that start with underscores
-        return hashlib.md5(unicode(self.configuration.filename).encode('utf-8')).hexdigest()
+        return hashlib.md5(six.text_type(self.configuration.filename).encode('utf-8')).hexdigest()
 
     def set_payload(self, payload):
         self.put_attachment(payload, self.get_attachment_name())

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
 from tastypie import fields
@@ -36,6 +37,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchforms.models import doc_types
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
+import six
 
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
@@ -107,10 +109,10 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     is_phone_submission = fields.BooleanField(readonly=True)
 
     def dehydrate_is_phone_submission(self, bundle):
-        return (
-            getattr(bundle.obj, 'openrosa_headers', None)
-            and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
-        )
+        headers = getattr(bundle.obj, 'openrosa_headers', None)
+        if not headers:
+            return False
+        return headers.get('HTTP_X_OPENROSA_VERSION') is not None
 
     edited_by_user_id = fields.CharField(readonly=True, null=True)
 
@@ -189,7 +191,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=get_all_repeater_types().keys())
+                                       additional_doc_types=list(get_all_repeater_types()))
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']
@@ -444,7 +446,7 @@ class ApplicationResource(BaseApplicationResource):
             return dehydrated
         except Exception as e:
             return {
-                'error': unicode(e)
+                'error': six.text_type(e)
             }
 
     def dehydrate_modules(self, bundle):
@@ -511,8 +513,8 @@ class HOPECaseResource(CommCareCaseResource):
             bundle.data['case_properties'] = bundle.data['properties']
             del bundle.data['properties']
 
-        mother_lists = filter(lambda x: x.obj.type == CC_BIHAR_PREGNANCY, data['objects'])
-        child_lists = filter(lambda x: x.obj.type == CC_BIHAR_NEWBORN, data['objects'])
+        mother_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_PREGNANCY]
+        child_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_NEWBORN]
 
         return {'objects': {
             'mother_lists': mother_lists,

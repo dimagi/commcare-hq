@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 
 from django.conf import settings
@@ -26,6 +27,8 @@ from custom.ewsghana.utils import ProductsReportHelper, send_sms
 from custom.ewsghana.alerts.alerts import SOHAlerts
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 from dimagi.utils.couch.database import iter_docs
+import six
+from six.moves import map
 
 
 def get_transactions_by_product(transactions):
@@ -98,7 +101,7 @@ class SOHHandler(KeywordHandler):
         if bad_codes:
             kwargs['err'] = 'Unrecognized commodity codes: {bad_codes}.'.format(bad_codes=bad_codes)
 
-        self.respond('{} {}'.format(error_message.format(**kwargs), unicode(ASSISTANCE_MESSAGE)))
+        self.respond('{} {}'.format(error_message.format(**kwargs), six.text_type(ASSISTANCE_MESSAGE)))
 
     def send_ms_alert(self, previous_stockouts, transactions, ms_type):
         stockouts = {
@@ -134,10 +137,10 @@ class SOHHandler(KeywordHandler):
                         send_sms(self.domain, user, phone_number, message)
 
     def send_message_to_admins(self, message):
-        in_charge_users = map(CommCareUser.wrap, iter_docs(
+        in_charge_users = list(map(CommCareUser.wrap, iter_docs(
             CommCareUser.get_db(),
             [in_charge.user_id for in_charge in self.sql_location.facilityincharge_set.all()]
-        ))
+        )))
         for in_charge_user in in_charge_users:
             phone_number = get_preferred_phone_number_for_recipient(in_charge_user)
             if not phone_number:
@@ -197,12 +200,12 @@ class SOHHandler(KeywordHandler):
         except NotAUserClassError:
             return False
         except (SMSError, NoDefaultLocationException):
-            self.respond(unicode(INVALID_MESSAGE))
+            self.respond(six.text_type(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
             self.respond(e.message)
             return True
-        except Exception as e:  # todo: should we only trap SMSErrors?
+        except Exception as e:
             if settings.UNIT_TESTING or settings.DEBUG:
                 raise
             self.respond('problem with stock report: %s' % str(e))

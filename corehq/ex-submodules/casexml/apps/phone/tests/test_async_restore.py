@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import mock
 from cStringIO import StringIO
 from django.test import TestCase, SimpleTestCase

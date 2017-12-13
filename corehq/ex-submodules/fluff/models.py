@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import timedelta
 from dimagi.ext.couchdbkit import Document
 import fluff

@@ -53,9 +53,9 @@ class FixtureGenerator(object):
         self._generator_providers = {}
         if hasattr(settings, "FIXTURE_GENERATORS"):
             for group, func_paths in settings.FIXTURE_GENERATORS.items():
-                self._generator_providers[group] = filter(None, [
+                self._generator_providers[group] = [_f for _f in [
                     to_function(func_path, failhard=True) for func_path in func_paths
-                ])
+                ] if _f]
 
     def get_providers(self, user, fixture_id=None, version=V2):
         if version == V1:
@@ -81,8 +81,9 @@ class FixtureGenerator(object):
 
     def _get_fixtures(self, restore_user, fixture_id=None):
         providers = self.get_providers(restore_user, fixture_id=fixture_id)
+        restore_state = _get_restore_state(restore_user)
         return itertools.chain(*[
-            provider(_get_restore_state(restore_user))
+            provider(restore_state)
             for provider in providers
         ])
 

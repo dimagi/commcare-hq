@@ -16,10 +16,14 @@
     <script src="{% static 'reports/js/datepicker.js' %}"></script>
     <script src="{% static 'reports/js/reports.config.js' %}"></script>
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
-    <script src="{% static 'reports/js/filters.js' %}"></script>
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+    <script src="{% static 'userreports/js/report_analytics.js' %}"></script>
+    <script src="{% static 'reports/js/filters.js' %}"></script>
     {% endcompress %}
+    {% for script in report.js_scripts %}
+        <script src="{{ script|static }}"></script>
+    {% endfor %}
 {% endblock %}
 
 {% block stylesheets %}
@@ -61,6 +65,18 @@
             <a href="{{ report.url }}" id="report-title">{% trans report.title|default:"Untitled Report"|safe %}</a>
         </li>
     </ol>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+  {% if request|ui_notify_enabled:"REPORT_BUILDER_V2" %}
+      <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+           style="margin-left: 12px"
+           data-target="#create-new-report-left-nav"
+           data-slug="{{ "REPORT_BUILDER_V2"|ui_notify_slug }}"
+           role="alert">
+          {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
+        </div>
+  {% endif %}
 {% endblock %}
 
 {% block page_content %}

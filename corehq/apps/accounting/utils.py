@@ -220,7 +220,7 @@ def get_customer_cards(username, domain):
             method_type=PaymentMethodType.STRIPE
         )
         stripe_customer = payment_method.customer
-        return stripe_customer.cards
+        return dict(stripe_customer.cards)
     except StripePaymentMethod.DoesNotExist:
         pass
     except stripe.error.AuthenticationError:
@@ -347,4 +347,24 @@ def get_account_name_from_default_name(default_name):
         return '%s (%d)' % (
             default_name,
             matching_regex_count + 1
+        )
+
+
+def cancel_future_subscriptions(domain_name, from_date, web_user):
+    from corehq.apps.accounting.models import (
+        Subscription,
+        SubscriptionAdjustment,
+        SubscriptionAdjustmentReason,
+    )
+    for later_subscription in Subscription.objects.filter(
+        subscriber__domain=domain_name,
+        date_start__gt=from_date,
+    ).order_by('date_start').all():
+        later_subscription.date_end = later_subscription.date_start
+        later_subscription.save()
+        SubscriptionAdjustment.record_adjustment(
+            later_subscription,
+            reason=SubscriptionAdjustmentReason.CANCEL,
+            web_user=web_user,
+            note="Cancelled due to changing subscription",
         )

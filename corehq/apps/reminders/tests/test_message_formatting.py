@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, LocationType

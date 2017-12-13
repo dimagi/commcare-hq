@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import random
 import uuid
@@ -6,6 +7,7 @@ from django.test import TestCase
 from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
 from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS, \
     XFORMS_SESSION_IVR
+from six.moves import range
 
 
 class SQLSessionTestCase(TestCase):
@@ -158,9 +160,9 @@ def _arbitrary_session_properties(**kwargs):
 
     def arbitrary_date():
         return datetime(
-            random.choice(range(2010, 2015)),
-            random.choice(range(1, 13)),
-            random.choice(range(1, 28)),
+            random.choice(list(range(2010, 2015))),
+            random.choice(list(range(1, 13))),
+            random.choice(list(range(1, 28))),
         )
 
     def arbitrary_bool():

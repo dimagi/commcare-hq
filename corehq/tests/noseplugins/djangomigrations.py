@@ -2,6 +2,7 @@
 
 Use --no-migrations to disable django database migrations.
 """
+from __future__ import absolute_import
 from nose.plugins import Plugin
 
 

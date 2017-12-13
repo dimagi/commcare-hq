@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.reminders.tasks import process_handlers_for_case_changed

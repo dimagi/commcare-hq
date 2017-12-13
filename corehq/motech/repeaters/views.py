@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from couchdbkit import ResourceNotFound
 from django.http import Http404

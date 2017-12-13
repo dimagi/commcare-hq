@@ -1,4 +1,6 @@
 # coding=utf-8
+from __future__ import absolute_import
+
 from collections import OrderedDict
 import json
 import logging
@@ -16,6 +18,7 @@ from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
@@ -24,6 +27,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, h
 from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
+    MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
     CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
@@ -62,6 +66,7 @@ from corehq.apps.app_manager.models import (
     DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from six.moves import map
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +234,7 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
@@ -242,9 +247,11 @@ def _get_report_module_context(app, module):
             'moduleFilter': module.module_filter,
             'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
             'currentReports': [r.to_json() for r in module.report_configs],  # config data for app reports
-            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'columnXpathTemplate': get_column_xpath_client_template(app.mobile_ucr_restore_version),
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
+            'supportSyncDelay': app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_1,
+            'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
         },
         'static_data_options': {
             'filterChoices': filter_choices,
@@ -692,7 +699,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
-    long = params.get('long', None)
+    long_ = params.get('long', None)
     tabs = params.get('tabs', None)
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
@@ -732,7 +739,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
-        detail.short.columns = map(DetailColumn.from_json, short)
+        detail.short.columns = list(map(DetailColumn.from_json, short))
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -747,10 +754,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         if case_list_lookup is not None:
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
-    if long is not None:
-        detail.long.columns = map(DetailColumn.from_json, long)
+    if long_ is not None:
+        detail.long.columns = list(map(DetailColumn.from_json, long_))
         if tabs is not None:
-            detail.long.tabs = map(DetailTab.wrap, tabs)
+            detail.long.tabs = list(map(DetailTab.wrap, tabs))
         if print_template is not None:
             detail.long.print_template = print_template
     if filter != ():

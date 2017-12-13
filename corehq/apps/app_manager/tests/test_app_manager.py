@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import absolute_import
 import json
 import uuid
 
@@ -17,6 +18,8 @@ from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
+from six.moves import zip
+from six.moves import range
 
 
 class AppManagerTest(TestCase):
@@ -52,7 +55,7 @@ class AppManagerTest(TestCase):
         for i in range(3):
             module = self.app.add_module(Module.new_module("Module%d" % i, "en"))
             for j in range(3):
-                self.app.new_form(module.id, name="Form%s-%s" % (i,j), attachment=self.xform_str, lang="en")
+                self.app.new_form(module.id, name="Form%s-%s" % (i, j), attachment=self.xform_str, lang="en")
             module = self.app.get_module(i)
             detail = module.ref_details.short
             detail.columns.append(
@@ -110,7 +113,7 @@ class AppManagerTest(TestCase):
         self.app.delete_form(self.app.modules[0].unique_id,
                              self.app.modules[0].forms[0].unique_id)
         self.assertEqual(len(self.app.modules), 3)
-        for module, i in zip(self.app.get_modules(), [2,3,3]):
+        for module, i in zip(self.app.get_modules(), [2, 3, 3]):
             self.assertEqual(len(module.forms), i)
 
     def testDeleteModule(self):
@@ -120,7 +123,7 @@ class AppManagerTest(TestCase):
     def testSwapModules(self):
         m0 = self.app.modules[0].name['en']
         m1 = self.app.modules[1].name['en']
-        self.app.rearrange_modules(0,1)
+        self.app.rearrange_modules(0, 1)
         self.assertEqual(self.app.modules[0].name['en'], m1)
         self.assertEqual(self.app.modules[1].name['en'], m0)
 
@@ -133,12 +136,22 @@ class AppManagerTest(TestCase):
         for new_form, old_form in zip(new_forms, old_forms):
             self.assertEqual(new_form.source, old_form.source)
             self.assertNotEqual(new_form.unique_id, old_form.unique_id)
+        for new_module, old_module in zip(new_app.get_modules(), self.app.get_modules()):
+            if isinstance(old_module, ReportModule):
+                old_config_ids = {config.uuid for config in old_module.report_configs}
+                new_config_ids = {config.uuid for config in new_module.report_configs}
+                self.assertEqual(old_config_ids.intersection(new_config_ids), set())
 
     def testImportApp_from_id(self):
         self.assertTrue(self.app.blobs)
         self._test_import_app(self.app.id)
 
     def testImportApp_from_source(self):
+        report_module = self.app.add_module(ReportModule.new_module('Reports', None))
+        report_module.report_configs = [
+            ReportAppConfig(report_id='config_id1', header={'en': 'CommBugz'}),
+            ReportAppConfig(report_id='config_id2', header={'en': 'CommBugz'})
+        ]
         app_source = self.app.export_json(dump_json=False)
         self._test_import_app(app_source)
 

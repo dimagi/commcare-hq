@@ -90,7 +90,7 @@ hqDefine('cloudcare/js/util', function () {
         hideLoading();
         if (isError) {
             showError(
-                gettext('Could not sync user data. Please try again and report a bug if issue persists.'),
+                gettext('Could not sync user data. Please report an issue if this persists.'),
                 $('#cloudcare-notifications')
             );
         } else {

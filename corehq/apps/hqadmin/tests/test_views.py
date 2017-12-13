@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpResponse
 from django.test import SimpleTestCase
 from mock import patch, Mock
@@ -31,4 +32,10 @@ class AdminRestoreViewTests(SimpleTestCase):
                 'timing_data': [],
                 'num_cases': 0,
                 'num_locations': 0,
+                'num_reports': 0,
+                'hide_xml': False,
+                'case_type_counts': {},
+                'location_type_counts': {},
+                'report_row_counts': {},
+                'num_ledger_entries': 0,
             })

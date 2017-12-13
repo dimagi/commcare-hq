@@ -49,6 +49,24 @@
             {% if toggle_meta.help_link %}
             <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
             {% endif %}
+
+            {% if toggle_meta.relevant_environments %}
+                {% if debug or server_environment in toggle_meta.relevant_environments %}
+                <div class="alert alert-warning" role="alert">
+                    {% blocktrans %}
+                    <strong>Please Note:</strong> This feature flag is available on this server environment, but not on others.
+                    {% endblocktrans %}
+                </div>
+                {% else %}
+                <div class="alert alert-danger" role="alert">
+                    {% blocktrans %}
+                    <strong>CAUTION:</strong> This feature flag is not available on the current server environment.
+                    {% endblocktrans %}
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <hr/>
             <div id="toggle_editing_ko">
                 <div data-bind="saveButton: saveButton"></div>
                 <h4>{% trans "Enabled toggle items" %}</h4>

@@ -3,6 +3,7 @@ Shortcuts for working with domains and users.
 """
 
 
+from __future__ import absolute_import
 def create_domain(name, active=True):
     """Create domain without secure submissions for tests"""
     return Domain.get_or_create_with_name(name=name, is_active=active,

@@ -4,6 +4,7 @@ and some autogeneration. These additions are turned on by a feature flag, but
 domain and HQ admins are excepted, in case we ever need to violate the
 assumptions laid out here.
 """
+from __future__ import absolute_import
 import math
 import re
 import uuid
@@ -16,6 +17,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
+from corehq.apps.locations.models import LocationType
 from corehq.apps.users.forms import clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
@@ -27,6 +29,8 @@ from .const import (
     PRIVATE_SECTOR_WORKER_ROLE,
 )
 from .models import AgencyIdCounter, IssuerId
+from six.moves import range
+from six.moves import map
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
 LOC_TYPES_TO_USER_TYPES = {
@@ -122,7 +126,7 @@ def get_site_code(name, nikshay_code, type_code, parent):
         return slugify(re.sub(r'\s+', '_', word))
 
     nikshay_code = code_ify(nikshay_code)
-    if nikshay_code in map(str, range(0, 10)):
+    if nikshay_code in list(map(str, list(range(0, 10)))):
         nikshay_code = "0{}".format(nikshay_code)
 
     parent_site_code = parent.site_code
@@ -155,7 +159,7 @@ def save_user_callback(sender, couch_user, **kwargs):
         changed = set_issuer_id(commcare_user.domain, commcare_user) or changed
         changed = add_drtb_hiv_to_dto(commcare_user.domain, commcare_user) or changed
         if changed:
-            commcare_user.save()
+            commcare_user.save(fire_signals=False)
 
 
 def set_default_role(domain, commcare_user):
@@ -226,11 +230,14 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
     return ''.join(output)
 
 
-def get_last_used_device_number(user):
-    if not user.devices:
-        return None
-    _, index = max((device.last_used, i) for i, device in enumerate(user.devices))
-    return index + 1
+def set_enikshay_device_id(user, device_id):
+    # device_id was JUST set, so it must be in there
+    device_number = [device.device_id for device in user.devices].index(device_id) + 1
+    if user.user_data.get('id_device_number') != device_number:
+        user.user_data['id_device_number'] = device_number
+        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
+        return True
+    return False
 
 
 def set_issuer_id(domain, user):
@@ -241,12 +248,6 @@ def set_issuer_id(domain, user):
         issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user._id)
         user.user_data['id_issuer_number'] = issuer_id.pk
         user.user_data['id_issuer_body'] = compress_nikshay_id(issuer_id.pk, 3)
-        changed = True
-
-    device_number = get_last_used_device_number(user)
-    if device_number and user.user_data.get('id_device_number', None) != device_number:
-        user.user_data['id_device_number'] = device_number
-        user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
         changed = True
 
     return changed
@@ -272,9 +273,23 @@ def connect_signals():
 # pcc -> pharmacy / chemist
 # dto -> Field officer??
 
-def _make_field_visible_to(field, type_code):
-    # loc_type() is available because this is inside the location form
-    return crispy.Div(field, data_bind="visible: loc_type() === '{}'".format(type_code))
+
+def _make_fields_type_specific(domain, form, fields_to_loc_types):
+    """Make certain fields only appear for specified loctypes"""
+    fs = form.helper.layout[0]
+    assert isinstance(fs, crispy.Fieldset)
+    codes_to_names = dict(LocationType.objects
+                          .filter(domain=domain)
+                          .values_list('code', 'name'))
+    for i, field in enumerate(fs.fields):
+        if field in fields_to_loc_types:
+            loc_type_name = codes_to_names[fields_to_loc_types[field]]
+            # loc_type() is available because this is inside the location form
+            fs[i] = crispy.Div(
+                field,
+                data_bind="visible: loc_type() === '{}'".format(loc_type_name)
+            )
+    return form
 
 
 class ENikshayLocationUserDataEditor(CustomDataEditor):
@@ -292,9 +307,6 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
 
     def init_form(self, post_dict=None):
         form = super(ENikshayLocationUserDataEditor, self).init_form(post_dict)
-        fs = form.helper.layout[0]
-        assert isinstance(fs, crispy.Fieldset)
-
         fields_to_loc_types = {
             'pcp_professional_org_membership': 'pcp',
             'pac_qualification': 'pac',
@@ -303,16 +315,11 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             'plc_lab_or_collection_center': 'plc',
             'plc_accredidation': 'plc',
             'plc_tb_tests': 'plc',
-            'plc_hf_if_nikshay': 'plc',
             'pcc_pharmacy_name': 'pcc',
             'pcc_pharmacy_affiliation': 'pcc',
             'pcc_tb_drugs_in_stock': 'pcc',
         }
-
-        for i, field in enumerate(fs.fields):
-            if field in fields_to_loc_types:
-                fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
-        return form
+        return _make_fields_type_specific(self.domain, form, fields_to_loc_types)
 
     def _make_field(self, field):
         if field.slug == 'language_code':
@@ -350,7 +357,7 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
         return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
 
-class ENikshayUserLocationDataEditor(CustomDataEditor):
+class ENikshayLocationDataEditor(CustomDataEditor):
     """Custom Location Data on Virtual Location User (agency) creation"""
 
     @property
@@ -365,6 +372,17 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
             field for field in self.model.get_fields(required_only=False)
             if field.is_required or field.slug in fields_to_include
         ]
+
+    def init_form(self, post_dict=None):
+        form = super(ENikshayLocationDataEditor, self).init_form(post_dict)
+        if not self.required_only:
+            # This is an edit page, not an agency creation page
+            return form
+        fields_to_loc_types = {
+            'facility_type': 'pcp',
+            'plc_hf_if_nikshay': 'plc',
+        }
+        return _make_fields_type_specific(self.domain, form, fields_to_loc_types)
 
     def _make_field(self, field):
         if field.slug == 'private_sector_org_id':
@@ -393,7 +411,7 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
                     ('18', "WHP-AMC"),
                 ],
             )
-        return super(ENikshayUserLocationDataEditor, self)._make_field(field)
+        return super(ENikshayLocationDataEditor, self)._make_field(field)
 
 
 class ENikshayLocationForm(LocationForm):
@@ -429,7 +447,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = ENikshayLocationForm
-    _location_data_editor = ENikshayUserLocationDataEditor
+    _location_data_editor = ENikshayLocationDataEditor
     _user_data_editor = ENikshayLocationUserDataEditor
 
     @property

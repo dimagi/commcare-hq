@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 
 from corehq.apps.locations.models import SQLLocation
@@ -44,7 +45,7 @@ class RestrictedLocationDrillDown(object):
             location['children'] = parent_to_location_map[location['pk']]
 
         min_level = min([location['level'] for location in user_locations])
-        return filter(lambda x: x['level'] == min_level, user_locations)
+        return [x for x in user_locations if x['level'] == min_level]
 
 
 class RestrictedAsyncLocationFilter(AsyncLocationFilter):

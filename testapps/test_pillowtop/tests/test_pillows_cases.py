@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.test import TestCase
 from casexml.apps.case.xform import extract_case_blocks

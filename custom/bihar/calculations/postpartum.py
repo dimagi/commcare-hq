@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from custom.bihar.calculations.utils.calculations import get_forms
 from custom.bihar.calculations.utils.xmlns import DELIVERY, PNC, EBF, REGISTRATION

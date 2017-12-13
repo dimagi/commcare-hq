@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.test import TestCase
 
@@ -6,6 +7,7 @@ from pillowtop.feed.couch import change_from_couch_row
 
 import sqlalchemy
 from fluff.signals import rebuild_table, indicator_document_updated
+import six
 
 if not settings.configured:
     settings.configure(DEBUG=True)
@@ -21,7 +23,7 @@ WEEK = timedelta(days=7)
 
 def flat_field(fn):
     def getter(item):
-        return unicode(fn(item) or "")
+        return six.text_type(fn(item) or "")
     return fluff.FlatField(getter)
 
 
@@ -153,8 +155,8 @@ class FluffTest(TestCase):
         ]))
 
     def test_indicator_classes(self):
-        self.assertEquals(Indicators1._calculators.keys(), ['base0'])
-        self.assertEquals(Indicators2._calculators.keys(), ['base1', 'base2'])
+        self.assertEquals(list(Indicators1._calculators), ['base0'])
+        self.assertEquals(list(Indicators2._calculators), ['base1', 'base2'])
 
     def test_indicator_calculation(self):
         actions = [dict(date="2012-09-23", x=2), dict(date="2012-09-24", x=3)]
@@ -195,7 +197,7 @@ class FluffTest(TestCase):
         calc.fluff = MockIndicators
         values = calc.calculate(MockDoc.wrap(dict(actions=[dict(date="2012-09-23", x=2),
                                                            dict(date="2012-09-24", x=3)])))
-        self.assertEquals(len(values.keys()), 8)
+        self.assertEquals(len(list(values)), 8)
         self.assertEquals(values['null_value'], [dict(date=None, value=2, group_by=None)])
         self.assertEquals(values['date_value'], [
             dict(date=date(2012, 9, 23), value=2, group_by=None),
@@ -251,7 +253,7 @@ class FluffTest(TestCase):
                 domain="mock",
                 owner_id="123",
                 value_week=dict(
-                    date=[[date(2012, 02, 23), 1]],
+                    date=[[date(2012, 2, 23), 1]],
                     null=[],
                     date_value=[],
                     null_value=[[None, 3]]
@@ -285,7 +287,7 @@ class FluffTest(TestCase):
             doc = cls(domain="mock",
                       owner_id="123",
                       value_week=dict(
-                          date=[date(2012, 02, 23)],
+                          date=[date(2012, 2, 23)],
                           null=[],
                           date_value=[],
                           null_value=[[None, 3]]
@@ -318,16 +320,16 @@ class FluffTest(TestCase):
         for cls in [MockIndicators, MockIndicatorsWithGetters]:
             current = cls(domain="mock",
                                      owner_id="123",
-                                     value_week=dict(date=[[date(2012, 02, 23), 1]],
+                                     value_week=dict(date=[[date(2012, 2, 23), 1]],
                                                      null=[],
-                                                     date_value=[[date(2012, 02, 23), 3]],
+                                                     date_value=[[date(2012, 2, 23), 3]],
                                                      null_value=[]))
             new = cls(domain="mock",
                       owner_id="123",
                       value_week=dict(
-                          date=[[date(2012, 02, 24), 1]],
+                          date=[[date(2012, 2, 24), 1]],
                           null=[[None, 1]],
-                          date_value=[[date(2012, 02, 23), 4]],
+                          date_value=[[date(2012, 2, 23), 4]],
                           null_value=[[None, 2]]))
 
             diff = new.diff(current)
@@ -370,14 +372,14 @@ class FluffTest(TestCase):
                                      owner_id="123",
                                      value_week=dict(
                                          date=[dict(date=date(2012, 2, 23), value=1, group_by=None)],
-                                         date_value=[[date(2012, 02, 24), 1]],
+                                         date_value=[[date(2012, 2, 24), 1]],
                                          group_list=[],
                                          null_value=[dict(date=None, value=1, group_by='abc')],
                                      ))
             new = cls(domain="mock",
                       owner_id="123",
                       value_week=dict(
-                          date=[[date(2012, 02, 24), 1]],
+                          date=[[date(2012, 2, 24), 1]],
                           date_value=[dict(date=date(2012, 2, 20), value=2, group_by=None)],
                           group_list=[dict(date=date(2013, 1, 1), value=3, group_by=['abc', '123'])],
                           null_value=[dict(date=None, value=1, group_by='abc')],

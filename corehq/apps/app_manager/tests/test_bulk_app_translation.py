@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 import codecs
 import tempfile
 
@@ -19,6 +20,7 @@ from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
     update_form_translations,
     get_unicode_dicts)
+from six.moves import zip
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
@@ -258,14 +260,14 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
-                u'Sheet "Modules_and_forms" has less columns than expected. Sheet '
+                u'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
                 u'will be processed but the following translations will be '
                 u'unchanged: default_fra',
 
                 u'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
                 u'be processed but ignoring the following columns: default-fra',
 
-                u'Sheet "module1" has less columns than expected. Sheet '
+                u'Sheet "module1" has fewer columns than expected. Sheet '
                 u'will be processed but the following translations will be '
                 u'unchanged: default_fra',
 
@@ -273,7 +275,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
                 u'be processed but ignoring the following columns: default-fra',
                 u"You must provide at least one translation of the case property 'name'",
 
-                u'Sheet "module1_form1" has less columns than expected. Sheet '
+                u'Sheet "module1_form1" has fewer columns than expected. Sheet '
                 u'will be processed but the following translations will be '
                 u'unchanged: default_fra',
 

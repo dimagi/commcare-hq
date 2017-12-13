@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import dateutil.parser
 from django.test import SimpleTestCase

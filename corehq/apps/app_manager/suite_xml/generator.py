@@ -1,4 +1,5 @@
-import urllib
+from __future__ import absolute_import
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
 
@@ -152,5 +153,5 @@ class MediaSuiteGenerator(object):
                 remote=self.app.url_base + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
-                ) + urllib.quote(name.encode('utf-8')) if name else name
+                ) + six.moves.urllib.parse.quote(name.encode('utf-8')) if name else name
             )

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import (
     DictProperty,
     DocumentSchema,
@@ -89,6 +90,8 @@ class FormQuestionConcept(FormQuestion):
 class OpenmrsCaseConfig(DocumentSchema):
     id_matchers = SchemaListProperty(IdMatcher)
     person_properties = SchemaDictProperty(ValueSource)
+    person_preferred_name = SchemaDictProperty(ValueSource)
+    person_preferred_address = SchemaDictProperty(ValueSource)
     person_attributes = SchemaDictProperty(ValueSource)
 
 
@@ -106,5 +109,6 @@ class OpenmrsFormConfig(DocumentSchema):
 
 
 class OpenmrsConfig(DocumentSchema):
+    openmrs_provider = StringProperty(required=False)
     case_config = SchemaProperty(OpenmrsCaseConfig)
     form_configs = ListProperty(OpenmrsFormConfig)

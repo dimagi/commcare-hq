@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.ewsghana.reminders import STOCK_ON_HAND_REMINDER
 from custom.ewsghana.reminders.const import IN_CHARGE_ROLE
 from custom.ewsghana.reminders.reminder import Reminder

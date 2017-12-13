@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import *
 import re
 from decimal import Decimal
 from dimagi.utils.couch import CriticalSection
 from collections import namedtuple
+import six
 
 
 phone_number_re = re.compile("^\d+$")
@@ -60,9 +62,9 @@ def apply_leniency(contact_phone_number):
     """
     from corehq.apps.sms.util import strip_plus
     # Decimal preserves trailing zeroes, so it's ok 
-    if isinstance(contact_phone_number, (int, long, Decimal)):
+    if isinstance(contact_phone_number, six.integer_types + (Decimal,)):
         contact_phone_number = str(contact_phone_number)
-    if isinstance(contact_phone_number, basestring):
+    if isinstance(contact_phone_number, six.string_types):
         chars = re.compile(r"[()\s\-.]+")
         contact_phone_number = chars.sub("", contact_phone_number)
         contact_phone_number = strip_plus(contact_phone_number)

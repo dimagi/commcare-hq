@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django import forms
 
 # todo proper B3 Handle
@@ -88,7 +89,7 @@ class AdvancedPrimeRestoreCacheForm(forms.Form):
 
     def clean_users(self):
         user_ids = self.cleaned_data['users'].splitlines()
-        self.user_ids = filter(None, user_ids)
+        self.user_ids = [_f for _f in user_ids if _f]
         return self.cleaned_data['users']
 
     def clean(self):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -7,9 +8,12 @@ from dateutil.rrule import rrule, DAILY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcDailyView
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -18,6 +22,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -26,44 +31,25 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         queryset = AggAwcDailyView.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             in_day=Sum('daily_attendance_open'),
             all=Sum('num_launched_awcs'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
 
         return queryset
 
-    map_data = {}
-
-    in_day_total = 0
-    valid_total = 0
-
-    for row in get_data_for(config):
-        valid = row['all']
-        name = row['%s_name' % loc_level]
-
-        in_day = row['in_day']
-
-        in_day_total += (in_day or 0)
-        valid_total += (valid or 0)
-
-        value = (in_day or 0) * 100 / (valid or 1)
-        row_values = {
-            'in_day': in_day or 0,
-            'all': valid or 0
-        }
-        if value < 50:
-            row_values.update({'fillKey': '0%-50%'})
-        elif 50 <= value < 75:
-            row_values.update({'fillKey': '50%-75%'})
-        elif value >= 75:
-            row_values.update({'fillKey': '75%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, valid_total, in_day_total = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'in_day',
+        'all',
+        50,
+        75
+    )
 
     fills = OrderedDict()
     fills.update({'0%-50%': RED})
@@ -82,13 +68,26 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
                     "Percentage of Angwanwadi Centers that were open yesterday."
                 )),
                 'period': 'Daily',
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of AWCs that were open yesterday:',
+                        'value': valid_total},
+                    {
+                        'indicator': 'Total number of AWCs that have been launched:',
+                        'value': in_day_total
+                    },
+                    {
+                        'indicator': '% of AWCs open yesterday:',
+                        'value': '%.2f%%' % (in_day_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     last = datetime(*config['month']) - relativedelta(days=30)
@@ -130,8 +129,9 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         location = row['%s_name' % loc_level]
         valid = row['all'] or 0
 
-        best_worst[location]['in_day'] = in_day
-        best_worst[location]['all'] = valid
+        if date.month == month.month:
+            best_worst[location]['in_day'] = in_day
+            best_worst[location]['all'] = valid
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -142,10 +142,10 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
         [
             dict(
                 loc_name=key,
-                percent=(value['in_day'] * 100) / float(value['all'] or 1)
-            ) for key, value in best_worst.iteritems()
+                value=value['in_day']
+            ) for key, value in six.iteritems(best_worst)
         ],
-        key=lambda x: x['percent'],
+        key=lambda x: x['value'],
         reverse=True
     )
 
@@ -155,27 +155,27 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
+                        'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['launched'].iteritems()
+                    } for key, value in six.iteritems(data['launched'])
                 ],
                 "key": "Number of AWCs launched",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": PINK
+                "color": ChartColors.PINK
             },
             {
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
+                        'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['open_in_day'].iteritems()
+                    } for key, value in six.iteritems(data['open_in_day'])
                 ],
-                "key": "Total AWCs open yesterday",
+                "key": "Total AWCs open",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,
@@ -185,7 +185,8 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
     }
 
 
-def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['date'] = datetime(*config['month'])
@@ -211,16 +212,20 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False)
         'all': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['all']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         in_day = row['in_day']
         row_values = {
             'in_day': in_day or 0,
             'all': valid or 0
         }
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = (in_day or 0) / float(valid or 1)
@@ -229,8 +234,14 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, show_test=False)
             name, value
         ])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of Angwanwadi Centers that were open yesterday."
         )),

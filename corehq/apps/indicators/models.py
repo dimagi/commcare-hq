@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import calendar
 import copy
@@ -16,6 +17,7 @@ from dimagi.utils.dates import DateSpan, add_months, months_between
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.couch.cache import cache_core
+import six
 
 
 class DocumentNotInDomainError(Exception):
@@ -212,7 +214,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             descending=True,
             **couch_key
         ).all()
-        return [item.get('key',[])[-1] for item in data]
+        return [item.get('key', [])[-1] for item in data]
 
     @classmethod
     @memoized
@@ -615,7 +617,7 @@ class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
             if item.get('value'):
                 unique_values[item['value']['_id']] = item['value']['value']
         value = sum(unique_values.values())
-        return (value, unique_values.keys()) if is_debug else value
+        return (value, list(unique_values)) if is_debug else value
 
     @classmethod
     def get_nice_name(cls):
@@ -756,7 +758,7 @@ class FormDataIndicatorDefinitionMixin(DocumentSchema):
         """
             question_id must be formatted like: path.to.question_id
         """
-        if isinstance(question_id, basestring):
+        if isinstance(question_id, six.string_types):
             question_id = question_id.split('.')
         if len(question_id) > 0 and form_data:
             return self.get_from_form(form_data.get(question_id[0]), question_id[1:])
@@ -949,7 +951,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
             if related_forms:
                 try:
                     value_list = computed.get(self.slug, {}).get('value', {})
-                    saved_form_ids = value_list.keys()
+                    saved_form_ids = list(value_list)
                     current_ids = set([f._id for f in related_forms])
                     is_update = len(current_ids.difference(saved_form_ids)) > 0
                     if is_update:

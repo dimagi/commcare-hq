@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import *
 
 PROFILE_A = "A"
@@ -10,14 +11,14 @@ PROFILE_G = "G"
 PROFILE_H = "H"
 PROFILES = [PROFILE_A, PROFILE_B, PROFILE_C, PROFILE_D, PROFILE_E, PROFILE_F, PROFILE_G, PROFILE_H]
 PROFILE_DESC = {
-    PROFILE_A : "A - HIV+",
-    PROFILE_B : "B - ART non",
-    PROFILE_C : "C - IDU",
-    PROFILE_D : "D - PSE/CSV",
-    PROFILE_E : "E - Top",
-    PROFILE_F : "F - Bottom",
-    PROFILE_G : "G - General",
-    PROFILE_H : "H - Other",
+    PROFILE_A: "A - HIV+",
+    PROFILE_B: "B - ART non",
+    PROFILE_C: "C - IDU",
+    PROFILE_D: "D - PSE/CSV",
+    PROFILE_E: "E - Top",
+    PROFILE_F: "F - Bottom",
+    PROFILE_G: "G - General",
+    PROFILE_H: "H - Other",
 }
 
 

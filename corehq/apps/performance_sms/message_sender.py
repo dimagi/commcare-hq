@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from corehq.apps.performance_sms.parser import get_parsed_params
 from corehq.apps.performance_sms.query_engine import QueryEngine, QueryContext

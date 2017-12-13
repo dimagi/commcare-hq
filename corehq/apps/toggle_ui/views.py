@@ -1,6 +1,8 @@
+from __future__ import absolute_import
 import json
 from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
+from django.conf import settings
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
@@ -10,11 +12,13 @@ from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache, parse_toggle
+import six
 
 NOT_FOUND = "Not Found"
 
@@ -119,7 +123,7 @@ class ToggleEditView(ToggleBaseView):
         """
         Returns the corresponding toggle definition from corehq/toggles.py
         """
-        return _find_static_toggle(self.toggle_slug)
+        return find_static_toggle(self.toggle_slug)
 
     def get_toggle(self):
         if not self.static_toggle:
@@ -145,6 +149,7 @@ class ToggleEditView(ToggleBaseView):
             'expanded': self.expanded,
             'namespaces': [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces],
             'usage_info': self.usage_info,
+            'server_environment': settings.SERVER_ENVIRONMENT,
         }
         if self.expanded:
             context['domain_toggle_list'] = sorted(
@@ -195,15 +200,9 @@ def toggle_app_manager_v2(request):
         else:
             toggle.enabled_users.remove(request.user.username)
         toggle.save()
-        _call_save_fn_and_clear_cache(slug, changed_entries, toggle.enabled_users, _find_static_toggle(slug))
+        _call_save_fn_and_clear_cache(slug, changed_entries, toggle.enabled_users, find_static_toggle(slug))
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
-
-
-def _find_static_toggle(slug):
-    for toggle in all_toggles():
-        if toggle.slug == slug:
-            return toggle
 
 
 def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enabled, static_toggle):
@@ -274,7 +273,7 @@ def _format_date(date):
 
 def _get_most_recently_used(last_used):
     """Returns the name and date of the most recently used toggle"""
-    last_used = {k: v for k, v in last_used.iteritems() if v != NOT_FOUND}
+    last_used = {k: v for k, v in six.iteritems(last_used) if v != NOT_FOUND}
     most_recently_used = sorted(last_used, key=last_used.get, reverse=True)
     return {
         'name': most_recently_used[0],

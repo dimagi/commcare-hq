@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import datetime
 from cStringIO import StringIO
 from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
+import sys
 
 from celery import group
 from celery.task import periodic_task, task
@@ -10,6 +12,7 @@ from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_datetime, parse_date
+from django.core.management import call_command
 from soil import MultipleTaskDownload
 
 from corehq import toggles
@@ -48,6 +51,7 @@ from .const import (
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
+import six
 
 
 logger = get_task_logger(__name__)
@@ -61,7 +65,7 @@ cache = get_redis_client()
 
 @periodic_task(
     bind=True,
-    run_every=crontab(hour=0, minute=0),  # every day at midnight
+    run_every=crontab(hour=2, minute=15),  # every day at 2:15am IST (8:45pm UTC, 4:45pm EST)
     queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
 )
 def enikshay_task(self):
@@ -189,14 +193,6 @@ class EpisodeUpdater(object):
 
         return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
 
-    def update_single_case(self, episode_case):
-        # updates a single episode_case.
-        assert episode_case.domain == self.domain
-        update_json = EpisodeAdherenceUpdate(self.domain, episode_case).update_json()
-        if update_json:
-            update_case(self.domain, episode_case.case_id, update_json,
-                        device_id="%s.%s" % (__name__, type(self).__name__))
-
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
         episode_cases = case_accessor.iter_cases(case_ids)
@@ -283,23 +279,27 @@ class EpisodeAdherenceUpdate(object):
         self.domain = domain
         self.episode = episode_case
         self.adherence_data_store = get_datastore(self.domain)
-        # set purge_date to 30 days back
+        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
         self.purge_date = datetime.datetime.now(
             pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
-        self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
+
 
         self._cache_dose_taken_by_date = False
 
     @memoized
-    def get_doses_data(self):
+    def get_fixture_column(self, fixture_column_name):
         # return 'doses_per_week' by 'schedule_id' from the Fixture data
         fixtures = get_itemlist(self.domain)
         doses_per_week_by_schedule_id = {}
         for f in fixtures:
             schedule_id = f.fields[SCHEDULE_ID_FIXTURE].field_list[0].field_value
-            doses_per_week = int(f.fields["doses_per_week"].field_list[0].field_value)
+            doses_per_week = int(f.fields[fixture_column_name].field_list[0].field_value)
             doses_per_week_by_schedule_id[schedule_id] = doses_per_week
         return doses_per_week_by_schedule_id
+
+    @memoized
+    def get_doses_data(self):
+        return self.get_fixture_column('doses_per_week')
 
     @memoized
     def get_valid_adherence_cases(self):
@@ -355,7 +355,7 @@ class EpisodeAdherenceUpdate(object):
         else:
             return len([
                 status
-                for date, status in dose_status_by_date.iteritems()
+                for date, status in six.iteritems(dose_status_by_date)
                 if start_date <= date <= end_date and getattr(status, dose_type)
             ])
 
@@ -366,7 +366,7 @@ class EpisodeAdherenceUpdate(object):
         {'99DOTS': 1, 'MERM': 1, 'treatment_supervisor': 0, ... }
         """
         counts = defaultdict(int)
-        for date, status in dose_status_by_date.iteritems():
+        for date, status in six.iteritems(dose_status_by_date):
             if status.source in VALID_ADHERENCE_SOURCES:
                 if start_date and end_date and start_date <= date <= end_date:
                     counts[status.source] += 1
@@ -389,10 +389,11 @@ class EpisodeAdherenceUpdate(object):
 
         adherence_cases = self.get_valid_adherence_cases()
         dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
+        doses_per_week = self.get_doses_per_week()
 
         update = {
-            'total_expected_doses_taken': self.get_total_expected_doses_taken(adherence_schedule_date_start),
             'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
+            'doses_per_week': doses_per_week
         }
         update.update(self.get_adherence_scores(dose_status_by_date))
         update.update(self.get_aggregated_scores(
@@ -400,6 +401,9 @@ class EpisodeAdherenceUpdate(object):
             adherence_schedule_date_start,
             dose_status_by_date
         ))
+        update.update(self.get_ip_followup_test_threshold_dates(dose_status_by_date))
+        update.update(self.get_cp_followup_test_threshold_dates(dose_status_by_date))
+        update.update(self.get_outcome_due_threshold_dates(dose_status_by_date))
 
         return self.check_and_return(update)
 
@@ -418,7 +422,7 @@ class EpisodeAdherenceUpdate(object):
         start_date = self.get_adherence_schedule_start_date()
 
         properties = {}
-        for num_days, day_name in readable_day_names.iteritems():
+        for num_days, day_name in six.iteritems(readable_day_names):
             if today - datetime.timedelta(days=num_days) >= start_date:
                 start = today - datetime.timedelta(days=num_days)
                 end = today
@@ -463,6 +467,9 @@ class EpisodeAdherenceUpdate(object):
         date, prior to which adherence cases are closed. The "purged" cases are
         not sent down to the phone.
 
+        Adherence cases are closed 30 days after the adherence_date property.
+        If today is Jan 31, then all cases on or before Jan 1 will have been "purged"
+
         """
 
         if (adherence_schedule_date_start > self.purge_date) or not latest_adherence_date:
@@ -491,12 +498,61 @@ class EpisodeAdherenceUpdate(object):
         )
 
         doses_per_week = self.get_doses_per_week()
-        update['expected_doses_taken'] = int(((
-            (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
-        ) * doses_per_week)
 
-        update['total_expected_doses_taken'] = self.get_total_expected_doses_taken(adherence_schedule_date_start)
+        # the expected number of doses taken between the time the adherence
+        # schedule started and the last valid date of the score
+        # (i.e. the earlier of (30 days ago, latest_adherence_date))
+        # this property should actually have been called "aggregated_score_count_expected"
+        num_days = (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days + 1
+        update['expected_doses_taken'] = int(doses_per_week * num_days / 7.0)
+
         return update
+
+    def get_dates_threshold_crossed_and_expected(self, dosage_threshold, dose_status_by_date):
+        adherence_date_threshold_crossed = self.get_date_of_nth_dose(dosage_threshold, dose_status_by_date)
+        if adherence_date_threshold_crossed:
+            adherence_date_test_expected = adherence_date_threshold_crossed + datetime.timedelta(days=7)
+        else:
+            adherence_date_test_expected = ''
+        return adherence_date_threshold_crossed, adherence_date_test_expected
+
+    def get_ip_followup_test_threshold_dates(self, dose_status_by_date):
+        ip_dosage_threshold = self.get_dose_count_ip() - self.get_doses_per_week()
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            ip_dosage_threshold, dose_status_by_date
+        )
+        return {
+            'adherence_ip_date_followup_test_expected': date_expected,
+            'adherence_ip_date_threshold_crossed': date_crossed or '',
+        }
+
+    def get_cp_followup_test_threshold_dates(self, dose_status_by_date):
+        cp_dosage_threshold = self.get_dose_count_cp() - self.get_doses_per_week()
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            cp_dosage_threshold, dose_status_by_date
+        )
+        return {
+            'adherence_cp_date_followup_test_expected': date_expected,
+            'adherence_cp_date_threshold_crossed': date_crossed or '',
+        }
+
+    def get_outcome_due_threshold_dates(self, dose_status_by_date):
+        outcome_due_dosage_threshold = self.get_dose_count_outcome_due() - self.get_doses_per_week()
+        date_crossed, date_expected = self.get_dates_threshold_crossed_and_expected(
+            outcome_due_dosage_threshold, dose_status_by_date
+        )
+        return {
+            'adherence_date_outcome_due': date_expected,
+        }
+
+    @staticmethod
+    def get_date_of_nth_dose(dose_count, dose_status_by_date):
+        doses_to_date = 0
+        for dose_date in sorted(dose_status_by_date):
+            if dose_status_by_date[dose_date].taken:
+                doses_to_date += 1
+                if doses_to_date == dose_count:
+                    return dose_date
 
     @memoized
     def get_doses_per_week(self):
@@ -512,12 +568,41 @@ class EpisodeAdherenceUpdate(object):
             return 0
         return doses_per_week
 
-    def get_total_expected_doses_taken(self, adherence_schedule_date_start):
-        doses_per_week = self.get_doses_per_week()
-        today = self.date_today_in_india
-        total_expected_doses_taken = int(
-            round(((today - adherence_schedule_date_start).days / 7.0) * doses_per_week))
-        return total_expected_doses_taken
+    def get_dose_count_by_threshold(self, threshold):
+        dose_count_by_adherence_schedule = self.get_fixture_column(threshold)
+        adherence_schedule_id = self.episode.get_case_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
+        dose_count = dose_count_by_adherence_schedule.get(adherence_schedule_id)
+        if dose_count is None:
+            soft_assert('{}@{}'.format('npellegrino', 'dimagi.com'))(
+                False,
+                "No fixture item found with schedule_id {}".format(adherence_schedule_id)
+            )
+            return sys.maxsize
+        return dose_count
+
+    @memoized
+    def get_dose_count_ip(self):
+        threshold = (
+            'dose_count_ip_new_patient' if self.episode.get_case_property('patient_type_choice') == 'new'
+            else 'dose_count_ip_recurring_patient'
+        )
+        return self.get_dose_count_by_threshold(threshold)
+
+    @memoized
+    def get_dose_count_cp(self):
+        threshold = (
+            'dose_count_cp_new_patient' if self.episode.get_case_property('patient_type_choice') == 'new'
+            else 'dose_count_cp_recurring_patient'
+        )
+        return self.get_dose_count_by_threshold(threshold)
+
+    @memoized
+    def get_dose_count_outcome_due(self):
+        threshold = (
+            'dose_count_outcome_due_new_patient' if self.episode.get_case_property('patient_type_choice') == 'new'
+            else 'dose_count_outcome_due_recurring_patient'
+        )
+        return self.get_dose_count_by_threshold(threshold)
 
     def check_and_return(self, update_dict):
         """
@@ -532,7 +617,7 @@ class EpisodeAdherenceUpdate(object):
         """
         needs_update = any([
             self.episode.get_case_property(k) != v
-            for (k, v) in update_dict.iteritems()
+            for (k, v) in six.iteritems(update_dict)
         ])
         if needs_update:
             return update_dict
@@ -653,6 +738,8 @@ class EpisodeVoucherUpdate(object):
 
         try:
             first_prescription = get_prescription_from_voucher(self.domain, first_voucher_generated.case_id)
+            if first_prescription.closed:
+                return {}
         except ENikshayCaseNotFound:
             return {}
 
@@ -715,7 +802,7 @@ def calculate_dose_status_by_day(adherence_cases):
         adherence_cases_by_date[adherence_date].append(case)
 
     status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False))
-    for day, cases in adherence_cases_by_date.iteritems():
+    for day, cases in six.iteritems(adherence_cases_by_date):
         case = _get_relevent_case(cases)
         if not case:
             pass  # unknown
@@ -745,14 +832,11 @@ def _get_relevent_case(cases):
     if 'enikshay' not in sources:
         valid_cases = cases
     else:
-        valid_cases = filter(
-            lambda case: (
+        valid_cases = [case for case in cases if (
                 case.get('adherence_source') == 'enikshay' and
                 (not case['closed'] or (case['closed'] and
                     case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
-            ),
-            cases
-        )
+            )]
     if valid_cases:
         by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
         latest_case = by_modified_on[-1]
@@ -763,8 +847,24 @@ def _get_relevent_case(cases):
 def get_updated_fields(existing_properties, new_properties):
     updated_fields = {}
     for prop, value in new_properties.items():
-        existing_value = unicode(existing_properties.get(prop, '--'))
-        new_value = unicode(value) if value is not None else u""
+        existing_value = six.text_type(existing_properties.get(prop, '--'))
+        new_value = six.text_type(value) if value is not None else u""
         if existing_value != new_value:
             updated_fields[prop] = value
     return updated_fields
+
+
+@task(queue='background_queue', ignore_result=True)
+def run_model_reconciliation(command_name, email, person_case_ids=None, commit=False):
+    call_command(command_name,
+                 recipient=email,
+                 person_case_ids=person_case_ids,
+                 commit=commit)
+
+
+@task
+def update_single_episode(domain, episode_case):
+    update_json = EpisodeAdherenceUpdate(domain, episode_case).update_json()
+    if update_json:
+        update_case(domain, episode_case.case_id, update_json,
+                    device_id="%s.%s" % (__name__, 'update_single_episode'))

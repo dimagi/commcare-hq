@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.apps.userreports.models import AsyncIndicator, get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
+import six
 
 
 DOMAIN = 'icds-cas'
@@ -20,7 +22,7 @@ STATE_IDS = [
 
 
 def create_async_indicator(doc_id):
-    assert isinstance(doc_id, unicode)
+    assert isinstance(doc_id, six.text_type)
     return AsyncIndicator(
         doc_id=doc_id, doc_type="CommCareCase", domain=DOMAIN,
         indicator_config_ids=[DATA_SOURCE_NAME]

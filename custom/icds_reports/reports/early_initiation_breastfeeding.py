@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -6,9 +7,12 @@ from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -17,6 +21,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -24,41 +29,24 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             birth=Sum('bf_at_birth'),
             in_month=Sum('born_in_month'),
-        )
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
-    birth_total = 0
-    in_month_total = 0
-    for row in get_data_for(config):
-        name = row['%s_name' % loc_level]
-
-        birth = row['birth']
-        in_month = row['in_month']
-
-        birth_total += (birth or 0)
-        in_month_total += (in_month or 0)
-
-        value = (birth or 0) * 100 / (in_month or 1)
-        row_values = {
-            'birth': birth,
-            'in_month': in_month,
-        }
-        if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 < value < 60:
-            row_values.update({'fillKey': '20%-60%'})
-        elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, in_month_total, birth_total = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'birth',
+        'in_month',
+        20,
+        60
+    )
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
@@ -79,13 +67,26 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                     "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
                     "nutrients and encourages exclusive breastfeeding practice"
                 )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                "extended_info": [
+                    {'indicator': 'Total Number of Children born in the given month:', 'value': in_month_total},
+                    {
+                        'indicator': (
+                            'Total Number of Children who were put to the breast within one hour of birth:'
+                        ),
+                        'value': birth_total
+                    },
+                    {
+                        'indicator': '% children who were put to the breast within one hour of birth:',
+                        'value': '%.2f%%' % (birth_total * 100 / float(in_month_total or 1))
+                    }
+                ]
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -132,7 +133,7 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
         data_for_month['y'] = data_for_month['birth'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=val) for key, val in best_worst.iteritems()],
+        [dict(loc_name=key, percent=val) for key, val in six.iteritems(best_worst)],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -146,12 +147,12 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
                         'y': val['y'],
                         'all': val['all'],
                         'birth': val['birth']
-                    } for key, val in data['blue'].iteritems()
+                    } for key, val in six.iteritems(data['blue'])
                 ],
                 "key": "% Early Initiation of Breastfeeding",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,
@@ -161,7 +162,8 @@ def get_early_initiation_breastfeeding_chart(domain, config, loc_level, show_tes
     }
 
 
-def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_early_initiation_breastfeeding_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -186,9 +188,13 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
         'birth': 0,
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         in_month = row['in_month']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         birth = row['birth']
 
@@ -201,8 +207,14 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, show_test
             name, value
         ])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of children who were put to the breast within one hour of birth."
             "<br/><br/>"

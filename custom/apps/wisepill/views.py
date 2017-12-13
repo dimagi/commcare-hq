@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import csv
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime

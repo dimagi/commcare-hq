@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from importlib import import_module
 
 from django.conf import settings
@@ -18,7 +19,7 @@ def login_with_permission_from_post(login_decorator=login_and_domain_required):
             if req.method == 'POST':
                 cookie = req.POST.get('_cookie')
                 if cookie:
-                    cookies = dict(map(lambda x: x.strip().split('=', 1), cookie.split(';')))
+                    cookies = dict([x.strip().split('=', 1) for x in cookie.split(';')])
 
                     session_key = cookies.get(settings.SESSION_COOKIE_NAME, None)
                     engine = import_module(settings.SESSION_ENGINE)

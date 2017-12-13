@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.messaging.tasks import sync_case_for_messaging

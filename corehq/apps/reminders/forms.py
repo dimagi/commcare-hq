@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import json
 import re
@@ -76,6 +77,7 @@ from corehq.apps.app_manager.models import Form as CCHQForm
 from dimagi.utils.django.fields import TrimmedCharField
 from corehq.util.timezones.utils import get_timezone_for_user
 from langcodes import get_name as get_language_name
+import six
 
 ONE_MINUTE_OFFSET = time(0, 1)
 
@@ -153,7 +155,7 @@ def validate_integer(value, error_msg, nonnegative=False):
 
 def validate_date(value):
     date_regex = re.compile('^\d\d\d\d-\d\d-\d\d$')
-    if not isinstance(value, basestring) or date_regex.match(value) is None:
+    if not isinstance(value, six.string_types) or date_regex.match(value) is None:
         raise ValidationError(_('Dates must be in YYYY-MM-DD format.'))
     try:
         return parse(value).date()
@@ -166,7 +168,7 @@ def validate_time(value):
         return value
     error_msg = _("Please enter a valid time from 00:00 to 23:59.")
     time_regex = re.compile("^\d{1,2}:\d\d(:\d\d){0,1}$")
-    if not isinstance(value, basestring) or time_regex.match(value) is None:
+    if not isinstance(value, six.string_types) or time_regex.match(value) is None:
         raise ValidationError(error_msg)
     try:
         return parse(value).time()
@@ -548,7 +550,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-4 col-lg-4'
+        self.helper.field_class = 'col-sm-8 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -619,10 +621,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_property',
-                            css_class="input-xlarge",
                             data_bind="autocompleteSelect2: getAvailableCaseProperties",
                         ),
-                        css_class='col-sm-6'
+                        css_class='col-sm-4'
                     ),
                     crispy.Div(
                         InlineField(
@@ -634,12 +635,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_value',
-                            style="margin-left: 5px;",
                             data_bind="visible: isStartMatchValueVisible",
                         ),
-                        css_class='col-sm-2'
+                        css_class='col-sm-4'
                     ),
-                    field_class='col-md-8 col-sm-8'
                 ),
                 data_bind="visible: isStartReminderCaseProperty",
             ),
@@ -691,21 +690,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_date_offset_type',
-                            css_class="input-xlarge",
                         ),
-                        css_class='col-sm-4'
+                        css_class='col-sm-6'
                     ),
                     crispy.Div(
                         InlineField(
                             'start_date_offset',
-                            css_class='input-mini',
-
                         ),
                         crispy.HTML('<p class="help-inline">day(s)</p>'),
                         style='display: inline; margin-left: 5px;',
-                        css_class='col-sm-2'
+                        css_class='col-sm-4'
                     ),
-                    field_class='col-lg-8 col-md-8'
                 ),
                 data_bind="visible: isStartReminderCaseDate"
             ),
@@ -985,7 +980,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'is_trial_project': domain_is_on_trial(self.domain),
             'email_trial_message': EMAIL_TRIAL_MESSAGE % {'limit': TRIAL_MAX_EMAILS},
         }
-        for field_name in self.fields.keys():
+        for field_name in self.fields:
             current_values[field_name] = self[field_name].value()
         return current_values
 
@@ -1501,8 +1496,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @classmethod
     def compute_initial(cls, reminder_handler, available_languages):
         initial = {}
-        fields = cls.__dict__['base_fields'].keys()
-        for field in fields:
+        for field in cls.__dict__['base_fields']:
             try:
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
@@ -1916,7 +1910,7 @@ class RecordListWidget(Widget):
         data_dict = DotExpandedDict(raw)
         data_list = []
         if len(data_dict) > 0:
-            for key in sorted(data_dict[input_name].iterkeys()):
+            for key in sorted(six.iterkeys(data_dict[input_name])):
                 data_list.append(data_dict[input_name][key])
         
         return data_list
@@ -2713,7 +2707,7 @@ class BroadcastForm(Form):
             return []
 
         value = self.cleaned_data.get('location_ids')
-        if not isinstance(value, basestring) or value.strip() == '':
+        if not isinstance(value, six.string_types) or value.strip() == '':
             raise ValidationError(_('Please choose at least one location'))
 
         location_ids = [location_id.strip() for location_id in value.split(',')]

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import uuid
 from datetime import datetime
@@ -9,13 +10,11 @@ from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex
-from casexml.apps.phone.tests.utils import (
-    create_restore_user,
-    get_restore_config,
-    MockDevice,
-)
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import get_restore_config, MockDevice
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.groups.models import Group
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -44,6 +43,7 @@ from casexml.apps.phone.restore import (
 )
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
+from six.moves import range
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -92,6 +92,7 @@ class BaseSyncTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         delete_all_users()
+        delete_all_domains()
         super(BaseSyncTest, cls).tearDownClass()
 
     def get_device(self, **kw):

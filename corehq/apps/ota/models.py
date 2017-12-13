@@ -1,11 +1,14 @@
+from __future__ import absolute_import
 from cStringIO import StringIO
-from django.db import models
+from django.db import models, transaction
 
 from casexml.apps.phone.restore import stream_response
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.util import random_url_id
 from corehq.blobs.exceptions import NotFound
+from corehq.util.quickcache import quickcache
+import six
 
 
 class DemoUserRestore(models.Model):
@@ -74,7 +77,7 @@ class DemoUserRestore(models.Model):
 
     def _write_restore_blob(self, restore, db):
 
-        if isinstance(restore, unicode):
+        if isinstance(restore, six.text_type):
             restore = StringIO(restore.encode("utf-8"))
         elif isinstance(restore, bytes):
             restore = StringIO(restore)
@@ -89,3 +92,40 @@ class DemoUserRestore(models.Model):
         self.restore_blob_id = None
 
         return deleted
+
+
+class SerialIdBucket(models.Model):
+    """
+    Model used to keep track of an incrementing, unique integer
+    to be used in serial ID generation
+    """
+    domain = models.CharField(max_length=255)
+    bucket_id = models.CharField(max_length=255)
+    current_value = models.IntegerField(default=-1)
+
+    class Meta:
+        index_together = ('domain', 'bucket_id',)
+        unique_together = ('domain', 'bucket_id',)
+
+    @classmethod
+    def get_next(cls, domain, bucket_id, session_id=None):
+        if session_id:
+            return cls._get_next_cached(domain, bucket_id, session_id)
+        else:
+            return cls._get_next(domain, bucket_id)
+
+    @classmethod
+    @quickcache(['domain', 'bucket_id', 'session_id'])
+    def _get_next_cached(cls, domain, bucket_id, session_id):
+        return cls._get_next(domain, bucket_id)
+
+    @classmethod
+    @transaction.atomic
+    def _get_next(cls, domain, bucket_id):
+        # select_for_update locks matching rows until the end of the transaction
+        bucket, _ = (cls.objects
+                     .select_for_update()
+                     .get_or_create(domain=domain, bucket_id=bucket_id))
+        bucket.current_value += 1
+        bucket.save()
+        return bucket.current_value

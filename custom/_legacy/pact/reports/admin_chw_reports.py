@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -5,6 +6,7 @@ from corehq.apps.users.models import CommCareUser
 from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_DOMAIN
 from pact.reports import chw_schedule
+from six.moves import range
 
 
 class PactCHWAdminReport(GenericTabularReport, CustomProjectReport):

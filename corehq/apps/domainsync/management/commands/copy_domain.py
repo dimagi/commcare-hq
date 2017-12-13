@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from multiprocessing import Process, Queue
 import sys
 import os
@@ -18,6 +19,7 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 # doctypes we want to be careful not to copy, which must be explicitly
 # specified with --include
 from dimagi.utils.parsing import json_format_date
+from six.moves import range
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
@@ -146,7 +148,6 @@ class Command(BaseCommand):
         })
 
     def handle(self, sourcedb, domain, targetdb, **options):
-        # FIXME broken b/c https://github.com/dimagi/commcare-hq/pull/15896
         self.exclude_dbs = (
             # these have data we don't want to copy
             'receiverwrapper', 'auditcare', 'fluff-bihar',
@@ -172,7 +173,7 @@ class Command(BaseCommand):
         if options['postgres_db'] and options['postgres_password']:
             settings.DATABASES[options['postgres_db']]['PASSWORD'] = options['postgres_password']
 
-        self.targetdb = CouchConfig(targetdb) if targetdb else CouchConfig()
+        self.target_couch = self._get_couch_database_configs_from_string(targetdb)
 
         try:
             domain_doc = Domain.get_by_name(domain)
@@ -247,7 +248,7 @@ class Command(BaseCommand):
         if self.run_multi_process:
             queue = Queue(150)
             for i in range(NUM_PROCESSES):
-                Worker(queue, sourcedb, self.targetdb, exclude_types, total, simulate, err_log, exclude_attachments).start()
+                Worker(queue, sourcedb, self.target_couch, exclude_types, total, simulate, err_log, exclude_attachments).start()
 
             for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
                 count += 1
@@ -258,7 +259,7 @@ class Command(BaseCommand):
                 queue.put(None)
         else:
             for doc in iter_docs(sourcedb, doc_ids, chunksize=100):
-                target = self.targetdb.get_db_for_doc_type(doc['doc_type'])
+                target = self.target_couch.get_db_for_doc_type(doc['doc_type'])
                 count += 1
                 copy_doc(doc, count, sourcedb, target, exclude_types, total, simulate, exclude_attachments)
 
@@ -284,7 +285,7 @@ class Command(BaseCommand):
         if result and 'doc' in result:
             domain_doc = Domain.wrap(result['doc'])
             dt = DocumentTransform(domain_doc._obj, sourcedb)
-            save(dt, self.targetdb.get_db_for_doc_type(domain_doc['doc_type']))
+            save(dt, self.target_couch.get_db_for_doc_type(domain_doc['doc_type']))
         else:
             print("Domain doc not found for domain %s." % domain)
 
@@ -298,11 +299,11 @@ class Command(BaseCommand):
 
 class Worker(Process):
 
-    def __init__(self, queue, sourcedb, targetdb, exclude_types, total, simulate, err_log, exclude_attachments):
+    def __init__(self, queue, sourcedb, target_couch, exclude_types, total, simulate, err_log, exclude_attachments):
         super(Worker, self).__init__()
         self.queue = queue
         self.sourcedb = sourcedb
-        self.targetdb = targetdb
+        self.target_couch = target_couch
         self.exclude_types = exclude_types
         self.exclude_attachments = exclude_attachments
         self.total = total
@@ -312,7 +313,7 @@ class Worker(Process):
     def run(self):
         for doc, count in iter(self.queue.get, None):
             try:
-                target = self.targetdb.get_db_for_doc_type(doc['doc_type'])
+                target = self.target_couch.get_db_for_doc_type(doc['doc_type'])
                 copy_doc(doc, count, self.sourcedb, target, self.exclude_types, self.total, self.simulate,
                          self.exclude_attachments)
             except Exception as e:
@@ -320,22 +321,22 @@ class Worker(Process):
                 print("     Document %s failed! Error is: %s %s" % (doc["_id"], e.__class__.__name__, e))
 
 
-def copy_doc(doc, count, sourcedb, targetdb, exclude_types, total, simulate, exclude_attachments):
+def copy_doc(doc, count, sourcedb, target_couch, exclude_types, total, simulate, exclude_attachments):
     if exclude_types and doc["doc_type"] in exclude_types:
         print("     SKIPPED (excluded type: %s). Synced %s/%s docs (%s: %s)" % \
               (doc["doc_type"], count, total, doc["doc_type"], doc["_id"]))
     else:
         if not simulate:
-            for i in reversed(range(5)):
+            for i in reversed(list(range(5))):
                 try:
                     dt = DocumentTransform(doc, sourcedb, exclude_attachments)
                     break
                 except RequestError:
                     if i == 0:
                         raise
-            for i in reversed(range(5)):
+            for i in reversed(list(range(5))):
                 try:
-                    save(dt, targetdb)
+                    save(dt, target_couch)
                     break
                 except (ResourceConflict, ParserError, TypeError):
                     if i == 0:

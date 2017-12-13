@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from base64 import b64decode
 from collections import namedtuple
 from datetime import datetime, date, time
@@ -8,6 +9,7 @@ from time import strptime
 from lxml import etree
 from corehq.util.quickcache import quickcache
 from couchforms.models import XFormDeprecated
+import six
 
 
 class OpenClinicaIntegrationError(Exception):
@@ -105,7 +107,7 @@ def get_study_metadata_string(domain):
     else:
         string = oc_settings.study.metadata
     # If the XML is Unicode but it says that it's UTF-8, then make it UTF-8.
-    if isinstance(string, unicode):
+    if isinstance(string, six.text_type):
         match = re.match(r'<\?xml .*?encoding="([\w-]+)".*?\?>', string)  # Assumes no whitespace up front
         if match:
             string = string.encode(match.group(1))

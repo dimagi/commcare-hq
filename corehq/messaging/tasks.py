@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reminders import tasks as reminders_tasks
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -27,7 +28,7 @@ def _sync_case_for_messaging(domain, case_id):
     case = CaseAccessors(domain).get_case(case_id)
     sms_tasks.clear_case_caches(case)
 
-    if settings.SERVER_ENVIRONMENT != 'icds':
+    if settings.SERVER_ENVIRONMENT not in ('icds', 'icds-new'):
         sms_tasks._sync_case_phone_number(case)
 
     handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)

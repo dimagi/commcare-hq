@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from collections import namedtuple
 
@@ -105,6 +106,11 @@ class FormProcessorInterface(object):
     def copy_attachments(self, from_form, to_form):
         """Copy attachments from one for to another (exlucding form.xml)"""
         self.processor.copy_attachments(from_form, to_form)
+
+    def copy_form_operations(self, from_form, to_form):
+        """Copy form operations from one for to another. This happens when a form is edited to ensure
+        that the most recent form has the full history."""
+        self.processor.copy_form_operations(from_form, to_form)
 
     def is_duplicate(self, xform_id, domain=None):
         """

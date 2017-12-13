@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from corehq.blobs import get_blob_db

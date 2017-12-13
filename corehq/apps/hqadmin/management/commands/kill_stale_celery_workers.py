@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.core.management.base import BaseCommand
@@ -28,6 +29,6 @@ def _kill_stale_workers():
         worker_responses = celery.control.ping(timeout=10)
         pings = parse_celery_pings(worker_responses)
 
-        hosts_to_stop = filter(lambda hostname: hostname in pings, expected_stopped)
+        hosts_to_stop = [hostname for hostname in expected_stopped if hostname in pings]
         if hosts_to_stop:
             celery.control.broadcast('shutdown', destination=hosts_to_stop)

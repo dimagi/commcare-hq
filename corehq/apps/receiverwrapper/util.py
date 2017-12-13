@@ -1,10 +1,11 @@
 # coding=utf-8
+from __future__ import absolute_import
 from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.domain.auth import determine_authtype_from_request
+from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
@@ -12,6 +13,7 @@ from corehq.util.quickcache import quickcache
 from couchforms.models import DefaultAuthContext
 import couchforms
 from django.http import Http404
+import six
 
 
 def get_submit_url(domain, app_id=None):
@@ -44,7 +46,7 @@ def get_meta_appversion_text(form_metadata):
         return None
 
     # just make sure this is a longish string and not something like '2.0'
-    if isinstance(text, (str, unicode)) and len(text) > 5:
+    if isinstance(text, (str, six.text_type)) and len(text) > 5:
         return text
     else:
         return None
@@ -209,7 +211,7 @@ def determine_authtype(request):
     if request.GET.get('authtype'):
         return request.GET['authtype']
 
-    return determine_authtype_from_request(request)
+    return determine_authtype_from_request(request, default=BASIC)
 
 
 def from_demo_user(form_json):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import hashlib
@@ -5,10 +6,8 @@ import os
 import tempfile
 from unidecode import unidecode
 import uuid
-from wsgiref.util import FileWrapper
 import zipfile
 
-from django.utils.translation import ugettext as _
 from django.conf import settings
 
 from celery.schedules import crontab
@@ -19,6 +18,7 @@ from celery.utils.log import get_task_logger
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
 from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
+from corehq.apps.reports.util import send_report_download_email
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
@@ -27,11 +27,9 @@ from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from corehq.util.log import send_HTML_email
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
-from soil.util import expose_file_download, expose_cached_download
+from soil.util import expose_download
 
 from corehq.apps.domain.calculations import (
     all_domain_stats,
@@ -44,7 +42,6 @@ from corehq.elastic import (
     send_to_elasticsearch,
     get_es_new, ES_META)
 from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.util.files import file_extention_from_filename
 from corehq.util.view_utils import absolute_reverse
 
 from .analytics.esaccessors import (
@@ -59,6 +56,9 @@ from .models import (
     UnsupportedScheduledReportError,
 )
 from .scheduled import get_scheduled_report_ids
+import six
+from six.moves import map
+from six.moves import filter
 
 
 logging = get_task_logger(__name__)
@@ -126,7 +126,7 @@ def monthly_reports():
         send_delayed_report(report_id)
 
 
-@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE','celery'))
+@periodic_task(run_every=crontab(hour="23", minute="59", day_of_week="*"), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def saved_exports():
     for group_config_id in get_doc_ids_by_class(HQGroupExportConfiguration):
         export_for_group_async.delay(group_config_id)
@@ -239,17 +239,7 @@ def _send_email(user, report, hash_id):
     link = absolute_reverse("export_report", args=[domain, str(hash_id),
                                                    report.export_format])
 
-    title = "%s: Requested export excel data"
-    body = "The export you requested for the '%s' report is ready.<br>" \
-           "You can download the data at the following link: %s<br><br>" \
-           "Please remember that this link will only be active for 24 hours."
-
-    send_HTML_email(
-        _(title) % report.name,
-        user.get_email(),
-        _(body) % (report.name, "<a href='%s'>%s</a>" % (link, link)),
-        email_from=settings.DEFAULT_FROM_EMAIL
-    )
+    send_report_download_email(report.name, user, link)
 
 
 def _store_excel_in_redis(report_class, file):
@@ -300,7 +290,7 @@ def build_form_multimedia_zip(
 
     case_id_to_name = _get_case_names(
         domain,
-        set.union(*map(lambda form_info: form_info['case_ids'], forms_info)) if forms_info else set(),
+        set.union(*[form_info['case_ids'] for form_info in forms_info]) if forms_info else set(),
     )
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
@@ -310,7 +300,9 @@ def build_form_multimedia_zip(
         _, fpath = tempfile.mkstemp()
 
     _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
-    _expose_download(fpath, use_transfer, zip_name, download_id, num_forms)
+    filename = u"{}.zip".format(zip_name)
+    expose_download(use_transfer, fpath, filename, download_id, 'zip')
+    DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
 
 def _get_case_names(domain, case_ids):
@@ -326,30 +318,6 @@ def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_fo
     fname = '{}-{}'.format(app_id, hashlib.md5(params).hexdigest())
     fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, fname)
     return fpath
-
-
-def _expose_download(fpath, use_transfer, zip_name, download_id, num_forms):
-    common_kwargs = dict(
-        mimetype='application/zip',
-        content_disposition='attachment; filename="{fname}.zip"'.format(fname=zip_name),
-        download_id=download_id,
-    )
-
-    if use_transfer:
-        expose_file_download(
-            fpath,
-            use_transfer=use_transfer,
-            **common_kwargs
-        )
-    else:
-        expose_cached_download(
-            FileWrapper(open(fpath)),
-            expiry=(1 * 60 * 60),
-            file_extension=file_extention_from_filename(fpath),
-            **common_kwargs
-        )
-
-    DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
 
 def _format_filename(form_info, question_id, extension, case_id_to_name):
@@ -395,10 +363,10 @@ def _convert_legacy_indices_to_export_properties(indices):
     return set(map(
         lambda index: '-'.join(index.split('.')[1:]),
         # Filter out any columns that are not form questions
-        filter(
+        list(filter(
             lambda index: index and index.startswith('form'),
             indices,
-        ),
+        )),
     ))
 
 
@@ -413,7 +381,7 @@ def _get_export_properties(export_id, export_is_legacy):
             schema = FormExportSchema.get(export_id)
             for table in schema.tables:
                 properties |= _convert_legacy_indices_to_export_properties(
-                    map(lambda column: column.index, table.columns)
+                    [column.index for column in table.columns]
                 )
         else:
             from corehq.apps.export.models import FormExportInstance
@@ -434,7 +402,7 @@ def _extract_form_attachment_info(form, properties):
     attachments
     """
     def find_question_id(form, value):
-        for k, v in form.iteritems():
+        for k, v in six.iteritems(form):
             if isinstance(v, dict):
                 ret = find_question_id(v, value)
                 if ret:
@@ -463,7 +431,7 @@ def _extract_form_attachment_info(form, properties):
     # TODO make form.attachments always return objects that conform to a
     # uniform interface. XFormInstance attachment values are dicts, and
     # XFormInstanceSQL attachment values are XFormAttachmentSQL objects.
-    for attachment_name, attachment in form.attachments.iteritems():
+    for attachment_name, attachment in six.iteritems(form.attachments):
         if hasattr(attachment, 'content_type'):
             content_type = attachment.content_type
         else:
@@ -471,14 +439,14 @@ def _extract_form_attachment_info(form, properties):
         if content_type == 'text/xml':
             continue
         try:
-            question_id = unicode(
+            question_id = six.text_type(
                 u'-'.join(find_question_id(form.form_data, attachment_name)))
         except TypeError:
-            question_id = u'unknown' + unicode(unknown_number)
+            question_id = u'unknown' + six.text_type(unknown_number)
             unknown_number += 1
 
         if not properties or question_id in properties:
-            extension = unicode(os.path.splitext(attachment_name)[1])
+            extension = six.text_type(os.path.splitext(attachment_name)[1])
             if hasattr(attachment, 'content_length'):
                 # FormAttachmentSQL or BlobMeta
                 size = attachment.content_length

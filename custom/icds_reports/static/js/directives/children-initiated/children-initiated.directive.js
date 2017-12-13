@@ -1,8 +1,8 @@
-/* global d3 */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, genders) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -10,6 +10,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+    vm.userLocationId = userLocationId;
+    var genderIndex = _.findIndex(genders, function (x) {
+        return x.id === vm.filtersData.gender;
+    });
+    if (genderIndex !== -1) {
+        vm.genderLabel = genders[genderIndex].name;
+    }
+
     vm.label = "Children initiated appropriate complementary feeding";
     vm.step = $routeParams.step;
     vm.steps = {
@@ -22,13 +30,25 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = [];
+    vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
     };
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -88,20 +108,27 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    0,
-                    Math.ceil(d3.max(vm.chartData, function(line) {
-                        return d3.max(line.values, function(d) {
-                            return d.y;
-                        });
-                    }) * 100) / 100 + 0.01,
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
                 ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -114,7 +141,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -123,7 +150,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -140,6 +167,11 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.resetAdditionalFilter = function() {
+        vm.filtersData.gender = '';
+        $location.search('gender', null);
     };
 
     vm.chartOptions = {
@@ -182,15 +214,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
                     var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of children between age 6 - 8 months: <strong>" + day.all + "</strong></p>";
-                    tooltip_content += "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + day.in_month + "</strong></p>";
-                    tooltip_content += "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    return vm.tooltipContent(d.value, day);
                 });
                 return chart;
             },
@@ -208,12 +233,19 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         },
     };
 
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of children between age 6 - 8 months: <strong>" + dataInMonth.all + "</strong></p>"
+            + "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + dataInMonth.in_month + "</strong></p>"
+            + "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+    };
+
     vm.showAllLocations = function () {
         return vm.all_locations.length < 10;
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
 
 window.angular.module('icdsApp').directive('childrenInitiated', function() {
     return {

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.specs import TypeProperty

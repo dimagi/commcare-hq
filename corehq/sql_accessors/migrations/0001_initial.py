@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CaseTransaction
@@ -67,7 +68,6 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS get_form_ids_in_domain(text, text);",
             "SELECT 1",
         ),
-        migrator.get_migration('archive_unarchive_form.sql'),
         migrator.get_migration('check_form_exists.sql'),
         migrator.get_migration('get_case_attachments.sql'),
         migrator.get_migration('get_case_by_id.sql'),

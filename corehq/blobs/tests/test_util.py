@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
+from __future__ import absolute_import
 from tempfile import NamedTemporaryFile
 from unittest import TestCase
 
 import corehq.blobs.util as mod
+from six.moves import range
 
 
 class TestClosingContextProxy(TestCase):
@@ -20,7 +22,7 @@ class TestRandomUrlId(TestCase):
     sample_size = 100
 
     def setUp(self):
-        self.ids = [mod.random_url_id(8) for x in xrange(self.sample_size)]
+        self.ids = [mod.random_url_id(8) for x in range(self.sample_size)]
 
     def test_random_id_length(self):
         self.assertGreater(min(len(id) for id in self.ids), 0, self.ids)

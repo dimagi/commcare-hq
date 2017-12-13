@@ -1,16 +1,21 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractproperty, abstractmethod
 from datetime import datetime
 
 import sys
+
+from django.db.utils import DatabaseError, InterfaceError
 
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicAndPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
+from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
+import six
 
 
 def _topic_for_ddog(topic):
@@ -33,12 +38,11 @@ class PillowRuntimeContext(object):
         self.changes_seen = changes_seen
 
 
-class PillowBase(object):
+class PillowBase(six.with_metaclass(ABCMeta, object)):
     """
     This defines the external pillowtop API. Everything else should be considered a specialization
     on top of it.
     """
-    __metaclass__ = ABCMeta
 
     # set to true to disable saving pillow retry errors
     retry_errors = True
@@ -168,7 +172,7 @@ class PillowBase(object):
             'pillow_name:{}'.format(self.get_name()),
         ])
         checkpoint_sequence = self._normalize_checkpoint_sequence()
-        for topic, value in checkpoint_sequence.iteritems():
+        for topic, value in six.iteritems(checkpoint_sequence):
             datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
                 'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(topic),
@@ -202,11 +206,10 @@ class PillowBase(object):
                 datadog_histogram('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
-class ChangeEventHandler(object):
+class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):
     """
     A change-event-handler object used in constructed pillows.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def fire_change_processed(self, change, context):
@@ -264,11 +267,18 @@ class ConstructedPillow(PillowBase):
 def handle_pillow_error(pillow, change, exception):
     from pillow_retry.models import PillowError
     error_id = None
-    if pillow.retry_errors:
-        error = PillowError.get_or_create(change, pillow)
-        error.add_attempt(exception, sys.exc_info()[2])
-        error.save()
-        error_id = error.id
+    e = None
+
+    # always retry document missing errors, because the error is likely with couch
+    if pillow.retry_errors or isinstance(exception, DocumentMissingError):
+        try:
+            error = PillowError.get_or_create(change, pillow)
+        except (DatabaseError, InterfaceError) as e:
+            error_id = 'PillowError.get_or_create failed'
+        else:
+            error.add_attempt(exception, sys.exc_info()[2])
+            error.save()
+            error_id = error.id
 
     pillow_logging.exception(
         u"[%s] Error on change: %s, %s. Logged as: %s" % (
@@ -278,3 +288,6 @@ def handle_pillow_error(pillow, change, exception):
             error_id
         )
     )
+
+    if e:
+        raise e

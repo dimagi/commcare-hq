@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import uuid
 from django.urls import reverse
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username

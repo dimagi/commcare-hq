@@ -7,7 +7,7 @@
         "enikshay",
         "softlayer"
     ],
-    "data_source_table": "episode",
+    "data_source_table": "episode_for_cc_outbound_v2",
     "report_id": "cc_outbound_call_list",
     "config": {
         "description": "",
@@ -55,7 +55,7 @@
             {
                 "display": "eNikshay ID",
                 "type": "field",
-                "field": "person_id",
+                "field": "person_id_property",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -185,6 +185,17 @@
                     "custom_type": "owner_display"
                 },
                 "calculate_total": false
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "episode_info_freetext",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Remarks"
             }
         ]
     }

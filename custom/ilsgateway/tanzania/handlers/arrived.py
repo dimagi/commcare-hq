@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.locations.models import SQLLocation
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_KNOWN, ARRIVED_DEFAULT

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 import traceback
 from collections import defaultdict, namedtuple
@@ -268,7 +269,7 @@ def send_keys_to_couch(db, keys):
     """
     url = db.uri + '/_all_docs'
     r = requests.post(url=url,
-                      data=json.dumps({'keys': filter(None, keys)}),
+                      data=json.dumps({'keys': [_f for _f in keys if _f]}),
                       headers={'content-type': 'application/json'},
                       auth=get_auth(url),
                       params={'include_docs': 'true'})

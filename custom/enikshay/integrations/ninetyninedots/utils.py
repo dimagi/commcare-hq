@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from dateutil import parser
 from pytz import timezone
@@ -10,9 +11,13 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
-from custom.enikshay.case_utils import get_open_episode_case_from_person, get_adherence_cases_between_dates
+from custom.enikshay.case_utils import (
+    get_open_episode_case_from_person,
+    get_all_episode_cases_from_person,
+    get_adherence_cases_between_dates,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-from custom.enikshay.tasks import EpisodeUpdater
+from custom.enikshay.tasks import update_single_episode
 
 
 class AdherenceCaseFactory(object):
@@ -51,9 +56,18 @@ class AdherenceCaseFactory(object):
     @memoized
     def _episode_case(self):
         try:
-            return get_open_episode_case_from_person(self.domain, self._person_case.case_id)
+            episode_cases = get_all_episode_cases_from_person(self.domain, self._person_case.case_id)
         except ENikshayCaseNotFound as e:
-            raise AdherenceException(e.message)
+            raise AdherenceException(e)
+
+        if not episode_cases:
+            raise AdherenceException("No episode cases found for {}".format(self._person_case.case_id))
+
+        open_cases = [c for c in episode_cases if not c.closed]
+        if open_cases:
+            return sorted(open_cases, key=lambda c: c.opened_on)[0]
+
+        return episode_cases[0]
 
     def create_adherence_cases(self, adherence_points):
         case_structures = []
@@ -137,6 +151,10 @@ class AdherenceCaseFactory(object):
             )
         ])
 
+    def update_episode_adherence_properties(self):
+        # update episode 10 minutes later to give the adherence datasource time to catch up
+        update_single_episode.apply_async(args=[self.domain, self._episode_case], countdown=600)
+
 
 def create_adherence_cases(domain, person_id, adherence_points):
     return AdherenceCaseFactory(domain, person_id).create_adherence_cases(adherence_points)
@@ -148,20 +166,3 @@ def update_adherence_confidence_level(domain, person_id, start_date, end_date, n
 
 def update_default_confidence_level(domain, person_id, new_confidence):
     return AdherenceCaseFactory(domain, person_id).update_default_confidence_level(new_confidence)
-
-
-def update_episode_adherence_properties(domain, person_id):
-    try:
-        episode_case = get_open_episode_case_from_person(domain, person_id)
-    except ENikshayCaseNotFound as e:
-        raise AdherenceException(e.message)
-    try:
-        updater = EpisodeUpdater(domain)
-        updater.update_single_case(episode_case)
-    except Exception as e:
-        raise AdherenceException(
-            "Error calculating updates for episode case_id({}): {}".format(
-                episode_case.case_id,
-                e
-            )
-        )

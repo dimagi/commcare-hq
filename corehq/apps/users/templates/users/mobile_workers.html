@@ -24,94 +24,14 @@
 {% endif %}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-$(function () {
-   'use strict';
-    $('#newMobileWorkerModal').on('shown.bs.modal', function () {
-        $('#id_username').focus();
-    });
-});
-(function (angular, undefined) {
-    'use strict';
-    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers', 'ngSanitize', 'ui.select']);
-    mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
-    }]);
-    mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
-    }]);
-    mobileWorkerApp.constant('customFields', {{ custom_fields|JSON }});
-    mobileWorkerApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
-    mobileWorkerApp.constant('paginationCustomData', {
-        customFormFieldNames: {{ custom_field_names|JSON }},
-        showDeactivatedUsers: false,
-        activateUser: function (user, djangoRMI) {
-            $('#activate_' + user.user_id).modal('hide');
-            djangoRMI.modify_user_status({
-                user_id: user.user_id,
-                is_active: true
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        user.mark_activated = true;
-                        user.action_error = '';
-                    } else {
-                        user.action_error = data.error;
-                    }
-                })
-                .error(function () {
-                    user.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
-                });
-        },
-        deactivateUser: function (user, djangoRMI) {
-            $('#deactivate_' + user.user_id).modal('hide');
-            djangoRMI.modify_user_status({
-                user_id: user.user_id,
-                is_active: false
-            })
-                .success(function (data) {
-                    if (data.success) {
-                        user.mark_deactivated = true;
-                        user.action_error = '';
-                    } else {
-                        user.action_error = data.error;
-                    }
-                })
-                .error(function () {
-                    user.action_error = '{% trans "Issue communicating with server. Try again."|escapejs %}';
-                });
-        }
-    });
-    mobileWorkerApp.constant('generateStrongPasswords', {{ strong_mobile_passwords|JSON }});
-    mobileWorkerApp.constant('location_url', '{{ location_url }}');
-    {% angularjs %}
-    mobileWorkerApp.directive('workertableHeader', function () {
-        return {
-            restrict: 'A',
-            template: '<tr>'
-                        + '<th class="col-xs-3">{% trans "Username"|escapejs %}</th>'
-                        + '<th class="col-xs-3">{% trans "First Name"|escapejs %}</th>'
-                        + '<th class="col-xs-3">{% trans "Last Name"|escapejs %}</th>'
-                        + '<th class="col-xs-3">{% trans "Status"|escapejs %}</th>'
-                    + '</tr>'
-        }
-    });
-    mobileWorkerApp.constant('paginationLimits', [
-        [10, '{% trans "Show 10 Mobile Workers"|escapejs %}'],
-        [25, '{% trans "Show 25 Mobile Workers"|escapejs %}'],
-        [50, '{% trans "Show 50 Mobile Workers"|escapejs %}'],
-        [100, '{% trans "Show 100 Mobile Workers"|escapejs %}']
-    ]);
-    {% endangularjs %}
-}(window.angular));
-</script>
-{% endblock %}
-
 {% block page_content %}
+    {% initial_page_data 'custom_fields' custom_fields %}
+    {% initial_page_data 'custom_field_names' custom_field_names %}
+    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'location_url' location_url %}
+    {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
+    {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+
     <div ng-app="mobileWorkerApp">
         <div ng-controller="MobileWorkerCreationController">
             <div class="row">

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 
 from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain

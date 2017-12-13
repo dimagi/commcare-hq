@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from io import StringIO
 from django.test import SimpleTestCase
 
@@ -37,4 +38,4 @@ class TestBlobDownload(SimpleTestCase):
         self.assertIsNotNone(download)
 
         response = download.toHttpResponse()
-        self.assertEqual(response.streaming_content.next(), u'content')
+        self.assertEqual(next(response.streaming_content), u'content')

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 import base64
 import hashlib
 import jsonfield
@@ -27,6 +28,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext_lazy
+import six
 
 
 INCOMING = "I"
@@ -266,6 +268,27 @@ class SMS(SMSBase):
     def publish_change(self):
         from corehq.apps.sms.tasks import publish_sms_change
         publish_sms_change.delay(self)
+
+    def requeue(self):
+        if self.processed or self.direction != OUTGOING:
+            raise ValueError("Should only requeue outgoing messages that haven't yet been proccessed")
+
+        with transaction.atomic():
+            queued_sms = QueuedSMS()
+            for field in self._meta.fields:
+                if field.name != 'id':
+                    setattr(queued_sms, field.name, getattr(self, field.name))
+
+            queued_sms.processed = False
+            queued_sms.error = False
+            queued_sms.system_error_message = None
+            queued_sms.num_processing_attempts = 0
+            queued_sms.date = datetime.utcnow()
+            queued_sms.datetime_to_process = datetime.utcnow()
+            queued_sms.queued_timestamp = datetime.utcnow()
+            queued_sms.processed_timestamp = None
+            self.delete()
+            queued_sms.save()
 
 
 class QueuedSMS(SMSBase):
@@ -542,7 +565,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
@@ -1275,7 +1298,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     xforms_session = models.ForeignKey('smsforms.SQLXFormsSession', null=True, on_delete=models.PROTECT)
 
     # If this was a reminder that spawned off of a case, this is the case's id
-    case_id = models.CharField(max_length=126, null=True)
+    case_id = models.CharField(max_length=126, null=True, db_index=True)
     status = models.CharField(max_length=3, choices=MessagingEvent.STATUS_CHOICES, null=False)
     error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
@@ -2094,7 +2117,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         the rest untouched.
         """
         result = self.get_extra_fields()
-        for k, v in kwargs.iteritems():
+        for k, v in six.iteritems(kwargs):
             if k not in self.get_available_extra_fields():
                 raise Exception("Field %s is not an available extra field for %s"
                     % (k, self.__class__.__name__))
@@ -2221,7 +2244,7 @@ class PhoneLoadBalancingMixin(object):
             return self.load_balancing_numbers[0]
 
         hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
-        index = long(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
+        index = int(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
         return self.load_balancing_numbers[index]
 
 

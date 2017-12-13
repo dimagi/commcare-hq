@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from collections import defaultdict
 from datetime import datetime
@@ -15,6 +16,7 @@ from corehq.apps.app_manager.xform import (
     get_case_parent_id_xpath,
 )
 from dimagi.utils.parsing import json_format_datetime
+import six
 
 
 logger = logging.getLogger('app_migration')
@@ -165,7 +167,7 @@ def iter_forms(app):
 def fix_user_props_copy(app, module, form, form_ix, preloads, dry):
     updated = False
     xform = XForm(form.source)
-    refs = {xform.resolve_path(ref): prop for ref, prop in preloads.iteritems()}
+    refs = {xform.resolve_path(ref): prop for ref, prop in six.iteritems(preloads)}
     for node in xform.model_node.findall("{f}setvalue"):
         if (node.attrib.get('ref') in refs
                 and node.attrib.get('event') == "xforms-ready"):
@@ -194,7 +196,7 @@ def fix_user_props_caseref(app, module, form, form_ix, dry):
     updated = False
     xform = XForm(form.source)
     refs = {xform.resolve_path(ref): vals
-        for ref, vals in form.case_references.load.iteritems()
+        for ref, vals in six.iteritems(form.case_references.load)
         if any(v.startswith("#user/") for v in vals)}
     ref_warnings = []
     for node in xform.model_node.findall("{f}setvalue"):
@@ -299,7 +301,7 @@ def migrate_preloads(app, form, preload_items, form_ix, dry):
                 xform.add_setvalue(ref=nodeset, value=USERPROP_PREFIX + prop)
         else:
             raise ValueError("unknown hashtag: " + hashtag)
-        for nodeset, prop in preloads.iteritems():
+        for nodeset, prop in six.iteritems(preloads):
             load_refs.setdefault(nodeset, []).append(hashtag + prop)
             logger.info("%s/%s %s setvalue %s = %s",
                 app.domain, app._id, form_ix, nodeset, hashtag + prop)

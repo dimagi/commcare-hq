@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import uuid
 from contextlib import contextmanager
@@ -15,6 +16,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from six.moves import range
 
 
 TEST_DOMAIN_NAME = 'test-domain'
@@ -188,7 +190,7 @@ def _check_payload_has_cases(testcase, payload_string, username, case_blocks, sh
         n = 0
 
         def extra_info():
-            return "\n%s\n%s" % (case_block.to_string(), map(lambda b: b.to_string(), blocks_from_restore))
+            return "\n%s\n%s" % (case_block.to_string(), [b.to_string() for b in blocks_from_restore])
 
         match = None
         for block in blocks_from_restore:

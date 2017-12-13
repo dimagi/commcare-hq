@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from StringIO import StringIO
 
 from django.contrib import messages
@@ -22,6 +23,7 @@ from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
+import six
 
 
 @no_conflict_require_POST
@@ -50,11 +52,10 @@ def upload_bulk_ui_translations(request, domain, app_id):
             app.translations = dict(trans_dict)
             app.save()
             success = True
-
-        if warnings:
-            message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
-                                    warnings)
-            messages.warning(request, message, extra_tags='html')
+            if warnings:
+                message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
+                                        warnings)
+                messages.warning(request, message, extra_tags='html')
     except InvalidExcelFileException as e:
         messages.error(request, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
     except Exception:
@@ -82,7 +83,7 @@ def download_bulk_app_translations(request, domain, app_id):
     headers = expected_bulk_app_sheet_headers(app)
     rows = expected_bulk_app_sheet_rows(app)
     temp = StringIO()
-    data = [(k, v) for k, v in rows.iteritems()]
+    data = [(k, v) for k, v in six.iteritems(rows)]
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
 

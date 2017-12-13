@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from inspect import ismethod
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.html import format_html
@@ -6,6 +7,9 @@ from custom.bihar.models import CareBiharFluff
 from custom.bihar.utils import get_all_owner_ids_from_group
 from custom.bihar.reports.indicators.clientlistdisplay import PreDeliveryDoneDueCLD, PreDeliveryCLD, PreDeliverySummaryCLD, PostDeliverySummaryCLD, ComplicationsCalculator, PostDeliveryDoneDueCLD
 from django.utils.translation import ugettext_noop as _
+from six.moves import zip
+from six.moves import map
+from six.moves import filter
 
 
 # static config - should this eventually live in the DB?
@@ -258,7 +262,7 @@ INDICATOR_SETS = [
 
 def _one(filter_func, list):
     # this will (intentionally) fail hard if not exactly 1 match
-    [ret] = filter(filter_func, list)
+    [ret] = list(filter(filter_func, list))
     return ret
 
 
@@ -352,7 +356,7 @@ class IndicatorDataProvider(object):
         # (0, 0) to set the dimensions
         # otherwise if results is ()
         # it'll be num, denom = () and that'll raise a ValueError
-        num, denom = map(sum, zip((0, 0), *pairs()))
+        num, denom = list(map(sum, zip((0, 0), *pairs())))
         return num, denom
 
     def get_indicator_value(self, indicator):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from django.test import TestCase
@@ -99,7 +100,7 @@ class CaseAssignmentTest(TestCase):
         assign_case(self.primary.case_id, self.primary_user._id, include_subcases=True, include_parent_cases=True,
                     exclude_function=exclude_fn)
         self._check_state(new_owner_id=self.primary_user._id, expected_changed=[
-            self.grandmother, self.parent, self.son, self.daughter,self.granddaughter, self.grandson2
+            self.grandmother, self.parent, self.son, self.daughter, self.granddaughter, self.grandson2
         ])
 
     def test_assign_bad_index_ref(self):

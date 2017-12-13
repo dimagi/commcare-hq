@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from custom.enikshay.nikshay_datamigration.management.commands.base_cleanup_command import BaseCleanupCommand
+from six.moves import range
 
 # before any changes
 MO_INDEX = 3

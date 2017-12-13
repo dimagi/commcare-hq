@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from functools import partial
 import copy
 import datetime
@@ -245,7 +246,15 @@ def render_case(case, options):
         definition = get_default_definition(
             dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
-        dynamic_properties = _get_tables_as_rows(dynamic_data, definition)
+        info_url = None
+        if options.get('property_details_enabled'):
+            info_url = reverse('case_property_changes', args=[case.domain, case.case_id, '__placeholder__'])
+
+        dynamic_properties = _get_tables_as_rows(
+            dynamic_data,
+            definition,
+            info_url=info_url,
+        )
     else:
         dynamic_properties = None
 
@@ -300,7 +309,7 @@ def get_inverse(val):
         return datetime.datetime.max - val
     elif isinstance(val, numbers.Number):
         return 10 ** 20
-    elif isinstance(val, (types.NoneType, bool)):
+    elif val is None or isinstance(val, bool):
         return not val
     else:
         raise Exception("%r has uninversable type: %s" % (val, type(val)))

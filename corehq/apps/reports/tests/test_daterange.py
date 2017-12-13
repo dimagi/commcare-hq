@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.test import SimpleTestCase
 from mock import patch
@@ -15,7 +16,7 @@ class DateRangeTest(SimpleTestCase):
             get_daterange_start_end_dates(daterange.slug)
 
     def test_exceptions_on_complex_calls(self):
-        for daterange in filter(lambda choice: not choice.simple, get_all_daterange_choices()):
+        for daterange in [choice for choice in get_all_daterange_choices() if not choice.simple]:
             with self.assertRaises(InvalidDaterangeException):
                 get_daterange_start_end_dates(daterange.slug)
 

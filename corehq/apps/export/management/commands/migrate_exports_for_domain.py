@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.apps.export.utils import migrate_domain

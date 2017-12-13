@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
-    <ShortName>CommCare HQ</ShortName>
+    <ShortName>CommCare HQ{% if env %} - {{env}}{% endif %}</ShortName>
     <Description>Enter any ID; a case ID or form ID, for example</Description>
     <Url type="text/html" method="get" template="{{ url_base }}/search/?q={searchTerms}"/>
 </OpenSearchDescription>

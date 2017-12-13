@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division
 from datetime import datetime
 
 from collections import defaultdict, OrderedDict
@@ -8,9 +9,12 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.const import LocationTypes
+from corehq.apps.locations.models import SQLLocation
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+import six
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -19,6 +23,7 @@ PINK = '#fee0d2'
 GREY = '#9D9D9D'
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=False):
 
     def get_data_for(filters):
@@ -26,42 +31,23 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            in_month=Sum('ebf_in_month'),
-            eligible=Sum('ebf_eligible'),
-        )
+            children=Sum('ebf_in_month'),
+            all=Sum('ebf_eligible'),
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
-
-    valid_total = 0
-    in_month_total = 0
-
-    for row in get_data_for(config):
-        valid = row['eligible']
-        name = row['%s_name' % loc_level]
-
-        in_month = row['in_month']
-
-        in_month_total += (in_month or 0)
-        valid_total += (valid or 0)
-
-        value = (in_month or 0) * 100 / (valid or 1)
-        row_values = {
-            'children': in_month or 0,
-            'all': valid or 0
-        }
-        if value < 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-60%'})
-        elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, valid_total, in_month_total = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'children',
+        'all',
+        20,
+        60
+    )
 
     fills = OrderedDict()
     fills.update({'0%-20%': RED})
@@ -82,13 +68,29 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
                     "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
                     "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
                 )),
-                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of children between ages 0 - 6 months:',
+                        'value': valid_total
+                    },
+                    {
+                        'indicator': (
+                            'Total number of children (0-6 months) exclusively breastfed in the given month:'
+                        ),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': '% children (0-6 months) exclusively in_month_total in the given month:',
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
             },
-            "data": map_data,
+            "data": dict(data_for_map),
         }
     ]
 
 
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -135,7 +137,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
         data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -149,12 +151,12 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "% children exclusively breastfed",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": ChartColors.BLUE
             }
         ],
         "all_locations": top_locations,
@@ -164,7 +166,8 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
     }
 
 
-def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
+def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -189,9 +192,13 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test
         'all': 0
     })
 
+    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    result_set = set()
+
     for row in data:
         valid = row['eligible']
         name = row['%s_name' % loc_level]
+        result_set.add(name)
 
         in_month = row['in_month']
 
@@ -200,7 +207,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test
             'all': valid or 0
         }
 
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         in_month = row['in_month']
@@ -210,8 +217,14 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, show_test
             name, value
         ])
 
+    for sql_location in loc_children:
+        if sql_location.name not in result_set:
+            chart_data['blue'].append([sql_location.name, 0])
+
+    chart_data['blue'] = sorted(chart_data['blue'])
+
     return {
-        "tooltips_data": tooltips_data,
+        "tooltips_data": dict(tooltips_data),
         "info": _((
             "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
             "<br/><br/>"

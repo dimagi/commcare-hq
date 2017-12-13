@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import io
 import logging
@@ -61,6 +62,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.exceptions import SubscriptionRenewalError
 from corehq.apps.accounting.utils import (
+    cancel_future_subscriptions,
     domain_has_privilege,
     get_account_name_from_default_name,
     get_privileges,
@@ -87,6 +89,8 @@ from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
+import six
+from six.moves import range
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -370,7 +374,7 @@ class SnapshotSettingsForm(forms.Form):
             if referenced_forms:
                 apps = [Application.get(app_id) for app_id in app_ids]
                 app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
-                nonexistent_forms = filter(lambda f: f not in app_forms, referenced_forms)
+                nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
                 nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
                 if nonexistent_forms:
                     msg = """
@@ -383,7 +387,7 @@ class SnapshotSettingsForm(forms.Form):
 
     def _get_apps_to_publish(self):
         app_ids = []
-        for d, val in self.data.iteritems():
+        for d, val in six.iteritems(self.data):
             d = d.split('-')
             if len(d) < 2:
                 continue
@@ -1184,13 +1188,6 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         )
 
 
-########################################################################################################
-
-min_pwd = 4
-max_pwd = 20
-pwd_pattern = re.compile( r"([-\w]){"  + str(min_pwd) + ',' + str(max_pwd) + '}' )
-
-
 def clean_password(txt):
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         strength = legacy_get_password_strength(txt)
@@ -1223,7 +1220,7 @@ def _get_uppercase_unicode_regexp():
     # rather than add another dependency (regex library)
     # http://stackoverflow.com/a/17065040/10840
     uppers = [u'[']
-    for i in xrange(sys.maxunicode):
+    for i in range(sys.maxunicode):
         c = unichr(i)
         if c.isupper():
             uppers.append(c)
@@ -1552,14 +1549,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                # changing a plan overrides future subscriptions
-                future_subscriptions = Subscription.objects.filter(
-                    subscriber__domain=self.domain,
-                    date_start__gt=datetime.date.today()
-                )
-                if future_subscriptions.count() > 0:
-                    future_subscriptions.update(date_end=F('date_start'))
-
+                cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
                     self.current_subscription.change_plan(
                         self.plan_version,
@@ -1567,6 +1557,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
+                        skip_auto_downgrade=False,
+                        do_not_invoice=False,
+                        no_invoice_reason='',
+                        date_delay_invoicing=None,
                     )
                 else:
                     Subscription.new_domain_subscription(
@@ -1575,7 +1569,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
-                        funding_source=FundingSource.CLIENT
+                        funding_source=FundingSource.CLIENT,
+                        skip_auto_downgrade=False,
                     )
                 return True
         except Exception as e:
@@ -1658,20 +1653,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                for later_subscription in Subscription.objects.filter(
-                    subscriber__domain=self.domain,
-                    date_start__gt=self.current_subscription.date_start
-                ).order_by('date_start').all():
-                    later_subscription.date_start = datetime.date.today()
-                    later_subscription.date_end = datetime.date.today()
-                    later_subscription.save()
-                    SubscriptionAdjustment.record_adjustment(
-                        later_subscription,
-                        reason=SubscriptionAdjustmentReason.CANCEL,
-                        web_user=self.creating_user,
-                        note="Cancelled due to changing subscription",
-                    )
-
+                cancel_future_subscriptions(self.domain, self.current_subscription.date_start, self.creating_user)
                 self.current_subscription.renew_subscription(
                     web_user=self.creating_user,
                     adjustment_method=SubscriptionAdjustmentMethod.USER,
@@ -1850,6 +1832,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     def subscription_default_fields(self):
         return {
             'internal_change': True,
+            'skip_auto_downgrade': False,
             'web_user': self.web_user,
         }
 
@@ -1916,6 +1899,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
         fields = super(DimagiOnlyEnterpriseForm, self).subscription_default_fields
         fields.update({
             'do_not_invoice': True,
+            'no_invoice_reason': '',
             'service_type': SubscriptionType.INTERNAL,
         })
         return fields
@@ -2007,6 +1991,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'date_end': datetime.date.today() + relativedelta(days=int(self.cleaned_data['trial_length'])),
             'do_not_invoice': False,
             'is_trial': True,
+            'no_invoice_reason': '',
             'service_type': SubscriptionType.EXTENDED_TRIAL
         })
         return fields
@@ -2214,6 +2199,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'auto_generate_credits': True,
             'date_end': self.cleaned_data['end_date'],
             'do_not_invoice': False,
+            'no_invoice_reason': '',
             'service_type': SubscriptionType.IMPLEMENTATION,
         })
         return fields

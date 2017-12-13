@@ -22,7 +22,6 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SoftwareProductType
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -469,7 +468,7 @@ class ProductLineItemFactory(LineItemFactory):
         CreditLine.add_credit(
             line_item.subtotal,
             subscription=self.subscription,
-            product_type=SoftwareProductType.ANY,
+            is_product=True,
             permit_inactive=True,
         )
 

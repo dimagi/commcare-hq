@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase, override_settings
 from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 

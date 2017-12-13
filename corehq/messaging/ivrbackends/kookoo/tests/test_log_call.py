@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import corehq.apps.ivr.tests.util as util
 from corehq.messaging.ivrbackends.kookoo.models import SQLKooKooBackend
 from django.test import Client

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 
 
@@ -9,7 +10,11 @@ class TrackRelatedChanges(object):
         self.delete_models = defaultdict(list)
 
     def has_tracked_models(self):
-        return bool(self.create_models or self.update_models or self.delete_models)
+        return any((
+            any(models for models in self.create_models.values()),
+            any(models for models in self.update_models.values()),
+            any(models for models in self.delete_models.values())
+        ))
 
     def clear_tracked_models(self, model_class=None):
         if not model_class:

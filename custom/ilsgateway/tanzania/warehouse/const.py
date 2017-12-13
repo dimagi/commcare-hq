@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatusValues
 
 NEEDED_STATUS_TYPES = [SupplyPointStatusTypes.DELIVERY_FACILITY,

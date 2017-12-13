@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
@@ -66,6 +67,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def iter_form_ids_by_xmlns(self, xmlns=None):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_with_attachments(form_id):
         raise NotImplementedError
 
@@ -125,7 +130,7 @@ class FormAccessors(object):
 
     def iter_forms(self, form_ids):
         for chunk in chunked(form_ids, 100):
-            chunk = list(filter(None, chunk))
+            chunk = list([_f for _f in chunk if _f])
             for form in self.get_forms(chunk):
                 yield form
 
@@ -143,6 +148,9 @@ class FormAccessors(object):
             start_datetime,
             end_datetime,
         )
+
+    def iter_form_ids_by_xmlns(self, xmlns=None):
+        return self.db_accessor.iter_form_ids_by_xmlns(self.domain, xmlns)
 
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)
@@ -304,7 +312,7 @@ class CaseAccessors(object):
 
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
-            chunk = list(filter(None, chunk))
+            chunk = list([_f for _f in chunk if _f])
             for case in self.get_cases(chunk):
                 yield case
 

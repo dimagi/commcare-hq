@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import delete_all_cases
@@ -61,10 +62,10 @@ class LoadtestUserTest(TestCase):
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == case1.case_id, caseblocks)))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == case2.case_id, caseblocks)))
-        self.assertEqual(3, len(filter(lambda cb: case1.name in cb.get_case_name(), caseblocks)))
-        self.assertEqual(3, len(filter(lambda cb: case2.name in cb.get_case_name(), caseblocks)))
+        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == case1.case_id]))
+        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == case2.case_id]))
+        self.assertEqual(3, len([cb for cb in caseblocks if case1.name in cb.get_case_name()]))
+        self.assertEqual(3, len([cb for cb in caseblocks if case2.name in cb.get_case_name()]))
 
     @run_with_all_backends
     def test_parent_child(self):
@@ -86,7 +87,7 @@ class LoadtestUserTest(TestCase):
         payload_string = restore_config.get_payload().as_string()
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == child.case_id, caseblocks)))
-        self.assertEqual(1, len(filter(lambda cb: cb.get_case_id() == parent.case_id, caseblocks)))
-        self.assertEqual(3, len(filter(lambda cb: child.name in cb.get_case_name(), caseblocks)))
-        self.assertEqual(3, len(filter(lambda cb: parent.name in cb.get_case_name(), caseblocks)))
+        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == child.case_id]))
+        self.assertEqual(1, len([cb for cb in caseblocks if cb.get_case_id() == parent.case_id]))
+        self.assertEqual(3, len([cb for cb in caseblocks if child.name in cb.get_case_name()]))
+        self.assertEqual(3, len([cb for cb in caseblocks if parent.name in cb.get_case_name()]))

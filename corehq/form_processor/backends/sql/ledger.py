@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 from corehq.apps.commtrack.processing import compute_ledger_values
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
-from corehq.form_processor.change_publishers import publish_ledger_v2_saved
+from corehq.form_processor.change_publishers import publish_ledger_v2_saved, publish_ledger_v2_deleted
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
@@ -106,13 +107,14 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         return ledger_value
 
     def rebuild_ledger_state(self, case_id, section_id, entry_id):
-        LedgerProcessorSQL.hard_rebuild_ledgers(case_id, section_id, entry_id)
+        LedgerProcessorSQL.hard_rebuild_ledgers(self.domain, case_id, section_id, entry_id)
 
     @staticmethod
-    def hard_rebuild_ledgers(case_id, section_id=None, entry_id=None):
+    def hard_rebuild_ledgers(domain, case_id, section_id=None, entry_id=None):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id, section_id, entry_id)
         if not transactions:
             LedgerAccessorSQL.delete_ledger_values(case_id, section_id, entry_id)
+            publish_ledger_v2_deleted(domain, case_id, section_id, entry_id)
             return
         ledger_value = LedgerAccessorSQL.get_ledger_value(case_id, section_id, entry_id)
         ledger_value = LedgerProcessorSQL._rebuild_ledger_value_from_transactions(ledger_value, transactions)

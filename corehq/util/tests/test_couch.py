@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.http import Http404
@@ -10,6 +11,7 @@ from corehq.util.exceptions import DocumentClassNotFound
 
 from ..couch import (get_document_or_404, IterDB, iter_update, IterUpdateError,
         DocUpdate, get_document_class_by_doc_type, get_document_or_404_lite)
+from six.moves import range
 
 
 class MockDb(object):
@@ -100,7 +102,7 @@ class TestLoggingDB(object):
         self.docs_saved = []
         self.num_writes = 0
 
-    def bulk_save(self, docs, use_uuids=True, all_or_nothing=False, new_edits=None, **params):
+    def bulk_save(self, docs, use_uuids=True, new_edits=None, **params):
         """Method signature matches coucdbkit.client.Database.bulk_save
         """
         self.docs_saved.extend(docs)
@@ -113,7 +115,7 @@ class IterDBSimpleTest(SimpleTestCase):
     def test_number_of_calls(self):
         db = TestLoggingDB()
         with IterDB(db, chunksize=50) as iter_db:
-            all_docs = range(105)
+            all_docs = list(range(105))
             for doc in all_docs:
                 iter_db.save(doc)
 

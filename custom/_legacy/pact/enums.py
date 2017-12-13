@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import itertools
 import pytz
 
@@ -99,7 +100,7 @@ PACT_DOT_CHOICES_DICT = dict(x for x in PACT_DOT_CHOICES)
 
 
 PACT_REGIMEN_CHOICES = (
-    ('None',[('', '-- None --'),]),
+    ('None', [('', '-- None --'),]),
     ('QD - Once a day', [
         ('morning', 'Morning'),
         ('noon', 'Noon'),

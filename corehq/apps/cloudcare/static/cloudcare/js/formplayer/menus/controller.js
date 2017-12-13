@@ -4,6 +4,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     Menus.Controller = {
         selectMenu: function (options) {
 
+            options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+
             var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
 
             /*
@@ -64,7 +66,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
-            if (menuResponse.persistentCaseTile) {
+            if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
                 Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
                 FormplayerFrontend.regions.persistentCaseTile.empty();

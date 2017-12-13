@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext
 from corehq.apps.hqwebapp.crispy import FormActions, B3MultiField
 import langcodes
@@ -14,6 +15,7 @@ from .models import (
     ReportConfig,
     ReportNotification,
 )
+from six.moves import range
 
 
 class LanguageSelect(forms.Select):

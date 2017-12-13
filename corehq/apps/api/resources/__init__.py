@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.urls import NoReverseMatch
@@ -9,6 +10,7 @@ from tastypie.exceptions import InvalidSortError, ImmediateHttpResponse
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.util import get_obj
+from corehq.apps.analytics.tasks import track_workflow
 
 
 class DictObject(object):
@@ -72,7 +74,7 @@ class CorsResourceMixin(object):
             allowed = []
 
         request_method = request.method.lower()
-        allows = ','.join(map(lambda x: x.upper() if x else '', allowed))
+        allows = ','.join([x.upper() for x in allowed if x])
 
         if request_method == 'options':
             response = HttpResponse(allows)
@@ -103,6 +105,11 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 content_type="application/json",
                 status=401))
         if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
+            if isinstance(self, DomainSpecificResourceMixin):
+                track_workflow(request.user.username, "API Request", properties={
+                    'domain': request.domain,
+                    'is_dimagi': request.user.username.endswith('@dimagi.com'),
+                })
             return super(HqBaseResource, self).dispatch(request_type, request, **kwargs)
         else:
             raise ImmediateHttpResponse(HttpResponse(

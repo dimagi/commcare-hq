@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from StringIO import StringIO
 import datetime
 import re
@@ -36,7 +37,10 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
-from export import get_writer
+from .export import get_writer
+import six
+from six.moves import zip
+from six.moves import range
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -95,6 +99,7 @@ class GenericReportView(object):
     description = None  # Human-readable description of the report
     report_template_path = None
     report_partial_path = None
+    js_scripts = None
 
     asynchronous = False
     hide_filters = False
@@ -314,7 +319,7 @@ class GenericReportView(object):
         filters = []
         fields = self.fields
         for field in fields or []:
-            if isinstance(field, basestring):
+            if isinstance(field, six.string_types):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
@@ -445,7 +450,7 @@ class GenericReportView(object):
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
-            field_fn = to_function(field) if isinstance(field, basestring) else field
+            field_fn = to_function(field) if isinstance(field, six.string_types) else field
             return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
 
         has_datespan = any([is_editable_datespan(field) for field in self.fields])
@@ -477,6 +482,7 @@ class GenericReportView(object):
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
+                js_scripts=self.js_scripts,
                 js_options=self.js_options,
             ),
             current_config_id=current_config_id,
@@ -942,7 +948,7 @@ class GenericTabularReport(GenericReportView):
         # using regex breaks values then we should use a parser instead, and
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return re.sub('<[^>]*?>', '', value)
         return value
 
@@ -1103,7 +1109,7 @@ class SummaryTablularReport(GenericTabularReport):
     def summary_values(self):
         headers = list(self.headers)
         assert (len(self.data) == len(headers))
-        return zip(headers, self.data)
+        return list(zip(headers, self.data))
 
 
 class ProjectInspectionReportParamsMixin(object):

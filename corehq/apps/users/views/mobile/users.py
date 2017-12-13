@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import csv
 import io
 import json
@@ -48,6 +49,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
@@ -88,6 +90,7 @@ from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     InvalidExcelFileException
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
+import six
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -237,15 +240,6 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def user_role_choices(self):
         return [('none', _('(none)'))] + self.editable_role_choices
-
-    @property
-    def existing_role(self):
-        role = self.editable_user.get_role(self.domain)
-        if role is None:
-            role = "none"
-        else:
-            role = role.get_qualified_id()
-        return role
 
     @property
     @memoized
@@ -542,7 +536,7 @@ def update_user_data(request, domain, couch_user_id):
 
 
 @location_safe
-class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
+class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
     urlname = 'mobile_workers'
     page_title = ugettext_noop("Mobile Workers")
@@ -688,7 +682,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         users_data = users_query.run()
         return {
             'response': {
-                'itemList': map(lambda user: self._format_user(user, include_location), users_data.hits),
+                'itemList': [self._format_user(user, include_location) for user in users_data.hits],
                 'total': users_data.total,
                 'page': page,
                 'query': query,
@@ -772,7 +766,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             form_data = self._construct_form_data(in_data, fields)
         except InvalidMobileWorkerRequest as e:
             return {
-                'error': unicode(e)
+                'error': six.text_type(e)
             }
 
         self.request.POST = form_data
@@ -853,7 +847,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 form_data[f] = user_data.get(f)
             form_data['domain'] = self.domain
             return form_data
-        except Exception, e:
+        except Exception as e:
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
 
 
@@ -1132,9 +1126,10 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
 
 
 @require_can_edit_commcare_users
-def user_download_job_poll(request, domain, download_id, template="users/mobile/partials/user_download_status.html"):
+def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
+        context.update({'link_text': _('Download Users')})
     except TaskFailedError as e:
         return HttpResponseServerError(e.errors)
     return render(request, template, context)

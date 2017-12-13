@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from corehq.util.workbook_json.excel import IteratorJSONReader
 

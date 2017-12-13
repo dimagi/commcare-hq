@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import datetime
 from collections import defaultdict
@@ -7,8 +9,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.util.couch import IterDB
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE, RECORD_SUCCESS_STATE
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, Repeater
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -41,6 +44,8 @@ class Command(BaseCommand):
     def handle(self, domain, repeater_id, *args, **options):
         self.domain = domain
         self.repeater_id = repeater_id
+        repeater = Repeater.get(repeater_id)
+        print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         redundant_records = []
         records_by_payload_id = defaultdict(list)
@@ -48,7 +53,9 @@ class Command(BaseCommand):
         total_records = 0
         for record in records:
             total_records += 1
-            if record.last_checked < self.most_recent_success:
+            most_recent_success = self.most_recent_success.get(record.payload_id)
+            if most_recent_success and record.last_checked < most_recent_success:
+                # another record with this payload has succeeded after this record failed
                 redundant_records.append(record)
             else:
                 records_by_payload_id[record.payload_id].append(record)
@@ -60,16 +67,18 @@ class Command(BaseCommand):
                .format(total=total_records,
                        redundant=redundant_payloads,
                        unique=unique_payloads))
-        print "Delete {} duplicate records?".format(total_records - unique_payloads)
-        if not raw_input("(y/n)") == 'y':
-            print "Aborting"
+        print("Delete {} duplicate records?".format(total_records - unique_payloads))
+        if not input("(y/n)") == 'y':
+            print("Aborting")
             return
 
         redundant_log = self.delete_already_successful_records(redundant_records)
         duplicates_log = self.resolve_duplicates(records_by_payload_id)
 
-        filename = "cancelled_repeat_records-{}.csv".format(datetime.datetime.utcnow().isoformat())
-        print "Writing log of changes to {}".format(filename)
+        filename = "cancelled_{}_records-{}.csv".format(
+            repeater.__class__.__name__,
+            datetime.datetime.utcnow().isoformat())
+        print("Writing log of changes to {}".format(filename))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(('RepeatRecord ID', 'Payload ID', 'Failure Reason', 'Deleted?', 'Reason'))

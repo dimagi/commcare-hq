@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 import uuid
 import os
@@ -184,7 +185,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             hashlib.md5(case.get_attachment(single_attach)).hexdigest()
         )
         if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            self.assertEqual(1, len(filter(lambda x: x['action_type'] == 'attachment', case.actions)))
+            self.assertEqual(1, len([x for x in case.actions if x['action_type'] == 'attachment']))
 
     def testArchiveAfterAttach(self):
         single_attach = 'fruity_file'
@@ -218,7 +219,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             with self.assertRaises(AttachmentNotFound):
                 attachment_sql.read_content()
         else:
-            attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
+            attach_actions = [x for x in case.actions if x['action_type'] == 'attachment']
             self.assertEqual(2, len(attach_actions))
             last_action = attach_actions[-1]
             self.assertEqual(sorted(removes), sorted(last_action['attachments'].keys()))
@@ -233,7 +234,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(sorted(new_attachments), sorted(case.case_attachments.keys()))
 
         if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
+            attach_actions = [x for x in case.actions if x['action_type'] == 'attachment']
             self.assertEqual(2, len(attach_actions))
 
     @flag_enabled('MM_CASE_PROPERTIES')
@@ -279,7 +280,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         # 1 plus the 2 we had
         self.assertEqual(len(new_attachments) + 1, len(case.case_attachments))
         if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
-            attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
+            attach_actions = [x for x in case.actions if x['action_type'] == 'attachment']
             self.assertEqual(2, len(attach_actions))
             last_action = attach_actions[-1]
             self.assertEqual(sorted(new_attachments), sorted(last_action['attachments'].keys()))

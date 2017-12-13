@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 import logging
@@ -7,7 +8,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.db import Error, connections
+from django.db import Error, IntegrityError, connections
 
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -17,10 +18,16 @@ from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
+from six.moves import range
 
 celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
+
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'lbagnoli', 'ssrikrishnan']
+_dashboard_team_soft_assert = soft_assert(to=[
+    '{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS
+])
 
 
 @periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
@@ -29,25 +36,13 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
 
 
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='background_queue')
-def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
+def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
     monthly_date = date.replace(day=1)
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
         with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
-
-            path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
-            celery_task_logger.info("Starting icds reports create_functions")
-            with open(path, "r") as sql_file:
-                sql_to_execute = sql_file.read()
-                cursor.execute(sql_to_execute)
-            celery_task_logger.info("Ended icds reports create_functions")
-
-            path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
-            celery_task_logger.info("Starting icds reports update_location_tables")
-            with open(path, "r") as sql_file:
-                sql_to_execute = sql_file.read()
-                cursor.execute(sql_to_execute)
-            celery_task_logger.info("Ended icds reports update_location_tables_sql")
+            _create_aggregate_functions(cursor)
+            _update_aggregate_locations_tables(cursor)
 
         aggregation_tasks = []
 
@@ -57,6 +52,44 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=3):
 
         aggregation_tasks.append(UCRAggregationTask('daily', date.strftime('%Y-%m-%d')))
         aggregate_tables.delay(aggregation_tasks[0], aggregation_tasks[1:])
+
+
+def _create_aggregate_functions(cursor):
+    try:
+        path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
+        celery_task_logger.info("Starting icds reports create_functions")
+        with open(path, "r") as sql_file:
+            sql_to_execute = sql_file.read()
+            cursor.execute(sql_to_execute)
+        celery_task_logger.info("Ended icds reports create_functions")
+    except Exception:
+        # This is likely due to a change in the UCR models or aggregation script which should be rare
+        # First step would be to look through this error to find what function is causing the error
+        # and look for recent changes in this folder.
+        _dashboard_team_soft_assert(False, "Unexpected occurred while creating functions in dashboard aggregation")
+        raise
+
+
+def _update_aggregate_locations_tables(cursor):
+    try:
+        path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
+        celery_task_logger.info("Starting icds reports update_location_tables")
+        with open(path, "r") as sql_file:
+            sql_to_execute = sql_file.read()
+            cursor.execute(sql_to_execute)
+        celery_task_logger.info("Ended icds reports update_location_tables_sql")
+    except IntegrityError:
+        # This has occurred when there's a location upload, but not all locations were updated.
+        # Some more details are here https://github.com/dimagi/commcare-hq/pull/18839
+        # It's usually fixed by rebuild the location UCR table and running this task again, but
+        # that PR should fix that issue
+        _dashboard_team_soft_assert(False, "Error occurred while aggregating locations")
+        raise
+    except Exception:
+        # I'm not sure what this one will be
+        _dashboard_team_soft_assert(
+            False, "Unexpected occurred while aggregating locations in dashboard aggregation")
+        raise
 
 
 @task(queue='background_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
@@ -84,6 +117,12 @@ def aggregate_tables(self, current_task, future_tasks):
                 try:
                     cursor.execute(sql_to_execute, {"date": aggregation_date})
                 except Error as exc:
+                    _dashboard_team_soft_assert(
+                        False,
+                        "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+                            aggregation_type, settings.SERVER_ENVIRONMENT, aggregation_date
+                        )
+                    )
                     notify_exception(
                         None,
                         message="Error occurred during ICDS aggregation",
@@ -105,8 +144,7 @@ def aggregate_tables(self, current_task, future_tasks):
         aggregate_tables.delay(future_tasks[0], future_tasks[1:])
     else:
         # temporary soft assert to verify it's completing
-        _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-        _soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
+        _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
         celery_task_logger.info("Aggregation has completed")
 
 

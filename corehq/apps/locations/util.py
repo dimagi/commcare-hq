@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from django.conf import settings
+
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
@@ -9,9 +12,10 @@ from corehq.util.workbook_json.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
-from StringIO import StringIO
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 
+from soil.util import get_download_file_path, expose_download
+import six
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         user=None, only_administrative=False):
@@ -103,8 +107,8 @@ def parent_child(domain):
     Returns a dict mapping from a location type to its possible
     child types
     """
-    return map_reduce(lambda (k, v): [(p, k) for p in v],
-                      data=dict(location_hierarchy_config(domain)).iteritems())
+    return map_reduce(lambda k_v: [(p, k_v[0]) for p in k_v[1]],
+                      data=six.iteritems(dict(location_hierarchy_config(domain))))
 
 
 @quickcache(['domain'], timeout=60)
@@ -184,7 +188,7 @@ class LocationExporter(object):
             model_data, uncategorized_data = \
                 self.data_model.get_model_and_uncategorized(loc.metadata)
 
-            uncategorized_keys.update(uncategorized_data.keys())
+            uncategorized_keys.update(uncategorized_data)
 
             loc_dict = {
                 'location_id': loc.location_id,
@@ -245,14 +249,12 @@ class LocationExporter(object):
                 headers['do_delete']: '',
                 headers['shares_cases']: coax_boolean(lt.shares_cases),
                 headers['view_descendants']: coax_boolean(lt.view_descendants),
-                headers['expand_from']: foreign_code(lt, 'expand_from'),
-                headers['expand_to']: foreign_code(lt, 'expand_to'),
             }
             rows.append(dict(type_row))
 
         return ('types', {
             'headers': [headers[header] for header in ['code', 'name', 'parent_code', 'do_delete',
-                        'shares_cases', 'view_descendants', 'expand_from', 'expand_to']],
+                        'shares_cases', 'view_descendants']],
             'rows': rows
         })
 
@@ -266,13 +268,16 @@ class LocationExporter(object):
         return sheets
 
 
-def dump_locations(response, domain, include_consumption=False):
+def dump_locations(domain, download_id, include_consumption=False):
     exporter = LocationExporter(domain, include_consumption=include_consumption)
-    result = write_to_file(exporter.get_export_dict())
-    response.write(result)
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    filename = '{}_locations.xlsx'.format(domain)
+    file_path = write_to_file(exporter.get_export_dict(), filename, use_transfer)
+
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
 
 
-def write_to_file(locations):
+def write_to_file(locations, filename, use_transfer):
     """
     locations = [
         ('loc_type1', {
@@ -287,7 +292,7 @@ def write_to_file(locations):
         })
     ]
     """
-    outfile = StringIO()
+    outfile = get_download_file_path(use_transfer, filename)
     writer = Excel2007ExportWriter()
     header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
     writer.open(header_table=header_table, file=outfile)
@@ -297,7 +302,7 @@ def write_to_file(locations):
                     for row in tab['rows']]
         writer.write([(tab_name, tab_rows)])
     writer.close()
-    return outfile.getvalue()
+    return outfile
 
 
 def get_locations_from_ids(location_ids, domain, base_queryset=None):

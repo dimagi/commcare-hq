@@ -70,6 +70,7 @@ An overview of the design, API and data structures used here.
             - [Formats](#formats)
         - [AggregateDateColumn](#aggregatedatecolumn)
         - [Expanded Columns](#expanded-columns)
+        - [Expression Columns](#expression-columns)
         - [The "aggregation" column property](#the-aggregation-column-property)
             - [Column IDs](#column-ids)
         - [Calculating Column Totals](#calculating-column-totals)
@@ -802,7 +803,8 @@ Operator   | Description  | Value type | Example
 `eq`       | is equal     | constant   | `doc["age"] == 21`
 `not_eq`   | is not equal | constant   | `doc["age"] != 21`
 `in`       | single value is in a list | list | `doc["color"] in ["red", "blue"]`
-`in_multi` | multiselect value is in a list | list | `selected(doc["color"], ["red", "blue"])`
+`in_multi` | a value is in a multi select | list | `selected(doc["color"], "red")`
+`any_in_multi` | one of a list of values in in a multiselect | list | `selected(doc["color"], ["red", "blue"])`
 `lt`       | is less than | number | `doc["age"] < 21`
 `lte`      | is less than or equal | number | `doc["age"] <= 21`
 `gt`       | is greater than | number | `doc["age"] > 21`
@@ -1340,6 +1342,7 @@ Reports are made up of columns. The currently supported column types ares:
 * [_percent_](#percent-columns) which combines two values in to a percent
 * [_aggregate_date_](#aggregatedatecolumn) which aggregates data by month
 * [_expanded_](#expanded-columns) which expands a select question into multiple columns
+* [_expression_](#expression-columns) which can do calculations on data in other columns
 
 ### Field columns
 
@@ -2059,6 +2062,19 @@ A diagram of this workflow can be found [here](examples/async_indicator.png)
 ## Inspecting database tables
 
 The easiest way to inspect the database tables is to use the sql command line utility.
+
 This can be done by runnning `./manage.py dbshell` or using `psql`.
-The naming convention for tables is: `configurable_indicators_[domain name]_[table id]_[hash]`.
+
+The naming convention for tables is: `config_report_[domain name]_[table id]_[hash]`.
+
 In postgres, you can see all tables by typing `\dt` and use sql commands to inspect the appropriate tables.
+
+## ElasticSearch
+
+Optionally you can use ElasticSearch as a data source. ElasticSearch settings
+can be modified using es_index_settings.
+
+Using ES has the following drawbacks:
+
+- Results will be sorted by the first aggregate column when using aggregations
+- You cannot aggregate reports based on month or year

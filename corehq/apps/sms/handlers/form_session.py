@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (
     MessageMetadata,
@@ -141,7 +142,7 @@ def validate_answer(event, text, v):
                     int_answer = int(answer)
                     assert int_answer >= 1 and int_answer <= max_index
                     final_answers[str(int_answer)] = ""
-            text = " ".join(final_answers.keys())
+            text = " ".join(final_answers)
             valid = True
         except Exception:
             error_msg = get_message(MSG_INVALID_CHOICE, v)
@@ -165,7 +166,7 @@ def validate_answer(event, text, v):
     # Validate longint
     elif event.datatype == "longint":
         try:
-            long(text)
+            int(text)
             valid = True
         except ValueError:
             error_msg = get_message(MSG_INVALID_LONG, v)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from tastypie import fields
 from tastypie.exceptions import BadRequest

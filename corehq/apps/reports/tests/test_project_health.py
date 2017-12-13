@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 import datetime
 from dimagi.utils.dates import add_months
@@ -163,7 +164,7 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         """
         _get_all_user_stubs() should contain two users from this month
         """
-        self.assertEqual(len(self.month._get_all_user_stubs().keys()), 2)
+        self.assertEqual(len(list(self.month._get_all_user_stubs())), 2)
 
 
 @mock.patch('corehq.apps.reports.standard.project_health.GroupES', GroupESFake)

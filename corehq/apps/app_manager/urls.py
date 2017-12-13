@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import (
@@ -15,7 +16,7 @@ from corehq.apps.app_manager.views import (
     upload_bulk_app_translations, multimedia_ajax, releases_ajax, current_app_version, paginate_releases,
     release_build, view_module, view_module_legacy, view_form, view_form_legacy,
     get_form_datums, form_source, form_source_legacy, update_build_comment, export_gzip,
-    xform_display, get_xform_source, form_casexml, app_source, import_app, app_from_template, copy_app,
+    xform_display, get_xform_source, form_casexml, app_source, import_app, copy_app,
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
     edit_form_attr_api, patch_xform, validate_form_for_build, rename_language, validate_language,
@@ -25,8 +26,9 @@ from corehq.apps.app_manager.views import (
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
-    update_linked_whitelist, overwrite_module_case_list, app_settings,
+    update_linked_whitelist, overwrite_module_case_list, app_settings, PatchLinkedAppWhitelist
 )
+from corehq.apps.app_manager.views.remote_linked_apps import get_latest_released_app_source
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -79,8 +81,9 @@ urlpatterns = [
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
+    url(r'^release_source/(?P<app_id>[\w-]+)/$', get_latest_released_app_source,
+        name='latest_released_app_source'),
     url(r'^import_app/$', import_app, name='import_app'),
-    url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
     url(r'^schema/form/(?P<form_unique_id>[\w-]+)/$',
@@ -93,6 +96,7 @@ urlpatterns = [
     url(r'^drop_user_case/(?P<app_id>[\w-]+)/$', drop_user_case, name='drop_user_case'),
     url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
     url(r'^linked_whitelist/(?P<app_id>[\w-]+)/$', update_linked_whitelist, name='update_linked_whitelist'),
+    url(r'^patch_linked_whitelist/(?P<app_id>[\w-]+)/$', PatchLinkedAppWhitelist.as_view(), name=PatchLinkedAppWhitelist.urlname),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', delete_app, name='delete_app'),
     url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',

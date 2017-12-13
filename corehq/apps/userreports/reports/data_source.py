@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SQL_BACKEND, UCR_ES_PRIMARY
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
 from corehq.apps.userreports.util import get_backend_id
+import six
 
 
 class ConfigurableReportDataSource(object):
@@ -14,7 +16,7 @@ class ConfigurableReportDataSource(object):
             self._config = config_or_config_id
             self._config_id = self._config._id
         else:
-            assert isinstance(config_or_config_id, basestring)
+            assert isinstance(config_or_config_id, six.string_types)
             self._config = None
             self._config_id = config_or_config_id
 

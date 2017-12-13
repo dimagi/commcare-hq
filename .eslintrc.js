@@ -10,15 +10,16 @@ module.exports = {
     // http://eslint.org/docs/user-guide/configuring#specifying-globals
     "globals": {
         // false means it shouldn't be overwritten
+        "define": false,
         "hqDefine": false,
         "hqImport": false,
+        "requirejs": false,
         "gettext": false,
         "assert": false,
         "sinon": false,
         "$": false,
         "ko": false,
         "_": false,
-        "ga_track_event": false,
         "L": true,
         "it": false,
         "describe": false,

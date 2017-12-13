@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url, include
 from django.contrib.auth.views import (
     password_change,
@@ -40,6 +41,7 @@ from corehq.apps.domain.views import (
     EditMyProjectSettingsView,
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
+    EmailOnDowngradeView,
     ExchangeSnapshotsView,
     FlagsAndPrivilegesView,
     FeaturePreviewsView,
@@ -122,6 +124,7 @@ domain_settings = [
         name=SelectedEnterprisePlanView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
+    url(r'^subscription/change/email/$', EmailOnDowngradeView.as_view(), name=EmailOnDowngradeView.urlname),
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),

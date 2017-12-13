@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 import os
 from datetime import date, datetime
@@ -30,8 +31,8 @@ class TestMeta(TestCase, TestFileMixin):
         xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertNotEqual(None, xform.metadata)
-        self.assertEqual(date(2010, 07, 22), xform.metadata.timeStart.date())
-        self.assertEqual(date(2010, 07, 23), xform.metadata.timeEnd.date())
+        self.assertEqual(date(2010, 7, 22), xform.metadata.timeStart.date())
+        self.assertEqual(date(2010, 7, 23), xform.metadata.timeEnd.date())
         self.assertEqual("admin", xform.metadata.username)
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.userID)
         self.assertEqual("v1.2.3 (biz bazzle)", xform.metadata.appVersion)

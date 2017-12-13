@@ -1,6 +1,6 @@
+from __future__ import absolute_import
 from datetime import datetime
 from decimal import Decimal
-import itertools
 import jsonfield
 
 from django.db import models
@@ -19,6 +19,8 @@ from dimagi.utils.couch.database import iter_docs
 
 # move these too
 from corehq.apps.commtrack.exceptions import InvalidProductException, DuplicateProductCodeException
+import six
+from six.moves import map
 
 
 class Product(Document):
@@ -48,7 +50,7 @@ class Product(Document):
         return super(Product, cls).wrap(data)
 
     @classmethod
-    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False, codes_by_domain=None):
+    def save_docs(cls, docs, use_uuids=True, codes_by_domain=None):
         from corehq.apps.commtrack.util import generate_code
 
         codes_by_domain = codes_by_domain or {}
@@ -67,7 +69,7 @@ class Product(Document):
                     get_codes(doc['domain'])
                 )
 
-        super(Product, cls).save_docs(docs, use_uuids, all_or_nothing)
+        super(Product, cls).save_docs(docs, use_uuids)
 
     bulk_save = save_docs
 
@@ -169,8 +171,8 @@ class Product(Document):
     @classmethod
     def _export_attrs(cls):
         return [
-            ('name', unicode),
-            ('unit', unicode),
+            ('name', six.text_type),
+            ('unit', six.text_type),
             'description',
             'category',
             ('program_id', str),
@@ -196,7 +198,7 @@ class Product(Document):
         from corehq.apps.commtrack.util import encode_if_needed
         property_dict = {}
 
-        for prop, val in self.product_data.iteritems():
+        for prop, val in six.iteritems(self.product_data):
             property_dict['data: ' + prop] = encode_if_needed(val)
 
         return property_dict
@@ -278,7 +280,7 @@ class ProductQueriesMixin(object):
         ids = self.product_ids()
         products = iter_docs(Product.get_db(), ids)
         if wrapped:
-            return itertools.imap(Product.wrap, products)
+            return map(Product.wrap, products)
         return products
 
 

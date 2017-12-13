@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import copy
 
@@ -29,6 +30,7 @@ from .forms import ConsumptionForm, StockLevelsForm, CommTrackSettingsForm
 from .models import CommtrackActionConfig, StockRestoreConfig
 from .tasks import recalculate_domain_consumption_task
 from .util import all_sms_codes
+import six
 
 
 @domain_admin_required
@@ -209,7 +211,7 @@ class SMSSettingsView(BaseCommTrackManageView):
         }
 
     def get_other_sms_codes(self):
-        for k, v in all_sms_codes(self.domain).iteritems():
+        for k, v in six.iteritems(all_sms_codes(self.domain)):
             if v[0] == 'product':
                 yield (k, (v[0], v[1].name))
 

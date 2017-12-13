@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.performance_sms.models import PerformanceConfiguration
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type

@@ -60,7 +60,6 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVersion,
     SoftwarePlanVisibility,
     SoftwareProductRate,
-    SoftwareProductType,
     Subscription,
     SubscriptionType,
     WireBillingRecord,
@@ -775,6 +774,7 @@ class ChangeSubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source'],
             internal_change=True,
         )
 
@@ -840,8 +840,7 @@ class CreditForm(forms.Form):
     def adjust_credit(self, web_user=None):
         amount = self.cleaned_data['amount']
         note = self.cleaned_data['note']
-        product_type = (SoftwareProductType.ANY
-                        if self.cleaned_data['rate_type'] == 'Product' else None)
+        is_product = self.cleaned_data['rate_type'] == 'Product'
         feature_type = (self.cleaned_data['feature_type']
                         if self.cleaned_data['rate_type'] == 'Feature' else None)
         CreditLine.add_credit(
@@ -849,7 +848,7 @@ class CreditForm(forms.Form):
             account=self.account,
             subscription=self.subscription,
             feature_type=feature_type,
-            product_type=product_type,
+            is_product=is_product,
             note=note,
             web_user=web_user,
             permit_inactive=True,
@@ -1047,10 +1046,6 @@ class SoftwarePlanVersionForm(forms.Form):
         required=False,
         label="Search for or Create Product"
     )
-    new_product_type = forms.ChoiceField(
-        required=False,
-        choices=SoftwareProductType.CHOICES,
-    )
     product_rates = forms.CharField(
         required=False,
         widget=forms.HiddenInput,
@@ -1229,10 +1224,6 @@ class SoftwarePlanVersionForm(forms.Form):
                 ),
                 hqcrispy.B3MultiField(
                     "Product Type",
-                    InlineField(
-                        'new_product_type',
-                        data_bind="value: productRates.rateType",
-                    ),
                     crispy.Div(
                         StrictButton(
                             "Create Product",
@@ -1590,10 +1581,7 @@ class ProductRateForm(forms.ModelForm):
         self.helper.form_tag = False
         self.helper.layout = crispy.Layout(
             crispy.HTML("""
-                        <h4><span data-bind="text: name"></span>
-                        <span class="label label-default"
-                            style="display: inline-block; margin: 0 10px;"
-                            data-bind="text: product_type"></span></h4>
+                        <h4><span data-bind="text: name"></span></h4>
                         <hr />
             """),
             crispy.Field('monthly_fee', data_bind="value: monthly_fee"),

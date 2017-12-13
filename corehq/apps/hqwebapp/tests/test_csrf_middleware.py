@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from bs4 import BeautifulSoup
 from django.urls import reverse
 from django.test import TestCase, Client

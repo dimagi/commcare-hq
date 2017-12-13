@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -14,6 +15,7 @@ from corehq.apps.es.users import UserES
 from itertools import chain
 from corehq.apps.locations.models import SQLLocation
 from django.db.models import Sum
+from six.moves import range
 
 
 def get_performance_threshold(domain_name):
@@ -234,10 +236,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         but are not this month (though are still active).
         """
         if self._previous_summary:
-            unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing,
-                self._get_all_user_stubs_with_extra_data()
-            )
+            unhealthy_users = [stub for stub in self._get_all_user_stubs_with_extra_data() if stub.is_active and not stub.is_performing]
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
 
     def get_dropouts(self):
@@ -246,10 +245,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         but are not active this month
         """
         if self._previous_summary:
-            dropouts = filter(
-                lambda stub: not stub.is_active,
-                self._get_all_user_stubs_with_extra_data()
-            )
+            dropouts = [stub for stub in self._get_all_user_stubs_with_extra_data() if not stub.is_active]
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
 
     def get_newly_performing(self):
@@ -258,10 +254,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         after not performing last month.
         """
         if self._previous_summary:
-            dropouts = filter(
-                lambda stub: stub.is_newly_performing,
-                self._get_all_user_stubs_with_extra_data()
-            )
+            dropouts = [stub for stub in self._get_all_user_stubs_with_extra_data() if stub.is_newly_performing]
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
 
 
@@ -289,6 +282,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
+    js_scripts = ['reports/js/project_health_dashboard.js']
 
     @property
     @memoized
@@ -308,7 +302,7 @@ class ProjectHealthDashboard(ProjectReport):
             return 6
 
     def get_group_location_ids(self):
-        params = filter(None, self.request.GET.getlist('grouplocationfilter'))
+        params = [_f for _f in self.request.GET.getlist('grouplocationfilter') if _f]
         return params
 
     def parse_group_location_params(self, param_ids):

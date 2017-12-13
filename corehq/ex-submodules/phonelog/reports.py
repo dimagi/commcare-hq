@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import logging
 from django.db.models import Q
@@ -26,7 +27,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -99,12 +101,12 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     @memoized
     def selected_tags(self):
-        return filter(None, self.request.GET.getlist(DeviceLogTagFilter.slug))
+        return [_f for _f in self.request.GET.getlist(DeviceLogTagFilter.slug) if _f]
 
     @property
     @memoized
     def selected_devices(self):
-        return set(filter(None, self.request.GET.getlist(DeviceLogDevicesFilter.slug)))
+        return set([_f for _f in self.request.GET.getlist(DeviceLogDevicesFilter.slug) if _f])
 
     @property
     @memoized
@@ -300,7 +302,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
         return logs
 
     def _filter_query_by_slug(self, slug):
-        return urlencode({k: v for (k, v) in self.request.GET.iteritems() if not k.startswith(slug)})
+        return urlencode({k: v for (k, v) in six.iteritems(self.request.GET) if not k.startswith(slug)})
 
 
 class DeviceLogDetailsReport(BaseDeviceLogReport, DeploymentsReport):

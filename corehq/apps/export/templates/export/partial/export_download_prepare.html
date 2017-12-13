@@ -80,12 +80,14 @@
                         {% trans "Preparing Multimedia" %}
                     </button>
                 </div>
+                {% if export_list_url %}
                 <div class="col-xs-12 col-sm-4 col-md-5">
                     <a href="{{ export_list_url }}"
                        class="btn btn-default">
                         {% trans "Cancel" %}
                     </a>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>

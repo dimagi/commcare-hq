@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from datetime import timedelta, datetime, date, time
 import re
@@ -30,6 +31,8 @@ from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
 from django.db import models, transaction
 from string import Formatter
+import six
+from six.moves import filter
 
 
 class IllegalModelStateException(Exception):
@@ -101,7 +104,7 @@ RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
     RECIPIENT_LOCATION
-] + settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.keys()
+] + list(settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS)
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
 KEYWORD_ACTION_CHOICES = [METHOD_SMS, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
@@ -120,7 +123,7 @@ CASE_CRITERIA = "CASE_CRITERIA"
 ON_DATETIME = "ON_DATETIME"
 START_CONDITION_TYPES = [CASE_CRITERIA, ON_DATETIME]
 
-SURVEY_METHOD_LIST = ["SMS","CATI"]
+SURVEY_METHOD_LIST = ["SMS", "CATI"]
 
 UI_FREQUENCY_ADVANCED = "ADVANCED"
 UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
@@ -159,7 +162,7 @@ def looks_like_timestamp(value):
 
 
 def property_references_parent(case_property):
-    return isinstance(case_property, basestring) and case_property.startswith("parent/")
+    return isinstance(case_property, six.string_types) and case_property.startswith("parent/")
 
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):
@@ -210,7 +213,7 @@ class MessageVariable(object):
         self.variable = variable
 
     def __repr__(self):
-        return unicode(self.variable).encode('utf-8')
+        return six.text_type(self.variable).encode('utf-8')
 
     @property
     def days_until(self):
@@ -265,8 +268,8 @@ class Message(object):
     @classmethod
     def render(cls, template, **params):
         if isinstance(template, str):
-            template = unicode(template, encoding='utf-8')
-        return unicode(cls(template, **params))
+            template = six.text_type(template, encoding='utf-8')
+        return six.text_type(cls(template, **params))
 
 
 class CaseReminderEvent(DocumentSchema):
@@ -673,7 +676,7 @@ class CaseReminderHandler(Document):
 
             event.fire_time = fire_time
         elif fire_time_type == FIRE_TIME_CASE_PROPERTY:
-            if not isinstance(fire_time, basestring):
+            if not isinstance(fire_time, six.string_types):
                 raise UnexpectedConfigurationException("Expected fire_time to be a case property name")
 
             event.fire_time_aux = fire_time
@@ -888,7 +891,7 @@ class CaseReminderHandler(Document):
             user_id=user_id,
             method=self.method,
             active=True,
-            start_date=date(now.year, now.month, now.day) if (now.hour == 0 and now.minute == 0 and now.second == 0 and now.microsecond == 0) else date(local_now.year,local_now.month,local_now.day),
+            start_date=date(now.year, now.month, now.day) if (now.hour == 0 and now.minute == 0 and now.second == 0 and now.microsecond == 0) else date(local_now.year, local_now.month, local_now.day),
             schedule_iteration_num=1,
             current_event_sequence_num=0,
             callback_try_count=0,
@@ -1093,7 +1096,7 @@ class CaseReminderHandler(Document):
             if not isinstance(recipient, CouchUser):
                 return False
 
-            for key, value in self.user_data_filter.iteritems():
+            for key, value in six.iteritems(self.user_data_filter):
                 if key not in recipient.user_data:
                     return False
 
@@ -1110,7 +1113,7 @@ class CaseReminderHandler(Document):
 
             return True
 
-        return filter(filter_fcn, recipients)
+        return list(filter(filter_fcn, recipients))
 
     def recipient_is_list_of_locations(self, recipient):
         return (isinstance(recipient, list) and
@@ -1680,7 +1683,7 @@ class CaseReminderHandler(Document):
     def get_referenced_forms(cls, domain):
         handlers = cls.get_handlers(domain)
         referenced_forms = [e.form_unique_id for events in [h.events for h in handlers] for e in events]
-        return filter(None, referenced_forms)
+        return [_f for _f in referenced_forms if _f]
 
     @classmethod
     def get_all_reminders(cls, domain=None, due_before=None, ids_only=False):

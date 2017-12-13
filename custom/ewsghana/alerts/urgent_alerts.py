@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
 from corehq.apps.commtrack.models import StockState
@@ -59,7 +60,7 @@ class UrgentStockoutAlert(UrgentAlert):
         program_id = user.get_domain_membership(self.domain).program_id
 
         if program_id:
-            sql_products = filter(lambda p: p.program_id == program_id, sql_products)
+            sql_products = [p for p in sql_products if p.program_id == program_id]
 
         if not sql_products:
             return

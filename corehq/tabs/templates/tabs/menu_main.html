@@ -5,8 +5,16 @@
     {% for tab in tabs %}
     {% cache 500 header_tab tab.class_name tab.domain tab.is_active_tab tab.couch_user.get_id LANGUAGE_CODE %}
     {% with tab.filtered_dropdown_items as items %}
-        <li id="mainmenu-{{ tab.css_id }}"
-            class="{% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}">
+        <li class="mainmenu-tab {% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}"
+            id="{{ tab.class_name }}"
+            {% if ANALYTICS_IDS.GOOGLE_ANALYTICS_API_ID and tab.ga_tracker %}
+                data-category="{{ tab.ga_tracker.category }}"
+                data-action="{{ tab.ga_tracker.action }}"
+                {% if tab.ga_tracker.label %}
+                    data-label="{{ tab.ga_tracker.label }}"
+                {% endif %}
+            {% endif %}
+        >
             <a {% if items %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}
                href="{% if items %}#{% else %}{{ tab.url }}{% endif %}">
                 {% trans tab.title %}{% if items %} <b class="caret"></b>{% endif %}
@@ -38,4 +46,3 @@
     {% endcache %}
     {% endfor %}
 </ul>
-{% include 'tabs/menu_main_js.html' %}

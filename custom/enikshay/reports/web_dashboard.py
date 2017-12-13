@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter

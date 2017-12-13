@@ -1,14 +1,15 @@
 {% load menu_tags %}{% load i18n %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
+{% requirejs_main %}
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
-        {% if GTM_ID %}
+        {% if ANALYTICS_IDS.GTM_ID %}
             <!-- Google Tag Manager -->
             <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
             j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','{{ GTM_ID }}');</script>
+            })(window,document,'script','dataLayer','{{ ANALYTICS_IDS.GTM_ID }}');</script>
             <!-- End Google Tag Manager -->
         {% endif %}
 
@@ -29,7 +30,7 @@
         <link type="application/opensearchdescription+xml"
               rel="search"
               href="{% url 'osdd' %}"
-              title="CommCare HQ" />
+              title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
         {% if less_debug %}
             <link type="text/less"
@@ -168,35 +169,13 @@
                   href="{% static 'bootstrap-tour/build/css/bootstrap-tour.min.css' %}" />
         {% endif %}
 
-        {# Core Libraries #}
-        {% include "hqwebapp/includes/jquery.html" %}
-        {% compress js %}
-        {% include "hqwebapp/includes/core_libraries.html" %}
-        {% endcompress %} 
-
-        {% if request.use_jquery_ui %}
-        {% compress js %}
-            <!-- UI libraries needed for all other widgets and interactions -->
-            <script src="{% static 'jquery-ui/ui/core.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/mouse.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
-
-            <!-- Individual widgets and interactions -->
-            <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/resizable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/droppable.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/sortable.js' %}"></script>
-        {% endcompress %}
+        {% if not requirejs_main %}
+            {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
         {% endif %}
-
-        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
-        {% if request.use_daterangepicker %}
+        {% if request.use_daterangepicker and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'moment/moment.js' %}"></script>
         <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
@@ -207,19 +186,17 @@
         {% block head %}
         {% endblock %}
 
-        {% include 'hqwebapp/includes/analytics_all.html' %}
-
-        {% if is_saas_environment and not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-        {% if not request.user.is_authenticated or request.couch_user.days_since_created < 31 %}
-        {% compress js %}
-        <script src="{% static 'hqwebapp/js/drift.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hubspot_drift.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-        {% endif %}
-
+        <script>
+            // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
+            // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
+            window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
+        </script>
 
         {% if less_debug %}
+            <!--
+                This is not inside RequireJS because it has no dependencies
+                and ought to happen immediately on page load.
+            -->
             <script>
                 less = {
                     env: "development",
@@ -238,9 +215,9 @@
         {% endif %}
     </head>
     <body>
-        {% if GTM_ID %}
+        {% if ANALYTICS_IDS.GTM_ID %}
         <!-- Google Tag Manager (noscript) -->
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ GTM_ID }}"
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ ANALYTICS_IDS.GTM_ID }}"
         height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- End Google Tag Manager (noscript) -->
         {% endif %}
@@ -407,52 +384,94 @@
             {# do not override this block, use registerurl template tag to populate #}
         {% endblock %}
         </div>
+        {% include 'analytics/initial/all.html' %}
+        {% include 'analytics/initial/drift.html' %}
+        <div class="initial-analytics-data hide">
+        {% block initial_analytics_data %}
+            {# do not override this block, use initial_analytics_data template tag to populate #}
+        {% endblock %}
+        </div>
+        <div class="analytics-ab-tests hide">
+        {% block analytics_ab_test %}
+            {# do not override this block, use analytics_ab_test template tag to populate #}
+        {% endblock %}
+        </div>
 
         {# javascript below this line #}
 
+        {% if requirejs_main %}
+            <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+            <script src="{% static 'requirejs/require.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+            <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
+            <script type="text/javascript">
+                requirejs.config({
+                    deps: ['knockout', 'ko.mapping'],
+                    callback: function (ko, mapping) {
+                        ko.mapping = mapping;
+                    },
+                });
+                requirejs([
+                    'hqwebapp/js/common',
+                    'jquery.cookie/jquery.cookie',
+                    'hqwebapp/js/layout',
+                    'hqwebapp/js/hq-bug-report',
+                    'notifications/js/notifications_service',
+                    'analytix/js/drift',
+                    'analytix/js/google',
+                    'analytix/js/hubspot',
+                    'analytix/js/kissmetrix',
+                ], function () {
+                    requirejs(['{{ requirejs_main }}']);
+                });
+            </script>
+        {% endif %}
+
         {# HQ Specific Libraries #}
-        <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-        {% compress js %}
-        <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/main.js' %}"></script>
-        {% endcompress %}
+        {% if not requirejs_main %}
+            <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+
+            {% compress js %}
+                <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+            {% endcompress %}
+        {% endif %}
 
         {# JavaScript Display Logic Libaries #}
 
-        {% if request.couch_user %}
-        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
-        {% endif %}
-
-        {% include "hqwebapp/includes/ko.html" %}
+        {% if not requirejs_main %}
         {% compress js %}
         <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
         {% endcompress %}
+        {% endif %}
 
-        {% if request.use_angular_js %}
+        {% if request.couch_user and not requirejs_main %}
+        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
+        {% endif %}
+
+        {% if request.use_angular_js and not requirejs_main %}
         {% compress js %}
         {% include "hqwebapp/includes/angular.html" %}
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_select2 %}
+        {% if request.use_select2 and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'select2-3.5.2-legacy/select2.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_select2_v4 %}
+        {% if request.use_select2_v4 and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_nvd3 %}
+        {% if request.use_nvd3 and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v2.js' %}"></script>
         <script src="{% static 'nvd3/lib/fisheye.js' %}"></script>
@@ -461,7 +480,7 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_nvd3_v3 %}
+        {% if request.use_nvd3_v3 and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
         <script src="{% static 'd3/d3.min.js' %}"></script>
@@ -469,7 +488,7 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_datatables %}
+        {% if request.use_datatables and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js' %}"></script>
@@ -477,59 +496,60 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_typeahead %}
+        {% if request.use_typeahead and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'bootstrap3-typeahead/bootstrap3-typeahead.min.js' %}"></script>
         <script src="{% static 'hqwebapp/js/bootstrap-multi-typeahead.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_timepicker %}
+        {% if request.use_timepicker and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'bootstrap-timepicker/js/bootstrap-timepicker.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.guided_tour %}
+        {% if request.guided_tour and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'tour/js/tour.utils.js' %}"></script>
         <script src="{% static 'bootstrap-tour/build/js/bootstrap-tour.min.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-
+        {% if not requirejs_main %}
         {% if request.use_maps or request.use_maps_async %}
         {% compress js %}
         <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
         <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         {% endcompress %}
         {% endif %}
+        {% endif %}
 
-        {% if request.maps_prefer_canvas %}
+        {% if request.maps_prefer_canvas and not requirejs_main %}
         {% addtoblock js-inline %}
         <script>L_PREFER_CANVAS = true;</script>
         {% endaddtoblock %}
         {% endif %}
 
-        {% if request.use_maps %}
+        {% if request.use_maps and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'reports/js/maps.js' %}"></script>
         <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_maps_async %}
+        {% if request.use_maps_async and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'reports/js/async_maps.js' %}"></script>
         <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_timeago %}
+        {% if request.use_timeago and not requirejs_main %}
         <script src="{% static 'jquery-timeago/jquery.timeago.js' %}"></script>
         {% endif %}
 
-        {% if request.use_multiselect %}
+        {% if request.use_multiselect and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
@@ -537,25 +557,20 @@
         {% endcompress %}
         {% endif %}
 
-        {% if request.use_ko_validation %}
+        {% if request.use_ko_validation and not requirejs_main %}
           <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
         {# If it's loaded early, then execution of all following scripts block on it #}
-        {% if request.domain and request.user.username %}
+        {% if request.domain and request.user.username and not requirejs_main %}
             <script src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
         {% block js %}{% endblock js %}
 
         {# Report Issue #}
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
-
-        {# Remote modals (EULA and CDA) #}
-        {% compress js %}
-            <script src="{% static 'hqwebapp/js/remote-modals.js' %}"></script>
-        {% endcompress %}
 
         {# EULA #}
         {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from django.test import TestCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -11,6 +12,7 @@ from corehq.apps.reports.analytics.couchaccessors import (
     get_form_details_for_app_and_xmlns,
     get_form_details_for_app,
 )
+from six.moves import range
 
 
 class SetupSimpleAppMixin(object):

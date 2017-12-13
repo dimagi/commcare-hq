@@ -1,4 +1,5 @@
-from Queue import Queue
+from __future__ import absolute_import
+from six.moves.queue import Queue
 import threading
 from couchdbkit import Database
 from django.test import TestCase

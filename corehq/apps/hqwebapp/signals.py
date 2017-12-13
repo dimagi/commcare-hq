@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date
 
 from django.contrib.auth.signals import user_logged_in, user_login_failed
@@ -14,12 +15,16 @@ def clear_login_attempts(user):
 
 @receiver(user_logged_in)
 def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
-    couch_user = CouchUser.from_django_user(user)
+    couch_user = getattr(request, 'couch_user', None)
+    if not couch_user:
+        couch_user = CouchUser.from_django_user(user)
     clear_login_attempts(couch_user)
 
 
 @receiver(user_login_failed)
 def add_failed_attempt(sender, credentials, **kwargs):
+    if credentials['username'].endswith('.commcarehq.org'):
+        return  # mobile user
     user = CouchUser.get_by_username(credentials['username'])
     if user and user.is_web_user():
         if user.is_locked_out():

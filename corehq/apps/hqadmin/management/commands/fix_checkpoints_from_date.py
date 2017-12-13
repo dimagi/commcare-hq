@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 import argparse
 import difflib
 import pprint
@@ -11,6 +12,7 @@ from django.core.management import BaseCommand, CommandError
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances
+from six.moves import input
 
 
 def valid_date(s):
@@ -22,8 +24,8 @@ def valid_date(s):
 
 
 def confirm(msg):
-    input = raw_input("{} Type ['y', 'yes'] to continue.\n".format(msg))
-    if input in ['y', 'yes']:
+    user_input = input("{} Type ['y', 'yes'] to continue.\n".format(msg))
+    if user_input in ['y', 'yes']:
         return True
 
 

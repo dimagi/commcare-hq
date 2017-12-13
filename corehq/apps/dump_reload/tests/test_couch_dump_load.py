@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import os
 import random
@@ -24,6 +25,7 @@ from corehq.util.test_utils import mock_out_couch
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
+from six.moves import range
 
 
 class CouchDumpLoadTest(TestCase):

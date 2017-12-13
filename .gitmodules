@@ -25,9 +25,6 @@
 [submodule "submodules/django-no-exceptions"]
 	path = submodules/django-no-exceptions
 	url = git://github.com/dimagi/django-no-exceptions.git
-[submodule "submodules/django-prbac-src"]
-	path = submodules/django-prbac-src
-	url = git://github.com/dimagi/django-prbac.git
 [submodule "submodules/xml2json"]
 	path = submodules/xml2json
 	url = git://github.com/dimagi/xml2json.git

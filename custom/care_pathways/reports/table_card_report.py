@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.filters import TableCardGroupByFilter, TableCardTypeFilter

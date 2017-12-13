@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import copy
 import logging
 from corehq.util.dates import iso_string_to_date
@@ -196,14 +197,14 @@ class VaccinationClientList(ClientListBase):
                 return None
 
         def _get_related_cases(results):
-            ids = filter(None, [_related_id(res) for res in results])
+            ids = [_f for _f in [_related_id(res) for res in results] if _f]
             return dict((c['_id'], c) for c in iter_docs(CommCareCase.get_db(), ids))
 
         results = get_due_list_records(target_date, owner_id=owner_id, task_types=self.config_item['tasks'])
         # this preloads the cases we'll need into memory to avoid excessive couch
         # queries to get related cases
         primary_cases = _get_related_cases(results)
-        secondary_cases = _get_related_cases(filter(lambda x: x['type'] == BIHAR_CHILD_CASE_TYPE, primary_cases.values()))
+        secondary_cases = _get_related_cases([x for x in primary_cases.values() if x['type'] == BIHAR_CHILD_CASE_TYPE])
 
         def _to_row(case):
             # this function uses closures so don't move it!

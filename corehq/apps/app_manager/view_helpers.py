@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import Http404
 from django.views.generic.base import TemplateView
 from corehq.apps.app_manager.dbaccessors import get_app

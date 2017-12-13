@@ -350,16 +350,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     )
                 )
 
-    def process_request(self, request):
-        response = super(CreditStripePaymentHandler, self).process_request(request)
-        if self.credit_lines:
-            response.update({
-                'balances': [{'type': cline.product_type if cline.product_type else cline.feature_type,
-                              'balance': fmt_dollar_amount(cline.balance)}
-                             for cline in self.credit_lines]
-            })
-        return response
-
 
 class AutoPayInvoicePaymentHandler(object):
 

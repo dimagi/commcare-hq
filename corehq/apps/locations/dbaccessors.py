@@ -1,4 +1,6 @@
-from itertools import imap, chain
+from __future__ import absolute_import
+from itertools import chain
+from six.moves import map
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
@@ -60,7 +62,7 @@ def get_users_assigned_to_locations(domain):
         include_docs=False,
         reduce=False,
     )]
-    return imap(CouchUser.wrap_correctly, iter_docs(CouchUser.get_db(), ids))
+    return map(CouchUser.wrap_correctly, iter_docs(CouchUser.get_db(), ids))
 
 
 def get_web_users_by_location(domain, location_id):

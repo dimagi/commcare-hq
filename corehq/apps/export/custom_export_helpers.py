@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -10,6 +11,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
 from corehq.apps.domain.models import Domain
+from six.moves import filter
 
 
 USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
@@ -174,7 +176,7 @@ class CustomExportHelper(object):
     def get_context(self):
         table_configuration = self.format_config_for_javascript(self.custom_export.table_configuration)
         if self.minimal:
-            table_configuration = filter(lambda t: t['selected'], table_configuration)
+            table_configuration = [t for t in table_configuration if t['selected']]
         return {
             'custom_export': self.custom_export,
             'default_order': self.default_order,
@@ -249,11 +251,11 @@ class FormCustomExportHelper(CustomExportHelper):
                                          transform=CASENAME_TRANSFORM, show=True, selected=False)
             if not requires_case:
                 case_name_col.show, case_name_col.selected, case_name_col.tag = False, False, 'deleted'
-            matches = filter(case_name_col.match, column_conf)
+            matches = list(filter(case_name_col.match, column_conf))
             if matches:
                 # hack/annoying - also might have to re-add the case id column which can get
                 # overwritten by case name if only that is set.
-                case_id_cols = filter(lambda col: col['index'] == FORM_CASE_ID_PATH, column_conf)
+                case_id_cols = [col for col in column_conf if col['index'] == FORM_CASE_ID_PATH]
                 if len(case_id_cols) <= 1:
                     ret.append(ExportColumn(
                         index=FORM_CASE_ID_PATH,
@@ -264,7 +266,7 @@ class FormCustomExportHelper(CustomExportHelper):
                 for match in matches:
                     case_name_col.format_for_javascript(match)
 
-            elif filter(lambda col: col["index"] == case_name_col.index, column_conf):
+            elif [col for col in column_conf if col["index"] == case_name_col.index]:
                 ret.append(case_name_col.default_column())
             return ret
 
@@ -297,7 +299,7 @@ class FormCustomExportHelper(CustomExportHelper):
 
         requires_case = self.custom_export.uses_cases()
 
-        case_cols = filter(lambda col: col["index"] == FORM_CASE_ID_PATH, column_conf)
+        case_cols = [col for col in column_conf if col["index"] == FORM_CASE_ID_PATH]
         if not requires_case:
             for col in case_cols:
                 col['tag'], col['show'] = 'deleted', col['selected']
@@ -442,7 +444,7 @@ class CaseCustomExportHelper(CustomExportHelper):
         ]
         main_table_columns = table_configuration[0]['column_configuration']
         for custom in custom_columns:
-            matches = filter(custom.match, main_table_columns)
+            matches = list(filter(custom.match, main_table_columns))
             if not matches:
                 main_table_columns.append(custom.default_column())
             else:
@@ -492,7 +494,7 @@ class CaseCustomExportHelper(CustomExportHelper):
                 display='',
                 show=True,
             ).to_config_format(selected=self.creating_new_export))
-            for prop in filter(lambda prop: not prop.startswith("parent/"), remaining_properties)
+            for prop in [prop for prop in remaining_properties if not prop.startswith("parent/")]
         ])
 
         table_conf[0]["column_configuration"] = column_conf

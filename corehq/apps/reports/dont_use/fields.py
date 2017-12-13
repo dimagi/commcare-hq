@@ -2,6 +2,7 @@
 DO NOT WRITE ANY NEW FUNCTIONALITY BASED ON THIS FILE
 This is being kept around only to support legacy reports
 """
+from __future__ import absolute_import
 from django.template.loader import render_to_string
 import pytz
 import warnings

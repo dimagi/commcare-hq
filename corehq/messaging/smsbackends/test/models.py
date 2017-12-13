@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.conf import settings
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.forms import BackendForm

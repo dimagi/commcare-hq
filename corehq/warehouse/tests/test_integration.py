@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 
 from corehq.apps.users.models import CommCareUser

@@ -9,6 +9,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
     vm.label = "Institutional deliveries";
     vm.step = $routeParams.step;
@@ -22,6 +23,8 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
@@ -29,6 +32,16 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         info: 'Percentage of pregnant women who delivered in a public or private medical facility in the last month. Delivery in medical instituitions is associated with a decrease in maternal mortality rate.',
     };
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -88,20 +101,27 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    0,
-                    Math.ceil(d3.max(vm.chartData, function(line) {
-                        return d3.max(line.values, function(d) {
-                            return d.y;
-                        });
-                    }) * 100) / 100 + 0.01,
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
                 ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -114,7 +134,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -123,7 +143,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -182,15 +202,8 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of pregnant women who delivered in the last month: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
-                    tooltip_content += "<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></p>";
-                    tooltip_content += "<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, dataInMonth);
                 });
                 return chart;
             },
@@ -206,6 +219,13 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of pregnant women who delivered in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
+            + "<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
+            + "<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

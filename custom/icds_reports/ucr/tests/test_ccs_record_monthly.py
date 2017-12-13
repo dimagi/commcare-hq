@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from datetime import datetime, date
 from xml.etree import cElementTree as ElementTree
@@ -212,7 +213,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             dob=date(1990, 1, 1),
             edd=date(2016, 6, 2),
-            date_opened=datetime(2016, 1, 10),
+            date_opened=datetime(2016, 3, 10),
             date_modified=datetime(2016, 3, 12),
             closed=True,
         )
@@ -220,10 +221,21 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         cases = [
             (0, [('open_in_month', 0)]),
             (1, [('open_in_month', 1)]),
-            (2, [('open_in_month', 1)]),
-            (3, [('open_in_month', 1)]),
-            (4, [('open_in_month', 0)]),
         ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_closed(self):
+        case_id = uuid.uuid4().hex
+        self._create_ccs_case(
+            case_id=case_id,
+            dob=date(1990, 1, 1),
+            edd=date(2016, 6, 2),
+            date_opened=datetime(2016, 1, 10),
+            date_modified=datetime(2016, 1, 12),
+            closed=True,
+        )
+
+        cases = []
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
     def test_alive_in_month(self):
@@ -234,14 +246,13 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             edd=date(2016, 6, 2),
             date_opened=datetime(2016, 1, 10),
             date_modified=datetime(2016, 3, 12),
-            date_death=date(2016, 1, 10),
+            date_death=date(2016, 3, 2),
         )
 
         cases = [
             (0, [('alive_in_month', 1)]),
             (1, [('alive_in_month', 1)]),
             (2, [('alive_in_month', 0)]),
-            (3, [('alive_in_month', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -254,13 +265,25 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             resident='yes',
             disabled='yes',
             dob=date(1990, 1, 1),
-            edd=date(2016, 11, 10),
-            date_opened=datetime(2015, 1, 10),
+            edd=date(2016, 8, 10),
+            date_opened=datetime(2016, 1, 10),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
             (0, [
+                ('caste', 'sc'),
+                ('disabled', 'yes'),
+                ('minority', 'yes'),
+                ('resident', 'yes'),
+            ]),
+            (1, [
+                ('caste', 'sc'),
+                ('disabled', 'yes'),
+                ('minority', 'yes'),
+                ('resident', 'yes'),
+            ]),
+            (2, [
                 ('caste', 'sc'),
                 ('disabled', 'yes'),
                 ('minority', 'yes'),
@@ -299,10 +322,9 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (1, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
-            (2, [('num_rations_distributed', 11), ('rations_21_plus_distributed', 0)]),
-            (3, [('num_rations_distributed', 21), ('rations_21_plus_distributed', 1)]),
-            (4, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
+            (0, [('num_rations_distributed', 11), ('rations_21_plus_distributed', 0)]),
+            (1, [('num_rations_distributed', 21), ('rations_21_plus_distributed', 1)]),
+            (2, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -311,17 +333,16 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2015, 8, 10),
-            add=date(2015, 8, 12),
+            edd=date(2015, 9, 10),
+            add=date(2015, 9, 12),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
         )
 
+        # no rows where ccs_status = other
         cases = [
+            (0, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
             (1, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
-            (2, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
-            (3, [('pregnant', 0), ('lactating', 0), ('ccs_status', 'other')]),
-            (4, [('pregnant', 0), ('lactating', 0), ('ccs_status', 'other')]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -330,16 +351,16 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
-            (1, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
+            (0, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
+            (1, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
             (2, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
-            (3, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -349,7 +370,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             dob=date(1990, 1, 1),
             edd=date(2016, 9, 6),
-            date_opened=datetime(2016, 1, 4),
+            date_opened=datetime(2016, 3, 4),
             date_modified=datetime(2016, 3, 12),
         )
 
@@ -357,7 +378,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             (0, [('pregnant', 0), ('lactating', 0), ('ccs_status', 'other')]),
             (1, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
             (2, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
-            (3, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -373,10 +393,9 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (1, [('postnatal', 0)]),
-            (2, [('postnatal', 1)]),
-            (3, [('postnatal', 1)]),
-            (4, [('postnatal', 0)]),
+            (0, [('postnatal', 1)]),
+            (1, [('postnatal', 1)]),
+            (2, [('postnatal', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -391,9 +410,9 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
+            (0, [('tetanus_complete', 0)]),
             (1, [('tetanus_complete', 0)]),
             (2, [('tetanus_complete', 0)]),
-            (3, [('tetanus_complete', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -405,13 +424,13 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             edd=date(2016, 6, 4),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
-            tt_complete_date=date(2016, 2, 7)
+            tt_complete_date=date(2016, 3, 7)
         )
 
         cases = [
-            (1, [('tetanus_complete', 0)]),
+            (0, [('tetanus_complete', 0)]),
+            (1, [('tetanus_complete', 1)]),
             (2, [('tetanus_complete', 1)]),
-            (3, [('tetanus_complete', 1)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -420,16 +439,33 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
-            (1, [('delivered_in_month', 0)]),
-            (2, [('delivered_in_month', 1)]),
-            (3, [('delivered_in_month', 0)]),
+            (0, [('delivered_in_month', 0)]),
+            (1, [('delivered_in_month', 1)]),
+            (2, [('delivered_in_month', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_trimester_not_open(self):
+        case_id = uuid.uuid4().hex
+        self._create_ccs_case(
+            case_id=case_id,
+            dob=date(1990, 1, 1),
+            edd=date(2016, 9, 6),
+            date_opened=datetime(2016, 3, 3),
+            date_modified=datetime(2016, 3, 12),
+        )
+
+        cases = [
+            (0, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
+            (1, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
+            (2, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -444,10 +480,9 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (1, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
-            (2, [('trimester', 1), ('trimester_2', 0), ('trimester_3', 0)]),
-            (3, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
-            (4, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
+            (0, [('trimester', 1), ('trimester_2', 0), ('trimester_3', 0)]),
+            (1, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
+            (2, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -456,16 +491,16 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
-            (1, [('trimester', 3), ('trimester_2', 0), ('trimester_3', 1)]),
+            (0, [('trimester', 3), ('trimester_2', 0), ('trimester_3', 1)]),
+            (1, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
             (2, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
-            (3, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -482,15 +517,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
+            (0, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
             (1, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
             (2, [('anc1_received_at_delivery', 0),
-                 ('anc2_received_at_delivery', 0),
-                 ('anc3_received_at_delivery', 0),
-                 ('anc4_received_at_delivery', 0)]),
-            (3, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -502,23 +537,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
             num_anc_complete=1,
         )
 
         cases = [
-            (1, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (2, [('anc1_received_at_delivery', 1),
+            (1, [('anc1_received_at_delivery', 1),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (2, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -530,23 +565,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
             num_anc_complete=2,
         )
 
         cases = [
-            (1, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (2, [('anc1_received_at_delivery', 1),
+            (1, [('anc1_received_at_delivery', 1),
                  ('anc2_received_at_delivery', 1),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (2, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -558,23 +593,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
             num_anc_complete=3,
         )
 
         cases = [
-            (1, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (2, [('anc1_received_at_delivery', 1),
+            (1, [('anc1_received_at_delivery', 1),
                  ('anc2_received_at_delivery', 1),
                  ('anc3_received_at_delivery', 1),
                  ('anc4_received_at_delivery', 0)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (2, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -586,23 +621,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
             num_anc_complete=4,
         )
 
         cases = [
-            (1, [('anc1_received_at_delivery', 0),
+            (0, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
-            (2, [('anc1_received_at_delivery', 1),
+            (1, [('anc1_received_at_delivery', 1),
                  ('anc2_received_at_delivery', 1),
                  ('anc3_received_at_delivery', 1),
                  ('anc4_received_at_delivery', 1)]),
-            (3, [('anc1_received_at_delivery', 0),
+            (2, [('anc1_received_at_delivery', 0),
                  ('anc2_received_at_delivery', 0),
                  ('anc3_received_at_delivery', 0),
                  ('anc4_received_at_delivery', 0)]),
@@ -614,16 +649,16 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 2, 4),
-            add=date(2016, 2, 15),
-            date_opened=datetime(2015, 12, 10),
+            edd=date(2016, 3, 4),
+            add=date(2016, 3, 15),
+            date_opened=datetime(2016, 2, 10),
             date_modified=datetime(2016, 3, 12),
         )
 
         cases = [
-            (1, [('registration_trimester_at_delivery', None)]),
-            (2, [('registration_trimester_at_delivery', 3)]),
-            (3, [('registration_trimester_at_delivery', None)]),
+            (0, [('registration_trimester_at_delivery', None)]),
+            (1, [('registration_trimester_at_delivery', 3)]),
+            (2, [('registration_trimester_at_delivery', None)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -632,38 +667,36 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 4, 13),
-            add=date(2016, 4, 15),
-            date_opened=datetime(2015, 12, 10),
-            date_modified=datetime(2016, 5, 12),
+            edd=date(2016, 3, 13),
+            add=date(2016, 3, 15),
+            date_opened=datetime(2015, 10, 10),
+            date_modified=datetime(2016, 3, 12),
         )
 
-        start_date = date(2016, 2, 1)
         cases = [
-            (1, [('registration_trimester_at_delivery', None)]),
-            (2, [('registration_trimester_at_delivery', 2)]),
-            (3, [('registration_trimester_at_delivery', None)]),
+            (0, [('registration_trimester_at_delivery', None)]),
+            (1, [('registration_trimester_at_delivery', 2)]),
+            (2, [('registration_trimester_at_delivery', None)]),
         ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases, start_date=start_date)
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
     def test_reg_trimester_1_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
             case_id=case_id,
             dob=date(1990, 1, 1),
-            edd=date(2016, 8, 10),
-            add=date(2016, 8, 8),
-            date_opened=datetime(2015, 12, 10),
-            date_modified=datetime(2016, 9, 12),
+            edd=date(2016, 3, 10),
+            add=date(2016, 3, 8),
+            date_opened=datetime(2015, 8, 10),
+            date_modified=datetime(2016, 3, 12),
         )
 
-        start_date = date(2016, 6, 1)
         cases = [
-            (1, [('registration_trimester_at_delivery', None)]),
-            (2, [('registration_trimester_at_delivery', 1)]),
-            (3, [('registration_trimester_at_delivery', None)]),
+            (0, [('registration_trimester_at_delivery', None)]),
+            (1, [('registration_trimester_at_delivery', 1)]),
+            (2, [('registration_trimester_at_delivery', None)]),
         ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases, start_date=start_date)
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
     def test_bp_in_month(self):
         case_id = uuid.uuid4().hex
@@ -676,14 +709,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         self._submit_bp_form(
-            form_date=datetime(2016, 2, 2),
+            form_date=datetime(2016, 3, 2),
             case_id=case_id
         )
 
         cases = [
-            (1, [('bp_visited_in_month', 0)]),
-            (2, [('bp_visited_in_month', 1)]),
-            (3, [('bp_visited_in_month', 0)]),
+            (0, [('bp_visited_in_month', 0)]),
+            (1, [('bp_visited_in_month', 1)]),
+            (2, [('bp_visited_in_month', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -693,20 +726,20 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             dob=date(1990, 1, 1),
             edd=date(2016, 2, 5),
-            add=date(2016, 2, 2),
+            add=date(2016, 2, 24),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
         )
 
         self._submit_pnc_form(
-            form_date=datetime(2016, 2, 2),
+            form_date=datetime(2016, 3, 2),
             case_id=case_id
         )
 
         cases = [
-            (1, [('pnc_visited_in_month', 0)]),
-            (2, [('pnc_visited_in_month', 1)]),
-            (3, [('pnc_visited_in_month', 0)]),
+            (0, [('pnc_visited_in_month', 0)]),
+            (1, [('pnc_visited_in_month', 1)]),
+            (2, [('pnc_visited_in_month', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -738,23 +771,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (0, [('using_ifa', 0),
-                 ('ifa_consumed_last_seven_days', 0),
-                 ('extra_meal', 0),
-                 ('resting_during_pregnancy', 0)]),
-            (1, [('using_ifa', 1),
+            (0, [('using_ifa', 1),
                  ('ifa_consumed_last_seven_days', 1),
                  ('extra_meal', 1),
                  ('resting_during_pregnancy', 1)]),
-            (2, [('using_ifa', 1),
-                 ('ifa_consumed_last_seven_days', 1),
-                 ('extra_meal', 1),
-                 ('resting_during_pregnancy', 1)]),
-            (3, [('using_ifa', 0),
+            (1, [('using_ifa', 0),
                  ('ifa_consumed_last_seven_days', 0),
                  ('extra_meal', 0),
                  ('resting_during_pregnancy', 0)]),
-            (4, [('using_ifa', 0),
+            (2, [('using_ifa', 0),
                  ('ifa_consumed_last_seven_days', 0),
                  ('extra_meal', 0),
                  ('resting_during_pregnancy', 0)]),
@@ -803,25 +828,19 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (1, [('counsel_immediate_bf', 0),
+            (0, [('counsel_immediate_bf', 0),
                  ('counsel_bp_vid', 0),
                  ('counsel_preparation', 0),
                  ('counsel_fp_vid', 0),
                  ('counsel_immediate_conception', 0),
                  ('counsel_accessible_postpartum_fp', 0)]),
-            (2, [('counsel_immediate_bf', 0),
-                 ('counsel_bp_vid', 0),
-                 ('counsel_preparation', 0),
-                 ('counsel_fp_vid', 0),
-                 ('counsel_immediate_conception', 0),
-                 ('counsel_accessible_postpartum_fp', 0)]),
-            (3, [('counsel_immediate_bf', 1),
+            (1, [('counsel_immediate_bf', 1),
                  ('counsel_bp_vid', 1),
                  ('counsel_preparation', 1),
                  ('counsel_fp_vid', 1),
                  ('counsel_immediate_conception', 1),
                  ('counsel_accessible_postpartum_fp', 1)]),
-            (4, [('counsel_immediate_bf', 1),
+            (2, [('counsel_immediate_bf', 1),
                  ('counsel_bp_vid', 1),
                  ('counsel_preparation', 1),
                  ('counsel_fp_vid', 1),
@@ -841,6 +860,10 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
+            (0, [('anemic_unknown', 1),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
             (1, [('anemic_unknown', 1),
                  ('anemic_normal', 0),
                  ('anemic_moderate', 0),
@@ -863,17 +886,17 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         self._submit_bp_form(
-            form_date=datetime(2016, 1, 9),
+            form_date=datetime(2016, 3, 9),
             case_id=case_id,
             anemia='severe',
         )
         self._submit_bp_form(
-            form_date=datetime(2016, 1, 10),
+            form_date=datetime(2016, 3, 10),
             case_id=case_id,
             anemia='normal',
         )
         self._submit_bp_form(
-            form_date=datetime(2016, 2, 10),
+            form_date=datetime(2016, 3, 14),
             case_id=case_id,
         )
 
@@ -887,10 +910,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anemic_moderate', 0),
                  ('anemic_severe', 0)]),
             (2, [('anemic_unknown', 0),
-                 ('anemic_normal', 1),
-                 ('anemic_moderate', 0),
-                 ('anemic_severe', 0)]),
-            (3, [('anemic_unknown', 0),
                  ('anemic_normal', 1),
                  ('anemic_moderate', 0),
                  ('anemic_severe', 0)]),
@@ -908,17 +927,17 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         self._submit_bp_form(
-            form_date=datetime(2016, 1, 9),
+            form_date=datetime(2016, 3, 9),
             case_id=case_id,
             anemia='severe',
         )
         self._submit_bp_form(
-            form_date=datetime(2016, 1, 10),
+            form_date=datetime(2016, 3, 10),
             case_id=case_id,
             anemia='moderate',
         )
         self._submit_bp_form(
-            form_date=datetime(2016, 2, 10),
+            form_date=datetime(2016, 3, 14),
             case_id=case_id,
         )
 
@@ -932,10 +951,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anemic_moderate', 1),
                  ('anemic_severe', 0)]),
             (2, [('anemic_unknown', 0),
-                 ('anemic_normal', 0),
-                 ('anemic_moderate', 1),
-                 ('anemic_severe', 0)]),
-            (3, [('anemic_unknown', 0),
                  ('anemic_normal', 0),
                  ('anemic_moderate', 1),
                  ('anemic_severe', 0)]),
@@ -953,17 +968,17 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         self._submit_bp_form(
-            form_date=datetime(2016, 1, 9),
+            form_date=datetime(2016, 3, 9),
             case_id=case_id,
             anemia='normal',
         )
         self._submit_bp_form(
-            form_date=datetime(2016, 1, 10),
+            form_date=datetime(2016, 3, 10),
             case_id=case_id,
             anemia='severe',
         )
         self._submit_bp_form(
-            form_date=datetime(2016, 2, 10),
+            form_date=datetime(2016, 3, 15),
             case_id=case_id,
         )
 
@@ -977,10 +992,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('anemic_moderate', 0),
                  ('anemic_severe', 1)]),
             (2, [('anemic_unknown', 0),
-                 ('anemic_normal', 0),
-                 ('anemic_moderate', 0),
-                 ('anemic_severe', 1)]),
-            (3, [('anemic_unknown', 0),
                  ('anemic_normal', 0),
                  ('anemic_moderate', 0),
                  ('anemic_severe', 1)]),
@@ -1010,10 +1021,9 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (1, [('counsel_fp_methods', 0)]),
-            (2, [('counsel_fp_methods', 0)]),
-            (3, [('counsel_fp_methods', 1)]),
-            (4, [('counsel_fp_methods', 1)]),
+            (0, [('counsel_fp_methods', 0)]),
+            (1, [('counsel_fp_methods', 1)]),
+            (2, [('counsel_fp_methods', 1)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
@@ -1040,14 +1050,43 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         )
 
         cases = [
-            (1, [('counsel_fp_methods', 0)]),
-            (2, [('counsel_fp_methods', 0)]),
-            (3, [('counsel_fp_methods', 1)]),
-            (4, [('counsel_fp_methods', 1)]),
+            (0, [('counsel_fp_methods', 0)]),
+            (1, [('counsel_fp_methods', 1)]),
+            (2, [('counsel_fp_methods', 1)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    def test_bp_pnc_complete(self):
+    def test_bp_complete(self):
+        case_id = uuid.uuid4().hex
+        self._create_ccs_case(
+            case_id=case_id,
+            dob=date(1990, 1, 1),
+            edd=date(2016, 2, 5),
+            add=date(2016, 5, 2),
+            date_opened=datetime(2015, 12, 10),
+            date_modified=datetime(2016, 3, 12),
+            bp1_date=date(2015, 2, 13),
+            bp2_date=date(2016, 3, 9),
+            bp3_date=date(2016, 4, 10),
+        )
+
+        cases = [
+            (0, [('bp1_complete', 1),
+                 ('bp2_complete', 0),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 0)]),
+            (1, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 0)]),
+            (2, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 1),
+                 ('pnc_complete', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_pnc_complete(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
             case_id=case_id,
@@ -1064,20 +1103,16 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
 
         cases = [
             (0, [('bp1_complete', 1),
-                 ('bp2_complete', 0),
-                 ('bp3_complete', 0),
-                 ('pnc_complete', 0)]),
-            (1, [('bp1_complete', 1),
-                 ('bp2_complete', 1),
-                 ('bp3_complete', 0),
-                 ('pnc_complete', 0)]),
-            (2, [('bp1_complete', 1),
                  ('bp2_complete', 1),
                  ('bp3_complete', 1),
                  ('pnc_complete', 0)]),
-            (3, [('bp1_complete', 0),
+            (1, [('bp1_complete', 0),
                  ('bp2_complete', 0),
                  ('bp3_complete', 0),
                  ('pnc_complete', 1)]),
+            (2, [('bp1_complete', 0),
+                 ('bp2_complete', 0),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)

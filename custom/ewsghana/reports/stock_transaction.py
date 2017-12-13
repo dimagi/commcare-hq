@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.sms.models import SMS
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from datetime import datetime

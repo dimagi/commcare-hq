@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from collections import defaultdict
 from datetime import timedelta, datetime
@@ -15,6 +16,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 logger = logging.getLogger('callcenter')
 
@@ -371,7 +373,7 @@ class CallCenterIndicators(object):
 
             cache_timeout = seconds_till_midnight(self.timezone)
             user_to_case_map = self.user_to_case_map
-            for user_id, indicators in self.data.iteritems():
+            for user_id, indicators in six.iteritems(self.data):
                 # only include data for users that we are expecting. There may be partial
                 # data for other users who are part of the same case sharing groups.
                 if user_id in self.users_needing_data:
@@ -390,7 +392,7 @@ class CallCenterIndicators(object):
                         )
                         final_data[user_case_id] = indicators
 
-        for cache_data in self.cached_data.itervalues():
+        for cache_data in six.itervalues(self.cached_data):
             final_data[cache_data.case_id] = cache_data.indicators
 
         return final_data

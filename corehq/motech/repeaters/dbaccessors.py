@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from dimagi.utils.parsing import json_format_datetime
 
@@ -106,7 +107,7 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=No
         yield RepeatRecord.wrap(doc['doc'])
 
 
-def get_repeat_records_by_payload_id(domain, payload_id, chunk_size=1000):
+def get_repeat_records_by_payload_id(domain, payload_id):
     from .models import RepeatRecord
     results = RepeatRecord.get_db().view(
         'repeaters/repeat_records_by_payload_id',

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import os
 import re
@@ -200,10 +201,6 @@ class TestViews(TestCase):
         })
 
     def test_dashboard(self, mock):
-        self._test_status_codes(['dashboard_new_user'], {
-            'domain': self.domain.name,
-        })
-
         # This redirects to the dashboard
         self._test_status_codes(['default_app'], {
             'domain': self.domain.name,

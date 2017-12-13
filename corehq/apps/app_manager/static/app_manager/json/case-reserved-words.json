@@ -9,6 +9,8 @@
     "closed_by",
     "closed_on",
     "commtrack",
+    "computed_",
+    "computed_modified_on_",
     "date",
     "date_modified",
     "date-opened",

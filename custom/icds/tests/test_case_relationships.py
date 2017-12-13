@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.icds.case_relationships import (
     child_health_case_from_tasks_case,
     ccs_record_case_from_tasks_case,

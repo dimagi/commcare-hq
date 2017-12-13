@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import mock
 import datetime
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
@@ -9,7 +10,8 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tasks import rebuild_indicators, queue_async_indicators
+from corehq.util.test_utils import update_case
 
 from custom.enikshay.const import (
     DOSE_MISSED,
@@ -24,16 +26,18 @@ from custom.enikshay.tasks import (
     EpisodeAdherenceUpdate,
     calculate_dose_status_by_day,
     get_datastore,
+    update_single_episode,
 )
-from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
     get_occurrence_case_structure,
     get_episode_case_structure
 )
+import six
 
 
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestAdherenceUpdater(TestCase):
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
@@ -62,11 +66,38 @@ class TestAdherenceUpdater(TestCase):
 
     @classmethod
     def setupFixtureData(cls):
-        cls.fixture_data = {
-            'schedule1': '7',
-            'schedule2': '14',
-            'schedule3': '21',
-        }
+        cls.fixture_data = [
+            {
+                SCHEDULE_ID_FIXTURE: 'schedule1',
+                'doses_per_week': '7',
+                'dose_count_ip_new_patient': '56',
+                'dose_count_ip_recurring_patient': '84',
+                'dose_count_cp_new_patient': '112',
+                'dose_count_cp_recurring_patient': '140',
+                'dose_count_outcome_due_new_patient': '168',
+                'dose_count_outcome_due_recurring_patient': '168',
+            },
+            {
+                SCHEDULE_ID_FIXTURE: 'schedule2',
+                'doses_per_week': '14',
+                'dose_count_ip_new_patient': '24',
+                'dose_count_ip_recurring_patient': '36',
+                'dose_count_cp_new_patient': '54',
+                'dose_count_cp_recurring_patient': '66',
+                'dose_count_outcome_due_new_patient': '78',
+                'dose_count_outcome_due_recurring_patient': '78',
+            },
+            {
+                SCHEDULE_ID_FIXTURE: 'schedule3',
+                'doses_per_week': '21',
+                'dose_count_ip_new_patient': '24',
+                'dose_count_ip_recurring_patient': '36',
+                'dose_count_cp_new_patient': '54',
+                'dose_count_cp_recurring_patient': '66',
+                'dose_count_outcome_due_new_patient': '78',
+                'dose_count_outcome_due_recurring_patient': '78',
+            },
+        ]
         cls.data_type = FixtureDataType(
             domain=cls.domain,
             tag=DAILY_SCHEDULE_FIXTURE_NAME,
@@ -85,25 +116,19 @@ class TestAdherenceUpdater(TestCase):
         )
         cls.data_type.save()
         cls.data_items = []
-        for _id, value in cls.fixture_data.iteritems():
+        for row in cls.fixture_data:
             data_item = FixtureDataItem(
                 domain=cls.domain,
                 data_type_id=cls.data_type.get_id,
                 fields={
-                    SCHEDULE_ID_FIXTURE: FieldList(
-                        field_list=[
-                            FixtureItemField(
-                                field_value=_id,
-                            )
-                        ]
-                    ),
-                    "doses_per_week": FieldList(
+                    column_name: FieldList(
                         field_list=[
                             FixtureItemField(
                                 field_value=value,
                             )
                         ]
                     )
+                    for column_name, value in six.iteritems(row)
                 },
                 item_attributes={},
             )
@@ -124,7 +149,12 @@ class TestAdherenceUpdater(TestCase):
         self.data_store.adapter.clear_table()
         FormProcessorTestUtils.delete_all_cases()
 
-    def _create_episode_case(self, adherence_schedule_date_start=None, adherence_schedule_id=None):
+    def _create_episode_case(
+            self,
+            adherence_schedule_date_start=None,
+            adherence_schedule_id=None,
+            extra_properties=None,
+    ):
         person = get_person_case_structure(
             self.person_id,
             self.user.user_id,
@@ -135,13 +165,16 @@ class TestAdherenceUpdater(TestCase):
             person
         )
 
+        extra_update = {
+            'adherence_schedule_date_start': adherence_schedule_date_start,
+            'adherence_schedule_id': adherence_schedule_id
+        }
+        extra_update.update(extra_properties or {})
+
         episode_structure = get_episode_case_structure(
             self.episode_id,
             occurrence,
-            extra_update={
-                'adherence_schedule_date_start': adherence_schedule_date_start,
-                'adherence_schedule_id': adherence_schedule_id
-            }
+            extra_update=extra_update,
         )
         cases = {case.case_id: case for case in self.factory.create_or_update_cases([episode_structure])}
         episode_case = cases[self.episode_id]
@@ -160,7 +193,7 @@ class TestAdherenceUpdater(TestCase):
         ])
 
     def assert_update(self, purge_date, adherence_schedule_date_start,
-                      adherence_schedule_id, adherence_cases,
+                      adherence_schedule_id, adherence_cases, episode_properties=None,
                       date_today_in_india=None, output=None):
         adherence_cases = [
             {
@@ -172,7 +205,8 @@ class TestAdherenceUpdater(TestCase):
             for adherence_case in adherence_cases
         ]
         episode = self.create_episode_case(
-            adherence_schedule_date_start, adherence_schedule_id, adherence_cases
+            adherence_schedule_date_start, adherence_schedule_id, adherence_cases,
+            extra_properties=episode_properties,
         )
 
         updater = EpisodeAdherenceUpdate(self.domain, episode)
@@ -186,7 +220,7 @@ class TestAdherenceUpdater(TestCase):
 
         self.assertDictContainsSubset(
             # convert values to strings
-            {key: str(val) for key, val in expected.iteritems()},
+            {key: str(val) for key, val in six.iteritems(expected)},
             {key: str(actual[key]) for key in expected},
         )
 
@@ -199,9 +233,10 @@ class TestAdherenceUpdater(TestCase):
             self,
             adherence_schedule_date_start,
             adherence_schedule_id,
-            adherence_cases
+            adherence_cases,
+            extra_properties=None,
     ):
-        episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
+        episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id, extra_properties)
         adherence_cases = self._create_adherence_cases(adherence_cases)
         self._rebuild_indicators()
         return episode
@@ -209,6 +244,7 @@ class TestAdherenceUpdater(TestCase):
     def _rebuild_indicators(self):
         # rebuild so that adherence UCR data gets updated
         rebuild_indicators(self.data_store.datasource._id)
+        queue_async_indicators()
         self.data_store.adapter.refresh_table()
 
     def test_invalid_cases(self):
@@ -241,28 +277,6 @@ class TestAdherenceUpdater(TestCase):
         episode_ids = [episode.case_id
                        for episode in self.case_updater._get_open_episode_cases(case_ids)]
         self.assertEqual(episode_ids, [self.episode_id])
-
-    def test_total_expected_doses_taken(self):
-
-        # adherence_schedule_start after purge
-        self.assert_update(
-            datetime.date(2016, 1, 15), datetime.date(2016, 1, 17), 'schedule1',
-            adherence_cases=[],
-            output={
-                'total_expected_doses_taken': 31,
-            },
-            date_today_in_india=datetime.date(2016, 2, 17),
-        )
-
-        # adherence_schedule_start before purge
-        self.assert_update(
-            datetime.date(2015, 1, 15), datetime.date(2016, 2, 15), 'schedule1',
-            adherence_cases=[],
-            output={
-                'total_expected_doses_taken': 2,
-            },
-            date_today_in_india=datetime.date(2016, 2, 17),
-        )
 
     def test_adherence_schedule_date_start_late(self):
         self.assert_update(
@@ -298,15 +312,22 @@ class TestAdherenceUpdater(TestCase):
         )
 
     def test_adherence_date_less_than_purge_date(self):
+        purge_date = datetime.date(2016, 1, 20)
+        adherence_schedule_start_date = datetime.date(2016, 1, 10)
+        latest_adherence_date = datetime.date(2016, 1, 15)
+        expected_doses_taken = 6
+
         self.assert_update(
-            datetime.date(2016, 1, 20), datetime.date(2016, 1, 10), 'schedule1',
+            purge_date,
+            adherence_schedule_start_date,
+            'schedule1',
             # if adherence_date less than purge_date
-            [(datetime.date(2016, 1, 15), DTIndicators[0])],
+            [(latest_adherence_date, DTIndicators[0])],
             output={
                 # set to latest adherence_date
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 15),
                 # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
-                'expected_doses_taken': int((5.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': expected_doses_taken,
                 'aggregated_score_count_taken': 1,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 15),
                 'adherence_total_doses_taken': 1
@@ -314,21 +335,23 @@ class TestAdherenceUpdater(TestCase):
         )
 
     def test_adherence_date_greater_than_purge_date(self):
+        purge_date = datetime.date(2016, 1, 31)
+        adherence_schedule_start_date = datetime.date(2016, 1, 1)
+        expected_doses_taken = 31
+
         self.assert_update(
-            datetime.date(2016, 1, 20),
-            datetime.date(2016, 1, 10), 'schedule1',
-            # if adherence_date is less than adherence_schedule_date_start
-            [(datetime.date(2016, 1, 22), DTIndicators[0])],
+            purge_date,
+            adherence_schedule_start_date,
+            'schedule1',
+            # if adherence_date is later than adherence_schedule_date_start
+            [(datetime.date(2016, 2, 22), DTIndicators[0])],
             output={
-                # should be purge_date
-                'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
-                # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
-                'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
-                # no doses taken before aggregated_score_date_calculated
+                'aggregated_score_date_calculated': purge_date,
+                'expected_doses_taken': expected_doses_taken,
+                # no doses taken before purge_date
                 'aggregated_score_count_taken': 0,
                 # latest adherence taken date
-                'adherence_latest_date_recorded': datetime.date(2016, 1, 22),
-                # no doses taken before aggregated_score_date_calculated
+                'adherence_latest_date_recorded': datetime.date(2016, 2, 22),
                 'adherence_total_doses_taken': 1
             }
         )
@@ -347,7 +370,7 @@ class TestAdherenceUpdater(TestCase):
             output={   # should be purge_date
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
                 # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
-                'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((11.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 # no dose taken before aggregated_score_date_calculated
                 'aggregated_score_count_taken': 0,
                 # latest recorded
@@ -355,6 +378,144 @@ class TestAdherenceUpdater(TestCase):
                 # total 3 taken, unknown is not counted
                 'adherence_total_doses_taken': 3
             }
+        )
+
+    def _generate_doses_taken(self, start_date, num_days, dose_status=None):
+        return [
+            (start_date + datetime.timedelta(days=i), dose_status or DTIndicators[0])
+            for i in range(num_days)
+        ]
+
+    def test_ip_date_followup_blank_schedule1(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 5),
+            output={
+                'adherence_total_doses_taken': 5,
+                'adherence_ip_date_followup_test_expected': '',
+                'adherence_ip_date_threshold_crossed': '',
+            },
+        )
+
+    def test_ip_date_followup_set_schedule1(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 100),
+            output={
+                'adherence_total_doses_taken': 100,
+                'adherence_ip_date_followup_test_expected': '2016-04-12',
+                'adherence_ip_date_threshold_crossed': '2016-04-05',
+            },
+        )
+
+    def test_cp_date_followup_blank_schedule1(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 5),
+            output={
+                'adherence_total_doses_taken': 5,
+                'adherence_cp_date_followup_test_expected': '',
+                'adherence_cp_date_threshold_crossed': '',
+            },
+        )
+
+    def test_cp_date_followup_set_schedule1(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 200),
+            output={
+                'adherence_total_doses_taken': 200,
+                'adherence_cp_date_followup_test_expected': '2016-06-07',
+                'adherence_cp_date_threshold_crossed': '2016-05-31',
+            },
+        )
+
+    def test_outcome_due_blank_schedule1(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 5),
+            output={
+                'adherence_total_doses_taken': 5,
+                'adherence_date_outcome_due': '',
+            },
+        )
+
+    def test_outcome_due_set_schedule1(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 200),
+            output={
+                'adherence_total_doses_taken': 200,
+                'adherence_date_outcome_due': '2016-07-05',
+            },
+        )
+
+    def test_ip_date_followup_blank_schedule1_new_patient(self):
+        update_case(self.domain, self.episode_id, {'patient_type_choice': 'new'})
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 5),
+            output={
+                'adherence_total_doses_taken': 5,
+                'adherence_ip_date_followup_test_expected': '',
+                'adherence_ip_date_threshold_crossed': '',
+            },
+        )
+
+    def test_ip_date_followup_set_schedule1_new_patient(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 200),
+            episode_properties={'patient_type_choice': 'new'},
+            output={
+                'adherence_total_doses_taken': 200,
+                'adherence_ip_date_followup_test_expected': '2016-03-15',
+                'adherence_ip_date_threshold_crossed': '2016-03-08',
+            },
+        )
+
+    def test_ip_date_followup_blank_schedule2(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule2',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 5),
+            output={
+                'adherence_total_doses_taken': 5,
+                'adherence_ip_date_followup_test_expected': '',
+                'adherence_ip_date_threshold_crossed': '',
+            },
+        )
+
+    def test_ip_date_followup_set_schedule2(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule2',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 200),
+            output={
+                'adherence_total_doses_taken': 200,
+                'adherence_ip_date_followup_test_expected': '2016-02-17',
+                'adherence_ip_date_threshold_crossed': '2016-02-10',
+            },
+        )
+
+    def test_ip_date_followup_blank_doses_missed(self):
+        self.assert_update(
+            datetime.date(2016, 1, 20),
+            datetime.date(2016, 1, 20), 'schedule1',
+            self._generate_doses_taken(datetime.date(2016, 1, 20), 200, dose_status=DOSE_MISSED),
+            output={
+                'adherence_total_doses_taken': 0,
+                'adherence_ip_date_followup_test_expected': '',
+                'adherence_ip_date_threshold_crossed': '',
+            },
         )
 
     def test_multiple_adherence_cases_all_less(self):
@@ -370,7 +531,7 @@ class TestAdherenceUpdater(TestCase):
             ],
             output={   # set to latest adherence_date, exclude 14th because its unknown
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 12),
-                'expected_doses_taken': int((2.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((3.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 'aggregated_score_count_taken': 2,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 12),
                 'adherence_total_doses_taken': 2
@@ -389,7 +550,7 @@ class TestAdherenceUpdater(TestCase):
             ],
             output={
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 12),
-                'expected_doses_taken': int((2.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((3.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 'aggregated_score_count_taken': 2,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 12),
                 'adherence_total_doses_taken': 2
@@ -408,7 +569,7 @@ class TestAdherenceUpdater(TestCase):
             ],
             output={
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
-                'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((11.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 'aggregated_score_count_taken': 2,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 21),
                 'adherence_total_doses_taken': 2
@@ -426,7 +587,7 @@ class TestAdherenceUpdater(TestCase):
             ],
             output={
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 11),
-                'expected_doses_taken': int((1.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((2.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 'aggregated_score_count_taken': 1,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 11),
                 'adherence_total_doses_taken': 1
@@ -443,7 +604,7 @@ class TestAdherenceUpdater(TestCase):
             ],
             output={
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 11),
-                'expected_doses_taken': int((1.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((2.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 'aggregated_score_count_taken': 1,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 11),
                 'adherence_total_doses_taken': 1
@@ -475,7 +636,7 @@ class TestAdherenceUpdater(TestCase):
             ],
             output={
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 11),
-                'expected_doses_taken': int((1.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((2.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 'aggregated_score_count_taken': 0,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 11),
                 'adherence_total_doses_taken': 0
@@ -507,7 +668,7 @@ class TestAdherenceUpdater(TestCase):
             ],
             output={
                 'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
-                'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
+                'expected_doses_taken': int((11.0 / 7) * int(self.fixture_data[0]['doses_per_week'])),
                 'aggregated_score_count_taken': 0,
                 'adherence_latest_date_recorded': datetime.date(2016, 1, 22),
                 'adherence_total_doses_taken': 0
@@ -754,12 +915,12 @@ class TestAdherenceUpdater(TestCase):
             'schedule1',
             []
         )
-        update_episode_adherence_properties(self.domain, self.person_id)
+        update_single_episode(self.domain, episode)
 
         episode = CaseAccessors(self.domain).get_case(episode.case_id)
         self.assertDictEqual(
             {key: episode.dynamic_case_properties()[key] for key in expected_update},
-            {key: str(val) for key, val in expected_update.iteritems()}  # convert values to strings
+            {key: str(val) for key, val in six.iteritems(expected_update)}  # convert values to strings
         )
 
     def test_adherence_score_start_date_month(self):

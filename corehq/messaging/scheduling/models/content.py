@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import jsonfield
 from corehq.apps.sms.api import send_sms_with_backend_name, send_sms
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -73,10 +75,10 @@ class SMSContent(Content):
         if not phone_number:
             return
 
-        language_code = recipient.get_language_code()
-        message = (
-            self.message.get(language_code) or
-            self.message.get(schedule_instance.memoized_schedule.default_language_code)
+        message = self.get_translation_from_message_dict(
+            self.message,
+            schedule_instance.memoized_schedule,
+            recipient.get_language_code()
         )
         message = self.render_message(message, schedule_instance)
 
@@ -88,11 +90,11 @@ class EmailContent(Content):
     message = jsonfield.JSONField(default=dict)
 
     def send(self, recipient, schedule_instance):
-        print '*******************************'
-        print 'To:', recipient
-        print 'Subject: ', self.subject
-        print 'Message: ', self.message
-        print '*******************************'
+        print('*******************************')
+        print('To:', recipient)
+        print('Subject: ', self.subject)
+        print('Message: ', self.message)
+        print('*******************************')
 
 
 class SMSSurveyContent(Content):
@@ -102,20 +104,20 @@ class SMSSurveyContent(Content):
     expire_after = models.IntegerField()
 
     def send(self, recipient, schedule_instance):
-        print '*******************************'
-        print 'To:', recipient
-        print 'SMS Survey: ', self.form_unique_id
-        print '*******************************'
+        print('*******************************')
+        print('To:', recipient)
+        print('SMS Survey: ', self.form_unique_id)
+        print('*******************************')
 
 
 class IVRSurveyContent(Content):
     form_unique_id = models.CharField(max_length=126)
 
     def send(self, recipient, schedule_instance):
-        print '*******************************'
-        print 'To:', recipient
-        print 'IVR Survey: ', self.form_unique_id
-        print '*******************************'
+        print('*******************************')
+        print('To:', recipient)
+        print('IVR Survey: ', self.form_unique_id)
+        print('*******************************')
 
 
 class CustomContent(Content):

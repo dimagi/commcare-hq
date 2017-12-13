@@ -1,13 +1,20 @@
+from __future__ import absolute_import
 import copy
 from datetime import datetime, timedelta
 import json
 
+from django.urls import reverse
+
+from auditcare.models import NavigationEventAudit
+from auditcare.utils.export import navigation_event_ids_by_user
 from corehq.apps.builds.utils import get_all_versions
 from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import NestedTermAggregationsHelper, AggregationTerm, SumAggregation
 from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
+from corehq.apps.reports.standard import DatespanMixin
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
@@ -27,6 +34,8 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from phonelog.reports import BaseDeviceLogReport
 from phonelog.models import DeviceReportEntry
 from corehq.apps.es.domains import DomainES
+import six
+from six.moves import range
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -802,7 +811,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return _('No info')
 
         for dom in domains:
-            if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:  # for some reason when using the statistical facet, ES adds an empty dict to hits
                 first_form_default_message = _("No Forms")
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")
@@ -997,9 +1006,12 @@ class AdminUserReport(AdminFacetedReport):
                 return ", ".join([dm['domain'] for dm in user.get('domain_memberships', [])])
             return user.get('domain_membership', {}).get('domain', _('No Domain Data'))
 
+        user_lookup_url = reverse('web_user_lookup')
         for u in users:
             yield [
-                u.get('username'),
+                '<a href="%(url)s?q=%(username)s">%(username)s</a>' % {
+                    'url': user_lookup_url, 'username': u.get('username')
+                },
                 get_domains(u),
                 format_date(u.get('date_joined'), _('No date')),
                 format_date(u.get('last_login'), _('No date')),
@@ -1038,12 +1050,12 @@ class AdminAppReport(AdminFacetedReport):
 
     @property
     def properties(self):
-        return filter(lambda p: p and p not in self.excluded_properties, Application.properties().keys())
+        return [p for p in Application.properties().keys() if p and p not in self.excluded_properties]
 
     @property
     def es_facet_list(self):
         props = self.properties + self.profile_list + ["cp_is_active"]
-        return filter(lambda p: p not in self.excluded_properties, props)
+        return [p for p in props if p not in self.excluded_properties]
 
     @property
     def es_facet_mapping(self):
@@ -1317,7 +1329,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     @memoized
     def phone_number_filter(self):
         value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return apply_leniency(value.strip())
 
         return None
@@ -1341,3 +1353,52 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     @property
     def total_records(self):
         return self._get_queryset().count()
+
+
+class UserAuditReport(AdminReport, DatespanMixin):
+    base_template = 'reports/base_template.html'
+
+    slug = 'user_audit_report'
+    name = ugettext_lazy("User Audit Events")
+
+    fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
+        'corehq.apps.reports.filters.simple.SimpleUsername',
+        'corehq.apps.reports.filters.simple.SimpleDomain',
+    ]
+    emailable = False
+    exportable = True
+    default_rows = 10
+
+    @property
+    def selected_domain(self):
+        selected_domain = self.request.GET.get('domain_name', None)
+        return selected_domain if selected_domain != u'' else None
+
+    @property
+    def selected_user(self):
+        return self.request.GET.get('username', None)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(ugettext_lazy("Date")),
+            DataTablesColumn(ugettext_lazy("Username")),
+            DataTablesColumn(ugettext_lazy("Domain")),
+            DataTablesColumn(ugettext_lazy("IP Address")),
+            DataTablesColumn(ugettext_lazy("Request Path")),
+        )
+
+    @property
+    def rows(self):
+        rows = []
+        event_ids = navigation_event_ids_by_user(
+            self.selected_user, self.datespan.startdate, self.datespan.enddate
+        )
+        for event_doc in iter_docs(NavigationEventAudit.get_db(), event_ids):
+            event = NavigationEventAudit.wrap(event_doc)
+            if not self.selected_domain or self.selected_domain == event.domain:
+                rows.append([
+                    event.event_date, event.user, event.domain or '', event.ip_address, event.request_path
+                ])
+        return rows

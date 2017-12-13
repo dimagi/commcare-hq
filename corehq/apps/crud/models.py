@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.safestring import mark_safe
 from dimagi.utils.data.crud import TabularCRUDManager, BaseCRUDForm
 from dimagi.utils.decorators.memoized import memoized

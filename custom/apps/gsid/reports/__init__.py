@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
@@ -11,7 +12,7 @@ from custom.apps.gsid.reports.sql_reports import (
     GSIDSQLTestLotsReport,
     PatientMapReport,
 )
-from util import get_unique_combinations
+from .util import get_unique_combinations
 
 
 class AsyncClinicField(MultiLocationFilter):

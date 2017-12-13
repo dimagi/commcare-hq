@@ -207,7 +207,7 @@
             var reqStr = location_url + "?name=" + query;
             $http.get(reqStr).then(
                 function (response) {
-                    $scope.availableLocations = response.data;
+                    $scope.availableLocations = response.data.results;
                 }
             );
         };
@@ -225,7 +225,7 @@
                 last_name: 'User',
                 is_anonymous: true,
             });
-            ga_track_event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
         };
 
         $scope.initializeMobileWorker = function (mobileWorker) {
@@ -246,7 +246,7 @@
                     generateStrongPasswords: generateStrongPasswords,
                 });
             }
-            ga_track_event('Manage Mobile Workers', 'New Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         $scope.submitNewMobileWorker = function () {
@@ -344,7 +344,7 @@
                     }
                     return deferred.promise;
                 };
-            }
+            },
         };
     };
 
@@ -420,4 +420,77 @@
     mobileWorkers.directive(mobileWorkerDirectives);
     mobileWorkers.factory(mobileWorkerFactories);
     mobileWorkers.controller(mobileWorkerControllers);
+
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
+    var mobileWorkerApp = angular.module('mobileWorkerApp', ['hq.pagination', 'hq.mobile_workers', 'ngSanitize', 'ui.select']);
+    mobileWorkerApp.config(['$httpProvider', function($httpProvider) {
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
+    }]);
+    mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
+        djangoRMIProvider.configure(initial_page_data('djng_current_rmi'));
+    }]);
+    mobileWorkerApp.constant('customFields', initial_page_data('custom_fields'));
+    mobileWorkerApp.constant('paginationLimitCookieName', initial_page_data('pagination_limit_cookie_name'));
+    mobileWorkerApp.constant('paginationCustomData', {
+        customFormFieldNames: initial_page_data('custom_field_names'),
+        showDeactivatedUsers: false,
+        activateUser: function (user, djangoRMI) {
+            $('#activate_' + user.user_id).modal('hide');
+            djangoRMI.modify_user_status({
+                user_id: user.user_id,
+                is_active: true,
+            })
+                .success(function (data) {
+                    if (data.success) {
+                        user.mark_activated = true;
+                        user.action_error = '';
+                    } else {
+                        user.action_error = data.error;
+                    }
+                })
+                .error(function () {
+                    user.action_error = gettext("Issue communicating with server. Try again.");
+                });
+        },
+        deactivateUser: function (user, djangoRMI) {
+            $('#deactivate_' + user.user_id).modal('hide');
+            djangoRMI.modify_user_status({
+                user_id: user.user_id,
+                is_active: false,
+            })
+                .success(function (data) {
+                    if (data.success) {
+                        user.mark_deactivated = true;
+                        user.action_error = '';
+                    } else {
+                        user.action_error = data.error;
+                    }
+                })
+                .error(function () {
+                    user.action_error = gettext("Issue communicating with server. Try again.");
+                });
+        }
+    });
+    mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
+    mobileWorkerApp.constant('location_url', initial_page_data('location_url'));
+    mobileWorkerApp.directive('workertableHeader', function () {
+        return {
+            restrict: 'A',
+            template: '<tr>'
+                        + '<th class="col-xs-3">' + gettext("Username") + '</th>'
+                        + '<th class="col-xs-3">' + gettext("First Name") + '</th>'
+                        + '<th class="col-xs-3">' + gettext("Last Name") + '</th>'
+                        + '<th class="col-xs-3">' + gettext("Status") + '</th>'
+                    + '</tr>',
+        };
+    });
+    mobileWorkerApp.constant('paginationLimits', [
+        [10, gettext('Show 10 Mobile Workers')],
+        [25, gettext('Show 25 Mobile Workers')],
+        [50, gettext('Show 50 Mobile Workers')],
+        [100, gettext('Show 100 Mobile Workers')],
+    ]);
 }(window.angular));

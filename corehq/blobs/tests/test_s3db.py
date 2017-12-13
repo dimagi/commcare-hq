@@ -70,6 +70,7 @@ Add the following to localsettings.py
 
 """
 from __future__ import unicode_literals
+from __future__ import absolute_import
 from os.path import join
 from unittest import TestCase
 from StringIO import StringIO

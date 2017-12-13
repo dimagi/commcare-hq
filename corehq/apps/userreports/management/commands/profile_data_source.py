@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import cProfile
 import pstats
 
@@ -15,21 +16,22 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('data_source_id')
         parser.add_argument('doc_id')
+        parser.add_argument('--sort', dest='sort', action='store', default='time')
 
     def handle(self, domain, data_source_id, doc_id, **options):
         config, _ = get_datasource_config(data_source_id, domain)
         doc_type = config.referenced_doc_type
         doc_store = get_document_store(domain, doc_type)
         doc = doc_store.get_document(doc_id)
-
+        sort_by = options['sort']
         local_variables = {'config': config, 'doc': doc}
 
         cProfile.runctx('config.get_all_values(doc)', {}, local_variables, 'ucr_stats.log')
         p = pstats.Stats('ucr_stats.log')
-        p.sort_stats('time')
+        p.sort_stats(sort_by)
 
-        print("Top 10 functions by time\n")
-        p.print_stats(10)
+        print("Top 50 functions by {}\n".format(sort_by))
+        p.print_stats(50)
 
         print("Specs timing\n")
         p.print_stats('userreports.*specs.*\(__call__\)')

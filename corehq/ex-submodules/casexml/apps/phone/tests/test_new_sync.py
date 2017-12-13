@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 import uuid
 from django.test import TestCase, SimpleTestCase
@@ -17,13 +18,14 @@ from casexml.apps.phone.models import (
 from casexml.apps.phone.restore import RestoreConfig
 from casexml.apps.phone.tests.utils import (
     create_restore_user,
-    MockDevice,
     deprecated_synclog_from_restore_payload,
 )
+from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request.api import set_request
+from six.moves import range
 
 
 class TestSyncLogMigration(SimpleTestCase):

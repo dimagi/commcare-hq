@@ -18,6 +18,7 @@ The export works as follows:
   * Add successful pages to final ZIP archive
   * Add raw data dumps for unsuccessful pages to final ZIP archive
 """
+from __future__ import absolute_import
 import gzip
 import json
 import logging
@@ -26,7 +27,7 @@ import os
 import tempfile
 import time
 import zipfile
-from Queue import Empty
+from six.moves.queue import Empty
 from collections import namedtuple
 from datetime import timedelta
 

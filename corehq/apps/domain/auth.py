@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import base64
 import re
 from rest_framework.authentication import TokenAuthentication
@@ -7,7 +8,7 @@ from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
-
+from python_digest import parse_digest_credentials
 
 J2ME = 'j2me'
 ANDROID = 'android'
@@ -18,7 +19,7 @@ API_KEY = 'api_key'
 TOKEN = 'token'
 
 
-def determine_authtype_from_header(request, default=None):
+def determine_authtype_from_header(request, default=DIGEST):
     """
     Guess the auth type, based on the headers found in the request.
     """
@@ -32,10 +33,12 @@ def determine_authtype_from_header(request, default=None):
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
 
+    # If there is no HTTP_AUTHORIZATION header, we return a 401 along with the necessary
+    # headers for digest auth
     return default
 
 
-def determine_authtype_from_request(request, default='basic'):
+def determine_authtype_from_request(request, default=DIGEST):
     """
     Guess the auth type, based on the (phone's) user agent or the
     headers found in the request.
@@ -49,7 +52,7 @@ def determine_authtype_from_request(request, default='basic'):
     if user_type is not None:
         return type_to_auth_map.get(user_type, default)
     else:
-        return determine_authtype_from_header(request, default=default)
+        return determine_authtype_from_header(request, default)
 
 
 def guess_phone_type_from_user_agent(user_agent):
@@ -66,17 +69,33 @@ def guess_phone_type_from_user_agent(user_agent):
 
 
 def get_username_and_password_from_request(request):
+    """Returns tuple of (username, password). Tuple values
+    may be null."""
     from corehq.apps.hqwebapp.utils import decode_password
 
-    username, password = None, None
-    if 'HTTP_AUTHORIZATION' in request.META:
-        auth = request.META['HTTP_AUTHORIZATION'].split()
-        if len(auth) == 2:
-            if auth[0].lower() == BASIC:
-                username, password = base64.b64decode(auth[1]).split(':', 1)
-                # decode password submitted from mobile app login
-                password = decode_password(password)
+    if 'HTTP_AUTHORIZATION' not in request.META:
+        return None, None
 
+    def _decode(string):
+        try:
+            return string.decode('utf-8')
+        except UnicodeDecodeError:
+            # https://sentry.io/dimagi/commcarehq/issues/391378081/
+            return string.decode('latin1')
+
+    auth = request.META['HTTP_AUTHORIZATION'].split()
+    username = password = None
+    if auth[0].lower() == DIGEST:
+        try:
+            digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
+            username = digest.username
+        except UnicodeDecodeError:
+            pass
+    elif auth[0].lower() == BASIC:
+        username, password = base64.b64decode(auth[1]).split(':', 1)
+        # decode password submitted from mobile app login
+        password = decode_password(password)
+        username, password = _decode(username), _decode(password)
     return username, password
 
 
@@ -109,7 +128,7 @@ def tokenauth(view):
             return HttpResponse(status=401)
         try:
             user, token = TokenAuthentication().authenticate(request)
-        except AuthenticationFailed, e:
+        except AuthenticationFailed as e:
             return HttpResponse(e, status=401)
 
         if user.is_active:

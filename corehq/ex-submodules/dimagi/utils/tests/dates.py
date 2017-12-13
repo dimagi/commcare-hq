@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta, date
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 import pytz
 from dimagi.utils.dates import DateSpan, add_months_to_date
 from django.test import SimpleTestCase

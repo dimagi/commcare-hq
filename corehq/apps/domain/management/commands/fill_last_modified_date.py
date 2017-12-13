@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.models import Domain
@@ -16,7 +17,7 @@ class Command(BaseCommand):
                 include_docs=False
             )
         ])
-        return filter(lambda x: 'last_modified' not in x or not x['last_modified'], docs)
+        return [x for x in docs if 'last_modified' not in x or not x['last_modified']]
 
     def handle(self, **options):
         for domain_doc in self._get_domains_without_last_modified_date():

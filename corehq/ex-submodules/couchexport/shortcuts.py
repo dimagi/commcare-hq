@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from wsgiref.util import FileWrapper
 from zipfile import ZipFile

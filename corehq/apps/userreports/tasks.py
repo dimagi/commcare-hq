@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
@@ -10,12 +11,18 @@ from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
-from django.db.models import Count, F, Min
+from django.db import transaction
+from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
 
+from couchexport.export import export_from_tables
+from couchexport.models import Format
+from soil.util import get_download_file_path, expose_download
+
 from corehq import toggles
+from corehq.apps.reports.util import send_report_download_email
 from corehq.apps.userreports.const import (
     UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
@@ -39,9 +46,11 @@ from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
 from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
+from corehq.util.view_utils import reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+import six
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -53,18 +62,17 @@ def _get_config_by_id(indicator_config_id):
         return DataSourceConfiguration.get(indicator_config_id)
 
 
-def _build_indicators(config, document_store, relevant_ids, resume_helper):
+def _build_indicators(config, document_store, relevant_ids):
     adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
 
-    last_id = None
     for doc in document_store.iter_documents(relevant_ids):
-        # save is a noop if the filter doesn't match
-        adapter.best_effort_save(doc)
-        last_id = doc.get('_id')
-        resume_helper.remove_id(last_id)
-
-    if last_id:
-        resume_helper.add_id(last_id)
+        if config.asynchronous:
+            AsyncIndicator.update_record(
+                doc.get('_id'), config.referenced_doc_type, config.domain, [config._id]
+            )
+        else:
+            # save is a noop if the filter doesn't match
+            adapter.best_effort_save(doc)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
@@ -88,7 +96,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, doc_id_provider=None):
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
@@ -101,7 +109,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, doc_id_p
             config.save()
 
         adapter.build_table()
-        _iteratively_build_table(config, in_place=True, doc_id_provider=doc_id_provider)
+        _iteratively_build_table(config, in_place=True)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -113,51 +121,42 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         resume_helper = DataSourceResumeHelper(config)
 
-        relevant_ids = resume_helper.get_ids_to_resume_from()
-        if len(relevant_ids) > 0:
-            _build_indicators(config, get_document_store(config.domain, config.referenced_doc_type), relevant_ids,
-                              resume_helper)
-            last_id = relevant_ids[-1]
-            _iteratively_build_table(config, last_id, resume_helper)
+        _iteratively_build_table(config, resume_helper)
 
 
-@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def recalculate_indicators(indicator_config_id, initiated_by=None):
-    config = _get_config_by_id(indicator_config_id)
-    adapter = get_indicator_adapter(config)
-    doc_id_provider = adapter.get_distinct_values('doc_id', 10000)[0]
-    rebuild_indicators_in_place(indicator_config_id, initiated_by, doc_id_provider)
-
-
-def _iteratively_build_table(config, last_id=None, resume_helper=None,
-                             in_place=False, doc_id_provider=None, limit=-1):
+def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
-    case_type_or_xmlns = config.get_case_type_or_xmlns_filter()
+    case_type_or_xmlns_list = config.get_case_type_or_xmlns_filter()
+    completed_ct_xmlns = resume_helper.get_completed_case_type_or_xmlns()
+    if completed_ct_xmlns:
+        case_type_or_xmlns_list = [
+            case_type_or_xmlns
+            for case_type_or_xmlns in case_type_or_xmlns_list
+            if case_type_or_xmlns not in completed_ct_xmlns
+        ]
 
-    relevant_ids = []
-    document_store = get_document_store(
-        config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
-    )
+    for case_type_or_xmlns in case_type_or_xmlns_list:
+        relevant_ids = []
+        document_store = get_document_store(
+            config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
+        )
 
-    if not doc_id_provider:
-        doc_id_provider = document_store.iter_document_ids(last_id)
+        for i, relevant_id in enumerate(document_store.iter_document_ids()):
+            if i >= limit > -1:
+                break
+            relevant_ids.append(relevant_id)
+            if len(relevant_ids) >= ID_CHUNK_SIZE:
+                _build_indicators(config, document_store, relevant_ids)
+                relevant_ids = []
 
-    for i, relevant_id in enumerate(doc_id_provider):
-        if last_id is None and i >= limit > -1:
-            break
-        relevant_ids.append(relevant_id)
-        if len(relevant_ids) >= ID_CHUNK_SIZE:
-            resume_helper.set_ids_to_resume_from(relevant_ids)
-            _build_indicators(config, document_store, relevant_ids, resume_helper)
-            relevant_ids = []
+        if relevant_ids:
+            _build_indicators(config, document_store, relevant_ids)
 
-    if relevant_ids:
-        resume_helper.set_ids_to_resume_from(relevant_ids)
-        _build_indicators(config, document_store, relevant_ids, resume_helper)
+        resume_helper.add_completed_case_type_or_xmlns(case_type_or_xmlns)
 
     if not id_is_static(indicator_config_id):
-        resume_helper.clear_ids()
+        resume_helper.clear_resume_info()
         if in_place:
             config.meta.build.finished_in_place = True
         else:
@@ -308,16 +307,17 @@ def save_document(doc_ids):
         with timer:
             for doc in doc_store.iter_documents(doc_ids):
                 indicator = indicator_by_doc_id[doc['_id']]
-                successfully_processed = _save_document_helper(indicator, doc)
+                successfully_processed, to_remove = _save_document_helper(indicator, doc)
                 if successfully_processed:
                     processed_indicators.append(indicator.pk)
                 else:
-                    failed_indicators.append(indicator.pk)
+                    failed_indicators.append((indicator, to_remove))
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
-        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
-            date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
-        )
+        with transaction.atomic():
+            for indicator, to_remove in failed_indicators:
+                indicator.update_failure(to_remove)
+                indicator.save()
 
     datadog_histogram(
         'commcare.async_indicator.processing_time', timer.duration,
@@ -330,35 +330,46 @@ def save_document(doc_ids):
 def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
     something_failed = False
+    configs_to_remove = []
     for config_id in indicator.indicator_config_ids:
         adapter = None
         try:
             config = _get_config(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+            configs_to_remove.append(config_id)
             continue
         except ESError:
             celery_task_logger.info("ES errored when trying to retrieve config")
             something_failed = True
-            return
+            continue
         try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
-        except (DatabaseError, ESError, InternalError, RequestError,
-                ConnectionTimeout, ProtocolError, ReadTimeout):
-            # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("DB error when saving config: {}".format(config_id))
+        except (ProtocolError, ReadTimeout):
+            celery_task_logger.info("Riak error when saving config: {}".format(config_id))
             something_failed = True
-            return
+        except RequestError:
+            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
+            something_failed = True
+        except (ESError, ConnectionTimeout):
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("ES error when saving config: {}".format(config_id))
+            something_failed = True
+        except (DatabaseError, InternalError):
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("psql error when saving config: {}".format(config_id))
+            something_failed = True
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
             something_failed = True
-            return
+        else:
+            configs_to_remove.append(config_id)
 
-    return not something_failed
+    return (not something_failed, configs_to_remove)
 
 
 @periodic_task(
@@ -366,17 +377,26 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
+    now = datetime.utcnow()
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
-        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
+        lag = (now - oldest_indicator.date_queued).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
-    indicator = AsyncIndicator.objects.first()
-    if indicator:
-        lag = (datetime.utcnow() - indicator.date_created).total_seconds()
+    oldest_100_indicators = AsyncIndicator.objects.all()[:100]
+    oldest_indicator = oldest_100_indicators[0]
+    if oldest_indicator:
+        lag = (now - oldest_indicator.date_created).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 
-    for config_id, metrics in _indicator_metrics().iteritems():
+        lags = [
+            (now - indicator.date_created).total_seconds()
+            for indicator in oldest_100_indicators
+        ]
+        avg_lag = sum(lags) / len(lags)
+        datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
+
+    for config_id, metrics in six.iteritems(_indicator_metrics()):
         tags = ["config_id:{}".format(config_id)]
         datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
         datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
@@ -419,3 +439,15 @@ def _indicator_metrics(date_created=None):
                 }
 
     return ret
+
+
+@task
+def export_ucr_async(export_table, download_id, title, user):
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    filename = u'{}.xlsx'.format(title.replace(u'/', u'?'))
+    file_path = get_download_file_path(use_transfer, filename)
+    export_from_tables(export_table, file_path, Format.XLS_2007)
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
+
+    send_report_download_email(title, user, link)

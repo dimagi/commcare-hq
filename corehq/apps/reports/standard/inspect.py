@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
@@ -7,7 +8,7 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
@@ -49,7 +50,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
     name = ugettext_noop('Submit History')
     slug = 'submit_history'
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
         'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
         'corehq.apps.reports.filters.dates.DatespanFilter',
@@ -62,7 +63,10 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         return datespan_from_beginning(self.domain_object, self.timezone)
 
     def _get_users_filter(self, mobile_user_and_group_slugs):
-        user_ids = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).values_list('_id', flat=True)
+        user_ids = (EMWF.user_es_query(self.domain,
+                                       mobile_user_and_group_slugs,
+                                       self.request.couch_user)
+                    .values_list('_id', flat=True))
         return form_es.user_id(user_ids)
 
     @staticmethod
@@ -75,14 +79,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
             )
         return form_es.xmlns(form['xmlns'])
 
-    def scope_filter(self):
-        # Filter to be applied in AND with filters for export for restricted user
-        # Restricts to forms submitted by users at accessible locations
-        accessible_user_ids = (user_ids_at_accessible_locations(
-            self.request.domain, self.request.couch_user
-        ))
-        return form_es.user_id(accessible_user_ids)
-
     @property
     def es_query(self):
         time_filter = form_es.submitted if self.by_submission_time else form_es.completed
@@ -93,9 +89,6 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                  .filter(time_filter(gte=self.datespan.startdate,
                                      lt=self.datespan.enddate_adjusted))
                  .filter(self._get_users_filter(mobile_user_and_group_slugs)))
-
-        if not self.request.can_access_all_locations:
-            query = query.filter(self.scope_filter())
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):

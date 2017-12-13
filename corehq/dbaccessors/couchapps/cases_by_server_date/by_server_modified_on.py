@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.models import CommCareCase
 from corehq.util.dates import iso_string_to_datetime
 

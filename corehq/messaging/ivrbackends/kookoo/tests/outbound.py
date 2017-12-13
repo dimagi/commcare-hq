@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
 from corehq.apps.sms.tests.util import TouchformsTestCase
@@ -12,8 +13,8 @@ from mock import patch
 from datetime import datetime, time
 import hashlib
 import os
-import urllib
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 
 
 def mock_kookoo_outbound_api(*args, **kwargs):
@@ -56,14 +57,14 @@ class KooKooTestCase(TouchformsTestCase):
             .set_schedule_manually(EVENT_AS_SCHEDULE, 1, [
                 CaseReminderEvent(
                     day_num=0,
-                    fire_time=time(12,0),
+                    fire_time=time(12, 0),
                     fire_time_type=FIRE_TIME_DEFAULT,
                     callback_timeout_intervals=[30],
                     form_unique_id=self.apps[0].modules[0].forms[0].unique_id,
                 ),
                 CaseReminderEvent(
                     day_num=0,
-                    fire_time=time(13,0),
+                    fire_time=time(13, 0),
                     fire_time_type=FIRE_TIME_DEFAULT,
                     callback_timeout_intervals=[30],
                     form_unique_id=self.apps[0].modules[0].forms[1].unique_id,
@@ -90,18 +91,18 @@ class KooKooTestCase(TouchformsTestCase):
         params should be a dictionary containing:
         event, cid, sid, and (optionally) data
         """
-        params = urllib.urlencode(params)
+        params = six.moves.urllib.parse.urlencode(params)
         url = "%s/kookoo/ivr/" % self.live_server_url
-        return urllib2.urlopen("%s?%s" % (url, params)).read()
+        return six.moves.urllib.request.urlopen("%s?%s" % (url, params)).read()
 
     def kookoo_finished(self, params):
         """
         params should be a dictionary containing:
         sid, status, and duration
         """
-        params = urllib.urlencode(params)
+        params = six.moves.urllib.parse.urlencode(params)
         url = "%s/kookoo/ivr_finished/" % self.live_server_url
-        return urllib2.urlopen(url, params).read()
+        return six.moves.urllib.request.urlopen(url, params).read()
 
     @run_with_all_backends
     def testOutbound(self):

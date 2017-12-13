@@ -1,3 +1,19 @@
+formplayer:
+  extends:
+    file: hq-compose.yml
+    service: formplayer
+  environment:
+    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
+    WEB_HOST: "dockerhost"
+  links:
+    - postgres
+    - couch
+    - redis
+  expose:
+    - 8010
+  ports:
+    - "8010:8010"
+
 postgres:
   extends:
     file: hq-compose.yml
@@ -9,7 +25,7 @@ couch:
   extends:
     file: hq-compose.yml
     service: couch
-  command: ["--with-haproxy", "--admin=commcarehq:commcarehq", "-n", "1"]
+  command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
   ports:
     - "5984:5984"
 
@@ -21,16 +37,15 @@ redis:
     - "6379:6379"
 
 elasticsearch:
-  build: .
-  dockerfile: Dockerfile_es
+  extends:
+    file: hq-compose.yml
+    service: elasticsearch
   command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
   environment:
     ES_CLUSTER_NAME: ES_CLUSTER_NAME
     ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
   ports:
     - "9200:9200"
-  volumes:
-    - ${DATA_VOLUME_PREFIX}elasticsearch:/usr/share/elasticsearch/data
 
 kafka:
   extends:

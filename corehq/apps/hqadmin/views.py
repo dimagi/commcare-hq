@@ -1,9 +1,11 @@
-import HTMLParser
+from __future__ import absolute_import
+import six.moves.html_parser
 import json
 import socket
+import uuid
 from StringIO import StringIO
-from collections import defaultdict, namedtuple, OrderedDict
-from datetime import timedelta, date
+from collections import defaultdict, namedtuple, OrderedDict, Counter
+from datetime import timedelta, date, datetime
 
 import dateutil
 from couchdbkit import ResourceNotFound
@@ -13,6 +15,7 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core import management, cache
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import mail_admins
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -22,8 +25,10 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.http.response import Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
@@ -34,6 +39,7 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
@@ -81,6 +87,7 @@ from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
@@ -89,12 +96,13 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import (
     AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
-    ReprocessMessagingCaseUpdatesForm
-)
+    ReprocessMessagingCaseUpdatesForm,
+    DisableTwoFactorForm, DisableUserForm)
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
+import six
 
 
 @require_superuser
@@ -110,7 +118,7 @@ datespan_default = datespan_in_request(
 
 def get_rabbitmq_management_url():
     if settings.BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.BROKER_URL.replace('amqp://','').split('/')
+        amqp_parts = settings.BROKER_URL.replace('amqp://', '').split('/')
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         return "http://%s" % mq_management_url.split('@')[-1]
     else:
@@ -265,7 +273,7 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     if type == "_active_tasks":
         try:
-            tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+            tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
         except Unauthorized:
             return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
 
@@ -505,10 +513,31 @@ class AdminRestoreView(TemplateView):
             string_payload = ''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
-            num_locations = len(
-                xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
-                                    .format(RESPONSE_XMLNS)))
+            cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
+            num_cases = len(cases)
+            case_type_counts = dict(Counter(
+                case.find(
+                    '{http://commcarehq.org/case/transaction/v2}create/'
+                    '{http://commcarehq.org/case/transaction/v2}case_type'
+                ).text for case in cases
+            ))
+            locations = xml_payload.findall(
+                "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
+            )
+            num_locations = len(locations)
+            location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
+            reports = xml_payload.findall(
+                "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS)
+            )
+            num_reports = len(reports)
+            report_row_counts = {
+                report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
+                for report in reports
+                if 'report_id' in report.attrib
+            }
+            num_ledger_entries = len(xml_payload.findall(
+                "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
+            ))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -523,8 +552,14 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            case_type_counts = {}
             num_locations = 0
+            location_type_counts = {}
+            num_reports = 0
+            report_row_counts = {}
+            num_ledger_entries = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
@@ -532,6 +567,12 @@ class AdminRestoreView(TemplateView):
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
             'num_locations': num_locations,
+            'num_reports': num_reports,
+            'hide_xml': hide_xml,
+            'case_type_counts': case_type_counts,
+            'location_type_counts': location_type_counts,
+            'report_row_counts': report_row_counts,
+            'num_ledger_entries': num_ledger_entries,
         })
         return context
 
@@ -595,7 +636,7 @@ def stats_data(request):
     datefield = request.GET.get("datefield")
     get_request_params_json = request.GET.get("get_request_params", None)
     get_request_params = (
-        json.loads(HTMLParser.HTMLParser().unescape(get_request_params_json))
+        json.loads(six.moves.html_parser.HTMLParser().unescape(get_request_params_json))
         if get_request_params_json is not None else {}
     )
 
@@ -627,7 +668,7 @@ def stats_data(request):
     except HistoTypeNotFoundException:
         return HttpResponseBadRequest(
             'histogram_type param must be one of <ul><li>{}</li></ul>'
-            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC.keys())))
+            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC)))
 
 
 @require_superuser
@@ -723,13 +764,192 @@ def web_user_lookup(request):
         return render(request, template, {})
 
     web_user = WebUser.get_by_username(web_user_email)
+    context = {
+        'audit_report_url': reverse('admin_report_dispatcher', args=('user_audit_report',))
+    }
     if web_user is None:
         messages.error(
-            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+            request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
-    return render(request, template, {
-        'web_user': web_user
-    })
+    else:
+        from django_otp import user_has_device
+        context['web_user'] = web_user
+        django_user = web_user.get_django_user()
+        context['has_two_factor'] = user_has_device(django_user)
+    return render(request, template, context)
+
+
+@method_decorator(require_superuser, name='dispatch')
+class DisableUserView(FormView):
+    template_name = 'hqadmin/disable_user.html'
+    success_url = None
+    form_class = DisableUserForm
+    urlname = 'disable_user'
+
+    def get_initial(self):
+        return {
+            'user': self.user,
+            'reset_password': False,
+        }
+
+    @property
+    def username(self):
+        return self.request.GET.get("username")
+
+    @cached_property
+    def user(self):
+        try:
+            return User.objects.get(username__iexact=self.username)
+        except User.DoesNotExist:
+            return None
+
+    @property
+    def redirect_url(self):
+        return '{}?q={}'.format(reverse('web_user_lookup'), self.username)
+
+    def get(self, request, *args, **kwargs):
+        if not self.user:
+            return self.redirect_response(request)
+
+        return super(DisableUserView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(DisableUserView, self).get_context_data(**kwargs)
+        context['verb'] = 'disable' if self.user.is_active else 'enable'
+        context['username'] = self.username
+        return context
+
+    def redirect_response(self, request):
+        messages.warning(request, _('User with username %(username)s not found.') % {
+            'username': self.username
+        })
+        return redirect(self.redirect_url)
+
+    def form_valid(self, form):
+        if not self.user:
+            return self.redirect_response(self.request)
+
+        reset_password = form.cleaned_data['reset_password']
+        if reset_password:
+            self.user.set_password(uuid.uuid4().hex)
+
+        # toggle active state
+        self.user.is_active = not self.user.is_active
+        self.user.save()
+
+        verb = 're-enabled' if self.user.is_active else 'disabled'
+        mail_admins(
+            "User account {}".format(verb),
+            "The following user account has been {verb}: \n"
+            "    Account: {username}\n"
+            "    Reset by: {reset_by}\n"
+            "    Password reset: {password_reset}\n"
+            "    Reason: {reason}".format(
+                verb=verb,
+                username=self.username,
+                reset_by=self.request.user.username,
+                password_reset=str(reset_password),
+                reason=form.cleaned_data['reason'],
+            )
+        )
+        send_HTML_email(
+            "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
+            self.username,
+            render_to_string('hqadmin/email/account_disabled_email.html', context={
+                'support_email': settings.SUPPORT_EMAIL,
+                'password_reset': reset_password,
+                'user': self.user,
+                'verb': verb,
+                'reason': form.cleaned_data['reason'],
+            }),
+        )
+
+        messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
+        return redirect('{}?q={}'.format(reverse('web_user_lookup'), self.username))
+
+
+@method_decorator(require_superuser, name='dispatch')
+class DisableTwoFactorView(FormView):
+    """
+    View for disabling two-factor for a user's account.
+    """
+    template_name = 'hqadmin/disable_two_factor.html'
+    success_url = None
+    form_class = DisableTwoFactorForm
+    urlname = 'disable_two_factor'
+
+    def get_initial(self):
+        return {
+            'username': self.request.GET.get("q"),
+            'disable_for_days': 0,
+        }
+
+    def get(self, request, *args, **kwargs):
+        from django_otp import user_has_device
+
+        username = request.GET.get("q")
+        redirect_url = '{}?q={}'.format(reverse('web_user_lookup'), username)
+        try:
+            user = User.objects.get(username__iexact=username)
+        except User.DoesNotExist:
+            messages.warning(request, _('User with username %(username)s not found.') % {
+                'username': username
+            })
+            return redirect(redirect_url)
+
+        if not user_has_device(user):
+            messages.warning(request, _(
+                'User with username %(username)s does not have Two-Factor Auth enabled.') % {
+                'username': username
+            })
+            return redirect(redirect_url)
+
+        return super(DisableTwoFactorView, self).get(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        from django_otp import devices_for_user
+
+        username = form.cleaned_data['username']
+        user = User.objects.get(username__iexact=username)
+        for device in devices_for_user(user):
+            device.delete()
+
+        disable_for_days = form.cleaned_data['disable_for_days']
+        if disable_for_days:
+            couch_user = CouchUser.from_django_user(user)
+            disable_until = datetime.utcnow() + timedelta(days=disable_for_days)
+            couch_user.two_factor_auth_disabled_until = disable_until
+            couch_user.save()
+
+        mail_admins(
+            "Two-Factor account reset",
+            "Two-Factor auth was reset. Details: \n"
+            "    Account reset: {username}\n"
+            "    Reset by: {reset_by}\n"
+            "    Request Verificatoin Mode: {verification}\n"
+            "    Verified by: {verified_by}\n"
+            "    Two-Factor disabled for {days} days.".format(
+                username=username,
+                reset_by=self.request.user.username,
+                verification=form.cleaned_data['verification_mode'],
+                verified_by=form.cleaned_data['via_who'] or self.request.user.username,
+                days=disable_for_days
+            ),
+        )
+        send_HTML_email(
+            "%sTwo-Factor authentication reset" % settings.EMAIL_SUBJECT_PREFIX,
+            username,
+            render_to_string('hqadmin/email/two_factor_reset_email.html', context={
+                'until': disable_until.strftime('%Y-%m-%d %H:%M:%S UTC') if disable_for_days else None,
+                'support_email': settings.SUPPORT_EMAIL,
+                'email_subject': "[URGENT] Possible Account Breach",
+                'email_body': "Two Factor Auth on my CommCare account "
+                              "was disabled without my request. My username is: %s" % username,
+            }),
+        )
+
+        messages.success(self.request, _('Two-Factor Auth successfully disabled.'))
+        return redirect('{}?q={}'.format(reverse('web_user_lookup'), username))
 
 
 @require_superuser
@@ -765,7 +985,7 @@ def doc_in_es(request):
 
 @require_superuser
 def raw_couch(request):
-    get_params = dict(request.GET.iteritems())
+    get_params = dict(six.iteritems(request.GET))
     return HttpResponseRedirect(reverse("raw_doc", params=get_params))
 
 
@@ -784,8 +1004,8 @@ def raw_doc(request):
             return HttpResponse(json.dumps({"status": "missing"}),
                                 content_type="application/json", status=404)
 
-    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
+    other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + list(_SQL_DBS)
     context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)
 
@@ -834,7 +1054,7 @@ def callcenter_test(request):
 
     def view_data(case_id, indicators):
         new_dict = OrderedDict()
-        key_list = sorted(indicators.keys())
+        key_list = sorted(indicators)
         for key in key_list:
             new_dict[key] = indicators[key]
         return {

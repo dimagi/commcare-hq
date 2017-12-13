@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse, NoReverseMatch
 from django.views import View
 
@@ -56,10 +57,7 @@ class SubmissionErrorReport(DeploymentsReport):
     @property
     @memoized
     def paged_result(self):
-        doc_types = map(
-            lambda filter_: filter_.doc_type,
-            filter(lambda filter_: filter_.show, self.submitfilter)
-        )
+        doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         return get_paged_forms_by_type(
             self.domain,
             doc_types,

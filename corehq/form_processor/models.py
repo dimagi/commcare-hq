@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 import mimetypes
 import os
@@ -36,6 +37,8 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.decorators.memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound
+import six
+from six.moves import map
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -75,7 +78,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
         else:
             data = self.raw_content
 
-        if isinstance(data, unicode):
+        if isinstance(data, six.text_type):
             data = data.encode("utf-8")
         return data
 
@@ -177,11 +180,16 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # When a form is deprecated, the new form gets a reference to the deprecated form
     deprecated_form_id = models.CharField(max_length=255, null=True)
 
-    # Stores the datetime of when a form was deprecated
-    edited_on = models.DateTimeField(null=True)
+    server_modified_on = models.DateTimeField(db_index=True, auto_now=True, null=True)
 
     # The time at which the server has received the form
     received_on = models.DateTimeField(db_index=True)
+
+    # Stores the datetime of when a form was deprecated
+    edited_on = models.DateTimeField(null=True)
+
+    deleted_on = models.DateTimeField(null=True)
+    deletion_id = models.CharField(max_length=255, null=True)
 
     auth_context = JSONField(default=dict)
     openrosa_headers = JSONField(default=dict)
@@ -192,24 +200,17 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     submit_ip = models.CharField(max_length=255, null=True)
     last_sync_token = models.CharField(max_length=255, null=True)
     problem = models.TextField(null=True)
-    # almost always a datetime, but if it's not parseable it'll be a string
     date_header = models.DateTimeField(null=True)
     build_id = models.CharField(max_length=255, null=True)
-    # export_tag = DefaultProperty(name='#export_tag')
     state = models.PositiveSmallIntegerField(choices=STATES, default=NORMAL)
     initial_processing_complete = models.BooleanField(default=False)
-
-    deleted_on = models.DateTimeField(null=True)
-    deletion_id = models.CharField(max_length=255, null=True)
 
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
-    # keep track to avoid refetching to check whether value is updated
-    __original_form_id = None
-
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
+        # keep track to avoid refetching to check whether value is updated
         self.__original_form_id = self.form_id
 
     def form_id_updated(self):
@@ -285,6 +286,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @property
     def doc_type(self):
+        """Comparability with couch forms"""
         from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
         if self.is_deleted:
             return 'XFormInstance' + DELETED_SUFFIX
@@ -308,6 +310,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     @property
     @memoized
     def form_data(self):
+        """Returns the JSON representation of the form XML"""
         from couchforms import XMLSyntaxError
         from .utils import convert_xform_to_json, adjust_datetimes
         from corehq.form_processor.utils.metadata import scrub_form_meta
@@ -325,6 +328,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @property
     def history(self):
+        """:returns: List of XFormOperationSQL objects"""
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
         operations += self.get_tracked_models_to_create(XFormOperationSQL)
@@ -362,7 +366,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if not xml:
             return None
 
-        if isinstance(xml, unicode):
+        if isinstance(xml, six.text_type):
             xml = xml.encode('utf-8', errors='replace')
 
         return etree.fromstring(xml)
@@ -435,7 +439,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         content_readable = content
-        if isinstance(content, basestring):
+        if isinstance(content, six.string_types):
             content_readable = StringIO(content)
 
         db = get_blob_db()
@@ -505,7 +509,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     )
 
     def __unicode__(self):
-        return unicode(
+        return six.text_type(
             "XFormAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
             "form_id='{a.form_id}', "
@@ -531,6 +535,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
 
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
+    EDIT = 'edit'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
@@ -687,7 +692,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return self.deleted
 
     def dynamic_case_properties(self):
-        return OrderedDict(sorted(self.case_json.iteritems()))
+        return OrderedDict(sorted(six.iteritems(self.case_json)))
 
     def to_api_json(self, lite=False):
         from .serializers import CommCareCaseSQLAPISerializer
@@ -761,7 +766,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
-        found = filter(lambda i: i.identifier == index_id, self.indices)
+        found = [i for i in self.indices if i.identifier == index_id]
         if found:
             assert(len(found) == 1)
             return found[0]
@@ -790,10 +795,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transactions = filter(
-            lambda t: t.form_id == form_id,
-            self.get_tracked_models_to_create(CaseTransaction)
-        )
+        transactions = [t for t in self.get_tracked_models_to_create(CaseTransaction) if t.form_id == form_id]
         assert len(transactions) <= 1
         transaction = transactions[0] if transactions else None
 
@@ -837,10 +839,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
-        transactions += filter(
-            lambda t: (t.type & transaction_type) == transaction_type,
-            self.get_tracked_models_to_create(CaseTransaction)
-        )
+        transactions += [t for t in self.get_tracked_models_to_create(CaseTransaction) if (t.type & transaction_type) == transaction_type]
         return transactions
 
     def modified_since_sync(self, sync_log):
@@ -891,10 +890,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         indices = self.indices
 
         if identifier:
-            indices = filter(lambda index: index.identifier == identifier, indices)
+            indices = [index for index in indices if index.identifier == identifier]
 
         if relationship:
-            indices = filter(lambda index: index.relationship_id == relationship, indices)
+            indices = [index for index in indices if index.relationship_id == relationship]
 
         return [index.referenced_case for index in indices]
 
@@ -990,7 +989,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         return ret
 
     def __unicode__(self):
-        return unicode(
+        return six.text_type(
             "CaseAttachmentSQL("
             "attachment_id='{a.attachment_id}', "
             "case_id='{a.case_id}', "
@@ -1239,7 +1238,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def form_transaction(cls, case, xform, action_types=None):
         action_types = action_types or []
 
-        if any(map(lambda action_type: not cls._valid_action_type(action_type), action_types)):
+        if any([not cls._valid_action_type(action_type) for action_type in action_types]):
             raise UnknownActionType('Unknown action type found')
 
         type_ = cls.TYPE_FORM
@@ -1437,7 +1436,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
         return "LedgerValue(" \
                "case_id={s.case_id}, " \
                "section_id={s.section_id}, " \
-               "entry_id={s.entry_id}," \
+               "entry_id={s.entry_id}, " \
                "balance={s.balance}".format(s=self)
 
     class Meta:

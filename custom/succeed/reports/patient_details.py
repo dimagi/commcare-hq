@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
@@ -7,6 +8,7 @@ from dimagi.utils.decorators.memoized import memoized
 from custom.succeed.utils import get_app_build, SUCCEED_CM_APPNAME, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, \
     SUCCEED_DOMAIN
 from casexml.apps.case.models import CommCareCase
+import six
 
 EMPTY_URL = ''
 
@@ -93,7 +95,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         return self.request.couch_user.get_role().permissions.view_report_list
 
     def get_class_path(self, report_class):
-        return unicode(report_class.__module__+'.'+report_class.__name__)
+        return six.text_type(report_class.__module__+'.'+report_class.__name__)
 
     @property
     def patient_info_url(self):

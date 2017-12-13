@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import Http404
 from django.forms import ValidationError
 from tastypie import http
@@ -47,6 +48,7 @@ from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 from itertools import chain
+from six.moves import map
 
 
 MOCK_BULK_USER_ES = None
@@ -95,7 +97,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         '''
         if '_id' in user:
             user['id'] = user.pop('_id')
-        return namedtuple('user', user.keys())(**user)
+        return namedtuple('user', list(user))(**user)
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
@@ -122,7 +124,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
 
         params = bundle.request.GET
         param = lambda p: params.get(p, None)
-        fields = self.fields.keys()
+        fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
         fn = MOCK_BULK_USER_ES or user_es_call
@@ -133,7 +135,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
             size=param('limit'),
             start_at=param('offset'),
         )
-        return map(self.to_obj, users)
+        return list(map(self.to_obj, users))
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {

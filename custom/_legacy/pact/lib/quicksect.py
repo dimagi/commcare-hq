@@ -11,8 +11,10 @@ source:
 http://bitbucket.org/james_taylor/bx-python/src/14b6a6c95da6/lib/bx/intervals/operations/quicksect.py
 """
 from __future__ import print_function
+from __future__ import absolute_import
 import time
 import random
+from six.moves import range
 
 
 class IntervalNode( object ):
@@ -113,7 +115,7 @@ def main():
     test = None
     intlist = []
     for x in range(20000):
-        start = random.randint(0,1000000)
+        start = random.randint(0, 1000000)
         end = start + random.randint(1, 1000)
         if test: test = test.insert( start, end )
         else: test = IntervalNode( start, end )

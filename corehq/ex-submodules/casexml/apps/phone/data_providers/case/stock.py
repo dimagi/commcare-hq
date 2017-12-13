@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime
 
@@ -81,7 +82,7 @@ class StockPayloadGenerator(object):
                             self._consumption_entry(case_id, product_id, state)
                         )
 
-                consumption_entries = filter(lambda e: e is not None, consumption_entries)
+                consumption_entries = [e for e in consumption_entries if e is not None]
                 if consumption_entries:
                     yield self.elem_maker.balance(
                         *consumption_entries,

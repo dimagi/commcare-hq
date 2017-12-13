@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import importlib
 from django.utils import http
 from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS

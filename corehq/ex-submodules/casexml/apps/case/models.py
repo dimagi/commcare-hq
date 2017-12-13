@@ -36,6 +36,8 @@ from dimagi.utils.couch import (
     CouchDocLockableMixIn,
     LooselyEqualDocumentSchema,
 )
+import six
+from six.moves import filter
 
 CASE_STATUS_OPEN = 'open'
 CASE_STATUS_CLOSED = 'closed'
@@ -191,7 +193,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         _STRING_ATTRS = ('external_id', 'user_id', 'owner_id', 'opened_by',
                          'closed_by', 'type', 'name')
         if key in _STRING_ATTRS:
-            value = unicode(value or '')
+            value = six.text_type(value or '')
         super(CommCareCase, self).__setattr__(key, value)
 
     def __get_case_id(self):
@@ -231,10 +233,10 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         indices = self.indices
 
         if identifier:
-            indices = filter(lambda index: index.identifier == identifier, indices)
+            indices = [index for index in indices if index.identifier == identifier]
 
         if relationship:
-            indices = filter(lambda index: index.relationship == relationship, indices)
+            indices = [index for index in indices if index.relationship == relationship]
 
         return [CommCareCase.get(index.referenced_id) for index in indices]
 
@@ -378,10 +380,10 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
             return None
 
     def get_closing_transactions(self):
-        return filter(lambda action: action.action_type == const.CASE_ACTION_CLOSE, reversed(self.actions))
+        return [action for action in reversed(self.actions) if action.action_type == const.CASE_ACTION_CLOSE]
 
     def get_opening_transactions(self):
-        return filter(lambda action: action.action_type == const.CASE_ACTION_CREATE, self.actions)
+        return [action for action in self.actions if action.action_type == const.CASE_ACTION_CREATE]
 
     def case_properties(self):
         return self.to_json()

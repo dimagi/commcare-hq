@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -42,6 +43,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     CustomIcon)
 from django_prbac.utils import has_privilege
+import six
 
 
 @retry_resource(3)
@@ -122,9 +124,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
-        # don't fail hard.
+        # redirect to "main" app rather than specific build
         return HttpResponseRedirect(reverse(
-            "view_app", args=[domain, app.copy_of] # TODO - is this right?
+            "view_app", args=[domain, app.copy_of]
         ))
 
     # grandfather in people who set commcare sense earlier
@@ -239,11 +241,11 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'multimedia': {
                 "object_map": app.get_object_map(),
                 'upload_managers': uploaders,
-                'upload_managers_js': {type: u.js_options for type, u in uploaders.iteritems()},
+                'upload_managers_js': {type: u.js_options for type, u in six.iteritems(uploaders)},
             }
         })
         context['module_icon'] = None
-        if add_ons.show("custom_icon_badges", request, module.get_app()):
+        if toggles.CUSTOM_ICON_BADGES.enabled(domain):
             context['module_icon'] = module.custom_icon if module.custom_icon else CustomIcon()
         try:
             context['multimedia']['references'] = app.get_references()

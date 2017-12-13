@@ -37,13 +37,13 @@ var ReportConfig = function (data) {
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
         var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
-        if (null !== standardHQReport.slug) {
+        if (standardHQReport.slug) {
             data['report_slug'] = standardHQReport.slug;
         }
-        if ("" !== standardHQReport.type) {
+        if (standardHQReport.type) {
             data['report_type'] = standardHQReport.type;
         }
-        if ("" !== standardHQReport.subReportSlug) {
+        if (standardHQReport.subReportSlug) {
             data['subreport_slug'] = standardHQReport.subReportSlug;
         }
         return data;

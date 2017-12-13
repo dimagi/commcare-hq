@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.utils.rate_limit import rate_limit, DomainRateLimiter
 from django.test import SimpleTestCase
 # import the datetime module and not datetime.datetime:

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 import datetime
 from django.test import SimpleTestCase
@@ -27,7 +28,7 @@ class XMLSerializeTest(SimpleTestCase):
         self.assertEqual(serialize(None), '')
 
     def test_long_serialization(self):
-        self.assertEqual(serialize(123L), '123')
+        self.assertEqual(serialize(123), '123')
 
     def test_date_serialization(self):
         self.assertEqual(serialize(datetime.date(1982, 5, 14)), '1982-05-14')

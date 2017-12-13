@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.util.quickcache import quickcache
 

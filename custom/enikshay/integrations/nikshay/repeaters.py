@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 
 from django.db.models.signals import post_save
@@ -16,7 +17,11 @@ from casexml.apps.case.signals import case_post_save
 from corehq.motech.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
-)
+    get_open_episode_case_from_person,
+    get_occurrence_case_from_test,
+    get_open_episode_case_from_occurrence,
+    person_has_any_nikshay_notifiable_episode,
+    get_person_case_from_occurrence)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
     TREATMENT_OUTCOME,
@@ -46,9 +51,14 @@ from custom.enikshay.integrations.utils import (
 
 from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
+import six
 
 
 class BaseNikshayRepeater(CaseRepeater):
+    @property
+    def verify(self):
+        return False
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -118,7 +128,8 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
                     related_dates_changed(person_case) or
                     person_hiv_status_changed(person_case)
                 ) and
-                is_valid_person_submission(person_case)
+                is_valid_person_submission(person_case) and
+                person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
@@ -150,7 +161,7 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
                 valid_nikshay_patient_registration(episode_case_properties)
             ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
-            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
+            episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome and
             is_valid_archived_submission(episode_case)
         )
 
@@ -177,6 +188,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
         # and episode.nikshay_registered is true
         allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
         if allowed_case_types_and_users:
+            occurrence_case = get_occurrence_case_from_test(test_case.domain, test_case.case_id)
+            person_case = get_person_case_from_occurrence(test_case.domain, occurrence_case.case_id)
             test_case_properties = test_case.dynamic_case_properties()
             return (
                 not (test_case_properties.get(ENROLLED_IN_PRIVATE) == 'true') and
@@ -189,7 +202,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                     test_case_properties.get('rft_dstb_followup') in self.followup_for_tests
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
-                not is_valid_test_submission(test_case)
+                not is_valid_test_submission(test_case) and
+                person_has_any_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
@@ -242,8 +256,9 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             result,
+            verify=self.verify
         )
-        if isinstance(message, basestring) and message.isdigit():
+        if isinstance(message, six.string_types) and message.isdigit():
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
@@ -293,6 +308,7 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             result,
+            verify=self.verify
         )
         # message does not give the final node message here so need to find the real message
         # look at SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE for example

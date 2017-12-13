@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import json
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.utils import override_settings
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import TestFileMixin
@@ -13,6 +14,7 @@ import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
+import six
 
 
 class SubmissionTest(TestCase):
@@ -21,8 +23,7 @@ class SubmissionTest(TestCase):
     def setUp(self):
         super(SubmissionTest, self).setUp()
         self.domain = create_domain("submit")
-        self.couch_user = WebUser.create(None, "test", "foobar")
-        self.couch_user.add_domain_membership(self.domain.name, is_admin=True)
+        self.couch_user = CommCareUser.create(self.domain.name, "test", "foobar")
         self.couch_user.save()
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
@@ -39,8 +40,9 @@ class SubmissionTest(TestCase):
 
     def _submit(self, formname, **extra):
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
+        url = extra.pop('url', self.url)
         with open(file_path, "rb") as f:
-            return self.client.post(self.url, {
+            return self.client.post(url, {
                 "xml_submission_file": f
             }, **extra)
 
@@ -53,7 +55,7 @@ class SubmissionTest(TestCase):
             expected = json.load(f)
 
         expected['_id'] = form_id
-        expected['xmlns'] = unicode(xmlns)
+        expected['xmlns'] = six.text_type(xmlns)
 
         return expected
 
@@ -63,11 +65,7 @@ class SubmissionTest(TestCase):
         foo = FormAccessors(self.domain.name).get_form(xform_id).to_json()
         self.assertTrue(foo['received_on'])
 
-        if not self.use_sql:
-            n_times_saved = int(foo['_rev'].split('-')[0])
-            self.assertEqual(n_times_saved, 1)
-
-        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id']:
+        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id', 'server_modified_on']:
             if key in foo:
                 del foo[key]
 
@@ -105,6 +103,14 @@ class SubmissionTest(TestCase):
             form='namespace_in_meta.xml',
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
         )
+
+    def test_submit_deprecated_form(self):
+        self._submit('simple_form.xml')
+        response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))
+        xform_id = response['X-CommCareHQ-FormID']
+        form = FormAccessors(self.domain.name).get_form(xform_id)
+        self.assertEqual(1, len(form.history))
+        self.assertEqual(self.couch_user.get_id, form.history[0].user)
 
 
 @use_sql_backend

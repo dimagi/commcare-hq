@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_noop as _
 
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin

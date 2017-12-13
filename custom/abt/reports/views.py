@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from StringIO import StringIO
 
@@ -10,6 +11,7 @@ from openpyxl.utils import get_column_letter
 
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 from corehq.util.soft_assert import soft_assert
+from six.moves import range
 
 # Copied from custom/abt/reports/data_sources/supervisory.json
 MAX_LOCATION_COLUMNS = 350

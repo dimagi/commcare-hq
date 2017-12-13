@@ -8,6 +8,7 @@ from corehq.apps.accounting.models import (
     SoftwareProductType,
 )
 from corehq.apps.accounting.utils import log_accounting_error, log_accounting_info
+import six
 
 FEATURE_TYPES = [
     FeatureType.USER,
@@ -21,7 +22,7 @@ def ensure_plans(config, verbose, apps):
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    for plan_key, plan_deets in config.iteritems():
+    for plan_key, plan_deets in six.iteritems(config):
         edition, is_trial, is_report_builder_enabled = plan_key
         features = _ensure_features(edition, verbose, apps)
         try:

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from corehq.apps.locations.dbaccessors import get_users_assigned_to_locations

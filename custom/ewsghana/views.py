@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -30,6 +31,7 @@ from custom.ewsghana.utils import make_url, has_input_stock_permissions, calcula
 from custom.ilsgateway.views import GlobalStats
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.web import json_handler, json_response
+from six.moves import map
 
 
 class EWSGlobalStats(GlobalStats):
@@ -244,7 +246,7 @@ def non_administrative_locations_for_select2(request, domain):
     if locs != [] and query:
         locs = locs.filter(name__icontains=query)
 
-    return json_response(map(loc_to_payload, locs[:10]))
+    return json_response(list(map(loc_to_payload, locs[:10])))
 
 
 class DashboardPageView(RedirectView):

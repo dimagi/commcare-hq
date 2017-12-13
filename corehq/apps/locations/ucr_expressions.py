@@ -1,10 +1,23 @@
+from __future__ import absolute_import
 from jsonobject import DefaultProperty
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, DictProperty
+
+
+@ucr_context_cache(vary_on=('location_id',))
+def _get_location(location_id, context):
+    try:
+        return SQLLocation.objects.prefetch_related('location_type').get(
+            domain=context.root_doc['domain'],
+            location_id=location_id
+        )
+    except SQLLocation.DoesNotExist:
+        return None
 
 
 class LocationTypeSpec(JsonObject):
@@ -20,19 +33,9 @@ class LocationTypeSpec(JsonObject):
             return None
 
         assert context.root_doc['domain']
-        return self._get_location_type(doc_id, context.root_doc['domain'])
-
-    @staticmethod
-    @quickcache(['location_id', 'domain'], timeout=600)
-    def _get_location_type(location_id, domain):
-        sql_location = SQLLocation.objects.filter(
-            domain=domain,
-            location_id=location_id
-        )
-        if sql_location:
-            return sql_location[0].location_type.name
-        else:
-            return None
+        location = _get_location(doc_id, context)
+        if location:
+            return location.location_type.name
 
 
 class LocationParentIdSpec(JsonObject):
@@ -55,12 +58,8 @@ def location_parent_id(spec, context):
         "related_doc_type": "Location",
         "doc_id_expression": spec['location_id_expression'],
         "value_expression": {
-            "type": "array_index",
-            'array_expression': {
-                'type': 'property_name',
-                'property_name': 'lineage'
-            },
-            'index_expression': 0,
+            "type": "property_name",
+            "property_name": "parent_location_id",
         }
     }
     return ExpressionFactory.from_spec(spec, context)
@@ -84,17 +83,13 @@ class AncestorLocationExpression(JsonObject):
     def __call__(self, item, context=None):
         location_id = self._location_id_expression(item, context)
         location_type = self._location_type_expression(item, context)
+        return self._get_ancestor(location_id, location_type, context)
 
-        cache_key = (self.__class__.__name__, location_id, location_type)
-        if context.get_cache_value(cache_key, False) is not False:
-            return context.get_cache_value(cache_key)
-        ancestor_json = self._get_ancestor(location_id, location_type)
-        context.set_cache_value(cache_key, ancestor_json)
-        return ancestor_json
-
-    def _get_ancestor(self, location_id, location_type):
+    @staticmethod
+    @ucr_context_cache(vary_on=('location_id', 'location_type',))
+    def _get_ancestor(location_id, location_type, context):
         try:
-            location = SQLLocation.objects.get(location_id=location_id)
+            location = _get_location(location_id, context)
             ancestor = location.get_ancestors(include_self=False).get(location_type__name=location_type)
             return ancestor.to_json()
         except (AttributeError, SQLLocation.DoesNotExist):

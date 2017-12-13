@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import Counter
 
 from django.contrib.auth.models import User

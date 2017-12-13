@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -14,6 +15,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.notifications.forms import NotificationCreationForm
 from corehq.apps.notifications.models import Notification, LastSeenNotification, \
     IllegalModelStateException, DismissedUINotify
+import six
 
 
 class NotificationsServiceRMIView(JSONResponseMixin, View):
@@ -30,7 +32,7 @@ class NotificationsServiceRMIView(JSONResponseMixin, View):
     def get_notifications(self, in_data):
         # todo always grab alerts if they are still relevant
         notifications = Notification.get_by_user(self.request.user, self.request.couch_user)
-        has_unread = len(filter(lambda x: not x['isRead'], notifications)) > 0
+        has_unread = len([x for x in notifications if not x['isRead']]) > 0
         last_seen_notification_date = LastSeenNotification.get_last_seen_notification_date_for_user(
             self.request.user
         )
@@ -91,7 +93,7 @@ class ManageNotificationView(BasePageView):
                 'content': alert.content,
                 'url': alert.url,
                 'type': alert.get_type_display(),
-                'activated': unicode(alert.activated),
+                'activated': six.text_type(alert.activated),
                 'isActive': alert.is_active,
                 'id': alert.id,
             } for alert in Notification.objects.order_by('-created').all()],

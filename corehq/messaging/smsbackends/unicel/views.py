@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import HttpResponse
 from corehq.messaging.smsbackends.unicel.models import create_from_request
 import json

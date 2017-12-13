@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 from couchdbkit.ext.django import schema
 import datetime
@@ -5,6 +6,8 @@ import sqlalchemy
 from .util import get_indicator_model, default_null_value_placeholder
 from .calculators import Calculator
 from .const import ALL_TYPES, TYPE_STRING
+import six
+from six.moves import zip
 
 
 class FlatField(schema.StringProperty):
@@ -27,7 +30,7 @@ class FlatField(schema.StringProperty):
 
     def calculate(self, item):
         result = self.fn(item)
-        assert isinstance(result, basestring)
+        assert isinstance(result, six.string_types)
         return result
 
 
@@ -74,9 +77,8 @@ class IndicatorDocumentMeta(schema.DocumentMeta):
         return cls
 
 
-class IndicatorDocument(schema.Document):
+class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Document)):
 
-    __metaclass__ = IndicatorDocumentMeta
     base_doc = 'IndicatorDocument'
 
     document_class = None
@@ -110,7 +112,7 @@ class IndicatorDocument(schema.Document):
     @property
     def wrapped_group_by(self):
         def _wrap_if_necessary(string_or_attribute_getter):
-            if isinstance(string_or_attribute_getter, basestring):
+            if isinstance(string_or_attribute_getter, six.string_types):
                 getter = AttributeGetter(string_or_attribute_getter)
             else:
                 getter = string_or_attribute_getter
@@ -296,9 +298,9 @@ class IndicatorDocument(schema.Document):
         if not left and not right:
             return None
         elif not left or not right:
-            return left.keys() if left else right.keys()
+            return list(left) if left else list(right)
 
-        left_set, right_set = set(left.keys()), set(right.keys())
+        left_set, right_set = set(left), set(right)
         intersect = right_set.intersection(left_set)
 
         added = right_set - intersect
@@ -320,7 +322,7 @@ class IndicatorDocument(schema.Document):
 
         flat_keys = None
         try:
-            flat_keys = self._flat_fields.keys()
+            flat_keys = list(self._flat_fields)
         except AttributeError:
             pass
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from lxml import etree
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.xml_models import Fixture

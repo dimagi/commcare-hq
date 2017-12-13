@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.es.fake.es_query_fake import HQESQueryFake
 
 

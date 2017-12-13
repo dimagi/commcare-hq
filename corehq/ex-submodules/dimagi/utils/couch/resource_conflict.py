@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceConflict
 from django.utils.functional import wraps
+from six.moves import range
 
 def repeat(fn, n):
     for _ in range(n):

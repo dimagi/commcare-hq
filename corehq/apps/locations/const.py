@@ -1,4 +1,3 @@
-
 ROOT_LOCATION_TYPE = "TOP"
 
 LOCATION_SHEET_HEADERS = {
@@ -21,6 +20,6 @@ LOCATION_TYPE_SHEET_HEADERS = {
     'do_delete': 'Delete(Y/N)',
     'shares_cases': 'Shares Cases Y/N',
     'view_descendants': 'View Child Cases (Y/N)',
-    'expand_from': 'ExpandFrom',
-    'expand_to': 'ExpandTo',
 }
+
+LOCK_LOCATIONS_TIMEOUT = 60 * 60 * 10  # seconds

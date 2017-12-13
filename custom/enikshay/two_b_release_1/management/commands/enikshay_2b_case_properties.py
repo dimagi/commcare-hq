@@ -2,6 +2,7 @@
 eNikshay 2B - Release 1 Migration
 https://docs.google.com/spreadsheets/d/1GFpMht-C-0cMCQu8rfqQG9lgW9omfYi3y2nUXHR8Pio/edit#gid=0
 """
+from __future__ import absolute_import
 import datetime
 import logging
 import phonenumbers
@@ -22,6 +23,8 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE, CASE_TYPE_TEST, CASE_TYPE_TRAIL,
     CASE_TYPE_DRTB_HIV_REFERRAL, CASE_TYPE_SECONDARY_OWNER)
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
+from six.moves import filter
+from six.moves import input
 
 logger = logging.getLogger('two_b_datamigration')
 
@@ -60,7 +63,7 @@ class PersonCaseSet(object):
 
 
 def confirm(msg):
-    if raw_input(msg + "\n(y/n)") != 'y':
+    if input(msg + "\n(y/n)") != 'y':
         sys.exit()
 
 
@@ -177,7 +180,7 @@ class ENikshay2BMigrator(object):
                               CASE_TYPE_TEST: 'tests',
                               CASE_TYPE_TRAIL: 'trails'}
             episodes_to_person = {}
-            for case in self.accessor.get_reverse_indexed_cases(referrals_and_occurrences_to_person.keys()):
+            for case in self.accessor.get_reverse_indexed_cases(list(referrals_and_occurrences_to_person)):
                 bucket = type_to_bucket.get(case.type, None)
                 if bucket:
                     for index in case.indices:
@@ -188,7 +191,7 @@ class ENikshay2BMigrator(object):
                                 episodes_to_person[case.case_id] = person_id
                             break
 
-            for case in self.accessor.get_reverse_indexed_cases(episodes_to_person.keys()):
+            for case in self.accessor.get_reverse_indexed_cases(list(episodes_to_person)):
                 if case.type == CASE_TYPE_DRTB_HIV_REFERRAL:
                     for index in case.indices:
                         person_id = episodes_to_person.get(index.referenced_id)
@@ -203,7 +206,7 @@ class ENikshay2BMigrator(object):
                 yield person
 
     def migrate_person_case_set(self, person):
-        changes = filter(None,
+        changes = list(filter(None,
             [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
@@ -213,7 +216,7 @@ class ENikshay2BMigrator(object):
             + [self.open_secondary_owners(drtb_hiv, person.person, person.occurrences)
                for drtb_hiv in person.drtb_hiv]
             + [self.close_drtb_hiv(drtb_hiv) for drtb_hiv in person.drtb_hiv]
-        )
+        ))
         if self.commit:
             self.factory.create_or_update_cases(changes)
 

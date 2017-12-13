@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from datetime import datetime
 from time import sleep, time
 
@@ -7,6 +8,7 @@ from celery.backends.base import DisabledBackend
 from celery.task import task
 from django.conf import settings
 import kombu.five
+import six
 
 
 def no_result_task(*args, **kwargs):
@@ -124,7 +126,7 @@ def revoke_tasks(task_names, interval=5):
             if not result:
                 continue
 
-            for worker, task_dicts in result.iteritems():
+            for worker, task_dicts in six.iteritems(result):
                 tasks.extend(_get_task_info_fcn(task_state)(task_dicts))
 
         for task in tasks:
@@ -183,6 +185,6 @@ def get_running_workers(timeout=10):
 
     worker_names = []
     for worker_info in result:
-        worker_names.extend(worker_info.keys())
+        worker_names.extend(list(worker_info))
 
     return worker_names

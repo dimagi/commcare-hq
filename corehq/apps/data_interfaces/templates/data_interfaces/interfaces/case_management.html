@@ -55,7 +55,7 @@
         $('#reassign_owner_select').select2({
             placeholder: '{% trans "Search for users or groups" %}',
             ajax: {
-                url: '{% url "case_list_options" domain %}',
+                url: '{% url "reassign_case_options" domain %}',
                 data: function (term, page) {
                     return {
                         q: term
@@ -66,12 +66,7 @@
                 results: function (data, page) {
                     return {
                         total: data.total,
-                        results: (data.results
-                            // white list groups and users
-                            .filter(function(o) {
-                                return o.id.startsWith('u__') || o.id.startsWith('sg__') || o.id.startsWith('l__');
-                            })
-                        )
+                        results: data.results,
                     };
                 },
                 cache: true

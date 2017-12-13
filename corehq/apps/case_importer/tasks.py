@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 
 from celery.schedules import crontab
@@ -99,7 +100,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             else:
                 if record_form_callback:
                     record_form_callback(form.form_id)
-                properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
+                properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
                 if case_type and len(properties):
                     add_inferred_export_properties.delay(
                         'CaseImporter',

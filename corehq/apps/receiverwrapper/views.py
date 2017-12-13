@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from couchdbkit import ResourceNotFound
 from django.http import (
@@ -275,7 +276,7 @@ def secure_post(request, domain, app_id=None):
         decorated_view = authtype_map[determine_authtype(request)]
     except KeyError:
         return HttpResponseBadRequest(
-            'authtype must be one of: {0}'.format(','.join(authtype_map.keys()))
+            'authtype must be one of: {0}'.format(','.join(authtype_map))
         )
 
     return decorated_view(request, domain, app_id=app_id)

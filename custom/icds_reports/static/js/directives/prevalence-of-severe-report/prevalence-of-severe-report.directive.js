@@ -1,9 +1,9 @@
-/* global d3*/
+/* global d3, _ */
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, genders, ages) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -11,6 +11,21 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
+    vm.userLocationId = userLocationId;
+    var ageIndex = _.findIndex(ages,function (x) {
+        return x.id === vm.filtersData.age;
+    });
+    if (ageIndex !== -1) {
+        vm.ageLabel = ages[ageIndex].name;
+    }
+
+    var genderIndex = _.findIndex(genders, function (x) {
+        return x.id === vm.filtersData.gender;
+    });
+    if (genderIndex !== -1) {
+        vm.genderLabel = genders[genderIndex].name;
+    }
+
     vm.label = "Prevalence of Wasting (Weight-for-Height)";
     vm.step = $routeParams.step;
     vm.steps = {
@@ -23,6 +38,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = [];
@@ -32,6 +49,16 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -55,13 +82,15 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
-        var sever = row ? d3.format(".0%")(row.severe / (row.total || 1)) : 'N/A';
-        var moderate = row ? d3.format(".0%")(row.moderate / (row.total || 1)) : 'N/A';
-        var normal = row ? d3.format(".0%")(row.normal / (row.total || 1)) : 'N/A';
+        var sever = row ? d3.format(".2%")(row.severe / (row.total || 1)) : 'N/A';
+        var moderate = row ? d3.format(".2%")(row.moderate / (row.total || 1)) : 'N/A';
+        var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
+        var unmeasured = row ? d3.format(".2%")((row.total - (row.normal + row.severe + row.moderate)) / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
             '<div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div>' +
+            '<div>% Unmeasured: <strong>' + unmeasured + '</strong></div>' +
             '<div>% Severely Acute Malnutrition: <strong>' + sever + '</strong></div>' +
             '<div>% Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div>' +
             '<div>% Normal: <strong>' + normal + '</strong></div></ul>';
@@ -95,20 +124,27 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 vm.all_locations = response.data.report_data.all_locations;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    0,
-                    Math.ceil(d3.max(vm.chartData, function(line) {
-                        return d3.max(line.values, function(d) {
-                            return d.y;
-                        });
-                    }) * 100) / 100 + 0.01,
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
                 ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
@@ -121,7 +157,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         });
     };
 
-    init();
+    vm.init();
 
 
     $scope.$on('filtersChange', function() {
@@ -172,15 +208,13 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(".2%")(day['y']);
+                        return day['y'];
                     };
 
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>% children with Normal Acute Malnutrition: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children with Moderate Acute Malnutrition (MAM): <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var normal = findValue(vm.chartData[0].values, d.value);
+                    var moderate = findValue(vm.chartData[1].values, d.value);
+                    var severe = findValue(vm.chartData[2].values, d.value);
+                    return vm.tooltipContent(d.value, normal, moderate, severe);
                 });
                 return chart;
             },
@@ -199,10 +233,18 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         },
     };
 
+    vm.tooltipContent = function (monthName, normal, moderate, severe) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>% children with Normal Acute Malnutrition: <strong>" + d3.format(".2%")(normal) + "</strong></p>"
+            + "<p>% children with Moderate Acute Malnutrition (MAM): <strong>" + d3.format(".2%")(moderate) + "</strong></p>"
+            + "<p>% children with Severe Acute Malnutrition (SAM): <strong>" + d3.format(".2%")(severe) + "</strong></p>"
+            + "<p>% Unmeasured: <strong>" + d3.format(".2%")((1 - (normal + moderate + severe))) + "</strong></p>";
+    };
+
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -221,12 +263,24 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         }
     };
 
+    vm.resetAdditionalFilter = function() {
+        vm.filtersData.gender = '';
+        vm.filtersData.age = '';
+        $location.search('gender', null);
+        $location.search('age', null);
+    };
+
+    vm.resetOnlyAgeAdditionalFilter = function() {
+        vm.filtersData.age = '';
+        $location.search('age', null);
+    };
+
     vm.showAllLocations = function () {
         return vm.all_locations.length < 10;
     };
 }
 
-PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive('prevalenceOfSevere', function() {
     return {

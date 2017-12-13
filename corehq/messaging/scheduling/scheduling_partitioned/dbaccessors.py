@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.sql_db.util import (
     run_query_across_partitioned_databases,
 )

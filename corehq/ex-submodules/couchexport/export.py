@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 import itertools
 from couchexport.exceptions import SchemaMismatchException,\
@@ -11,6 +12,9 @@ from couchexport import writers
 from dimagi.utils.decorators.memoized import memoized
 from couchexport.util import get_schema_index_view_keys, default_cleanup
 from datetime import datetime
+import six
+from six.moves import range
+from six.moves import map
 
 
 class ExportConfiguration(object):
@@ -274,7 +278,7 @@ def fit_to_schema(doc, schema):
         answ = {}
         for key in schema:
             #if schema[key] == unknown_type: continue
-            if doc.has_key(key):
+            if key in doc:
                 answ[key] = fit_to_schema(doc.get(key), schema[key])
             else:
                 answ[key] = render_never_was(schema[key])
@@ -282,9 +286,9 @@ def fit_to_schema(doc, schema):
     if schema == "string":
         if not doc:
             doc = ""
-        if not isinstance(doc, basestring):
+        if not isinstance(doc, six.string_types):
         #log("%s is not a string" % doc)
-            doc = unicode(doc)
+            doc = six.text_type(doc)
         return doc
 
 
@@ -328,7 +332,7 @@ def _create_intermediate_tables(docs, schema):
         column = []
         id = []
         for k in path:
-            if isinstance(k, basestring):
+            if isinstance(k, six.string_types):
                 if k:
                     column.append(k)
             else:
@@ -389,16 +393,16 @@ class FormattedRow(object):
 
     @property
     def formatted_id(self):
-        if isinstance(self.id, basestring):
+        if isinstance(self.id, six.string_types):
             return self.id
-        return self.separator.join(map(unicode, self.id))
+        return self.separator.join(map(six.text_type, self.id))
 
     def include_compound_id(self):
         return len(self.compound_id) > 1
 
     @property
     def compound_id(self):
-        if isinstance(self.id, basestring):
+        if isinstance(self.id, six.string_types):
             return [self.id]
         return self.id
 
@@ -429,7 +433,7 @@ class FormattedRow(object):
         ret = []
         for name, rows in tables:
             rows = list(rows)
-            if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], basestring)):
+            if rows and (not hasattr(rows[0], '__iter__') or isinstance(rows[0], six.string_types)):
                 # `rows` is actually just a single row, so wrap it
                 rows = [rows]
             ret.append(
@@ -457,11 +461,11 @@ def _format_tables(tables, id_label='id', separator='.', include_headers=True,
 
     for table_name, table in sorted(tables.items()):
         new_table = []
-        keys = sorted(table.items()[0][1].keys()) # the keys for every row are the same
+        keys = sorted(list(table.items())[0][1])  # the keys for every row are the same
 
         if include_headers:
             id_key = [id_label]
-            id_len = len(table.keys()[0]) # this is a proxy for the complexity of the ID
+            id_len = len(list(table)[0])  # this is a proxy for the complexity of the ID
             if id_len > 1:
                 id_key += ["{id}__{count}".format(id=id_label, count=i) \
                            for i in range(id_len)]

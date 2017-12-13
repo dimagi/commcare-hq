@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.users.models import CommCareUser, CouchUser
 from custom.enikshay.case_utils import get_person_case_from_voucher
 from custom.enikshay.exceptions import ENikshayCaseNotFound

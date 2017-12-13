@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from ..user_setup import compress_id
+from six.moves import range
 
 
 def test_compression():

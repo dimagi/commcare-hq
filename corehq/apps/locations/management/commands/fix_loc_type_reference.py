@@ -1,8 +1,10 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation, LocationType
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -33,7 +35,7 @@ class Command(BaseCommand):
             if has_bad_location_types(domain):
                 print("{} has bad location types".format(domain))
                 if not options['dry_run']:
-                    if options['noinput'] or raw_input("fix? (y/N)").lower() == 'y':
+                    if options['noinput'] or input("fix? (y/N)").lower() == 'y':
                         fix_domain(domain)
 
 
