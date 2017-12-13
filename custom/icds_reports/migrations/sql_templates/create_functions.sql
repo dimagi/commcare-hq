@@ -361,10 +361,10 @@ BEGIN
 		'sum(pse_eligible), ' ||
 		'sum(pse_attended_16_days), ' ||
 		'sum(born_in_month), ' ||
-		'sum(CASE WHEN dob <= ' || quote_literal(_one_week_ago) || ' THEN low_birth_weight_in_month ELSE 0 END), ' ||
+		'sum(low_birth_weight_born_in_month), ' ||
 		'sum(bf_at_birth_born_in_month), ' ||
-		'sum(CASE WHEN dob <= ' || quote_literal(_one_week_ago) || ' THEN ebf_eligible ELSE 0 END), ' ||
-		'sum(CASE WHEN dob <= ' || quote_literal(_one_week_ago) || ' THEN ebf_in_month ELSE 0 END), ' ||
+		'sum(ebf_eligible), ' ||
+		'sum(ebf_in_month), ' ||
 		'sum(cf_eligible), ' ||
 		'sum(cf_in_month), ' ||
 		'sum(cf_diet_diversity), ' ||
@@ -395,7 +395,8 @@ BEGIN
 		'sum(stunting_normal), ' ||
 		'sum(valid_all_registered_in_month), ' ||
 		'sum(ebf_no_info_recorded) ' ||
-		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
+		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND dob <= ' || quote_literal(_one_week_ago) || ' '
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -603,7 +604,7 @@ BEGIN
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed), ' ||
 		'sum(tetanus_complete), ' ||
-		'sum(CASE WHEN add <= ' || quote_literal(_one_week_ago) || ' THEN delivered_in_month ELSE 0 END), ' ||
+		'sum(delivered_in_month), ' ||
 		'sum(anc1_received_at_delivery), ' ||
 		'sum(anc2_received_at_delivery), ' ||
 		'sum(anc3_received_at_delivery), ' ||
@@ -633,10 +634,11 @@ BEGIN
 		'sum(has_aadhar_id), ' ||
 		'5, '
 		'sum(valid_all_registered_in_month), ' ||
-		'sum(CASE WHEN add <= ' || quote_literal(_one_week_ago) || ' THEN institutional_delivery_in_month ELSE 0 END), ' ||
+		'sum(institutional_delivery_in_month), ' ||
 		'sum(lactating_all), ' ||
 		'sum(pregnant_all) ' ||
-		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
+		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' ' ||
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND (add IS NULL OR add <= ' || quote_literal(_one_week_ago) || ') ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
