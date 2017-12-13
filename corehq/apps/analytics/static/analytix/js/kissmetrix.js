@@ -16,9 +16,9 @@ hqDefine('analytix/js/kissmetrix', [
     'use strict';
     var _get = initialAnalytics.getFn('kissmetrics'),
         _global = initialAnalytics.getFn('global'),
-        logger = logging.getLoggerForApi('Kissmetrics'),
         _allAbTests = {},
-        _init = {};
+        _init = {},
+        logger;
 
     window.dataLayer = window.dataLayer || [];
 
@@ -56,6 +56,7 @@ hqDefine('analytix/js/kissmetrix', [
     };
 
     var __init__ = function () {
+        logger = logging.getLoggerForApi('Kissmetrics');
         _init.apiId = _get('apiId');
         logger.verbose.log(_init.apiId || "NONE SET", "API ID");
 

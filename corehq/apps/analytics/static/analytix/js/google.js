@@ -19,13 +19,14 @@ hqDefine('analytix/js/google', [
     'use strict';
     var _get = initialAnalytics.getFn('google'),
         _global = initialAnalytics.getFn('global'),
-        logger = logging.getLoggerForApi('Google Analytics'),
         _data = {},
         module = {},
-        _gtag = function () {};
+        _gtag = function () {},
+        logger;
 
     var __init__ = function () {
         _data.apiId = _get('apiId');
+        logger = logging.getLoggerForApi('Google Analytics'),
         logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
 
         if (_data.apiId) {
