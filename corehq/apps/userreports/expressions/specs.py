@@ -286,7 +286,7 @@ class RelatedDocExpressionSpec(JsonObject):
         return self._value_expression(doc, EvaluationContext(doc, 0))
 
     def __str__(self):
-        return "{}[{}].{}".format(self.related_doc_type,
+        return "{}[{}]/{}".format(self.related_doc_type,
                                   str(self._doc_id_expression),
                                   str(self._value_expression))
 
