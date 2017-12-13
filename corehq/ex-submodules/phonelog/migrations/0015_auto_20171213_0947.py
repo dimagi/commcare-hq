@@ -12,13 +12,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            "SELECT ",
-            "SELECT 1",
-            state_operations=migrations.AlterField(
-                model_name='devicereportentry',
-                name='id',
-                field=models.BigAutoField(primary_key=True, serialize=False)
-            )
-        ),
+        migrations.AlterField(
+            model_name='devicereportentry',
+            name='id',
+            field=models.BigAutoField(primary_key=True, serialize=False)
+        )
     ]
