@@ -184,6 +184,7 @@ class TestFormsExpressionSpecWithFilterEsVersion(TestFormsExpressionSpecWithFilt
     @classmethod
     def setUpClass(cls):
         super(TestFormsExpressionSpecWithFilterEsVersion, cls).setUpClass()
+        # enable toggle to 100%
         db_toggle = Toggle(slug=ICDS_UCR_ELASTICSEARCH_DOC_LOADING.slug)
         setattr(db_toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, 1)
         db_toggle.save()
