@@ -378,7 +378,7 @@ def _ensure_valid_namespaces(namespaces):
 
 
 def _ensure_valid_randomness(randomness):
-    if 0 <= randomness <= 1:
+    if not 0 <= randomness <= 1:
         raise Exception('randomness must be between 0 and 1!')
 
 
