@@ -87,6 +87,9 @@ def commit(db_name, table_name):
 
 
 class Command(BaseCommand):
+    """
+    Based on https://stackoverflow.com/a/33509181/10840
+    """
     help = 'Convert int ID column to bigint'
 
     def add_arguments(self, parser):
