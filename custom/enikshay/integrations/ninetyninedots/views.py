@@ -19,6 +19,8 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 )
 import six
 
+from custom.enikshay.utils import update_ledger_for_adherence
+
 
 class RegisterPatientRepeaterView(AddCaseRepeaterView):
     urlname = 'register_99dots_patient'
@@ -62,7 +64,7 @@ def update_patient_adherence(request, domain):
     try:
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
-        factory.create_adherence_cases(adherence_values)
+        adherence_cases = factory.create_adherence_cases(adherence_values)
     except AdherenceException as e:
         return json_response({"error": six.text_type(e)}, status_code=400)
 
@@ -72,6 +74,16 @@ def update_patient_adherence(request, domain):
         notify_exception(
             request,
             message=("An error occurred updating the episode case after receiving a 99DOTS"
+                     "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
+
+    try:
+        for adherence_case in adherence_cases:
+            if adherence_case.get_case_property('adherence_date'):
+                update_ledger_for_adherence(adherence_case, factory._episode_case)
+    except Exception as e:
+        notify_exception(
+            request,
+            message=("An error occurred updating the ledgers after receiving a 99DOTS"
                      "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
 
     return json_response({"success": "Patient adherences updated."})
