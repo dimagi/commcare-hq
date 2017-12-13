@@ -6,6 +6,7 @@ import jsonobject
 import phonenumbers
 import yaml
 
+from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     CASE_TYPE_PERSON,
@@ -26,7 +27,8 @@ from custom.enikshay.integrations.ninetyninedots.const import (
     MERM_REFILL_REMINDER_TIME,
     MERM_RT_HOURS,
 )
-from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
+from custom.enikshay.integrations.ninetyninedots.exceptions import \
+    NinetyNineDotsException
 from dimagi.ext.jsonobject import StrictJsonObject
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.modules import to_function
@@ -242,6 +244,16 @@ def _format_number(phonenumber):
 
 def noop(*args, **kwargs):
     return None
+
+
+def location_name_getter(case_properties, props_to_check):
+    if len(props_to_check) > 1:
+        raise AttributeError("This getter only accepts a single case property")
+    try:
+        location = SQLLocation.active_objects.get(location_id=case_properties.get(props_to_check[0]))
+        return location.name
+    except SQLLocation.DoesNotExist:
+        return None
 
 
 class MermParams(StrictJsonObject):

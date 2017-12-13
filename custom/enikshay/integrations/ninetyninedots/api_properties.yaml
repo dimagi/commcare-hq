@@ -563,3 +563,27 @@ api_params:
       - not_evaluated
       - traceless
       - other
+- api_param_name: fo_name
+  direction: 1
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.location_name_getter
+  case_type:
+    private: person
+  case_properties:
+    private:
+      - fo
+- api_param_name: treating_hospital_name
+  direction: 1
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.location_name_getter
+  case_type:
+    private: person
+  case_properties:
+    private:
+      - treating_hospital_name
+- api_param_name: facility_assigned_to_name
+  direction: 1
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.location_name_getter
+  case_type:
+    private: person
+  case_properties:
+    private:
+      - facility_assigned_to_name
