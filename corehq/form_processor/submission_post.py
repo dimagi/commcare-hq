@@ -167,6 +167,7 @@ class SubmissionPost(object):
 
             with case_db_cache as case_db:
                 instance = xforms[0]
+                # ignore temporarily till we migrate DeviceReportEntry id to bigint
                 ignore_device_logs = settings.SERVER_ENVIRONMENT == 'icds'
                 if not ignore_device_logs and instance.xmlns == DEVICE_LOG_XMLNS:
                     submission_type = 'device_log'
