@@ -134,7 +134,7 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
         fake_request = self._get_fake_request()
 
         fake_request['private_only'] = 'so private'
-        with self.assertRaises(NinetyNineDotsException) as e:
+        with self.assertRaises(NinetyNineDotsException):
             PatientDetailsUpdater(self.domain, fake_request).update_cases()
 
     def test_merm_params(self):
