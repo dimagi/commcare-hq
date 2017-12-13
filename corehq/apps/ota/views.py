@@ -23,9 +23,9 @@ from corehq.apps.app_manager.util import get_app, LatestAppInfo
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
-    login_or_digest_or_basic_or_apikey,
+    api_auth,
     check_domain_migration,
-    login_or_digest_or_basic_or_apikey_or_token,
+    mobile_auth_or_token,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
@@ -43,7 +43,7 @@ from corehq.apps.users.util import update_device_meta, update_latest_builds, upd
 
 @location_safe
 @handle_401_response
-@login_or_digest_or_basic_or_apikey_or_token(default=BASIC)
+@mobile_auth_or_token
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
@@ -56,7 +56,7 @@ def restore(request, domain, app_id=None):
 
 
 @location_safe
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @check_domain_migration
 def search(request, domain):
     """
@@ -104,7 +104,7 @@ def _handle_es_exception(request, exception, query_addition_debug_details):
 @location_safe
 @csrf_exempt
 @require_POST
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @check_domain_migration
 def claim(request, domain):
     """
@@ -238,7 +238,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     return restore_config.get_response(), restore_config.timing_context
 
 
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_GET
 def heartbeat(request, domain, app_build_id):
     """
@@ -314,7 +314,7 @@ def heartbeat(request, domain, app_build_id):
 
 
 @location_safe
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_GET
 def get_next_id(request, domain):
     bucket_id = request.GET.get('pool_id')
