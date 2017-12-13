@@ -6,6 +6,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.models import LedgerValue
+from custom.enikshay.case_utils import get_episode_case_from_adherence
 
 
 def get_episode_adherence_ledger(domain, episode_case_id, entry_id):
@@ -25,28 +26,42 @@ def update_ledger_with_episode(episode_case, adherence_case, entry_id):
     """
     adherence_source = adherence_case.get_case_property('adherence_source')
     adherence_value = adherence_case.get_case_property('adherence_value')
-    fixture = FixtureDataType.by_domain_tag(adherence_case.domain, "adherence_ledger_values").first()
-    fixture_items_for_source = FixtureDataItem.by_field_value(
-        adherence_case.domain, fixture,
-        "adherence_source", adherence_source).all()
-    fixture_items_for_value = [
-        fixture_item for fixture_item in fixture_items_for_source
-        if fixture_item.fields['adherence_value'].field_list[0].field_value == adherence_value
-    ]
-    fixture_item = fixture_items_for_value[0]
-    ledger_value = fixture_item.fields['ledger_value'].field_list[0].field_value
-    ledger = get_episode_adherence_ledger(episode_case.domain, episode_case.case_id, entry_id)
-    if ledger:
-        ledger.balance = ledger_value
-        ledger.save()
-    else:
-        ledger = LedgerValue(
-            domain=adherence_case.domain,
-            case_id=episode_case.case_id,
-            section_id="adherence",
-            entry_id=entry_id,
-            balance=ledger_value,
-            last_modified=datetime.utcnow()
-        )
-    LedgerAccessorSQL.save_ledger_values([ledger])
-    return ledger
+    if adherence_source and adherence_value:
+        fixture = FixtureDataType.by_domain_tag(adherence_case.domain, "adherence_ledger_values").first()
+        if fixture:
+            fixture_items_for_source = FixtureDataItem.by_field_value(
+                adherence_case.domain, fixture,
+                "adherence_source", adherence_source).all()
+            if fixture_items_for_source:
+                fixture_items_for_value = [
+                    fixture_item for fixture_item in fixture_items_for_source
+                    if fixture_item.fields['adherence_value'].field_list[0].field_value == adherence_value
+                ]
+                if fixture_items_for_value:
+                    fixture_item = fixture_items_for_source[0]
+                    ledger_value = fixture_item.fields['ledger_value'].field_list[0].field_value
+                    ledger = get_episode_adherence_ledger(episode_case.domain, episode_case.case_id, entry_id)
+                    if ledger:
+                        ledger.balance = ledger_value
+                        ledger.save()
+                    else:
+                        ledger = LedgerValue(
+                            domain=adherence_case.domain,
+                            case_id=episode_case.case_id,
+                            section_id="adherence",
+                            entry_id=entry_id,
+                            balance=ledger_value,
+                            last_modified=datetime.utcnow()
+                        )
+                    LedgerAccessorSQL.save_ledger_values([ledger])
+                    return ledger
+
+
+def update_ledger_for_adherence(adherence_case, episode_case=None):
+    if not episode_case:
+        episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
+
+    adherence_date = adherence_case.get_case_property('adherence_date')
+    if adherence_date:
+        entry_id = "date_%s" % adherence_date
+        update_ledger_with_episode(episode_case, adherence_case, entry_id)
