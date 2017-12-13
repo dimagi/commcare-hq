@@ -36,6 +36,7 @@ from corehq.messaging.scheduling.models import (
     TimedSchedule,
     TimedEvent,
     RandomTimedEvent,
+    CasePropertyTimedEvent,
     ImmediateBroadcast,
     ScheduledBroadcast,
     SMSContent,
@@ -249,9 +250,7 @@ class ScheduleForm(Form):
         initial['send_frequency'] = self.SEND_MONTHLY
         initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
 
-    def add_initial_for_timed_schedule(self, initial):
-        initial['send_time_type'] = self.initial_schedule.event_type
-
+    def add_initial_for_send_time(self, initial):
         if self.initial_schedule.event_type == TimedSchedule.EVENT_SPECIFIC_TIME:
             initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
         elif self.initial_schedule.event_type == TimedSchedule.EVENT_RANDOM_TIME:
@@ -259,6 +258,11 @@ class ScheduleForm(Form):
             initial['window_length'] = self.initial_schedule.memoized_events[0].window_length
         else:
             raise ValueError("Unexpected event_type: %s" % self.initial_schedule.event_type)
+
+    def add_initial_for_timed_schedule(self, initial):
+        initial['send_time_type'] = self.initial_schedule.event_type
+
+        self.add_initial_for_send_time(initial)
 
         if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
             initial['stop_type'] = self.STOP_NEVER
@@ -385,8 +389,11 @@ class ScheduleForm(Form):
             ),
         ]
 
-    def get_timing_layout_fields(self):
+    def get_start_date_layout_fields(self):
         raise NotImplementedError()
+
+    def get_extra_timing_fields(self):
+        return []
 
     def get_scheduling_layout_fields(self):
         result = [
@@ -426,7 +433,8 @@ class ScheduleForm(Form):
                     data_bind=("visible: send_time_type() === '%s' || send_time_type() === '%s'"
                                % (TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME)),
                 ),
-                data_bind="visible: showTimeInput",
+                *self.get_extra_timing_fields(),
+                data_bind="visible: showTimeInput"
             ),
             hqcrispy.B3MultiField(
                 _("Random Window Length (minutes)"),
@@ -438,7 +446,7 @@ class ScheduleForm(Form):
             ),
         ]
 
-        result.extend(self.get_timing_layout_fields())
+        result.extend(self.get_start_date_layout_fields())
 
         result.extend([
             hqcrispy.B3MultiField(
@@ -1021,7 +1029,7 @@ class BroadcastForm(ScheduleForm):
         )
         return result
 
-    def get_timing_layout_fields(self):
+    def get_start_date_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
                 _("Start"),
@@ -1190,6 +1198,11 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
+    send_time_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
     def __init__(self, domain, schedule, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
@@ -1197,6 +1210,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.initial_rule:
             self.set_read_only_fields_during_editing()
         self.update_recipient_types_choices()
+        self.update_send_time_type_choices()
+
+    def get_extra_timing_fields(self):
+        return [
+            crispy.Div(
+                twbscrispy.InlineField('send_time_case_property_name'),
+                data_bind="visible: send_time_type() === '%s'" % TimedSchedule.EVENT_CASE_PROPERTY_TIME,
+                css_class='col-sm-6',
+            ),
+        ]
 
     @property
     def scheduling_fieldset_legend(self):
@@ -1220,6 +1243,11 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def requires_system_admin_to_save(self):
         return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types']
 
+    def update_send_time_type_choices(self):
+        self.fields['send_time_type'].choices += [
+            (TimedSchedule.EVENT_CASE_PROPERTY_TIME, _("The time from case property:")),
+        ]
+
     def update_recipient_types_choices(self):
         new_choices = [
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, _("The Case")),
@@ -1236,6 +1264,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             ])
 
         self.fields['recipient_types'].choices = new_choices
+
+    def add_initial_for_send_time(self, initial):
+        if self.initial_schedule.event_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
+            initial['send_time_case_property_name'] = \
+                self.initial_schedule.memoized_events[0].case_property_name
+        else:
+            super(ConditionalAlertScheduleForm, self).add_initial_for_send_time(initial)
 
     def add_initial_recipients(self, recipients, initial):
         super(ConditionalAlertScheduleForm, self).add_initial_recipients(recipients, initial)
@@ -1278,7 +1313,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return result
 
-    def get_timing_layout_fields(self):
+    def get_start_date_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
                 _("Start Date"),
@@ -1449,6 +1484,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             allow_parent_case_references=False,
         )
 
+    def clean_send_time_case_property_name(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_CASE_PROPERTY_TIME
+        ):
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('send_time_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1491,6 +1538,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
 
         return result
+
+    def distill_model_timed_event(self):
+        event_type = self.cleaned_data['send_time_type']
+        if event_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
+            return CasePropertyTimedEvent(
+                case_property_name=self.cleaned_data['send_time_case_property_name'],
+            )
+
+        return super(ConditionalAlertScheduleForm, self).distill_model_timed_event()
 
     def create_rule_action(self, rule, schedule):
         fields = {

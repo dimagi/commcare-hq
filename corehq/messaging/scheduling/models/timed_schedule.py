@@ -3,11 +3,13 @@ import calendar
 import hashlib
 import json
 import random
+import re
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
 from corehq.util.timezones.conversions import UserTime
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime, date, time
+from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 
@@ -27,6 +29,7 @@ class TimedSchedule(Schedule):
 
     EVENT_SPECIFIC_TIME = 'SPECIFIC_TIME'
     EVENT_RANDOM_TIME = 'RANDOM_TIME'
+    EVENT_CASE_PROPERTY_TIME = 'CASE_PROPERTY_TIME'
 
     schedule_length = models.IntegerField()
     total_iterations = models.IntegerField()
@@ -65,6 +68,8 @@ class TimedSchedule(Schedule):
             return self.timedevent_set
         elif self.event_type == self.EVENT_RANDOM_TIME:
             return self.randomtimedevent_set
+        elif self.event_type == self.EVENT_CASE_PROPERTY_TIME:
+            return self.casepropertytimedevent_set
         else:
             raise ValueError("Unexpected value for event_type: %s" % self.event_type)
 
@@ -207,6 +212,8 @@ class TimedSchedule(Schedule):
             return self.EVENT_SPECIFIC_TIME
         elif isinstance(model_event, RandomTimedEvent):
             return self.EVENT_RANDOM_TIME
+        elif isinstance(model_event, CasePropertyTimedEvent):
+            return self.EVENT_CASE_PROPERTY_TIME
         else:
             raise TypeError("Unexpected type: %s" % type(model_event))
 
@@ -221,6 +228,11 @@ class TimedSchedule(Schedule):
                 schedule=self,
                 time=model_event.time,
                 window_length=model_event.window_length,
+            )
+        elif isinstance(model_event, CasePropertyTimedEvent):
+            return CasePropertyTimedEvent(
+                schedule=self,
+                case_property_name=model_event.case_property_name,
             )
         else:
             raise TypeError("Unexpected type: %s" % type(model_event))
@@ -414,6 +426,40 @@ class RandomTimedEvent(AbstractTimedEvent):
 
     def get_scheduling_info(self, case=None):
         return [self.day, self.time.strftime('%H:%M:%S'), 'random-window-length-%s' % self.window_length]
+
+
+class CasePropertyTimedEvent(AbstractTimedEvent):
+    """
+    A CasePropertyTimedEvent defines the time at which to send the
+    content based on the value in a case property.
+    """
+    case_property_name = models.CharField(max_length=126)
+
+    def get_time(self, case=None):
+        if not case:
+            raise ValueError("Expected a case")
+
+        default_time = time(12, 0)
+        event_time = case.dynamic_case_properties().get(self.case_property_name, '').strip()
+
+        if not re.match('^\d?\d:\d\d', event_time):
+            event_time = default_time
+        else:
+            try:
+                event_time = parse(event_time).time()
+            except ValueError:
+                event_time = default_time
+
+        return event_time, 0
+
+    def get_scheduling_info(self, case=None):
+        """
+        Include the actual scheduled time (not just the case property name) in
+        the scheduling info. This makes the actual time become part of the
+        schedule revision so that the framework is responsive to changes
+        in the case property's value.
+        """
+        return [self.day, self.get_time(case=case)[0].strftime('%H:%M:%S')]
 
 
 class ScheduledBroadcast(Broadcast):
