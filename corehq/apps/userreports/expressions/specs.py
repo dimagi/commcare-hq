@@ -244,7 +244,7 @@ class RootDocExpressionSpec(JsonObject):
         return self._expression_fn(context.root_doc, context)
 
     def __str__(self):
-        return "root_doc({expression})".format(expression=str(self._expression_fn))
+        return "doc/{expression}".format(expression=str(self._expression_fn))
 
 
 class RelatedDocExpressionSpec(JsonObject):
