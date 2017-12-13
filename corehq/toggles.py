@@ -228,8 +228,8 @@ class PredictablyRandomToggle(StaticToggle):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description,
                                                       always_disabled=always_disabled)
-        assert namespaces, 'namespaces must be defined!'
-        assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(randomness)
         self.randomness = randomness
 
     @property
@@ -286,8 +286,8 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description,
                                                       always_disabled=always_disabled)
-        assert namespaces, 'namespaces must be defined!'
-        assert 0 <= default_randomness <= 1, 'default randomness must be between 0 and 1!'
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(default_randomness)
         self.default_randomness = default_randomness
 
     @property
@@ -370,6 +370,16 @@ def toggle_values_by_name(username=None, domain=None):
     return {toggle_name: (toggle.enabled(username, NAMESPACE_USER) or
                           toggle.enabled(domain, NAMESPACE_DOMAIN))
             for toggle_name, toggle in all_toggles_by_name().items()}
+
+
+def _ensure_valid_namespaces(namespaces):
+    if not namespaces:
+        raise Exception('namespaces must be defined!')
+
+
+def _ensure_valid_randomness(randomness):
+    if 0 <= randomness <= 1:
+        raise Exception('randomness must be between 0 and 1!')
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
