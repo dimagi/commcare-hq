@@ -68,7 +68,7 @@ AMOUNT_APPROVED = "amount_approved"
 INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
-HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD = ['pcp', 'pac', 'pcc', 'plc']
+HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD = ['pcp', 'plc']
 HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX = r'^HE_ID: (\d*)$'
 
 DEFAULT_MOBILE_WORKER_ROLE = "Default Mobile Worker"
