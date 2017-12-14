@@ -9,6 +9,7 @@ import tempfile
 import zipfile
 from datetime import datetime
 
+import multiprocessing
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
@@ -31,6 +32,13 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('export_id')
         parser.add_argument('-d', '--download_path', help="Path to download export to.")
+        parser.add_argument(
+            '--processes',
+            type=int,
+            dest='processes',
+            default=multiprocessing.cpu_count() - 1,
+            help='Number of parallel processes to run.'
+        )
 
     def handle(self, export_id, **options):
         export_instance = get_properly_wrapped_export_instance(export_id)
@@ -52,7 +60,7 @@ class Command(BaseCommand):
             filters.append(NOT(TermFilter('_id', last_form_id)))
         total_docs = get_export_size(export_instance, filters)
         exporter = MultiprocessExporter(
-            export_instance, total_docs, 1,
+            export_instance, total_docs, options['processes'],
             existing_archive_path=options['download_path'], keep_file=True
         )
         paginator = OutputPaginator(export_id, last_page_number + 1)
