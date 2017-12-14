@@ -119,13 +119,13 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
                     {'indicator': 'Total Children with height measured in given month:', 'value': measured_total},
                     {'indicator': '% Unmeasured:', 'value': '%.2f%%' % percent_unmeasured},
                     {'indicator': '% Severely stunted:', 'value': '%.2f%%' % (
-                        severe_total * 100 / float(valid_total)
+                        severe_total * 100 / float(valid_total or 1)
                     )},
                     {'indicator': '% Moderately stunted:', 'value': '%.2f%%' % (
-                        moderate_total * 100 / float(valid_total)
+                        moderate_total * 100 / float(valid_total or 1)
                     )},
                     {'indicator': '% Normal:', 'value': '%.2f%%' % (
-                        normal_total * 100 / float(valid_total)
+                        normal_total * 100 / float(valid_total or 1)
                     )}
                 ]
             },

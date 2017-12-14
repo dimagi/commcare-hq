@@ -80,7 +80,7 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
                         'value': in_month_total
                     },
                     {
-                        'indicator': '% children (0-6 months) exclusively in_month_total in the given month:',
+                        'indicator': '% children (0-6 months) exclusively breastfed in the given month:',
                         'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
                     }
                 ]

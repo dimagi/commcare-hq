@@ -280,7 +280,6 @@ class ProgramSummaryView(View):
 
         domain = self.kwargs['domain']
 
-        yesterday = (now - relativedelta(days=1)).date()
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
 
@@ -299,14 +298,14 @@ class ProgramSummaryView(View):
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
                 domain,
-                tuple(yesterday.timetuple())[:3],
+                tuple(now.date().timetuple())[:3],
                 config,
                 include_test
             )
         elif step == 'demographics':
             data = get_demographics_data(
                 domain,
-                tuple(yesterday.timetuple())[:3],
+                tuple(now.date().timetuple())[:3],
                 config,
                 include_test
             )
@@ -518,6 +517,7 @@ class AwcReportsView(View):
             data = get_awc_report_demographics(
                 domain,
                 config,
+                tuple(now.date().timetuple())[:3],
                 tuple(month.timetuple())[:3],
                 include_test
             )
