@@ -34,9 +34,15 @@ class Command(BaseCommand):
     help = """
     Finds cases with duplicate IDs and marks all but one of each ID as a duplicate
     """
-    # TODO what are the headers we need?
-    logfile_fields = ['name', 'dto_name', 'phi_name', 'owner_id', 'dob',
-                      'phone_number', 'enrolled_in_private']
+    logfile_fields = [
+        # person-case properties always logged
+        'person_case_id', 'person_name', 'dto_name', 'phi_name', 'owner_id',
+        'dob', 'phone_number', 'enrolled_in_private',
+        # case-specific properties that may be updated
+        'case_id', 'name', 'person_id', 'person_id_flat',
+        'person_id_deprecated', 'person_id_flat_deprecated',
+        'person_id_at_request', 'person_id_flat_at_request',
+    ]
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -56,20 +62,27 @@ class Command(BaseCommand):
                                       datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S'))
         print("Logging actions to {}".format(filename))
         with open(filename, 'w') as f:
-            self.logfile = csv.DictWriter(f, self.logfile_fields, extrasaction='ignore')
-            self.logfile.writeheader()
+            logfile = csv.DictWriter(f, self.logfile_fields, extrasaction='ignore')
+            logfile.writeheader()
 
             print("Finding duplicates")
             bad_cases = get_cases_with_duplicate_ids(self.domain, CASE_TYPE_PERSON)
 
             print("Processing duplicate cases")
             for person_case in with_progress_bar(bad_cases):
-                self.log_person_case_info(person_case)
                 if person_case.get_case_property('enrolled_in_private') = 'true':
-                    updates = self.get_private_updates(person_case)
+                    updates = list(filter(None, self.get_private_updates(person_case)))
                 else:
-                    updates = self.get_public_updates(person_case)
-                bulk_update_cases(self.domain, updates, self.__module__)
+                    updates = list(filter(None, self.get_public_updates(person_case)))
+
+                person_info = self.get_person_case_info(person_case)
+                for update in updates:
+                    log = {k: v for d in [person_info, update] for k, v in d.items()}
+                    log['case_id'] = update[0]
+                    logfile.writerow()
+
+                if commit:
+                    bulk_update_cases(self.domain, updates, self.__module__)
 
     @property
     @memoized
@@ -79,19 +92,19 @@ class Command(BaseCommand):
             (loc.location_id, loc.loc_name) for loc in locs
         ))
 
-    def log_person_case_info(self, person_case):
+    def get_person_case_info(self, person_case):
         """Pull info that we want to log but not update"""
         person = person_case.dynamic_case_properties()
-        self.logfile.writerow({
+        return {
             'person_case_id': person_case.case_id,
-            'name': ' '.join(filter(None, [person.get('first_name'), person.get('last_name')])),
+            'person_name': ' '.join(filter(None, [person.get('first_name'), person.get('last_name')])),
             'enrolled_in_private': person.get('enrolled_in_private'),
             'dto_name': self.districts_by_id(person.get('current_address_district_choice')),
             'phi_name': person.get('phi'),
             'owner_id': person_case.owner_id,
             'dob': person.get('dob'),
             'phone_number': person.get('contact_phone_number'),
-        })
+        }
 
     def get_public_updates(self, person_case):
         """ Get updates for a public sector person case and a bunch of its children
