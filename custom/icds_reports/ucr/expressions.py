@@ -417,55 +417,36 @@ def get_case_forms_by_date(spec, context):
     else:
         case_id_expression = spec['case_id_expression']
 
-    get_case_forms_expression = {
+    items_expression = {
         "type": "icds_get_case_forms_in_date",
         "case_id_expression": case_id_expression
     }
-    filters = []
     if spec['start_date'] is not None:
-        get_case_forms_expression['from_date_expression'] = spec['start_date']
+        items_expression['from_date_expression'] = spec['start_date']
     if spec['end_date'] is not None:
-        get_case_forms_expression['to_date_expression'] = spec['end_date']
+        items_expression['to_date_expression'] = spec['end_date']
     if spec['xmlns']:
-        get_case_forms_expression['xmlns'] = spec['xmlns']
+        items_expression['xmlns'] = spec['xmlns']
     if spec['form_filter'] is not None:
-        filters.append(spec['form_filter'])
+        items_expression = {
+            "type": "filter_items",
+            "filter_expression": spec['form_filter'],
+            "items_expression": items_expression
+        }
 
-    if len(filters) > 0:
-        spec = {
-            "type": "sort_items",
-            "sort_expression": {
-                "type": "property_path",
-                "property_path": [
-                    "form",
-                    "meta",
-                    "timeEnd"
-                ],
-                "datatype": "date"
-            },
-            "items_expression": {
-                "filter_expression": {
-                    "type": "and",
-                    "filters": filters
-                },
-                "type": "filter_items",
-                "items_expression": get_case_forms_expression
-            }
-        }
-    else:
-        spec = {
-            "type": "sort_items",
-            "sort_expression": {
-                "type": "property_path",
-                "property_path": [
-                    "form",
-                    "meta",
-                    "timeEnd"
-                ],
-                "datatype": "date"
-            },
-            "items_expression": get_case_forms_expression
-        }
+    spec = {
+        "type": "sort_items",
+        "sort_expression": {
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+            ],
+            "datatype": "date"
+        },
+        "items_expression": items_expression
+    }
     return ExpressionFactory.from_spec(spec, context)
 
 
