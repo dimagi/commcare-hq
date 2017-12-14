@@ -509,6 +509,22 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
         else:
             return NOT_AVAILABLE_VALUE
 
+    @staticmethod
+    def _get_mobile_number(location_user_data):
+        contact_phone_number = location_user_data.get('contact_phone_number')
+        if contact_phone_number:
+            # reject any isd codes entered like 919876543210 so pick last 10 digits only
+            return contact_phone_number.strip()[-10:]
+        return DUMMY_VALUES['phone_number']
+
+    @staticmethod
+    def _get_telephone_number(location_user_data):
+        landline_no = location_user_data.get('landline_no')
+        if landline_no:
+            # reject any isd codes entered like 02223777800 so pick last 10 digits only
+            return landline_no.strip()[-10:]
+        return DUMMY_VALUES['phone_number']
+
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
         location_user = get_location_user_for_notification(location)
@@ -520,8 +536,8 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             'MCI_HR_NO': (location_user_data.get('registration_number') or DUMMY_VALUES['registration_number']),
             'CONTACT_PNAME': location_user.full_name,
             'CONTACT_PDESIGNATION': (location_user_data.get('pcp_qualification') or NOT_AVAILABLE_VALUE),
-            'TELEPHONE_NO': (location_user_data.get('landline_no') or DUMMY_VALUES['phone_number']),
-            'MOBILE_NO': (location_user_data.get('contact_phone_number') or DUMMY_VALUES['phone_number']),
+            'TELEPHONE_NO': self._get_telephone_number(location_user_data),
+            'MOBILE_NO': self._get_mobile_number(location_user_data),
             'COMPLETE_ADDRESS': self._get_address(location_user_data),
             'PINCODE': (location_user_data.get('pincode') or DUMMY_VALUES['pincode']),
             'EMAILID': (location_user_data.get('email') or DUMMY_VALUES['email']),
