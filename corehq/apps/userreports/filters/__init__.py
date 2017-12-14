@@ -103,7 +103,7 @@ class NamedFilter(Filter):
         self.filter = filter
 
     def __call__(self, item, context=None):
-        return filter(item, context)
+        return self.filter(item, context)
 
     def __str__(self):
         return "NamedF:{}".format(self.filter_name)
