@@ -121,14 +121,16 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                     "of insufficient food intake or a high incidence of infectious diseases. Severe Acute "
                     "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
                     "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
-                    "status for a child that has moderate wasting (weight-for-height) below -2Z.".format(age_label)
+                    "status for a child that has moderate wasting (weight-for-height) below -2Z."
+                    .format(age_label)
                 )),
                 "extended_info": [
                     {
                         'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
                         'value': valid_total},
                     {
-                        'indicator': 'Total Children{} with height measured in given month:'.format(chosen_filters),
+                        'indicator': 'Total Children{} with height measured in given month:'
+                        .format(chosen_filters),
                         'value': measured_total},
                     {
                         'indicator': '% Unmeasured{}:'.format(chosen_filters),

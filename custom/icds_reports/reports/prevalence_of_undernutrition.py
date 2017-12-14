@@ -135,7 +135,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                     {
                         'indicator': '% Moderately Underweight{}:'.format(chosen_filters),
                         'value': '%.2f%%' % (moderately_underweight_total * 100 / float(valid_total or 1))
-                     },
+                    },
                     {
                         'indicator': '% Normal{}:'.format(chosen_filters),
                         'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))

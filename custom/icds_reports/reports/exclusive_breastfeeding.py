@@ -72,7 +72,8 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
                 )),
                 "extended_info": [
                     {
-                        'indicator': 'Total number of children between ages 0 - 6 months{}:'.format(chosen_filters),
+                        'indicator': 'Total number of children between ages 0 - 6 months{}:'
+                        .format(chosen_filters),
                         'value': valid_total
                     },
                     {

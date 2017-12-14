@@ -81,8 +81,8 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                         'value': valid_total},
                     {
                         'indicator': (
-                            'Total number of children who have recieved complete immunizations required by age 1{}:'
-                            .format(chosen_filters)
+                            'Total number of children who have recieved complete immunizations required '
+                            'by age 1{}:'.format(chosen_filters)
                         ),
                         'value': in_month_total
                     },
