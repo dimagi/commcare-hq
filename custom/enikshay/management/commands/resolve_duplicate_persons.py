@@ -18,10 +18,12 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_INVESTIGATION,
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
+    CASE_TYPE_PRESCRIPTION,
     CASE_TYPE_REFERRAL,
     CASE_TYPE_SECONDARY_OWNER,
     CASE_TYPE_TEST,
     CASE_TYPE_TRAIL,
+    CASE_TYPE_VOUCHER,
     get_all_occurrence_cases_from_person,
 )
 from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, get_new_readable_id
@@ -33,7 +35,8 @@ class Command(BaseCommand):
     Finds cases with duplicate IDs and marks all but one of each ID as a duplicate
     """
     # TODO what are the headers we need?
-    logfile_fields = ['name', 'dto_name', 'phi_name', 'owner_id', 'dob', 'phone_number']
+    logfile_fields = ['name', 'dto_name', 'phi_name', 'owner_id', 'dob',
+                      'phone_number', 'enrolled_in_private']
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -62,7 +65,10 @@ class Command(BaseCommand):
             print("Processing duplicate cases")
             for person_case in with_progress_bar(bad_cases):
                 self.log_person_case_info(person_case)
-                updates = self.get_updates(person_case)
+                if person_case.get_case_property('enrolled_in_private') = 'true':
+                    updates = self.get_private_updates(person_case)
+                else:
+                    updates = self.get_public_updates(person_case)
                 bulk_update_cases(self.domain, updates, self.__module__)
 
     @property
@@ -79,6 +85,7 @@ class Command(BaseCommand):
         self.logfile.writerow({
             'person_case_id': person_case.case_id,
             'name': ' '.join(filter(None, [person.get('first_name'), person.get('last_name')])),
+            'enrolled_in_private': person.get('enrolled_in_private'),
             'dto_name': self.districts_by_id(person.get('current_address_district_choice')),
             'phi_name': person.get('phi'),
             'owner_id': person_case.owner_id,
@@ -86,12 +93,8 @@ class Command(BaseCommand):
             'phone_number': person.get('contact_phone_number'),
         })
 
-    def get_reverse_indexed(self, case, case_type):
-        all_cases = self.accessor.get_reverse_indexed_cases([case.case_id])
-        return [case for case in all_cases if case.type == case_type]
-
-    def get_updates(self, person_case):
-        """ Get updates for a person case and a bunch of its children
+    def get_public_updates(self, person_case):
+        """ Get updates for a public sector person case and a bunch of its children
         https://docs.google.com/document/d/1NS5ozgk7w-2AADsrdTtjgqODkgWIEaCw6eqQ0cLg138/edit#
         """
         old_id = person_case.get_case_property('person_id')
@@ -129,6 +132,25 @@ class Command(BaseCommand):
                             if investigation_case.type == CASE_TYPE_INVESTIGATION:
                                 yield get_name_update(investigation_case, old_id, new_id)
 
+    def get_private_updates(self, person_case):
+        """ Get updates for a private sector person case and a bunch of its children
+        https://docs.google.com/document/d/1NS5ozgk7w-2AADsrdTtjgqODkgWIEaCw6eqQ0cLg138/edit#
+        """
+        old_id = person_case.get_case_property('person_id')
+        new_id = get_new_readable_id()  # TODO
+        yield get_case_update(person_case, {
+            'person_id_deprecated': old_id,
+            'person_id_flat_deprecated': person_case.get_case_property('person_id_flat'),
+            'person_id': new_id,
+            'person_id_flat': new_id.replace('-', ''),
+        })
+
+        for voucher_case in get_all_vouchers_from_person(self.domain, person_case):
+            yield get_case_update(voucher_case, {
+                'person_id': new_id,
+                'person_id_flat': new_id.replace('-', ''),
+            })
+
 
 def get_case_update(case, update):
     # check that this is actually an update, else return None
@@ -139,3 +161,21 @@ def get_case_update(case, update):
 def get_name_update(case, old_id, new_id):
     new_name = case.get_case_property('name').replace(old_id, new_id)
     return get_case_update(case, {'name': new_name})
+
+
+def get_all_vouchers_from_person(person_case):
+    """Returns all voucher cases under tests or prescriptions"""
+    accessor = CaseAccessors(domain)
+    for occurrence_case in accessor.get_reverse_indexed_cases([person_case.case_id]):
+        if occurrence_case.type == CASE_TYPE_OCCURRENCE:
+            for case in accessor.get_reverse_indexed_cases([occurrence_case.case_id]):
+                if case.type == CASE_TYPE_TEST:
+                    for voucher_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if voucher_case.type == CASE_TYPE_VOUCHER:
+                            yield voucher_case
+                if case.type == CASE_TYPE_EPISODE:
+                    for prescription_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if prescription_case.type == CASE_TYPE_PRESCRIPTION:
+                            for voucher_case in accessor.get_reverse_indexed_cases([prescription_case.case_id]):
+                                if voucher_case.type == CASE_TYPE_VOUCHER:
+                                    yield voucher_case
