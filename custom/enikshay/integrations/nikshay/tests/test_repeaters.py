@@ -1460,8 +1460,8 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         location_user.user_data.update({
             'usertype': self.pcp.location_type.code,
             'email': "test_user@enikshay.com",
-            'landline_no': "9898989898",
-            'contact_phone_number': "8888999988",
+            'landline_no': "09898989898",
+            'contact_phone_number': "918888999988",
             'address_line_1': "Address line 1",
             'address_line_2': "Address line 2",
             'pincode': "110088",
