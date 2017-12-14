@@ -1584,6 +1584,9 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         location_user.is_active = True
         location_user.user_location_id = self.pcp.location_id
         location_user.set_location(self.pcp, commit=False)
+        location_user.user_data.update({
+            'usertype': self.pcp.location_type.code,
+        })
         location_user.save()
         self.pcp.metadata['nikshay_code'] = ''
         # save with no nikshay code to add a repeat record
