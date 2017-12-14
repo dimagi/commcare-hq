@@ -57,7 +57,8 @@ def _build_boolean_expression_filter(spec, context):
 
 def _build_named_filter(spec, context):
     wrapped = NamedFilterSpec.wrap(spec)
-    return NamedFilter(wrapped.name)
+    filter = context.named_filters[wrapped.name]
+    return NamedFilter(wrapped.name, filter)
 
 
 class FilterFactory(object):

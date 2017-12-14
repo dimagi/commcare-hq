@@ -98,11 +98,12 @@ class SinglePropertyValueFilter(Filter):
 
 
 class NamedFilter(Filter):
-    def __init__(self, filter_name):
+    def __init__(self, filter_name, filter):
         self.filter_name = filter_name
+        self.filter = filter
 
     def __call__(self, item, context=None):
-        return context.named_filters[self.filter_name](item, context)
+        return filter(item, context)
 
     def __str__(self):
         return "NamedF:{}".format(self.filter_name)
