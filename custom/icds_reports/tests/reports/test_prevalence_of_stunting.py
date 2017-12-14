@@ -22,7 +22,7 @@ class TestPrevalenceOfStunting(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of children (6-60 months) enrolled for ICDS services with "
+                    "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "
                             "height-for-age below -2Z standard deviations of "
                             "the WHO Child Growth Standards median.<br/><br/>Stunting "
                             "is a sign of chronic undernutrition and has long "
@@ -82,7 +82,7 @@ class TestPrevalenceOfStunting(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Percentage of children (6-60 months) enrolled for ICDS services with "
+                    "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "
                             "height-for-age below -2Z standard deviations of "
                             "the WHO Child Growth Standards median.<br/><br/>Stunting "
                             "is a sign of chronic undernutrition and has long "
