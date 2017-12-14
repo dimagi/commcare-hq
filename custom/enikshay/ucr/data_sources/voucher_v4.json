@@ -604,6 +604,34 @@
             {
                 "comment": null,
                 "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_path",
+                        "property_path": [
+                            "user_data",
+                            "contact_phone_number"
+                        ]
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareUser",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "voucher_issued_by_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "issued_contact_phone_number"
+            },
+            {
+                "comment": null,
+                "create_index": false,
                 "display_name": "fo",
                 "datatype": "string",
                 "expression": {
