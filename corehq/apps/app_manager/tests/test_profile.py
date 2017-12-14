@@ -105,7 +105,12 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         self._test_profile(self.app)
         self._test_custom_property(ET.fromstring(profile), 'random', 'value')
 
-    def test_heartbeat_url_in_profile(self):
+    def test_heartbeat_url_toggle_off(self):
+        profile = self.app.create_profile()
+        self.assertXmlDoesNotHaveXpath(profile, "./property[@key='heartbeat-url']")
+
+    @mock.patch('corehq.toggles.PHONE_HEARTBEAT.enabled', return_value=True)
+    def test_heartbeat_url_toggle_on(self, _mock):
         profile = self.app.create_profile()
         self._test_custom_property(ET.fromstring(profile), 'heartbeat-url', self.app.heartbeat_url)
 
