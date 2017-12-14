@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels
 import six
 
 
@@ -57,10 +57,12 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
     fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
+    gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
+
     return [
         {
             "slug": "institutional_deliveries",
-            "label": "Percent Immunization Coverage at 1 year",
+            "label": "Percent Immunization Coverage at 1 year{}".format(chosen_filters),
             "fills": fills,
             "rightLegend": {
                 "average": (in_month_total * 100) / float(valid_total or 1),
@@ -74,17 +76,20 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                 )),
                 "extended_info": [
                     {
-                        'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
+                        'indicator': 'Total number of ICDS Child beneficiaries older than '
+                                     '1 year{}:'.format(chosen_filters),
                         'value': valid_total},
                     {
                         'indicator': (
-                            'Total number of children who have recieved complete immunizations required by age 1:'
+                            'Total number of children who have recieved complete immunizations required '
+                            'by age 1{}:'.format(chosen_filters)
                         ),
                         'value': in_month_total
                     },
                     {
                         'indicator': (
-                            '% of children who have recieved complete immunizations required by age 1:'
+                            '% of children who have recieved complete immunizations required by age 1{}:'
+                            .format(chosen_filters)
                         ),
                         'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
                     }

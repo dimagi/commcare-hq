@@ -70,14 +70,16 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children who have recieved complete immunizations required by age 1: <strong>' + children + '</strong></div>' +
-            '<div>% of children who have recieved complete immunizations required by age 1: <strong>' + percent + '</strong></div>';
+            '<div>Total number of ICDS Child beneficiaries older than 1 year' + chosenFilters + ': <strong>' + total + '</strong></div>' +
+            '<div>Total number of children who have recieved complete immunizations required by age 1' + chosenFilters + ': <strong>' + children + '</strong></div>' +
+            '<div>% of children who have recieved complete immunizations required by age 1' + chosenFilters + ': <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {

@@ -385,3 +385,40 @@ def calculate_date_for_age(dob, date):
     else:
         date_for_age = (date + relativedelta(months=1)) - relativedelta(days=1)
     return current_age(dob, date_for_age)
+
+
+def chosen_filters_to_labels(config, default_interval=''):
+    gender_types = {
+        'M': 'Male',
+        'F': 'Female'
+    }
+
+    age_intervals = {
+        '6': '0-6 months',
+        '12': '6-12 months',
+        '24': '12-24 months',
+        '36': '24-36 months',
+        '48': '36-48 months',
+        '60': '48-60 months',
+        '72': '60-72 months'
+    }
+
+    gender = config.get('gender')
+    gender_label = ' ({gender})'.format(gender=gender_types.get(gender)) if gender else ''
+    chosen_gender = '{gender}'.format(gender=gender_types.get(gender)) if gender else ''
+
+    age = config.get('age_tranche')
+    age_in = config.get('age_tranche__in')
+    if age:
+        chosen_age = '{age}'.format(age=age_intervals.get(age))
+    elif age_in:
+        chosen_age = '{age}'.format(age=age_intervals.get(age_in[-1]))
+    else:
+        chosen_age = ''
+    age_label = chosen_age if chosen_age else default_interval
+
+    delimiter = ', ' if gender and (age or age_in) else ''
+    chosen_filters = ' ({gender}{delimiter}{age})'\
+        .format(gender=chosen_gender, delimiter=delimiter, age=chosen_age) if gender or age else ''
+
+    return gender_label, age_label, chosen_filters
