@@ -163,14 +163,15 @@ class EpisodeUpdater(object):
         with Timer() as t:
             batch_size = 100
             updates = []
-            episode_case_ids = []  # keep in store episode case ids to update ledger later
             for episode in self._get_open_episode_cases(case_ids):
-                episode_case_ids.append(episode.case_id)
                 did_error = False
+                adherence_cases = None
                 update_json = {}
                 for updater in self.updaters:
                     try:
                         potential_update = updater(self.domain, episode).update_json()
+                        if isinstance(updater, EpisodeAdherenceUpdate):
+                            adherence_cases = updater.get_all_adherence_cases()
                         update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
                     except Exception as e:
                         did_error = True
@@ -187,27 +188,21 @@ class EpisodeUpdater(object):
                     update_count += 1
                 else:
                     noupdate_count += 1
+                if adherence_cases:
+                    self._update_ledger_values(episode, adherence_cases)
                 if len(updates) >= batch_size:
                     bulk_update_cases(self.domain, updates, device_id)
-                    self._update_ledger_values(episode_case_ids)
-                    episode_case_ids = []  # reset episode case ids
                     updates = []
                     case_batches += 1
 
             if len(updates) > 0:
                 bulk_update_cases(self.domain, updates, device_id)
-            self._update_ledger_values(episode_case_ids)
 
         return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
 
-    def _update_ledger_values(self, episode_case_ids):
-        accessor = CaseAccessors(self.domain)
-        for episode_case_id in episode_case_ids:
-            # fetch episode case again to get updated case
-            episode_case = accessor.get_case(episode_case_id)
-            adherence_cases = get_adherence_cases_from_episode(episode_case)
-            for adherence_case in adherence_cases:
-                update_ledger_for_adherence(adherence_case, episode_case)
+    def _update_ledger_values(self, episode_case, adherence_cases):
+        for adherence_case in adherence_cases:
+            update_ledger_for_adherence(adherence_case, episode_case)
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
@@ -316,6 +311,10 @@ class EpisodeAdherenceUpdate(object):
     @memoized
     def get_doses_data(self):
         return self.get_fixture_column('doses_per_week')
+
+    @memoized
+    def get_all_adherence_cases(self):
+        return self.adherence_data_store.all_adherences(self.episode.case_id)
 
     @memoized
     def get_valid_adherence_cases(self):

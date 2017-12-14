@@ -24,9 +24,17 @@ class AdherenceDatastore(object):
         )
 
     @memoized
+    def all_adherences(self, episode_id):
+        return self.es.filter(
+            filters.AND(filters.term('episode_id', episode_id),)
+        ).sort('adherence_date', desc=True).run().hits
+
+    @memoized
     def dose_known_adherences(self, episode_id):
         # return sorted adherences, so self.latest_adherence_date can reuse the result of this query
-        return self.es.filter(self._base_filters(episode_id)).sort('adherence_date', desc=True).run().hits
+        get_all_adherences = self.all_adherences(episode_id)
+        return [case for case in get_all_adherences
+                if case.get_case_property('adherence_value') in DOSE_KNOWN_INDICATORS]
 
     def latest_adherence_date(self, episode_id):
         result = self.dose_known_adherences(episode_id)
