@@ -9,7 +9,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
-    ICDSBugReportView
+    ICDSBugReportView, AWCLocationView
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
@@ -111,4 +111,5 @@ urlpatterns = [
         name='adult_weight_scale'),
     url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
     url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
+    url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
 ]

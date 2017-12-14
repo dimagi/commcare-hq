@@ -16,6 +16,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
+from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, DATA_NOT_ENTERED
@@ -2617,3 +2618,64 @@ class FactSheetsReport(object):
                         row['data'].append({'html': 0})
 
         return {'config': config}
+
+
+class AWCInfrastructureUCR(SqlData):
+    engine_id = 'icds-test-ucr'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], 'static-infrastructure_form')
+
+    @property
+    def filters(self):
+        return [
+            EQ('awc_id', 'awc_id'),
+            EQ('month', 'month')
+        ]
+
+    @property
+    def group_by(self):
+        return []
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('where_housed', SimpleColumn('where_housed')),
+            DatabaseColumn('provided_building', SimpleColumn('provided_building')),
+            DatabaseColumn('kitchen', SimpleColumn('kitchen')),
+            DatabaseColumn('toilet_facility', SimpleColumn('toilet_facility')),
+            DatabaseColumn('type_toilet', SimpleColumn('type_toilet')),
+            DatabaseColumn('preschool_kit_available', SimpleColumn('preschool_kit_available')),
+            DatabaseColumn('preschool_kit_usable', SimpleColumn('preschool_kit_usable'))
+        ]
+
+
+class VHNDFormUCR(SqlData):
+    engine_id = 'icds-test-ucr'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], 'static-vhnd_form')
+
+    @property
+    def filters(self):
+        return [
+            EQ('awc_id', 'awc_id'),
+            EQ('month', 'month')
+        ]
+
+    @property
+    def group_by(self):
+        return []
+
+    @property
+    def order_by(self):
+        return [OrderBy('submitted_on')]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('vhsnd_date_past_month', SimpleColumn('vhsnd_date_past_month')),
+            DatabaseColumn('local_leader', SimpleColumn('local_leader'))
+        ]

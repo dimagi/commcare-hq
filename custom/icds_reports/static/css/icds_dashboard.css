@@ -760,3 +760,9 @@ table.dataTable td {
   -moz-box-sizing: content-box;
   box-sizing: content-box;
 }
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 7px;
+    margin-left: 2px;
+    min-height: 34px;
+}

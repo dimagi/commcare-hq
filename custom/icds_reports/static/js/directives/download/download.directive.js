@@ -39,6 +39,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
+    vm.selectedPDFFormat = 'one';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
     vm.now = new Date().getMonth() + 1;
@@ -56,6 +57,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 'csv', name: 'CSV'},
         {id: 'xls', name: 'Excel'},
     ];
+
+    vm.pdfFormats = [
+        {id: 'one', name: 'One PDF per AWC'},
+        {id: 'many', name: 'One Combined PDF for all AWCs'},
+    ];
+
+    vm.awcLocations = [];
 
     vm.indicators = [
         {id: 1, name: 'Child'},
@@ -218,6 +226,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
         return selectedLocationIndex() !== -1 && i >= level;
     };
 
+    vm.onSelectForISSNIP = function ($item, level) {
+        locationsService.getAwcLocations($item.location_id).then(function (data) {
+            vm.awcLocations = [ALL_OPTION].concat(data)
+        });
+        vm.onSelect($item, level);
+    };
+
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
 
@@ -237,7 +252,18 @@ function DownloadController($location, locationHierarchy, locationsService, user
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
     };
 
+    vm.getAwcs = function () {
+        locationsService.getAncestors()
+    }
+
     vm.getFormats = function() {
+        if (vm.isISSNIPMonthlyRegisterSelected()) {
+            vm.selectedFormat = 'one';
+            return [
+                {id: 'one', name: 'CSV'},
+                {id: 'many', name: 'Excel'},
+            ]
+        }
         if (vm.isChildBeneficiaryListSelected()) {
             return [vm.formats[0]];
         } else {
@@ -270,6 +296,10 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.isChildBeneficiaryListSelected = function() {
         return vm.selectedIndicator === 6;
+    };
+
+    vm.isISSNIPMonthlyRegisterSelected = function () {
+        return vm.selectedIndicator === 7;
     };
 
     vm.isDistrictOrBelowSelected = function() {

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from base64 import b64encode
 from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import logging
 import os
 
@@ -14,6 +14,7 @@ from django.db import Error, IntegrityError, connections
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.settings.views import get_qrcode
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -21,6 +22,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
+from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from six.moves import range
@@ -214,22 +216,32 @@ def _find_stagnant_cases(adapter):
 
 
 @task(queue='background_queue', ignore_result=True)
-def prepare_issnip_monthly_register_reports(dir_name):
+def prepare_issnip_monthly_register_reports(dir_name, domain, awcs, pdf_format, month, year):
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     qrcode = get_qrcode("super test 1234")
     base_dir = os.path.join(settings.BASE_DIR, 'custom/icds_reports/static/media/')
     # directory = os.path.dirname(os.path.join(base_dir, dir_name.hex + '/'))
     # if not os.path.exists(directory):
     #     os.makedirs(directory)
+    selected_date = date(year, month, 1)
+    awcs = ['96f90d4ba46d4a1186b1a2da64e7f044']
+    for awc in awcs:
+        # awc_location = SQLLocation.objects.get(location_id=awc)
+        file_name = "{}.pdf".format(awc)
+        resultFile = open(os.path.join(base_dir, file_name), "w+b")
+        report = ISSNIPMonthlyReport(config={
+            'awc_id': awc,
+            'month': selected_date,
+            'domain': domain
+        })
+        report_context = {
+            'qrcode_64': b64encode(qrcode),
+            'report': report
+        }
 
-    resultFile = open(os.path.join(base_dir, 'test.pdf'), "w+b")
+        pisaStatus = pisa.CreatePDF(
+            template.render(report_context),
+            dest=resultFile)
 
-    # convert HTML to PDF
-    pisaStatus = pisa.CreatePDF(
-        template.render({
-            'qrcode_64': b64encode(qrcode)
-        }),  # the HTML to convert
-        dest=resultFile)  # file handle to recieve result
-
-    # close output file
-    resultFile.close()
+        # close output file
+        resultFile.close()

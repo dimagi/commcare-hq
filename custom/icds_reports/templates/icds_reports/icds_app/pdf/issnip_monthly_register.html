@@ -2,6 +2,7 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load icds_format %}
 <!DOCTYPE html>
 <html>
     <head>
@@ -23,6 +24,9 @@
                 vertical-align: middle;
             }
 
+            .table-no-border {
+                border: none;
+            }
 
             table {
                 border: 1px solid black;
@@ -35,7 +39,6 @@
         </style>
     </head>
     <body>
-        {% for awc_data in context %}
             <div style="page-break-after: always">
                 <h1>ISSNIP Monthly Register</h1>
                 <div class="row">
@@ -48,13 +51,13 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Name of Project:</td>
-                                    <td>*LGD Code:</td>
+                                    <td>Name of Project: {{ report.agg_awc_monthly_data|icds_format:"block_name" }}</td>
+                                    <td>*LGD Code: {{ report.agg_awc_monthly_data|icds_format:"awc_name" }}</td>
                                     <td>*Main AWC / Mini AWC:</td>
                                 </tr>
                                 <tr>
                                     <td>Name of AWC:</td>
-                                    <td>AWC Code:</td>
+                                    <td>AWC Code: {{ report.agg_awc_monthly_data|icds_format:"awc_site_code" }}</td>
                                     <td>*Name Of Supervisor: </td>
                                 </tr>
                                 <tr>
@@ -74,11 +77,11 @@
                         <table class="table-no-border">
                             <tbody>
                                 <tr>
-                                    <td>Type of AWC building Pucca / Others:</td>
+                                    <td>Type of AWC building Pucca / Others: {{ report.agg_awc_monthly_data|icds_format:"infra_type_of_building" }}</td>
                                     <td>Owned/rented/Others: </td>
                                 </tr>
                                 <tr>
-                                    <td>Whether drinking water available at AWC? (Y/N): </td>
+                                    <td>Whether drinking water available at AWC? (Y/N): {{ report.agg_awc_monthly_data|icds_format:"infra_clean_water" }}</td>
                                     <td></td>
                                 </tr>
                                 <tr>
@@ -110,11 +113,11 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"infants_0_6" }}</td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"children_6_36" }}</td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"childen_36_72" }}</td>
+                                    <td>{{ report.agg_awc_monthly_data|icds_format:"cases_ccs_pregnant_all" }}</td>
+                                    <td>{{ report.agg_awc_monthly_data|icds_format:"cases_ccs_lactating_all" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -128,8 +131,8 @@
                         <table class="table-no-border">
                             <tbody>
                                 <tr>
-                                    <td>Number of days AWC functioned: </td>
-                                    <td>Number of days AWC conducted Preschool Education: </td>
+                                    <td>Number of days AWC functioned: {{ report.agg_awc_monthly_data|icds_format:"awc_days_open" }}</td>
+                                    <td>Number of days AWC conducted Preschool Education: {{ report.agg_awc_monthly_data|icds_format:"awc_days_pse_conducted" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -153,27 +156,27 @@
                             <tbody>
                                 <tr>
                                     <td>Normal Children</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"normal_children_breakfastt_and_hcm" }}</td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"normal_children_breakfastt_and_hcm" }}</td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"normal_children_thr" }}</td>
                                 </tr>
                                 <tr>
                                     <td>*Severely underweight Children</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ report.child_health_monthly_data|icds_format:"severely_underweight_children_thr" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Pregnant Women</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>N/A</td>
+                                    <td>N/A</td>
+                                    <td>{{ report.css_record_monthly|icds_format:"pregnant_women_thr" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Lactating Mothers</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>N/A</td>
+                                    <td>N/A</td>
+                                    <td>{{ report.css_record_monthly|icds_format:"lactating_women_thr" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -313,45 +316,38 @@
                             <tbody>
                                 <tr>
                                     <td>Normal (Green)</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_normal_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_normal_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_normal_3_5" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_normal_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Moderately Under weight (yellow)</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_moderately_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_moderately_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_moderately_3_5" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_moderately_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Severely Under weight (Red)</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_severely_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_severely_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_severely_3_5" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_severely_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Stunted (Height for Age)</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_stunted_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_stunted_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_stunted_3_5" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_stunted_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Wasted (Weight for height)</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td>Minority (out of total) </td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_wasted_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_wasted_0_3" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_wasted_3_5" }}</td>
+                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_wasted_3_5" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -370,7 +366,7 @@
                                 </tr>
                                 <tr>
                                     <td>AWW present during VHSND? (Y/N)</td>
-                                    <td></td>
+                                    <td>{{ report.agg_awc_monthly_data|icds_format:"ls_awc_present" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Number of antenatal check- ups conducted during the Month </td>
@@ -390,11 +386,11 @@
                                 </tr>
                                 <tr>
                                     <td>No of Referrals made for the Month</td>
-                                    <td></td>
+                                    <td>{{ report.agg_awc_monthly_data|icds_format:"cases_person_referred" }}</td>
                                 </tr>
                                 <tr>
                                     <td>No of Home visits made during the Month</td>
-                                    <td></td>
+                                    <td>{{ report.agg_awc_monthly_data|icds_format:"usage_num_home_visit" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -450,9 +446,8 @@
                 <br/>
                 <p style="text-align: right; padding-right: 100px;">Signature of AWW</p>
                 <div class="row" style="bottom: 0;">
-                    <img src="data:image/png;base64,{{ awc_data.qrcode_64 }}" width="150" alt="QR Code"/>
+                    <img src="data:image/png;base64,{{ qrcode_64 }}" width="150" alt="QR Code"/>
                 </div>
             </div>
-        {% endfor %}
     </body>
 </html>

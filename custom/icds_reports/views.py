@@ -25,6 +25,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import UserRole
+from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
@@ -430,7 +431,7 @@ class LocationAncestorsView(View):
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         parents = list(SQLLocation.objects.get_queryset_ancestors(
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
-        ).distinct()) + list(selected_location.get_ancestors())
+        ).distinct()) + list(selected_location.get_descendants())
         parent_ids = [x.pk for x in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
@@ -454,6 +455,26 @@ class LocationAncestorsView(View):
                 'name': selected_location.name,
                 'parent_id': selected_location.parent.location_id if selected_location.parent else None
             }
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class AWCLocationView(View):
+    def get(self, request, *args, **kwargs):
+        location_id = request.GET.get('location_id')
+        selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
+        awcs = selected_location.get_descendants().filter(
+            location_type__code=AWC_LOCATION_TYPE_CODE
+        ).order_by('name')
+        return JsonResponse(data={
+            'locations': [
+                {
+                    'location_id': location.location_id,
+                    'name': location.name,
+                }
+                for location in awcs
+            ]
         })
 
 
@@ -647,7 +668,11 @@ class ExportIndicatorView(View):
             ).to_export('csv', location)
         elif indicator == 7:
             dir_name = uuid.uuid4()
-            prepare_issnip_monthly_register_reports.delay(dir_name)
+            awcs = request.POST.get('selected_awcs').split(',')
+            pdf_format = request.POST.get('pdfformat')
+            prepare_issnip_monthly_register_reports.delay(
+                dir_name, 'icds-dashboard-qa', awcs, pdf_format, month, year
+            )
 
 
 

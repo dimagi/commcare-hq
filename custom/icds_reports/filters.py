@@ -12,6 +12,7 @@ from custom.common.filters import RestrictedAsyncLocationFilter
 from dimagi.utils.decorators.memoized import memoized
 
 
+
 def location_hierarchy_config(domain, location_types=None):
     location_types = location_types or ['state', 'district', 'block']
     return [
