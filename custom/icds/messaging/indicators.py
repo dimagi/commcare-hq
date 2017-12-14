@@ -201,7 +201,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
                         "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
                     )
 
-        raise IndicatorError("AWC {} not found in the restore".format(location_name))
+        return 0
 
     def get_messages(self, language_code=None):
         if self.supervisor is None:
