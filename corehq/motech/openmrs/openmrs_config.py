@@ -38,6 +38,15 @@ class ValueSource(DocumentSchema):
 
 
 class CaseProperty(ValueSource):
+    # Example "person_property" value::
+    #
+    #     {
+    #       "birthdate": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "dob"
+    #       }
+    #     }
+    #
     case_property = StringProperty()
 
     def get_value(self, case_trigger_info):
@@ -52,6 +61,15 @@ class FormQuestion(ValueSource):
 
 
 class ConstantString(ValueSource):
+    # Example "person_property" value::
+    #
+    #     {
+    #       "birthdate": {
+    #         "doc_type": "ConstantString",
+    #         "value": "Sep 7, 3761 BC"
+    #       }
+    #     }
+    #
     value = StringProperty()
 
     def get_value(self, case_trigger_info):
@@ -62,6 +80,19 @@ class CasePropertyConcept(CaseProperty):
     """
     Maps case property values to OpenMRS concepts
     """
+    # Example "person_attribute" value::
+    #
+    #     {
+    #       "00000000-771d-0000-0000-000000000000": {
+    #         "doc_type": "CasePropertyConcept",
+    #         "case_property": "pill"
+    #         "value_concepts": {
+    #           "red": "00ff0000-771d-0000-0000-000000000000",
+    #           "blue": "000000ff-771d-0000-0000-000000000000",
+    #         }
+    #       }
+    #     }
+    #
     value_concepts = DictProperty()
 
     def get_value(self, case_trigger_info):
