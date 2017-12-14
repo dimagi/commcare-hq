@@ -13,6 +13,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.utils import pformat_json
+from dimagi.utils.modules import to_function
+from six.moves import zip
 
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
@@ -292,7 +294,20 @@ def get_subresource_instances(requests, person_uuid, subresource):
     )).json()['results']
 
 
-def get_patient(requests, info, openmrs_config):
+def find_patient(requests, domain, case_id, openmrs_config):
+    PatientFinder = to_function(openmrs_config.patient_finder)
+    if not PatientFinder:
+        return None
+
+    case = CaseAccessors(domain).get_case(case_id)
+    patient_finder = PatientFinder()
+    patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
+    # If PatientFinder can't narrow down the number of candidate
+    # patients, don't guess. Just admit that we don't know.
+    return patients[0] if len(patients) == 1 else None
+
+
+def get_patient(requests, domain, info, openmrs_config):
     patient = None
     for id_matcher in openmrs_config.case_config.id_matchers:
         assert isinstance(id_matcher, IdMatcher)
@@ -302,6 +317,12 @@ def get_patient(requests, info, openmrs_config):
                 info.extra_fields[id_matcher.case_property])
             if patient:
                 break
+    else:
+        # ID matchers did not match a patient in OpenMRS.
+        if openmrs_config.patient_finder:
+            # Search for patients based on other case properties
+            patient = find_patient(requests, domain, info.case_id, openmrs_config)
+
     return patient
 
 
