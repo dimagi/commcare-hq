@@ -1,3 +1,4 @@
+from __future__ import division
 from collections import namedtuple
 
 from jsonpath_rw import parse
@@ -155,7 +156,7 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
         patients_scores = sorted(candidates.values(), key=lambda cand: cand.score, reverse=True)
         if len(patients_scores) == 1:
             return [patients_scores[0].patient]
-        if float(patients_scores[0].score) / patients_scores[1].score > 1 + self.confidence_margin:
+        if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
             # (defaults to 10%) in score between the best-ranked
             # patient and the second-best-ranked patient. Let's go with
