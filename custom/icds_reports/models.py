@@ -488,3 +488,58 @@ class ChildHealthMonthlyView(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'child_health_monthly_view'
+
+
+class CcsRecordMonthly(models.Model):
+    awc_id = models.TextField()
+    case_id = models.TextField()
+    month = models.DateField()
+    age_in_months = models.IntegerField(blank=True, null=True)
+    ccs_status = models.TextField(blank=True, null=True)
+    open_in_month = models.IntegerField(blank=True, null=True)
+    alive_in_month = models.IntegerField(blank=True, null=True)
+    trimester = models.IntegerField(blank=True, null=True)
+    num_rations_distributed = models.IntegerField(blank=True, null=True)
+    thr_eligible = models.IntegerField(blank=True, null=True)
+    tetanus_complete = models.IntegerField(blank=True, null=True)
+    delivered_in_month = models.IntegerField(blank=True, null=True)
+    anc1_received_at_delivery = models.IntegerField(blank=True, null=True)
+    anc2_received_at_delivery = models.IntegerField(blank=True, null=True)
+    anc3_received_at_delivery = models.IntegerField(blank=True, null=True)
+    anc4_received_at_delivery = models.IntegerField(blank=True, null=True)
+    registration_trimester_at_delivery = models.IntegerField(blank=True, null=True)
+    using_ifa = models.IntegerField(blank=True, null=True)
+    ifa_consumed_last_seven_days = models.IntegerField(blank=True, null=True)
+    anemic_severe = models.IntegerField(blank=True, null=True)
+    anemic_moderate = models.IntegerField(blank=True, null=True)
+    anemic_normal = models.IntegerField(blank=True, null=True)
+    anemic_unknown = models.IntegerField(blank=True, null=True)
+    extra_meal = models.IntegerField(blank=True, null=True)
+    resting_during_pregnancy = models.IntegerField(blank=True, null=True)
+    bp_visited_in_month = models.IntegerField(blank=True, null=True)
+    pnc_visited_in_month = models.IntegerField(blank=True, null=True)
+    trimester_2 = models.IntegerField(blank=True, null=True)
+    trimester_3 = models.IntegerField(blank=True, null=True)
+    counsel_immediate_bf = models.IntegerField(blank=True, null=True)
+    counsel_bp_vid = models.IntegerField(blank=True, null=True)
+    counsel_preparation = models.IntegerField(blank=True, null=True)
+    counsel_fp_vid = models.IntegerField(blank=True, null=True)
+    counsel_immediate_conception = models.IntegerField(blank=True, null=True)
+    counsel_accessible_postpartum_fp = models.IntegerField(blank=True, null=True)
+    bp1_complete = models.IntegerField(blank=True, null=True)
+    bp2_complete = models.IntegerField(blank=True, null=True)
+    bp3_complete = models.IntegerField(blank=True, null=True)
+    pnc_complete = models.IntegerField(blank=True, null=True)
+    postnatal = models.IntegerField(blank=True, null=True)
+    has_aadhar_id = models.IntegerField(blank=True, null=True)
+    counsel_fp_methods = models.IntegerField(blank=True, null=True)
+    pregnant = models.IntegerField(blank=True, null=True)
+    pregnant_all = models.IntegerField(blank=True, null=True)
+    lactating = models.IntegerField(blank=True, null=True)
+    lactating_all = models.IntegerField(blank=True, null=True)
+    institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'ccs_record_monthly'

@@ -64,6 +64,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
+        {id: 7, name: 'ISSNIP Monthly Register'},
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};

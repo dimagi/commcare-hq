@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+from base64 import b64encode
 from collections import namedtuple
 from datetime import datetime, timedelta
 import logging
@@ -9,7 +11,10 @@ from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections
+from django.template.loader import get_template
+from xhtml2pdf import pisa
 
+from corehq.apps.settings.views import get_qrcode
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -206,3 +211,25 @@ def _find_stagnant_cases(adapter):
         table.columns.inserted_at <= stagnant_date
     ).distinct()
     return query.all()
+
+
+@task(queue='background_queue', ignore_result=True)
+def prepare_issnip_monthly_register_reports(dir_name):
+    template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
+    qrcode = get_qrcode("super test 1234")
+    base_dir = os.path.join(settings.BASE_DIR, 'custom/icds_reports/static/media/')
+    # directory = os.path.dirname(os.path.join(base_dir, dir_name.hex + '/'))
+    # if not os.path.exists(directory):
+    #     os.makedirs(directory)
+
+    resultFile = open(os.path.join(base_dir, 'test.pdf'), "w+b")
+
+    # convert HTML to PDF
+    pisaStatus = pisa.CreatePDF(
+        template.render({
+            'qrcode_64': b64encode(qrcode)
+        }),  # the HTML to convert
+        dest=resultFile)  # file handle to recieve result
+
+    # close output file
+    resultFile.close()

@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+
+import uuid
+
 import requests
 
 from datetime import datetime, date
@@ -21,7 +24,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.users.models import Permissions, UserRole
+from corehq.apps.users.models import UserRole
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
@@ -80,7 +83,7 @@ from custom.icds_reports.reports.registered_household import get_registered_hous
 
 from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
+from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level
 from dimagi.utils.dates import force_to_date
@@ -642,6 +645,10 @@ class ExportIndicatorView(View):
                 loc_level=aggregation_level,
                 show_test=include_test
             ).to_export('csv', location)
+        elif indicator == 7:
+            dir_name = uuid.uuid4()
+            prepare_issnip_monthly_register_reports.delay(dir_name)
+
 
 
 @method_decorator([login_and_domain_required], name='dispatch')

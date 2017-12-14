@@ -200,6 +200,8 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'raven.contrib.django.raven_compat',
+    'html5lib',
+    'xhtml2pdf',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'

@@ -16,6 +16,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, DATA_NOT_ENTERED
 from couchexport.export import export_from_tables

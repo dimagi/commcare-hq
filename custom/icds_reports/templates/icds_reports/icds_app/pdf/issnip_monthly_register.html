@@ -1,0 +1,458 @@
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ISSNIP Monthly Register</title>
+        <style type="text/css">
+            @page {
+                margin: 1cm 1cm;
+                size: A4;
+                border: 1px solid white;
+            }
+
+            h1 {
+                text-align: center;
+            }
+
+            th, td {
+                padding: 5px;
+                padding-bottom: 0px !important;
+                vertical-align: middle;
+            }
+
+
+            table {
+                border: 1px solid black;
+            }
+            .row:after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+        </style>
+    </head>
+    <body>
+        {% for awc_data in context %}
+            <div style="page-break-after: always">
+                <h1>ISSNIP Monthly Register</h1>
+                <div class="row">
+                    <div class="row">
+                        <h2>1. Basic Details</h2>
+                    </div>
+                    <div class="row">
+                        <table class="table">
+                            <thead>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Name of Project:</td>
+                                    <td>*LGD Code:</td>
+                                    <td>*Main AWC / Mini AWC:</td>
+                                </tr>
+                                <tr>
+                                    <td>Name of AWC:</td>
+                                    <td>AWC Code:</td>
+                                    <td>*Name Of Supervisor: </td>
+                                </tr>
+                                <tr>
+                                    <td>*Name of AWW:</td>
+                                    <td>Mobile number of AWW:</td>
+                                    <td>*Name of AW Helper: </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>2. Infrastructure</h2>
+                    </div>
+                    <div class="row">
+                        <table class="table-no-border">
+                            <tbody>
+                                <tr>
+                                    <td>Type of AWC building Pucca / Others:</td>
+                                    <td>Owned/rented/Others: </td>
+                                </tr>
+                                <tr>
+                                    <td>Whether drinking water available at AWC? (Y/N): </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Whether Kitchen available at AWC? (Y/N):</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Whether toilet available at AWC? (Y/N): </td>
+                                    <td>Type of toilet at AWC:</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>3. Total Population as per Anganwadi Survey Register</h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Infants (0- 6 Months)</th>
+                                    <th>Children(6 -36 Months)</th>
+                                    <th>Children (36-72 months)</th>
+                                    <th>Pregnant Women</th>
+                                    <th>Lactating Mothers</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>4. AWC Functioning & services delivered</h2>
+                    </div>
+                    <div class="row">
+                        <table class="table-no-border">
+                            <tbody>
+                                <tr>
+                                    <td>Number of days AWC functioned: </td>
+                                    <td>Number of days AWC conducted Preschool Education: </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row">
+                        <p>*ECCE material available at AWC(Y/N): </p>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th colspan="1" rowspan="2">Infants (0- 6 Months)</th>
+                                    <th colspan="3">No. of beneficiaries availing Supplementary Nutrition /Month</th>
+                                </tr>
+                                <tr>
+                                    <th>Breakfast</th>
+                                    <th>HCM</th>
+                                    <th>THR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Normal Children</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>*Severely underweight Children</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Pregnant Women</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Lactating Mothers</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row" style="page-break-after: always">
+                    <div class="row">
+                        <h2>5. Services</h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th colspan="1"></th>
+                                    <th colspan="6">Supplementary Nutrition 21+days in the Reporting Month</th>
+                                    <th colspan="2">Pre- School Education</th>
+                                </tr>
+                                <tr>
+                                    <th rowspan="2" colspan="1">Category </th>
+                                    <th colspan="2">6-36</th>
+                                    <th colspan="2">36-72</th>
+                                    <th colspan="2">Women</th>
+                                    <th colspan="2">36-72 month</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                    <th colspan="1">Pregnant</th>
+                                    <th colspan="1">Lactating</th>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1">1</th>
+                                    <th colspan="1">2</th>
+                                    <th colspan="1">3</th>
+                                    <th colspan="1">4</th>
+                                    <th colspan="1">5</th>
+                                    <th colspan="1">6</th>
+                                    <th colspan="1">7</th>
+                                    <th colspan="1">8</th>
+                                    <th colspan="1">9</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>SC</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>ST</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>OBC</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>General</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Total</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Minority (out of total) </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>6. Classification of Nutritional Status of Children as per the WHO Growth Standards</h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th colspan="1" rowspan="2">Children</th>
+                                    <th colspan="2">No. of Children (0-3years)</th>
+                                    <th colspan="2">No. of Children (3-5years)</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Normal (Green)</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Moderately Under weight (yellow)</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Severely Under weight (Red)</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Stunted (Height for Age)</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Wasted (Weight for height)</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Minority (out of total) </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>7. Village Health Sanitation and Nutrition Day (VHSND) activity summary and other details </h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <td>Date of VHSND conducted </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>AWW present during VHSND? (Y/N)</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Number of antenatal check- ups conducted during the Month </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Total children Immunized during Month</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Did Village leaders/VHSNC members participated in VHSND?</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>* No of children given de-worming tablets (Children 1-2 yrs-half tablet and above 1 tablet)</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>No of Referrals made for the Month</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>No of Home visits made during the Month</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>8. *THR Distribution </h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Quantity of THR</th>
+                                    <th>Normal Children</th>
+                                    <th>Pregnant women lactating Mothers</th>
+                                    <th>Severely underweight Children</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Opening Balance</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Received</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Distributed</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Closing balance</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+                <p>*fields are not be updated by AWW</p>
+                <br/>
+                <br/>
+                <p style="text-align: right; padding-right: 100px;">Signature of AWW</p>
+                <div class="row" style="bottom: 0;">
+                    <img src="data:image/png;base64,{{ awc_data.qrcode_64 }}" width="150" alt="QR Code"/>
+                </div>
+            </div>
+        {% endfor %}
+    </body>
+</html>
