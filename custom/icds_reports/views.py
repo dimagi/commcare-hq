@@ -431,7 +431,7 @@ class LocationAncestorsView(View):
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         parents = list(SQLLocation.objects.get_queryset_ancestors(
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
-        ).distinct()) + list(selected_location.get_descendants())
+        ).distinct()) + list(selected_location.get_ancestors())
         parent_ids = [x.pk for x in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
