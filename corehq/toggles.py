@@ -1398,6 +1398,13 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BULK_UPLOAD_DATE_OPENED = StaticToggle(
+    'bulk_upload_date_opened',
+    "Allow updating of the date_opened field with the bulk uploader",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
