@@ -420,7 +420,7 @@ var reportBuilder = function () {  // eslint-disable-line
 
         self.serialize = function () {
             // Clear invalid defaullt filters
-            default_filters = JSON.parse(self.defaultFilterList.serializedProperties())
+            var default_filters = JSON.parse(self.defaultFilterList.serializedProperties());
             default_filters = _.filter(
                 default_filters,
                 function(c){return c.property && c.pre_value;}
