@@ -178,8 +178,9 @@ def get_case_update(case, update):
 
 
 def get_name_update(case, old_id, new_id):
-    new_name = case.get_case_property('name').replace(old_id, new_id)
-    return get_case_update(case, {'name': new_name})
+    if case.get_case_property('name') and old_id:
+        new_name = case.get_case_property('name').replace(old_id, new_id)
+        return get_case_update(case, {'name': new_name})
 
 
 def get_all_vouchers_from_person(domain, person_case):
