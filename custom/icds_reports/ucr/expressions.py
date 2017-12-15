@@ -736,6 +736,14 @@ def datetime_now(spec, context):
 
 
 def get_related_docs_ids(case_id):
+    """gets a related case id from an ICDS ccs_record or child_health case. Expects the hierarchy:
+                                      /---->  ccs_record
+         household -----> person  --<
+                                      \---->  child_health
+
+    This could likley be optimized pretty easily to take in multiple case_ids but we
+    don't currently have an interface to do so
+    """
     db = CaseAccessors('icds-cas')
     current_case = db.get_case(case_id)
     if not current_case or not current_case.indices:
