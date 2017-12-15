@@ -87,9 +87,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 encodedUrl,
                 menuCollection;
 
-            // Response can be a form response which will result in the the session id
-            // being stored in the session_id field.
-
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             response.appId = urlObject.appId;
