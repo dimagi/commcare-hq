@@ -3,7 +3,6 @@ from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.reminders.models import CaseReminder
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from custom.enikshay.const import LOCATION_SITE_CODE_MEHSANA
