@@ -85,7 +85,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var currentFragment,
                 urlObject,
                 encodedUrl,
-                sessionId,
                 menuCollection;
 
             // Response can be a form response which will result in the the session id
@@ -101,7 +100,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 response,
                 { parse: true }
             );
-
+            // Need to get URL fragment again since fetch might have updated it
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
