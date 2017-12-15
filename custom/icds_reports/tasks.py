@@ -38,7 +38,16 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
 @serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='background_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
-    monthly_date = date.replace(day=1)
+    monthly_dates = []
+
+    first_day_of_month = date.replace(day=1)
+    for interval in range(intervals - 1, 0, -1):
+        # calculate the last day of the previous months to send to the aggregation script
+        first_day_next_month = first_day_of_month - relativedelta(months=interval - 1)
+        monthly_dates.append(first_day_next_month - relativedelta(days=1))
+
+    monthly_dates.append(date)
+
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
         with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
             _create_aggregate_functions(cursor)
@@ -46,8 +55,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
         aggregation_tasks = []
 
-        for interval in range(intervals - 1, -1, -1):
-            calculation_date = (monthly_date - relativedelta(months=interval)).strftime('%Y-%m-%d')
+        for monthly_date in monthly_dates:
+            calculation_date = monthly_date.strftime('%Y-%m-%d')
             aggregation_tasks.append(UCRAggregationTask('monthly', calculation_date))
 
         aggregation_tasks.append(UCRAggregationTask('daily', date.strftime('%Y-%m-%d')))
@@ -156,10 +165,8 @@ def aggregate_tables(self, current_task, future_tasks):
 def recalculate_stagnant_cases():
     domain = 'icds-cas'
     config_ids = [
-        'static-icds-cas-static-ccs_record_cases_monthly',
         'static-icds-cas-static-ccs_record_cases_monthly_v2',
         'static-icds-cas-static-ccs_record_cases_monthly_tableau_v2',
-        'static-icds-cas-static-child_cases_monthly',
         'static-icds-cas-static-child_cases_monthly_v2',
         'static-icds-cas-static-child_cases_monthly_tableau_v2',
     ]

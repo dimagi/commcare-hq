@@ -10,10 +10,11 @@ from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
 from custom.icds_reports.utils import percent_increase, percent_diff, get_value, apply_exclude
 
 
-@quickcache(['domain', 'yesterday', 'config', 'show_test'], timeout=30 * 60)
-def get_demographics_data(domain, yesterday, config, show_test=False):
-    yesterday_date = datetime(*yesterday)
-    two_days_ago = (yesterday_date - relativedelta(days=1)).date()
+@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
+def get_demographics_data(domain, now_date, config, show_test=False):
+    now_date = datetime(*now_date)
+    yesterday_date = (now_date - relativedelta(days=1)).date()
+    two_days_ago = (now_date - relativedelta(days=2)).date()
     current_month = datetime(*config['month'])
     previous_month = datetime(*config['prev_month'])
     del config['month']
@@ -48,12 +49,15 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    now = datetime.utcnow()
-    if current_month.month == now.month and current_month.year == now.year:
+    if current_month.month == now_date.month and current_month.year == now_date.year:
         config['date'] = yesterday_date
         data = get_data_for(AggAwcDailyView, config)
         config['date'] = two_days_ago
         prev_data = get_data_for(AggAwcDailyView, config)
+        if not data:
+            data = prev_data
+            config['date'] = (now_date - relativedelta(days=3)).date()
+            prev_data = get_data_for(AggAwcDailyView, config)
         frequency = 'day'
     else:
         config['month'] = current_month

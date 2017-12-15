@@ -1,5 +1,0 @@
-{% load hq_shared_tags %}
-{% initial_analytics_data 'logging.debug' request|toggle_enabled:"ANALYTICS_DEBUG" %}
-{% initial_analytics_data 'logging.verbose' request|toggle_enabled:"ANALYTICS_VERBOSE" %}
-{% initial_analytics_data 'logging.warning' request|toggle_enabled:"ANALYTICS_WARNING" %}
-{% initial_analytics_data 'logging.deprecated' request|toggle_enabled:"ANALYTICS_WARNING" %}

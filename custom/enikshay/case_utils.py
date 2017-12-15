@@ -586,6 +586,14 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
+def get_sector(episode_case):
+    if episode_case.type != CASE_TYPE_EPISODE:
+        raise ValueError('Must pass in an episode case')
+    if episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
+        return PRIVATE_SECTOR
+    return PUBLIC_SECTOR
+
+
 def iter_all_active_person_episode_cases(domain, case_ids, sector=None):
     """From a list of case_ids, return all the active episodes and associate person case
     """
@@ -669,7 +677,7 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
         episode_cases += [
             case for case in all_cases
             if case.type == CASE_TYPE_EPISODE and (
-                case.dynamic_case_properties().get('referral_status') not in [
+                case.dynamic_case_properties().get('close_reason') not in [
                     'invalid_episode',
                     'duplicate',
                     'invalid_registration'

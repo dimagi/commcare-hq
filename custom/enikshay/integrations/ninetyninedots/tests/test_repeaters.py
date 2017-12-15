@@ -20,7 +20,6 @@ from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     OTHER_NUMBER,
-    MERM_ID,
     ENIKSHAY_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
@@ -34,6 +33,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     ENROLLED_IN_PRIVATE,
 )
+from custom.enikshay.integrations.ninetyninedots.const import MERM_ID
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,

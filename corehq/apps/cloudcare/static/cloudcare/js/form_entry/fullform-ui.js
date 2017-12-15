@@ -277,8 +277,10 @@ function Form(json) {
     };
 
     self.afterRender = function() {
-        // Once form has finished rendering, render all popovers
-        $('.js-form-container [data-toggle="popover"]').popover();
+        $(".help-text-trigger").click(function(event) {
+            var container = $(event.currentTarget).closest(".caption");
+            container.find(".modal").modal('show');
+        });
     };
 
     $.unsubscribe('session');

@@ -16,7 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
@@ -403,7 +403,7 @@ class UploadFixtureAPIResponse(object):
 
 @csrf_exempt
 @require_POST
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_can_edit_fixtures
 def upload_fixture_api(request, domain, **kwargs):
     """

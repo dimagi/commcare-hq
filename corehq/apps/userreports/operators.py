@@ -53,6 +53,19 @@ OPERATORS = {
 }
 
 
+OPERATOR_DISPLAY = {
+    'equal': '=',
+    'not_equal': '!=',
+    'in_': 'in',
+    'in_multiselect': 'in_multiselect',
+    'any_in_multiselect': 'any_in_multiselect',
+    'less_than': '<',
+    'less_than_equal': '<=',
+    'greater_than': '>',
+    'greater_than_equal': '>=',
+}
+
+
 def get_operator(slug):
     def _get_safe_operator(fn):
         @wraps(fn)

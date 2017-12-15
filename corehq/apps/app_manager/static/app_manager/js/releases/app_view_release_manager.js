@@ -43,11 +43,11 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         $profilesTab.koApplyBindings(profileManager);
     }
 
-    if (initial_page_data('intro_only')) {
-        hqImport('app_manager/js/preview_app').forceShowPreview();
-    }
-
     $(function() {
+        if (initial_page_data('intro_only')) {
+            hqImport('app_manager/js/preview_app').forceShowPreview();
+        }
+
         hqImport('analytix/js/kissmetrix').track.event('Visited the Release Manager');
         if (initial_page_data('confirm')) {
             hqImport('analytix/js/google').track.event('User actions', 'User created login', window.location.pathname);

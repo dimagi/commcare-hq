@@ -23,7 +23,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             )[0],
             {
                 'rightLegend': {
-                    'info': u'Percentage of children between 0-5 years enrolled for ICDS services'
+                    'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'
                             u' with weight-for-age less than -2 standard deviations'
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
@@ -63,7 +63,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     }
                 },
                 'slug': 'moderately_underweight',
-                'label': 'Percent of Children Underweight (0-5 years)'
+                'label': 'Percent of Children Underweight (0 - 5 years)'
             }
         )
 
@@ -81,7 +81,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             )[0],
             {
                 'rightLegend': {
-                    'info': u'Percentage of children between 0-5 years enrolled for ICDS services'
+                    'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'
                             u' with weight-for-age less than -2 standard deviations'
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
@@ -114,7 +114,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     }
                 },
                 'slug': 'moderately_underweight',
-                'label': 'Percent of Children Underweight (0-5 years)'
+                'label': 'Percent of Children Underweight (0 - 5 years)'
             }
         )
 

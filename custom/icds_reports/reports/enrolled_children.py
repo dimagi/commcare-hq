@@ -9,7 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, match_age
+from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels
 import six
 
 RED = '#de2d26'
@@ -63,6 +63,8 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
     fills.update({'Children': BLUE})
     fills.update({'defaultFill': GREY})
 
+    gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
+
     return [
         {
             "slug": "enrolled_children",
@@ -76,18 +78,21 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
                 )),
                 "extended_info": [
                     {
-                        'indicator': 'Number of lactating women who are enrolled for ICDS services:',
+                        'indicator':
+                            'Number of children (0 - 6 years) who are enrolled for ICDS services{}:'
+                            .format(chosen_filters),
                         'value': total_valid
                     },
                     {
                         'indicator': (
-                            'Total number of lactating women who are registered: '
+                            'Total number of children (0 - 6 years) who are registered{}: '.format(chosen_filters)
                         ),
                         'value': total
                     },
                     {
                         'indicator': (
-                            'Percentage of registered lactating women who are enrolled for ICDS services:'
+                            'Percentage of registered children (0-6 years) who are enrolled for ICDS services{}:'
+                            .format(chosen_filters)
                         ),
                         'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                     }
