@@ -255,8 +255,51 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
-            ]
+            ],
+            None,
         )
+
+    @property
+    def indicator_summary(self):
+        context = self.get_factory_context()
+        wrapped_specs = [
+            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            for spec in self.configured_indicators
+        ]
+        return [
+            {
+                "column_id": wrapped.column_id,
+                "comment": wrapped.comment,
+                "readable_output": wrapped.readable_output(context)
+            }
+            for wrapped in wrapped_specs if wrapped
+        ]
+
+    @property
+    def named_expression_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.named_expressions[name].get('comment'),
+                "readable_output": str(exp)
+            }
+            for name, exp in self.named_expression_objects.items()
+        ]
+
+    @property
+    def named_filter_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.named_filters[name].get('comment'),
+                "readable_output": str(filter)
+            }
+            for name, filter in self.named_filter_objects.items()
+        ]
+
+    @property
+    def configured_filter_summary(self):
+        return str(FilterFactory.from_spec(self.configured_filter, context=self.get_factory_context()))
 
     @property
     @memoized
