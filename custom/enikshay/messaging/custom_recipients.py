@@ -60,8 +60,9 @@ def get_user_cases_at_location(location):
 def beneficiary_registration_recipients(handler, reminder):
     beneficiary = reminder.case
 
-    owner_location = SQLLocation.by_location_id(beneficiary.owner_id)
-    if owner_location is None or owner_location.domain != reminder.domain:
+    try:
+        owner_location = SQLLocation.active_objects.get(domain=reminder.domain, location_id=beneficiary.owner_id)
+    except SQLLocation.DoesNotExist:
         return beneficiary
 
     if not located_in_mehsana(owner_location):
@@ -71,8 +72,9 @@ def beneficiary_registration_recipients(handler, reminder):
     if not fo_location_id:
         return beneficiary
 
-    fo_location = SQLLocation.by_location_id(fo_location_id)
-    if fo_location is None or fo_location.domain != reminder.domain:
+    try:
+        fo_location = SQLLocation.active_objects.get(domain=reminder.domain, location_id=fo_location_id)
+    except SQLLocation.DoesNotExist:
         return beneficiary
 
     additional_recipients = get_user_cases_at_location(fo_location)
@@ -87,8 +89,9 @@ def prescription_voucher_alert_recipients(handler, reminder):
     if beneficiary is None:
         return None
 
-    owner_location = SQLLocation.by_location_id(beneficiary.owner_id)
-    if owner_location is None or owner_location.domain != reminder.domain:
+    try:
+        owner_location = SQLLocation.active_objects.get(domain=reminder.domain, location_id=beneficiary.owner_id)
+    except SQLLocation.DoesNotExist:
         return beneficiary
 
     if not located_in_mehsana(owner_location):
