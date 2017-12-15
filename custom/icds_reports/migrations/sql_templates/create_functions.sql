@@ -319,7 +319,6 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
-	_aggregation_delay date;
 	_rollup_text text;
 	_rollup_text2 text;
 BEGIN
@@ -334,7 +333,6 @@ BEGIN
 	_null_value = NULL;
 	_blank_value = '';
 	_no_text = 'no';
-	_aggregation_delay = ($1 + INTERVAL ' - 4 DAYS')::DATE;
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
@@ -396,7 +394,7 @@ BEGIN
 		'sum(valid_all_registered_in_month), ' ||
 		'sum(ebf_no_info_recorded) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
-    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND (dob IS NULL OR dob <= ' || quote_literal(_aggregation_delay) || ') '
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -568,7 +566,6 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
-	_aggregation_delay date;
 	_rollup_text text;
 	_rollup_text2 text;
 BEGIN
@@ -583,7 +580,6 @@ BEGIN
 	_blank_value = '';
 	_no_text = 'no';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
-	_aggregation_delay = ($1 + INTERVAL ' - 4 DAYS')::DATE;
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
@@ -638,7 +634,7 @@ BEGIN
 		'sum(lactating_all), ' ||
 		'sum(pregnant_all) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' ' ||
-    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND (add IS NULL OR add <= ' || quote_literal(_aggregation_delay) || ') ' ||
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
