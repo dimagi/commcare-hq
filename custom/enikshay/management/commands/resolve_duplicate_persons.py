@@ -79,7 +79,7 @@ class Command(BaseCommand):
 
                 person_info = self.get_person_case_info(person_case)
                 for update in updates:
-                    log = {k: v for d in [person_info, update] for k, v in d.items()}
+                    log = {k: v for d in [person_info, update[1]] for k, v in d.items()}
                     log['case_id'] = update[0]
                     logfile.writerow(log)
 
@@ -101,7 +101,7 @@ class Command(BaseCommand):
             'person_case_id': person_case.case_id,
             'person_name': ' '.join(filter(None, [person.get('first_name'), person.get('last_name')])),
             'enrolled_in_private': person.get('enrolled_in_private'),
-            'dto_name': self.districts_by_id(person.get('current_address_district_choice')),
+            'dto_name': self.districts_by_id[person.get('current_address_district_choice')],
             'phi_name': person.get('phi'),
             'owner_id': person_case.owner_id,
             'dob': person.get('dob'),
