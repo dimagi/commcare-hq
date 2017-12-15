@@ -201,7 +201,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
                         "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
                     )
 
-        raise IndicatorError("AWC {} not found in the restore".format(location_name))
+        return 0
 
     def get_messages(self, language_code=None):
         if self.supervisor is None:
@@ -403,7 +403,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         num_weigh = self.get_value_from_fixture(self.weighed_fixture, 'open_weighed')
         num_weigh_avail = self.get_value_from_fixture(self.weighed_fixture, 'open_count')
         num_days_open = int(self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count'))
-        num_awc_locations = len(self.days_open_fixture.findall('./rows/row[@is_total_row="False"]'))
+        num_awc_locations = len(self.awc_locations)
         if num_awc_locations:
             avg_days_open = int(round(1.0 * num_days_open / num_awc_locations))
         else:
