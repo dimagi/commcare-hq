@@ -4,6 +4,7 @@ from collections import defaultdict
 import csv
 import datetime
 from django.core.management.base import BaseCommand
+from unidecode import unidecode
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -79,7 +80,8 @@ class Command(BaseCommand):
 
                 person_info = self.get_person_case_info(person_case)
                 for update in updates:
-                    log = {k: v for d in [person_info, update[1]] for k, v in d.items()}
+                    log = {unidecode(k): unidecode(v)
+                           for d in [person_info, update[1]] for k, v in d.items() if v}
                     log['case_id'] = update[0]
                     logfile.writerow(log)
 
