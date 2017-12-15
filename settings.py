@@ -1614,6 +1614,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
         ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
          "TB: Agency user case from voucher_fulfilled_by_id"],
+    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.beneficiary_registration_recipients',
+         "TB: Beneficiary Registration Recipients"],
+    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.prescription_voucher_alert_recipients',
+         "TB: Prescription Voucher Alert Recipients"],
 }
 
 # Used by the new reminders framework
