@@ -525,7 +525,12 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
+    @memoized
     def _build_temp_data_source(self, app_source, username):
+        """
+        Build a temp datasource and return the ID
+        """
+
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
@@ -547,13 +552,6 @@ class ConfigureReport(ReportBuilderView):
             countdown=TEMP_DATA_SOURCE_LIFESPAN
         )
         settings.CELERY_ALWAYS_EAGER = always_eager
-
-    @memoized
-    def _get_preview_data_source(self):
-        """
-        Return the ID of the report's DataSourceConfiguration
-        """
-        return self._build_temp_data_source(self.app_source, request.user.username)
 
     def _get_existing_report_type(self):
         if self.existing_report:
@@ -625,8 +623,8 @@ class ConfigureReport(ReportBuilderView):
             'source_id': self.source_id,
             'application': self.app_id,
             'report_preview_url': reverse(ReportPreview.urlname,
-                                          args=[self.domain, self._get_preview_data_source()]),
-            'preview_datasource_id': self._get_preview_data_source(),
+                                          args=[self.domain, self._build_temp_data_source()]),
+            'preview_datasource_id': self._build_temp_data_source(),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
