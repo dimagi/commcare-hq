@@ -90,14 +90,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
             // Response can be a form response which will result in the the session id
             // being stored in the session_id field.
-            sessionId = response.session_id;
 
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
-            urlObject.setSessionId(sessionId);
-            encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
             response.appId = urlObject.appId;
-            response.sessionId = sessionId;
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
@@ -105,6 +101,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
                 response,
                 { parse: true }
             );
+
+            currentFragment = Backbone.history.getFragment();
+            urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
+            encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
             FormplayerFrontend.navigate(encodedUrl);
 
             FormplayerFrontend.Menus.Controller.showMenu(menuCollection);
