@@ -48,11 +48,10 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         _.defaults(self.options, {
             baseUrl: null,
             formSessionId: null,
-            selections: null,
+            menuSessionId: null,
             username: null,
             restoreAs: null,
             domain: null,
-            appId: null,
             tabs: [
                 TabIDs.FORM_DATA,
                 TabIDs.FORM_XML,
@@ -169,11 +168,10 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         API.menuDebuggerContent(
             this.options.baseUrl,
             {
-                selections: this.options.selections,
+                session_id: this.options.menuSessionId,
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
-                app_id: this.options.appId,
             }
         ).done(function(response) {
             this.evalXPath.autocomplete(response.autoCompletableItems);
@@ -193,12 +191,11 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         _.defaults(self.options, {
             baseUrl: null,
             formSessionId: null,
-            selections: null,
+            menuSessionId: null,
             username: null,
             restoreAs: null,
             domain: null,
             sessionType: SessionTypes.FORM,
-            appId: null,
         });
 
 
@@ -334,6 +331,8 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.getSessionId = function() {
             if (self.options.sessionType === SessionTypes.FORM) {
                 return self.options.formSessionId;
+            } else {
+                return self.options.menuSessionId;
             }
         };
 
@@ -346,8 +345,6 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     restoreAs: self.options.restoreAs,
                     domain: self.options.domain,
                     xpath: xpath,
-                    app_id: self.options.appId,
-                    selections: self.options.selections,
                     debugOutput: self.selectedDebugOption().key,
                 },
                 self.options.sessionType

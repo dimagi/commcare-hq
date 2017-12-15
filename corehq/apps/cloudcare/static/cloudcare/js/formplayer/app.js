@@ -246,7 +246,7 @@ FormplayerFrontend.on("start", function (options) {
     }
 });
 
-FormplayerFrontend.on('configureDebugger', function() {
+FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
     var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerMenu,
         TabIDs = hqImport('cloudcare/js/debugger/debugger').TabIDs,
         user = FormplayerFrontend.request('currentUser'),
@@ -256,18 +256,13 @@ FormplayerFrontend.on('configureDebugger', function() {
     if (!$debug.length)
         return;
 
-    var urlObject = Util.currentUrlToObject();
-    var selections = urlObject.steps;
-    var appId = urlObject.appId;
-
     $debug.html('');
     cloudCareDebugger = new CloudCareDebugger({
         baseUrl: user.formplayer_url,
-        selections: selections,
+        menuSessionId: menuSessionId,
         username: user.username,
         restoreAs: user.restoreAs,
         domain: user.domain,
-        appId: appId,
         tabs: [
             TabIDs.EVAL_XPATH,
         ],
