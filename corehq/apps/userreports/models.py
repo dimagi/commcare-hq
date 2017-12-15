@@ -298,6 +298,10 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         ]
 
     @property
+    def configured_filter_summary(self):
+        return str(FilterFactory.from_spec(self.configured_filter, context=self.get_factory_context()))
+
+    @property
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:

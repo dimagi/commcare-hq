@@ -1,7 +1,25 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
 {% block page_content %}
-<h1>Summary</h1>
+<h2>Summary</h2>
+<table class="table">
+    <colgroup>
+        <col width="10%">
+        <col width="90%">
+    </colgroup>
+    <tr>
+        <td>Name</td>
+        <td>{{ datasource_display_name }}</td>
+    </tr>
+    <tr>
+        <td>Description</td>
+        <td>{{ datasource_description }}</td>
+    </tr>
+    <tr>
+        <td>Filter</td>
+        <td><pre>{{ filter_summary }}</pre></td>
+    </tr>
+</table>
 <h2>Indicators</h2>
 <table class="table">
     <colgroup>
