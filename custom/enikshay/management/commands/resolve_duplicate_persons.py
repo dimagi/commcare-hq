@@ -24,7 +24,6 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_TEST,
     CASE_TYPE_TRAIL,
     CASE_TYPE_VOUCHER,
-    get_all_occurrence_cases_from_person,
 )
 from custom.enikshay.duplicate_ids import (
     get_cases_with_duplicate_ids, ReadableIdGenerator)
@@ -81,7 +80,7 @@ class Command(BaseCommand):
                 for update in updates:
                     log = {k: v for d in [person_info, update] for k, v in d.items()}
                     log['case_id'] = update[0]
-                    logfile.writerow()
+                    logfile.writerow(log)
 
                 if commit:
                     bulk_update_cases(self.domain, updates, self.__module__)
@@ -91,7 +90,7 @@ class Command(BaseCommand):
     def districts_by_id(self):
         locs = SQLLocation.objects.filter(domain=self.domain, location_type__code='dto')
         return defaultdict(lambda: '', (
-            (loc.location_id, loc.loc_name) for loc in locs
+            (loc.location_id, loc.name) for loc in locs
         ))
 
     def get_person_case_info(self, person_case):
@@ -180,7 +179,7 @@ def get_name_update(case, old_id, new_id):
     return get_case_update(case, {'name': new_name})
 
 
-def get_all_vouchers_from_person(person_case):
+def get_all_vouchers_from_person(domain, person_case):
     """Returns all voucher cases under tests or prescriptions"""
     accessor = CaseAccessors(domain)
     for occurrence_case in accessor.get_reverse_indexed_cases([person_case.case_id]):
