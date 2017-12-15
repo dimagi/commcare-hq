@@ -1,6 +1,5 @@
 {% load hq_shared_tags %}
 
-{# TODO: API id was already publicly visible, but it should be moved into settings #}
 {% if ANALYTICS_CONFIG.DEBUG %}
     {# Developer is working on analytics #}
     {% initial_analytics_data 'drift.apiId' ANALYTICS_IDS.DRIFT_ID %}
