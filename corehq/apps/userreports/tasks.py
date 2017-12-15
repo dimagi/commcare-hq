@@ -338,20 +338,10 @@ def _save_document_helper(doc_ids, indicator_by_doc_id, doc_store):
 
     # remove any related docs that were just rebuilt
     related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
-
-    # need to add/change locking for these docs
-    # also need to get indicators for these docs as they won't be in the inciator_by_doc_id dict passed in
-    for doc in doc_store.iter_documents(list(related_docs_to_rebuild)):
-        if related_docs_to_rebuild in indicator_by_doc_id:
-            # don't process docs already processed
-            continue
-        indicator = indicator_by_doc_id[doc['_id']]
-        # intentionally ignoring any docs to rebuild because don't want to get in infinite loop
-        successfully_processed, to_remove, ignored = _save_document_helper_helper(indicator, doc)
-        if successfully_processed:
-            processed_indicators.append(indicator.pk)
-        else:
-            failed_indicators.append((indicator, to_remove))
+    # queue the docs that aren't already queued
+    _queue_indicators(AsyncIndicator.objects.filter(
+        doc_id__in=related_docs_to_rebuild, date_queued=None
+    ))
 
     return processed_indicators, failed_indicators
 
