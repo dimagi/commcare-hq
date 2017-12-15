@@ -288,28 +288,6 @@ class ReportBuilderView(BaseDomainView):
     def section_url(self):
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
-    def _build_temp_data_source(self, app_source, username):
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **self._get_config_kwargs(app_source)
-        )
-        data_source_config.validate()
-        data_source_config.save()
-        self._expire_data_source(data_source_config._id)
-        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
-        self.filter_data_source_changes(data_source_config._id)
-        return data_source_config._id
-
-    def _expire_data_source(self, data_source_config_id):
-        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
-        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
-        settings.CELERY_ALWAYS_EAGER = False
-        delete_data_source_task.apply_async(
-            (self.domain, data_source_config_id),
-            countdown=TEMP_DATA_SOURCE_LIFESPAN
-        )
-        settings.CELERY_ALWAYS_EAGER = always_eager
 
     def _get_config_kwargs(self, app_source):
         app = Application.get(app_source.application)
@@ -453,7 +431,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            data_source_config_id = self._build_temp_data_source(app_source, request.user.username)
 
             track_workflow(
                 request.user.email,
@@ -472,7 +449,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'application': app_source.application,
                 'source_type': app_source.source_type,
                 'source': app_source.source,
-                'data_source': data_source_config_id,
             }
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
@@ -549,24 +525,35 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
+    def _build_temp_data_source(self, app_source, username):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            **self._get_config_kwargs(app_source)
+        )
+        data_source_config.validate()
+        data_source_config.save()
+        self._expire_data_source(data_source_config._id)
+        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        self.filter_data_source_changes(data_source_config._id)
+        return data_source_config._id
+
+    def _expire_data_source(self, data_source_config_id):
+        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        delete_data_source_task.apply_async(
+            (self.domain, data_source_config_id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
+
     @memoized
     def _get_preview_data_source(self):
         """
         Return the ID of the report's DataSourceConfiguration
         """
-
-        if self.existing_report:
-            source_type = {
-                "CommCareCase": "case",
-                "XFormInstance": "form"
-            }[self.existing_report.config.referenced_doc_type]
-            source_id = self.existing_report.config.meta.build.source_id
-            app_id = self.existing_report.config.meta.build.app_id
-            app_source = ApplicationDataSource(app_id, source_type, source_id)
-            data_soruce_id = self._build_temp_data_source(app_source, self.request.user.username)
-            return data_soruce_id
-        else:
-            return self.request.GET['data_source']
+        return self._build_temp_data_source(self.app_source, request.user.username)
 
     def _get_existing_report_type(self):
         if self.existing_report:
