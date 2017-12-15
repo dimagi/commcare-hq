@@ -46,21 +46,21 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var location_id = $location.search().location_id;
 
         var mapConfiguration = function(location) {
-             vm.type = '';
+            vm.type = '';
 
-             if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
-                 vm.scope = "ind";
-                 vm.type = vm.scope + "Topo";
-                 Datamap.prototype[vm.type] = STATES_TOPOJSON;
-             } else if (location_level === 0) {
-                 vm.scope = location.map_location_name;
-                 vm.type = vm.scope + "Topo";
-                 Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
-             } else if (location_level === 1) {
-                 vm.scope = location.map_location_name;
-                 vm.type = vm.scope + "Topo";
-                 Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
-             }
+            if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
+                vm.scope = "ind";
+                vm.type = vm.scope + "Topo";
+                Datamap.prototype[vm.type] = STATES_TOPOJSON;
+            } else if (location_level === 0) {
+                vm.scope = location.map_location_name;
+                vm.type = vm.scope + "Topo";
+                Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
+            } else if (location_level === 1) {
+                vm.scope = location.map_location_name;
+                vm.type = vm.scope + "Topo";
+                Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+            }
 
             vm.map = {
                 scope: vm.scope,
@@ -188,7 +188,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         };
 
         locationsService.getLocation(location_id).then(function(location) {
-            mapConfiguration(location)
+            mapConfiguration(location);
         });
 
         vm.indicator = vm.data && vm.data[0] !== void(0) ? vm.data[0].slug : null;
