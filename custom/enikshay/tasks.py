@@ -58,7 +58,7 @@ import six
 
 logger = get_task_logger(__name__)
 
-DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
+DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source value')
 BatchStatus = namedtuple('BatchStatus', 'update_count noupdate_count success_count errors case_batches duration')
 
 CACHE_KEY = "reconciliation-task-{}"
@@ -165,13 +165,13 @@ class EpisodeUpdater(object):
             updates = []
             for episode in self._get_open_episode_cases(case_ids):
                 did_error = False
-                adherence_cases = None
+                dose_status_by_date = None
                 update_json = {}
                 for updater in self.updaters:
                     try:
                         potential_update = updater(self.domain, episode).update_json()
                         if isinstance(updater, EpisodeAdherenceUpdate):
-                            adherence_cases = updater.get_all_adherence_cases()
+                            dose_status_by_date = updater.dose_status_by_date
                         update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
                     except Exception as e:
                         did_error = True
@@ -188,8 +188,12 @@ class EpisodeUpdater(object):
                     update_count += 1
                 else:
                     noupdate_count += 1
-                if adherence_cases:
-                    self._update_ledger_values(episode, adherence_cases)
+                if dose_status_by_date:
+                    for dose_date, dose_status in dose_status_by_date:
+                        self._update_ledger_values(episode,
+                                                   dose_date,
+                                                   dose_status.source,
+                                                   dose_status.value)
                 if len(updates) >= batch_size:
                     bulk_update_cases(self.domain, updates, device_id)
                     updates = []
@@ -200,9 +204,10 @@ class EpisodeUpdater(object):
 
         return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
 
-    def _update_ledger_values(self, episode_case, adherence_cases):
-        for adherence_case in adherence_cases:
-            update_ledger_for_adherence(adherence_case, episode_case)
+    @staticmethod
+    def _update_ledger_values(episode_case, adherence_date, adherence_source, adherence_value):
+        if adherence_date and adherence_source and adherence_value:
+            update_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value)
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
@@ -293,7 +298,7 @@ class EpisodeAdherenceUpdate(object):
         self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
         self.purge_date = datetime.datetime.now(
             pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
-
+        self.dose_status_by_date = {}
 
         self._cache_dose_taken_by_date = False
 
@@ -403,22 +408,22 @@ class EpisodeAdherenceUpdate(object):
         debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
 
         adherence_cases = self.get_valid_adherence_cases()
-        dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
+        self.dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
         doses_per_week = self.get_doses_per_week()
 
         update = {
-            'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
+            'adherence_total_doses_taken': self.count_doses_taken(self.dose_status_by_date),
             'doses_per_week': doses_per_week
         }
-        update.update(self.get_adherence_scores(dose_status_by_date))
+        update.update(self.get_adherence_scores(self.dose_status_by_date))
         update.update(self.get_aggregated_scores(
             latest_adherence_date,
             adherence_schedule_date_start,
-            dose_status_by_date
+            self.dose_status_by_date
         ))
-        update.update(self.get_ip_followup_test_threshold_dates(dose_status_by_date))
-        update.update(self.get_cp_followup_test_threshold_dates(dose_status_by_date))
-        update.update(self.get_outcome_due_threshold_dates(dose_status_by_date))
+        update.update(self.get_ip_followup_test_threshold_dates(self.dose_status_by_date))
+        update.update(self.get_cp_followup_test_threshold_dates(self.dose_status_by_date))
+        update.update(self.get_outcome_due_threshold_dates(self.dose_status_by_date))
 
         return self.check_and_return(update)
 
@@ -816,22 +821,24 @@ def calculate_dose_status_by_day(adherence_cases):
         adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
         adherence_cases_by_date[adherence_date].append(case)
 
-    status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False))
+    status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False, value=None))
     for day, cases in six.iteritems(adherence_cases_by_date):
-        case = _get_relevent_case(cases)
+        case = get_relevent_case(cases)
         if not case:
             pass  # unknown
         elif case.get('adherence_value') in DOSE_TAKEN_INDICATORS:
             source = case.get('adherence_report_source') or case.get('adherence_source')
-            status_by_day[day] = DoseStatus(taken=True, missed=False, unknown=False, source=source)
+            status_by_day[day] = DoseStatus(taken=True, missed=False, unknown=False, source=source,
+                                            value=case.get('adherence_value'))
         elif case.get('adherence_value') == DOSE_MISSED:
-            status_by_day[day] = DoseStatus(taken=False, missed=True, unknown=False, source=False)
+            status_by_day[day] = DoseStatus(taken=False, missed=True, unknown=False, source=False,
+                                            value=case.get('adherence_value'))
         else:
             pass  # unknown
     return status_by_day
 
 
-def _get_relevent_case(cases):
+def get_relevent_case(cases):
     """
     If there are multiple cases on one day filter to a single case as per below
     1. Find most relevant case

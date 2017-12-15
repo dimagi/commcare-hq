@@ -65,13 +65,11 @@ def get_all_fixture_items(domain, fixture_id):
         return {}
 
 
-def update_ledger_with_episode(episode_case, adherence_case, entry_id):
+def update_ledger_with_episode(episode_case, entry_id, adherence_source, adherence_value):
     """
     :param episode_case: episode case for the adherence
     :param entry_id: example "date_2017-12-09" which would be the adherence date
     """
-    adherence_source = adherence_case.get_case_property('adherence_source')
-    adherence_value = adherence_case.get_case_property('adherence_value')
     domain = episode_case.domain
     if adherence_source and adherence_value:
         fixture_id = get_id_of_fixture_tagged_adherence_ledger_values(domain)
@@ -94,11 +92,6 @@ def update_ledger_with_episode(episode_case, adherence_case, entry_id):
                                           SYSTEM_USER_ID)
 
 
-def update_ledger_for_adherence(adherence_case, episode_case=None):
-    if not episode_case:
-        episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
-
-    adherence_date = adherence_case.get_case_property('adherence_date')
-    if adherence_date:
-        entry_id = "date_%s" % adherence_date
-        update_ledger_with_episode(episode_case, adherence_case, entry_id)
+def update_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value):
+    entry_id = "date_%s" % adherence_date
+    update_ledger_with_episode(episode_case, entry_id, adherence_source, adherence_value)

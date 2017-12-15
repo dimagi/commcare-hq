@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 import json
 import pytz
+from collections import defaultdict
+
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_datetime, parse_date
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, check_domain_migration
@@ -11,6 +13,7 @@ from dimagi.utils.web import json_response
 from dimagi.utils.logging import notify_exception
 
 from corehq.motech.repeaters.views import AddCaseRepeaterView
+from custom.enikshay.case_utils import get_adherence_cases_from_episode
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     AdherenceCaseFactory,
@@ -19,6 +22,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 )
 import six
 
+from custom.enikshay.tasks import get_relevent_case
 from custom.enikshay.utils import update_ledger_for_adherence
 
 
@@ -77,9 +81,20 @@ def update_patient_adherence(request, domain):
                      "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
 
     try:
-        for adherence_case in adherence_cases:
+        adherence_cases_by_date = defaultdict(list)
+        # refetch all adherence cases to consider all adherence cases post update
+        adherence_cases_for_episode = get_adherence_cases_from_episode(domain, factory._episode_case)
+        for case in adherence_cases_for_episode:
+            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
+            adherence_cases_by_date[adherence_date].append(case)
+        for day, cases in six.iteritems(adherence_cases_by_date):
+            adherence_case = get_relevent_case(cases)
             if adherence_case.get_case_property('adherence_date'):
-                update_ledger_for_adherence(adherence_case, factory._episode_case)
+                update_ledger_for_adherence(factory._episode_case,
+                                            adherence_case.get_case_property('adherence_date'),
+                                            adherence_case.get_case_property('adherence_source'),
+                                            adherence_case.get_case_property('adherence_value'),
+                                            )
     except Exception as e:
         notify_exception(
             request,
