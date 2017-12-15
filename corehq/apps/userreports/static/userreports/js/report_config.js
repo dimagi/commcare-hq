@@ -308,6 +308,7 @@ var reportBuilder = function () {  // eslint-disable-line
             selectablePropertyOptions: self.selectablePropertyOptions,
         });
         self.defaultFilterList.serializedProperties.subscribe(function () {
+            self.refreshPreview();
             self.saveButton.fire("change");
         });
         self.previewError = ko.observable(false);
@@ -418,6 +419,12 @@ var reportBuilder = function () {  // eslint-disable-line
         };
 
         self.serialize = function () {
+            // Clear invalid defaullt filters
+            default_filters = JSON.parse(self.defaultFilterList.serializedProperties())
+            default_filters = _.filter(
+                default_filters,
+                function(c){return c.property && c.pre_value;}
+            );
             return {
                 "existing_report": self.existingReportId,
                 "report_title": $('#report-title').val(), // From the inline-edit component
@@ -427,7 +434,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 "chart": self.selectedChart(),
                 "columns": JSON.parse(self.columnList.serializedProperties()),
                 "location": self.location_field(),
-                "default_filters": JSON.parse(self.defaultFilterList.serializedProperties()),
+                "default_filters": default_filters,
                 "user_filters": JSON.parse(self.filterList.serializedProperties()),
             };
         };

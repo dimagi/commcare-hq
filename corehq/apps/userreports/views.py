@@ -781,9 +781,8 @@ class ReportPreview(BaseDomainView):
         report_data = json.loads(six.moves.urllib.parse.unquote(request.body))
         form_class = _get_form_type(report_data['report_type'])
 
-        # ignore filters
+        # ignore user filters
         report_data['user_filters'] = []
-        report_data['default_filters'] = []
 
         _munge_report_data(report_data)
 
