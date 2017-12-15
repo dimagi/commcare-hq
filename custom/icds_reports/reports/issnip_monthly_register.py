@@ -2,7 +2,7 @@ from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, Cc
 from django.db.models.aggregates import Sum, Count
 from django.db.models import Case, When, Q, F, IntegerField
 
-from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR
+from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRecordMonthlyURC, ChildHealthMonthlyURC
 
 DATA_NOT_ENTERED = "Data Not Entered"
 
@@ -80,11 +80,23 @@ class ISSNIPMonthlyReport(object):
 
     @property
     def infrastructure_data(self):
-        return AWCInfrastructureUCR(self.config).data
+        data = AWCInfrastructureUCR(self.config).data
+        return data[0] if data else None
 
     @property
     def vhnd_data(self):
-        return VHNDFormUCR(self.config).data
+        data = VHNDFormUCR(self.config).data
+        return data[0] if data else None
+
+    @property
+    def ccs_record_monthly_ucr(self):
+        data = CcsRecordMonthlyURC(self.config).data
+        return data[0] if data else None
+
+    @property
+    def child_health_monthly_ucr(self):
+        data = ChildHealthMonthlyURC(self.config).data
+        return data[0] if data else None
 
     @property
     def agg_child_health_monthly(self):
@@ -196,5 +208,54 @@ class ISSNIPMonthlyReport(object):
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
             }, 'wasting_severe')),
+            sc_boys_6_36=Sum(self.filter_by({
+                'caste': 'sc',
+                'gender': 'M',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            sc_girls_6_36=Sum(self.filter_by({
+                'caste': 'sc',
+                'gender': 'F',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            st_boys_6_36=Sum(self.filter_by({
+                'caste': 'st',
+                'gender': 'M',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            st_girls_6_36=Sum(self.filter_by({
+                'caste': 'st',
+                'gender': 'F',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            obc_boys_6_36=Sum(self.filter_by({
+                'caste': 'obc',
+                'gender': 'M',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            obc_girls_6_36=Sum(self.filter_by({
+                'caste': 'obc',
+                'gender': 'F',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            general_boys_6_36=Sum(self.filter_by({
+                'caste': 'other',
+                'gender': 'M',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            general_girls_6_36=Sum(self.filter_by({
+                'caste': 'other',
+                'gender': 'F',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            total_boys_6_36=Sum(self.filter_by({
+                'gender': 'M',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            total_girls_6_36=Sum(self.filter_by({
+                'gender': 'F',
+                'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+
         )
         return data[0] if data else None

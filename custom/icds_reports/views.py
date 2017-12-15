@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-import uuid
-
 import requests
 
 from datetime import datetime, date
@@ -667,13 +665,16 @@ class ExportIndicatorView(View):
                 show_test=include_test
             ).to_export('csv', location)
         elif indicator == 7:
-            dir_name = uuid.uuid4()
             awcs = request.POST.get('selected_awcs').split(',')
             pdf_format = request.POST.get('pdfformat')
             prepare_issnip_monthly_register_reports.delay(
-                dir_name, 'icds-dashboard-qa', awcs, pdf_format, month, year
+                'icds-dashboard-qa',
+                self.request.couch_user,
+                awcs,
+                pdf_format,
+                month,
+                year
             )
-
 
 
 @method_decorator([login_and_domain_required], name='dispatch')

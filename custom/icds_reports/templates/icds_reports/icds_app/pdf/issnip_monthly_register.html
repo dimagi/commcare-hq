@@ -39,6 +39,7 @@
         </style>
     </head>
     <body>
+        {% for data in reports %}
             <div style="page-break-after: always">
                 <h1>ISSNIP Monthly Register</h1>
                 <div class="row">
@@ -51,13 +52,13 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Name of Project: {{ report.agg_awc_monthly_data|icds_format:"block_name" }}</td>
-                                    <td>*LGD Code: {{ report.agg_awc_monthly_data|icds_format:"awc_name" }}</td>
+                                    <td>Name of Project: {{ data.report.agg_awc_monthly_data|icds_format:"block_name" }}</td>
+                                    <td>*LGD Code: {{ data.report.agg_awc_monthly_data|icds_format:"awc_name" }}</td>
                                     <td>*Main AWC / Mini AWC:</td>
                                 </tr>
                                 <tr>
                                     <td>Name of AWC:</td>
-                                    <td>AWC Code: {{ report.agg_awc_monthly_data|icds_format:"awc_site_code" }}</td>
+                                    <td>AWC Code: {{ data.report.agg_awc_monthly_data|icds_format:"awc_site_code" }}</td>
                                     <td>*Name Of Supervisor: </td>
                                 </tr>
                                 <tr>
@@ -77,20 +78,20 @@
                         <table class="table-no-border">
                             <tbody>
                                 <tr>
-                                    <td>Type of AWC building Pucca / Others: {{ report.agg_awc_monthly_data|icds_format:"infra_type_of_building" }}</td>
-                                    <td>Owned/rented/Others: </td>
+                                    <td>Type of AWC building Pucca / Others: {{ data.report.agg_awc_monthly_data|icds_format:"infra_type_of_building" }}</td>
+                                    <td>Owned/rented/Others: {{ data.report.infrastructure_data|icds_type_of_building }}</td>
                                 </tr>
                                 <tr>
-                                    <td>Whether drinking water available at AWC? (Y/N): {{ report.agg_awc_monthly_data|icds_format:"infra_clean_water" }}</td>
+                                    <td>Whether drinking water available at AWC? (Y/N): {{ data.report.agg_awc_monthly_data|icds_format:"infra_clean_water" }}</td>
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td>Whether Kitchen available at AWC? (Y/N):</td>
+                                    <td>Whether Kitchen available at AWC? (Y/N): {{ data.report.infrastructure_data.kitchen|icds_yes_no }}</td>
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td>Whether toilet available at AWC? (Y/N): </td>
-                                    <td>Type of toilet at AWC:</td>
+                                    <td>Whether toilet available at AWC? (Y/N): {{ data.report.infrastructure_data.toilet_facility|icds_yes_no }}</td>
+                                    <td>Type of toilet at AWC: {{ data.report.infrastructure_data.type_toilet|icds_toilet_type }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -113,11 +114,11 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"infants_0_6" }}</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"children_6_36" }}</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"childen_36_72" }}</td>
-                                    <td>{{ report.agg_awc_monthly_data|icds_format:"cases_ccs_pregnant_all" }}</td>
-                                    <td>{{ report.agg_awc_monthly_data|icds_format:"cases_ccs_lactating_all" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"infants_0_6" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"children_6_36" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"childen_36_72" }}</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"cases_ccs_pregnant_all" }}</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"cases_ccs_lactating_all" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -131,14 +132,14 @@
                         <table class="table-no-border">
                             <tbody>
                                 <tr>
-                                    <td>Number of days AWC functioned: {{ report.agg_awc_monthly_data|icds_format:"awc_days_open" }}</td>
-                                    <td>Number of days AWC conducted Preschool Education: {{ report.agg_awc_monthly_data|icds_format:"awc_days_pse_conducted" }}</td>
+                                    <td>Number of days AWC functioned: {{ data.report.agg_awc_monthly_data|icds_format:"awc_days_open" }}</td>
+                                    <td>Number of days AWC conducted Preschool Education: {{ data.report.agg_awc_monthly_data|icds_format:"awc_days_pse_conducted" }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="row">
-                        <p>*ECCE material available at AWC(Y/N): </p>
+                        <p>*ECCE material available at AWC(Y/N): {{ data.report.infrastructure_data|icds_material_available }}</p>
                     </div>
                     <div class="row">
                         <table>
@@ -156,27 +157,27 @@
                             <tbody>
                                 <tr>
                                     <td>Normal Children</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"normal_children_breakfastt_and_hcm" }}</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"normal_children_breakfastt_and_hcm" }}</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"normal_children_thr" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"normal_children_breakfastt_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"normal_children_breakfastt_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"normal_children_thr" }}</td>
                                 </tr>
                                 <tr>
                                     <td>*Severely underweight Children</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
-                                    <td>{{ report.child_health_monthly_data|icds_format:"severely_underweight_children_thr" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_thr" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Pregnant Women</td>
                                     <td>N/A</td>
                                     <td>N/A</td>
-                                    <td>{{ report.css_record_monthly|icds_format:"pregnant_women_thr" }}</td>
+                                    <td>{{ data.report.css_record_monthly|icds_format:"pregnant_women_thr" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Lactating Mothers</td>
                                     <td>N/A</td>
                                     <td>N/A</td>
-                                    <td>{{ report.css_record_monthly|icds_format:"lactating_women_thr" }}</td>
+                                    <td>{{ data.report.css_record_monthly|icds_format:"lactating_women_thr" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -226,58 +227,58 @@
                             <tbody>
                                 <tr>
                                     <td>SC</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"sc_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"sc_girls_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"sc_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"sc_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_sc_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_sc_girls_36_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>ST</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"st_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"st_boys_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"st_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"st_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_st_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_st_girls_36_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>OBC</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"obc_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"obc_boys_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"obc_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"obc_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_obc_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_obc_girls_36_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>General</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"general_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"general_boys_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"general_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"general_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_general_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_general_girls_36_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Total</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"total_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"total_boys_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"total_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"total_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_total_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_total_girls_36_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Minority (out of total) </td>
@@ -316,38 +317,38 @@
                             <tbody>
                                 <tr>
                                     <td>Normal (Green)</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_normal_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_normal_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_normal_3_5" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_normal_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_normal_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_normal_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_normal_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_normal_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Moderately Under weight (yellow)</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_moderately_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_moderately_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_moderately_3_5" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_moderately_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_moderately_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_moderately_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_moderately_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_moderately_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Severely Under weight (Red)</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_severely_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_severely_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_severely_3_5" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_severely_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_severely_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_severely_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_severely_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_severely_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Stunted (Height for Age)</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_stunted_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_stunted_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_stunted_3_5" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_stunted_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_stunted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_stunted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_stunted_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_stunted_3_5" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Wasted (Weight for height)</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_wasted_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_wasted_0_3" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"boys_wasted_3_5" }}</td>
-                                    <td>{{ report.agg_child_health_monthly|icds_format:"girls_wasted_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_wasted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_wasted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_wasted_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_wasted_3_5" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -362,11 +363,11 @@
                             <tbody>
                                 <tr>
                                     <td>Date of VHSND conducted </td>
-                                    <td></td>
+                                    <td>{{ data.report.vhnd_data|icds_format:"vhsnd_date_past_month" }}</td>
                                 </tr>
                                 <tr>
                                     <td>AWW present during VHSND? (Y/N)</td>
-                                    <td>{{ report.agg_awc_monthly_data|icds_format:"ls_awc_present" }}</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"ls_awc_present" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Number of antenatal check- ups conducted during the Month </td>
@@ -378,7 +379,7 @@
                                 </tr>
                                 <tr>
                                     <td>Did Village leaders/VHSNC members participated in VHSND?</td>
-                                    <td></td>
+                                    <td>{{ data.report.vhnd_data|icds_format:"local_leader" }}</td>
                                 </tr>
                                 <tr>
                                     <td>* No of children given de-worming tablets (Children 1-2 yrs-half tablet and above 1 tablet)</td>
@@ -386,11 +387,11 @@
                                 </tr>
                                 <tr>
                                     <td>No of Referrals made for the Month</td>
-                                    <td>{{ report.agg_awc_monthly_data|icds_format:"cases_person_referred" }}</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"cases_person_referred" }}</td>
                                 </tr>
                                 <tr>
                                     <td>No of Home visits made during the Month</td>
-                                    <td>{{ report.agg_awc_monthly_data|icds_format:"usage_num_home_visit" }}</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"usage_num_home_visit" }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -446,8 +447,9 @@
                 <br/>
                 <p style="text-align: right; padding-right: 100px;">Signature of AWW</p>
                 <div class="row" style="bottom: 0;">
-                    <img src="data:image/png;base64,{{ qrcode_64 }}" width="150" alt="QR Code"/>
+                    <img src="data:image/png;base64,{{ data.qrcode_64 }}" width="150" alt="QR Code"/>
                 </div>
             </div>
+        {% endfor %}
     </body>
 </html>

@@ -39,7 +39,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
-    vm.selectedPDFFormat = 'one';
+    vm.selectedPDFFormat = 'many';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
     vm.now = new Date().getMonth() + 1;
@@ -59,8 +59,8 @@ function DownloadController($location, locationHierarchy, locationsService, user
     ];
 
     vm.pdfFormats = [
-        {id: 'one', name: 'One PDF per AWC'},
-        {id: 'many', name: 'One Combined PDF for all AWCs'},
+        {id: 'many', name: 'One PDF per AWC'},
+        {id: 'one', name: 'One Combined PDF for all AWCs'},
     ];
 
     vm.awcLocations = [];
@@ -257,13 +257,6 @@ function DownloadController($location, locationHierarchy, locationsService, user
     }
 
     vm.getFormats = function() {
-        if (vm.isISSNIPMonthlyRegisterSelected()) {
-            vm.selectedFormat = 'one';
-            return [
-                {id: 'one', name: 'CSV'},
-                {id: 'many', name: 'Excel'},
-            ]
-        }
         if (vm.isChildBeneficiaryListSelected()) {
             return [vm.formats[0]];
         } else {

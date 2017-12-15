@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import uuid
 from base64 import b64encode
 from collections import namedtuple
 from datetime import date, datetime, timedelta
@@ -11,10 +12,9 @@ from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections
-from django.template.loader import get_template
-from xhtml2pdf import pisa
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.util import send_report_download_email
 from corehq.apps.settings.views import get_qrcode
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -23,6 +23,7 @@ from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
+from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from six.moves import range
@@ -216,32 +217,60 @@ def _find_stagnant_cases(adapter):
 
 
 @task(queue='background_queue', ignore_result=True)
-def prepare_issnip_monthly_register_reports(dir_name, domain, awcs, pdf_format, month, year):
-    template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
-    qrcode = get_qrcode("super test 1234")
+def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
+    dir_name = uuid.uuid4()
+
     base_dir = os.path.join(settings.BASE_DIR, 'custom/icds_reports/static/media/')
-    # directory = os.path.dirname(os.path.join(base_dir, dir_name.hex + '/'))
-    # if not os.path.exists(directory):
-    #     os.makedirs(directory)
+    directory = os.path.dirname(os.path.join(base_dir, dir_name.hex + '/'))
+
     selected_date = date(year, month, 1)
-    awcs = ['96f90d4ba46d4a1186b1a2da64e7f044']
+    awcs = ['96f90d4ba46d4a1186b1a2da64e7f044', '0618707bdbba469aa5be123a8fd231df', '86f068f741ab49e29f4770674ab94460']
+
+    report_context = {
+        'reports': []
+    }
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     for awc in awcs:
         # awc_location = SQLLocation.objects.get(location_id=awc)
-        file_name = "{}.pdf".format(awc)
-        resultFile = open(os.path.join(base_dir, file_name), "w+b")
         report = ISSNIPMonthlyReport(config={
             'awc_id': awc,
             'month': selected_date,
             'domain': domain
         })
-        report_context = {
+        qrcode = get_qrcode("super test 1234")
+        context = {
             'qrcode_64': b64encode(qrcode),
             'report': report
         }
 
-        pisaStatus = pisa.CreatePDF(
-            template.render(report_context),
-            dest=resultFile)
+        if pdf_format == 'one':
+            report_context['reports'].append(context)
+        else:
+            report_context['reports'] = [context]
+            create_pdf_file('ISSNIP_monthly_register_{}'.format(awc), directory, report_context)
 
-        # close output file
-        resultFile.close()
+    if pdf_format == 'many':
+        zip_folder(base_dir, dir_name.hex)
+    else:
+        create_pdf_file('ISSNIP_monthly_register_cumulative', directory, report_context)
+
+    send_report_download_email('ISSNIP monthly register', user, 'test')
+    print datetime.now()
+    icds_remove_files.apply_async(args=[dir_name.hex, base_dir, pdf_format], countdown=60)
+
+
+@task(queue='background_queue', ignore_result=True)
+def icds_remove_files(uuid, folder_dir, pdf_format):
+    print datetime.now()
+    reports_dir = os.path.join(folder_dir, uuid)
+    for root, dirs, files in os.walk(reports_dir):
+        for name in files:
+            os.remove(os.path.join(root, name))
+    if pdf_format == 'many':
+        os.remove(os.path.join(folder_dir, "{}.zip").format(uuid))
+    os.rmdir(reports_dir)
+
+
+

@@ -7,8 +7,8 @@ import pytz
 from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter
+from sqlagg.columns import SumColumn, SimpleColumn, CountColumn, CountUniqueColumn
+from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter, GT, GTE
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
@@ -2678,4 +2678,313 @@ class VHNDFormUCR(SqlData):
         return [
             DatabaseColumn('vhsnd_date_past_month', SimpleColumn('vhsnd_date_past_month')),
             DatabaseColumn('local_leader', SimpleColumn('local_leader'))
+        ]
+
+
+class CcsRecordMonthlyURC(SqlData):
+    engine_id = 'icds-test-ucr'
+
+    def __init__(self, config=None):
+        config.update({
+            'sc': 'sc',
+            'st': 'st',
+            'obc': 'obc',
+            'other': 'other',
+            'one': 1,
+            'twentyone': 21
+        })
+        super(CcsRecordMonthlyURC, self).__init__(config)
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], 'static-ccs_record_cases_monthly_tableau_v2')
+
+    @property
+    def filters(self):
+        return [
+            EQ('awc_id', 'awc_id'),
+            EQ('month', 'month')
+        ]
+
+    @property
+    def group_by(self):
+        return ['awc_id']
+
+    @property
+    def order_by(self):
+        return []
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('sc_pregnant', CountUniqueColumn(
+                'doc_id',
+                alias='sc_pregnant',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'sc'),
+                    EQ('pregnant', 'one'),
+                ]
+            )),
+            DatabaseColumn('st_pregnant', CountUniqueColumn(
+                'doc_id',
+                alias='st_pregnant',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'st'),
+                    EQ('pregnant', 'one'),
+                ]
+            )),
+            DatabaseColumn('obc_pregnant', CountUniqueColumn(
+                'doc_id',
+                alias='obc_pregnant',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'obc'),
+                    EQ('pregnant', 'one'),
+                ]
+            )),
+            DatabaseColumn('general_pregnant', CountUniqueColumn(
+                'doc_id',
+                alias='general_pregnant',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'other'),
+                    EQ('pregnant', 'one'),
+                ]
+            )),
+            DatabaseColumn('general_pregnant', CountUniqueColumn(
+                'doc_id',
+                alias='total_pregnant',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('pregnant', 'one'),
+                ]
+            )),
+            DatabaseColumn('sc_lactating', CountUniqueColumn(
+                'doc_id',
+                alias='sc_lactating',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'sc'),
+                    EQ('lactating', 'one'),
+                ]
+            )),
+            DatabaseColumn('st_lactating', CountUniqueColumn(
+                'doc_id',
+                alias='st_lactating',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'st'),
+                    EQ('lactating', 'one'),
+                ]
+            )),
+            DatabaseColumn('obc_lactating', CountUniqueColumn(
+                'doc_id',
+                alias='obc_lactating',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'obc'),
+                    EQ('lactating', 'one'),
+                ]
+            )),
+            DatabaseColumn('general_lactating', CountUniqueColumn(
+                'doc_id',
+                alias='general_lactating',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('caste', 'other'),
+                    EQ('lactating', 'one'),
+                ]
+            )),
+            DatabaseColumn('total_lactating', CountUniqueColumn(
+                'doc_id',
+                alias='total_lactating',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('lactating', 'one'),
+                ]
+            )),
+        ]
+
+
+class ChildHealthMonthlyURC(SqlData):
+    engine_id = 'icds-test-ucr'
+
+    def __init__(self, config=None):
+        config.update({
+            'sc': 'sc',
+            'st': 'st',
+            'obc': 'obc',
+            'other': 'other',
+            'one': 1,
+            'male': 'M',
+            'female': 'F',
+            'age_48': '48',
+            'age_60': '60',
+            'age_72': '72',
+            'twentyone': 21
+        })
+        super(ChildHealthMonthlyURC, self).__init__(config)
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], 'static-child_cases_monthly_tableau_v2')
+
+    @property
+    def filters(self):
+        return [
+            EQ('awc_id', 'awc_id'),
+            EQ('month', 'month')
+        ]
+
+    @property
+    def group_by(self):
+        return ['awc_id']
+
+    @property
+    def order_by(self):
+        return []
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('pre_sc_boys_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_sc_boys_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'sc'),
+                    EQ('sex', 'male'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_sc_girls_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_sc_girls_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'sc'),
+                    EQ('sex', 'female'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_st_boys_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_st_boys_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'st'),
+                    EQ('sex', 'male'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_st_girls_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_st_girls_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'st'),
+                    EQ('sex', 'female'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_obc_boys_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_obc_boys_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'obc'),
+                    EQ('sex', 'male'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_obc_girls_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_obc_girls_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'obc'),
+                    EQ('sex', 'female'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_general_boys_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_general_boys_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'other'),
+                    EQ('sex', 'male'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_general_girls_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_general_girls_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('caste', 'other'),
+                    EQ('sex', 'female'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_total_boys_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_total_boys_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('sex', 'male'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            )),
+            DatabaseColumn('pre_total_girls_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_total_girls_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('sex', 'female'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                ]
+            ))
         ]

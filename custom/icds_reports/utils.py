@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division
 import json
 import os
+import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -8,7 +9,8 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
+from xhtml2pdf import pisa
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
@@ -422,3 +424,33 @@ def chosen_filters_to_labels(config, default_interval=''):
         .format(gender=chosen_gender, delimiter=delimiter, age=chosen_age) if gender or age else ''
 
     return gender_label, age_label, chosen_filters
+
+
+def zip_folder(root_path, name_of_folder):
+    folder_path = os.path.join(root_path, name_of_folder)
+    contents = os.walk(folder_path)
+    output = os.path.join(root_path, '{}.zip'.format(name_of_folder))
+    try:
+        zip_file = zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED)
+        for root, folders, files in contents:
+            for file_name in files:
+                absolute_path = os.path.join(root, file_name)
+                zip_file.write(absolute_path, file_name)
+    except IOError as message:
+        print message
+    except OSError  as message:
+        print message
+    except zipfile.BadZipfile as message:
+        print message
+    finally:
+        zip_file.close()
+
+
+def create_pdf_file(file_name, directory, pdf_context):
+    template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
+    file_name = "{}.pdf".format(file_name)
+    resultFile = open(os.path.join(directory, file_name), "w+b")
+    pisa.CreatePDF(
+        template.render(pdf_context),
+        dest=resultFile)
+    resultFile.close()
