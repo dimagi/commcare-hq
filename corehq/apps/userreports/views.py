@@ -288,25 +288,6 @@ class ReportBuilderView(BaseDomainView):
     def section_url(self):
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
-
-    def _get_config_kwargs(self, app_source):
-        app = Application.get(app_source.application)
-        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
-        return {
-            'display_name': builder.data_source_name,
-            'referenced_doc_type': builder.source_doc_type,
-            'configured_filter': builder.filter,
-            'configured_indicators': builder.all_possible_indicators(),
-            'base_item_expression': builder.base_item_expression(False),
-            'meta': DataSourceMeta(
-                build=DataSourceBuildInformation(
-                    source_id=app_source.source,
-                    app_id=app._id,
-                    app_version=app.version,
-                )
-            )
-        }
-
     @staticmethod
     def filter_data_source_changes(data_source_config_id):
         """
@@ -526,22 +507,43 @@ class ConfigureReport(ReportBuilderView):
             return request.GET.get('report_name', '')
 
     @memoized
-    def _build_temp_data_source(self, app_source, username):
+    def _build_temp_data_source(self):
         """
         Build a temp datasource and return the ID
         """
 
+        app_source = ApplicationDataSource(self.app_id, self.source_type, self.source_id)
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **self._get_config_kwargs(app_source)
+            **self._get_ds_config_kwargs(app_source)
         )
         data_source_config.validate()
         data_source_config.save()
         self._expire_data_source(data_source_config._id)
-        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        rebuild_indicators(data_source_config._id,
+                           self.request.user.username,
+                           limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
         self.filter_data_source_changes(data_source_config._id)
         return data_source_config._id
+
+    def _get_ds_config_kwargs(self, app_source):
+        app = Application.get(app_source.application)
+        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
+        return {
+            'display_name': builder.data_source_name,
+            'referenced_doc_type': builder.source_doc_type,
+            'configured_filter': builder.filter,
+            'configured_indicators': builder.all_possible_indicators(),
+            'base_item_expression': builder.base_item_expression(False),
+            'meta': DataSourceMeta(
+                build=DataSourceBuildInformation(
+                    source_id=app_source.source,
+                    app_id=app._id,
+                    app_version=app.version,
+                )
+            )
+        }
 
     def _expire_data_source(self, data_source_config_id):
         always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
