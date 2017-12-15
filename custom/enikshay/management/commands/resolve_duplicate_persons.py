@@ -26,8 +26,9 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_VOUCHER,
     get_all_occurrence_cases_from_person,
 )
-from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, get_new_readable_id
-from custom.enikshay.user_setup import compress_nikshay_id, join_chunked
+from custom.enikshay.duplicate_ids import (
+    get_cases_with_duplicate_ids, ReadableIdGenerator)
+from custom.enikshay.user_setup import join_chunked
 
 
 class Command(BaseCommand):
@@ -57,6 +58,7 @@ class Command(BaseCommand):
         self.domain = domain
         self.accessor = CaseAccessors(domain)
         commit = options['commit']
+        self.id_generator = ReadableIdGenerator(domain, commit)
 
         filename = '{}-{}.csv'.format(self.__module__.split('.')[-1],
                                       datetime.datetime.now().strftime('%Y-%m-%d_%H.%M.%S'))
@@ -70,7 +72,7 @@ class Command(BaseCommand):
 
             print("Processing duplicate cases")
             for person_case in with_progress_bar(bad_cases):
-                if person_case.get_case_property('enrolled_in_private') = 'true':
+                if person_case.get_case_property('enrolled_in_private') == 'true':
                     updates = list(filter(None, self.get_private_updates(person_case)))
                 else:
                     updates = list(filter(None, self.get_public_updates(person_case)))
@@ -111,12 +113,13 @@ class Command(BaseCommand):
         https://docs.google.com/document/d/1NS5ozgk7w-2AADsrdTtjgqODkgWIEaCw6eqQ0cLg138/edit#
         """
         old_id = person_case.get_case_property('person_id')
-        new_id = get_new_readable_id()  # TODO uppercase
+        new_flat_id = self.id_generator.get_next()
+        new_id = join_chunked(new_flat_id, 3)
         yield get_case_update(person_case, {
             'person_id_deprecated': old_id,
             'person_id_flat_deprecated': person_case.get_case_property('person_id_flat'),
             'person_id': new_id,
-            'person_id_flat': new_id.replace('-', ''),
+            'person_id_flat': new_flat_id,
         })
 
         for person_child_case in self.accessor.get_reverse_indexed_cases([person_case.case_id]):
@@ -137,7 +140,7 @@ class Command(BaseCommand):
                     if case.type == CASE_TYPE_TEST:
                         yield get_case_update(case, {
                             'person_id_at_request': new_id,
-                            'person_id_flat_at_request': new_id.replace('-', '')
+                            'person_id_flat_at_request': new_flat_id
                         })
 
                     if case.type == CASE_TYPE_EPISODE:
@@ -150,18 +153,19 @@ class Command(BaseCommand):
         https://docs.google.com/document/d/1NS5ozgk7w-2AADsrdTtjgqODkgWIEaCw6eqQ0cLg138/edit#
         """
         old_id = person_case.get_case_property('person_id')
-        new_id = get_new_readable_id()  # TODO
+        new_flat_id = self.id_generator.get_next()
+        new_id = join_chunked(new_flat_id, 3)
         yield get_case_update(person_case, {
             'person_id_deprecated': old_id,
             'person_id_flat_deprecated': person_case.get_case_property('person_id_flat'),
             'person_id': new_id,
-            'person_id_flat': new_id.replace('-', ''),
+            'person_id_flat': new_flat_id,
         })
 
         for voucher_case in get_all_vouchers_from_person(self.domain, person_case):
             yield get_case_update(voucher_case, {
                 'person_id': new_id,
-                'person_id_flat': new_id.replace('-', ''),
+                'person_id_flat': new_flat_id,
             })
 
 
