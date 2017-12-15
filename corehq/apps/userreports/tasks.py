@@ -47,6 +47,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
+from custom.icds_reports.ucr.expressions import get_related_docs_ids
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -293,6 +294,8 @@ def save_document(doc_ids):
             return
 
         first_indicator = indicators[0]
+        processed_indicators = []
+        failed_indicators = []
 
         for i in indicators:
             assert i.domain == first_indicator.domain
@@ -301,16 +304,31 @@ def save_document(doc_ids):
         indicator_by_doc_id = {i.doc_id: i for i in indicators}
         doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
         indicator_config_ids = first_indicator.indicator_config_ids
+        related_docs_to_rebuild = set()
 
         with timer:
-            processed_indicators, failed_indicators = _save_document_helper(
-                doc_ids, indicator_by_doc_id, doc_store)
+            for doc in doc_store.iter_documents(doc_ids):
+                indicator = indicator_by_doc_id[doc['_id']]
+                successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
+                if rebuild_related_docs:
+                    related_docs_to_rebuild = related_docs_to_rebuild.union(get_related_docs_ids(doc['_id']))
+                if successfully_processed:
+                    processed_indicators.append(indicator.pk)
+                else:
+                    failed_indicators.append((indicator, to_remove))
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         with transaction.atomic():
             for indicator, to_remove in failed_indicators:
                 indicator.update_failure(to_remove)
                 indicator.save()
+
+    # remove any related docs that were just rebuilt
+    related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
+    # queue the docs that aren't already queued
+    _queue_indicators(AsyncIndicator.objects.filter(
+        doc_id__in=related_docs_to_rebuild, date_queued=None
+    ))
 
     datadog_histogram(
         'commcare.async_indicator.processing_time', timer.duration,
@@ -320,33 +338,7 @@ def save_document(doc_ids):
     )
 
 
-def _save_document_helper(doc_ids, indicator_by_doc_id, doc_store):
-    # don't think I need doc_ids. can get them from the dictionary
-    from custom.icds_reports.ucr.expressions import get_related_docs_ids
-    processed_indicators = []
-    failed_indicators = []
-    related_docs_to_rebuild = set()
-    for doc in doc_store.iter_documents(doc_ids):
-        indicator = indicator_by_doc_id[doc['_id']]
-        successfully_processed, to_remove, rebuild_related_docs = _save_document_helper_helper(indicator, doc)
-        if rebuild_related_docs:
-            related_docs_to_rebuild = related_docs_to_rebuild.union(get_related_docs_ids(doc['_id']))
-        if successfully_processed:
-            processed_indicators.append(indicator.pk)
-        else:
-            failed_indicators.append((indicator, to_remove))
-
-    # remove any related docs that were just rebuilt
-    related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
-    # queue the docs that aren't already queued
-    _queue_indicators(AsyncIndicator.objects.filter(
-        doc_id__in=related_docs_to_rebuild, date_queued=None
-    ))
-
-    return processed_indicators, failed_indicators
-
-
-def _save_document_helper_helper(indicator, doc):
+def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
     something_failed = False
     configs_to_remove = []
