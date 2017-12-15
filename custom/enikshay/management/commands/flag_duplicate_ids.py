@@ -8,7 +8,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import bulk_update_cases
 
-from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, add_debug_info_to_cases
+from custom.enikshay.duplicate_ids import get_duplicated_case_stubs, add_debug_info_to_cases
 
 
 class Command(BaseCommand):
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             logfile.writeheader()
 
             print("Finding duplicates")
-            bad_cases = get_cases_with_duplicate_ids(self.domain, self.case_type)
+            bad_cases = get_duplicated_case_stubs(self.domain, self.case_type)
             if self.debug_info:
                 print("Adding debug info to cases")
                 add_debug_info_to_cases(bad_cases, limit_debug_to=None)

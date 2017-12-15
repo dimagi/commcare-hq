@@ -20,7 +20,7 @@ from .models import IssuerId
 from .user_setup import compress_nikshay_id
 
 
-def get_cases_with_duplicate_ids(domain, case_type):
+def get_duplicated_case_stubs(domain, case_type):
     accessor = CaseAccessors(domain)
     id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[case_type]
     all_case_ids = accessor.get_case_ids_in_domain(case_type)

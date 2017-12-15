@@ -26,7 +26,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_VOUCHER,
 )
 from custom.enikshay.duplicate_ids import (
-    get_cases_with_duplicate_ids, ReadableIdGenerator)
+    get_duplicated_case_stubs, ReadableIdGenerator)
 from custom.enikshay.user_setup import join_chunked
 
 
@@ -67,10 +67,11 @@ class Command(BaseCommand):
             logfile.writeheader()
 
             print("Finding duplicates")
-            bad_cases = get_cases_with_duplicate_ids(self.domain, CASE_TYPE_PERSON)
+            bad_case_stubs = get_duplicated_case_stubs(self.domain, CASE_TYPE_PERSON)
+            bad_cases = self.accessor.iter_cases(stub['case_id'] for stub in bad_case_stubs)
 
             print("Processing duplicate cases")
-            for person_case in with_progress_bar(bad_cases):
+            for person_case in with_progress_bar(bad_cases, len(bad_case_stubs)):
                 if person_case.get_case_property('enrolled_in_private') == 'true':
                     updates = list(filter(None, self.get_private_updates(person_case)))
                 else:
