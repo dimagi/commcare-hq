@@ -96,6 +96,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
             response.appId = urlObject.appId;
+            response.sessionId = sessionId;
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
