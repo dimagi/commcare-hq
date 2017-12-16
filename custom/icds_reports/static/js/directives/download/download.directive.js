@@ -1,6 +1,6 @@
 /* global moment */
 
-function DownloadController($location, locationHierarchy, locationsService, userLocationId) {
+function DownloadController($location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures) {
     var vm = this;
 
     vm.months = [];
@@ -72,8 +72,12 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
-        {id: 7, name: 'ISSNIP Monthly Register'},
+
     ];
+
+    if (haveAccessToFeatures) {
+        vm.indicators.push({id: 7, name: 'ISSNIP Monthly Register'});
+    }
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
@@ -300,7 +304,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     };
 }
 
-DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
+DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

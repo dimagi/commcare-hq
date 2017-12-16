@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 import logging
 import os
 
+import pytz
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
@@ -215,16 +216,19 @@ def _find_stagnant_cases(adapter):
     ).distinct()
     return query.all()
 
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 @task(queue='background_queue', ignore_result=True)
 def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
     dir_name = uuid.uuid4()
 
+    utc_now = datetime.now(pytz.utc)
+    india_now = utc_now.astimezone(india_timezone)
+
     base_dir = os.path.join(settings.BASE_DIR, 'custom/icds_reports/static/media/')
     directory = os.path.dirname(os.path.join(base_dir, dir_name.hex + '/'))
 
     selected_date = date(year, month, 1)
-    awcs = ['96f90d4ba46d4a1186b1a2da64e7f044', '0618707bdbba469aa5be123a8fd231df', '86f068f741ab49e29f4770674ab94460']
 
     report_context = {
         'reports': []
@@ -233,13 +237,16 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
     if not os.path.exists(directory):
         os.makedirs(directory)
     for awc in awcs:
-        # awc_location = SQLLocation.objects.get(location_id=awc)
+        awc_location = SQLLocation.objects.get(location_id=awc)
         report = ISSNIPMonthlyReport(config={
-            'awc_id': awc,
+            'awc_id': awc_location.location_id,
             'month': selected_date,
             'domain': domain
         })
-        qrcode = get_qrcode("super test 1234")
+        qrcode = get_qrcode("{} {}".format(
+            awc_location.site_code,
+            india_now.strftime('%d %b %Y')
+        ))
         context = {
             'qrcode_64': b64encode(qrcode),
             'report': report
@@ -249,7 +256,11 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
             report_context['reports'].append(context)
         else:
             report_context['reports'] = [context]
-            create_pdf_file('ISSNIP_monthly_register_{}'.format(awc), directory, report_context)
+            create_pdf_file(
+                'ISSNIP_monthly_register_{}'.format(awc_location.name.replace(' ', '_')),
+                directory,
+                report_context
+            )
 
     if pdf_format == 'many':
         zip_folder(base_dir, dir_name.hex)
@@ -257,13 +268,11 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
         create_pdf_file('ISSNIP_monthly_register_cumulative', directory, report_context)
 
     send_report_download_email('ISSNIP monthly register', user, 'test')
-    print datetime.now()
     icds_remove_files.apply_async(args=[dir_name.hex, base_dir, pdf_format], countdown=60)
 
 
 @task(queue='background_queue', ignore_result=True)
 def icds_remove_files(uuid, folder_dir, pdf_format):
-    print datetime.now()
     reports_dir = os.path.join(folder_dir, uuid)
     for root, dirs, files in os.walk(reports_dir):
         for name in files:

@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
 from xhtml2pdf import pisa
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
@@ -454,3 +455,7 @@ def create_pdf_file(file_name, directory, pdf_context):
         template.render(pdf_context),
         dest=resultFile)
     resultFile.close()
+
+
+def have_access_to_features(user):
+    return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)

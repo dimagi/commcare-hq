@@ -84,7 +84,7 @@ from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, Pregna
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id, get_location_level
+    get_latest_issue_tracker_build_id, get_location_level, have_access_to_features
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -242,6 +242,7 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
+        kwargs['have_access'] = have_access_to_features(self.couch_user)
 
         is_commcare_user = self.couch_user.is_commcare_user()
 
