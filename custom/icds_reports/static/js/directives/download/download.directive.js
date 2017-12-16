@@ -232,7 +232,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
     vm.onSelectForISSNIP = function ($item, level) {
         locationsService.getAwcLocations($item.location_id).then(function (data) {
-            vm.awcLocations = [ALL_OPTION].concat(data)
+            vm.awcLocations = [ALL_OPTION].concat(data);
         });
         vm.onSelect($item, level);
     };
@@ -257,8 +257,8 @@ function DownloadController($location, locationHierarchy, locationsService, user
     };
 
     vm.getAwcs = function () {
-        locationsService.getAncestors()
-    }
+        locationsService.getAncestors();
+    };
 
     vm.getFormats = function() {
         if (vm.isChildBeneficiaryListSelected()) {

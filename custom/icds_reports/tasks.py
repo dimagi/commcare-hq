@@ -216,7 +216,9 @@ def _find_stagnant_cases(adapter):
     ).distinct()
     return query.all()
 
+
 india_timezone = pytz.timezone('Asia/Kolkata')
+
 
 @task(queue='background_queue', ignore_result=True)
 def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
@@ -280,6 +282,3 @@ def icds_remove_files(uuid, folder_dir, pdf_format):
     if pdf_format == 'many':
         os.remove(os.path.join(folder_dir, "{}.zip").format(uuid))
     os.rmdir(reports_dir)
-
-
-

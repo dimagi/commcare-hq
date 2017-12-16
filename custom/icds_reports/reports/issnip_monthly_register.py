@@ -1,4 +1,6 @@
-from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, AggChildHealthMonthly
+from __future__ import absolute_import
+from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
+    AggChildHealthMonthly
 from django.db.models.aggregates import Sum, Count
 from django.db.models import Case, When, Q, F, IntegerField
 

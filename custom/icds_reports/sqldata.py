@@ -7,7 +7,7 @@ import pytz
 from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
-from sqlagg.columns import SumColumn, SimpleColumn, CountColumn, CountUniqueColumn
+from sqlagg.columns import SumColumn, SimpleColumn, CountUniqueColumn
 from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter, GT, GTE
 from sqlagg.sorting import OrderBy
 
@@ -17,7 +17,6 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
-from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, DATA_NOT_ENTERED
 from couchexport.export import export_from_tables

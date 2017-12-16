@@ -82,7 +82,8 @@ from custom.icds_reports.reports.registered_household import get_registered_hous
 
 from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, prepare_issnip_monthly_register_reports
+from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
+    prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, have_access_to_features
 from dimagi.utils.dates import force_to_date

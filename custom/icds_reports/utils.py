@@ -437,12 +437,6 @@ def zip_folder(root_path, name_of_folder):
             for file_name in files:
                 absolute_path = os.path.join(root, file_name)
                 zip_file.write(absolute_path, file_name)
-    except IOError as message:
-        print message
-    except OSError  as message:
-        print message
-    except zipfile.BadZipfile as message:
-        print message
     finally:
         zip_file.close()
 
