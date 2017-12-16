@@ -507,7 +507,7 @@ class ConfigureReport(ReportBuilderView):
             return request.GET.get('report_name', '')
 
     @memoized
-    def _build_temp_data_source(self):
+    def _build_temp_data_source(self, initial_columns, initial_filters):
         """
         Build a temp datasource and return the ID
         """
@@ -516,7 +516,7 @@ class ConfigureReport(ReportBuilderView):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **self._get_ds_config_kwargs(app_source)
+            **self._get_ds_config_kwargs(app_source, initial_columns, initial_filters)
         )
         data_source_config.validate()
         data_source_config.save()
@@ -527,14 +527,15 @@ class ConfigureReport(ReportBuilderView):
         self.filter_data_source_changes(data_source_config._id)
         return data_source_config._id
 
-    def _get_ds_config_kwargs(self, app_source):
+    def _get_ds_config_kwargs(self, app_source, initial_columns, initial_filters):
         app = Application.get(app_source.application)
         builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
         return {
             'display_name': builder.data_source_name,
             'referenced_doc_type': builder.source_doc_type,
             'configured_filter': builder.filter,
-            'configured_indicators': builder.all_possible_indicators(),
+            'configured_indicators': builder.all_possible_indicators(columns=initial_columns,
+                                                                     filters=initial_filters),
             'base_item_expression': builder.base_item_expression(False),
             'meta': DataSourceMeta(
                 build=DataSourceBuildInformation(
@@ -607,6 +608,12 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
+        initial_columns = [c._asdict() for c in report_form.initial_columns]
+        initial_user_filters = [f._asdict() for f in report_form.initial_user_filters]
+        initial_default_filters = [f._asdict() for f in report_form.initial_default_filters]
+
+        temp_ds_id = self._build_temp_data_source(initial_columns,
+                                                  initial_user_filters + initial_default_filters)
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
@@ -616,17 +623,17 @@ class ConfigureReport(ReportBuilderView):
             'column_options': [p.to_view_model() for p in report_form.report_column_options.values()],
             # TODO: Consider renaming this because it's more like "possible" data source props
             'data_source_properties': [p.to_view_model() for p in report_form.data_source_properties.values()],
-            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
-            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
-            'initial_columns': [c._asdict() for c in report_form.initial_columns],
+            'initial_user_filters': initial_user_filters,
+            'initial_default_filters': initial_default_filters,
+            'initial_columns': initial_columns,
             'initial_location': self._get_initial_location(report_form),
             'initial_chart_type': self._get_initial_chart_type(),
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
             'report_preview_url': reverse(ReportPreview.urlname,
-                                          args=[self.domain, self._build_temp_data_source()]),
-            'preview_datasource_id': self._build_temp_data_source(),
+                                          args=[self.domain, temp_ds_id]),
+            'preview_datasource_id': temp_ds_id,
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],

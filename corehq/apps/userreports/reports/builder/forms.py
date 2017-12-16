@@ -400,24 +400,28 @@ class DataSourceBuilder(object):
         :param filters: A list of filter configuration objects
         """
 
-        def get_key(i):
-            return i['column_id'], i['type']
-
         indicators = OrderedDict()
         for column in columns:
             column_option = self.report_column_options[column['property']]
             for indicator in column_option.get_indicators(column['aggregation'], is_multiselect_chart_report):
-                indicators.setdefault(get_key(indicator), indicator)
+                indicators.setdefault(str(indicator), indicator)
 
         for filter_ in filters:
             property_ = self.data_source_properties[filter_['property']]
             indicator = property_.to_report_filter_indicator(filter_)
-            indicators.setdefault(get_key(indicator), indicator)
+            indicators.setdefault(str(indicator), indicator)
 
         return list(indicators.values())
 
-    def all_possible_indicators(self):
+    def all_possible_indicators(self, columns=[], filters=[]):
+        """
+        Will generate a set of possible indicators for the datasource making sure to include the
+        provided columns and filters
+        """
         indicators = OrderedDict()
+        for i in self.indicators(columns, filters):
+            indicators.setdefault(str(i), i)
+
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
                 for indicator in column_option.get_indicators(agg):
