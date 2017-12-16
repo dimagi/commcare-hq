@@ -669,7 +669,7 @@ class ExportIndicatorView(View):
             awcs = request.POST.get('selected_awcs').split(',')
             pdf_format = request.POST.get('pdfformat')
             prepare_issnip_monthly_register_reports.delay(
-                'icds-dashboard-qa',
+                self.kwargs['domain'],
                 self.request.couch_user,
                 awcs,
                 pdf_format,
