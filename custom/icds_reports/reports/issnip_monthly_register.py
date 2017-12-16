@@ -4,7 +4,8 @@ from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, Cc
 from django.db.models.aggregates import Sum, Count
 from django.db.models import Case, When, Q, F, IntegerField
 
-from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRecordMonthlyURC, ChildHealthMonthlyURC
+from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRecordMonthlyURC, \
+    ChildHealthMonthlyURC
 
 DATA_NOT_ENTERED = "Data Not Entered"
 
