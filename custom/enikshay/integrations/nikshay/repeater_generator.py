@@ -525,6 +525,10 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             return landline_no.strip()[-10:]
         return DUMMY_VALUES['phone_number']
 
+    @staticmethod
+    def _get_value_or_dummy_value(location_user_data, value_for):
+        return location_user_data.get(value_for) or DUMMY_VALUES.get(value_for)
+
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
         location_user = get_location_user_for_notification(location)
@@ -533,14 +537,14 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
             'ESTABLISHMENT_NAME': location.name,
-            'MCI_HR_NO': (location_user_data.get('registration_number') or DUMMY_VALUES['registration_number']),
+            'MCI_HR_NO': self._get_value_or_dummy_value(location_user_data, 'registration_number'),
             'CONTACT_PNAME': location_user.full_name,
             'CONTACT_PDESIGNATION': (location_user_data.get('pcp_qualification') or NOT_AVAILABLE_VALUE),
             'TELEPHONE_NO': self._get_telephone_number(location_user_data),
             'MOBILE_NO': self._get_mobile_number(location_user_data),
             'COMPLETE_ADDRESS': self._get_address(location_user_data),
-            'PINCODE': (location_user_data.get('pincode') or DUMMY_VALUES['pincode']),
-            'EMAILID': (location_user_data.get('email') or DUMMY_VALUES['email']),
+            'PINCODE': self._get_value_or_dummy_value(location_user_data, 'pincode'),
+            'EMAILID': self._get_value_or_dummy_value(location_user_data, 'email'),
             'STATE_CODE': location_hierarchy_codes.stcode,
             'DISTRICT_CODE': location_hierarchy_codes.dtcode,
             'TBU_CODE': location.metadata.get('nikshay_tu_id'),
