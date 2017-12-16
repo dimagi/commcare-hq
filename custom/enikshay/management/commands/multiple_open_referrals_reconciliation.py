@@ -43,11 +43,12 @@ class Command(BaseModelReconciliationCommand):
         # iterate all occurrence cases
         for occurrence_case_id in self._get_open_occurrence_case_ids_to_process():
             if self.public_app_case(occurrence_case_id):
-                if self.needs_manual_reconciliation():
-                    self.record_manual_reconciliation(occurrence_case_id)
                 referral_cases = get_open_referral_cases_from_occurrence(occurrence_case_id)
                 if len(referral_cases) > 1:
-                    self.reconcile_cases(referral_cases, occurrence_case_id)
+                    if self.needs_manual_reconciliation():
+                        self.record_manual_reconciliation(occurrence_case_id)
+                    else:
+                        self.reconcile_cases(referral_cases, occurrence_case_id)
         self.email_report()
 
     def needs_manual_reconciliation(self):
