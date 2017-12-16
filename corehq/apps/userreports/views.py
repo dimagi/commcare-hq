@@ -7,6 +7,7 @@ import json
 import os
 import tempfile
 import uuid
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -1473,3 +1474,53 @@ def _shared_context(domain):
         'reports': ReportConfiguration.by_domain(domain) + static_reports,
         'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
     }
+
+
+class DataSourceSummaryView(BaseUserConfigReportsView):
+    urlname = 'summary_configurable_data_source'
+    template_name = "userreports/summary_data_source.html"
+    page_title = ugettext_lazy("Data Source Summary")
+
+    @property
+    def config_id(self):
+        return self.kwargs['config_id']
+
+    @property
+    @memoized
+    def config(self):
+        return get_datasource_config_or_404(self.config_id, self.domain)[0]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.config_id,))
+
+    @property
+    def page_name(self):
+        return u"Summary - {}".format(self.config.display_name)
+
+    @property
+    def page_context(self):
+        return {
+            'datasource_display_name': self.config.display_name,
+            'datasource_description': self.config.description,
+            'filter_summary': self.config.configured_filter_summary,
+            'indicator_summary': self._add_links_to_output(self.config.indicator_summary),
+            'named_expression_summary': self._add_links_to_output(self.config.named_expression_summary),
+            'named_filter_summary': self._add_links_to_output(self.config.named_filter_summary),
+        }
+
+    def _add_links_to_output(self, items):
+        def make_link(match):
+            value = match.group()
+            return '<a href="#{value}">{value}</a>'.format(value=value)
+
+        def add_links(content):
+            content = re.sub(r"NamedF:[A-Za-z0-9_-]+", make_link, content)
+            content = re.sub(r"NamedE:[A-Za-z0-9_-]+", make_link, content)
+            return content
+
+        list = []
+        for i in items:
+            i['readable_output'] = add_links(i.get('readable_output'))
+            list.append(i)
+        return list

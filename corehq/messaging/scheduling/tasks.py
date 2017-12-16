@@ -110,6 +110,8 @@ def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
         recipients = convert_to_tuple_of_tuples(recipients)
         new_recipients = set(recipients)
 
+        schedule_revision = schedule.get_schedule_revision()
+
         for recipient_type, recipient_id in new_recipients:
             if (recipient_type, recipient_id) not in existing_instances:
                 instance = TimedScheduleInstance.create_for_recipient(
@@ -118,7 +120,7 @@ def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
                     recipient_id,
                     start_date=start_date,
                     move_to_next_event_not_in_the_past=True,
-                    schedule_revision=schedule.memoized_schedule_revision,
+                    schedule_revision=schedule_revision,
                 )
                 save_timed_schedule_instance(instance)
 
@@ -127,7 +129,7 @@ def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
                 delete_timed_schedule_instance(schedule_instance)
             elif (
                 (start_date and start_date != schedule_instance.start_date) or
-                (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
+                (schedule_instance.schedule_revision != schedule_revision)
             ):
                 new_start_date = start_date or schedule_instance.start_date
                 schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)
@@ -220,6 +222,8 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
 
     reset_case_property_value = get_reset_case_property_value(case, action_definition)
 
+    schedule_revision = schedule.get_schedule_revision(case=case)
+
     for recipient_type, recipient_id in new_recipients:
         if (recipient_type, recipient_id) not in existing_instances:
             instance = CaseTimedScheduleInstance.create_for_recipient(
@@ -231,7 +235,7 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
                 case_id=case.case_id,
                 rule_id=rule.pk,
                 last_reset_case_property_value=reset_case_property_value,
-                schedule_revision=schedule.memoized_schedule_revision,
+                schedule_revision=schedule_revision,
             )
             save_case_schedule_instance(instance)
 
@@ -248,7 +252,7 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
 
             if (
                 (start_date and start_date != schedule_instance.start_date) or
-                (schedule_instance.schedule_revision != schedule.memoized_schedule_revision)
+                (schedule_instance.schedule_revision != schedule_revision)
             ):
                 new_start_date = start_date or schedule_instance.start_date
                 schedule_instance.recalculate_schedule(schedule, new_start_date=new_start_date)

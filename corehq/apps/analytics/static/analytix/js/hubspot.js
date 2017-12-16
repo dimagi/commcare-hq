@@ -16,12 +16,13 @@ hqDefine('analytix/js/hubspot', [
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _global = initialAnalytics.getFn('global'),
-        logger = logging.getLoggerForApi('Hubspot'),
-        _data = {};
+        _data = {},
+        logger = logging.getLoggerForApi('Hubspot');
 
     var _hsq = window._hsq = window._hsq || [];
 
     var __init__ = function () {
+        logger = logging.getLoggerForApi('Hubspot');
         _data.apiId = _get('apiId');
         if (_data.apiId) {
             _data.scriptSrc = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + _data.apiId + '.js';

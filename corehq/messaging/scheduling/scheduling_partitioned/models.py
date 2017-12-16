@@ -273,7 +273,7 @@ class AbstractTimedScheduleInstance(ScheduleInstance):
         self.active = True
         schedule.set_first_event_due_timestamp(self, start_date=new_start_date)
         schedule.move_to_next_event_not_in_the_past(self)
-        self.schedule_revision = schedule.memoized_schedule_revision
+        self.schedule_revision = schedule.get_schedule_revision(case=schedule.get_case_or_none(self))
 
 
 class AlertScheduleInstance(AbstractAlertScheduleInstance):

@@ -12,7 +12,7 @@
     "icds"
   ],
   "report_id": "static-mpr_5_ccs_record_cases",
-  "data_source_table": "static-ccs_record_cases_monthly",
+  "data_source_table": "static-ccs_record_cases_monthly_v2",
   "config": {
     "title": "MPR - 5 - CCS Record cases (Static)",
     "description": "",

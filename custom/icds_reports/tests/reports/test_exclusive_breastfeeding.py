@@ -40,7 +40,7 @@ class TestExclusiveBreastfeeding(TestCase):
                             'value': 28
                         },
                         {
-                            'indicator': '% children (0-6 months) exclusively in_month_total in the given month:',
+                            'indicator': '% children (0-6 months) exclusively breastfed in the given month:',
                             'value': '56.00%'
                         }
                     ]
@@ -102,7 +102,7 @@ class TestExclusiveBreastfeeding(TestCase):
                             'value': 17
                         },
                         {
-                            'indicator': '% children (0-6 months) exclusively in_month_total in the given month:',
+                            'indicator': '% children (0-6 months) exclusively breastfed in the given month:',
                             'value': '65.38%'
                         }
                     ]

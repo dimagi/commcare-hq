@@ -3,6 +3,9 @@
 
 
 from __future__ import absolute_import
+from exceptions import NotImplementedError
+from corehq.apps.userreports.operators import OPERATOR_DISPLAY
+from corehq.apps.userreports.util import add_tabbed_text
 class Filter(object):
     """
     Base filter class
@@ -10,6 +13,9 @@ class Filter(object):
 
     def __call__(self, item, context=None):
         return True
+
+    def __str__(self):
+        raise NotImplementedError()
 
 
 class NOTFilter(Filter):
@@ -19,6 +25,9 @@ class NOTFilter(Filter):
 
     def __call__(self, item, context=None):
         return not self._filter(item, context)
+
+    def __str__(self):
+        return "not({})".format(str(self._filter))
 
 
 class ANDFilter(Filter):
@@ -33,6 +42,10 @@ class ANDFilter(Filter):
     def __call__(self, item, context=None):
         return all(_filter(item, context) for _filter in self.filters)
 
+    def __str__(self):
+        return "and(\n{}\n)".format(
+            add_tabbed_text("\n,\n".join([str(f) for f in self.filters])))
+
 
 class ORFilter(Filter):
     """
@@ -45,6 +58,10 @@ class ORFilter(Filter):
 
     def __call__(self, item, context=None):
         return any(_filter(item, context) for _filter in self.filters)
+
+    def __str__(self):
+        return "or(\n{}\n)".format(
+            add_tabbed_text("\n,\n".join([str(f) for f in self.filters])))
 
 
 class CustomFilter(Filter):
@@ -60,6 +77,9 @@ class CustomFilter(Filter):
     def __call__(self, item, context=None):
         return self._filter(item, context)
 
+    def __str__(self):
+        return str(self._filter)
+
 
 class SinglePropertyValueFilter(Filter):
 
@@ -70,3 +90,20 @@ class SinglePropertyValueFilter(Filter):
 
     def __call__(self, item, context=None):
         return self.operator(self.expression(item, context), self.reference_expression(item, context))
+
+    def __str__(self):
+        return "{} {} '{}'".format(str(self.expression),
+                                   OPERATOR_DISPLAY[self.operator.func_name],
+                                   str(self.reference_expression))
+
+
+class NamedFilter(Filter):
+    def __init__(self, filter_name, filter):
+        self.filter_name = filter_name
+        self.filter = filter
+
+    def __call__(self, item, context=None):
+        return self.filter(item, context)
+
+    def __str__(self):
+        return "NamedF:{}".format(self.filter_name)

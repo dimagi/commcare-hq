@@ -11,7 +11,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels
 import six
 
 
@@ -54,10 +54,12 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
     fills.update({'60%-100%': RED})
     fills.update({'defaultFill': GREY})
 
+    gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
+
     return [
         {
             "slug": "low_birth",
-            "label": "Percent Newborns with Low Birth Weight",
+            "label": "Percent Newborns with Low Birth Weight{}".format(chosen_filters),
             "fills": fills,
             "rightLegend": {
                 "average": (low_birth_total * 100) / float(in_month_total or 1),
@@ -69,14 +71,24 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                     "diseases later in life"
                 )),
                 "extended_info": [
-                    {'indicator': 'Total Number of Newborns born in given month:', 'value': in_month_total},
-                    {'indicator': 'Number of Newborns with LBW in given month:', 'value': low_birth_total},
-                    {'indicator': '% newborns with LBW in given month:', 'value': '%.2f%%' % (
-                        low_birth_total * 100 / float(in_month_total or 1)
-                    )},
-                    {'indicator': '% Unweighed:', 'value': '%.2f%%' % (
-                        (in_month_total - low_birth_total) * 100 / float(in_month_total or 1)
-                    )}
+                    {
+                        'indicator': 'Total Number of Newborns born in given month{}:'.format(chosen_filters),
+                        'value': in_month_total
+                    },
+                    {
+                        'indicator': 'Number of Newborns with LBW in given month{}:'.format(chosen_filters),
+                        'value': low_birth_total
+                    },
+                    {
+                        'indicator': '% newborns with LBW in given month{}:'.format(chosen_filters),
+                        'value': '%.2f%%' % (
+                            low_birth_total * 100 / float(in_month_total or 1))
+                    },
+                    {
+                        'indicator': '% Unweighed{}:'.format(chosen_filters),
+                        'value': '%.2f%%' % (
+                            (in_month_total - low_birth_total) * 100 / float(in_month_total or 1))
+                    }
                 ]
 
             },

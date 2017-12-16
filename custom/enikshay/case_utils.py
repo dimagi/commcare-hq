@@ -677,7 +677,7 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
         episode_cases += [
             case for case in all_cases
             if case.type == CASE_TYPE_EPISODE and (
-                case.dynamic_case_properties().get('referral_status') not in [
+                case.dynamic_case_properties().get('close_reason') not in [
                     'invalid_episode',
                     'duplicate',
                     'invalid_registration'

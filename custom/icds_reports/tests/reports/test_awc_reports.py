@@ -752,7 +752,7 @@ class TestAWCReport(TestCase):
             }
         )
 
-    def test_awc_reports_demographics(self):
+    def test_awc_reports_demographics_monthly(self):
         self.assertDictEqual(
             get_awc_report_demographics(
                 'icds-cas',
@@ -763,6 +763,7 @@ class TestAWCReport(TestCase):
                     'awc_id': 'a1',
                     'aggregation_level': 5
                 },
+                (2017, 6, 1),
                 (2017, 5, 1),
             ),
             {
@@ -867,6 +868,228 @@ class TestAWCReport(TestCase):
                     }
                 ]
             }
+        )
+
+    def test_awc_reports_demographics_daily(self):
+        self.assertDictEqual(
+            get_awc_report_demographics(
+                'icds-cas',
+                {
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'block_id': 'b1',
+                    'awc_id': 'a1',
+                    'aggregation_level': 5
+                },
+                (2017, 5, 29),
+                (2017, 5, 1),
+            ),
+            {
+                "kpi": [
+                    [
+                        {
+                            "all": "",
+                            "format": "number",
+                            "color": "green",
+                            "percent": 13900.0,
+                            "value": 139,
+                            "label": "Registered Households",
+                            "frequency": "day",
+                            "help_text": "Total number of households registered"
+                        },
+                        {
+                            "all": 1,
+                            "format": "percent_and_div",
+                            "percent": 0.0,
+                            "value": 0,
+                            "label": "Percent Aadhaar-seeded Beneficiaries",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of ICDS beneficiaries whose Aadhaar identification has been captured"
+                            )
+                        }
+                    ],
+                    [
+                        {
+                            "all": 0,
+                            "format": "percent_and_div",
+                            "color": "red",
+                            "percent": 0.0,
+                            "value": 0,
+                            "label": "Percent children (0-6 years) enrolled for ICDS services",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of children registered between 0-6 years old "
+                                "who are enrolled for ICDS services"
+                            )
+                        },
+                        {
+                            "all": 2,
+                            "format": "percent_and_div",
+                            "color": "green",
+                            "percent": 10000.0,
+                            "value": 2,
+                            "label": "Percent pregnant women enrolled for ICDS services",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of pregnant women registered who are enrolled for ICDS services"
+                            )
+                        }
+                    ],
+                    [
+                        {
+                            "all": 3,
+                            "format": "percent_and_div",
+                            "color": "green",
+                            "percent": 10000.0,
+                            "value": 3,
+                            "label": "Percent lactating women enrolled for ICDS services",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of lactating women registered who are enrolled for ICDS services"
+                            )
+                        },
+                        {
+                            "all": 0,
+                            "format": "percent_and_div",
+                            "color": "red",
+                            "percent": 0.0,
+                            "value": 0,
+                            "label": (
+                                "Percent adolescent girls (11-18 years) enrolled for ICDS services"
+                            ),
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of adolescent girls registered between 11-18 years old who "
+                                "are enrolled for ICDS services"
+                            )
+                        }
+                    ]
+                ],
+                "chart": [{
+                    "values": [
+                        ["0-1 month", 0],
+                        ["1-6 months", 0],
+                        ["6-12 months", 0],
+                        ["1-3 years", 0],
+                        ["3-6 years", 0]
+                    ],
+                    "classed": "dashed",
+                    "key": "Children (0-6 years)"
+                }]
+            }
+
+        )
+
+    def test_awc_reports_demographics_daily_if_aggregation_script_fail(self):
+        self.assertDictEqual(
+            get_awc_report_demographics(
+                'icds-cas',
+                {
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'block_id': 'b1',
+                    'awc_id': 'a1',
+                    'aggregation_level': 5
+                },
+                (2017, 5, 30),
+                (2017, 5, 1),
+            ),
+            {
+                "kpi": [
+                    [
+                        {
+                            "all": "",
+                            "format": "number",
+                            "color": "green",
+                            "percent": 13900.0,
+                            "value": 139,
+                            "label": "Registered Households",
+                            "frequency": "day",
+                            "help_text": "Total number of households registered"
+                        },
+                        {
+                            "all": 1,
+                            "format": "percent_and_div",
+                            "percent": 0.0,
+                            "value": 0,
+                            "label": "Percent Aadhaar-seeded Beneficiaries",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of ICDS beneficiaries whose Aadhaar identification has been captured"
+                            )
+                        }
+                    ],
+                    [
+                        {
+                            "all": 0,
+                            "format": "percent_and_div",
+                            "color": "red",
+                            "percent": 0.0,
+                            "value": 0,
+                            "label": "Percent children (0-6 years) enrolled for ICDS services",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of children registered between 0-6 years old "
+                                "who are enrolled for ICDS services"
+                            )
+                        },
+                        {
+                            "all": 2,
+                            "format": "percent_and_div",
+                            "color": "green",
+                            "percent": 10000.0,
+                            "value": 2,
+                            "label": "Percent pregnant women enrolled for ICDS services",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of pregnant women registered who are enrolled for ICDS services"
+                            )
+                        }
+                    ],
+                    [
+                        {
+                            "all": 3,
+                            "format": "percent_and_div",
+                            "color": "green",
+                            "percent": 10000.0,
+                            "value": 3,
+                            "label": "Percent lactating women enrolled for ICDS services",
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of lactating women registered who are enrolled for ICDS services"
+                            )
+                        },
+                        {
+                            "all": 0,
+                            "format": "percent_and_div",
+                            "color": "red",
+                            "percent": 0.0,
+                            "value": 0,
+                            "label": (
+                                "Percent adolescent girls (11-18 years) enrolled for ICDS services"
+                            ),
+                            "frequency": "day",
+                            "help_text": (
+                                "Percentage of adolescent girls registered between 11-18 years old who "
+                                "are enrolled for ICDS services"
+                            )
+                        }
+                    ]
+                ],
+                "chart": [{
+                    "values": [
+                        ["0-1 month", 0],
+                        ["1-6 months", 0],
+                        ["6-12 months", 0],
+                        ["1-3 years", 0],
+                        ["3-6 years", 0]
+                    ],
+                    "classed": "dashed",
+                    "key": "Children (0-6 years)"
+                }]
+            }
+
         )
 
     def test_awc_reports_infrastructure(self):

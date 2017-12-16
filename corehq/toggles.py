@@ -1398,6 +1398,13 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BULK_UPLOAD_DATE_OPENED = StaticToggle(
+    'bulk_upload_date_opened',
+    "Allow updating of the date_opened field with the bulk uploader",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
@@ -1416,27 +1423,6 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_DEBUG = StaticToggle(
-    'analytics_debug',
-    "Turn on DEBUG level output for debugging analytics.",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_VERBOSE = StaticToggle(
-    'analytics_verbose',
-    "Turn on VERBOSE level output for debugging analytics.",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
-ANALYTICS_WARNING = StaticToggle(
-    'analytics_warning',
-    "Turn on WARNING level output for debugging analytics.",
     TAG_INTERNAL,
     [NAMESPACE_USER]
 )

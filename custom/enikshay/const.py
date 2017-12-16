@@ -182,3 +182,5 @@ DUMMY_VALUES = {
     'pincode': '888888',
     'email': 'abc@xyz.com'
 }
+
+LOCATION_SITE_CODE_MEHSANA = 'dto_gu_msn'

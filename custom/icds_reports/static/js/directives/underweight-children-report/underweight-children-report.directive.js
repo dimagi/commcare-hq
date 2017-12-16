@@ -79,6 +79,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var age = ageIndex > 0 ? ages[ageIndex].name : '';
+        var delimiter = gender && age ? ', ' : '';
+        var chosenFilters = gender || age ? ' (' + gender + delimiter + age + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var underweight = row ? d3.format(".2%")((row.total - (row.severely_underweight + row.moderately_underweight + row.normal)) / (row.total || 1)) : "N/A";
         var severely_underweight = row ? d3.format(".2%")(row.severely_underweight / (row.total || 1)) : 'N/A';
@@ -86,11 +90,11 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>% Unweighed: <strong>' + underweight + '</strong></div>' +
-            '<div>% Severely Underweight: <strong>' + severely_underweight + '</strong></div>' +
-            '<div>% Moderately Underweight: <strong>' + moderately_underweight +'</strong></div>' +
-            '<div>% Normal: <strong>' + normal + '</strong></div>';
+            '<div>'+ chosenFilters +'Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>% Unweighed'+ chosenFilters +': <strong>' + underweight + '</strong></div>' +
+            '<div>% Severely Underweight'+ chosenFilters +': <strong>' + severely_underweight + '</strong></div>' +
+            '<div>% Moderately Underweight'+ chosenFilters +': <strong>' + moderately_underweight +'</strong></div>' +
+            '<div>% Normal'+ chosenFilters +': <strong>' + normal + '</strong></div>';
     };
 
     vm.loadData = function () {

@@ -6,6 +6,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
 )
@@ -17,7 +18,6 @@ from corehq.apps.receiverwrapper.auth import (
 )
 from corehq.apps.receiverwrapper.util import (
     get_app_and_build_ids,
-    determine_authtype,
     from_demo_user,
     should_ignore_submission,
     DEMO_SUBMIT_MODE,
@@ -272,8 +272,13 @@ def secure_post(request, domain, app_id=None):
     if toggles.ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
         authtype_map['token'] = _secure_post_token
 
+    if request.GET.get('authtype'):
+        authtype = request.GET['authtype']
+    else:
+        authtype = determine_authtype_from_request(request, default=BASIC)
+
     try:
-        decorated_view = authtype_map[determine_authtype(request)]
+        decorated_view = authtype_map[authtype]
     except KeyError:
         return HttpResponseBadRequest(
             'authtype must be one of: {0}'.format(','.join(authtype_map))
