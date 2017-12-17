@@ -750,6 +750,9 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
     if v2:
         occurrence_key_population = occurence_case.get_case_property('key_populations')
         if occurrence_key_population:
+            # key populations is multiple choice and hence can have two options like "diabetes tobacco"
+            # so pick the first option
+            occurrence_key_population = occurrence_key_population.split(' ')[0]
             episode_properties['key_population'] = key_population.get(
                 occurrence_key_population,
                 key_population.get('other')
