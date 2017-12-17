@@ -356,14 +356,6 @@ class EvalExpressionSpec(JsonObject):
         return var_dict
 
     def __str__(self):
-        # context_variables = "\n".join(
-        #     ["{}:{}".format(name, str(exp)) for name, exp in self._context_variables.items()]
-        # )
-        # value = "{} with (\n{}\n)".format(self.statement,
-        #                                   context_variables)
-        # if self.datatype:
-        #     value =  "({}){}".format(self.datatype, value)
-        # return value
         value = self.statement
         for name, exp in self._context_variables.items():
             value.replace(name, str(exp))
