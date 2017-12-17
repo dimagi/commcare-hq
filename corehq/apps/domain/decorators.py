@@ -214,34 +214,19 @@ def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_digest_or_basic_or_apikey(default=DIGEST):
+def _get_multi_auth_decorator(default, allow_token=False):
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
-            function_wrapper = {
-                BASIC: login_or_basic_ex(allow_cc_users=True),
-                DIGEST: login_or_digest_ex(allow_cc_users=True),
-                API_KEY: login_or_api_key_ex(allow_cc_users=True)
-            }[determine_authtype_from_request(request, default)]
-            if not function_wrapper:
+            authtype = determine_authtype_from_request(request, default=default)
+            if authtype == TOKEN and not allow_token:
                 return HttpResponseForbidden()
-            return function_wrapper(fn)(request, *args, **kwargs)
-        return _inner
-    return decorator
-
-
-def login_or_digest_or_basic_or_apikey_or_token(default=DIGEST):
-    def decorator(fn):
-        @wraps(fn)
-        def _inner(request, *args, **kwargs):
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
                 TOKEN: login_or_token_ex(allow_cc_users=True),
-            }[determine_authtype_from_request(request, default)]
-            if not function_wrapper:
-                return HttpResponseForbidden()
+            }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -259,10 +244,24 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
+
+# This decorator should be used for any endpoints used by CommCare mobile
+# It supports basic, session, and apikey auth, but not digest
+mobile_auth = _get_multi_auth_decorator(default=BASIC)
+
+# This decorator is deprecated, it's used only for anonymous web apps
+mobile_auth_or_token = _get_multi_auth_decorator(
+    default=BASIC, allow_token=True)
+
+# Use this decorator to allow any auth type -
+# basic, digest, session, or apikey
+api_auth = _get_multi_auth_decorator(default=DIGEST)
+
 # Use these decorators on views to allow sesson-auth or an extra authorization method
 login_or_digest = login_or_digest_ex()
 login_or_basic = login_or_basic_ex()
 login_or_api_key = login_or_api_key_ex()
+
 # Use these decorators on views to exclusively allow any one authorization method and not session based auth
 digest_auth = login_or_digest_ex(allow_sessions=False)
 basic_auth = login_or_basic_ex(allow_sessions=False)

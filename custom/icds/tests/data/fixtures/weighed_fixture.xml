@@ -6,7 +6,12 @@
 			<column id="open_weighed">1</column>
 			<column id="owner_id">AWC1</column>
 		</row>
-		<row index="9" is_total_row="True">
+		<row index="1" is_total_row="False">
+			<column id="open_count">31</column>
+			<column id="open_weighed">29</column>
+			<column id="owner_id">AWC2</column>
+		</row>
+		<row index="2" is_total_row="True">
 			<column id="open_count">33</column>
 			<column id="open_weighed">30</column>
 			<column id="owner_id">Total</column>

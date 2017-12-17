@@ -1010,6 +1010,15 @@ class CaseExportSchema(HQExportSchema):
 
         return props
 
+    @property
+    def has_case_history_table(self):
+        case_history_table = [table for table in self.tables if table.label == 'Case History']
+        return any(
+            column.selected
+            for table in case_history_table
+            for column in table.columns
+        )
+
 
 class DefaultFormExportSchema(DefaultExportSchema):
 
