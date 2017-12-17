@@ -70,6 +70,12 @@ def update_ledger_with_episode(episode_case, entry_id, adherence_source, adheren
     :param episode_case: episode case for the adherence
     :param entry_id: example "date_2017-12-09" which would be the adherence date
     """
+    def needs_update(new_value):
+        ledger = get_episode_adherence_ledger(domain, episode_case.case_id, entry_id)
+        if ledger:
+            return ledger.balance != new_value
+        return True
+
     domain = episode_case.domain
     if adherence_source and adherence_value:
         fixture_id = get_id_of_fixture_tagged_adherence_ledger_values(domain)
@@ -79,17 +85,18 @@ def update_ledger_with_episode(episode_case, entry_id, adherence_source, adheren
                 fixture_id
             ).get(adherence_source, {}).get(adherence_value)
             if ledger_value:
-                balance = Balance()
-                balance.entity_id = episode_case.case_id
-                balance.date = datetime.utcnow()
-                balance.section_id = "adherence"
-                entry = Entry()
-                entry.id = entry_id
-                entry.quantity = ledger_value
-                balance.entry = entry
-                return submit_case_blocks([balance.as_string()],
-                                          episode_case.domain,
-                                          SYSTEM_USER_ID)
+                if needs_update(ledger_value):
+                    balance = Balance()
+                    balance.entity_id = episode_case.case_id
+                    balance.date = datetime.utcnow()
+                    balance.section_id = "adherence"
+                    entry = Entry()
+                    entry.id = entry_id
+                    entry.quantity = ledger_value
+                    balance.entry = entry
+                    return submit_case_blocks([balance.as_string()],
+                                              episode_case.domain,
+                                              SYSTEM_USER_ID)
 
 
 def update_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value):
