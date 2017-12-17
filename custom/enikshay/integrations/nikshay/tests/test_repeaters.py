@@ -1394,8 +1394,16 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
         # so nothing should get queued here
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        # set up pcp location under private sector to make it valid for notification
+        # save location user for pcp
         self.pcp = locations['PCP']
+        location_user = make_location_user(self.pcp)
+        location_user.user_data.update({'usertype': self.pcp.location_type.code})
+        location_user.is_active = True
+        location_user.user_location_id = self.pcp.location_id
+        location_user.set_location(self.pcp, commit=False)
+        location_user.save()
+
+        # set up pcp location under private sector to make it valid for notification
         self.pcp.metadata.update({
             'sector': PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
         })
@@ -1404,7 +1412,6 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # on update
-        self.pcp = locations['PCP']
         self.pcp.name = "Nikshay PCP"
         self.pcp.metadata.update({
             'email_address': 'pcp@email.com',
@@ -1412,13 +1419,13 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
             'nikshay_code': '',
         })
         self.pcp.save()
-        self.assertTrue(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
+        self.assertTrue(self.pcp.location_id in [record.payload_id for record in RepeatRecord.all()])
 
         # update on test location
         delete_all_repeat_records()
         self.pcp.metadata['is_test'] = 'yes'
         self.pcp.save()
-        self.assertFalse(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
+        self.assertFalse(self.pcp.location_id in [record.payload_id for record in RepeatRecord.all()])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, ENIKSHAY_PRIVATE_API_PASSWORD="123",
