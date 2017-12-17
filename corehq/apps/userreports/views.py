@@ -1515,8 +1515,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             return '<a href="#{value}">{value}</a>'.format(value=value)
 
         def add_links(content):
-            content = re.sub(r"NamedF:[A-Za-z0-9_-]+", make_link, content)
-            content = re.sub(r"NamedE:[A-Za-z0-9_-]+", make_link, content)
+            content = re.sub(r"NamedFilter:[A-Za-z0-9_-]+", make_link, content)
+            content = re.sub(r"NamedExpression:[A-Za-z0-9_-]+", make_link, content)
             return content
 
         list = []

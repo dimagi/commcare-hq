@@ -122,7 +122,7 @@ class NamedExpressionSpec(JsonObject):
         return result
 
     def __str__(self):
-        return "NamedE:{}".format(self.name)
+        return "NamedExpression:{}".format(self.name)
 
 
 class ConditionalExpressionSpec(JsonObject):

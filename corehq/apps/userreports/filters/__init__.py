@@ -106,4 +106,4 @@ class NamedFilter(Filter):
         return self.filter(item, context)
 
     def __str__(self):
-        return "NamedF:{}".format(self.filter_name)
+        return "NamedFilter:{}".format(self.filter_name)
