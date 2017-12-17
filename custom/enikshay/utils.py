@@ -6,7 +6,6 @@ from collections import defaultdict
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.quickcache import quickcache
-from custom.enikshay.case_utils import get_episode_case_from_adherence
 from casexml.apps.stock.mock import (
     Balance,
     Entry,
