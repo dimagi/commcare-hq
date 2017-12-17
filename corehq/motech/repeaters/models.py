@@ -303,12 +303,12 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     @property
     def is_form_repeater(self):
         # check if any of parent class is FormRepeater
-        return bool(filter(lambda parent_class: parent_class.__name__ == "FormRepeater", self.__class__.__mro__))
+        return isinstance(self, FormRepeater)
 
     @property
     def is_case_repeater(self):
         # check if any of parent class is CaseRepeater
-        return bool(filter(lambda parent_class: parent_class.__name__ == "CaseRepeater", self.__class__.__mro__))
+        return isinstance(self, CaseRepeater)
 
 
 class FormRepeater(Repeater):
