@@ -49,18 +49,18 @@ function days_in_month(month, year) {
 
 function next_interval(date, interval) {
     switch(interval) {
-        case "day":
-            date.setUTCDate(date.getUTCDate() + 1);
-            break;
-        case "week":
-            date.setUTCDate(date.getUTCDate() + 7);
-            break;
-        case "month":
-            date.setUTCDate(date.getUTCDate() + days_in_month(date.getUTCMonth(), date.getUTCFullYear()));
-            break;
-        case "year":
-            date.setUTCDate(date.getUTCDate() + days_in_year(date.getUTCFullYear()));
-            break;
+    case "day":
+        date.setUTCDate(date.getUTCDate() + 1);
+        break;
+    case "week":
+        date.setUTCDate(date.getUTCDate() + 7);
+        break;
+    case "month":
+        date.setUTCDate(date.getUTCDate() + days_in_month(date.getUTCMonth(), date.getUTCFullYear()));
+        break;
+    case "year":
+        date.setUTCDate(date.getUTCDate() + days_in_year(date.getUTCFullYear()));
+        break;
     }
     return date;
 }
