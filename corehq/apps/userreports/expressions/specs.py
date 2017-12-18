@@ -523,7 +523,7 @@ class SplitStringExpressionSpec(JsonObject):
         split_text = "split {}".format(str(self._string_expression))
         if self.delimiter:
             split_text += " on '{}'".format(self.delimiter)
-        return "(split {})[{}]".format(str(self.split_text), str(self._index_expression))
+        return "(split {})[{}]".format(str(split_text), str(self._index_expression))
 
 
 class CoalesceExpressionSpec(JsonObject):
