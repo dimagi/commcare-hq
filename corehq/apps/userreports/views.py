@@ -1515,7 +1515,7 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         context = self.config.get_factory_context()
         wrapped_specs = [
             IndicatorFactory.from_spec(spec, context).wrapped_spec
-            for spec in self.configured_indicators
+            for spec in self.config.configured_indicators
         ]
         return [
             {
