@@ -22,7 +22,7 @@ describe('Location Filter Controller', function () {
 
     var mockSelectedLocations = [{
         name: "All",
-        location_id: "all"
+        location_id: "all",
     }, {
         location_type_name: "state",
         parent_id: null,
@@ -171,7 +171,7 @@ describe('Location Modal Controller', function () {
 
     var mockSelectedLocations = [{
         name: "All",
-        location_id: "all"
+        location_id: "all",
     }, {
         location_type_name: "state",
         parent_id: null,
