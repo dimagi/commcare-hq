@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from datetime import datetime
 from collections import defaultdict
 
+from django.utils.dateparse import parse_datetime, parse_date
+
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.quickcache import quickcache
@@ -12,6 +14,14 @@ from casexml.apps.stock.mock import (
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.util import SYSTEM_USER_ID
+
+
+def get_adherence_cases_by_date(adherence_cases):
+    adherence_cases_by_date = defaultdict(list)
+    for case in adherence_cases:
+        adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
+        adherence_cases_by_date[adherence_date].append(case)
+    return adherence_cases_by_date
 
 
 def get_episode_adherence_ledger(domain, episode_case_id, entry_id):

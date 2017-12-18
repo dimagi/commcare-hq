@@ -11,7 +11,7 @@ from celery.task import periodic_task, task
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.utils.dateparse import parse_datetime, parse_date
+from django.utils.dateparse import parse_date
 from django.core.management import call_command
 from soil import MultipleTaskDownload
 
@@ -26,7 +26,10 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from custom.enikshay.utils import update_ledger_for_adherence
+from custom.enikshay.utils import (
+    update_ledger_for_adherence,
+    get_adherence_cases_by_date,
+)
 
 from .case_utils import (
     CASE_TYPE_EPISODE,
@@ -34,7 +37,6 @@ from .case_utils import (
     get_private_diagnostic_test_cases_from_episode,
     get_prescription_from_voucher,
     get_person_case_from_episode,
-    get_adherence_cases_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
@@ -811,12 +813,7 @@ def calculate_dose_status_by_day(adherence_cases):
     adherence_cases: list of 'adherence' case dicts that come from elasticsearch
     Returns: {day: DoseStatus(taken, missed, unknown, source)}
     """
-
-    adherence_cases_by_date = defaultdict(list)
-    for case in adherence_cases:
-        adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
-        adherence_cases_by_date[adherence_date].append(case)
-
+    adherence_cases_by_date = get_adherence_cases_by_date(adherence_cases)
     status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False, value=None))
     for day, cases in six.iteritems(adherence_cases_by_date):
         case = get_relevent_case(cases)
