@@ -89,7 +89,7 @@ def update_patient_adherence(request, domain):
             adherence_cases_by_date[adherence_date].append(case)
         for day, cases in six.iteritems(adherence_cases_by_date):
             adherence_case = get_relevent_case(cases)
-            if adherence_case.get_case_property('adherence_date'):
+            if adherence_case and adherence_case.get_case_property('adherence_date'):
                 update_ledger_for_adherence(factory._episode_case,
                                             adherence_case.get_case_property('adherence_date'),
                                             adherence_case.get_case_property('adherence_source'),
