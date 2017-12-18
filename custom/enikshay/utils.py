@@ -6,6 +6,7 @@ from collections import defaultdict
 from django.utils.dateparse import parse_datetime, parse_date
 
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.quickcache import quickcache
 from casexml.apps.stock.mock import (
@@ -31,7 +32,10 @@ def get_episode_adherence_ledger(domain, episode_case_id, entry_id):
     :param entry_id: example date_2017-12-09
     """
     ledger_accessor = LedgerAccessors(domain)
-    return ledger_accessor.get_ledger_value(episode_case_id, "adherence", entry_id)
+    try:
+        return ledger_accessor.get_ledger_value(episode_case_id, "adherence", entry_id)
+    except LedgerValueNotFound:
+        return None
 
 
 @quickcache(['domain'], memoize_timeout=7 * 24 * 60 * 60, timeout=7 * 24 * 60 * 60)

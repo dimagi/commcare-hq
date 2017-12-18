@@ -70,7 +70,7 @@ def update_patient_adherence(request, domain):
     try:
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
-        adherence_cases = factory.create_adherence_cases(adherence_values)
+        factory.create_adherence_cases(adherence_values)
     except AdherenceException as e:
         return json_response({"error": six.text_type(e)}, status_code=400)
 
@@ -83,24 +83,28 @@ def update_patient_adherence(request, domain):
                      "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
 
     try:
-        # refetch all adherence cases to consider all adherence cases post update
-        adherence_cases_for_episode = get_adherence_cases_from_episode(domain, factory._episode_case)
-        adherence_cases_by_date = get_adherence_cases_by_date(adherence_cases_for_episode)
-        for day, cases in six.iteritems(adherence_cases_by_date):
-            adherence_case = get_relevent_case(cases)
-            if adherence_case and adherence_case.get_case_property('adherence_date'):
-                update_ledger_for_adherence(factory._episode_case,
-                                            adherence_case.get_case_property('adherence_date'),
-                                            adherence_case.get_case_property('adherence_source'),
-                                            adherence_case.get_case_property('adherence_value'),
-                                            )
+        update_ledger_for_episode(domain, factory._episode_case)
     except Exception as e:
         notify_exception(
             request,
             message=("An error occurred updating the ledgers after receiving a 99DOTS"
                      "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
-
     return json_response({"success": "Patient adherences updated."})
+
+
+def update_ledger_for_episode(domain, episode_case):
+    # refetch all adherence cases to consider all adherence cases post update
+    adherence_cases_for_episode = get_adherence_cases_from_episode(domain, episode_case.case_id)
+    _cases = [case.to_json() for case in adherence_cases_for_episode]
+    adherence_cases_by_date = get_adherence_cases_by_date(_cases)
+    for day, cases in six.iteritems(adherence_cases_by_date):
+        adherence_case = get_relevent_case(cases)
+        if adherence_case and adherence_case['adherence_date']:
+            update_ledger_for_adherence(episode_case,
+                                        adherence_case['adherence_date'],
+                                        adherence_case['adherence_source'],
+                                        adherence_case['adherence_value'],
+                                        )
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
