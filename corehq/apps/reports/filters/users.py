@@ -83,6 +83,16 @@ class SelectMobileWorkerFilter(BaseSingleOptionFilter):
         return default
 
 
+class AltPlaceholderMobileWorkerFilter(SelectMobileWorkerFilter):
+    default_text = ugettext_noop('Enter a worker')
+    is_paginated = True
+
+    @property
+    def pagination_source(self):
+        from corehq.apps.reports.filters.api import MobileWorkersOptionsView
+        return reverse(MobileWorkersOptionsView.urlname, args=[self.domain])
+
+
 class SelectCaseOwnerFilter(SelectMobileWorkerFilter):
     label = ugettext_noop("Select Case Owner")
     default_text = ugettext_noop("All Case Owners")
