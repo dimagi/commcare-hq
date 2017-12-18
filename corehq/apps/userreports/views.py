@@ -31,6 +31,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.specs import FactoryContext
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -58,7 +60,12 @@ from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.const import (
+    REPORT_BUILDER_EVENTS_KEY,
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    NAMED_EXPRESSION_PREFIX,
+    NAMED_FILTER_PREFIX,
+)
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -1502,11 +1509,52 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         return {
             'datasource_display_name': self.config.display_name,
             'datasource_description': self.config.description,
-            'filter_summary': self.config.configured_filter_summary,
-            'indicator_summary': self._add_links_to_output(self.config.indicator_summary),
-            'named_expression_summary': self._add_links_to_output(self.config.named_expression_summary),
-            'named_filter_summary': self._add_links_to_output(self.config.named_filter_summary),
+            'filter_summary': self.configured_filter_summary(),
+            'indicator_summary': self._add_links_to_output(self.indicator_summary()),
+            'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),
+            'named_filter_summary': self._add_links_to_output(self.named_filter_summary()),
+            'named_filter_prefix': NAMED_FILTER_PREFIX,
+            'named_expression_prefix': NAMED_EXPRESSION_PREFIX,
         }
+
+    def indicator_summary(self):
+        context = self.config.get_factory_context()
+        wrapped_specs = [
+            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            for spec in self.config.configured_indicators
+        ]
+        return [
+            {
+                "column_id": wrapped.column_id,
+                "comment": wrapped.comment,
+                "readable_output": wrapped.readable_output(context)
+            }
+            for wrapped in wrapped_specs if wrapped
+        ]
+
+    def named_expression_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.config.named_expressions[name].get('comment'),
+                "readable_output": str(exp)
+            }
+            for name, exp in self.config.named_expression_objects.items()
+        ]
+
+    def named_filter_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.config.named_filters[name].get('comment'),
+                "readable_output": str(filter)
+            }
+            for name, filter in self.config.named_filter_objects.items()
+        ]
+
+    def configured_filter_summary(self):
+        return str(FilterFactory.from_spec(self.config.configured_filter,
+                                           context=self.config.get_factory_context()))
 
     def _add_links_to_output(self, items):
         def make_link(match):
@@ -1514,8 +1562,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             return '<a href="#{value}">{value}</a>'.format(value=value)
 
         def add_links(content):
-            content = re.sub(r"NamedF:[A-Za-z0-9_-]+", make_link, content)
-            content = re.sub(r"NamedE:[A-Za-z0-9_-]+", make_link, content)
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_FILTER_PREFIX), make_link, content)
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_EXPRESSION_PREFIX), make_link, content)
             return content
 
         list = []
