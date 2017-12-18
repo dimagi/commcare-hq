@@ -9,7 +9,7 @@ from simpleeval import InvalidExpression
 import six
 
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
-from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
+from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -122,7 +122,7 @@ class NamedExpressionSpec(JsonObject):
         return result
 
     def __str__(self):
-        return "NamedExpression:{}".format(self.name)
+        return "{}:{}".format(NAMED_EXPRESSION_PREFIX, self.name)
 
 
 class ConditionalExpressionSpec(JsonObject):

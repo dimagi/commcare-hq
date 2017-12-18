@@ -60,7 +60,12 @@ from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.const import (
+    REPORT_BUILDER_EVENTS_KEY,
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    NAMED_EXPRESSION_PREFIX,
+    NAMED_FILTER_PREFIX,
+)
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -1509,6 +1514,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             'indicator_summary': self._add_links_to_output(self.indicator_summary()),
             'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),
             'named_filter_summary': self._add_links_to_output(self.named_filter_summary()),
+            'named_filter_prefix': NAMED_FILTER_PREFIX,
+            'named_expression_prefix': NAMED_EXPRESSION_PREFIX,
         }
 
     def indicator_summary(self):
@@ -1556,8 +1563,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             return '<a href="#{value}">{value}</a>'.format(value=value)
 
         def add_links(content):
-            content = re.sub(r"NamedFilter:[A-Za-z0-9_-]+", make_link, content)
-            content = re.sub(r"NamedExpression:[A-Za-z0-9_-]+", make_link, content)
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_FILTER_PREFIX), make_link, content)
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_EXPRESSION_PREFIX), make_link, content)
             return content
 
         list = []
