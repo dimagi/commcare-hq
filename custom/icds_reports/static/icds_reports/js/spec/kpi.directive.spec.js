@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('KpiDirective', function () {
+describe('Kpi Directive', function () {
 
     var $scope, $compile, $location, controller, $httpBackend;
 
@@ -28,6 +28,10 @@ describe('KpiDirective', function () {
         $scope.$digest();
         controller = compiled.controller("kpi");
     }));
+
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests get empty page path', function () {
         var result = controller.goToStep("test");
@@ -67,7 +71,6 @@ describe('KpiDirective', function () {
     });
 
     it('tests not shows percent info from wrong month parameter', function () {
-        //$location.search('month', null);
         $location.search('month', new Date().getMonth() + 1);
         var expected = false;
 

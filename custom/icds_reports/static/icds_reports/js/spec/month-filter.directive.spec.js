@@ -4,7 +4,7 @@
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('Month filter controller', function () {
+describe('Month Filter Controller', function () {
 
     beforeEach(module('icdsApp'));
 
@@ -32,19 +32,17 @@ describe('Month filter controller', function () {
         });
     });
 
-    it('should instantiate the controller properly', function () {
-        var expect = chai.expect;
-        expect(controller).not.to.be.a('undefined');
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
     });
 
-    it('should call open modal', function () {
-        var expect = chai.expect;
+    it('tests call open modal', function () {
         var open = sinon.spy($uibModal, 'open');
         controller.open();
-        expect(open).to.have.been.called;
+        chai.expect(open).to.have.been.called;
     });
 
-    it('should get placeholder', function () {
+    it('tests get placeholder', function () {
         var today = moment('2015-10-19').toDate();
         var clock = sinon.useFakeTimers(today.getTime());
 
@@ -57,7 +55,7 @@ describe('Month filter controller', function () {
     });
 });
 
-describe('Month modal controller', function () {
+describe('Month Modal Controller', function () {
 
     beforeEach(module('icdsApp'));
 
@@ -82,41 +80,38 @@ describe('Month modal controller', function () {
         });
     });
 
-    it('should instantiate the controller properly', function () {
-        var expect = chai.expect;
-        expect(controller).not.to.be.a('undefined');
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
     });
 
-    it('should call close modal', function () {
-        var expect = chai.expect;
+    it('tests call close modal', function () {
         controller.apply();
-        expect(modalInstance.close).to.have.been.called;
+        chai.expect(modalInstance.close).to.have.been.called;
     });
 
-    it('should call dismiss modal', function () {
-        var expect = chai.expect;
+    it('tests call dismiss modal', function () {
         controller.close();
-        expect(modalInstance.dismiss).to.have.been.called;
+        chai.expect(modalInstance.dismiss).to.have.been.called;
     });
 
-    it('should initiate years', function () {
+    it('tests initiate years', function () {
         assert.equal(checkIfObjectExist(controller.years, 2014), true);
         assert.equal(checkIfObjectExist(controller.years, 2015), true);
         assert.equal(checkIfObjectExist(controller.years, 2016), true);
         assert.equal(checkIfObjectExist(controller.years, 2017), true);
     });
 
-    it('should select current year', function () {
+    it('tests select current year', function () {
         var expected = new Date().getFullYear();
         assert.equal(controller.selectedYear, expected);
     });
 
-    it('should select current month', function () {
+    it('tests select current month', function () {
         var expected = new Date().getMonth() + 1;
         assert.equal(controller.selectedMonth, expected);
     });
 
-    it('should select month', function () {
+    it('tests select month', function () {
         var expected = new Date().getMonth() - 3;
 
         var currentYear = new Date().getFullYear();

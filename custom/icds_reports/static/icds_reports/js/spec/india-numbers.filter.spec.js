@@ -1,7 +1,7 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
-describe('IndiaNumberFilter', function () {
+describe('India Number Filter', function () {
 
     var $filter;
 
@@ -13,7 +13,11 @@ describe('IndiaNumberFilter', function () {
         });
     });
 
-    it('should filter null value', function () {
+    it('tests instantiate the filter properly', function () {
+        chai.expect($filter).not.to.be.a('undefined');
+    });
+
+    it('tests filter null value', function () {
         // Arrange.
         var testValue = null;
 
@@ -27,7 +31,7 @@ describe('IndiaNumberFilter', function () {
         assert.equal(expected, result);
     });
 
-    it('should filter last three values', function () {
+    it('tests filter last three values', function () {
         // Arrange.
         var testValue = 500.000;
 
@@ -41,7 +45,7 @@ describe('IndiaNumberFilter', function () {
         assert.equal(expected, result);
     });
 
-    it('should filter when number is a floating point', function () {
+    it('tests filter when number is a floating point', function () {
         // Arrange.
         var testValue = 50.88;
 
@@ -55,7 +59,7 @@ describe('IndiaNumberFilter', function () {
         assert.equal(expected, result);
     });
 
-    it('should filter one hundred thousands', function () {
+    it('tests filter one hundred thousands', function () {
         // Arrange.
         var testValue = 100000;
 
@@ -69,7 +73,7 @@ describe('IndiaNumberFilter', function () {
         assert.equal(expected, result);
     });
 
-    it('should filter one billion', function () {
+    it('tests filter one billion', function () {
         // Arrange.
         var testValue = 1000000000;
 
