@@ -38,7 +38,7 @@ class Command(BaseCommand):
     logfile_fields = [
         # person-case properties always logged
         'person_case_id', 'person_name', 'dto_name', 'phi_name', 'owner_id',
-        'dob', 'phone_number', 'enrolled_in_private',
+        'dob', 'phone_number', 'dataset', 'enrolled_in_private',
         # case-specific properties that may be updated
         'case_type', 'case_id', 'name', 'person_id', 'person_id_flat',
         'person_id_deprecated', 'person_id_flat_deprecated',
@@ -107,10 +107,11 @@ class Command(BaseCommand):
             'person_name': ' '.join(filter(None, [person.get('first_name'), person.get('last_name')])),
             'enrolled_in_private': person.get('enrolled_in_private'),
             'dto_name': self.districts_by_id[person.get('current_address_district_choice')],
-            'phi_name': person.get('phi'),
+            'phi_name': person.get('phi_name'),
             'owner_id': person_case.owner_id,
             'dob': person.get('dob'),
-            'phone_number': person.get('contact_phone_number'),
+            'phone_number': person.get('phone_number'),
+            'dataset': person.get('dataset'),
         }
 
     def get_public_updates(self, person_case):
