@@ -1,6 +1,7 @@
 /*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
+
     Menus.Controller = {
         selectMenu: function (options) {
 
@@ -18,11 +19,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
                 }
-
-                if (menuResponse.shouldRequestLocation) {
-                    Menus.Util.handleLocationRequest(options);
-                }
-                Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
 
                 // If redirect was set, clear and go home.
                 if (menuResponse.clearSession) {
@@ -45,6 +41,11 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
+
+                if (menuResponse.shouldRequestLocation) {
+                    Menus.Util.handleLocationRequest(options);
+                }
+                //Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
             }).fail(function() {
                 // if it didn't go through, then it displayed an error message.
                 // the right thing to do is then to just stay in the same place.
@@ -198,16 +199,27 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 hasInlineTile: detailObject.hasInlineTile,
             });
         },
+
+        showFetchingLocationView: function() {
+            console.log('showing FetchingLocationView');
+            var fetchingLocationView = new Menus.Views.FetchingLocationView();
+            console.log(fetchingLocationView);
+            FormplayerFrontend.regions.main.show(fetchingLocationView.render());
+        },
     };
 
     Menus.Util = {
         handleLocationRequest: function(optionsFromLastRequest) {
             var success = function(position) {
+                FormplayerFrontend.regions.loadingProgress.empty();
+
                 Menus.Util.recordPosition(position);
                 Menus.Controller.selectMenu(optionsFromLastRequest);
             };
 
             var error = function(err) {
+                FormplayerFrontend.regions.loadingProgress.empty();
+
                 var msg;
                 switch(err.code) {
                 case err.PERMISSION_DENIED:
@@ -223,9 +235,15 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
                 FormplayerFrontend.trigger('showError',
                     msg + "Without access to your location, computations that rely on the here() function will show up blank.");
+
             };
 
             if (navigator.geolocation) {
+                var progressView = new FormplayerFrontend.Layout.Views.ProgressView({
+                    progressMessage: "Fetching your location...",
+                });
+                FormplayerFrontend.regions.loadingProgress.show(progressView.render());
+
                 navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
             }
         },
