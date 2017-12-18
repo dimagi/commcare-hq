@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from collections import defaultdict, namedtuple
 import csv
 import datetime
 from django.core.management.base import BaseCommand
