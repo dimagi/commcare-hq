@@ -177,9 +177,16 @@ class FormsInDateExpressionSpec(JsonObject):
             context.set_cache_value(cache_key, count)
             return count
 
-        form_ids = [x['_id'] for x in xforms]
-        xforms = FormAccessors(domain).get_forms(form_ids)
-        xforms = FormsInDateExpressionSpec._get_form_json_list(case_id, xforms, context, domain)
+        if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
+            def _clean(f):
+                del f['timeEnd']  # for parity with what comes out of Riak
+                return f
+
+            xforms = list(map(_clean, xforms))
+        else:
+            form_ids = [x['_id'] for x in xforms]
+            xforms = FormAccessors(domain).get_forms(form_ids)
+            xforms = FormsInDateExpressionSpec._get_form_json_list(case_id, xforms, context, domain)
 
         context.set_cache_value(cache_key, xforms)
         return xforms
@@ -190,7 +197,11 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
+        source = (
+            True if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER)
+            else ['form.meta.timeEnd', 'xmlns', '_id']
+        )
+        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
         context.set_cache_value(cache_key, forms)
         return forms
 
@@ -208,37 +219,7 @@ class FormsInDateExpressionSpec(JsonObject):
     @staticmethod
     def _get_form_json_list(case_id, xforms, context, domain):
         domain_filtered_forms = [f for f in xforms if f.domain == domain]
-        if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
-            return FormsInDateExpressionSpec._get_form_json_list_using_elasticsearch(
-                domain_filtered_forms, context
-            )
-        else:
-            return [FormsInDateExpressionSpec._get_form_json(f, context) for f in domain_filtered_forms]
-
-    @staticmethod
-    def _get_form_json_list_using_elasticsearch(xforms, context):
-        # first get any available forms from cache
-        forms_from_cache = [
-            FormsInDateExpressionSpec._get_cached_form_json(f, context) for f in xforms
-        ]
-
-        # then build a list of needed (missing) forms
-        FormAndIndex = namedtuple('FormAndIndex', 'form index')
-        needed_forms = []
-        for i, form in enumerate(forms_from_cache):
-            if form is None:
-                needed_forms.append(FormAndIndex(xforms[i], i))
-
-        if needed_forms:
-            # then get the required forms in bulk from elastic
-            forms_from_es = FormsInDateExpressionSpec._bulk_get_form_json_from_es([fi.form for fi in needed_forms])
-            # and insert them in the list and cache
-            for needed_form in needed_forms:
-                form_json = forms_from_es[needed_form.form.form_id]
-                FormsInDateExpressionSpec._set_cached_form_json(needed_form.form, form_json, context)
-                forms_from_cache[needed_form.index] = form_json
-
-        return [f for f in forms_from_cache]
+        return [FormsInDateExpressionSpec._get_form_json(f, context) for f in domain_filtered_forms]
 
     @staticmethod
     def _get_form_json(form, context):
