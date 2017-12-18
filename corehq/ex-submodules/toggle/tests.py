@@ -4,7 +4,7 @@ import uuid
 from couchdbkit import ResourceConflict
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase, SimpleTestCase, override_settings
 
 from corehq.toggles import (
     NAMESPACE_USER,
@@ -138,15 +138,8 @@ class ToggleTestCase(TestCase):
         self.assertTrue(toggle_enabled(self.slug, 'fizbod', namespace=ns))
 
 
+@override_settings(DISABLE_RANDOM_TOGGLES=False)
 class PredictablyRandomToggleSimpleTests(SimpleTestCase):
-
-    def setUp(self):
-        # Lie to get past settings.UNIT_TESTING check in PredictablyRandomToggle.enabled()
-        self.unit_testing = settings.UNIT_TESTING
-        settings.UNIT_TESTING = False
-
-    def tearDown(self):
-        settings.UNIT_TESTING = self.unit_testing
 
     def test_deterministic(self):
         self.assertEqual(
