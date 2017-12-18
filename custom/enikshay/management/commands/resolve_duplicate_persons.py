@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import csv
 import datetime
 from django.core.management.base import BaseCommand
@@ -40,7 +40,7 @@ class Command(BaseCommand):
         'person_case_id', 'person_name', 'dto_name', 'phi_name', 'owner_id',
         'dob', 'phone_number', 'enrolled_in_private',
         # case-specific properties that may be updated
-        'case_id', 'name', 'person_id', 'person_id_flat',
+        'case_type', 'case_id', 'name', 'person_id', 'person_id_flat',
         'person_id_deprecated', 'person_id_flat_deprecated',
         'person_id_at_request', 'person_id_flat_at_request',
     ]
@@ -79,14 +79,17 @@ class Command(BaseCommand):
                     updates = list(filter(None, self.get_public_updates(person_case)))
 
                 person_info = self.get_person_case_info(person_case)
-                for update in updates:
+                for case, update in updates:
                     log = {unidecode(k): unidecode(v)
-                           for d in [person_info, update[1]] for k, v in d.items() if v}
-                    log['case_id'] = update[0]
+                           for d in [person_info, update] for k, v in d.items() if v}
+                    log['case_type'] = case.type
+                    log['case_id'] = case.case_id
                     logfile.writerow(log)
 
                 if commit:
-                    bulk_update_cases(self.domain, updates, self.__module__)
+                    update_tuples = [(case.case_id, update, False)
+                                     for case, update in updates]
+                    bulk_update_cases(self.domain, update_tuples, self.__module__)
 
     @property
     @memoized
@@ -174,7 +177,7 @@ class Command(BaseCommand):
 def get_case_update(case, update):
     # check that this is actually an update, else return None
     if any(case.get_case_property(k) != v for k, v in update.items()):
-        return (case.case_id, update, False)
+        return (case, update)
 
 
 def get_name_update(case, old_id, new_id):
