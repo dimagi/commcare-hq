@@ -204,16 +204,24 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     Menus.Util = {
         handleLocationRequest: function(optionsFromLastRequest) {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    Menus.Util.recordPosition(position);
-                    Menus.Controller.selectMenu(optionsFromLastRequest);
-                });
+                navigator.geolocation.getCurrentPosition(
+                    success=function(position) {
+                        Menus.Util.recordPosition(position);
+                        Menus.Controller.selectMenu(optionsFromLastRequest);
+                    },
+                    error=function() {
+                        FormplayerFrontend.request('showError',
+                            "Browser location was not provided or could not be determined. Computations that rely on" +
+                            " the here() function will show up blank.");
+                    },
+                    options={timeout: 5000}
+                );
             }
         },
 
         startOrStopLocationWatching: function(shouldWatchLocation) {
             if (navigator.geolocation) {
-                var notWatching = typeof sessionStorage.lastLocationWatchId == "undefined" || sessionStorage.lastLocationWatchId === '';
+                var notWatching = typeof sessionStorage.lastLocationWatchId === "undefined" || sessionStorage.lastLocationWatchId === '';
                 if (notWatching && shouldWatchLocation) {
                     console.log('starting location watch');
                     sessionStorage.lastLocationWatchId = navigator.geolocation.watchPosition(Menus.Util.recordPosition);

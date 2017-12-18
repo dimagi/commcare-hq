@@ -34,7 +34,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'hasInlineTile',
             'sortIndices',
             'shouldWatchLocation',
-            'shouldRequestLocation'
+            'shouldRequestLocation',
         ],
 
         commandProperties: [

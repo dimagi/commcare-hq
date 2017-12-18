@@ -83,7 +83,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 });
 
 FormplayerFrontend.reqres.setHandler('lastRecordedLocation', function() {
-    if (typeof sessionStorage.locationLat == "undefined") {
+    if (typeof sessionStorage.locationLat === "undefined") {
         return null;
     } else {
         var locationComponents = [sessionStorage.locationLat, sessionStorage.locationLon, sessionStorage.locationAltitude, sessionStorage.locationAccuracy];

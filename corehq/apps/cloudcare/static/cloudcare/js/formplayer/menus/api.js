@@ -16,7 +16,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 defer = $.Deferred(),
                 options,
                 menus;
-            console.log('lastRecordedLocation in queryFormplayer: ' + lastRecordedLocation);
             options = {
                 success: function (parsedMenus, response) {
                     if (response.status === 'retry') {
