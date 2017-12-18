@@ -91,28 +91,30 @@ class Command(BaseCommand):
                     bulk_update_cases(self.domain, update_tuples, self.__module__)
 
     @memoized
-    def get_owner_dto_name(self, owner_id):
+    def get_private_phi_and_dto(self, owner_id):
         try:
             owner = SQLLocation.objects.get(domain=self.domain, location_id=owner_id)
-            return (owner.get_ancestors(include_self=True)
-                         .get(location_type__code='dto')
-                         .name)
+            dto_name = (owner.get_ancestors(include_self=True)
+                        .get(location_type__code='dto')
+                        .name)
+            return owner.name, dto_name
         except SQLLocation.DoesNotExist:
-            return None
+            return None, None
 
     def get_person_case_info(self, person_case):
         """Pull info that we want to log but not update"""
         person = person_case.dynamic_case_properties()
         if person.get('enrolled_in_private') == 'true':
-            dto_name = self.get_owner_dto_name(person_case.owner_id)
+            phi_name, dto_name = self.get_private_phi_and_dto(person_case.owner_id)
         else:
             dto_name = person.get('dto_name')
+            phi_name = person.get('phi_name')
         return {
             'person_case_id': person_case.case_id,
             'person_name': ' '.join(filter(None, [person.get('first_name'), person.get('last_name')])),
             'enrolled_in_private': person.get('enrolled_in_private'),
             'dto_name': dto_name,
-            'phi_name': person.get('phi_name'),
+            'phi_name': phi_name,
             'owner_id': person_case.owner_id,
             'dob': person.get('dob'),
             'phone_number': person.get('phone_number'),
