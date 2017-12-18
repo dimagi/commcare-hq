@@ -38,7 +38,7 @@ MOCK_FIXTURE_ITEMS = {
         'missing_data': '4',
         'self_administered_dose': '5',
         'unobserved_dose': '2'},
-    }
+}
 
 
 class Receiver99DotsTests(SimpleTestCase):
@@ -139,7 +139,8 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
 
         # in case of two doses the relevant one takes over and ledger is updated according to it
         # so balance is 2 for enikshay instead of 14 for 99Dots
-        enikshay_adherence_ledger = get_episode_adherence_ledger(self.domain, episode_case.case_id, "date_2009-03-05")
+        enikshay_adherence_ledger = get_episode_adherence_ledger(self.domain, episode_case.case_id,
+                                                                 "date_2009-03-05")
         self.assertEqual(enikshay_adherence_ledger.balance, 2)
 
         # the only adherence on 2016-03-05
