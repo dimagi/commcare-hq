@@ -162,10 +162,10 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        xform_ids = self._get_case_form_ids(case_id, context)
+        xform_ids = FormsInDateExpressionSpec._get_case_form_ids(case_id, context)
         # TODO(Emord) this will eventually break down when cases have a lot of
         # forms associated with them. perhaps change to intersecting two sets
-        xforms = self._get_filtered_forms_from_es(case_id, xform_ids, context)
+        xforms = FormsInDateExpressionSpec._get_filtered_forms_from_es(case_id, xform_ids, context)
         if self.xmlns:
             xforms = [x for x in xforms if x['xmlns'] in xmlns_tuple]
         if from_date:
@@ -179,22 +179,24 @@ class FormsInDateExpressionSpec(JsonObject):
 
         form_ids = [x['_id'] for x in xforms]
         xforms = FormAccessors(domain).get_forms(form_ids)
-        xforms = self._get_form_json_list(case_id, xforms, context, domain)
+        xforms = FormsInDateExpressionSpec._get_form_json_list(case_id, xforms, context, domain)
 
         context.set_cache_value(cache_key, xforms)
         return xforms
 
-    def _get_filtered_forms_from_es(self, case_id, xform_ids, context):
-        cache_key = (self.__class__.__name__, 'es_helper', case_id, tuple(xform_ids))
+    @staticmethod
+    def _get_filtered_forms_from_es(case_id, xform_ids, context):
+        cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids))
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        forms = self._bulk_get_forms_from_elasticsearch(xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
+        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
         context.set_cache_value(cache_key, forms)
         return forms
 
-    def _get_case_form_ids(self, case_id, context):
-        cache_key = (self.__class__.__name__, 'helper', case_id)
+    @staticmethod
+    def _get_case_form_ids(case_id, context):
+        cache_key = (FormsInDateExpressionSpec.__name__, 'helper', case_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
