@@ -318,10 +318,6 @@ class EpisodeAdherenceUpdate(object):
         return self.get_fixture_column('doses_per_week')
 
     @memoized
-    def get_all_adherence_cases(self):
-        return self.adherence_data_store.all_adherences(self.episode.case_id)
-
-    @memoized
     def get_valid_adherence_cases(self):
         # Returns list of 'adherence' cases of which 'adherence_value' is one of DOSE_KNOWN_INDICATORS
         return self.adherence_data_store.dose_known_adherences(
