@@ -305,7 +305,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
 NAMESPACE_OTHER = 'other'
-ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN, NAMESPACE_OTHER]
+ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
 def any_toggle_enabled(*toggles):
