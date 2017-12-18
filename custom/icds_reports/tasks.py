@@ -13,6 +13,7 @@ from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections
+from corehq.util.view_utils import reverse
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import send_report_download_email
@@ -231,7 +232,6 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
     directory = os.path.dirname(os.path.join(base_dir, dir_name.hex + '/'))
 
     selected_date = date(year, month, 1)
-
     report_context = {
         'reports': []
     }
@@ -269,7 +269,15 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
     else:
         create_pdf_file('ISSNIP_monthly_register_cumulative', directory, report_context)
 
-    send_report_download_email('ISSNIP monthly register', user, 'test')
+    params = {
+        'domain': 'icds-cas',
+        'uuid': dir_name.hex,
+        'format': pdf_format
+    }
+    send_report_download_email(
+        'ISSNIP monthly register',
+        user,
+        reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain}))
     icds_remove_files.apply_async(args=[dir_name.hex, base_dir, pdf_format], countdown=60)
 
 

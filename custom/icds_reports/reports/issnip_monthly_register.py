@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+
+from dateutil.relativedelta import relativedelta
+
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly
 from django.db.models.aggregates import Sum, Count
@@ -42,8 +45,8 @@ class ISSNIPMonthlyReport(object):
         ).values('awc_id').annotate(
             infants_0_6=Sum(self.filter_by({'age_in_months__range': [0, 6]}, 'valid_in_month')),
             children_6_36=Sum(self.filter_by({'age_in_months__range': [7, 36]}, 'valid_in_month')),
-            childen_36_72=Sum(self.filter_by({'age_in_months__range': [37, 72]}, 'valid_in_month')),
-            normal_children_breakfastt_and_hcm=Count(
+            children_36_72=Sum(self.filter_by({'age_in_months__range': [37, 72]}, 'valid_in_month')),
+            normal_children_breakfast_and_hcm=Count(
                 self.filter_by({
                     'nutrition_status_last_recorded': 'normal',
                     'age_in_months__range': [36, 72]
@@ -84,22 +87,22 @@ class ISSNIPMonthlyReport(object):
     @property
     def infrastructure_data(self):
         data = AWCInfrastructureUCR(self.config).data
-        return data[0] if data else None
+        return data.values()[-1] if data else None
 
     @property
     def vhnd_data(self):
         data = VHNDFormUCR(self.config).data
-        return data[0] if data else None
+        return data.values()[-1] if data else None
 
     @property
     def ccs_record_monthly_ucr(self):
         data = CcsRecordMonthlyURC(self.config).data
-        return data[0] if data else None
+        return data[self.config['awc_id']] if data else None
 
     @property
     def child_health_monthly_ucr(self):
         data = ChildHealthMonthlyURC(self.config).data
-        return data[0] if data else None
+        return data[self.config['awc_id']] if data else None
 
     @property
     def agg_child_health_monthly(self):

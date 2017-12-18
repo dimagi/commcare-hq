@@ -431,14 +431,12 @@ def zip_folder(root_path, name_of_folder):
     folder_path = os.path.join(root_path, name_of_folder)
     contents = os.walk(folder_path)
     output = os.path.join(root_path, '{}.zip'.format(name_of_folder))
-    try:
-        zip_file = zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED)
-        for root, folders, files in contents:
-            for file_name in files:
-                absolute_path = os.path.join(root, file_name)
-                zip_file.write(absolute_path, file_name)
-    finally:
-        zip_file.close()
+    zip_file = zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED)
+    for root, folders, files in contents:
+        for file_name in files:
+            absolute_path = os.path.join(root, file_name)
+            zip_file.write(absolute_path, file_name)
+    zip_file.close()
 
 
 def create_pdf_file(file_name, directory, pdf_context):

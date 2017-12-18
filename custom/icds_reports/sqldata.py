@@ -14,7 +14,8 @@ from sqlagg.sorting import OrderBy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column, DataFormatter, \
+    TableDataFormat
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.queries import get_test_state_locations_id
@@ -2635,7 +2636,10 @@ class AWCInfrastructureUCR(SqlData):
 
     @property
     def group_by(self):
-        return []
+        return [
+            'where_housed', 'provided_building', 'kitchen', 'toilet_facility',
+            'type_toilet', 'preschool_kit_available', 'preschool_kit_usable'
+        ]
 
     @property
     def columns(self):
@@ -2666,7 +2670,7 @@ class VHNDFormUCR(SqlData):
 
     @property
     def group_by(self):
-        return []
+        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader']
 
     @property
     def order_by(self):
@@ -2710,10 +2714,6 @@ class CcsRecordMonthlyURC(SqlData):
         return ['awc_id']
 
     @property
-    def order_by(self):
-        return []
-
-    @property
     def columns(self):
         return [
             DatabaseColumn('sc_pregnant', CountUniqueColumn(
@@ -2752,7 +2752,7 @@ class CcsRecordMonthlyURC(SqlData):
                     EQ('pregnant', 'one'),
                 ]
             )),
-            DatabaseColumn('general_pregnant', CountUniqueColumn(
+            DatabaseColumn('total_pregnant', CountUniqueColumn(
                 'doc_id',
                 alias='total_pregnant',
                 filters=self.filters + [

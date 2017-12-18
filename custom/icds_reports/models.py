@@ -15,7 +15,7 @@ class AwcLocation(models.Model):
     district_id = models.TextField()
     district_name = models.TextField(blank=True, null=True)
     district_site_code = models.TextField(blank=True, null=True)
-    state_id = models.TextField(primary_key=True)
+    state_id = models.TextField()
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
@@ -31,7 +31,7 @@ class AwcLocation(models.Model):
 
 
 class AggAwcDailyView(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -83,7 +83,7 @@ class AggAwcDailyView(models.Model):
 
 
 class AggAwcMonthly(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -230,7 +230,7 @@ class AggAwcMonthly(models.Model):
 
 
 class AggCcsRecordMonthly(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -306,7 +306,7 @@ class AggCcsRecordMonthly(models.Model):
 
 
 class AggChildHealthMonthly(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -385,7 +385,7 @@ class AggChildHealthMonthly(models.Model):
 
 
 class AwcLocationMonths(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -414,7 +414,7 @@ class AwcLocationMonths(models.Model):
 
 
 class DailyAttendanceView(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -453,7 +453,7 @@ class DailyAttendanceView(models.Model):
 
 
 class ChildHealthMonthlyView(models.Model):
-    case_id = models.TextField(blank=True, null=True)
+    case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
     block_id = models.TextField(blank=True, null=True)
@@ -498,7 +498,7 @@ class ChildHealthMonthlyView(models.Model):
 
 class CcsRecordMonthly(models.Model):
     awc_id = models.TextField()
-    case_id = models.TextField()
+    case_id = models.TextField(primary_key=True)
     month = models.DateField()
     age_in_months = models.IntegerField(blank=True, null=True)
     ccs_status = models.TextField(blank=True, null=True)

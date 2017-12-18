@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import requests
+import os
 
 from datetime import datetime, date
 
@@ -8,11 +9,12 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest
+from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
 
+import settings
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -677,6 +679,8 @@ class ExportIndicatorView(View):
                 month,
                 year
             )
+            url = redirect('icds_dashboard', domain=self.kwargs['domain'])
+            return redirect(url.url + '#/download?show_pdf_message=true')
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1601,3 +1605,23 @@ class ICDSBugReportView(BugReportView):
     @property
     def recipients(self):
         return [ICDS_SUPPORT_EMAIL]
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class DownloadPDFReport(View):
+    def get(self, request, *args, **kwargs):
+        uuid = self.request.GET.get('uuid', None)
+        format = self.request.GET.get('format', None)
+        pdf_dir = os.path.join(settings.BASE_DIR, 'custom/icds_reports/static/media/')
+        if format == 'one':
+            pdf_file = os.path.join(pdf_dir, uuid, 'ISSNIP_monthly_register_cumulative.pdf')
+            fsock = open(pdf_file, "rb")
+            response = HttpResponse(fsock, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
+            return response
+        else:
+            zip_file = os.path.join(pdf_dir, '{}.zip'.format(uuid))
+            fsock = open(zip_file, "rb")
+            response = HttpResponse(fsock, content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
+            return response

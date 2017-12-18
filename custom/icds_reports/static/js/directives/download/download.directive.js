@@ -1,10 +1,16 @@
 /* global moment */
 
-function DownloadController($location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures) {
+function DownloadController($scope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures) {
     var vm = this;
 
     vm.months = [];
     vm.years = [];
+    vm.showPdfMessage = $location.search()['show_pdf_message'] || false;
+    setTimeout(function() {
+        $scope.$apply(function() {
+            vm.showPdfMessage = false;
+        })
+    }, 3000);
 
     vm.filterOptions = [
         {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
@@ -304,7 +310,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     };
 }
 
-DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId', 'haveAccessToFeatures'];
+DownloadController.$inject = ['$scope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
