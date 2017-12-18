@@ -32,7 +32,7 @@ module.exports = {
         // First option can be off, warn, or error
         "comma-dangle": ["warn", "always-multiline"],
         "eqeqeq": ["error"],
-        "indent": ["warn", 4],
+        "indent": ["warn", 4, {indentSwitchCase: true}],
         "linebreak-style": ["error", "unix"],
         "semi": ["error", "always"],
     }
