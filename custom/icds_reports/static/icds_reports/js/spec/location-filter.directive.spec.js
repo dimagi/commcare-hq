@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Location Filter Controller', function () {
 
-    beforeEach(module('icdsApp'));
+    pageData.registerUrl('icds_locations', 'icds_locations');
 
     var scope, controller, $uibModal, $location, storageService, locationsService;
 
@@ -30,8 +30,6 @@ describe('Location Filter Controller', function () {
         name: "Chhattisgarh",
     }, [], [], [],
     ];
-
-    pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
@@ -130,7 +128,7 @@ describe('Location Filter Controller', function () {
                 "location_type_name": "state",
                 "parent_id": null,
                 "location_id": "9951736acfe54c68948225cc05fbbd63",
-                "name": "Chhattisgarh"
+                "name": "Chhattisgarh",
             },
             {"name": "All", "location_id": "all"},
             null,
