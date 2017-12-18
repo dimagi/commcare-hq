@@ -239,7 +239,7 @@
                                 <tr>
                                     <td>ST</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format:"st_boys_6_36" }}</td>
-                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"st_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"st_girls_6_36" }}</td>
                                     <td>*</td>
                                     <td>*</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"st_pregnant" }}</td>
@@ -250,7 +250,7 @@
                                 <tr>
                                     <td>OBC</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format:"obc_boys_6_36" }}</td>
-                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"obc_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"obc_girls_6_36" }}</td>
                                     <td>*</td>
                                     <td>*</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"obc_pregnant" }}</td>
@@ -261,7 +261,7 @@
                                 <tr>
                                     <td>General</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format:"general_boys_6_36" }}</td>
-                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"general_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"general_girls_6_36" }}</td>
                                     <td>*</td>
                                     <td>*</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"general_pregnant" }}</td>
@@ -272,7 +272,7 @@
                                 <tr>
                                     <td>Total</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format:"total_boys_6_36" }}</td>
-                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"total_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"total_girls_6_36" }}</td>
                                     <td>*</td>
                                     <td>*</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"total_pregnant" }}</td>
@@ -282,14 +282,14 @@
                                 </tr>
                                 <tr>
                                     <td>Minority (out of total) </td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"minority_boys_6_36_num" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"minority_girls_6_36_num" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_girls_6_36" }}</td>
                                     <td></td>
                                     <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"minority_pregnant" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"minority_lactating" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_minority_boys_36_72" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_pregnant" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_minority_girls_36_72" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_pregnant" }}</td>
                                 </tr>
                             </tbody>
                         </table>

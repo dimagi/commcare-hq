@@ -14,8 +14,7 @@ from sqlagg.sorting import OrderBy
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column, DataFormatter, \
-    TableDataFormat
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn, Column
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.queries import get_test_state_locations_id
@@ -2694,6 +2693,7 @@ class CcsRecordMonthlyURC(SqlData):
             'obc': 'obc',
             'other': 'other',
             'one': 1,
+            'yes': 'yes',
             'twentyone': 21
         })
         super(CcsRecordMonthlyURC, self).__init__(config)
@@ -2804,6 +2804,24 @@ class CcsRecordMonthlyURC(SqlData):
                     EQ('lactating', 'one'),
                 ]
             )),
+            DatabaseColumn('minority_pregnant', CountUniqueColumn(
+                'doc_id',
+                alias='minority_pregnant',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('pregnant', 'one'),
+                    EQ('minority', 'yes'),
+                ]
+            )),
+            DatabaseColumn('minority_lactating', CountUniqueColumn(
+                'doc_id',
+                alias='minority_lactating',
+                filters=self.filters + [
+                    GT('num_rations_distributed', 'twentyone'),
+                    EQ('lactating', 'one'),
+                    EQ('minority', 'yes'),
+                ]
+            )),
         ]
 
 
@@ -2822,7 +2840,8 @@ class ChildHealthMonthlyURC(SqlData):
             'age_48': '48',
             'age_60': '60',
             'age_72': '72',
-            'twentyone': 21
+            'twentyone': 21,
+            'yes': 'yes'
         })
         super(ChildHealthMonthlyURC, self).__init__(config)
 
@@ -2984,6 +3003,34 @@ class ChildHealthMonthlyURC(SqlData):
                         EQ('age_tranche', 'age_60'),
                         EQ('age_tranche', 'age_72'),
                     ]),
+                ]
+            )),
+            DatabaseColumn('pre_minority_boys_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_minority_boys_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('sex', 'male'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                    EQ('minority', 'yes'),
+                ]
+            )),
+            DatabaseColumn('pre_minority_girls_36_72', CountUniqueColumn(
+                'doc_id',
+                alias='pre_minority_girls_36_72',
+                filters=self.filters + [
+                    GTE('pse_days_attended', 'twentyone'),
+                    EQ('sex', 'female'),
+                    OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72'),
+                    ]),
+                    EQ('minority', 'yes'),
                 ]
             ))
         ]

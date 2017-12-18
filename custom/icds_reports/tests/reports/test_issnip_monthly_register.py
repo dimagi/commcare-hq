@@ -75,6 +75,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         data = ISSNIPMonthlyReport(config=config).ccs_record_monthly_ucr
         self.assertEqual(data['obc_lactating'], 4)
         self.assertEqual(data['total_lactating'], 4)
+        self.assertEqual(data['minority_lactating'], 4)
 
     def test_child_health_monthly_ucr(self):
         config = {
@@ -126,3 +127,5 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data['general_girls_6_36'], 0)
         self.assertEqual(data['total_boys_6_36'], 0)
         self.assertEqual(data['total_girls_6_36'], 0)
+        self.assertEqual(data['minority_boys_6_36_num'], 0)
+        self.assertEqual(data['minority_girls_6_36_num'], 0)

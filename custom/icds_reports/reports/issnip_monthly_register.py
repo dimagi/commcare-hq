@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-from dateutil.relativedelta import relativedelta
-
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly
 from django.db.models.aggregates import Sum, Count
@@ -261,6 +259,16 @@ class ISSNIPMonthlyReport(object):
             total_girls_6_36=Sum(self.filter_by({
                 'gender': 'F',
                 'age_tranche__in': ['6', '12', '24', '36']
+            }, 'rations_21_plus_distributed')),
+            minority_boys_6_36_num=Sum(self.filter_by({
+                'gender': 'M',
+                'age_tranche__in': ['6', '12', '24', '36'],
+                'minority': 'yes'
+            }, 'rations_21_plus_distributed')),
+            minority_girls_6_36_num=Sum(self.filter_by({
+                'gender': 'F',
+                'age_tranche__in': ['6', '12', '24', '36'],
+                'minority': 'yes'
             }, 'rations_21_plus_distributed')),
 
         )

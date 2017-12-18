@@ -9,7 +9,7 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
     setTimeout(function() {
         $scope.$apply(function() {
             vm.showPdfMessage = false;
-        })
+        });
     }, 3000);
 
     vm.filterOptions = [
