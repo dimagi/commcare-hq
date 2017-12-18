@@ -814,7 +814,8 @@ def calculate_dose_status_by_day(adherence_cases):
     Returns: {day: DoseStatus(taken, missed, unknown, source)}
     """
     adherence_cases_by_date = get_adherence_cases_by_date(adherence_cases)
-    status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False, value=None))
+    status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True,
+                                                   source=False, value=None))
     for day, cases in six.iteritems(adherence_cases_by_date):
         case = get_relevent_case(cases)
         if not case:
