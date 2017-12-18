@@ -1,4 +1,4 @@
-/* global d3, module, inject, chai */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('AWC Reports Directive', function () {
 
-    var $scope, $httpBackend, $location, controller, $timeout;
+    var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('awc_reports', 'awc_reports');
@@ -29,11 +29,10 @@ describe('AWC Reports Directive', function () {
         "mother_name": "motherHH1",
     };
 
-    beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_, _$timeout_) {
+    beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
-        $timeout = _$timeout_;
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
 

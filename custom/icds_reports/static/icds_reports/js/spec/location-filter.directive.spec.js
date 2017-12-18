@@ -22,17 +22,13 @@ describe('Location Filter Controller', function () {
 
     var mockSelectedLocations = [{
         name: "All",
-        location_id: "all",
-    },
-        {
-            location_type_name: "state",
-            parent_id: null,
-            location_id: "9951736acfe54c68948225cc05fbbd63",
-            name: "Chhattisgarh",
-        },
-        [],
-        [],
-        [],
+        location_id: "all"
+    }, {
+        location_type_name: "state",
+        parent_id: null,
+        location_id: "9951736acfe54c68948225cc05fbbd63",
+        name: "Chhattisgarh",
+    }, [], [], [],
     ];
 
     pageData.registerUrl('icds_locations', 'icds_locations');
@@ -175,17 +171,13 @@ describe('Location Modal Controller', function () {
 
     var mockSelectedLocations = [{
         name: "All",
-        location_id: "all",
-    },
-        {
-            location_type_name: "state",
-            parent_id: null,
-            location_id: "9951736acfe54c68948225cc05fbbd63",
-            name: "Chhattisgarh",
-        },
-        [],
-        [],
-        [],
+        location_id: "all"
+    }, {
+        location_type_name: "state",
+        parent_id: null,
+        location_id: "9951736acfe54c68948225cc05fbbd63",
+        name: "Chhattisgarh",
+    }, [], [], [],
     ];
 
     var mockSelectedLocationId = "9951736acfe54c68948225cc05fbbd63";
@@ -295,7 +287,7 @@ describe('Location Modal Controller', function () {
                 "location_type_name": "state",
                 "parent_id": null,
                 "location_id": "9951736acfe54c68948225cc05fbbd63",
-                "name": "Chhattisgarh"
+                "name": "Chhattisgarh",
             },
             {"name": "All", "location_id": "all"},
             null,
@@ -316,7 +308,7 @@ describe('Location Modal Controller', function () {
         assert.equal(expected, result);
 
         controller.apply();
-        var expected = {"name": "All", "location_id": "all"};
+        expected = {"name": "All", "location_id": "all"};
         result = controller.selectedLocationId;
 
         assert.deepEqual(expected, result);
@@ -342,7 +334,7 @@ describe('Location Modal Controller', function () {
                 "location_type_name": "state",
                 "parent_id": null,
                 "location_id": "9951736acfe54c68948225cc05fbbd63",
-                "name": "Chhattisgarh"
+                "name": "Chhattisgarh",
             },
             {"name": "All", "location_id": "all"},
         ];

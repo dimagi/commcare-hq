@@ -1,6 +1,8 @@
 /* global module, inject, chai, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 "use strict";
 
+var pageData = hqImport('hqwebapp/js/initial_page_data');
+
 describe('Indie Map Directive', function () {
 
     var $scope, $location, controller, $httpBackend, $storageService;
@@ -35,7 +37,7 @@ describe('Indie Map Directive', function () {
             parent_id: null,
             location_id: "9951736acfe54c68948225cc05fbbd63",
             name: "Chhattisgarh",
-        }]
+        }],
     };
 
     beforeEach(module('icdsApp', function ($provide) {
@@ -142,7 +144,7 @@ describe('Indie Map Directive', function () {
 
         assert.deepEqual(expected, result);
         assert.deepEqual($storageService.getKey('search'), {
-            "location_id": null
+            "location_id": null,
         });
 
         $httpBackend.expectGET('icds_locations?name=test-id').respond(200, mockLocations);
@@ -154,7 +156,7 @@ describe('Indie Map Directive', function () {
 
         assert.deepEqual(expected, result);
         assert.deepEqual($storageService.getKey('search'), {
-            "location_name": "test-id", "location_id": "9951736acfe54c68948225cc05fbbd63"
+            "location_name": "test-id", "location_id": "9951736acfe54c68948225cc05fbbd63",
         });
     });
 });

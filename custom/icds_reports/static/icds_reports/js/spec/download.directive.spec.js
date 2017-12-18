@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Download Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('icds_locations', 'icds_locations');
@@ -21,19 +21,18 @@ describe('Download Directive', function () {
             ['supervisor', ['block']]]);
     }));
 
-    beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
+    beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
-        $location = _$location_;
 
         var mockLocation = {
             "locations": [{
                 "location_type_name": "state", "parent_id": null,
                 "location_id": "9951736acfe54c68948225cc05fbbd63", "name": "Chhattisgarh",
-            }]
+            }],
         };
 
-        $httpBackend.expectGET('template').respond(200, '<div></div>')
+        $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
 
         var fakeDate = new Date(2016, 9, 1);
@@ -68,7 +67,7 @@ describe('Download Directive', function () {
             {"name": "December", "id": 12},
         ];
 
-        assert.deepEqual(expected, controller.months)
+        assert.deepEqual(expected, controller.months);
     });
 
     it('tests selected month', function () {

@@ -236,9 +236,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.updateMap = function (geography) {
         if (geography.id !== void(0) && vm.data[0].data[geography.id] && vm.data[0].data[geography.id].original_name.length > 0) {
-            var ele = vm.getContent(geography);
+            var html = vm.getContent(geography);
             var css = 'display: block; left: ' + event.clientX + 'px; top: ' + event.clientY + 'px;';
-            return d3.select('#locPopup')
+            var ele = d3.select('#locPopup')
                 .attr('style', css)
                 .html(html);
             $compile(ele[0])($scope);
