@@ -208,13 +208,25 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             };
 
             var error = function(err) {
+                var msg;
+                switch(err.code) {
+                    case err.PERMISSION_DENIED:
+                        msg = "You denied CommCare HQ permission to read your browser's current location. ";
+                        break;
+                    case err.TIMEOUT:
+                        msg = "Your connection was not strong enough to acquire your location. Please try again later. ";
+                        break;
+                    case err.POSITION_UNAVAILABLE:
+                    default:
+                        msg = "Your browser location could not be determined. ";
+                        break;
+                }
                 FormplayerFrontend.trigger('showError',
-                    "Browser location was not provided or could not be determined. Computations that rely on the " +
-                    "here() function will show up blank.");
+                    msg + "Without access to your location, computations that rely on the here() function will show up blank.");
             };
 
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(success, error, {timeout: 8000});
+                navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
             }
         },
 
