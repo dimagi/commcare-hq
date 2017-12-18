@@ -91,22 +91,28 @@ class Command(BaseCommand):
                                      for case, update in updates]
                     bulk_update_cases(self.domain, update_tuples, self.__module__)
 
-    @property
     @memoized
-    def districts_by_id(self):
-        locs = SQLLocation.objects.filter(domain=self.domain, location_type__code='dto')
-        return defaultdict(lambda: '', (
-            (loc.location_id, loc.name) for loc in locs
-        ))
+    def get_owner_dto_name(self, owner_id):
+        try:
+            owner = SQLLocation.objects.get(domain=self.domain, location_id=owner_id)
+            return (owner.get_ancestors(include_self=True)
+                         .get(location_type__code='dto')
+                         .name)
+        except SQLLocation.DoesNotExist:
+            return None
 
     def get_person_case_info(self, person_case):
         """Pull info that we want to log but not update"""
         person = person_case.dynamic_case_properties()
+        if person.get('enrolled_in_private') == 'true':
+            dto_name = self.get_owner_dto_name(person_case.owner_id)
+        else:
+            dto_name = person.get('dto_name')
         return {
             'person_case_id': person_case.case_id,
             'person_name': ' '.join(filter(None, [person.get('first_name'), person.get('last_name')])),
             'enrolled_in_private': person.get('enrolled_in_private'),
-            'dto_name': self.districts_by_id[person.get('current_address_district_choice')],
+            'dto_name': dto_name,
             'phi_name': person.get('phi_name'),
             'owner_id': person_case.owner_id,
             'dob': person.get('dob'),
