@@ -267,7 +267,11 @@ class BaseExportView(BaseProjectDataView):
             try:
                 post_data = json.loads(self.request.body)
                 url = self.export_home_url
-                if post_data['is_daily_saved_export']:
+                # short circuit to check if the submit is from a create or edit feed
+                # to redirect it to the list view
+                if isinstance(self, DashboardFeedMixin):
+                    url = reverse(DashboardFeedListView.urlname, args=[self.domain])
+                elif post_data['is_daily_saved_export']:
                     url = reverse(DailySavedExportListView.urlname, args=[self.domain])
             except ValueError:
                 url = self.export_home_url
