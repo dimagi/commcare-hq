@@ -390,7 +390,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
     @memoized
     def _get_person_locations(self, episode_case):
         person_case = self._get_person_case(episode_case)
-        return get_person_locations(person_case)
+        return get_person_locations(person_case, episode_case)
 
     @memoized
     def _get_person_case(self, episode_case):
