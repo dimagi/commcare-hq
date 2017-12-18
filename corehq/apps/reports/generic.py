@@ -6,7 +6,7 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
@@ -136,10 +136,6 @@ class GenericReportView(object):
     # still include these reports in the list of reports we do access control
     # against.
     parent_report_class = None
-
-    is_deprecated = False
-    deprecation_email_message = ugettext("This report has been deprecated.")
-    deprecation_message = ugettext("This report has been deprecated.")
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -565,30 +561,18 @@ class GenericReportView(object):
         self.context.update(self._validate_context_dict(self.report_context))
 
     @property
-    def deprecate_response(self):
-        from django.contrib import messages
-        messages.warning(
-            self.request,
-            self.deprecation_message
-        )
-        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', '/'))
-
-    @property
     def view_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the general view of the report template.
         """
-        if self.is_deprecated:
-            return self.deprecate_response
-        else:
-            self.update_template_context()
-            template = self.template_base
-            if not self.asynchronous:
-                self.update_filter_context()
-                self.update_report_context()
-                template = self.template_report
-            return render(self.request, template, self.context)
+        self.update_template_context()
+        template = self.template_base
+        if not self.asynchronous:
+            self.update_filter_context()
+            self.update_report_context()
+            template = self.template_report
+        return render(self.request, template, self.context)
 
     @property
     @request_cache()
