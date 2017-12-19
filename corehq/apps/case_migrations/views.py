@@ -34,6 +34,7 @@ class BaseMigrationView(BaseDomainView):
 
 
 class MigrationView(BaseMigrationView, FormView):
+    """View to kick off a migration. Requires user to provide migration XML"""
     urlname = 'case_migration'
     template_name = 'case_migrations/migration.html'
     form_class = MigrationForm
@@ -60,6 +61,12 @@ def get_related_case_ids(domain, case_id):
 @domain_admin_required
 @WEBAPPS_CASE_MIGRATION.required_decorator()
 def migration_restore(request, domain, case_id):
+    """Restore endpoint used in bulk case migrations
+
+    Accepts the provided case_id and returns a restore for the user containing:
+    * Registration block
+    * The passed in case and its full network of cases
+    """
     domain_obj = Domain.get_by_name(domain)
     restore_user = request.couch_user
     restore_params = RestoreParams(device_id="case_migration", version=V2)
