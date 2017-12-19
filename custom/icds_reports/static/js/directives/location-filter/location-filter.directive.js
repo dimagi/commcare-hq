@@ -218,7 +218,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     };
 
     var init = function() {
-        if (vm.selectedLocationId && vm.selectedLocationId !== 'all') {
+        if (vm.selectedLocationId && vm.selectedLocationId !== 'all' && vm.selectedLocationId !== 'null') {
             locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
                 var locations = data.locations;
 

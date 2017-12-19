@@ -369,7 +369,7 @@ class PrevalenceOfUndernutritionView(View):
 class LocationView(View):
 
     def get(self, request, *args, **kwargs):
-        if 'location_id' in request.GET:
+        if 'location_id' in request.GET and request.GET['location_id'] and request.GET['location_id'] != 'null':
             location_id = request.GET['location_id']
             if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
                 return JsonResponse({})
