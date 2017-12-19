@@ -6,8 +6,7 @@
         "enikshay-performance-test"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode_2b_v5",
     "report_id": "tb_notification_register_2b",
