@@ -1,7 +1,9 @@
 function (doc) {
     var state = 'PENDING';
     if (doc.doc_type === 'RepeatRecord' || doc.doc_type === 'RepeatRecord-Failed') {
-        if (doc.succeeded) {
+        if (doc.archived) {
+            state = 'ARCHIVED';
+        } else if (doc.cancelled) {
             state = 'SUCCESS';
         } else if (doc.cancelled) {
             state = 'CANCELLED';

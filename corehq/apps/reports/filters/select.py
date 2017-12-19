@@ -13,10 +13,11 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.const import (
-    RECORD_FAILURE_STATE,
-    RECORD_SUCCESS_STATE,
+    RECORD_ARCHIVED_STATE,
     RECORD_CANCELLED_STATE,
+    RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_SUCCESS_STATE,
 )
 import six
 from six.moves import range
@@ -154,4 +155,5 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
             (RECORD_PENDING_STATE, _("Pending")),
             (RECORD_CANCELLED_STATE, _("Cancelled")),
             (RECORD_FAILURE_STATE, _("Failed")),
+            (RECORD_ARCHIVED_STATE, _("Archived")),
         ]

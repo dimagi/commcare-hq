@@ -41,6 +41,7 @@ from .const import (
     RECORD_SUCCESS_STATE,
     RECORD_PENDING_STATE,
     RECORD_CANCELLED_STATE,
+    RECORD_ARCHIVED_STATE,
     POST_TIMEOUT,
 )
 from .exceptions import RequestConnectionError
@@ -505,6 +506,7 @@ class RepeatRecord(Document):
     failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
+    archived = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -541,7 +543,9 @@ class RepeatRecord(Document):
     @property
     def state(self):
         state = RECORD_PENDING_STATE
-        if self.succeeded:
+        if self.archived:
+            state = RECORD_ARCHIVED_STATE
+        elif self.succeeded:
             state = RECORD_SUCCESS_STATE
         elif self.cancelled:
             state = RECORD_CANCELLED_STATE

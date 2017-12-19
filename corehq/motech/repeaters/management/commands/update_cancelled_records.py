@@ -31,7 +31,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--action',
             default="retrigger",
-            choices=('retrigger', 'succeed'),
+            choices=('retrigger', 'succeed', 'archive'),
             help=("The action to be performed on the repeat records")
         )
         parser.add_argument(
@@ -123,11 +123,11 @@ class Command(BaseCommand):
             for i, record in enumerate(records):
                 try:
                     if action == 'retrigger':
-                        if record.next_check is None:
-                            record.next_check = datetime.datetime.utcnow()
-                        record.fire(force_send=True)
+                        self._retrigger_record(record)
                     elif action == 'succeed':
                         self._succeed_record(record, success_message, response_status)
+                    elif action == 'archive':
+                        self._archive_record(record)
                 except Exception as e:
                     print("{}/{}: {} {}".format(i + 1, total_records, 'EXCEPTION', repr(e)))
                     writer.writerow((record._id, record.payload_id, record.state, repr(e)))
@@ -138,6 +138,11 @@ class Command(BaseCommand):
                     time.sleep(float(sleep_time))
 
         print("Wrote log of changes to {}".format(filename))
+
+    def _retrigger_record(self, record):
+        if record.next_check is None:
+            record.next_check = datetime.datetime.utcnow()
+        record.fire(force_send=True)
 
     def _succeed_record(self, record, success_message, response_status):
         success_attempt = RepeatRecordAttempt(
@@ -153,4 +158,8 @@ class Command(BaseCommand):
         repeater = record.repeater
         repeater.generator.handle_success(mock_response, repeater.payload_doc(record), record)
 
+        record.save()
+
+    def _archive_record(self, record):
+        record.archived = True
         record.save()

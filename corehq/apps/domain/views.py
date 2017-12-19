@@ -135,9 +135,10 @@ from corehq.motech.repeaters.dbaccessors import (
 )
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.motech.repeaters.const import (
+    RECORD_ARCHIVED_STATE,
+    RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
-    RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
 from corehq.apps.reports.generic import GenericTabularReport
@@ -2372,6 +2373,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
+        elif record.state == RECORD_ARCHIVED_STATE:
+            label_cls = 'info'
+            label_text = _('Archived')
         else:
             label_cls = ''
             label_text = ''
