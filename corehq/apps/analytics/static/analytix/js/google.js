@@ -21,7 +21,6 @@ hqDefine('analytix/js/google', [
         _global = initialAnalytics.getFn('global'),
         _data = {},
         module = {},
-        _gtag = function () {},
         _logger = logging.getLoggerForApi('Google Analytics'),
         _ready;
 
