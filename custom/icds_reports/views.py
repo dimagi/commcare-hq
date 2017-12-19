@@ -7,7 +7,6 @@ from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
-from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
