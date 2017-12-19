@@ -3,7 +3,6 @@ import uuid
 
 from couchdbkit import ResourceConflict
 from couchdbkit.exceptions import ResourceNotFound
-from django.conf import settings
 from django.test import TestCase, SimpleTestCase, override_settings
 
 from corehq.toggles import (
@@ -14,6 +13,7 @@ from corehq.toggles import (
     StaticToggle,
     deterministic_random,
     DynamicallyPredictablyRandomToggle)
+from django.conf import settings
 from toggle.shortcuts import (
     update_toggle_cache,
     namespaced_item,
@@ -218,13 +218,7 @@ class PredictablyRandomToggleTests(TestCase):
         cls.user_toggle.delete()
         cls.domain_toggle.delete()
 
-    def setUp(self):
-        self.unit_testing = settings.UNIT_TESTING
-        settings.UNIT_TESTING = False
-
-    def tearDown(self):
-        settings.UNIT_TESTING = self.unit_testing
-
+    @override_settings(DISABLE_RANDOM_TOGGLES=False)
     def test_user_namespace_disabled(self):
         toggle = PredictablyRandomToggle(
             'user_toggle',
@@ -236,6 +230,7 @@ class PredictablyRandomToggleTests(TestCase):
         self.assertTrue(toggle.enabled('diana', namespace=NAMESPACE_USER))
         self.assertFalse(toggle.enabled('jessica', namespace=NAMESPACE_USER))
 
+    @override_settings(DISABLE_RANDOM_TOGGLES=False)
     def test_domain_namespace_disabled(self):
         toggle = PredictablyRandomToggle(
             'domain_toggle',
