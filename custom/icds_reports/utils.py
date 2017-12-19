@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 import operator
 
-import cStringIO
+from six.moves import cStringIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
 from xhtml2pdf import pisa
