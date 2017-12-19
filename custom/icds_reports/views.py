@@ -26,7 +26,9 @@ from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import UserRole
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
-from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL
+from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
+    PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT, BENEFICIARY_LIST_EXPORT, \
+    ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -87,7 +89,8 @@ from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, Pregna
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id, get_location_level, have_access_to_features
+    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
@@ -248,7 +251,7 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['have_access'] = have_access_to_features(self.couch_user)
+        kwargs['have_access'] = icds_pre_release_features(self.couch_user)
 
         is_commcare_user = self.couch_user.is_commcare_user()
 
@@ -633,37 +636,37 @@ class ExportIndicatorView(View):
             except SQLLocation.DoesNotExist:
                 pass
 
-        if indicator == 1:
+        if indicator == CHILDREN_EXPORT:
             return ChildrenExport(
                 config=config,
                 loc_level=aggregation_level,
                 show_test=include_test
             ).to_export(export_format, location)
-        elif indicator == 2:
+        elif indicator == PREGNANT_WOMEN_EXPORT:
             return PregnantWomenExport(
                 config=config,
                 loc_level=aggregation_level,
                 show_test=include_test
             ).to_export(export_format, location)
-        elif indicator == 3:
+        elif indicator == DEMOGRAPHICS_EXPORT:
             return DemographicsExport(
                 config=config,
                 loc_level=aggregation_level,
                 show_test=include_test
             ).to_export(export_format, location)
-        elif indicator == 4:
+        elif indicator == SYSTEM_USAGE_EXPORT:
             return SystemUsageExport(
                 config=config,
                 loc_level=aggregation_level,
                 show_test=include_test
             ).to_export(export_format, location)
-        elif indicator == 5:
+        elif indicator == AWC_INFRASTRUCTURE_EXPORT:
             return AWCInfrastructureExport(
                 config=config,
                 loc_level=aggregation_level,
                 show_test=include_test
             ).to_export(export_format, location)
-        elif indicator == 6:
+        elif indicator == BENEFICIARY_LIST_EXPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
             return BeneficiaryExport(
@@ -671,7 +674,7 @@ class ExportIndicatorView(View):
                 loc_level=aggregation_level,
                 show_test=include_test
             ).to_export('csv', location)
-        elif indicator == 7:
+        elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
             pdf_format = request.POST.get('pdfformat')
             prepare_issnip_monthly_register_reports.delay(
@@ -1615,16 +1618,12 @@ class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         format = self.request.GET.get('format', None)
-        pdf_dir = os.path.join(settings.BASE_DIR, 'custom/icds_reports/static/media/')
+        client = get_redis_client()
         if format == 'one':
-            pdf_file = os.path.join(pdf_dir, uuid, 'ISSNIP_monthly_register_cumulative.pdf')
-            fsock = open(pdf_file, "rb")
-            response = HttpResponse(fsock, content_type='application/pdf')
+            response = HttpResponse(client.get(uuid), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
             return response
         else:
-            zip_file = os.path.join(pdf_dir, '{}.zip'.format(uuid))
-            fsock = open(zip_file, "rb")
-            response = HttpResponse(fsock, content_type='application/zip')
+            response = HttpResponse(client.get(uuid), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
             return response

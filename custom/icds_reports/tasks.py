@@ -223,23 +223,25 @@ india_timezone = pytz.timezone('Asia/Kolkata')
 
 @task(queue='background_queue', ignore_result=True)
 def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
-    dir_name = uuid.uuid4()
 
     utc_now = datetime.now(pytz.utc)
     india_now = utc_now.astimezone(india_timezone)
-
-    base_dir = os.path.join(settings.BASE_DIR, 'custom/icds_reports/static/media/')
-    directory = os.path.dirname(os.path.join(base_dir, dir_name.hex + '/'))
 
     selected_date = date(year, month, 1)
     report_context = {
         'reports': []
     }
 
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    pdf_files = []
+
     for awc in awcs:
+        pdf_hash = uuid.uuid4().hex
+
         awc_location = SQLLocation.objects.get(location_id=awc)
+        pdf_files.append({
+            'uuid': pdf_hash,
+            'location_name': awc_location.name.replace(' ', '_')
+        })
         report = ISSNIPMonthlyReport(config={
             'awc_id': awc_location.location_id,
             'month': selected_date,
@@ -259,34 +261,21 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
         else:
             report_context['reports'] = [context]
             create_pdf_file(
-                'ISSNIP_monthly_register_{}'.format(awc_location.name.replace(' ', '_')),
-                directory,
+                pdf_hash,
                 report_context
             )
 
     if pdf_format == 'many':
-        zip_folder(base_dir, dir_name.hex)
+        cache_key = zip_folder(pdf_files)
     else:
-        create_pdf_file('ISSNIP_monthly_register_cumulative', directory, report_context)
+        cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
 
     params = {
         'domain': 'icds-cas',
-        'uuid': dir_name.hex,
+        'uuid': cache_key,
         'format': pdf_format
     }
     send_report_download_email(
         'ISSNIP monthly register',
         user,
         reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain}))
-    icds_remove_files.apply_async(args=[dir_name.hex, base_dir, pdf_format], countdown=60)
-
-
-@task(queue='background_queue', ignore_result=True)
-def icds_remove_files(uuid, folder_dir, pdf_format):
-    reports_dir = os.path.join(folder_dir, uuid)
-    for root, dirs, files in os.walk(reports_dir):
-        for name in files:
-            os.remove(os.path.join(root, name))
-    if pdf_format == 'many':
-        os.remove(os.path.join(folder_dir, "{}.zip").format(uuid))
-    os.rmdir(reports_dir)

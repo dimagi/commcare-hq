@@ -9,6 +9,7 @@ from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRe
     ChildHealthMonthlyURC
 
 DATA_NOT_ENTERED = "Data Not Entered"
+AWC_LOCATION_LEVEL = 5
 
 
 class ISSNIPMonthlyReport(object):
@@ -26,7 +27,7 @@ class ISSNIPMonthlyReport(object):
     def agg_awc_monthly_data(self):
         data = AggAwcMonthly.objects.filter(
             awc_id=self.config['awc_id'],
-            aggregation_level=5,
+            aggregation_level=AWC_LOCATION_LEVEL,
             month=self.config['month']
         ).values(
             'block_name', 'awc_name', 'awc_site_code', 'infra_type_of_building', 'infra_clean_water',
@@ -106,6 +107,7 @@ class ISSNIPMonthlyReport(object):
     def agg_child_health_monthly(self):
         data = AggChildHealthMonthly.objects.filter(
             awc_id=self.config['awc_id'],
+            aggregation_level=AWC_LOCATION_LEVEL,
             month=self.config['month']
         ).values('awc_id').annotate(
             boys_normal_0_3=Sum(self.filter_by({

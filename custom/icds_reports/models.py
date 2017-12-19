@@ -3,7 +3,7 @@ from django.db import models
 
 
 class AwcLocation(models.Model):
-    doc_id = models.TextField()
+    doc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField()

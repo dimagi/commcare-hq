@@ -30,11 +30,6 @@ def icds_type_of_building(data):
         return ''
 
 
-@register.filter(name='icds_yes_no')
-def icds_yes_no(value):
-    return 'Yes' if value else 'No'
-
-
 @register.filter(name='icds_toilet_type')
 def icds_toilet_type(value):
     types = ['', 'Pit type (Latrine)', 'Only urinal', 'Flush system', 'Other']

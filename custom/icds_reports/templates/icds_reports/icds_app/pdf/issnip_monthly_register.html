@@ -86,11 +86,11 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td>Whether Kitchen available at AWC? (Y/N): {{ data.report.infrastructure_data.kitchen|icds_yes_no }}</td>
+                                    <td>Whether Kitchen available at AWC? (Y/N): {{ data.report.infrastructure_data.kitchen|yesno }}</td>
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td>Whether toilet available at AWC? (Y/N): {{ data.report.infrastructure_data.toilet_facility|icds_yes_no }}</td>
+                                    <td>Whether toilet available at AWC? (Y/N): {{ data.report.infrastructure_data.toilet_facility|yesno }}</td>
                                     <td>Type of toilet at AWC: {{ data.report.infrastructure_data.type_toilet|icds_toilet_type }}</td>
                                 </tr>
                             </tbody>
