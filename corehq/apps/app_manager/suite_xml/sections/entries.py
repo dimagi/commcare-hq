@@ -358,7 +358,7 @@ class EntriesHelper(object):
             else:
                 parent_filter = ''
 
-            detail_module = module if module.module_type == 'shadow' else datum['module']
+            detail_module = datum['module']
             detail_persistent = self.get_detail_persistent_attr(datum['module'], detail_module, "case_short")
             detail_inline = self.get_detail_inline_attr(datum['module'], detail_module, "case_short")
 
