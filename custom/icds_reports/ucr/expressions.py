@@ -176,9 +176,10 @@ class FormsInDateExpressionSpec(JsonObject):
             context.set_cache_value(cache_key, count)
             return count
 
-        form_ids = [x['_id'] for x in xforms]
-        xforms = FormAccessors(domain).get_forms(form_ids)
-        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
+        es_forms_by_id = {x['_id']: x for x in xforms}
+        xforms = FormAccessors(domain).get_forms(es_forms_by_id.keys())
+
+        xforms = [self._get_form_json(f, context, es_forms_by_id) for f in xforms if f.domain == domain]
 
         context.set_cache_value(cache_key, xforms)
         return xforms
@@ -200,7 +201,7 @@ class FormsInDateExpressionSpec(JsonObject):
             xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
             return xform
 
-        forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
+        forms = mget_query('forms', xform_ids, source=True)
         forms = list(filter(None, map(_transform_time_end, forms)))
         context.set_cache_value(cache_key, forms)
         return forms
@@ -215,12 +216,17 @@ class FormsInDateExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, xform_ids)
         return xform_ids
 
-    def _get_form_json(self, form, context):
+    def _get_form_json(self, form, context, es_map):
         cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        form_json = form.to_json()
+        if form.form_id in es_map:
+            # if available in the ES results, avoid a call to riak
+            form_json = es_map[form.form_id]
+        else:
+            form_json = form.to_json()
+
         context.set_cache_value(cache_key, form_json)
         return form_json
 
