@@ -111,10 +111,6 @@ class ToggleEditView(ToggleBaseView):
         return reverse(self.urlname, args=[self.toggle_slug])
 
     @property
-    def expanded(self):
-        return self.request.GET.get('expand') == 'true'
-
-    @property
     def usage_info(self):
         return self.request.GET.get('usage_info') == 'true'
 
@@ -159,7 +155,6 @@ class ToggleEditView(ToggleBaseView):
         context = {
             'toggle_meta': toggle_meta,
             'toggle': toggle,
-            'expanded': self.expanded,
             'namespaces': namespaces,
             'usage_info': self.usage_info,
             'server_environment': settings.SERVER_ENVIRONMENT,
@@ -167,11 +162,6 @@ class ToggleEditView(ToggleBaseView):
             'is_random_editable': self.is_random_editable,
             'allows_items': all(n in ALL_NAMESPACES for n in namespaces)
         }
-        if self.expanded and NAMESPACE_DOMAIN in namespaces:
-            context['domain_toggle_list'] = sorted(
-                [(row['key'], toggle_meta.enabled(row['key'])) for row in Domain.get_all(include_docs=False)],
-                key=lambda domain_tup: (not domain_tup[1], domain_tup[0])
-            )
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
         return context
