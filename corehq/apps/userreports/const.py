@@ -45,3 +45,6 @@ ASYNC_INDICATOR_QUEUE_TIME = timedelta(minutes=5)
 ASYNC_INDICATOR_CHUNK_SIZE = 100
 
 XFORM_CACHE_KEY_PREFIX = 'xform_to_json_cache'
+
+NAMED_EXPRESSION_PREFIX = 'NamedExpression'
+NAMED_FILTER_PREFIX = 'NamedFilter'
