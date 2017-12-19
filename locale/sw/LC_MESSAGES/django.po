@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-19 21:29+0000\n"
-"PO-Revision-Date: 2017-12-12 20:29+0000\n"
+"POT-Creation-Date: 2017-12-19 21:45+0000\n"
+"PO-Revision-Date: 2017-12-19 21:30+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -39524,6 +39524,24 @@ msgid ""
 "An error occurred while trying to connect to the CloudCare service. If you "
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
+
+#~ msgid "Sync Date"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "# of Cases"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Last Submitted"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Last Cached"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Show All Dates"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "You must select a location."
+#~ msgstr "Criança com problemas de malnutrição"
 
 #~ msgid "Total Users"
 #~ msgstr "Manejo de Casos"

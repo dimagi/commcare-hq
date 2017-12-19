@@ -33,8 +33,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-19 21:29+0000\n"
-"PO-Revision-Date: 2017-12-12 20:29+0000\n"
+"POT-Creation-Date: 2017-12-19 21:45+0000\n"
+"PO-Revision-Date: 2017-12-19 21:30+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -31778,10 +31778,8 @@ msgid "Restart schedule when this case property takes any new value: "
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py:1248
-#, fuzzy
-#| msgid "custom user property"
 msgid "The time from case property:"
-msgstr "Propriedade do usuário personalizada"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py:1253
 msgid "The Case"
@@ -39538,6 +39536,24 @@ msgstr ""
 "Ocorreu um erro ao tentar se conectar ao serviço de CloudCare. Se você tiver "
 "problemas para preencher o restante do formulário por favor envie  um "
 "relatorio do problema usando os links de abaixo."
+
+#~ msgid "Sync Date"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "# of Cases"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Last Submitted"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Last Cached"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Show All Dates"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "You must select a location."
+#~ msgstr "Criança com problemas de malnutrição"
 
 #~ msgid "Total Users"
 #~ msgstr "Manejo de Casos"

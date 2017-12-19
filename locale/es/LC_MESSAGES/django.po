@@ -13,8 +13,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-19 21:29+0000\n"
-"PO-Revision-Date: 2017-12-12 20:30+0000\n"
+"POT-Creation-Date: 2017-12-19 21:45+0000\n"
+"PO-Revision-Date: 2017-12-19 21:31+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
 "es/)\n"
@@ -10557,16 +10557,10 @@ msgstr ""
 "tenga un 'sí' en esta columna. "
 
 #: corehq/apps/case_importer/suggested_fields.py:96
-#, fuzzy
-#| msgid ""
-#| "This is a deprecated feature needed for a handful of clients. Please do "
-#| "not use unless you know what you are doing"
 msgid ""
 "The date opened property for this case will be changed. Please do not use "
 "unless you know what you are doing"
 msgstr ""
-"Esta es una función obsoleta necesaria para muchos clientes. Por favor no la "
-"utilice a menos que esté seguro de lo que hace"
 
 #: corehq/apps/case_importer/templates/case_importer/excel_commit.html:8
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html:27
@@ -21153,10 +21147,8 @@ msgid "Visit the Help Site"
 msgstr "Visite el Sitio de Ayuda"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:96
-#, fuzzy
-#| msgid "http://www.dimagi.com/policy"
 msgid "https://forum.dimagi.com/"
-msgstr "http://www.dimagi.com/policy "
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html:98
 msgid "User Forum"
@@ -28143,10 +28135,8 @@ msgid "Excel Attachment"
 msgstr "Adjunto de Excel"
 
 #: corehq/apps/reports/generic.py:141 corehq/apps/reports/generic.py:142
-#, fuzzy
-#| msgid "The recipient has been deactivated."
 msgid "This report has been deprecated."
-msgstr "El destinatario ha sido desactivado."
+msgstr ""
 
 #: corehq/apps/reports/models.py:82
 msgid "demo_user"
@@ -29121,16 +29111,12 @@ msgid "Report Filters"
 msgstr "Filtros de Reporte"
 
 #: corehq/apps/reports/templates/reports/async/partials/aggregate_user_status/chart_panel.html:20
-#, fuzzy
-#| msgid "Aggregate Inventory"
 msgid "Aggregate Percents"
-msgstr "Inventario Total"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/async/partials/aggregate_user_status/chart_panel.html:22
-#, fuzzy
-#| msgid "Display Column"
 msgid "Daily Counts"
-msgstr "Mostrar Columna"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/async/project_health_dashboard.html:15
 msgid "Set Performance Threshold"
@@ -32990,10 +32976,8 @@ msgstr "Vista previa de los datos"
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:26
 #: corehq/apps/userreports/views.py:1488
-#, fuzzy
-#| msgid "Feature Summary"
 msgid "Data Source Summary"
-msgstr "Resumen de Características"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/edit_data_source.html:27
 msgid "Data Source Source (Advanced)"
@@ -36352,10 +36336,8 @@ msgid "At"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py:440
-#, fuzzy
-#| msgid "Window Length (minutes)"
 msgid "Random Window Length (minutes)"
-msgstr "Longitud de la Ventana (minutos)"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py:453
 msgid "Stop"
@@ -36495,10 +36477,8 @@ msgid "Restart schedule when this case property takes any new value: "
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py:1248
-#, fuzzy
-#| msgid "the date in case property"
 msgid "The time from case property:"
-msgstr "La fecha en la propiedad del caso"
+msgstr ""
 
 #: corehq/messaging/scheduling/forms.py:1253
 msgid "The Case"
@@ -44387,96 +44367,23 @@ msgstr ""
 "problemas completando el resto del formulario, por favor notifique el "
 "problema. "
 
-#~ msgid "http://groups.google.com/group/commcare-users/subscribe"
-#~ msgstr "http://groups.google.com/group/commcare-users/subscribe "
-
-#~ msgid "Please enter a case property for the match criteria."
-#~ msgstr ""
-#~ "Por favor ingrese una propiedad de caso para el criterio de coincidencia."
-
-#~ msgid "You must specify a case property that will provide the start date."
-#~ msgstr ""
-#~ "Debe especificar una propiedad del caso que provea una fecha de inicio."
-
-#~ msgid "You must specify a case property for the case's child case."
-#~ msgstr "Debe especificar una propiedad de caso para el caso hijo del caso. "
-
-#~ msgid "Please enter the case property from which to pull the time."
-#~ msgstr ""
-#~ "Por favor ingrese la propiedad del caso desde la cual se obtendrá la "
-#~ "hora. "
-
-#~ msgid "You must specify a case property for the stop condition."
-#~ msgstr ""
-#~ "Debe especificar una propiedad del caso para la condición de detenerse."
-
-#~ msgid "Enter a worker"
-#~ msgstr "Ingrese un usuario"
-
-#~ msgid "Shows the last (up to) {} times a user has synced."
-#~ msgstr ""
-#~ "Muestra las últimas (hasta) {} veces que el usuario ha sincronizado."
-
 #~ msgid "Sync Date"
-#~ msgstr "Fecha de Sincronización"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "# of Cases"
-#~ msgstr "# de Casos"
-
-#~ msgid "Sync Duration"
-#~ msgstr "Duración de la Sincronización"
-
-#~ msgid "Sync Log Type"
-#~ msgstr "Tipo de Registro de Sincronización"
-
-#~ msgid "Previous Sync Log"
-#~ msgstr "Registro de Sincronización Previo"
-
-#~ msgid "Error Info"
-#~ msgstr "Error de Información"
-
-#~ msgid "State Hash"
-#~ msgstr "Estado Hash"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Last Submitted"
-#~ msgstr "Último Ingresado"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Last Cached"
-#~ msgstr "Último en Caché"
-
-#~ msgid "{} seconds"
-#~ msgstr "{} segundos"
-
-#~ msgid "Error computing hash! {}"
-#~ msgstr "¡Error computando hash! {}"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Show All Dates"
-#~ msgstr "Mostrar Todas las Fechas"
+#~ msgstr "Casos IRA Tratados"
 
-#~ msgid ""
-#~ "\n"
-#~ "                            And <strong>%(percent)s%%</strong> of all "
-#~ "other %(namespace)ss.\n"
-#~ "                            "
-#~ msgstr ""
-#~ "\n"
-#~ "Y <strong>%(percent)s%%</strong> de todos los otros %(namespace)ss.   "
-
-#~ msgid "see all"
-#~ msgstr "ver todos"
-
-#~ msgid ""
-#~ "Go to the project settings page to see if a toggle is randomly enabled "
-#~ "for your domain."
-#~ msgstr ""
-#~ "Ir a la página de configuración del proyecto para ver si una tecla está "
-#~ "habilitada aleatoriamente en su dominio. "
-
-#~ msgid "All domain/toggle statuses"
-#~ msgstr "Todos los dominios/estatus de tecla "
-
-#~ msgid "Enabled?"
-#~ msgstr "¿Habilitado?"
+#~ msgid "You must select a location."
+#~ msgstr "Criança com problemas de malnutrição"
 
 #~ msgid "Total Users"
 #~ msgstr "Manejo de Casos"

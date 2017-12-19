@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-19 21:30+0000\n"
+"POT-Creation-Date: 2017-12-19 21:46+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2017\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2017\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -2736,10 +2736,8 @@ msgid "Satellite"
 msgstr "Satellite"
 
 #: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
-#, fuzzy
-#| msgid "Show All"
 msgid "Show All Dates"
-msgstr "Afficher tous"
+msgstr "Afficher toutes les dates"
 
 #: corehq/apps/sms/static/sms/js/phone_number_filter.js:3
 msgid "That have phone numbers"
@@ -3065,6 +3063,3 @@ msgstr ""
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:103
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
-
-#~ msgid "Clear"
-#~ msgstr "Effacer"
