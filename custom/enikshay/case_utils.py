@@ -426,11 +426,18 @@ def _get_private_locations(person_case, episode_case=None):
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
     try:
+        dto_code = district_location.metadata['nikshay_code']
+        # HACK: remove this when we have all of the "HE ids" imported from Nikshay
+        pcp_code = pcp_location.metadata.get('nikshay_code') or None
+        # append 0 in beginning to make the code 6-digit
+        if pcp_code and len(pcp_code) == 5:
+            pcp_code = '0' + pcp_code
+        if not dto_code:
+            dto_code = pcp_location.metadata.get('rntcp_district_code')
         return PrivatePersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
-            dto=district_location.metadata['nikshay_code'],
-            # HACK: remove this when we have all of the "HE ids" imported from Nikshay
-            pcp=pcp_location.metadata.get('nikshay_code') or None,
+            dto=dto_code,
+            pcp=pcp_code,
             tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:
