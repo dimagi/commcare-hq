@@ -193,6 +193,7 @@ class TestFormsExpressionSpecWithFilterEsVersion(TestFormsExpressionSpecWithFilt
     @classmethod
     def tearDownClass(cls):
         Toggle.get(ICDS_UCR_ELASTICSEARCH_DOC_LOADING.slug).delete()
+        super(TestFormsExpressionSpecWithFilterEsVersion, cls).tearDownClass()
 
 
 class TestGetAppVersion(SimpleTestCase):
