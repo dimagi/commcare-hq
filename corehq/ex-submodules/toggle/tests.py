@@ -13,7 +13,6 @@ from corehq.toggles import (
     StaticToggle,
     deterministic_random,
     DynamicallyPredictablyRandomToggle)
-from django.conf import settings
 from toggle.shortcuts import (
     update_toggle_cache,
     namespaced_item,
