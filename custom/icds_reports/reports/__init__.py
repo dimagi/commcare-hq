@@ -133,7 +133,6 @@ CUSTOM_REPORTS = (
         ASRReport
     )),
     ('CUSTOM REPORTS', (
-        TableauReport,
         DashboardReport
     )),
 )
