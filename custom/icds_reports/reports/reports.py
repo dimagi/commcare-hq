@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from django.urls import reverse
-
+from django.http import Http404
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
