@@ -892,6 +892,13 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
+    'features_in_dashboard_icds_reports',
+    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 NINETYNINE_DOTS = StaticToggle(
     '99dots_integration',
     'Enikshay: Enable access to 99DOTS',

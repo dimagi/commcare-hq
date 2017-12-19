@@ -1,15 +1,19 @@
 from __future__ import absolute_import, division
 import json
 import os
+import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 import operator
 
+from six.moves import cStringIO
 from dateutil.relativedelta import relativedelta
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
+from xhtml2pdf import pisa
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
@@ -19,10 +23,11 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id
+from dimagi.utils.couch import get_redis_client
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
-
+import uuid
 
 OPERATORS = {
     "==": operator.eq,
@@ -422,3 +427,33 @@ def chosen_filters_to_labels(config, default_interval=''):
         .format(gender=chosen_gender, delimiter=delimiter, age=chosen_age) if gender or age else ''
 
     return gender_label, age_label, chosen_filters
+
+
+def zip_folder(pdf_files):
+    zip_hash = uuid.uuid4().hex
+    client = get_redis_client()
+    in_memory = cStringIO.StringIO()
+    zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
+    for pdf_file in pdf_files:
+        file = client.get(pdf_file['uuid'])
+        zip_file.writestr('ISSNIP_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
+    zip_file.close()
+    client.set(zip_hash, in_memory.getvalue())
+    return zip_hash
+
+
+def create_pdf_file(pdf_hash, pdf_context):
+    template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
+    resultFile = cStringIO.StringIO()
+    client = get_redis_client()
+    pisa.CreatePDF(
+        template.render(pdf_context),
+        dest=resultFile)
+    client.set(pdf_hash, resultFile.getvalue())
+    client.expire(pdf_hash, 24 * 60 * 60)
+    resultFile.close()
+    return pdf_hash
+
+
+def icds_pre_release_features(user):
+    return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)
