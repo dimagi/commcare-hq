@@ -172,6 +172,14 @@ def set_default_role(domain, commcare_user):
         commcare_user.save()
 
 
+def join_chunked(input_string, chunk_size):
+    """Parallels the CC mobile function join-string()"""
+    return '-'.join([
+        input_string[i:i + chunk_size]
+        for i in range(0, len(input_string), chunk_size)
+    ])
+
+
 def compress_nikshay_id(serial_id, body_digit_count):
     return compress_id(
         serial_id=serial_id,
