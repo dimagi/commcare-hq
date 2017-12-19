@@ -8,6 +8,8 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, DynamicallyPredictablyRandomToggle, NAMESPACE_OTHER
+from toggle.models import Toggle
 
 es_form_cache = []
 
@@ -175,6 +177,23 @@ class TestFormsExpressionSpecWithFilter(TestCase):
 
         self.assertEqual(len(forms), 0)
         self.assertEqual(forms, [])
+
+
+@override_settings(DISABLE_RANDOM_TOGGLES=False)
+class TestFormsExpressionSpecWithFilterEsVersion(TestFormsExpressionSpecWithFilter):
+    @classmethod
+    def setUpClass(cls):
+        super(TestFormsExpressionSpecWithFilterEsVersion, cls).setUpClass()
+        # enable toggle to 100%
+        db_toggle = Toggle(slug=ICDS_UCR_ELASTICSEARCH_DOC_LOADING.slug)
+        setattr(db_toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, 1)
+        db_toggle.save()
+        assert ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(uuid.uuid4().hex, NAMESPACE_OTHER)
+
+    @classmethod
+    def tearDownClass(cls):
+        Toggle.get(ICDS_UCR_ELASTICSEARCH_DOC_LOADING.slug).delete()
+        super(TestFormsExpressionSpecWithFilterEsVersion, cls).tearDownClass()
 
 
 class TestGetAppVersion(SimpleTestCase):

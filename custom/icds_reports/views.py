@@ -5,9 +5,10 @@ from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest
+from django.http.response import JsonResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
@@ -116,6 +117,9 @@ class TableauView(TemplateView):
         return self.request.couch_user
 
     def get_context_data(self, **kwargs):
+        if settings.SERVER_ENVIRONMENT == 'icds-new':
+            messages.error(self.request, "ICDS Tableau Dashboard is not available.")
+            raise Http404()
         location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(
             self.couch_user, self.domain
         )
@@ -369,7 +373,7 @@ class PrevalenceOfUndernutritionView(View):
 class LocationView(View):
 
     def get(self, request, *args, **kwargs):
-        if 'location_id' in request.GET:
+        if 'location_id' in request.GET and request.GET['location_id'] and request.GET['location_id'] != 'null':
             location_id = request.GET['location_id']
             if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
                 return JsonResponse({})

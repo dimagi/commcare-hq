@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from datetime import datetime
 from jsonobject.base_properties import DefaultProperty
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.es.forms import FormES
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -10,6 +9,7 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 from six.moves import filter
 from six.moves import map
@@ -161,10 +161,10 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        xform_ids = self._get_case_form_ids(case_id, context)
+        xform_ids = FormsInDateExpressionSpec._get_case_form_ids(case_id, context)
         # TODO(Emord) this will eventually break down when cases have a lot of
         # forms associated with them. perhaps change to intersecting two sets
-        xforms = self._get_filtered_forms_from_es(case_id, xform_ids, context)
+        xforms = FormsInDateExpressionSpec._get_filtered_forms_from_es(case_id, xform_ids, context)
         if self.xmlns:
             xforms = [x for x in xforms if x['xmlns'] in xmlns_tuple]
         if from_date:
@@ -176,37 +176,37 @@ class FormsInDateExpressionSpec(JsonObject):
             context.set_cache_value(cache_key, count)
             return count
 
-        form_ids = [x['_id'] for x in xforms]
-        xforms = FormAccessors(domain).get_forms(form_ids)
-        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
+        if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
+            def _clean(f):
+                del f['timeEnd']  # for parity with what comes out of Riak
+                return f
+
+            xforms = list(map(_clean, xforms))
+        else:
+            form_ids = [x['_id'] for x in xforms]
+            xforms = FormAccessors(domain).get_forms(form_ids)
+            xforms = FormsInDateExpressionSpec._get_form_json_list(case_id, xforms, context, domain)
 
         context.set_cache_value(cache_key, xforms)
         return xforms
 
-    def _get_filtered_forms_from_es(self, case_id, xform_ids, context):
-        cache_key = (self.__class__.__name__, 'es_helper', case_id, tuple(xform_ids))
+    @staticmethod
+    def _get_filtered_forms_from_es(case_id, xform_ids, context):
+        cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids))
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        def _transform_time_end(xform):
-            xform = xform.get('_source', {})
-            if not xform.get('xmlns', None):
-                return None
-            try:
-                time = xform['form']['meta']['timeEnd']
-            except KeyError:
-                return None
-
-            xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
-            return xform
-
-        forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = list(filter(None, map(_transform_time_end, forms)))
+        source = (
+            True if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER)
+            else ['form.meta.timeEnd', 'xmlns', '_id']
+        )
+        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
         context.set_cache_value(cache_key, forms)
         return forms
 
-    def _get_case_form_ids(self, case_id, context):
-        cache_key = (self.__class__.__name__, 'helper', case_id)
+    @staticmethod
+    def _get_case_form_ids(case_id, context):
+        cache_key = (FormsInDateExpressionSpec.__name__, 'helper', case_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
@@ -215,14 +215,63 @@ class FormsInDateExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, xform_ids)
         return xform_ids
 
-    def _get_form_json(self, form, context):
-        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
+    @staticmethod
+    def _get_form_json_list(case_id, xforms, context, domain):
+        domain_filtered_forms = [f for f in xforms if f.domain == domain]
+        return [FormsInDateExpressionSpec._get_form_json(f, context) for f in domain_filtered_forms]
+
+    @staticmethod
+    def _get_form_json(form, context):
+        cached_form = FormsInDateExpressionSpec._get_cached_form_json(form, context)
+        if cached_form is not None:
+            return cached_form
 
         form_json = form.to_json()
-        context.set_cache_value(cache_key, form_json)
+        FormsInDateExpressionSpec._set_cached_form_json(form, form_json, context)
         return form_json
+
+    @staticmethod
+    def _bulk_get_form_json_from_es(forms):
+        form_ids = [form.form_id for form in forms]
+        es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids, source=True)
+        for f in es_forms:
+            # for parity with what comes out of Riak
+            del f['timeEnd']
+        return {
+            f['_id']: f for f in es_forms
+        }
+
+    @staticmethod
+    def _get_cached_form_json(form, context):
+        return context.get_cache_value(FormsInDateExpressionSpec._get_form_json_cache_key(form))
+
+    @staticmethod
+    def _set_cached_form_json(form, form_json, context):
+        context.set_cache_value(FormsInDateExpressionSpec._get_form_json_cache_key(form), form_json)
+
+    @staticmethod
+    def _get_form_json_cache_key(form):
+        return (XFORM_CACHE_KEY_PREFIX, form.form_id)
+
+    @staticmethod
+    def _bulk_get_forms_from_elasticsearch(form_ids, source):
+        forms = mget_query('forms', form_ids, source)
+        return list(filter(None, [
+            FormsInDateExpressionSpec._transform_time_end_and_filter_bad_data(f) for f in forms
+        ]))
+
+    @staticmethod
+    def _transform_time_end_and_filter_bad_data(xform):
+        xform = xform.get('_source', {})
+        if not xform.get('xmlns', None):
+            return None
+        try:
+            time = xform['form']['meta']['timeEnd']
+        except KeyError:
+            return None
+
+        xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        return xform
 
     def __str__(self):
         value = "case_forms[{case_id}]".format(case_id=self._case_id_expression)

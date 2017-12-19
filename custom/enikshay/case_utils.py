@@ -344,7 +344,7 @@ def get_person_locations(person_case, episode_case=None):
     sto-> cto -> dto -> pcp
     """
     if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
-        return _get_private_locations(person_case)
+        return _get_private_locations(person_case, episode_case)
     else:
         return _get_public_locations(person_case, episode_case)
 
@@ -385,15 +385,34 @@ def _get_public_locations(person_case, episode_case):
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
 
-def _get_private_locations(person_case):
+def _get_private_locations(person_case, episode_case=None):
+    """
+    if episode case is passed
+    - find the location id as episode_treating_hospital on episode
+     - if this location has nikshay code
+      - consider this as the pcp
+     - else
+      - fallback to owner id as the pcp itself
+    """
     PrivatePersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto pcp tu')
-    try:
-        pcp_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
-    except SQLLocation.DoesNotExist:
-        raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
-            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
-        )
+    pcp_location = None
+    if episode_case:
+        episode_treating_hospital = episode_case.get_case_property('episode_treating_hospital')
+        if episode_treating_hospital:
+            pcp_location = SQLLocation.active_objects.get_or_None(
+                location_id=episode_treating_hospital)
+            if pcp_location:
+                if not pcp_location.metadata.get('nikshay_code'):
+                    pcp_location = None
+    if not pcp_location:
+        try:
+            pcp_location = SQLLocation.active_objects.get(
+                domain=person_case.domain, location_id=person_case.owner_id)
+        except SQLLocation.DoesNotExist:
+            raise NikshayLocationNotFound(
+                "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+                .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+            )
 
     try:
         tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id'] or None
