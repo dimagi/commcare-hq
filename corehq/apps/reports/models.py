@@ -468,6 +468,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         Get the report's HTML content as rendered by the static view format.
 
         """
+        from corehq.apps.locations.middleware import LocationAccessMiddleware
+
         try:
             if self.report is None:
                 return ReportContent(
@@ -506,6 +508,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(mock_request)
+        LocationAccessMiddleware.apply_location_access(mock_request)
 
         try:
             dispatch_func = functools.partial(self._dispatcher.__class__.as_view(), mock_request, **self.view_kwargs)
