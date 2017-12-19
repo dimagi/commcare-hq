@@ -608,12 +608,7 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
-        initial_columns = [c._asdict() for c in report_form.initial_columns]
-        initial_user_filters = [f._asdict() for f in report_form.initial_user_filters]
-        initial_default_filters = [f._asdict() for f in report_form.initial_default_filters]
-
-        temp_ds_id = self._build_temp_data_source(initial_columns,
-                                                  initial_user_filters + initial_default_filters)
+        temp_ds_id = self._build_temp_data_source([],[])
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
@@ -623,9 +618,9 @@ class ConfigureReport(ReportBuilderView):
             'column_options': [p.to_view_model() for p in report_form.report_column_options.values()],
             # TODO: Consider renaming this because it's more like "possible" data source props
             'data_source_properties': [p.to_view_model() for p in report_form.data_source_properties.values()],
-            'initial_user_filters': initial_user_filters,
-            'initial_default_filters': initial_default_filters,
-            'initial_columns': initial_columns,
+            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
+            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
+            'initial_columns': [c._asdict() for c in report_form.initial_columns],
             'initial_location': self._get_initial_location(report_form),
             'initial_chart_type': self._get_initial_chart_type(),
             'source_type': self.source_type,
