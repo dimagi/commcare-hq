@@ -1,10 +1,12 @@
 from __future__ import division
 from collections import namedtuple
+from pprint import pformat
 
 from jsonpath_rw import parse
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.motech.openmrs.logger import logger
 
 
 PATIENT_FINDERS = []
@@ -63,6 +65,9 @@ def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
     if value_source['doc_type'] == 'CasePropertyConcept':
         value_map = {v: k for k, v in value_source['value_concepts'].items()}
         return {value_source['case_property']: JsonpathValuemap(jsonpath, value_map)}
+
+
+PatientScore = namedtuple('PatientScore', ['patient', 'score'])
 
 
 class WeightedPropertyPatientFinder(PatientFinderBase):
@@ -160,9 +165,8 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
     def find_patients(self, requests, case, case_config):
         """
         Matches cases to patients. Returns a list of patients, each
-        with a confidence score >= THRESHOLD
+        with a confidence score >= self.threshold
         """
-        PatientScore = namedtuple('PatientScore', ['patient', 'score'])
         self.set_property_map(case_config)
 
         candidates = {}  # key on OpenMRS UUID to filter duplicates
@@ -174,11 +178,22 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
                 if score >= self.threshold:
                     candidates[patient['uuid']] = PatientScore(patient, score)
         if not candidates:
+            logger.info(
+                'Unable to match case "%(case_name)s" (%(case_id)s): No candidate patients found.',
+                case_name=case.name,
+                case_id=case.get_id,
+            )
             return []
         patients_scores = sorted(candidates.values(), key=lambda cand: cand.score, reverse=True)
         if len(patients_scores) == 1:
             patient = patients_scores[0].patient
             self.save_match_id(case, case_config, patient)
+            logger.info(
+                'Matched case "%(case_name)s" (%(case_id)s) to ONLY patient candidate: \n%(patient)s',
+                case_name=case.name,
+                case_id=case.get_id,
+                patient=pformat(patient, indent=2),
+            )
             return [patient]
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
@@ -187,6 +202,18 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
             # Patient One.
             patient = patients_scores[0].patient
             self.save_match_id(case, case_config, patient)
+            logger.info(
+                'Matched case "%(case_name)s" (%(case_id)s) to BEST patient candidate: \n%(patients)s',
+                case_name=case.name,
+                case_id=case.get_id,
+                patient=pformat(patients_scores, indent=2),
+            )
             return [patient]
         # We can't be sure. Just send them all.
+        logger.info(
+            'Unable to match case "%(case_name)s" (%(case_id)s) to patient candidates: \n%(patients)s',
+            case_name=case.name,
+            case_id=case.get_id,
+            patient=pformat(patients_scores, indent=2),
+        )
         return [ps.patient for ps in patients_scores]
