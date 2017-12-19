@@ -169,9 +169,6 @@ urlpatterns = [
         DailySavedExportPaywall.as_view(),
         name=DailySavedExportPaywall.urlname),
 
-    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
-        download_daily_saved_export,
-        name="download_daily_saved_export"),
     url(r"^build_full_schema/$",
         GenerateSchemaFromAllBuildsView.as_view(),
         name=GenerateSchemaFromAllBuildsView.urlname),

@@ -30,6 +30,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
+DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -503,6 +504,7 @@ DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+ICDS_ENVS = ('icds', 'icds-new')
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
@@ -725,7 +727,8 @@ ANALYTICS_IDS = {
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
     'HUBSPOT_API_ID': '',
-    'GTM_ID': ''
+    'GTM_ID': '',
+    'DRIFT_ID': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -1614,6 +1617,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
         ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
          "TB: Agency user case from voucher_fulfilled_by_id"],
+    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.beneficiary_registration_recipients',
+         "TB: Beneficiary Registration Recipients"],
+    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.prescription_voucher_alert_recipients',
+         "TB: Prescription Voucher Alert Recipients"],
 }
 
 # Used by the new reminders framework
@@ -1914,6 +1923,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),

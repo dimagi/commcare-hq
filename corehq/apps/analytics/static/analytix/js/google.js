@@ -18,7 +18,11 @@ hqDefine('analytix/js/google', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('google'),
-        _logger,
+        _global = initialAnalytics.getFn('global'),
+        _data = {},
+        module = {},
+        _gtag = function () {},
+        _logger = logging.getLoggerForApi('Google Analytics'),
         _ready;
 
     var _gtag = function () {

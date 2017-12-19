@@ -254,7 +254,7 @@ class PredictablyRandomToggle(StaticToggle):
                 )
             )
 
-        if settings.UNIT_TESTING:
+        if settings.DISABLE_RANDOM_TOGGLES:
             return False
         elif item in self.always_disabled:
             return False
@@ -304,6 +304,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_OTHER = 'other'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
@@ -1398,6 +1399,13 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BULK_UPLOAD_DATE_OPENED = StaticToggle(
+    'bulk_upload_date_opened',
+    "Allow updating of the date_opened field with the bulk uploader",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
@@ -1425,4 +1433,12 @@ CUSTOM_ICON_BADGES = StaticToggle(
     'eNikshay: Custom Icon Badges for modules and forms',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
+    'icds_ucr_elasticsearch_doc_loading',
+    'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
 )

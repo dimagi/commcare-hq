@@ -10,10 +10,11 @@ from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 
 
-@quickcache(['domain', 'yesterday', 'config', 'show_test'], timeout=30 * 60)
-def get_cas_reach_data(domain, yesterday, config, show_test=False):
-    yesterday_date = datetime(*yesterday)
-    two_days_ago = (yesterday_date - relativedelta(days=1)).date()
+@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
+def get_cas_reach_data(domain, now_date, config, show_test=False):
+    now_date = datetime(*now_date)
+    yesterday_date = (now_date - relativedelta(days=1)).date()
+    two_days_ago = (now_date - relativedelta(days=2)).date()
 
     def get_data_for_awc_monthly(month, filters):
         level = filters['aggregation_level']
@@ -56,6 +57,9 @@ def get_cas_reach_data(domain, yesterday, config, show_test=False):
 
     daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
     daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
+    if not daily_yesterday:
+        daily_yesterday = daily_two_days_ago
+        daily_two_days_ago = get_data_for_daily_usage((now_date - relativedelta(days=3)).date(), config)
 
     daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
 

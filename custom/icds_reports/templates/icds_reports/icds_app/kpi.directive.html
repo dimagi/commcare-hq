@@ -21,8 +21,10 @@
                             <div class="second_number white">(<span class="white" ng-bind="cell.value | indiaNumbers"></span> / <span  class="white" ng-bind="cell.all | indiaNumbers"></span>)</div>
                         </div>
                     </div>
-                    <div class="kpi-percents" ng-if="cell.show_percent === void(0)">
-                        <span class="white kpi-percents-text" ng-show="cell.percent !== null && $ctrl.showPercentInfo()">
+                    <div class="kpi-justify-center" ng-if="cell.show_percent === void(0)"
+                         ng-class="{'kpi-percent': cell.redirect}">
+                        <span class="white" ng-class="{'kpi-percents-text': cell.redirect}"
+                              ng-show="cell.percent !== null && $ctrl.showPercentInfo()">
                             <i class="fa" style="font-size: 1.5em" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0, 'green': cell.color === 'green', 'red': cell.color === 'red'}" ></i>&nbsp;
                             <span class="white" ng-bind="cell.percent | number:2"></span>% from previous {$ cell.frequency $}
                         </span>

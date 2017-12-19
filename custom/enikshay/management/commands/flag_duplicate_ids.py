@@ -8,14 +8,13 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqcase.utils import bulk_update_cases
 
-from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, add_debug_info_to_cases
+from custom.enikshay.duplicate_ids import get_duplicated_case_stubs, add_debug_info_to_cases
 
 
 class Command(BaseCommand):
     help = """
     Finds cases with duplicate IDs and marks all but one of each ID as a duplicate
     """
-    already_seen = set()
     logfile_fields = ['case_id', 'readable_id', 'opened_on']
     logfile_debug_fields = ['form_name', 'username', 'device_number_in_form', 'real_device_number']
 
@@ -51,17 +50,12 @@ class Command(BaseCommand):
                 fields = self.logfile_fields
             logfile = csv.DictWriter(f, fields, extrasaction='ignore')
             logfile.writeheader()
-            for chunk in chunked(self.get_updates(logfile), 100):
-                if commit:
-                    bulk_update_cases(self.domain, chunk, self.__module__)
 
-    def get_updates(self, logfile):
-        print("Finding duplicates")
-        bad_cases = get_cases_with_duplicate_ids(self.domain, self.case_type)
-        if self.debug_info:
-            print("Adding debug info to cases")
-            add_debug_info_to_cases(bad_cases, limit_debug_to=None)
-        print("Processing duplicate cases")
-        for case in bad_cases:
-            yield (case['case_id'], {'has_duplicate_id': 'yes'}, False)
-            logfile.writerow(case)
+            print("Finding duplicates")
+            bad_cases = get_duplicated_case_stubs(self.domain, self.case_type)
+            if self.debug_info:
+                print("Adding debug info to cases")
+                add_debug_info_to_cases(bad_cases, limit_debug_to=None)
+            print("Processing duplicate cases")
+            for case in bad_cases:
+                logfile.writerow(case)

@@ -7,6 +7,7 @@ import json
 import os
 import tempfile
 import uuid
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -30,6 +31,8 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.specs import FactoryContext
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -57,7 +60,12 @@ from corehq.apps.hqwebapp.decorators import (
     use_nvd3,
 )
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.const import (
+    REPORT_BUILDER_EVENTS_KEY,
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    NAMED_EXPRESSION_PREFIX,
+    NAMED_FILTER_PREFIX,
+)
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -781,9 +789,8 @@ class ReportPreview(BaseDomainView):
         report_data = json.loads(six.moves.urllib.parse.unquote(request.body))
         form_class = _get_form_type(report_data['report_type'])
 
-        # ignore filters
+        # ignore user filters
         report_data['user_filters'] = []
-        report_data['default_filters'] = []
 
         _munge_report_data(report_data)
 
@@ -1473,3 +1480,94 @@ def _shared_context(domain):
         'reports': ReportConfiguration.by_domain(domain) + static_reports,
         'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
     }
+
+
+class DataSourceSummaryView(BaseUserConfigReportsView):
+    urlname = 'summary_configurable_data_source'
+    template_name = "userreports/summary_data_source.html"
+    page_title = ugettext_lazy("Data Source Summary")
+
+    @property
+    def config_id(self):
+        return self.kwargs['config_id']
+
+    @property
+    @memoized
+    def config(self):
+        return get_datasource_config_or_404(self.config_id, self.domain)[0]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.config_id,))
+
+    @property
+    def page_name(self):
+        return u"Summary - {}".format(self.config.display_name)
+
+    @property
+    def page_context(self):
+        return {
+            'datasource_display_name': self.config.display_name,
+            'datasource_description': self.config.description,
+            'filter_summary': self.configured_filter_summary(),
+            'indicator_summary': self._add_links_to_output(self.indicator_summary()),
+            'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),
+            'named_filter_summary': self._add_links_to_output(self.named_filter_summary()),
+            'named_filter_prefix': NAMED_FILTER_PREFIX,
+            'named_expression_prefix': NAMED_EXPRESSION_PREFIX,
+        }
+
+    def indicator_summary(self):
+        context = self.config.get_factory_context()
+        wrapped_specs = [
+            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            for spec in self.config.configured_indicators
+        ]
+        return [
+            {
+                "column_id": wrapped.column_id,
+                "comment": wrapped.comment,
+                "readable_output": wrapped.readable_output(context)
+            }
+            for wrapped in wrapped_specs if wrapped
+        ]
+
+    def named_expression_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.config.named_expressions[name].get('comment'),
+                "readable_output": str(exp)
+            }
+            for name, exp in self.config.named_expression_objects.items()
+        ]
+
+    def named_filter_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.config.named_filters[name].get('comment'),
+                "readable_output": str(filter)
+            }
+            for name, filter in self.config.named_filter_objects.items()
+        ]
+
+    def configured_filter_summary(self):
+        return str(FilterFactory.from_spec(self.config.configured_filter,
+                                           context=self.config.get_factory_context()))
+
+    def _add_links_to_output(self, items):
+        def make_link(match):
+            value = match.group()
+            return '<a href="#{value}">{value}</a>'.format(value=value)
+
+        def add_links(content):
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_FILTER_PREFIX), make_link, content)
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_EXPRESSION_PREFIX), make_link, content)
+            return content
+
+        list = []
+        for i in items:
+            i['readable_output'] = add_links(i.get('readable_output'))
+            list.append(i)
+        return list

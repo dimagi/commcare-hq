@@ -1,0 +1,361 @@
+{
+  "domains": [
+    "enikshay"
+  ],
+  "server_environment": [
+    "enikshay",
+    "softlayer"
+  ],
+  "data_source_table": "episode_v4",
+  "report_id": "diagnostic_register",
+  "config": {
+    "description": "",
+    "title": "Diagnostic Register",
+    "sort_expression": [],
+    "visible": true,
+    "configured_charts": [],
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "datetime",
+        "required": false,
+        "slug": "date_fulfilled",
+        "field": "date_fulfilled",
+        "type": "date",
+        "display": "Voucher Validation Date"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "display": "Location",
+        "field": "person_owner_id",
+        "choice_provider": {
+          "include_descendants": true,
+          "type": "location",
+          "order_by_hierarchy": true,
+          "show_full_path": true
+        },
+        "slug": "village"
+      },
+      {
+        "pre_value": "test",
+        "datatype": "string",
+        "display": null,
+        "field": "voucher_type",
+        "type": "pre",
+        "slug": "voucher_type"
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "translations": {
+            "11": "Nagpur",
+            "10": "CTD",
+            "13": "Nagpur_Corp",
+            "12": "Nagpur-rural",
+            "15": "SMC",
+            "14": "Surat",
+            "17": "Rajkot",
+            "16": "Surat_Rural",
+            "18": "WHP-AMC",
+            "1": "PATH",
+            "3": "Alert-India",
+            "2": "MJK",
+            "5": "DTO-Mehsana",
+            "4": "WHP-Patna",
+            "7": "Accenture",
+            "6": "Vertex",
+            "9": "EY",
+            "8": "BMGF"
+          },
+          "type": "translation"
+        },
+        "aggregation": "simple",
+        "field": "private_sector_organization_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Organization Name"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "voucher_issued_by_login_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Issuing Provider ID"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "translations": {
+            "dto": "PPIA Admin",
+            "pcp": "MBBS",
+            "pcc-chemist": "Chemist",
+            "pac": "Ayush",
+            "plc": "Lab",
+            "pcc": "Chemist",
+            "ppia-do": "PPIA Admin",
+            "ps-dieldstaff": "Field Staff",
+            "fo": "Field Officer"
+          },
+          "type": "translation"
+        },
+        "aggregation": "simple",
+        "field": "voucher_issued_by_type",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Issuing Provider Type"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "voucher_issued_by_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Issuing Provider Name"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "issued_contact_phone_number",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Issuing Provider Mobile Number"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "person_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Beneficiary ID"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "person_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Beneficiary Name"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "phone_number",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Beneficiary Mobile No"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "translations": {
+            "presumptive_tb": "Presumptive TB",
+            "confirmed_tb": "Confirmed TB"
+          },
+          "type": "translation"
+        },
+        "aggregation": "simple",
+        "field": "episode_type",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Beneficiary Type"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "date_of_registration",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Benef. Date of Registration"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "voucher_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Voucher ID"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "date_issued",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Voucher Issue Date"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "date_fulfilled",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Voucher Validation Date"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "state",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Voucher Status"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "amount_fulfilled",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Voucher Amount"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "voucher_fulfilled_by_login_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Validating Provider ID"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "voucher_fulfilled_by_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Validating Provider Name"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "contact_phone_number",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Validating Provider Mobile Number"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "purpose_of_test",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Investigation Reason"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "investigation_type_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Investigation Name"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "result_label",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Result"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "grade_label",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Result Grade"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "date_reported",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Result Date"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {},
+        "aggregation": "simple",
+        "field": "test_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Test ID"
+      }
+    ]
+  }
+}

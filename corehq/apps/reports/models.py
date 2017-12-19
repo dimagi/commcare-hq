@@ -480,6 +480,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except Exception:
             pass
 
+        if self.report.is_deprecated:
+            return ReportContent(
+                self.report.deprecation_email_message or
+                _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
+                  "Please update your saved reports email settings if needed." % self.report.name
+                  ),
+                None,
+            )
+
         from django.http import HttpRequest, QueryDict
         mock_request = HttpRequest()
         mock_request.couch_user = self.owner
@@ -1009,6 +1018,15 @@ class CaseExportSchema(HQExportSchema):
             props |= set(prop_map[self.case_type])
 
         return props
+
+    @property
+    def has_case_history_table(self):
+        case_history_table = [table for table in self.tables if table.label == 'Case History']
+        return any(
+            column.selected
+            for table in case_history_table
+            for column in table.columns
+        )
 
 
 class DefaultFormExportSchema(DefaultExportSchema):

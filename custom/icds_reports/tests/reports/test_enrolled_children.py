@@ -28,16 +28,16 @@ class TestEnrolledChildren(TestCase):
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of lactating women who are enrolled for ICDS services:',
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for ICDS services:',
                             'value': 1287
                         },
                         {
-                            'indicator': 'Total number of lactating women who are registered: ',
+                            'indicator': 'Total number of children (0 - 6 years) who are registered: ',
                             'value': 1287
                         },
                         {
                             'indicator': (
-                                'Percentage of registered lactating women who are enrolled for ICDS services:'
+                                'Percentage of registered children (0-6 years) who are enrolled for ICDS services:'
                             ),
                             'value': '100.00%'
                         }
@@ -86,13 +86,13 @@ class TestEnrolledChildren(TestCase):
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of lactating women who are enrolled for ICDS services:',
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for ICDS services:',
                             'value': 618
                         },
-                        {'indicator': 'Total number of lactating women who are registered: ', 'value': 618},
+                        {'indicator': 'Total number of children (0 - 6 years) who are registered: ', 'value': 618},
                         {
                             'indicator': (
-                                'Percentage of registered lactating women who are enrolled for ICDS services:'
+                                'Percentage of registered children (0-6 years) who are enrolled for ICDS services:'
                             ),
                             'value': '100.00%'
                         }

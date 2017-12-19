@@ -56,6 +56,61 @@ class TestAWCDailyStatus(TestCase):
             }
         )
 
+    def test_map_data_if_aggregation_script_fail(self):
+        self.assertDictEqual(
+            get_awc_daily_status_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 29),
+                    'aggregation_level': 1
+                },
+                loc_level='state'
+            )[0],
+            {
+                "rightLegend": {
+                    "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                    "average": 0.0,
+                    "extended_info": [
+                        {
+                            "indicator": "Total number of AWCs that were open yesterday:",
+                            "value": 19
+                        },
+                        {
+                            "indicator": "Total number of AWCs that have been launched:",
+                            "value": 0
+                        },
+                        {
+                            "indicator": "% of AWCs open yesterday:",
+                            "value": "0.00%"
+                        }
+                    ],
+                    "period": "Daily"
+                },
+                "label": "Percent AWCs Open Yesterday",
+                "data": {
+                    "st1": {
+                        "in_day": 0,
+                        "all": 8,
+                        "original_name": [],
+                        "fillKey": "0%-50%"
+                    },
+                    "st2": {
+                        "in_day": 0,
+                        "all": 11,
+                        "original_name": [],
+                        "fillKey": "0%-50%"
+                    }
+                },
+                "slug": "awc_daily_statuses",
+                "fills": {
+                    "0%-50%": "#de2d26",
+                    "50%-75%": "#fc9272",
+                    "75%-100%": "#fee0d2",
+                    "defaultFill": "#9D9D9D"
+                }
+            }
+        )
+
     def test_map_name_is_different_data(self):
         self.assertDictEqual(
             get_awc_daily_status_data_map(
@@ -477,6 +532,47 @@ class TestAWCDailyStatus(TestCase):
                 'icds-cas',
                 config={
                     'month': (2017, 5, 28),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'block_id': 'b1',
+                    'aggregation_level': 4
+                },
+                location_id='b1',
+                loc_level='supervisor'
+            ),
+            {
+                "info": "Percentage of Angwanwadi Centers that were open yesterday.",
+                "tooltips_data": {
+                    "s2": {
+                        "in_day": 0,
+                        "all": 1
+                    },
+                    "s1": {
+                        "in_day": 0,
+                        "all": 2
+                    }
+                },
+                "chart_data": [
+                    {
+                        "color": "#006fdf",
+                        "classed": "dashed",
+                        "strokeWidth": 2,
+                        "values": [
+                            ["s1", 0.0],
+                            ["s2", 0.0]
+                        ],
+                        "key": ""
+                    }
+                ]
+            }
+        )
+
+    def test_sector_data_if_aggregation_script_fail(self):
+        self.assertDictEqual(
+            get_awc_daily_status_sector_data(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 29),
                     'state_id': 'st1',
                     'district_id': 'd1',
                     'block_id': 'b1',

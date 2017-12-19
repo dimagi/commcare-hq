@@ -15,7 +15,7 @@ hqDefine('analytix/js/hubspot', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
-        _logger,
+        _logger = logging.getLoggerForApi('Hubspot'),
         _ready;
 
     var _hsq = window._hsq = window._hsq || [];

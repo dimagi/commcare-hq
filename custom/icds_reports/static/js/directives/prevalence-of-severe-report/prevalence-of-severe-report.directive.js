@@ -80,6 +80,10 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var age = ageIndex > 0 ? ages[ageIndex].name : '';
+        var delimiter = gender && age ? ', ' : '';
+        var chosenFilters = gender || age ? ' (' + gender + delimiter + age + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total || 1)) : 'N/A';
@@ -88,12 +92,12 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         var unmeasured = row ? d3.format(".2%")((row.total - (row.normal + row.severe + row.moderate)) / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>Total Children with height measured in given month: <strong>' + total_measured + '</strong></div>' +
-            '<div>% Unmeasured: <strong>' + unmeasured + '</strong></div>' +
-            '<div>% Severely Acute Malnutrition: <strong>' + sever + '</strong></div>' +
-            '<div>% Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div>' +
-            '<div>% Normal: <strong>' + normal + '</strong></div></ul>';
+            '<div>' + chosenFilters + 'Total Children weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>' + chosenFilters + 'Total Children with height measured in given month: <strong>' + total_measured + '</strong></div>' +
+            '<div>% Unmeasured' + chosenFilters + ': <strong>' + unmeasured + '</strong></div>' +
+            '<div>% Severely Acute Malnutrition' + chosenFilters + ': <strong>' + sever + '</strong></div>' +
+            '<div>% Moderately Acute Malnutrition' + chosenFilters + ': <strong>' + moderate +'</strong></div>' +
+            '<div>% Normal' + chosenFilters + ': <strong>' + normal + '</strong></div></ul>';
     };
 
     vm.loadData = function () {

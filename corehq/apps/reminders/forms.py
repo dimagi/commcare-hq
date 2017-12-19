@@ -6,6 +6,7 @@ from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.data_interfaces.forms import validate_case_property_name
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django.urls import reverse
 from django.template.loader import render_to_string
@@ -1039,12 +1040,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def clean_start_property(self):
         start_reminder_on = self.cleaned_data['start_reminder_on']
         if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
-            start_property = self.cleaned_data['start_property'].strip()
-            if not start_property:
-                raise ValidationError(_(
-                    "Please enter a case property for the match criteria."
-                ))
-            return start_property
+            return validate_case_property_name(
+                self.cleaned_data['start_property'],
+                allow_parent_case_references=False
+            )
         if start_reminder_on == START_REMINDER_ALL_CASES:
             return START_PROPERTY_ALL_CASES_VALUE
         return None
@@ -1094,15 +1093,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return DAY_ANY
 
     def clean_start_date(self):
-        if (self.cleaned_data['start_property_offset_type'] ==
-            START_REMINDER_ON_CASE_DATE):
-            start_date = self.cleaned_data['start_date'].strip()
-            if not start_date:
-                raise ValidationError(_(
-                    "You must specify a case property that will provide the "
-                    "start date."
-                ))
-            return start_date
+        if self.cleaned_data['start_property_offset_type'] == START_REMINDER_ON_CASE_DATE:
+            return validate_case_property_name(
+                self.cleaned_data['start_date'],
+                allow_parent_case_references=False
+            )
         return None
 
     def clean_start_date_offset(self):
@@ -1125,13 +1120,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     def clean_recipient_case_match_property(self):
         if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
-            case_property = self.cleaned_data['recipient_case_match_property'].strip()
-            if not case_property:
-                raise ValidationError(_(
-                    "You must specify a case property for the case's "
-                    "child case."
-                ))
-            return case_property
+            return validate_case_property_name(
+                self.cleaned_data['recipient_case_match_property'],
+                allow_parent_case_references=False
+            )
         if self.cleaned_data['recipient'] == RECIPIENT_ALL_SUBCASES:
             return '_id'
         return None
@@ -1259,11 +1251,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # clean fire_time_aux:
             if fire_time_type != FIRE_TIME_CASE_PROPERTY:
                 event['fire_time_aux'] = None
-            elif not event.get('fire_time_aux'):
-                raise ValidationError(_(
-                    "Please enter the case property from which to pull "
-                    "the time."
-                ))
+            else:
+                validate_case_property_name(event['fire_time_aux'], allow_parent_case_references=False)
 
             # clean time_window_length:
             time_window_length = event['time_window_length']
@@ -1356,12 +1345,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     def clean_until(self):
         if self.cleaned_data['stop_condition'] == STOP_CONDITION_CASE_PROPERTY:
-            value = self.cleaned_data['until'].strip()
-            if not value:
-                raise ValidationError(_(
-                    "You must specify a case property for the stop condition."
-                ))
-            return value
+            return validate_case_property_name(self.cleaned_data['until'], allow_parent_case_references=False)
         return None
 
     def clean_max_question_retries(self):
