@@ -73,11 +73,11 @@ if 'y' == raw_input('Do you want instructions for how to migrate? [y/N]'):
     You will always need to enter the ansible virtualenv to run fab from now on,
     but if you use the following alias, you can run it from anywhere.
 
-      alias fab=fab -f ~/.commcare-cloud/fab/fabfile.py
+      alias fab=fab -f ~/.commcare-cloud/repo/fab/fabfile.py
 
     to add this to your .bash_profile you can run
 
-      echo "alias fab=fab -f ~/.commcare-cloud/fab/fabfile.py" >> ~/.bash_profile
+      echo "alias fab=fab -f ~/.commcare-cloud/repo/fab/fabfile.py" >> ~/.bash_profile
 
     Now from anywhere
 
