@@ -316,6 +316,107 @@ def _datetime_now():
     return datetime.utcnow()
 
 
+class ParentIDSpec(JsonObject):
+    type = TypeProperty('icds_parent_id')
+
+    def configure(self, context):
+        spec = {
+            'type': 'nested',
+            'argument_expression': {
+                'type': 'array_index',
+                'array_expression': {
+                    'type': 'filter_items',
+                    'items_expression': {
+                        'type': 'root_doc',
+                        'expression': {
+                            'datatype': 'array',
+                            'type': 'property_name',
+                            'property_name': 'indices'
+                        }
+                    },
+                    'filter_expression': {
+                        'type': 'boolean_expression',
+                        'operator': 'eq',
+                        'property_value': 'parent',
+                        'expression': {
+                            'type': 'property_name',
+                            'property_name': 'identifier'
+                        }
+                    }
+                },
+                'index_expression': {
+                    'type': 'constant',
+                    'constant': 0
+                }
+            },
+            'value_expression': {
+                'type': 'property_name',
+                'property_name': 'referenced_id'
+            }
+        }
+        self._expression = ExpressionFactory.from_spec(spec, context)
+
+    def __call__(self, item, context=None):
+        return self._expression(item, context)
+
+    def __str__(self):
+        return "ParentCase"
+
+
+class ParentParentIDSpec(JsonObject):
+    type = TypeProperty('icds_parent_parent_id')
+
+    def configure(self, context):
+        spec = {
+            'type': 'related_doc',
+            'related_doc_type': 'CommCareCase',
+            'doc_id_expression': {
+                'type': 'icds_parent_id'
+            },
+            'value_expression': {
+                'type': 'nested',
+                'argument_expression': {
+                    'type': 'array_index',
+                    'array_expression': {
+                        'type': 'filter_items',
+                        'items_expression': {
+                            'type': 'root_doc',
+                            'expression': {
+                                'datatype': 'array',
+                                'type': 'property_name',
+                                'property_name': 'indices'
+                            }
+                        },
+                        'filter_expression': {
+                            'type': 'boolean_expression',
+                            'operator': 'eq',
+                            'property_value': 'parent',
+                            'expression': {
+                                'type': 'property_name',
+                                'property_name': 'identifier'
+                            }
+                        }
+                    },
+                    'index_expression': {
+                        'type': 'constant',
+                        'constant': 0
+                    }
+                },
+                'value_expression': {
+                    'type': 'property_name',
+                    'property_name': 'referenced_id'
+                }
+            }
+        }
+        self._expression = ExpressionFactory.from_spec(spec, context)
+
+    def __call__(self, item, context=None):
+        return self._expression(item, context)
+
+    def __str__(self):
+        return "ParentParentCase"
+
+
 def month_start(spec, context):
     # fix offset to 3 months in past
     spec = {
@@ -371,86 +472,15 @@ def month_end(spec, context):
 
 
 def parent_id(spec, context):
-    spec = {
-        'type': 'nested',
-        'argument_expression': {
-            'type': 'array_index',
-            'array_expression': {
-                'type': 'filter_items',
-                'items_expression': {
-                    'type': 'root_doc',
-                    'expression': {
-                        'datatype': 'array',
-                        'type': 'property_name',
-                        'property_name': 'indices'
-                    }
-                },
-                'filter_expression': {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'property_value': 'parent',
-                    'expression': {
-                        'type': 'property_name',
-                        'property_name': 'identifier'
-                    }
-                }
-            },
-            'index_expression': {
-                'type': 'constant',
-                'constant': 0
-            }
-        },
-        'value_expression': {
-            'type': 'property_name',
-            'property_name': 'referenced_id'
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
+    wrapped = ParentIDSpec(spec)
+    wrapped.configure(context)
+    return wrapped
 
 
 def parent_parent_id(spec, context):
-    spec = {
-        'type': 'related_doc',
-        'related_doc_type': 'CommCareCase',
-        'doc_id_expression': {
-            'type': 'icds_parent_id'
-        },
-        'value_expression': {
-            'type': 'nested',
-            'argument_expression': {
-                'type': 'array_index',
-                'array_expression': {
-                    'type': 'filter_items',
-                    'items_expression': {
-                        'type': 'root_doc',
-                        'expression': {
-                            'datatype': 'array',
-                            'type': 'property_name',
-                            'property_name': 'indices'
-                        }
-                    },
-                    'filter_expression': {
-                        'type': 'boolean_expression',
-                        'operator': 'eq',
-                        'property_value': 'parent',
-                        'expression': {
-                            'type': 'property_name',
-                            'property_name': 'identifier'
-                        }
-                    }
-                },
-                'index_expression': {
-                    'type': 'constant',
-                    'constant': 0
-                }
-            },
-            'value_expression': {
-                'type': 'property_name',
-                'property_name': 'referenced_id'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
+    wrapped = ParentParentIDSpec(spec)
+    wrapped.configure(context)
+    return wrapped
 
 
 def get_case_forms_by_date(spec, context):
