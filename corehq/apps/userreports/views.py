@@ -506,7 +506,6 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
-    @memoized
     def _build_temp_data_source(self, initial_columns, initial_filters):
         """
         Build a temp datasource and return the ID
