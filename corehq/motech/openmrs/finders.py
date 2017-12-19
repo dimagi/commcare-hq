@@ -3,6 +3,9 @@ from collections import namedtuple
 
 from jsonpath_rw import parse
 
+from casexml.apps.case.mock import CaseBlock
+from corehq.apps.hqcase.utils import submit_case_blocks
+
 
 PATIENT_FINDERS = []
 
@@ -135,6 +138,25 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
 
         return sum(weights())
 
+    def save_match_id(self, case, case_config, patient):
+        """
+        If we are confident of the patient matched to a case, save
+        the patient's ID to the case.
+        """
+        id_map = {m['identifier_type_id']: m['case_property'] for m in case_config['id_matchers']}
+        case_update = {}
+        for identifier in patient['identifiers']:
+            if identifier['identifierType']['uuid'] in id_map:
+                case_property = id_map[identifier['identifierType']['uuid']]
+                value = identifier['identifier']
+                case_update[case_property] = value
+        case_block = CaseBlock(
+            case_id=case.get_id,
+            create=False,
+            update=case_update,
+        )
+        submit_case_blocks([case_block.as_string()], case.domain)
+
     def find_patients(self, requests, case, case_config):
         """
         Matches cases to patients. Returns a list of patients, each
@@ -155,12 +177,16 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
             return []
         patients_scores = sorted(candidates.values(), key=lambda cand: cand.score, reverse=True)
         if len(patients_scores) == 1:
-            return [patients_scores[0].patient]
+            patient = patients_scores[0].patient
+            self.save_match_id(case, case_config, patient)
+            return [patient]
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
             # (defaults to 10%) in score between the best-ranked
             # patient and the second-best-ranked patient. Let's go with
             # Patient One.
-            return [patients_scores[0].patient]
+            patient = patients_scores[0].patient
+            self.save_match_id(case, case_config, patient)
+            return [patient]
         # We can't be sure. Just send them all.
         return [ps.patient for ps in patients_scores]
