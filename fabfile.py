@@ -1,6 +1,8 @@
 # coding: utf-8
 from __future__ import print_function
 from __future__ import unicode_literals
+from __future__ import absolute_import
+from six.moves import input
 import os
 import time
 
@@ -11,7 +13,7 @@ time.sleep(1)
 print("We now do deploys from the commcarehq-ansible directory or the control machine.")
 print()
 time.sleep(2)
-if 'y' == raw_input('Do you want instructions for how to migrate? [y/N]'):
+if 'y' == input('Do you want instructions for how to migrate? [y/N]'):
     print()
     ansible_repo = os.path.join(os.path.dirname(__file__), '..', 'commcarehq-ansible')
     if not os.path.isdir(os.path.join(ansible_repo, '.git')):
@@ -31,7 +33,8 @@ if 'y' == raw_input('Do you want instructions for how to migrate? [y/N]'):
 
 """)
     else:
-        print("✓ You already have the commcarehq-ansible repo alonside this one: {}".format(os.path.realpath(ansible_repo)))
+        print("✓ You already have the commcarehq-ansible repo alonside this one: {}"
+              .format(os.path.realpath(ansible_repo)))
         print()
         time.sleep(1)
     print("""
