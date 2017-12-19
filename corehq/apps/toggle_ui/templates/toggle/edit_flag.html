@@ -82,9 +82,9 @@
                     <input id="randomness-edit" class="input-medium form-control" type="number" data-bind="value: randomness">
                 </div>
                 {% endif %}
+                {% if allows_items %}
                 <h4>{% trans "Enabled toggle items" %}</h4>
                 <hr/>
-                {% if allows_items %}
                 <div class="row" data-bind="visible: latest_use().name">
                     <div class="col-sm-6">
                         Most recently updated: <strong data-bind="text:latest_use().name"></strong>: <span data-bind="text:latest_use().date"></span>
