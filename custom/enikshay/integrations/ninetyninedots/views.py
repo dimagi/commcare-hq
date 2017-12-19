@@ -98,7 +98,7 @@ def update_patient_details(request, domain):
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_POST
 @csrf_exempt
 @check_domain_migration
