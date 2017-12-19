@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-12 20:28+0000\n"
+"POT-Creation-Date: 2017-12-19 21:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
+"Last-Translator: Marco Horta <mhorta@dimagi.com>, 2017\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -34,16 +34,16 @@ msgstr ""
 msgid "There was an error saving."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:180
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:172
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:373
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:365
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:401
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:393
 msgid "You have unsaved changes"
 msgstr ""
 
@@ -2089,7 +2089,7 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:268
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:271
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2110,7 +2110,7 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:600
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:602
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
@@ -2124,12 +2124,12 @@ msgstr ""
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:362
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:367
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:24
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:390
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:395
 msgid "Please wait..."
 msgstr ""
 
@@ -2143,7 +2143,7 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:50
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:51
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -2363,10 +2363,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:54
 msgid "Error saving, please try again."
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:41
-msgid "Clear"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
@@ -2713,6 +2709,10 @@ msgstr ""
 msgid "Satellite"
 msgstr ""
 
+#: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
+msgid "Show All Dates"
+msgstr ""
+
 #: corehq/apps/sms/static/sms/js/phone_number_filter.js:3
 msgid "That have phone numbers"
 msgstr ""
@@ -3014,11 +3014,11 @@ msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:32
 msgid "Weekly"
-msgstr ""
+msgstr "Semana"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:33
 msgid "Monthly"
-msgstr ""
+msgstr "Mes"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:36
 msgid "Disable logging"

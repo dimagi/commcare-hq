@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-12 20:28+0000\n"
+"POT-Creation-Date: 2017-12-19 21:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -34,16 +34,16 @@ msgstr "Tiene cambios sin guardar."
 msgid "There was an error saving."
 msgstr "Ocurrió un error al guardar."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:180
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:172
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr "Agregar"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:373
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:365
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:401
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:393
 msgid "You have unsaved changes"
 msgstr "Tiene cambios sin guardar"
 
@@ -2226,7 +2226,7 @@ msgstr "Formulario XML"
 msgid "Evaluate XPath"
 msgstr "Evaluar XPath"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:268
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:271
 msgid "Error evaluating expression."
 msgstr "Error al evaluar la expresión."
 
@@ -2247,7 +2247,7 @@ msgstr "Escriba para filtrar respuestas"
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:600
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:602
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
@@ -2261,12 +2261,12 @@ msgstr ""
 msgid "Form successfully saved"
 msgstr "El formulario se guardó exitosamente"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:362
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:367
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:24
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:390
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:395
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
@@ -2282,7 +2282,7 @@ msgstr ""
 msgid "Completed: "
 msgstr "Completado:"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:50
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:51
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -2509,10 +2509,6 @@ msgstr "Cargar"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:54
 msgid "Error saving, please try again."
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:41
-msgid "Clear"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
@@ -2893,6 +2889,12 @@ msgstr "Calles"
 msgid "Satellite"
 msgstr "Satélite"
 
+#: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
+#, fuzzy
+#| msgid "Show All"
+msgid "Show All Dates"
+msgstr "Mostrar Todo"
+
 #: corehq/apps/sms/static/sms/js/phone_number_filter.js:3
 msgid "That have phone numbers"
 msgstr "Que tengan números de teléfono"
@@ -3173,22 +3175,16 @@ msgstr "(filtrado del _MAX_total de mensajes)"
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:19
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:20
-#, fuzzy
-#| msgid "There are no messages to display."
 msgid "There are no alerts to display."
-msgstr "No hay mensajes que mostrar."
+msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:21
-#, fuzzy
-#| msgid "Loading messages..."
 msgid "Loading alerts..."
-msgstr "Cargando mensajes..."
+msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:22
-#, fuzzy
-#| msgid "Showing _START_ to _END_ of _TOTAL_ entries"
 msgid "Showing _START_ to _END_ of _TOTAL_ alerts"
-msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_de entradas"
+msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:94
 msgid "last"
@@ -3220,23 +3216,19 @@ msgstr "No es posible guardar los mapas DataSet"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:32
 msgid "Weekly"
-msgstr ""
+msgstr "Semanal"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:33
 msgid "Monthly"
-msgstr ""
+msgstr "Mensual"
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:36
-#, fuzzy
-#| msgid "Disable Text Formatting"
 msgid "Disable logging"
-msgstr "Desactive el Formato de Texto"
+msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:96
-#, fuzzy
-#| msgid "Unable to save DataSet maps"
 msgid "Unable to save OpenMRS Importers"
-msgstr "No es posible guardar los mapas DataSet"
+msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:101
 msgid "Importing from OpenMRS will begin shortly."
@@ -3246,5 +3238,5 @@ msgstr ""
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
-#~ msgid "Show All Dates"
-#~ msgstr "Mostrar Todas las Fechas"
+#~ msgid "Clear"
+#~ msgstr "Borrar"
