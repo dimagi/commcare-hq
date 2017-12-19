@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict
 
 from corehq.motech.openmrs.finders import register_patient_finder, WeightedPropertyPatientFinder
