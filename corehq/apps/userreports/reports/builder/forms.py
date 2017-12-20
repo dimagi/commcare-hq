@@ -711,7 +711,6 @@ class ConfigureNewReportBase(forms.Form):
     default_filters = FilterField(required=False)
     report_title = forms.CharField(widget=forms.HiddenInput, required=False)
     report_description = forms.CharField(widget=forms.HiddenInput, required=False)
-    button_text = ugettext_noop('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         """
@@ -723,7 +722,6 @@ class ConfigureNewReportBase(forms.Form):
 
         if self.existing_report:
             self._bootstrap(self.existing_report)
-            self.button_text = _('Save')
         else:
             self.report_name = report_name
             assert source_type in ['case', 'form']
