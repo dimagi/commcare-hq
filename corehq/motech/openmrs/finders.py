@@ -4,11 +4,6 @@ from pprint import pformat
 
 from jsonpath_rw import parse
 
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.repeater_helpers import search_patients
-
 
 PATIENT_FINDERS = []
 
@@ -149,6 +144,9 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
         If we are confident of the patient matched to a case, save
         the patient's ID to the case.
         """
+        from casexml.apps.case.mock import CaseBlock
+        from corehq.apps.hqcase.utils import submit_case_blocks
+
         id_map = {m['identifier_type_id']: m['case_property'] for m in case_config['id_matchers']}
         case_update = {}
         for identifier in patient['identifiers']:
@@ -168,6 +166,9 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
         Matches cases to patients. Returns a list of patients, each
         with a confidence score >= self.threshold
         """
+        from corehq.motech.openmrs.logger import logger
+        from corehq.motech.openmrs.repeater_helpers import search_patients
+
         self.set_property_map(case_config)
 
         candidates = {}  # key on OpenMRS UUID to filter duplicates
