@@ -350,13 +350,28 @@ class PatientSearchParser(object):
         self.response_json = response_json
 
     def get_patient_matching_identifiers(self, patient_identifier_type, patient_identifier):
-        patients = [
-            patient
-            for patient in self.response_json['results']
-            for identifier in patient['identifiers']
-            if identifier['identifier'] == patient_identifier and
-            identifier['identifierType']['uuid'] == patient_identifier_type
-        ]
+        """
+        Return the patient that matches the given identifier. If the
+        number of matches is zero or more than one, return None.
+
+        :param patient_identifier_type: 'uuid' to match the patient's
+            OpenMRS Person UUID, otherwise the UUID of the OpenMRS
+            identifier type
+        :param patient_identifier: The value that uniquely identifies
+            the patient we want.
+
+        """
+        patients = []
+        for patient in self.response_json['results']:
+            if patient_identifier_type == 'uuid' and patient['uuid'] == patient_identifier:
+                    patients.append(patient)
+            else:
+                for identifier in patient['identifiers']:
+                    if (
+                        identifier['identifier'] == patient_identifier and
+                        identifier['identifierType']['uuid'] == patient_identifier_type
+                    ):
+                        patients.append(patient)
         try:
             patient, = patients
         except ValueError:
