@@ -381,3 +381,26 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./entry/form"
         )
+
+    def test_parent_selection_first(self):
+        """https://manage.dimagi.com/default.asp?267251#1436434
+        """
+        self.single_form_module, self.form3 = self.factory.new_basic_module('basic_module', 'cow')
+        self.shadow_module = self.factory.new_shadow_module(
+            'shadow_module', self.single_form_module, with_form=False)
+
+        self.caselist_menu, self.form4 = self.factory.new_basic_module('caselist_only', 'ghost')
+        self.factory.form_requires_case(self.form3, parent_case_type='ghost')
+        self.factory.form_requires_case(self.form4)
+
+        expected_datum = """
+            <partial>
+              <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='ghost'][@status='open']"
+                     value="./@case_id" detail-select="m5_case_short"/>
+            </partial>
+        """
+        self.assertXmlPartialEqual(
+            expected_datum,
+            self.factory.app.create_suite(),
+            './entry/session/datum[@id="parent_id"]'
+        )
