@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 
 import operator
 
-from decimal import Decimal
 from six.moves import cStringIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template

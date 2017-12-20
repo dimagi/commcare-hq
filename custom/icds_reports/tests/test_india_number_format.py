@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 
 from custom.icds_reports.utils import indian_formatted_number
