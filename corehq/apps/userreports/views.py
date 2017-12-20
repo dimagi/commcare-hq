@@ -529,21 +529,7 @@ class ConfigureReport(ReportBuilderView):
     def _get_ds_config_kwargs(self, app_source, initial_columns, initial_filters):
         app = Application.get(app_source.application)
         builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
-        return {
-            'display_name': builder.data_source_name,
-            'referenced_doc_type': builder.source_doc_type,
-            'configured_filter': builder.filter,
-            'configured_indicators': builder.all_possible_indicators(columns=initial_columns,
-                                                                     filters=initial_filters),
-            'base_item_expression': builder.base_item_expression(False),
-            'meta': DataSourceMeta(
-                build=DataSourceBuildInformation(
-                    source_id=app_source.source,
-                    app_id=app._id,
-                    app_version=app.version,
-                )
-            )
-        }
+        return builder.get_temp_ds_config_kwargs(initial_columns, initial_filters)
 
     def _expire_data_source(self, data_source_config_id):
         always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER

@@ -594,6 +594,37 @@ class DataSourceBuilder(object):
         if self.source_type == 'case':
             return u"{} (v{})".format(self.source_id, self.app.version)
 
+    def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
+        if is_multiselect_chart_report:
+            base_item_expression = self.base_item_expression(True, multiselect_field)
+        else:
+            base_item_expression = self.base_item_expression(False)
+
+        return dict(
+            display_name=self.data_source_name,
+            referenced_doc_type=self.source_doc_type,
+            configured_filter=self.filter,
+            configured_indicators=indicators,
+            base_item_expression=base_item_expression,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+
+    def get_temp_ds_config_kwargs(self, initial_columns, initial_filters):
+        indicators = self.all_possible_indicators(initial_columns, initial_filters)
+        return self._ds_config_kwargs(indicators)
+
+    def get_ds_config_kwargs(self, columns, filters, is_multiselect_chart_report, multiselect_field=None):
+        indicators = self.indicators(
+            columns,
+            filters,
+            is_multiselect_chart_report
+        )
+        return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
+
 
 def _legend(title, subtext):
     """
@@ -785,30 +816,12 @@ class ConfigureNewReportBase(forms.Form):
         return configured_columns
 
     def _get_data_source_configuration_kwargs(self):
-        if self._is_multiselect_chart_report:
-            base_item_expression = self.ds_builder.base_item_expression(True,
-                                                                        self._report_aggregation_cols[0])
-        else:
-            base_item_expression = self.ds_builder.base_item_expression(False)
-
-        # We need the the column configurations that were selected by the user to determine the data source
-        # indicators.
-        return dict(
-            display_name=self.ds_builder.data_source_name,
-            referenced_doc_type=self.ds_builder.source_doc_type,
-            configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators(
-                self._configured_columns,
-                self.cleaned_data['user_filters'] + self.cleaned_data['default_filters'],
-                self._is_multiselect_chart_report
-            ),
-            base_item_expression=base_item_expression,
-            meta=DataSourceMeta(build=DataSourceBuildInformation(
-                source_id=self.report_source_id,
-                app_id=self.app._id,
-                app_version=self.app.version,
-            ))
-        )
+        filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
+        ms_field = self._report_aggregation_cols[0] if self._is_multiselect_chart_report else None
+        return self.ds_builder.get_ds_config_kwargs(self._configured_columns,
+                                                    filters,
+                                                    self._is_multiselect_chart_report,
+                                                    ms_field)
 
     def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
