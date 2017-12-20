@@ -76,7 +76,7 @@ def setUpModule():
                 continue
             adapter.build_table()
 
-        engine = connection_manager.get_session_helper(ICDS_UCR_ENGINE_ID).engine
+        engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine, extend_existing=True)
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -111,7 +111,7 @@ def tearDownModule():
                 continue
             adapter.drop_table()
 
-        engine = connection_manager.get_session_helper(ICDS_UCR_ENGINE_ID).engine
+        engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
         with engine.begin() as connection:
             metadata = sqlalchemy.MetaData(bind=engine)
             metadata.reflect(bind=engine, extend_existing=True)
