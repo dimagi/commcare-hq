@@ -630,16 +630,6 @@ class DataSourceBuilder(object):
         return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
 
 
-def _legend(title, subtext):
-    """
-    Return a string to be used in a crispy form Fieldset legend.
-    This function is just a light wrapped around some simple templating.
-    """
-    return u'{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
-        title=title, subtext=subtext
-    )
-
-
 class DataSourceForm(forms.Form):
     report_name = forms.CharField()
 
@@ -1159,10 +1149,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         null_values=([],),
         required=False,
         widget=forms.HiddenInput,
-    )
-    column_legend_fine_print = ugettext_noop(
-        u"Add columns to your report to display information from cases or form submissions. You may rearrange the "
-        u"order of the columns by dragging the arrows next to the column."
     )
 
     @property
