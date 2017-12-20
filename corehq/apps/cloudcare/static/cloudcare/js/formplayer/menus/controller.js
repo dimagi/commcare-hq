@@ -213,7 +213,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var error = function(err) {
                 FormplayerFrontend.regions.loadingProgress.empty();
                 FormplayerFrontend.trigger('showError',
-                    getSpecificErrorMsg() +
+                    getErrorMessage(err) +
                     "Without access to your location, computations that rely on the here() function will show up blank.");
             };
 
