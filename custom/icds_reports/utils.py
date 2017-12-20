@@ -460,12 +460,10 @@ def icds_pre_release_features(user):
     return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)
 
 
-def indian_formatted_number(amount):
-    amount = Decimal(str(amount))
-    amount, thousands = divmod(amount, 1000)
-    groups = [thousands]
-    while amount:
-        amount, group = divmod(amount, 100)
-        groups.insert(0, group)
-
-    return ','.join(map(str, groups))
+def indian_formatted_number(number):
+    s = str(number)
+    if s.isdigit():
+        r = ",".join([s[x - 2:x] for x in range(-3, -len(s), -2)][::-1] + [s[-3:]])
+        return "".join(r)
+    else:
+        return 0
