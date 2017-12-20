@@ -122,9 +122,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
 
 
-SAMPLE_DATA_MAX_ROWS = 100
 TEMP_REPORT_PREFIX = '__tmp'
-TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -506,35 +504,6 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
-    def _build_temp_data_source(self, ds_config_kwargs):
-        """
-        Build a temp datasource and return the ID
-        """
-
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **ds_config_kwargs
-        )
-        data_source_config.validate()
-        data_source_config.save()
-
-        # expire the data source
-        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
-        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
-        settings.CELERY_ALWAYS_EAGER = False
-        delete_data_source_task.apply_async(
-            (self.domain, data_source_config._id),
-            countdown=TEMP_DATA_SOURCE_LIFESPAN
-        )
-        settings.CELERY_ALWAYS_EAGER = always_eager
-
-        rebuild_indicators(data_source_config._id,
-                           self.request.user.username,
-                           limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
-        self.filter_data_source_changes(data_source_config._id)
-        return data_source_config._id
-
     def _get_existing_report_type(self):
         if self.existing_report:
             type_ = "list"
@@ -587,7 +556,7 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
-        temp_ds_id = self._build_temp_data_source(report_form.get_temp_ds_config_kwargs())
+        temp_ds_id = report_form.create_temp_data_source()
 
         return {
             'existing_report': self.existing_report,

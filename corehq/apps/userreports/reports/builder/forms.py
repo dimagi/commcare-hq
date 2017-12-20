@@ -3,6 +3,7 @@ from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
 import uuid
+from django.conf import settings
 from django import forms
 from django.forms import Widget
 from django.forms.utils import flatatt
@@ -77,6 +78,8 @@ STATIC_CASE_PROPS = [
 
 # PostgreSQL limit = 1600. Sane limit = 500?
 MAX_COLUMNS = 500
+TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
+SAMPLE_DATA_MAX_ROWS = 100
 
 
 class FilterField(JsonField):
@@ -818,11 +821,6 @@ class ConfigureNewReportBase(forms.Form):
                                                     self._is_multiselect_chart_report,
                                                     ms_field)
 
-    def get_temp_ds_config_kwargs(self):
-        filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
-        columns = [c._asdict() for c in self.initial_columns]
-        return self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
-
     def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
@@ -916,6 +914,38 @@ class ConfigureNewReportBase(forms.Form):
         report.validate()
         report.save()
         return report
+
+    def create_temp_data_source(self):
+        """
+        Build a temp datasource and return the ID
+        """
+
+        filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
+        columns = [c._asdict() for c in self.initial_columns]
+
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            **self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
+        )
+        data_source_config.validate()
+        data_source_config.save()
+
+        # expire the data source
+        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        tasks.delete_data_source_task.apply_async(
+            (self.domain, data_source_config._id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
+
+        tasks.rebuild_indicators(data_source_config._id,
+                           self.request.user.username,
+                           limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        self.filter_data_source_changes(data_source_config._id)
+        return data_source_config._id
 
     @property
     @memoized
