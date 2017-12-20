@@ -29,11 +29,11 @@ class TestEnrolledChildren(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of children (0 - 6 years) who are enrolled for ICDS services:',
-                            'value': 1287
+                            'value': "1,287"
                         },
                         {
                             'indicator': 'Total number of children (0 - 6 years) who are registered: ',
-                            'value': 1287
+                            'value': "1,287"
                         },
                         {
                             'indicator': (
@@ -87,9 +87,12 @@ class TestEnrolledChildren(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of children (0 - 6 years) who are enrolled for ICDS services:',
-                            'value': 618
+                            'value': "618"
                         },
-                        {'indicator': 'Total number of children (0 - 6 years) who are registered: ', 'value': 618},
+                        {
+                            'indicator': 'Total number of children (0 - 6 years) who are registered: ',
+                            'value': "618"
+                        },
                         {
                             'indicator': (
                                 'Percentage of registered children (0-6 years) who are enrolled for ICDS services:'

@@ -28,11 +28,11 @@ class TestEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 155
+                            'value': "155"
                         },
                         {
                             'indicator': 'Total number of pregnant women who are registered:',
-                            'value': 155
+                            'value': "155"
                         },
                         {
                             'indicator': (
@@ -85,11 +85,11 @@ class TestEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 70
+                            'value': "70"
                         },
                         {
                             'indicator': 'Total number of pregnant women who are registered:',
-                            'value': 70
+                            'value': "70"
                         },
                         {
                             'indicator': (

@@ -27,7 +27,7 @@ class TestAdhaar(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': 131
+                            'value': "131"
                         },
                         {
                             'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
@@ -80,7 +80,7 @@ class TestAdhaar(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': 64
+                            'value': "64"
                         },
                         {
                             'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',

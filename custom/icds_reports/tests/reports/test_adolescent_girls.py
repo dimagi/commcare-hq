@@ -30,11 +30,11 @@ class TestAdolescentGirls(TestCase):
                             'indicator': (
                                 'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
                             ),
-                            'value': 47
+                            'value': "47"
                         },
                         {
                             'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
-                            'value': 47
+                            'value': "47"
                         },
                         {
                             'indicator': (
@@ -90,11 +90,11 @@ class TestAdolescentGirls(TestCase):
                             'indicator': (
                                 'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
                             ),
-                            'value': 22
+                            'value': "22"
                         },
                         {
                             'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
-                            'value': 22
+                            'value': "22"
                         },
                         {
                             'indicator': (

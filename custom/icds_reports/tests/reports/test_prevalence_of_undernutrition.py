@@ -30,7 +30,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' have a higher risk of mortality',
                     'average': 17.593528816986854,
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 4945},
+                        {'indicator': 'Total Children weighed in given month:', 'value': "4,945"},
                         {'indicator': '% Unweighed:', 'value': '5.66%'},
                         {'indicator': '% Severely Underweight:', 'value': '0.00%'},
                         {'indicator': '% Moderately Underweight:', 'value': '17.59%'},
@@ -88,7 +88,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' have a higher risk of mortality',
                     'average': 18.94736842105263,
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 475},
+                        {'indicator': 'Total Children weighed in given month:', 'value': "475"},
                         {'indicator': '% Unweighed:', 'value': '4.42%'},
                         {'indicator': '% Severely Underweight:', 'value': '0.00%'},
                         {'indicator': '% Moderately Underweight:', 'value': '18.95%'},

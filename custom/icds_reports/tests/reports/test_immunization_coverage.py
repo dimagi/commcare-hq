@@ -32,14 +32,14 @@ class TestImmunizationCoverage(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                            'value': 1193
+                            'value': "1,193"
                         },
                         {
                             'indicator': (
                                 'Total number of children who have recieved '
                                 'complete immunizations required by age 1:'
                             ),
-                            'value': 130
+                            'value': "130"
                         },
                         {
                             'indicator': (
@@ -100,14 +100,14 @@ class TestImmunizationCoverage(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                            'value': 573
+                            'value': "573"
                         },
                         {
                             'indicator': (
                                 'Total number of children who have recieved '
                                 'complete immunizations required by age 1:'
                             ),
-                            'value': 85
+                            'value': "85"
                         },
                         {
                             'indicator': (

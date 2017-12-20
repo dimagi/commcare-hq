@@ -11,7 +11,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
+    indian_formatted_number
 import six
 
 RED = '#de2d26'
@@ -72,13 +73,14 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
                 "extended_info": [
                     {
                         'indicator': 'Total Number of Children born in the given month{}:'.format(chosen_filters),
-                        'value': in_month_total},
+                        'value': indian_formatted_number(in_month_total)
+                    },
                     {
                         'indicator': (
                             'Total Number of Children who were put to the breast within one hour of birth{}:'
                             .format(chosen_filters)
                         ),
-                        'value': birth_total
+                        'value': indian_formatted_number(birth_total)
                     },
                     {
                         'indicator': '% children who were put to the breast within one hour of '

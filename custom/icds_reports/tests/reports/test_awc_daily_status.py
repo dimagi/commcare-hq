@@ -26,8 +26,8 @@ class TestAWCDailyStatus(TestCase):
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': 19},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': 0},
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "19"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "0"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
@@ -73,11 +73,11 @@ class TestAWCDailyStatus(TestCase):
                     "extended_info": [
                         {
                             "indicator": "Total number of AWCs that were open yesterday:",
-                            "value": 19
+                            "value": "19"
                         },
                         {
                             "indicator": "Total number of AWCs that have been launched:",
-                            "value": 0
+                            "value": "0"
                         },
                         {
                             "indicator": "% of AWCs open yesterday:",
@@ -129,8 +129,8 @@ class TestAWCDailyStatus(TestCase):
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': 8},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': 0},
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "8"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "0"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },

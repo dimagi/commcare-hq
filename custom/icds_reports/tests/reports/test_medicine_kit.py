@@ -25,7 +25,7 @@ class TestMedicineKit(TestCase):
                     "info": "Percentage of AWCs with a Medicine Kit",
                     "average": 40.0,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': 20},
+                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "20"},
                         {'indicator': '% of AWCs with a Medicine Kit:', 'value': '40.00%'}
                     ]
                 },
@@ -71,7 +71,7 @@ class TestMedicineKit(TestCase):
                     "info": "Percentage of AWCs with a Medicine Kit",
                     "average": 34.61538461538461,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': 9},
+                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "9"},
                         {'indicator': '% of AWCs with a Medicine Kit:', 'value': '34.62%'}
                     ]
                 },

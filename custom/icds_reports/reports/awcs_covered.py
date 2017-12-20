@@ -11,7 +11,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 import six
 
 
@@ -107,13 +107,13 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     info = _(
         "Total AWCs that have launched ICDS CAS <br />" +
-        "Number of AWCs launched: %d" % total_awcs
+        "Number of AWCs launched: %s" % indian_formatted_number(total_awcs)
     )
     if level != 5:
         info = _(
             "Total AWCs that have launched ICDS CAS <br />" +
-            "Number of AWCs launched: %d <br />" % total_awcs +
-            "Number of %s launched: %d" % (prop.title(), total)
+            "Number of AWCs launched: %s <br />" % indian_formatted_number(total_awcs) +
+            "Number of %s launched: %s" % (prop.title(), indian_formatted_number(total))
         )
 
     return [

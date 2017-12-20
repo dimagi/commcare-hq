@@ -11,7 +11,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 import six
 
 
@@ -68,7 +68,7 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
             "rightLegend": {
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
-                "info": _("Total number of households registered: %d" % sum(average))
+                "info": _("Total number of households registered: %s" % indian_formatted_number(sum(average)))
             },
             "data": dict(data_for_map),
         }

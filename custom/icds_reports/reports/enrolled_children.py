@@ -9,7 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels
+from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, indian_formatted_number
 import six
 
 RED = '#de2d26'
@@ -81,13 +81,13 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
                         'indicator':
                             'Number of children (0 - 6 years) who are enrolled for ICDS services{}:'
                             .format(chosen_filters),
-                        'value': total_valid
+                        'value': indian_formatted_number(total_valid)
                     },
                     {
                         'indicator': (
                             'Total number of children (0 - 6 years) who are registered{}: '.format(chosen_filters)
                         ),
-                        'value': total
+                        'value': indian_formatted_number(total)
                     },
                     {
                         'indicator': (

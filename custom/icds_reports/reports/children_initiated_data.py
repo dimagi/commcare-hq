@@ -12,7 +12,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
+    indian_formatted_number
 import six
 
 RED = '#de2d26'
@@ -71,14 +72,14 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
                 "extended_info": [
                     {
                         'indicator': 'Total number of children between age 6 - 8 months{}:'.format(chosen_filters),
-                        'value': valid_total
+                        'value': indian_formatted_number(valid_total)
                     },
                     {
                         'indicator': (
                             'Total number of children (6-8 months) given timely introduction to sold or '
                             'semi-solid food in the given month{}:'.format(chosen_filters)
                         ),
-                        'value': in_month_total
+                        'value': indian_formatted_number(in_month_total)
                     },
                     {
                         'indicator': (
