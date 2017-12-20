@@ -429,16 +429,18 @@ FormplayerFrontend.on('view:phone', function() {
  * to complete progress.
  */
 FormplayerFrontend.on('clearProgress', function() {
-    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
-        progressFinishTimeout = 0;
-    if (progressView) {
-        progressFinishTimeout = 200;
-        progressView.setProgress(1, progressFinishTimeout);
-    }
+    var progressView = FormplayerFrontend.regions.loadingProgress.currentView;
 
-    setTimeout(function() {
+    if (progressView) {
+        var progressFinishTimeout = 200;
+        progressView.setProgress(1, progressFinishTimeout);
+
+        setTimeout(function() {
+            FormplayerFrontend.regions.loadingProgress.empty();
+        }, progressFinishTimeout);
+    } else {
         FormplayerFrontend.regions.loadingProgress.empty();
-    }, progressFinishTimeout);
+    }
 });
 
 
