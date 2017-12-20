@@ -29,12 +29,13 @@ class TestPrevalenceOfStunting(TestCase):
                             "lasting harmful consequences on the growth of a child",
                     "average": "2.77",
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': "939"},
-                        {'indicator': 'Total Children with height measured in given month:', 'value': "32"},
-                        {'indicator': '% Unmeasured:', 'value': '95.63%'},
-                        {'indicator': '% Severely stunted:', 'value': '1.70%'},
-                        {'indicator': '% Moderately stunted:', 'value': '1.06%'},
-                        {'indicator': '% Normal:', 'value': '1.60%'}
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '32'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '95.63%'},
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '1.70%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '1.06%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '1.60%'}
                     ]
                 },
                 "fills": {
@@ -89,12 +90,13 @@ class TestPrevalenceOfStunting(TestCase):
                             "lasting harmful consequences on the growth of a child",
                     "average": "1.78",
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': "449"},
-                        {'indicator': 'Total Children with height measured in given month:', 'value': "7"},
-                        {'indicator': '% Unmeasured:', 'value': '97.77%'},
-                        {'indicator': '% Severely stunted:', 'value': '0.67%'},
-                        {'indicator': '% Moderately stunted:', 'value': '1.11%'},
-                        {'indicator': '% Normal:', 'value': '0.45%'}
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '449'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '7'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '97.77%'},
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '0.67%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '1.11%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '0.45%'}
                     ]
                 },
                 "fills": {

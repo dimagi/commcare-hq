@@ -121,7 +121,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                 )),
                 "extended_info": [
                     {
-                        'indicator': '{}Total Children weighed in given month:'.format(chosen_filters),
+                        'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
                         'value': indian_formatted_number(valid_total)
                     },
                     {

@@ -91,11 +91,11 @@ describe('Underweight Children Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
             + '<p>test</p>'
-            + '<div>Total Children weighed in given month: <strong>20</strong></div>'
-            + '<div>% Unweighed: <strong>25.00%</strong></div>'
-            + '<div>% Severely Underweight: <strong>25.00%</strong></div>'
-            + '<div>% Moderately Underweight: <strong>25.00%</strong></div>'
-            + '<div>% Normal: <strong>25.00%</strong></div>');
+            + '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>'
+            + '<div>% Unweighed (0 - 5 years): <strong>25.00%</strong></div>'
+            + '<div>% Severely Underweight (0 - 5 years): <strong>25.00%</strong></div>'
+            + '<div>% Moderately Underweight (0 - 5 years): <strong>25.00%</strong></div>'
+            + '<div>% Normal (0 - 5 years): <strong>25.00%</strong></div>');
     });
 
     it('tests location change', function () {

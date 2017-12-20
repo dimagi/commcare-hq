@@ -93,7 +93,7 @@ describe('Enrolled Children Directive', function () {
             '<p>test</p>' +
             '<div>Number of children (0 - 6 years) who are enrolled for ICDS services: <strong>2</strong>' +
             '<div>Total number of children (0 - 6 years) who are registered: <strong>4</strong>' +
-            '<div>Percentage of registered children (0-6 years) who are enrolled for ICDS services: <strong>50.00%</strong>' +
+            '<div>Percentage of registered children (0 - 6 years) who are enrolled for ICDS services: <strong>50.00%</strong>' +
             '</div>';
         assert.equal(result, expected);
     });
