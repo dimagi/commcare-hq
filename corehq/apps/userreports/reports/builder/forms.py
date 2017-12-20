@@ -1271,7 +1271,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             elif self.cleaned_data['chart'] == "pie":
                 return [{
                     "type": "pie",
-                    "aggregation_column": "column_agg_0",
+                    "aggregation_column": get_agged_columns()[0]['column_id'],
                     "value_column": get_non_agged_columns()[0]['column_id'],
                 }]
         return []
