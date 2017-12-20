@@ -862,13 +862,6 @@ class ConfigureNewReportBase(forms.Form):
             }
             for c in self.cleaned_data['columns']
         ]
-        configured_columns += [
-            {
-                "property": c,
-                "aggregation": "Group By"
-            }
-            for c in self.cleaned_data.get('group_by', [])
-        ]
         location = self.cleaned_data.get("location")
         if location:
             configured_columns += [{
@@ -879,7 +872,8 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_data_source_configuration_kwargs(self):
         if self._is_multiselect_chart_report:
-            base_item_expression = self.ds_builder.base_item_expression(True, self.cleaned_data['group_by'][0])
+            base_item_expression = self.ds_builder.base_item_expression(True,
+                                                                        self._report_aggregation_cols[0])
         else:
             base_item_expression = self.ds_builder.base_item_expression(False)
 
@@ -1198,40 +1192,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     )
 
     @property
-    def container_fieldset(self):
-        source_name = ''
-        if self.source_type == 'case':
-            source_name = self.report_source_id
-        if self.source_type == 'form':
-            source_name = Form.get_form(self.report_source_id).default_name()
-        return crispy.Div(
-            crispy.Fieldset(
-                _legend(
-                    _("Rows"),
-                    _('This report will show one row for each {name} {source}').format(
-                        name=source_name, source=self.source_type
-                    )
-                )
-            ),
-            self.column_fieldset,
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
-
-    @property
-    def column_fieldset(self):
-        return crispy.Fieldset(
-            _legend(_("Columns"), _(self.column_legend_fine_print)),
-            crispy.Div(
-                crispy.HTML(self.column_config_template),
-                id="columns-table",
-                data_bind='with: columnsList'
-            ),
-            hqcrispy.B3HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
-        )
-
-    @property
     @memoized
     def initial_columns(self):
         if self.existing_report:
@@ -1371,54 +1331,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm):
     report_type = 'table'
-    column_legend_fine_print = ugettext_noop(
-        u'Add columns for this report to aggregate. Each property you add will create a column for every value '
-        u'of that property.  For example, if you add a column for a yes or no question, the report will show a '
-        u'column for "yes" and a column for "no."'
-    )
-    group_by = forms.MultipleChoiceField(label=_("Show one row for each"),
-                                         required=False)
     chart = forms.CharField(widget=forms.HiddenInput)
-
-    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
-        super(ConfigureTableReportForm, self).__init__(
-            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
-        )
-        if self.source_type == "form":
-            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
-        else:
-            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
-        self.fields['group_by'].choices = self._group_by_choices
-
-    @property
-    def container_fieldset(self):
-        return crispy.Div(
-            self.column_fieldset,
-            crispy.Fieldset(
-                _legend(
-                    _("Rows"),
-                    _(
-                        'Choose which property this report will group its results by. Each value of this property'
-                        ' will be a row in the table. For example, if you choose a yes or no question, the report '
-                        'will show a row for "yes" and a row for "no."'
-                    ),
-                ),
-                crispy.Field(
-                    'group_by'
-                ),
-                crispy.HTML(
-                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
-                             data-bind="visible:showGroupByValidationError">
-                             <strong class="text-danger">{error}</strong>
-                     </div>""".format(
-                        error=_("Please select a row.")
-                    )
-                )
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
 
     @property
     def _report_charts(self):
@@ -1462,54 +1375,25 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
     @property
     def _report_columns(self):
-        agg_fields = self.cleaned_data['group_by']
-        agg_field_ids = set(
-            self.data_source_properties[agg_field].to_report_column_option().get_indicator("Group By")['column_id']
-            for agg_field in agg_fields
-        )
-
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
             column = self.ds_builder.report_column_options[conf['property']]
             columns.extend(
                 column.to_column_dicts(
-                    i,
-                    conf['display_text'],
-                    conf['calculation'],
-                    conf['property'] in agg_fields
-                )
-            )
-
-        # Add the aggregation indicator to the columns if it's not already present.
-        extra_cols = []
-        existing_columns = set(c['property'] for c in self.cleaned_data['columns'])
-        for index, agg_field in enumerate(agg_fields):
-            if agg_field not in existing_columns:
-                column = self.ds_builder.report_column_options[agg_field]
-                agg_field_text = column.get_default_display()
-                extra_cols += column.to_column_dicts(
-                    "agg_{}".format(index), agg_field_text, "simple", is_aggregated_on=True
-                )
-        columns = extra_cols + columns
-
-        # Don't expand the aggregation columns
-        for c in columns:
-            if c['field'] in agg_field_ids:
-                c['aggregation'] = "simple"
-
+                    index=i,
+                    display_text=conf['display_text'],
+                    aggregation=conf['calculation'],
+                    is_aggregated_on=conf.get('calculation') == "Group By",
+                ))
         return columns
 
     @property
     @memoized
     def _report_aggregation_cols(self):
         return [
-            self.data_source_properties[f].to_report_column_option().get_indicator("Group By")['column_id']
-            for f in self.cleaned_data['group_by']
+            self.ds_builder.report_column_options[conf['property']].get_indicator("Group By")['column_id']
+            for conf in self.cleaned_data['columns'] if conf['calculation'] == "Group By"
         ]
-
-    @property
-    def _group_by_choices(self):
-        return [(p.get_id(), p.get_text()) for p in self.data_source_properties.values()]
 
 
 class ConfigureMapReportForm(ConfigureListReportForm):
@@ -1540,30 +1424,6 @@ class ConfigureMapReportForm(ConfigureListReportForm):
     @property
     def _location_choices(self):
         return [(p.get_id(), p.get_text()) for p in self.data_source_properties.values()]
-
-    @property
-    def container_fieldset(self):
-        return crispy.Div(
-            self.column_fieldset,
-            crispy.Fieldset(
-                _legend(
-                    _("Location"),
-                    _('Choose which property represents the location.'),
-                ),
-                'location',
-                crispy.HTML(
-                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
-                             data-bind="visible:showGroupByValidationError">
-                             <strong class="text-danger">{error}</strong>
-                     </div>""".format(
-                        error=_("Please select a property to represent the location.")
-                    )
-                )
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
 
     @property
     @memoized
