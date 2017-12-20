@@ -10,11 +10,10 @@ from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.utils import pformat_json
-from dimagi.utils.modules import to_function
-from six.moves import zip
 
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
@@ -295,12 +294,8 @@ def get_subresource_instances(requests, person_uuid, subresource):
 
 
 def find_patient(requests, domain, case_id, openmrs_config):
-    PatientFinder = to_function(openmrs_config.patient_finder)
-    if not PatientFinder:
-        raise ImportError('Cannot import PatientFinder {}'.format(openmrs_config.patient_finder))
-
     case = CaseAccessors(domain).get_case(case_id)
-    patient_finder = PatientFinder()
+    patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
     patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
     # If PatientFinder can't narrow down the number of candidate
     # patients, don't guess. Just admit that we don't know.
@@ -319,11 +314,11 @@ def get_patient(requests, domain, info, openmrs_config):
                 break
     else:
         # ID matchers did not match a patient in OpenMRS.
-        if openmrs_config.patient_finder:
+        if openmrs_config.case_config.patient_finder:
             # Search for patients based on other case properties
             logger.debug(
                 'Case %s did not match patient with OpenmrsCaseConfig.id_matchers. Search using '
-                'OpenmrsConfig.patient_finder "%s"', info.case_id, openmrs_config.patient_finder,
+                'PatientFinder "%s"', info.case_id, openmrs_config.case_config.patient_finder['doc_type'],
             )
             patient = find_patient(requests, domain, info.case_id, openmrs_config)
 

@@ -373,7 +373,6 @@ HQ_APPS = (
     'custom.nic_compliance',
     'custom.hki',
     'corehq.motech.openmrs',
-    'custom.possible_health',
     'custom.champ',
 )
 

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.motech.openmrs.finders import PatientFinder
 from dimagi.ext.couchdbkit import (
     DictProperty,
     DocumentSchema,
@@ -147,6 +149,19 @@ class OpenmrsCaseConfig(DocumentSchema):
     # }
     person_properties = SchemaDictProperty(ValueSource)
 
+    # "patient_finder": {
+    #     "doc_type": "WeightedPropertyPatientFinder",
+    #     "searchable_properties": ["nid", "family_name"],
+    #     "property_weights": [
+    #         {"case_property": "nid", "weight": 0.9},
+    #         {"case_property": "family_name", "weight": 0.4},
+    #         {"case_property": "given_name", "weight": 0.3},
+    #         {"case_property": "city", "weight": 0.2},
+    #         {"case_property": "dob", "weight": 0.3}
+    #     ]
+    # }
+    patient_finder = PatientFinder(required=False)
+
     # "person_preferred_name": {
     #     "givenName": {
     #         "doc_type": "CaseProperty",
@@ -205,4 +220,3 @@ class OpenmrsConfig(DocumentSchema):
     openmrs_provider = StringProperty(required=False)
     case_config = SchemaProperty(OpenmrsCaseConfig)
     form_configs = ListProperty(OpenmrsFormConfig)
-    patient_finder = StringProperty(required=False)

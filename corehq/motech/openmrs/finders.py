@@ -1,27 +1,34 @@
-from __future__ import absolute_import, division
+from __future__ import absolute_import
+from __future__ import division
+
 from collections import namedtuple
 from pprint import pformat
 
 from jsonpath_rw import parse
 
-from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.repeater_helpers import search_patients
+from dimagi.ext.couchdbkit import (
+    DecimalProperty,
+    DocumentSchema,
+    ListProperty,
+    StringProperty,
+)
 
 
-PATIENT_FINDERS = []
-
-
-def register_patient_finder(class_):
-    PATIENT_FINDERS.append(class_)
-    return class_
-
-
-class PatientFinderBase(object):
+class PatientFinder(DocumentSchema):
     """
-    PatientFinderBase is used to find a patient if ID matchers fail.
+    PatientFinder is used to find a patient if ID matchers fail.
     """
+
+    @classmethod
+    def wrap(cls, data):
+        from corehq.motech.openmrs.openmrs_config import recurse_subclasses
+
+        if cls is PatientFinder:
+            return {
+                sub._doc_type: sub for sub in recurse_subclasses(cls)
+            }[data['doc_type']].wrap(data)
+        else:
+            return super(PatientFinder, cls).wrap(data)
 
     def find_patients(self, requests, case, case_config):
         """
@@ -52,6 +59,9 @@ def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
     Used for updating property_map to map case properties to OpenMRS
     patient property-, attribute- and concept values.
 
+    i.e. Allows us to answer the question, "If we know the case property how
+    do we find the OpenMRS value?"
+
     :param jsonpath: The path to a value in an OpenMRS patient JSON object
     :param value_source: A case_config ValueSource instance
     :return: A single-item dictionary with the name of the case
@@ -71,27 +81,45 @@ def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
 PatientScore = namedtuple('PatientScore', ['patient', 'score'])
 
 
-class WeightedPropertyPatientFinder(PatientFinderBase):
+class PropertyWeight(DocumentSchema):
+    case_property = StringProperty()
+    weight = DecimalProperty()
+
+
+class WeightedPropertyPatientFinder(PatientFinder):
     """
     Finds patients that match cases by assigning weights to matching
     property values, and adding those weights to calculate a confidence
     score.
     """
-    def __init__(self, searchable_properties, property_weights, threshold=1, confidence_margin=0.1):
-        """
-        Initialise the instance
 
-        :param searchable_properties: Properties that can be used to
-               search for patients in OpenMRS
-        :param property_weights: A dictionary of case property names
-               and their weights
-        :param threshold: The sum of weights that must be met in order
-               for a patient to be considered a match
-        """
-        self.searchable_properties = searchable_properties
-        self.property_weights = property_weights
-        self.threshold = threshold
-        self.confidence_margin = confidence_margin
+    # Identifiers that are searchable in OpenMRS. e.g.
+    #     [ 'bahmni_id', 'household_id', 'last_name']
+    searchable_properties = ListProperty()
+
+    # The weight assigned to a matching property.
+    # [
+    #     {"case_property": "bahmni_id", "weight": 0.9},
+    #     {"case_property": "household_id", "weight": 0.9},
+    #     {"case_property": "dob", "weight": 0.75},
+    #     {"case_property": "first_name", "weight": 0.025},
+    #     {"case_property": "last_name", "weight": 0.025},
+    #     {"case_property": "municipality", "weight": 0.2},
+    # ]
+    property_weights = ListProperty(PropertyWeight)
+
+    # The threshold that the sum of weights must pass for a CommCare case to
+    # be considered a match to an OpenMRS patient
+    threshold = DecimalProperty(default=1.0)
+
+    # If more than one patient passes `threshold`, the margin by which the
+    # weight of the best match must exceed the weight of the second-best match
+    # to be considered correct.
+    confidence_margin = DecimalProperty(default=0.667)  # Default: Matches two thirds better than second-best
+
+
+    def __init__(self, *args, **kwargs):
+        super(WeightedPropertyPatientFinder, self).__init__(*args, **kwargs)
         self.property_map = {}
 
     def set_property_map(self, case_config):
@@ -149,6 +177,9 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
         If we are confident of the patient matched to a case, save
         the patient's ID to the case.
         """
+        from casexml.apps.case.mock import CaseBlock
+        from corehq.apps.hqcase.utils import submit_case_blocks
+
         id_map = {m['identifier_type_id']: m['case_property'] for m in case_config['id_matchers']}
         case_update = {}
         for identifier in patient['identifiers']:
@@ -168,6 +199,9 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
         Matches cases to patients. Returns a list of patients, each
         with a confidence score >= self.threshold
         """
+        from corehq.motech.openmrs.logger import logger
+        from corehq.motech.openmrs.repeater_helpers import search_patients
+
         self.set_property_map(case_config)
 
         candidates = {}  # key on OpenMRS UUID to filter duplicates
@@ -181,9 +215,8 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
                         candidates[patient['uuid']] = PatientScore(patient, score)
         if not candidates:
             logger.info(
-                'Unable to match case "%(case_name)s" (%(case_id)s): No candidate patients found.',
-                case_name=case.name,
-                case_id=case.get_id,
+                'Unable to match case "%s" (%s): No candidate patients found.',
+                case.name, case.get_id,
             )
             return []
         patients_scores = sorted(candidates.values(), key=lambda cand: cand.score, reverse=True)
@@ -191,10 +224,8 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
             patient = patients_scores[0].patient
             self.save_match_id(case, case_config, patient)
             logger.info(
-                'Matched case "%(case_name)s" (%(case_id)s) to ONLY patient candidate: \n%(patient)s',
-                case_name=case.name,
-                case_id=case.get_id,
-                patient=pformat(patient, indent=2),
+                'Matched case "%s" (%s) to ONLY patient candidate: \n%s',
+                case.name, case.get_id, pformat(patient, indent=2),
             )
             return [patient]
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
@@ -205,17 +236,13 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
             patient = patients_scores[0].patient
             self.save_match_id(case, case_config, patient)
             logger.info(
-                'Matched case "%(case_name)s" (%(case_id)s) to BEST patient candidate: \n%(patients)s',
-                case_name=case.name,
-                case_id=case.get_id,
-                patient=pformat(patients_scores, indent=2),
+                'Matched case "%s" (%s) to BEST patient candidate: \n%s',
+                case.name, case.get_id, pformat(patients_scores, indent=2),
             )
             return [patient]
         # We can't be sure. Just send them all.
         logger.info(
-            'Unable to match case "%(case_name)s" (%(case_id)s) to patient candidates: \n%(patients)s',
-            case_name=case.name,
-            case_id=case.get_id,
-            patient=pformat(patients_scores, indent=2),
+            'Unable to match case "%s" (%s) to patient candidates: \n%s',
+            case.name, case.get_id, pformat(patients_scores, indent=2),
         )
         return [ps.patient for ps in patients_scores]
