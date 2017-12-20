@@ -7,6 +7,7 @@ from jsonpath_rw import parse
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.motech.openmrs.logger import logger
+from corehq.motech.openmrs.repeater_helpers import search_patients
 
 
 PATIENT_FINDERS = []
@@ -172,11 +173,12 @@ class WeightedPropertyPatientFinder(PatientFinderBase):
         candidates = {}  # key on OpenMRS UUID to filter duplicates
         for prop in self.searchable_properties:
             value = case.get_case_property(prop)
-            response = requests.get('/ws/rest/v1/patient', {'q': value, 'v': 'full'})
-            for patient in response.json()['results']:
-                score = self.get_score(patient, case)
-                if score >= self.threshold:
-                    candidates[patient['uuid']] = PatientScore(patient, score)
+            if value:
+                response_json = search_patients(requests, value)
+                for patient in response_json['results']:
+                    score = self.get_score(patient, case)
+                    if score >= self.threshold:
+                        candidates[patient['uuid']] = PatientScore(patient, score)
         if not candidates:
             logger.info(
                 'Unable to match case "%(case_name)s" (%(case_id)s): No candidate patients found.',
