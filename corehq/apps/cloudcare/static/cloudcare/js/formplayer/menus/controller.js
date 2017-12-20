@@ -45,7 +45,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 if (menuResponse.shouldRequestLocation) {
                     Menus.Util.handleLocationRequest(options);
                 }
-                //Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+                Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
             }).fail(function() {
                 // if it didn't go through, then it displayed an error message.
                 // the right thing to do is then to just stay in the same place.
@@ -205,7 +205,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         handleLocationRequest: function(optionsFromLastRequest) {
             var success = function(position) {
                 FormplayerFrontend.regions.loadingProgress.empty();
-
                 Menus.Util.recordPosition(position);
                 Menus.Controller.selectMenu(optionsFromLastRequest);
             };
@@ -234,7 +233,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     progressMessage: "Fetching your location...",
                 });
                 FormplayerFrontend.regions.loadingProgress.show(progressView.render());
-
                 navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
             }
         },
