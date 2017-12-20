@@ -28,8 +28,8 @@ class TestNewBornWithLowWeight(TestCase):
                             " and chronic diseases later in life",
                     "average": 28.571428571428573,
                     'extended_info': [
-                        {'indicator': 'Total Number of Newborns born in given month:', 'value': 7},
-                        {'indicator': 'Number of Newborns with LBW in given month:', 'value': 2},
+                        {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
+                        {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
                         {'indicator': '% newborns with LBW in given month:', 'value': '28.57%'},
                         {'indicator': '% Unweighed:', 'value': '71.43%'}
                     ]
@@ -79,8 +79,8 @@ class TestNewBornWithLowWeight(TestCase):
                             " and chronic diseases later in life",
                     "average": 50.0,
                     'extended_info': [
-                        {'indicator': 'Total Number of Newborns born in given month:', 'value': 4},
-                        {'indicator': 'Number of Newborns with LBW in given month:', 'value': 2},
+                        {'indicator': 'Total Number of Newborns born in given month:', 'value': "4"},
+                        {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
                         {'indicator': '% newborns with LBW in given month:', 'value': '50.00%'},
                         {'indicator': '% Unweighed:', 'value': '50.00%'}
                     ]

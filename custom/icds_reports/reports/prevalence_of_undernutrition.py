@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number
 import six
 
 
@@ -122,7 +122,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
                 "extended_info": [
                     {
                         'indicator': '{}Total Children weighed in given month:'.format(chosen_filters),
-                        'value': valid_total
+                        'value': indian_formatted_number(valid_total)
                     },
                     {
                         'indicator': '% Unweighed{}:'.format(chosen_filters),

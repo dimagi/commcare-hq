@@ -29,14 +29,14 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of pregnant women who delivered in the last month:',
-                            'value': 26
+                            'value': "26"
                         },
                         {
                             'indicator': (
                                 'Total number of pregnant women who delivered in a public/private '
                                 'medical facilitiy in the last month:'
                             ),
-                            'value': 20
+                            'value': "20"
                         },
                         {
                             'indicator': (
@@ -93,14 +93,14 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of pregnant women who delivered in the last month:',
-                            'value': 13
+                            'value': "13"
                         },
                         {
                             'indicator': (
                                 'Total number of pregnant women who delivered in a public/private '
                                 'medical facilitiy in the last month:'
                             ),
-                            'value': 9
+                            'value': "9"
                         },
                         {
                             'indicator': (

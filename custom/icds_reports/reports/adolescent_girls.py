@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 import six
 
 
@@ -85,13 +85,13 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
                         'indicator': (
                             'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
                         ),
-                        'value': total_valid
+                        'value': indian_formatted_number(total_valid)
                     },
                     {
                         'indicator': (
                             'Total number of adolescent girls (11 - 18 years) who are registered:'
                         ),
-                        'value': total
+                        'value': indian_formatted_number(total)
                     },
                     {
                         'indicator': (

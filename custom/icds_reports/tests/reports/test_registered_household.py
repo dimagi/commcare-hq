@@ -22,7 +22,7 @@ class TestRegisteredHousehold(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Total number of households registered: 6964",
+                    "info": "Total number of households registered: 6,964",
                     "average": 3482.0,
                     "average_format": "number"
                 },
@@ -62,7 +62,7 @@ class TestRegisteredHousehold(TestCase):
             )[0],
             {
                 "rightLegend": {
-                    "info": "Total number of households registered: 3633",
+                    "info": "Total number of households registered: 3,633",
                     "average": 1816.5,
                     "average_format": "number"
                 },

@@ -11,7 +11,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggCcsRecordMonthly
-from custom.icds_reports.utils import apply_exclude
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 import six
 
 RED = '#de2d26'
@@ -81,13 +81,13 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
                 "extended_info": [
                     {
                         'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                        'value': total_valid
+                        'value': indian_formatted_number(total_valid)
                     },
                     {
                         'indicator': (
                             'Total number of pregnant women who are registered:'
                         ),
-                        'value': total
+                        'value': indian_formatted_number(total)
                     },
                     {
                         'indicator': (

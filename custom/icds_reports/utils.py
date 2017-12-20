@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 import operator
 
+from decimal import Decimal
 from six.moves import cStringIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
@@ -457,3 +458,14 @@ def create_pdf_file(pdf_hash, pdf_context):
 
 def icds_pre_release_features(user):
     return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)
+
+
+def indian_formatted_number(amount):
+    amount = Decimal(str(amount))
+    amount, thousands = divmod(amount, 1000)
+    groups = [thousands]
+    while amount:
+        amount, group = divmod(amount, 100)
+        groups.insert(0, group)
+
+    return ','.join(map(str, groups))

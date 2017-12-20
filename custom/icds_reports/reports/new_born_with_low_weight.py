@@ -11,7 +11,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
+    indian_formatted_number
 import six
 
 
@@ -73,11 +74,11 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                 "extended_info": [
                     {
                         'indicator': 'Total Number of Newborns born in given month{}:'.format(chosen_filters),
-                        'value': in_month_total
+                        'value': indian_formatted_number(in_month_total)
                     },
                     {
                         'indicator': 'Number of Newborns with LBW in given month{}:'.format(chosen_filters),
-                        'value': low_birth_total
+                        'value': indian_formatted_number(low_birth_total)
                     },
                     {
                         'indicator': '% newborns with LBW in given month{}:'.format(chosen_filters),

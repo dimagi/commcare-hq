@@ -32,8 +32,8 @@ class TestPrevalenceOfSevere(TestCase):
                             "that has moderate wasting (weight-for-height) below -2Z.",
                     "average": "1.06",
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 939},
-                        {'indicator': 'Total Children with height measured in given month:', 'value': 32},
+                        {'indicator': 'Total Children weighed in given month:', 'value': "939"},
+                        {'indicator': 'Total Children with height measured in given month:', 'value': "32"},
                         {'indicator': '% Unmeasured:', 'value': '96.70%'},
                         {'indicator': '% Severely Acute Malnutrition:', 'value': '0.21%'},
                         {'indicator': '% Moderately Acute Malnutrition:', 'value': '0.85%'},
@@ -95,8 +95,8 @@ class TestPrevalenceOfSevere(TestCase):
                             "that has moderate wasting (weight-for-height) below -2Z.",
                     "average": "0.89",
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 449},
-                        {'indicator': 'Total Children with height measured in given month:', 'value': 7},
+                        {'indicator': 'Total Children weighed in given month:', 'value': "449"},
+                        {'indicator': 'Total Children with height measured in given month:', 'value': "7"},
                         {'indicator': '% Unmeasured:', 'value': '98.00%'},
                         {'indicator': '% Severely Acute Malnutrition:', 'value': '0.00%'},
                         {'indicator': '% Moderately Acute Malnutrition:', 'value': '0.89%'},
