@@ -799,7 +799,7 @@ class ConfigureNewReportBase(forms.Form):
         if location:
             configured_columns += [{
                 "property": location,
-                "aggregation": "simple"  # Not aggregated
+                "calculation": "simple"  # Not aggregated
             }]
         return configured_columns
 
