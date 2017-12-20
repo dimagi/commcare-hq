@@ -37,7 +37,8 @@ class TestEnrolledChildren(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered children (0 - 6 years) who are enrolled for ICDS services:'
+                                'Percentage of registered children (0 - 6 years) '
+                                'who are enrolled for ICDS services:'
                             ),
                             'value': '100.00%'
                         }
@@ -95,7 +96,8 @@ class TestEnrolledChildren(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered children (0 - 6 years) who are enrolled for ICDS services:'
+                                'Percentage of registered children (0 - 6 years) '
+                                'who are enrolled for ICDS services:'
                             ),
                             'value': '100.00%'
                         }
