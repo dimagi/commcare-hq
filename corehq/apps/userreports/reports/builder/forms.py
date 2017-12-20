@@ -746,29 +746,6 @@ class ConfigureNewReportBase(forms.Form):
                 for i in indicators:
                     self._report_columns_by_column_id[i['column_id']] = column
 
-
-        # NOTE: The corresponding knockout view model is defined in:
-        #       templates/userreports/reportbuilder/configure_report.html
-        self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal form-config-report"
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.attrs['data_bind'] = "submit: submitHandler"
-        self.helper.form_id = "report-config-form"
-
-        buttons = [
-            StrictButton(
-                _(self.button_text),
-                css_class="btn btn-primary disable-on-submit",
-                type="submit",
-            )
-        ]
-        # Add a back button if we aren't editing an existing report
-        self.helper.layout = crispy.Layout(
-            self.container_fieldset,
-            hqcrispy.FormActions(crispy.ButtonHolder(*buttons)),
-        )
-
     def _bootstrap(self, existing_report):
         """
         Use an existing report to initialize some of the instance variables of this
@@ -788,67 +765,6 @@ class ConfigureNewReportBase(forms.Form):
                 "Report builder data source doesn't reference an application. "
                 "It is likely this report has been customized and it is no longer editable. "
             ))
-
-    @property
-    def column_config_template(self):
-        return render_to_string('userreports/partials/property_list_configuration.html')
-
-    @property
-    def container_fieldset(self):
-        """
-        Return the first fieldset in the form.
-        """
-        return crispy.Div(
-            self.user_filter_fieldset
-        )
-
-    @property
-    def validation_error_text(self):
-        return crispy.HTML(
-            """<div class="alert alert-danger"
-                    data-bind="text: validationErrorText,
-                               visible: showValidationError">
-               </div>"""
-        )
-
-    @property
-    def user_filter_fieldset(self):
-        """
-        Return a fieldset representing the markup used for configuring the
-        user filters.
-        """
-        return crispy.Fieldset(
-            _legend(
-                _("User Filters"),
-                _("Add filters to your report to allow viewers to select which data the report will display. "
-                  "These filters will be displayed at the top of your report.")
-            ),
-            crispy.Div(
-                crispy.HTML(self.column_config_template),
-                id="user-filters-table",
-                data_bind='with: userFiltersList'
-            ),
-            crispy.Hidden('user_filters', None, data_bind="value: userFiltersList.serializedProperties")
-        )
-
-    @property
-    def default_filter_fieldset(self):
-        """
-        Return a fieldset representing the markup used for configuring the
-        default filters.
-        """
-        return crispy.Fieldset(
-            _legend(
-                _("Default Filters"),
-                _("These filters are not displayed to report viewers and are always applied to the data.")
-            ),
-            crispy.Div(
-                crispy.HTML(self.column_config_template),
-                id="default-filters-table",
-                data_bind='with: defaultFiltersList'
-            ),
-            crispy.Hidden('default_filters', None, data_bind="value: defaultFiltersList.serializedProperties")
-        )
 
     @property
     def _configured_columns(self):
@@ -1404,16 +1320,6 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         super(ConfigureMapReportForm, self).__init__(
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
-        if self.source_type == "form":
-            self.fields['location'].widget = QuestionSelect(
-                attrs={'class': 'input-large'},
-                ko_value='groupBy'
-            )
-        else:
-            self.fields['location'].widget = Select2(
-                attrs={'class': 'input-large'},
-                ko_value="groupBy"
-            )
         self.fields['location'].choices = self._location_choices
 
         # Set initial value of location
