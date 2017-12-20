@@ -226,7 +226,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     default:
                         return "Your browser location could not be determined. ";
                 }
-            }
+            };
 
             if (navigator.geolocation) {
                 var progressView = new FormplayerFrontend.Layout.Views.ProgressView({
