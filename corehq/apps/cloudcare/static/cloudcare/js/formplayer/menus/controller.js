@@ -199,13 +199,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 hasInlineTile: detailObject.hasInlineTile,
             });
         },
-
-        showFetchingLocationView: function() {
-            console.log('showing FetchingLocationView');
-            var fetchingLocationView = new Menus.Views.FetchingLocationView();
-            console.log(fetchingLocationView);
-            FormplayerFrontend.regions.main.show(fetchingLocationView.render());
-        },
     };
 
     Menus.Util = {
