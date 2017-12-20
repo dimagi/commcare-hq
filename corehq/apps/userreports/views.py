@@ -518,22 +518,22 @@ class ConfigureReport(ReportBuilderView):
         )
         data_source_config.validate()
         data_source_config.save()
-        self._expire_data_source(data_source_config._id)
+
+        # expire the data source
+        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        delete_data_source_task.apply_async(
+            (self.domain, data_source_config._id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
+
         rebuild_indicators(data_source_config._id,
                            self.request.user.username,
                            limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
         self.filter_data_source_changes(data_source_config._id)
         return data_source_config._id
-
-    def _expire_data_source(self, data_source_config_id):
-        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
-        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
-        settings.CELERY_ALWAYS_EAGER = False
-        delete_data_source_task.apply_async(
-            (self.domain, data_source_config_id),
-            countdown=TEMP_DATA_SOURCE_LIFESPAN
-        )
-        settings.CELERY_ALWAYS_EAGER = always_eager
 
     def _get_existing_report_type(self):
         if self.existing_report:
