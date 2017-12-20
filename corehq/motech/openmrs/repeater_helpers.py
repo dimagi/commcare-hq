@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+import re
 from collections import namedtuple
 from datetime import timedelta
 from requests import HTTPError
@@ -167,10 +169,23 @@ def search_patients(requests, search_string):
     return requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'}).json()
 
 
+def get_patient_by_uuid(requests, uuid):
+    if not uuid:
+        return None
+    if not re.match(r'^[a-fA-F0-9\-]{36}$', uuid):
+        logger.debug('Person UUID "{}" failed validation'.format(uuid))
+        return None
+    return requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}).json()
+
+
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    response_json = search_patients(requests, patient_identifier)
-    return PatientSearchParser(response_json).get_patient_matching_identifiers(
-        patient_identifier_type, patient_identifier)
+    if patient_identifier_type == 'uuid':
+        patient = get_patient_by_uuid(requests, patient_identifier)
+        return patient
+    else:
+        response_json = search_patients(requests, patient_identifier)
+        return PatientSearchParser(response_json).get_patient_matching_identifiers(
+            patient_identifier_type, patient_identifier)
 
 
 def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
