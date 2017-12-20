@@ -766,3 +766,7 @@ table.dataTable td {
     margin-left: 2px;
     min-height: 34px;
 }
+
+hr {
+    border-top: 2px solid #eee;
+}
