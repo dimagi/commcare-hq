@@ -36,6 +36,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
+from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -413,6 +414,8 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 rule.name = self.basic_info_form.cleaned_data['name']
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
+
+            initiate_messaging_rule_run(rule.domain, rule.pk)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
