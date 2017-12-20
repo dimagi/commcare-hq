@@ -880,13 +880,14 @@ class ConfigureNewReportBase(forms.Form):
         report.save()
         return report
 
-    def create_temp_report(self, data_source_id):
+    def create_temp_report(self, data_source_id, username):
         """
-        Creates and saves a report config.
+        Updates the datasource then creates and saves a report config.
 
         :raises BadSpecError if report is invalid
         """
 
+        self._update_temp_datasource(data_source_id, username)
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_id,
@@ -953,6 +954,28 @@ class ConfigureNewReportBase(forms.Form):
         }
         data_source_config.validate()
         data_source_config.save()
+
+    def _update_temp_datasource(self, data_source_config_id, username):
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+
+        filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
+        required_column_set = set([c["column_id"]
+                                   for c in self.ds_builder.indicators(self._configured_columns, filters)])
+        current_column_set = set([c["column_id"] for c in data_source_config.configured_indicators])
+        missing_columns = [c for c in required_column_set if c not in current_column_set]
+
+        # rebuild the table
+        if missing_columns:
+            temp_config = self.ds_builder.get_temp_ds_config_kwargs(self._configured_columns, filters)
+            data_source_config.configured_indicators = temp_config["configured_indicators"]
+            data_source_config.configured_filter = temp_config["configured_filter"]
+            data_source_config.base_item_expression = temp_config["base_item_expression"]
+            data_source_config.validate()
+            data_source_config.save()
+            tasks.rebuild_indicators(data_source_config._id,
+                                     username,
+                                     limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+            self._filter_data_source_changes(data_source_config._id)
 
     @property
     @memoized

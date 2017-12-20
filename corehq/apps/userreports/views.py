@@ -703,7 +703,7 @@ class ReportPreview(BaseDomainView):
             report_data
         )
         if bound_form.is_valid():
-            temp_report = bound_form.create_temp_report(data_source)
+            temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
             response_data = ConfigurableReport.report_preview_data(self.domain, temp_report)
             if response_data:
                 return json_response(response_data)
