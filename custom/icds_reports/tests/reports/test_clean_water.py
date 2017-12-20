@@ -25,7 +25,10 @@ class TestCleanWater(TestCase):
                     "info": "Percentage of AWCs with a source of clean drinking water",
                     "average": 58.0,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a source of clean drinking water:', 'value': "29"},
+                        {
+                            'indicator': 'Total number of AWCs with a source of clean drinking water:',
+                            'value': "29"
+                        },
                         {'indicator': '% of AWCs with a source of clean drinking water:', 'value': '58.00%'}
                     ]
                 },
@@ -71,7 +74,10 @@ class TestCleanWater(TestCase):
                     "info": "Percentage of AWCs with a source of clean drinking water",
                     "average": 65.38461538461539,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a source of clean drinking water:', 'value': "17"},
+                        {
+                            'indicator': 'Total number of AWCs with a source of clean drinking water:',
+                            'value': "17"
+                        },
                         {'indicator': '% of AWCs with a source of clean drinking water:', 'value': '65.38%'}
                     ]
                 },
