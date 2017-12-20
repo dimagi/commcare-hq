@@ -26,13 +26,13 @@ class TestChildrenInitiated(TestCase):
                             " given timely introduction to solid, semi-solid or soft food.",
                     "average": 85.0,
                     'extended_info': [
-                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': 40},
+                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': "40"},
                         {
                             'indicator': (
                                 'Total number of children (6-8 months) given timely introduction '
                                 'to sold or semi-solid food in the given month:'
                             ),
-                            'value': 34
+                            'value': "34"
                         },
                         {
                             'indicator': (
@@ -86,13 +86,13 @@ class TestChildrenInitiated(TestCase):
                             " given timely introduction to solid, semi-solid or soft food.",
                     "average": 82.3529411764706,
                     'extended_info': [
-                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': 17},
+                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': "17"},
                         {
                             'indicator': (
                                 'Total number of children (6-8 months) given timely introduction '
                                 'to sold or semi-solid food in the given month:'
                             ),
-                            'value': 14
+                            'value': "14"
                         },
                         {
                             'indicator': (

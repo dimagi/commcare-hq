@@ -18,54 +18,41 @@ hqDefine('analytix/js/drift', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('drift'),
-        _global = initialAnalytics.getFn('global'),
-        _data = {},
         _drift = {},
-        logger = logging.getLoggerForApi('Drift');
+        _logger = logging.getLoggerForApi('Drift'),
+        _ready; // eslint-disable-line no-unused-vars
 
-    var __init__ = function () {
-        logger = logging.getLoggerForApi('Drift');
-        _drift = window.driftt = window.drift = window.driftt || [];
-        if (!_drift.init && !_drift.invoked ) {
-            _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];
-            _drift.factory = function (methodName) {
-                return function() {
-                    var methodFn = Array.prototype.slice.call(arguments);
-                    methodFn.unshift(methodName);
-                    _drift.push(methodFn);
-                    return _drift;
+    $(function () {
+        var apiId = _get('apiId'),
+            scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + apiId + '.js';
+
+        _logger = logging.getLoggerForApi('Drift');
+        _ready = utils.initApi(apiId, scriptUrl, _logger, function() {
+            _drift = window.driftt = window.drift = window.driftt || [];
+            if (!_drift.init && !_drift.invoked ) {
+                _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];
+                _drift.factory = function (methodName) {
+                    return function() {
+                        var methodFn = Array.prototype.slice.call(arguments);
+                        methodFn.unshift(methodName);
+                        _drift.push(methodFn);
+                        return _drift;
+                    };
                 };
-            };
-            _.each(_drift.methods, function (methodName) {
-                _drift[methodName] = _drift.factory(methodName);
-            });
-        }
+                _.each(_drift.methods, function (methodName) {
+                    _drift[methodName] = _drift.factory(methodName);
+                });
+            }
 
-        _drift.SNIPPET_VERSION = '0.3.1';
-        _data.apiId = _get('apiId');
+            _drift.SNIPPET_VERSION = '0.3.1';
 
-        if (_data.apiId) {
-            _data.scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + _data.apiId + '.js';
-            logger.verbose.log(_data.scriptUrl, "Adding Script");
-            utils.insertScript(_data.scriptUrl, logger.debug.log, {
-                crossorigin: 'anonymous',
+            _drift.on('emailCapture',function(e){
+                hubspot.identify({email: e.data.email});
+                hubspot.trackEvent('Identified via Drift');
             });
-        }
-        _drift.on('emailCapture',function(e){
-            hubspot.identify({email: e.data.email});
-            hubspot.trackEvent('Identified via Drift');
         });
-    };
-
-    $(function() {
-        if (_global('isEnabled')) {
-            __init__();
-            logger.debug.log("Initialized");
-        }
     });
 
     // no methods just yet
-    return {
-        logger: logger,
-    };
+    return 1;
 });

@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from custom.enikshay.const import PRIVATE_HEALTH_ESTABLISHMENT_SECTOR
+
 gender_mapping = {
     'male': 'M',
     'female': 'F',
@@ -153,6 +156,5 @@ health_establishment_type = {
 }
 
 health_establishment_sector = {
-    'public': 'P',
-    'private': 'V',
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR: 'V',
 }

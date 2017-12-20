@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
 import six
 
 
@@ -70,7 +70,7 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
                         'indicator': (
                             'Total number of AWCs with a weighing scale for infants:'
                         ),
-                        'value': in_month_total
+                        'value': indian_formatted_number(in_month_total)
                     },
                     {
                         'indicator': (

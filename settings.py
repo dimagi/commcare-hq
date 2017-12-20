@@ -30,6 +30,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
+DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -503,6 +504,7 @@ DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+ICDS_ENVS = ('icds', 'icds-new')
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 

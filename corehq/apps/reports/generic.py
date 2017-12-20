@@ -187,7 +187,8 @@ class GenericReportView(object):
                 PATH_INFO=self.request.META.get('PATH_INFO')
             ),
             datespan=self.request.datespan,
-            couch_user=None
+            couch_user=None,
+            can_access_all_locations=self.request.can_access_all_locations,
         )
 
         try:
@@ -218,12 +219,14 @@ class GenericReportView(object):
             META = {}
             couch_user = None
             datespan = None
+            can_access_all_locations = None
 
         request_data = state.get('request')
         request = FakeHttpRequest()
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
+        request.can_access_all_locations = request_data.get('can_access_all_locations')
 
         try:
             couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))

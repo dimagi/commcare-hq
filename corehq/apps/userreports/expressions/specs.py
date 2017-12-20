@@ -9,7 +9,7 @@ from simpleeval import InvalidExpression
 import six
 
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
-from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
+from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -122,7 +122,7 @@ class NamedExpressionSpec(JsonObject):
         return result
 
     def __str__(self):
-        return "NamedE:{}".format(self.name)
+        return "{}:{}".format(NAMED_EXPRESSION_PREFIX, self.name)
 
 
 class ConditionalExpressionSpec(JsonObject):
@@ -356,14 +356,6 @@ class EvalExpressionSpec(JsonObject):
         return var_dict
 
     def __str__(self):
-        # context_variables = "\n".join(
-        #     ["{}:{}".format(name, str(exp)) for name, exp in self._context_variables.items()]
-        # )
-        # value = "{} with (\n{}\n)".format(self.statement,
-        #                                   context_variables)
-        # if self.datatype:
-        #     value =  "({}){}".format(self.datatype, value)
-        # return value
         value = self.statement
         for name, exp in self._context_variables.items():
             value.replace(name, str(exp))
@@ -531,7 +523,7 @@ class SplitStringExpressionSpec(JsonObject):
         split_text = "split {}".format(str(self._string_expression))
         if self.delimiter:
             split_text += " on '{}'".format(self.delimiter)
-        return "(split {})[{}]".format(str(self.split_text), str(self._index_expression))
+        return "(split {})[{}]".format(str(split_text), str(self._index_expression))
 
 
 class CoalesceExpressionSpec(JsonObject):

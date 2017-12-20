@@ -4,6 +4,7 @@ import json
 import datetime
 import socket
 from django.conf import settings
+
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.integrations.bets.repeater_generators import LocationPayloadGenerator
 from corehq.motech.repeaters.exceptions import RequestConnectionError
@@ -20,6 +21,9 @@ from custom.enikshay.const import (
     DSTB_EPISODE_TYPE,
     PERSON_CASE_2B_VERSION,
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
+    NOT_AVAILABLE_VALUE,
+    DUMMY_VALUES,
+    AGENCY_LOCATION_TYPES,
 )
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
@@ -31,7 +35,9 @@ from custom.enikshay.case_utils import (
     get_lab_referral_from_test,
     get_occurrence_case_from_episode,
 )
-from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
+from custom.enikshay.integrations.nikshay.exceptions import (
+    NikshayResponseException,
+)
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
     NikshayRequiredValueMissing,
@@ -57,6 +63,8 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
 )
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
+
+from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
 from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
 from dimagi.utils.decorators.memoized import memoized
 import six
@@ -484,24 +492,62 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
     format_name = 'location_xml'
     format_label = 'XML'
 
+    @staticmethod
+    def _get_establishment_type(location):
+        if location.location_type.name == AGENCY_LOCATION_TYPES['plc']:
+            return health_establishment_type.get('lab')
+        if location.location_type.name == AGENCY_LOCATION_TYPES['pcp']:
+            return health_establishment_type.get(
+                location.metadata.get('facility_type')
+            )
+
+    @staticmethod
+    def _get_address(location_user_data):
+        if location_user_data.get('address_line_1') or location_user_data.get('address_line_2'):
+            return (u"%s %s" % (
+                location_user_data.get('address_line_1'), location_user_data.get('address_line_2'))).strip()
+        else:
+            return NOT_AVAILABLE_VALUE
+
+    @staticmethod
+    def _get_mobile_number(location_user_data):
+        contact_phone_number = location_user_data.get('contact_phone_number')
+        if contact_phone_number:
+            # reject any isd codes entered like 919876543210 so pick last 10 digits only
+            return contact_phone_number.strip()[-10:]
+        return DUMMY_VALUES['phone_number']
+
+    @staticmethod
+    def _get_telephone_number(location_user_data):
+        landline_no = location_user_data.get('landline_no')
+        if landline_no:
+            # reject any isd codes entered like 02223777800 so pick last 10 digits only
+            return landline_no.strip()[-10:]
+        return DUMMY_VALUES['phone_number']
+
+    @staticmethod
+    def _get_value_or_dummy_value(location_user_data, value_for):
+        return location_user_data.get(value_for) or DUMMY_VALUES.get(value_for)
+
     def get_payload(self, repeat_record, location):
         location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
+        location_user = get_location_user_for_notification(location)
+        location_user_data = location_user.user_data
         return {
-            'ESTABLISHMENT_TYPE': health_establishment_type.get(
-                location.metadata.get('establishment_type', ''), ''),
+            'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
             'ESTABLISHMENT_NAME': location.name,
-            'MCI_HR_NO': location.metadata.get('registration_number'),
-            'CONTACT_PNAME': location.metadata.get('contact_name'),
-            'CONTACT_PDESIGNATION': location.metadata.get('contact_designation'),
-            'TELEPHONE_NO': location.metadata.get('phone_number'),
-            'MOBILE_NO': location.metadata.get('mobile_number'),
-            'COMPLETE_ADDRESS': location.metadata.get('address'),
-            'PINCODE': location.metadata.get('address_pincode'),
-            'EMAILID': location.metadata.get('email_address'),
+            'MCI_HR_NO': self._get_value_or_dummy_value(location_user_data, 'registration_number'),
+            'CONTACT_PNAME': location_user.full_name,
+            'CONTACT_PDESIGNATION': (location_user_data.get('pcp_qualification') or NOT_AVAILABLE_VALUE),
+            'TELEPHONE_NO': self._get_telephone_number(location_user_data),
+            'MOBILE_NO': self._get_mobile_number(location_user_data),
+            'COMPLETE_ADDRESS': self._get_address(location_user_data),
+            'PINCODE': self._get_value_or_dummy_value(location_user_data, 'pincode'),
+            'EMAILID': self._get_value_or_dummy_value(location_user_data, 'email'),
             'STATE_CODE': location_hierarchy_codes.stcode,
             'DISTRICT_CODE': location_hierarchy_codes.dtcode,
-            'TBU_CODE': location.metadata.get('tbu_code', ''),
+            'TBU_CODE': location.metadata.get('nikshay_tu_id'),
             'MUST_CREATE_NEW': 'N',
             'USER_ID': settings.ENIKSHAY_PRIVATE_API_USERS.get(location_hierarchy_codes.stcode, ''),
             'PASSWORD': settings.ENIKSHAY_PRIVATE_API_PASSWORD,

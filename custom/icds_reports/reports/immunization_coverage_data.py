@@ -12,7 +12,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
+    indian_formatted_number
 import six
 
 
@@ -78,13 +79,14 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                     {
                         'indicator': 'Total number of ICDS Child beneficiaries older than '
                                      '1 year{}:'.format(chosen_filters),
-                        'value': valid_total},
+                        'value': indian_formatted_number(valid_total)
+                    },
                     {
                         'indicator': (
                             'Total number of children who have recieved complete immunizations required '
                             'by age 1{}:'.format(chosen_filters)
                         ),
-                        'value': in_month_total
+                        'value': indian_formatted_number(in_month_total)
                     },
                     {
                         'indicator': (

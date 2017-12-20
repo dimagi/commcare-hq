@@ -28,12 +28,12 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                             " and encourages exclusive breastfeeding practice",
                     "average": 57.142857142857146,
                     'extended_info': [
-                        {'indicator': 'Total Number of Children born in the given month:', 'value': 7},
+                        {'indicator': 'Total Number of Children born in the given month:', 'value': "7"},
                         {
                             'indicator': (
                                 'Total Number of Children who were put to the breast within one hour of birth:'
                             ),
-                            'value': 4
+                            'value': "4"
                         },
                         {
                             'indicator': '% children who were put to the breast within one hour of birth:',
@@ -86,12 +86,12 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                             " and encourages exclusive breastfeeding practice",
                     "average": 75.0,
                     'extended_info': [
-                        {'indicator': 'Total Number of Children born in the given month:', 'value': 4},
+                        {'indicator': 'Total Number of Children born in the given month:', 'value': "4"},
                         {
                             'indicator': (
                                 'Total Number of Children who were put to the breast within one hour of birth:'
                             ),
-                            'value': 3
+                            'value': "3"
                         },
                         {
                             'indicator': '% children who were put to the breast within one hour of birth:',

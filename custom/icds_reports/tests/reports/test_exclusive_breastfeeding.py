@@ -31,13 +31,13 @@ class TestExclusiveBreastfeeding(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of children between ages 0 - 6 months:',
-                            'value': 50
+                            'value': "50"
                         },
                         {
                             'indicator': (
                                 'Total number of children (0-6 months) exclusively breastfed in the given month:'
                             ),
-                            'value': 28
+                            'value': "28"
                         },
                         {
                             'indicator': '% children (0-6 months) exclusively breastfed in the given month:',
@@ -93,13 +93,13 @@ class TestExclusiveBreastfeeding(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of children between ages 0 - 6 months:',
-                            'value': 26
+                            'value': "26"
                         },
                         {
                             'indicator': (
                                 'Total number of children (0-6 months) exclusively breastfed in the given month:'
                             ),
-                            'value': 17
+                            'value': "17"
                         },
                         {
                             'indicator': '% children (0-6 months) exclusively breastfed in the given month:',

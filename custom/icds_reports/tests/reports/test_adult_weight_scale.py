@@ -27,7 +27,7 @@ class TestAdultWeightScale(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a weighing scale for mother and child:',
-                            'value': 9
+                            'value': "9"
                         },
                         {'indicator': '% of AWCs with a weighing scale for mother and child:', 'value': '18.00%'}
                     ]
@@ -76,7 +76,7 @@ class TestAdultWeightScale(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a weighing scale for mother and child:',
-                            'value': 5
+                            'value': "5"
                         },
                         {'indicator': '% of AWCs with a weighing scale for mother and child:', 'value': '19.23%'}
                     ]

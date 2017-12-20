@@ -36,6 +36,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
+        print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
 
     _call_center_domain_mock = mock.patch(

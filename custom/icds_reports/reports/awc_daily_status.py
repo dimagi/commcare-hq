@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcDailyView
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
 import six
 
 RED = '#de2d26'
@@ -77,10 +77,11 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
                 "extended_info": [
                     {
                         'indicator': 'Total number of AWCs that were open yesterday:',
-                        'value': valid_total},
+                        'value': indian_formatted_number(valid_total)
+                    },
                     {
                         'indicator': 'Total number of AWCs that have been launched:',
-                        'value': in_day_total
+                        'value': indian_formatted_number(in_day_total)
                     },
                     {
                         'indicator': '% of AWCs open yesterday:',

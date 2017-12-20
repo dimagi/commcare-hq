@@ -11,7 +11,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number
 import six
 
 RED = '#de2d26'
@@ -122,12 +122,12 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
                 "extended_info": [
                     {
                         'indicator': '{}Total Children weighed in given month:'.format(chosen_filters),
-                        'value': valid_total
+                        'value': indian_formatted_number(valid_total)
                     },
                     {
                         'indicator': '{}Total Children with height measured in given month:'
                         .format(chosen_filters),
-                        'value': measured_total
+                        'value': indian_formatted_number(measured_total)
                     },
                     {
                         'indicator': '% Unmeasured{}:'.format(chosen_filters),

@@ -1,2 +1,2 @@
-class AdherenceException(Exception):
+class NinetyNineDotsException(Exception):
     pass
