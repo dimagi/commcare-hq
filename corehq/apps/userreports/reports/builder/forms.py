@@ -915,7 +915,7 @@ class ConfigureNewReportBase(forms.Form):
         report.save()
         return report
 
-    def create_temp_data_source(self):
+    def create_temp_data_source(self, username):
         """
         Build a temp datasource and return the ID
         """
@@ -942,10 +942,27 @@ class ConfigureNewReportBase(forms.Form):
         settings.CELERY_ALWAYS_EAGER = always_eager
 
         tasks.rebuild_indicators(data_source_config._id,
-                           self.request.user.username,
-                           limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
-        self.filter_data_source_changes(data_source_config._id)
+                                 username,
+                                 limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        self._filter_data_source_changes(data_source_config._id)
         return data_source_config._id
+
+    @staticmethod
+    def _filter_data_source_changes(data_source_config_id):
+        """
+        Add filter to data source to prevent it from being updated by DB changes
+        """
+        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config.configured_filter = {
+            # An expression that is always false:
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": 1,
+            "property_value": 2,
+        }
+        data_source_config.validate()
+        data_source_config.save()
 
     @property
     @memoized

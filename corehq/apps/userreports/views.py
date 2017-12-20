@@ -286,23 +286,6 @@ class ReportBuilderView(BaseDomainView):
     def section_url(self):
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
-    @staticmethod
-    def filter_data_source_changes(data_source_config_id):
-        """
-        Add filter to data source to prevent it from being updated by DB changes
-        """
-        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
-        data_source_config = DataSourceConfiguration.get(data_source_config_id)
-        data_source_config.configured_filter = {
-            # An expression that is always false:
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": 1,
-            "property_value": 2,
-        }
-        data_source_config.validate()
-        data_source_config.save()
-
 
 @quickcache(["domain"], timeout=0, memoize_timeout=4)
 def paywall_home(domain):
@@ -556,7 +539,7 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
-        temp_ds_id = report_form.create_temp_data_source()
+        temp_ds_id = report_form.create_temp_data_source(self.request.user.username)
 
         return {
             'existing_report': self.existing_report,
