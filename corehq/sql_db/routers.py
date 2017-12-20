@@ -43,7 +43,10 @@ class MonolithRouter(object):
 
 def allow_migrate(db, app_label):
     if app_label == ICDS_REPORTS_APP:
-        return hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and db == settings.ICDS_UCR_DATABASE_ALIAS
+        try:
+            return db == connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
+        except KeyError:
+            return False
 
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP

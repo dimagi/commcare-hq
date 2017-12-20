@@ -3,9 +3,6 @@
 from __future__ import absolute_import
 import os
 
-ICDS_UCR_DATABASE_ALIAS = 'default'
-ICDS_UCR_TEST_DATABASE_ALIAS = 'default'
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
