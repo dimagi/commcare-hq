@@ -396,14 +396,14 @@ class DataSourceBuilder(object):
         Return a list of indicators to be used in a data source configuration that supports the given columns and
         indicators.
         :param columns: A list of objects representing columns in the report.
-            Each object has a "property" and "aggregation" key
+            Each object has a "property" and "calculation" key
         :param filters: A list of filter configuration objects
         """
 
         indicators = OrderedDict()
         for column in columns:
             column_option = self.report_column_options[column['property']]
-            for indicator in column_option.get_indicators(column['aggregation'], is_multiselect_chart_report):
+            for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
                 indicators.setdefault(str(indicator), indicator)
 
         for filter_ in filters:
@@ -413,13 +413,13 @@ class DataSourceBuilder(object):
 
         return list(indicators.values())
 
-    def all_possible_indicators(self, columns=[], filters=[]):
+    def all_possible_indicators(self, required_columns, required_filters):
         """
         Will generate a set of possible indicators for the datasource making sure to include the
         provided columns and filters
         """
         indicators = OrderedDict()
-        for i in self.indicators(columns, filters):
+        for i in self.indicators(required_columns, required_filters):
             indicators.setdefault(str(i), i)
 
         for column_option in self.report_column_options.values():
@@ -613,11 +613,12 @@ class DataSourceBuilder(object):
             ))
         )
 
-    def get_temp_ds_config_kwargs(self, initial_columns, initial_filters):
-        indicators = self.all_possible_indicators(initial_columns, initial_filters)
+    def get_temp_ds_config_kwargs(self, required_columns, required_filters):
+        indicators = self.all_possible_indicators(required_columns, required_filters)
         return self._ds_config_kwargs(indicators)
 
-    def get_ds_config_kwargs(self, columns, filters, is_multiselect_chart_report, multiselect_field=None):
+    def get_ds_config_kwargs(self, columns, filters,
+                             is_multiselect_chart_report=False, multiselect_field=None):
         indicators = self.indicators(
             columns,
             filters,
@@ -800,13 +801,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         To be used by DataSourceBuilder.indicators()
         """
-        configured_columns = [
-            {
-                "property": c['property'],
-                "aggregation": c['calculation'],
-            }
-            for c in self.cleaned_data['columns']
-        ]
+        configured_columns = self.cleaned_data['columns']
         location = self.cleaned_data.get("location")
         if location:
             configured_columns += [{
@@ -822,6 +817,11 @@ class ConfigureNewReportBase(forms.Form):
                                                     filters,
                                                     self._is_multiselect_chart_report,
                                                     ms_field)
+
+    def get_temp_ds_config_kwargs(self):
+        filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
+        columns = [c._asdict() for c in self.initial_columns]
+        return self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
 
     def _build_data_source(self):
         data_source_config = DataSourceConfiguration(

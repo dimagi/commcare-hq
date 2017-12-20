@@ -506,16 +506,15 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
-    def _build_temp_data_source(self, initial_columns, initial_filters):
+    def _build_temp_data_source(self, ds_config_kwargs):
         """
         Build a temp datasource and return the ID
         """
 
-        app_source = ApplicationDataSource(self.app_id, self.source_type, self.source_id)
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **self._get_ds_config_kwargs(app_source, initial_columns, initial_filters)
+            **ds_config_kwargs
         )
         data_source_config.validate()
         data_source_config.save()
@@ -525,11 +524,6 @@ class ConfigureReport(ReportBuilderView):
                            limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
         self.filter_data_source_changes(data_source_config._id)
         return data_source_config._id
-
-    def _get_ds_config_kwargs(self, app_source, initial_columns, initial_filters):
-        app = Application.get(app_source.application)
-        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
-        return builder.get_temp_ds_config_kwargs(initial_columns, initial_filters)
 
     def _expire_data_source(self, data_source_config_id):
         always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
@@ -593,7 +587,8 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
-        temp_ds_id = self._build_temp_data_source([],[])
+        temp_ds_id = self._build_temp_data_source(report_form.get_temp_ds_config_kwargs())
+
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
