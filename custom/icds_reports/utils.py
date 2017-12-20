@@ -432,7 +432,7 @@ def chosen_filters_to_labels(config, default_interval=''):
 def zip_folder(pdf_files):
     zip_hash = uuid.uuid4().hex
     client = get_redis_client()
-    in_memory = cStringIO.StringIO()
+    in_memory = cStringIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
     for pdf_file in pdf_files:
         file = client.get(pdf_file['uuid'])
@@ -444,7 +444,7 @@ def zip_folder(pdf_files):
 
 def create_pdf_file(pdf_hash, pdf_context):
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
-    resultFile = cStringIO.StringIO()
+    resultFile = cStringIO()
     client = get_redis_client()
     pisa.CreatePDF(
         template.render(pdf_context),
