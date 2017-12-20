@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from django.conf import settings
 
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
@@ -15,10 +16,10 @@ WAREHOUSE_APP = 'warehouse'
 class PartitionRouter(object):
 
     def db_for_read(self, model, **hints):
-        return db_for_read_write(model)
+        return db_for_read_write(model, write=False)
 
     def db_for_write(self, model, **hints):
-        return db_for_read_write(model)
+        return db_for_read_write(model, write=True)
 
     def allow_migrate(self, db, app_label, model=None, **hints):
         return allow_migrate(db, app_label)
@@ -62,7 +63,12 @@ def allow_migrate(db, app_label):
         return db == partition_config.get_main_db()
 
 
-def db_for_read_write(model):
+def db_for_read_write(model, write=True):
+    """
+    :param model: Django model being queried
+    :param write: Default to True since the DB for writes can also handle reads
+    :return: Django DB alias to use for query
+    """
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
 
@@ -74,8 +80,9 @@ def db_for_read_write(model):
         assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
         return settings.WAREHOUSE_DATABASE_ALIAS
     elif app_label == ICDS_MODEL:
-        assert hasattr(settings, "ICDS_UCR_TEST_DATABASE_ALIAS")
-        return settings.ICDS_UCR_TEST_DATABASE_ALIAS
-
+        engine_id = ICDS_UCR_ENGINE_ID
+        if not write:
+            engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
+        return connection_manager.get_django_db_alias(engine_id)
     else:
         return partition_config.get_main_db()
