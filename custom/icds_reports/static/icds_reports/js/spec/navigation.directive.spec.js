@@ -1,14 +1,14 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
-describe('NavigationDirective', function () {
+describe('Navigation Directive', function () {
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('icds_locations', 'icds_locations');
 
-    var $rootScope, $compile, $httpBackend;
+    var $rootScope, $compile, $httpBackend, controller;
 
     var myScope;
     beforeEach(module('icdsApp'));
@@ -24,9 +24,13 @@ describe('NavigationDirective', function () {
 
         $httpBackend.flush();
         $rootScope.$digest();
-        compiled.controller("navigation", {$scope: $rootScope});
+        controller = compiled.controller("navigation", {$scope: $rootScope});
         myScope = element.isolateScope();
     }));
+
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests get empty page path', function () {
         var result = myScope.goToStep("test", {});
