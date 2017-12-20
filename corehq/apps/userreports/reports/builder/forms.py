@@ -1302,7 +1302,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
                 self.ds_builder.report_column_options[conf['property']].to_column_dicts(
-                    i, conf['display_text'], "simple"
+                    i, conf.get('display_text', conf['property']), "simple"
                 )
             )
         return columns
