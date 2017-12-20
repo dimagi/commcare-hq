@@ -133,6 +133,6 @@ CUSTOM_REPORTS = (
         ASRReport
     )),
     ('CUSTOM REPORTS', (
-        DashboardReport
+        DashboardReport,
     )),
 )
