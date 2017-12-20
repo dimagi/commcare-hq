@@ -157,7 +157,7 @@ class Command(BaseModelReconciliationCommand):
         if self.commit:
             updates = [(case_id,
                         {'referral_closed_reason': "duplicate_reconciliation",
-                         'referral_closed_date': datetime.datetime.today()
+                         'referral_closed_date': datetime.date.today()
                          }, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
