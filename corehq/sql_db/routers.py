@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.conf import settings
 
-from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
 from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
@@ -43,10 +43,8 @@ class MonolithRouter(object):
 
 def allow_migrate(db, app_label):
     if app_label == ICDS_REPORTS_APP:
-        try:
-            return db == connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
-        except KeyError:
-            return False
+        db_alias = get_icds_ucr_db_alias()
+        return db_alias and db_alias == db
 
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP
