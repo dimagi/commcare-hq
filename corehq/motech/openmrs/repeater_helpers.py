@@ -297,7 +297,7 @@ def get_subresource_instances(requests, person_uuid, subresource):
 def find_patient(requests, domain, case_id, openmrs_config):
     PatientFinder = to_function(openmrs_config.patient_finder)
     if not PatientFinder:
-        return None
+        raise ImportError('Cannot import PatientFinder {}'.format(openmrs_config.patient_finder))
 
     case = CaseAccessors(domain).get_case(case_id)
     patient_finder = PatientFinder()
