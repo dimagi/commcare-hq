@@ -212,24 +212,22 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
             var error = function(err) {
                 FormplayerFrontend.regions.loadingProgress.empty();
-
-                var msg;
-                switch(err.code) {
-                case err.PERMISSION_DENIED:
-                    msg = "You denied CommCare HQ permission to read your browser's current location. ";
-                    break;
-                case err.TIMEOUT:
-                    msg = "Your connection was not strong enough to acquire your location. Please try again later. ";
-                    break;
-                case err.POSITION_UNAVAILABLE:
-                default:
-                    msg = "Your browser location could not be determined. ";
-                    break;
-                }
                 FormplayerFrontend.trigger('showError',
-                    msg + "Without access to your location, computations that rely on the here() function will show up blank.");
-
+                    getSpecificErrorMsg() +
+                    "Without access to your location, computations that rely on the here() function will show up blank.");
             };
+
+            var getErrorMessage = function(err) {
+                switch(err.code) {
+                    case err.PERMISSION_DENIED:
+                        return "You denied CommCare HQ permission to read your browser's current location. ";
+                    case err.TIMEOUT:
+                        return "Your connection was not strong enough to acquire your location. Please try again later. ";
+                    case err.POSITION_UNAVAILABLE:
+                    default:
+                        return "Your browser location could not be determined. ";
+                }
+            }
 
             if (navigator.geolocation) {
                 var progressView = new FormplayerFrontend.Layout.Views.ProgressView({
