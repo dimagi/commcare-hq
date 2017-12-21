@@ -352,6 +352,7 @@ api_params:
       - precision_handicraft_printing_and_related
       - market_oriented_agriculture_fishery
       - physical_and_engineering_science_associate
+      - housewife
 - api_param_name: socioeconomic_status
   direction: 1
   case_type:
