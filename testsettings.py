@@ -102,3 +102,10 @@ LOGGING = {
     'version': 1,
     'loggers': {},
 }
+
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default',
+    'icds-ucr': 'default',
+    'icds-test-ucr': 'default',
+}
