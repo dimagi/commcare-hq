@@ -180,7 +180,7 @@ api_params:
     private: treatment_options
   choices:
     private:
-      - FDC
+      - fdc
       - private
     public:
       - schedule_mwf
