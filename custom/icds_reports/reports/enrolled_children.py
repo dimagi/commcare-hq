@@ -56,8 +56,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
         total += all_children
         data_for_map[on_map_name]['valid'] += valid
         data_for_map[on_map_name]['all'] += all_children
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Children': BLUE})

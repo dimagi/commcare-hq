@@ -53,8 +53,7 @@ def get_registered_household_data_map(domain, config, loc_level, show_test=False
 
         average.append(household)
         data_for_map[on_map_name]['household'] += household
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Household': BLUE})

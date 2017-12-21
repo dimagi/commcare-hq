@@ -235,15 +235,22 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     vm.updateMap = function (geography) {
-        if (geography.id !== void(0) && vm.data[0].data[geography.id] && vm.data[0].data[geography.id].original_name.length > 0) {
-            var html = vm.getContent(geography);
+        if (geography.id !== void(0) && vm.data[0].data[geography.id] && vm.data[0].data[geography.id].original_name.length > 1) {
+            var html = "";
+            window.angular.forEach(vm.data[0].data[geography.id].original_name, function (value) {
+                html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
+            });
             var css = 'display: block; left: ' + event.clientX + 'px; top: ' + event.clientY + 'px;';
             var ele = d3.select('#locPopup')
                 .attr('style', css)
                 .html(html);
             $compile(ele[0])($scope);
         } else {
-            locationsService.getLocationByNameAndParent((geography.id || geography), location_id).then(function (locations) {
+            var location = geography.id || geography;
+            if (geography.id !== void(0) && vm.data[0].data[geography.id] && vm.data[0].data[geography.id].original_name.length === 1) {
+                location = vm.data[0].data[geography.id].original_name[0]
+            }
+            locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
                 var location = locations[0];
                 if (!location) {
                     return;

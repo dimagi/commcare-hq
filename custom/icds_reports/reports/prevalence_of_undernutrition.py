@@ -74,8 +74,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         data_for_map[on_map_name]['moderately_underweight'] += moderately_underweight
         data_for_map[on_map_name]['normal'] += normal
         data_for_map[on_map_name]['total'] += valid
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']

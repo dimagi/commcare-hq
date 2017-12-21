@@ -62,8 +62,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
 
         data_for_map[on_map_name]['valid'] += valid
         data_for_map[on_map_name]['all'] += all_adolescent
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Adolescent Girls': BLUE})

@@ -675,6 +675,16 @@ class ExportIndicatorView(View):
             ).to_export('csv', location)
         elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
+            if 'all' in awcs:
+                location = request.POST.get('location', '')
+                if location:
+                    awcs = [loc.location_id for loc in SQLLocation.objects.get(
+                        location_id=location).get_descendants().filter(
+                        location_type__code=AWC_LOCATION_TYPE_CODE)]
+                else:
+                    awcs = [loc.location_id for loc in SQLLocation.objects.filter(
+                        location_type__code=AWC_LOCATION_TYPE_CODE
+                    )]
             pdf_format = request.POST.get('pdfformat')
             prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
