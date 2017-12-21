@@ -1,14 +1,40 @@
-## Analytics
-We use multiple Analytics platforms. Google Analytics and Kissmetrics calls are done mainly using respective Javascript APIs. We track few aggregated user properties on [Kissmetrics from server side](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py#L210). For Hubspot we use their REST API from server side as well.
+# Analytics
+We use multiple analytics platforms, tracking events used primarily by the product and growth teams.
 
 [Directory of events and properties we track in these platforms](https://docs.google.com/spreadsheets/d/1frMdFeznNcMAIyMW3pG3zes6mmY03UG67HyMUHXlb-s/edit#gid=1804103672)
 
-### Google Analytics and Kissmetrics JS
-See [analytics_all.html](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/templates/hqwebapp/includes/analytics_all.html) and see example usages
+## Technical Overview
 
-### Server Side Kissmetrics
+### Server Side
+
+TODO
+
+### Client Side
+
+TODO
+
+### Debugging
+
+TODO
+
+## Individual Services
+
+### Google Analytics
+
+TODO
+
+### Kissmetrics
+
+TODO: expand?
+
 All kissmetrics actions can be done server side instead of client side using the `track_workflow` and `identify` functions in the [analytics tasks](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py) file. `track_workflow` is used to register events and accepts an optional argument to update properties as well. `identify` can be used if you are only looking to update a property.
-### Hubspot
+
+We track a few aggregated user properties on [Kissmetrics from server side](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py#L210).
+
+### HubSpot
+
+TODO: cookie
+TODO: periodic failures
 
 #### Adding/Removing Hubspot properties
 
@@ -22,4 +48,16 @@ Much of the analytics we use in hubspot are generated during the signup process.
 
 #### Testing
 
-To start testing, run Celery and update `HUBSPOT_API_KEY` and `HUBSPOT_ID` in `settings.ANALYTICS_IDS`. Hubspot provides a public demo portal with API access for testing. The credentials for this are available on their [API overview page](http://developers.hubspot.com/docs/overview). If you need to test using our production portal the credentials can be found in dimagi_shared keepass. Let marketing know before testing on production portal and clean-up after the testing is finished
+To start testing, run Celery and update `HUBSPOT_API_KEY` and `HUBSPOT_ID` in `settings.ANALYTICS_IDS`. Hubspot provides a public demo portal with API access for testing. The credentials for this are available on their [API overview page](http://developers.hubspot.com/docs/overview). If you need to test using our production portal the credentials can be found in dimagi_shared keepass. Let marketing know before testing on production portal and clean up after the testing is finished
+
+### Drift
+
+TODO
+
+### Fullstory
+
+TODO
+
+### Facebook Pixel
+
+TODO
