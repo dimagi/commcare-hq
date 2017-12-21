@@ -1,5 +1,5 @@
 # Analytics
-We use multiple analytics platforms, tracking events used primarily by the product and growth teams.
+We use multiple analytics platforms, tracking events used primarily by the product and growth teams. This includes tracking general usage (like page visits), tracking custom events (like when a user clicks a specific button), and managing A/B tests.
 
 [Directory of events and properties we track in these platforms](https://docs.google.com/spreadsheets/d/1frMdFeznNcMAIyMW3pG3zes6mmY03UG67HyMUHXlb-s/edit#gid=1804103672)
 
@@ -36,8 +36,13 @@ We track a few aggregated user properties on [Kissmetrics from server side](http
 
 ### HubSpot
 
-TODO: cookie
-TODO: periodic failures
+Used heavily by growth team.
+
+Most of the code is server side [analytics tasks](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py) that sends a "form" to Hubspot when a particular action happens on HQ.
+
+On the client side, [hubspot.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/hubspot.js) has functions to identify users and track events, but these are barely used. We do include a Hubspot-provided script that tracks basic usage (e.g., page visits) and also sets a cookie to identify the user (described [here](https://knowledge.hubspot.com/articles/kcs_article/reports/what-cookies-does-hubspot-set-in-a-visitor-s-browser) as the "hubspotutk" cookie). The server's form-sending code checks for this cookie and, if it isn't present, doesn't send forms.
+
+In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of non-event-based data to Hubspot and Kissmetrics (form submission count, mobile worker count, etc.).
 
 #### Adding/Removing Hubspot properties
 
@@ -52,6 +57,8 @@ Much of the analytics we use in hubspot are generated during the signup process.
 #### Testing
 
 To start testing, run Celery and update `HUBSPOT_API_KEY` and `HUBSPOT_ID` in `settings.ANALYTICS_IDS`. Hubspot provides a public demo portal with API access for testing. The credentials for this are available on their [API overview page](http://developers.hubspot.com/docs/overview). If you need to test using our production portal the credentials can be found in dimagi_shared keepass. Let marketing know before testing on production portal and clean up after the testing is finished
+
+When troubleshooting in Hubspot's portal, it's often useful to create lists based on key events.
 
 ### Drift
 
