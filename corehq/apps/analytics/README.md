@@ -7,11 +7,15 @@ We use multiple analytics platforms, tracking events used primarily by the produ
 
 ### Server Side
 
-TODO
+This varies depending on the service; see details on individual services below.
 
 ### Client Side
 
 TODO
+
+### A/B tests
+
+New tests need to be added to [ab_tests](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/ab_tests.py). Typically, view code will check the test's `version` and set a corresponding flag in the template context, which will then use that flag to deliver the appropriate content for the user's test group.
 
 ### Debugging
 
