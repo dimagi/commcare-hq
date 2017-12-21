@@ -21,6 +21,7 @@ from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsAdherenceRepeater,
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsTreatmentOutcomeRepeater,
+    NinetyNineDotsUnenrollPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
 )
 from custom.enikshay.tests.utils import (
@@ -74,11 +75,12 @@ class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         )
         self.create_case(dots_registered_case)
 
-    def _update_case(self, case_id, case_properties):
+    def _update_case(self, case_id, case_properties, close=False):
         return self.create_case(
             CaseStructure(
                 case_id=case_id,
                 attrs={
+                    "close": close,
                     "update": case_properties,
                 }
             )
@@ -258,4 +260,43 @@ class TestTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, ENikshayRepea
         self.assertEqual(1, len(self.repeat_records().all()))
 
         self._update_case(self.episode_id, {TREATMENT_SUPPORTER_FIRST_NAME: 'boo'})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestUnenrollPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+
+    def setUp(self):
+        super(TestUnenrollPatientRepeater, self).setUp()
+        self.repeater = NinetyNineDotsUnenrollPatientRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+        )
+        self.repeater.white_listed_case_types = ['episode']
+        self.repeater.save()
+
+    def test_trigger_99dots_disabled(self):
+        self.create_case_structure()
+        self._create_99dots_registered_case()
+        self._create_99dots_enabled_case()
+        self.assign_person_to_location(self.phi.location_id)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {'dots_99_enabled': 'false'})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {'dots_99_enabled': 'true'})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+    def test_trigger_case_closed(self):
+        self.create_case_structure()
+        self._create_99dots_registered_case()
+        self._create_99dots_enabled_case()
+        self.assign_person_to_location(self.phi.location_id)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {'close_reason': 'boo'}, close=True)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {'close_reason': 'duplicate'}, close=True)
         self.assertEqual(1, len(self.repeat_records().all()))

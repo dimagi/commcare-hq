@@ -27,6 +27,7 @@ from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
     AdherencePayloadGenerator,
     RegisterPatientPayloadGenerator,
     TreatmentOutcomePayloadGenerator,
+    UnenrollPatientPayloadGenerator,
     UpdatePatientPayloadGenerator,
 )
 from custom.enikshay.tests.utils import (
@@ -330,6 +331,34 @@ class TestTreatmentOutcomePayloadGenerator(TestPayloadGeneratorBase):
                 "beneficiary_id": "person",
                 "treatment_outcome": "the_end_of_days",
                 "end_date": "2017-01-07"
+            }
+        )
+        self.assertEqual(self._get_actual_payload(cases), expected_payload)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestUnenrollPatientPayloadGenerator(TestPayloadGeneratorBase):
+    def _get_actual_payload(self, casedb):
+        return UnenrollPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
+
+    def test_get_payload_closed_case(self):
+        self.episode.attrs['close'] = True
+        self.episode.attrs['update']['close_reason'] = 'invalid_episode'
+        cases = self.create_case_structure()
+        expected_payload = json.dumps(
+            {
+                "beneficiary_id": "person",
+                "reason": "invalid_episode"
+            }
+        )
+        self.assertEqual(self._get_actual_payload(cases), expected_payload)
+
+    def test_get_payload_source_changed(self):
+        cases = self.create_case_structure()
+        expected_payload = json.dumps(
+            {
+                "beneficiary_id": "person",
+                "reason": "source_changed"
             }
         )
         self.assertEqual(self._get_actual_payload(cases), expected_payload)
