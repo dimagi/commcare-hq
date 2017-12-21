@@ -96,19 +96,24 @@ describe('Indie Map Directive', function () {
 
     it('tests init topo json when location level equal 0', function () {
         $location.search('selectedLocationLevel', 0);
-        $location.search('location_name', 'test');
+        $location.search('location_name', 'Madhya Pradesh');
 
         var locationLevel = $location.search()['selectedLocationLevel'];
-        var location = $location.search()['location_name'];
+        var location = {
+            location_type: "state",
+            location_type_name: "state",
+            map_location_name: "Madhya Pradesh",
+            name: "Madhya Pradesh",
+        };
 
         assert.equal(locationLevel, 0);
-        assert.equal(location, 'test');
+        assert.equal(location.name, 'Madhya Pradesh');
 
         controller.initTopoJson(locationLevel, location);
 
-        assert.equal(controller.scope, 'test');
-        assert.equal(controller.type, 'testTopo');
-        assert.equal(Datamap.prototype['testTopo'], DISTRICT_TOPOJSON);
+        assert.equal(controller.scope, 'Madhya Pradesh');
+        assert.equal(controller.type, 'Madhya PradeshTopo');
+        assert.equal(Datamap.prototype['Madhya PradeshTopo'], DISTRICT_TOPOJSON);
     });
 
     it('tests init topo json when location level equal 1', function () {
@@ -116,16 +121,21 @@ describe('Indie Map Directive', function () {
         $location.search('location_name', 'test');
 
         var locationLevel = $location.search()['selectedLocationLevel'];
-        var location = $location.search()['location_name'];
+        var location = {
+            location_type: "state",
+            location_type_name: "state",
+            map_location_name: "test_on_map",
+            name: "test",
+        };
 
         assert.equal(locationLevel, 1);
-        assert.equal(location, 'test');
+        assert.equal(location.name, 'test');
 
         controller.initTopoJson(locationLevel, location);
 
-        assert.equal(controller.scope, 'test');
-        assert.equal(controller.type, 'testTopo');
-        assert.equal(Datamap.prototype['testTopo'], BLOCK_TOPOJSON);
+        assert.equal(controller.scope, 'test_on_map');
+        assert.equal(controller.type, 'test_on_mapTopo');
+        assert.equal(Datamap.prototype['test_on_mapTopo'], BLOCK_TOPOJSON);
     });
 
     it('tests html content of update map', function () {

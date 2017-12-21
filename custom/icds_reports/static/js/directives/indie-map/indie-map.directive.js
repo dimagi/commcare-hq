@@ -51,11 +51,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = STATES_TOPOJSON;
         } else if (location_level === 0) {
-            vm.scope = location;
+            vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
         } else if (location_level === 1) {
-            vm.scope = location;
+            vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
         }
