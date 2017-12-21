@@ -371,7 +371,7 @@ def copy_app(request, domain):
                 )
                 linked_app.save()
                 try:
-                    update_linked_app(app)
+                    update_linked_app(linked_app)
                 except AppLinkError as e:
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
