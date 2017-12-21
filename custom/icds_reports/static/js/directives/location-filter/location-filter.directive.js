@@ -1,4 +1,4 @@
-/* global _, LocationModalController, LocationFilterController */
+/* global _ */
 
 var transformLocationTypeName = function(locationTypeName) {
     if (locationTypeName === 'awc') {
@@ -59,7 +59,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         }
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (value, index) {
-            if (value && value.location_id === vm.userLocationId) {
+            if (value && value.location_id === userLocationId) {
                 i = index;
             }
         });
@@ -83,16 +83,16 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.reset = function() {
-        if (vm.userLocationId !== null) {
+        if (userLocationId !== null) {
             var i = -1;
             window.angular.forEach(vm.selectedLocations, function (key, value) {
-                if (key !== null && key.location_id === vm.userLocationId) {
+                if (key !== null && key.location_id === userLocationId) {
                     i = value;
                 }
             });
             vm.selectedLocations = vm.selectedLocations.slice(0, i + 1);
             vm.selectedLocations.push(ALL_OPTION);
-            vm.selectedLocationId = vm.userLocationId;
+            vm.selectedLocationId = userLocationId;
         } else {
             vm.selectedLocations = [ALL_OPTION];
             vm.selectedLocationId = null;
@@ -117,9 +117,8 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         storageService.setKey('search', $location.search());
     }
 
-    vm.userLocationId = userLocationId;
     vm.animationsEnabled = true;
-    vm.selectedLocationId = $location.search()['location_id'] || vm.userLocationId;
+    vm.selectedLocationId = $location.search()['location_id'] || userLocationId;
     vm.locationsCache = {};
     vm.selectedLocations = [];
     vm.hierarchy = [];

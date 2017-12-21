@@ -4,7 +4,7 @@
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('Additional Filter Controller', function () {
+describe('Additional filter controller', function () {
 
     beforeEach(module('icdsApp'));
 
@@ -32,17 +32,19 @@ describe('Additional Filter Controller', function () {
         });
     });
 
-    it('tests instantiate the controller properly', function () {
-        chai.expect(controller).not.to.be.a('undefined');
+    it('should instantiate the controller properly', function () {
+        var expect = chai.expect;
+        expect(controller).not.to.be.a('undefined');
     });
 
-    it('tests call open modal', function () {
+    it('should call open modal', function () {
+        var expect = chai.expect;
         var open = sinon.spy($uibModal, 'open');
         controller.open();
-        chai.expect(open).to.have.been.called;
+        expect(open).to.have.been.called;
     });
 
-    it('tests get empty placeholder', function () {
+    it('should get empty placeholder', function () {
         var result = controller.getPlaceholder();
         var expected = 'Additional Filter';
 
@@ -50,7 +52,7 @@ describe('Additional Filter Controller', function () {
     });
 });
 
-describe('Additional Modal Controller', function () {
+describe('Additional modal controller', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("genders", [
@@ -102,25 +104,29 @@ describe('Additional Modal Controller', function () {
         });
     });
 
-    it('tests instantiate the controller properly', function () {
-        chai.expect(controller).not.to.be.a('undefined');
+    it('should instantiate the controller properly', function () {
+        var expect = chai.expect;
+        expect(controller).not.to.be.a('undefined');
     });
 
-    it('tests call open modal', function () {
-        chai.expect($uibModal.open).to.have.been.called;
+    it('should call open modal', function () {
+        var expect = chai.expect;
+        expect($uibModal.open).to.have.been.called;
     });
 
-    it('tests call close modal', function () {
+    it('should call close modal', function () {
+        var expect = chai.expect;
         controller.apply();
-        chai.expect(modalInstance.close).to.have.been.called;
+        expect(modalInstance.close).to.have.been.called;
     });
 
-    it('tests call dismiss modal', function () {
+    it('should call dismiss modal', function () {
+        var expect = chai.expect;
         controller.close();
-        chai.expect(modalInstance.dismiss).to.have.been.called;
+        expect(modalInstance.dismiss).to.have.been.called;
     });
 
-    it('tests reset filters', function () {
+    it('should reset filters', function () {
         controller.selectedGender = "male";
         controller.selectedAge = "6";
         assert.equal(controller.selectedAge, '6');
@@ -131,17 +137,17 @@ describe('Additional Modal Controller', function () {
         assert.equal(controller.selectedGender, '');
     });
 
-    it('tests select gender', function () {
+    it('should select gender', function () {
         var expected = 'M';
         assert.equal(controller.selectedGender, expected);
     });
 
-    it('tests select age', function () {
+    it('should select age', function () {
         var expected = '0-6 months';
         assert.equal(controller.selectedAge, expected);
     });
 
-    it('tests get path', function () {
+    it('should get path', function () {
         var expected = 6;
         assert.equal(controller.ages.length, expected);
     });

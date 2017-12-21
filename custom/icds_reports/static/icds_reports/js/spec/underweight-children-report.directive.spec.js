@@ -1,10 +1,10 @@
-/* global module, inject, _, chai */
+/* global module, inject, _ */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('Underweight Children Directive', function () {
+describe('UnderweightChildrenDirective', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -49,9 +49,6 @@ describe('Underweight Children Directive', function () {
         controller.step = 'map';
     }));
 
-    it('tests instantiate the controller properly', function () {
-        chai.expect(controller).not.to.be.a('undefined');
-    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
