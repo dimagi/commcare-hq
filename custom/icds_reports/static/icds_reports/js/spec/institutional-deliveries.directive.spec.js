@@ -1,10 +1,10 @@
-/* global module, inject, chai */
+/* global module, inject */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('Institutional Deliveries Directive', function () {
+describe('InstitutionalDeliveriesDirective', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -34,9 +34,6 @@ describe('Institutional Deliveries Directive', function () {
         controller.step = 'map';
     }));
 
-    it('tests instantiate the controller properly', function () {
-        chai.expect(controller).not.to.be.a('undefined');
-    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');

@@ -1,10 +1,10 @@
-/* global module, inject, _, chai */
+/* global module, inject, _ */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('Exclusive Breastfeeding Directive', function () {
+describe('ExclusiveBreastfeedingDirective', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -39,9 +39,6 @@ describe('Exclusive Breastfeeding Directive', function () {
         controller.step = 'map';
     }));
 
-    it('tests instantiate the controller properly', function () {
-        chai.expect(controller).not.to.be.a('undefined');
-    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');

@@ -1,10 +1,10 @@
-/* global module, inject, chai */
+/* global module, inject */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('Dot Link Directive', function () {
+describe('DotLinkDirective', function () {
 
     var $scope, $compile, $location, controller, $httpBackend;
 
@@ -28,10 +28,6 @@ describe('Dot Link Directive', function () {
         $scope.$digest();
         controller = compiled.controller("dotLink");
     }));
-
-    it('tests instantiate the controller properly', function () {
-        chai.expect(controller).not.to.be.a('undefined');
-    });
 
     it('tests active', function () {
         controller.route  = '/test';
