@@ -24,7 +24,9 @@ Useful localsettings when working with analytics:
 
 ### Google Analytics
 
-TODO
+Used primarily by product team.
+
+No server component, just [google.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/google.js). We track events using `<module>.track.click` and `<module>.track.event`. We also use the default tracking (page views, etc.).
 
 ### Kissmetrics
 
