@@ -384,8 +384,8 @@ def async_indicators_metrics():
         datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
     oldest_100_indicators = AsyncIndicator.objects.all()[:100]
-    oldest_indicator = oldest_100_indicators[0]
-    if oldest_indicator:
+    if oldest_100_indicators.exists():
+        oldest_indicator = oldest_100_indicators[0]
         lag = (now - oldest_indicator.date_created).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 
