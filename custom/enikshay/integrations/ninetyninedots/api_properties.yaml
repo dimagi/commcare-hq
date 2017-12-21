@@ -180,7 +180,7 @@ api_params:
     private: treatment_options
   choices:
     private:
-      - FDC
+      - fdc
       - private
     public:
       - schedule_mwf
@@ -300,8 +300,8 @@ api_params:
     public: history_of_att
   choices:
     public:
-      - yes
-      - no
+      - 'yes'
+      - 'no'
 - api_param_name: marital_status
   direction: 1
   case_type:
@@ -352,6 +352,9 @@ api_params:
       - precision_handicraft_printing_and_related
       - market_oriented_agriculture_fishery
       - physical_and_engineering_science_associate
+      - housewife
+      - workers_not_reporting_any_occupation
+      - not_known
 - api_param_name: socioeconomic_status
   direction: 1
   case_type:
@@ -371,8 +374,8 @@ api_params:
     public: other_comorbidity
   choices:
     public:
-      - yes
-      - no
+      - 'yes'
+      - 'no'
 - api_param_name: other_comorbidity_detail
   direction: 1
   case_type:
