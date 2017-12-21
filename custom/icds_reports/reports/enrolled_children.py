@@ -63,7 +63,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
     fills.update({'Children': BLUE})
     fills.update({'defaultFill': GREY})
 
-    gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
+    gender_ignored, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 6 years')
 
     return [
         {
@@ -74,24 +74,26 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
                 "average": sum(average) / float(len(average) or 1),
                 "average_format": 'number',
                 "info": _((
-                    "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
+                    "Total number of children between the age of ({}) who are enrolled for ICDS services"
+                    .format(age_label)
                 )),
                 "extended_info": [
                     {
                         'indicator':
-                            'Number of children (0 - 6 years) who are enrolled for ICDS services{}:'
+                            'Number of children{} who are enrolled for ICDS services:'
                             .format(chosen_filters),
                         'value': indian_formatted_number(total_valid)
                     },
                     {
                         'indicator': (
-                            'Total number of children (0 - 6 years) who are registered{}: '.format(chosen_filters)
+                            'Total number of children{} who are registered: '
+                            .format(chosen_filters)
                         ),
                         'value': indian_formatted_number(total)
                     },
                     {
                         'indicator': (
-                            'Percentage of registered children (0-6 years) who are enrolled for ICDS services{}:'
+                            'Percentage of registered children{} who are enrolled for ICDS services:'
                             .format(chosen_filters)
                         ),
                         'value': '%.2f%%' % (total_valid * 100 / float(total or 1))

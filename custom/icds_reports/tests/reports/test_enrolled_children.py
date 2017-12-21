@@ -23,7 +23,7 @@ class TestEnrolledChildren(TestCase):
             {
                 "rightLegend": {
                     "info": "Total number of children between the age "
-                            "of 0 - 6 years who are enrolled for ICDS services",
+                            "of (0 - 6 years) who are enrolled for ICDS services",
                     "average": 643.5,
                     "average_format": "number",
                     'extended_info': [
@@ -37,7 +37,8 @@ class TestEnrolledChildren(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered children (0-6 years) who are enrolled for ICDS services:'
+                                'Percentage of registered children (0 - 6 years) '
+                                'who are enrolled for ICDS services:'
                             ),
                             'value': '100.00%'
                         }
@@ -81,7 +82,7 @@ class TestEnrolledChildren(TestCase):
             {
                 "rightLegend": {
                     "info": "Total number of children between the age "
-                            "of 0 - 6 years who are enrolled for ICDS services",
+                            "of (0 - 6 years) who are enrolled for ICDS services",
                     "average": 309.0,
                     "average_format": "number",
                     'extended_info': [
@@ -95,7 +96,8 @@ class TestEnrolledChildren(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered children (0-6 years) who are enrolled for ICDS services:'
+                                'Percentage of registered children (0 - 6 years) '
+                                'who are enrolled for ICDS services:'
                             ),
                             'value': '100.00%'
                         }

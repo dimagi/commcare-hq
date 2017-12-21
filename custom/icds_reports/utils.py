@@ -419,14 +419,13 @@ def chosen_filters_to_labels(config, default_interval=''):
     elif age_in:
         chosen_age = '{age}'.format(age=age_intervals.get(age_in[-1]))
     else:
-        chosen_age = ''
-    age_label = chosen_age if chosen_age else default_interval
+        chosen_age = default_interval
 
-    delimiter = ', ' if gender and (age or age_in) else ''
+    delimiter = ', ' if gender and chosen_age else ''
     chosen_filters = ' ({gender}{delimiter}{age})'\
-        .format(gender=chosen_gender, delimiter=delimiter, age=chosen_age) if gender or age else ''
+        .format(gender=chosen_gender, delimiter=delimiter, age=chosen_age) if gender or chosen_age else ''
 
-    return gender_label, age_label, chosen_filters
+    return gender_label, chosen_age, chosen_filters
 
 
 def zip_folder(pdf_files):
