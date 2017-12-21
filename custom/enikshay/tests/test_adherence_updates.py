@@ -356,6 +356,26 @@ class TestAdherenceUpdater(TestCase):
             }
         )
 
+    def test_start_date_after_purge_date_with_later_adherence(self):
+        purge_date = datetime.date(2016, 1, 10)
+        adherence_schedule_start_date = datetime.date(2016, 1, 20)
+        latest_adherence_date = datetime.date(2016, 1, 22)
+
+        self.assert_update(
+            purge_date,
+            adherence_schedule_start_date,
+            'schedule1',
+            [(latest_adherence_date, DTIndicators[0])], output={
+                # Should be adherence_schedule_start_date - 1
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 19),
+                # These two are 0 since no adherence data has been purged
+                'expected_doses_taken': 0,
+                'aggregated_score_count_taken': 0,
+                'adherence_latest_date_recorded': latest_adherence_date,
+                'adherence_total_doses_taken': 1
+            }
+        )
+
     def test_multiple_adherence_cases_all_greater(self):
         self.assert_update(
             datetime.date(2016, 1, 20),
