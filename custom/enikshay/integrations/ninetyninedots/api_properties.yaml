@@ -353,6 +353,8 @@ api_params:
       - market_oriented_agriculture_fishery
       - physical_and_engineering_science_associate
       - housewife
+      - workers_not_reporting_any_occupation
+      - not_known
 - api_param_name: socioeconomic_status
   direction: 1
   case_type:
