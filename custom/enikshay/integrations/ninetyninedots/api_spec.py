@@ -193,14 +193,13 @@ class BasePatientPayload(StrictJsonObject):
             case = cases[case_type]
             for spec_property in api_spec.params_by_case_type(cls._sector, case_type):
                 if spec_property.getter:
-                    payload_kwargs[spec_property.api_param_name] = to_function(spec_property.getter)(
+                    prop = to_function(spec_property.getter)(
                         case.dynamic_case_properties(),
                         spec_property.get_by_sector('case_properties', cls._sector)
                     )
                 else:
-                    payload_kwargs[spec_property.api_param_name] = case.get_case_property(
-                        spec_property.get_by_sector('case_property', cls._sector)
-                    )
+                    prop = case.get_case_property(spec_property.get_by_sector('case_property', cls._sector))
+                payload_kwargs[spec_property.api_param_name] = prop or None
 
         payload_kwargs.update(cls.get_locations(person_case, episode_case))
         return cls(payload_kwargs)
