@@ -5,7 +5,18 @@ from corehq.apps.userreports.reports.builder import (
     make_form_question_indicator,
     make_multiselect_question_indicator,
 )
-from corehq.apps.userreports.reports.builder.const import COUNT_PER_CHOICE
+from corehq.apps.userreports.reports.builder.const import (
+    AGGREGATION_COUNT_PER_CHOICE,
+    AGGREGATION_AVERAGE,
+    AGGREGATION_GROUP_BY,
+    AGGREGATION_SUM,
+    AGGREGATION_SIMPLE,
+    AGGREGATION_COUNT,
+    UCR_REPORT_AGGREGATION_SIMPLE,
+    UCR_REPORT_AGGREGATION_SUM,
+    UCR_REPORT_AGGREGATION_EXPAND,
+    UCR_REPORT_AGGREGATION_AVG,
+)
 from corehq.apps.userreports.sql import get_column_name
 from dimagi.utils.decorators.memoized import memoized
 import six
@@ -43,9 +54,12 @@ class ColumnOption(object):
     @memoized
     def aggregation_options(self):
         if "decimal" in self._data_types:
-            return ("Group By", COUNT_PER_CHOICE, "Sum", "Average")
+            return (AGGREGATION_GROUP_BY,
+                    AGGREGATION_COUNT_PER_CHOICE,
+                    AGGREGATION_SUM,
+                    AGGREGATION_AVERAGE)
         else:
-            return ("Group By", COUNT_PER_CHOICE)
+            return (AGGREGATION_GROUP_BY, AGGREGATION_COUNT_PER_CHOICE)
 
     def _get_aggregation_config(self, agg):
         """
@@ -55,12 +69,12 @@ class ColumnOption(object):
         :return: UCR config aggregation value
         """
         aggregation_map = {
-            'simple': 'simple',
-            COUNT_PER_CHOICE: 'expand',
-            'Sum': 'sum',
-            'Average': 'avg',
-            'Group By': 'simple',
-            None: "simple",
+            AGGREGATION_SIMPLE: UCR_REPORT_AGGREGATION_SIMPLE,
+            AGGREGATION_COUNT_PER_CHOICE: UCR_REPORT_AGGREGATION_EXPAND,
+            AGGREGATION_SUM: UCR_REPORT_AGGREGATION_SUM,
+            AGGREGATION_AVERAGE: UCR_REPORT_AGGREGATION_AVG,
+            AGGREGATION_GROUP_BY: UCR_REPORT_AGGREGATION_SIMPLE,
+            None: UCR_REPORT_AGGREGATION_SIMPLE,
         }
         return aggregation_map[agg]
 
@@ -112,10 +126,11 @@ class QuestionColumnOption(ColumnOption):
         return ret
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        if aggregation in ("Sum", "Avg"):
+        if aggregation not in self.aggregation_options:
+            raise Exception("invalid aggregation option: {}".format(aggregation))
+
+        if aggregation in (AGGREGATION_SUM, AGGREGATION_AVERAGE):
             data_type = "decimal"
-        elif aggregation in ("sum", "avg"):
-            raise Exception("I think this should be Sum or Avg, where did you find this?...")
         else:
             data_type = None  # use the default
 
@@ -163,7 +178,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         )
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
-        assert aggregation in [COUNT_PER_CHOICE, "simple"]
+        assert aggregation in [AGGREGATION_COUNT_PER_CHOICE, AGGREGATION_SIMPLE]
 
         if is_aggregated_on:
             return [{
@@ -182,7 +197,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
                 "type": "field",
                 "column_id": "column_{}_{}".format(index, choice_index),
                 "format": "default",
-                "aggregation": "sum",
+                "aggregation": UCR_REPORT_AGGREGATION_SUM,
                 "field": "{}_{}".format(self._get_choice_indicator()['column_id'], choice['value']),
                 "display": display_text + self.LABEL_DIVIDER + choice['label']
             })
@@ -210,7 +225,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         return [self._get_filter_and_agg_indicator(), self._get_choice_indicator()]
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        if aggregation == "Group By":
+        if aggregation == AGGREGATION_GROUP_BY:
             return super(MultiselectQuestionColumnOption, self).get_indicator(
                 aggregation, is_multiselect_chart_report)
         else:
@@ -228,10 +243,10 @@ class CasePropertyColumnOption(ColumnOption):
         user selected in the UI.
         """
         map = {
-            "simple": "string",
-            "expand": "string",
-            "sum": "decimal",
-            "avg": "decimal",
+            UCR_REPORT_AGGREGATION_SIMPLE: "string",
+            UCR_REPORT_AGGREGATION_EXPAND: "string",
+            UCR_REPORT_AGGREGATION_SUM: "decimal",
+            UCR_REPORT_AGGREGATION_AVG: "decimal",
         }
         return map[self._get_aggregation_config(aggregation)]
 
@@ -307,7 +322,7 @@ class CountColumn(ColumnOption):
         :param agg: UI aggregation value
         :return: UCR config aggregation value
         """
-        return "sum"
+        return UCR_REPORT_AGGREGATION_SUM
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         return {
@@ -328,4 +343,4 @@ class CountColumn(ColumnOption):
         # "format" field of the report builder. We're hoping that "Count"
         # will make more sense to users than "Sum", which would technically
         # be more accurate.
-        return ("Count",)
+        return (AGGREGATION_COUNT,)
