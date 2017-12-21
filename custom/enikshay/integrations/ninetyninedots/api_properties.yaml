@@ -237,7 +237,7 @@ api_params:
   choices:
     both:
       - reactive
-      - non-reactive
+      - non_reactive
       - unknown
 - api_param_name: cpt_initiation_date
   case_type:
