@@ -11,7 +11,15 @@ This varies depending on the service; see details on individual services below.
 
 ### Client Side
 
-TODO
+For passing data from the server to the client, which is mostly API keys, analytics uses a variation on [initial_page_data](https://github.com/dimagi/js-guide/blob/master/integration-patterns.md): same general idea, but with better namespacing and accessed via [initial.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/initial.js). Most of the analytics templates just contain this initial data, while a few contain the actual third-party scripts (for the services that don't interact with any other HQ JavaScript).
+
+Analytics has its own logging infrastructure, is set up in [logging.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/logging.js) and prints to the browser console. The logging level can be controlled via `settings.ANALYTICS_CONFIG['LOG_LEVEL']` (see "Debugging" below).
+
+Analytics code is inherently somewhat fragile because it depends on third-party services. There are two ways this fragility has repeatedly manifested:
+- Script inclusions: Each service has a script they host that we have to include on our pages, which may fail due to an adblocker or other reason. Analytics needs to fail gracefully in these cases. This leads to analytics code being promise-driven.
+- Callbacks: Events are often fired when a user takes an action that will lead them to a different page. The event triggers an ajax request to the third-party service, and we have to wait for it to complete before letting the user move on, since leaving the page would cancel the pending request and we'd lose the data. This leads to a pattern where the "main" behavior of a tracked button (e.g., submitting a form) is contained in a callback which is executed when the analytics request is finished (or when that request has failed, or when that request has taken too long to justify making the user wait for it...).
+
+Beyond the general infrastructure, there's a JavaScript module for each of the major analytics services. Each of these has initialization logic that checks if analytics is available for the given server and user, loads the service's script(s), and then typically makes a call to the service to identify the current user. These modules generally expose one or more tracking functions to be called from various other parts of HQ.
 
 ### A/B tests
 
@@ -22,7 +30,7 @@ New tests need to be added to [ab_tests](https://github.com/dimagi/commcare-hq/b
 Useful localsettings when working with analytics:
 - `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient.
 - `ANALYTICS_CONFIG.DEBUG`: Analytics code isn't run on every server. This is sometimes gated by checking `SERVER_ENVIRONMENT` and sometimes by setting or blanking out the relevant API id key in a specific server's settings. Set `DEBUG` to `True` to bypass these checks.
-- `ANALYTICS_CONFIG.LOG_LEVEL`: Client-side analytics code has its own logging infrastructure, which prints to the browser console. Turning it up to `verbose` can help debug.
+- `ANALYTICS_CONFIG.LOG_LEVEL`: Controls the client-side logging. Turning it up to `verbose` can help debug.
 
 ## Individual Services
 
@@ -30,7 +38,7 @@ Useful localsettings when working with analytics:
 
 Used primarily by product team.
 
-No server component, just [google.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/google.js). We track events using `<module>.track.click` and `<module>.track.event`. We also use the default tracking (page views, etc.).
+No server component, just [google.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/google.js). We track events using `<module>.track.click` and `<module>.track.event`. We also use the default tracking (page views, etc.). Google has a few tracking options; we use their [gtag.js](https://developers.google.com/analytics/devguides/collection/gtagjs/).
 
 ### Kissmetrics
 
