@@ -29,7 +29,7 @@ New tests need to be added to [ab_tests](https://github.com/dimagi/commcare-hq/b
 
 Useful localsettings when working with analytics:
 - `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient.
-- `ANALYTICS_CONFIG.DEBUG`: Analytics code isn't run on every server. This is sometimes gated by checking `SERVER_ENVIRONMENT` and sometimes by setting or blanking out the relevant API id key in a specific server's settings. Set `DEBUG` to `True` to bypass these checks.
+- `ANALYTICS_CONFIG.DEBUG`: Analytics code isn't run on every server. Set `DEBUG` to `True` to bypass these checks (you still need to set the API keys, too).
 - `ANALYTICS_CONFIG.LOG_LEVEL`: Controls the client-side logging. Turning it up to `verbose` can help debug.
 
 ## Individual Services
@@ -48,7 +48,7 @@ Most A/B tests are tracked using client side Kissmetrics code, so [kissmetrix.js
 
 Most events are tracked client side using `<module>.track.event`. Some are done server side, using `track_workflow` and `identify` functions in the [analytics tasks](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py) file. `track_workflow` is used to register events and accepts an optional argument to update properties as well. `identify` can be used if you are only looking to update a property. From the data side, it doesn't matter whether the tracking was done on the client or the server.
 
-We track a few aggregated user properties on [Kissmetrics from server side](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py#L210).
+In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of aggregated data to Hubspot and Kissmetrics (form submission count, mobile worker count, etc.).
 
 ### HubSpot
 
@@ -58,7 +58,7 @@ Most of the code is server side [analytics tasks](https://github.com/dimagi/comm
 
 On the client side, [hubspot.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/hubspot.js) has functions to identify users and track events, but these are barely used. We do include a Hubspot-provided script that tracks basic usage (e.g., page visits) and also sets a cookie to identify the user (described [here](https://knowledge.hubspot.com/articles/kcs_article/reports/what-cookies-does-hubspot-set-in-a-visitor-s-browser) as the "hubspotutk" cookie). The server's form-sending code checks for this cookie and, if it isn't present, doesn't send forms.
 
-In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of non-event-based data to Hubspot and Kissmetrics (form submission count, mobile worker count, etc.).
+In addition to the event-based code, the `track_periodic_data` task runs nightly and sends a variety of aggregated data to Hubspot and Kissmetrics (form submission count, mobile worker count, etc.).
 
 #### Adding/Removing Hubspot properties
 
