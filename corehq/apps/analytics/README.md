@@ -15,7 +15,10 @@ TODO
 
 ### Debugging
 
-TODO
+Useful localsettings when working with analytics:
+- `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient.
+- `ANALYTICS_CONFIG.DEBUG`: Analytics code isn't run on every server. This is sometimes gated by checking `SERVER_ENVIRONMENT` and sometimes by setting or blanking out the relevant API id key in a specific server's settings. Set `DEBUG` to `True` to bypass these checks.
+- `ANALYTICS_CONFIG.LOG_LEVEL`: Client-side analytics code has its own logging infrastructure, which prints to the browser console. Turning it up to `verbose` can help debug.
 
 ## Individual Services
 
