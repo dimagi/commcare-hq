@@ -1,10 +1,10 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('PrevalenceOfStuntingDirective', function () {
+describe('Prevalence Of Stunting Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -49,6 +49,9 @@ describe('PrevalenceOfStuntingDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
