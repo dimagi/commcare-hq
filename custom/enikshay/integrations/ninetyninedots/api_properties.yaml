@@ -300,8 +300,8 @@ api_params:
     public: history_of_att
   choices:
     public:
-      - yes
-      - no
+      - 'yes'
+      - 'no'
 - api_param_name: marital_status
   direction: 1
   case_type:
@@ -371,8 +371,8 @@ api_params:
     public: other_comorbidity
   choices:
     public:
-      - yes
-      - no
+      - 'yes'
+      - 'no'
 - api_param_name: other_comorbidity_detail
   direction: 1
   case_type:
