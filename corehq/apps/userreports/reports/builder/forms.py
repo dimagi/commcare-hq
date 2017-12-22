@@ -731,7 +731,6 @@ DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",
                                     _shared_properties + ['format', 'pre_value', 'pre_operator'])
 ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
 
-
 class ConfigureNewReportBase(forms.Form):
     user_filters = FilterField(required=False)
     default_filters = FilterField(required=False)
@@ -1270,20 +1269,14 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             display_text="Name",
             exists_in_current_version=True,
             property="name",
-            data_source_field=(
-                self.data_source_properties['name']
-                    .to_report_column_option()
-                    .get_indicator(AGGREGATION_COUNT_PER_CHOICE)['column_id']),
+            data_source_field=None,
             calculation=AGGREGATION_COUNT_PER_CHOICE
         ))
         cols.append(ColumnViewModel(
             display_text="Owner",
             exists_in_current_version=True,
             property=COMPUTED_OWNER_NAME_PROPERTY_ID,
-            data_source_field=(
-                self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID]
-                    .to_report_column_option()
-                    .get_indicator(AGGREGATION_COUNT_PER_CHOICE)['column_id']),
+            data_source_field=None,
             calculation=AGGREGATION_COUNT_PER_CHOICE
         ))
         case_props_found = 0
@@ -1296,7 +1289,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     display_text=prop.get_text(),
                     exists_in_current_version=True,
                     property=prop.get_id(),
-                    data_source_field=prop.to_report_column_option().get_indicator(AGGREGATION_COUNT_PER_CHOICE)['column_id'],
+                    data_source_field=None,
                     calculation=AGGREGATION_COUNT_PER_CHOICE,
                 ))
                 if case_props_found == 3:
@@ -1310,7 +1303,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             display_text=prop.get_text(),
             exists_in_current_version=True,
             property=prop.get_id(),
-            data_source_field=prop.to_report_column_option().get_indicator(AGGREGATION_COUNT_PER_CHOICE)['column_id'],
+            data_source_field=None,
             calculation=AGGREGATION_COUNT_PER_CHOICE
         ))
         questions = [p for p in self.data_source_properties.values()
@@ -1322,7 +1315,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 display_text=q.get_text(),
                 exists_in_current_version=True,
                 property=q.get_id(),
-                data_source_field=q.get_id(),
+                data_source_field=None,
                 calculation=AGGREGATION_COUNT_PER_CHOICE,
             ))
         return cols

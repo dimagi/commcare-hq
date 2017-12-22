@@ -8,6 +8,7 @@ AGGREGATION_SUM = "Sum"
 AGGREGATION_AVERAGE = "Average"
 AGGREGATION_SIMPLE = "simple"
 AGGREGATION_COUNT = "Count"
+AGGREGATION_ID_MAP = "Value Map"
 
 # These are the aggregation options for UCR report column
 UCR_REPORT_AGGREGATION_SIMPLE = "simple"

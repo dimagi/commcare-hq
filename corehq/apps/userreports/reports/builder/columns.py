@@ -12,6 +12,7 @@ from corehq.apps.userreports.reports.builder.const import (
     AGGREGATION_SUM,
     AGGREGATION_SIMPLE,
     AGGREGATION_COUNT,
+    AGGREGATION_ID_MAP,
     UCR_REPORT_AGGREGATION_SIMPLE,
     UCR_REPORT_AGGREGATION_SUM,
     UCR_REPORT_AGGREGATION_EXPAND,
@@ -57,9 +58,10 @@ class ColumnOption(object):
             return (AGGREGATION_GROUP_BY,
                     AGGREGATION_COUNT_PER_CHOICE,
                     AGGREGATION_SUM,
-                    AGGREGATION_AVERAGE)
+                    AGGREGATION_AVERAGE,
+                    AGGREGATION_ID_MAP)
         else:
-            return (AGGREGATION_GROUP_BY, AGGREGATION_COUNT_PER_CHOICE)
+            return (AGGREGATION_GROUP_BY, AGGREGATION_COUNT_PER_CHOICE, AGGREGATION_ID_MAP)
 
     def _get_aggregation_config(self, agg):
         """
@@ -74,6 +76,7 @@ class ColumnOption(object):
             AGGREGATION_SUM: UCR_REPORT_AGGREGATION_SUM,
             AGGREGATION_AVERAGE: UCR_REPORT_AGGREGATION_AVG,
             AGGREGATION_GROUP_BY: UCR_REPORT_AGGREGATION_SIMPLE,
+            AGGREGATION_ID_MAP: UCR_REPORT_AGGREGATION_SUM,
             None: UCR_REPORT_AGGREGATION_SIMPLE,
         }
         return aggregation_map[agg]
