@@ -1262,6 +1262,14 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     calculation_config=None,
                 )
             )
+
+            # Remove the location indicator from the columns.
+            # It gets removed because we want it to be a column in the report,
+            # but we don't want it to appear in the builder.
+            if self.existing_report and self.existing_report.location_column_id:
+                col_id = self.existing_report.location_column_id
+                location_property = self._get_property_id_by_indicator_id(col_id)
+                return [c for c in cols if c.property != location_property]
         return cols
 
     def _get_default_columns(self):
@@ -1441,20 +1449,6 @@ class ConfigureMapReportForm(ConfigureListReportForm):
     @property
     def _location_choices(self):
         return [(p.get_id(), p.get_text()) for p in self.data_source_properties.values()]
-
-    @property
-    @memoized
-    def initial_columns(self):
-        columns = super(ConfigureMapReportForm, self).initial_columns
-
-        # Remove the location indicator from the columns.
-        # It gets removed because we want it to be a column in the report,
-        # but we don't want it to appear in the builder.
-        if self.existing_report and self.existing_report.location_column_id:
-            col_id = self.existing_report.location_column_id
-            location_property = self._get_property_id_by_indicator_id(col_id)
-            return [c for c in columns if c.property != location_property]
-        return columns
 
     @property
     def location_field(self):
