@@ -1180,10 +1180,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     def initial_columns(self):
         if self.existing_report:
             reverse_agg_map = {
-                'simple': 'Group By',
-                'avg': 'Average',
-                'sum': 'Sum',
-                'expand': AGGREGATION_COUNT_PER_CHOICE,
+                UCR_REPORT_AGGREGATION_SIMPLE: AGGREGATION_GROUP_BY,
+                UCR_REPORT_AGGREGATION_AVG: AGGREGATION_AVERAGE,
+                UCR_REPORT_AGGREGATION_SUM: AGGREGATION_SUM,
+                UCR_REPORT_AGGREGATION_EXPAND: AGGREGATION_COUNT_PER_CHOICE,
             }
             added_multiselect_columns = set()
             cols = []
