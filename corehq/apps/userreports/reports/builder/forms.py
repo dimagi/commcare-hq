@@ -804,20 +804,19 @@ class ConfigureNewReportBase(forms.Form):
             }]
         return configured_columns
 
-    def _get_data_source_configuration_kwargs(self):
+    def _build_data_source(self):
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
         ms_field = self._report_aggregation_cols[0] if self._is_multiselect_chart_report else None
-        return self.ds_builder.get_ds_config_kwargs(self._configured_columns,
-                                                    filters,
-                                                    self._is_multiselect_chart_report,
-                                                    ms_field)
+        config = self.ds_builder.get_ds_config_kwargs(self._configured_columns,
+                                                      filters,
+                                                      self._is_multiselect_chart_report,
+                                                      ms_field)
 
-    def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             # The uuid gets truncated, so it's not really universally unique.
             table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
-            **self._get_data_source_configuration_kwargs()
+            **config
         )
         data_source_config.validate()
         data_source_config.save()
