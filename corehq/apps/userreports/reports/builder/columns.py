@@ -282,6 +282,8 @@ class UsernameComputedCasePropertyOption(ColumnOption):
         }
         return column_dicts
 
+    def aggregation_options(self):
+        return (AGGREGATION_GROUP_BY,)
 
 class OwnernameComputedCasePropertyOption(ColumnOption):
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
@@ -309,6 +311,9 @@ class OwnernameComputedCasePropertyOption(ColumnOption):
             'custom_type': 'owner_display'
         }
         return column_dicts
+
+    def aggregation_options(self):
+        return (AGGREGATION_GROUP_BY,)
 
 
 class CountColumn(ColumnOption):
