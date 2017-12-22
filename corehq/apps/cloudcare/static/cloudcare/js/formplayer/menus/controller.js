@@ -239,10 +239,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         startOrStopLocationWatching: function(shouldWatchLocation) {
             if (navigator.geolocation) {
-                var notWatching = typeof sessionStorage.lastLocationWatchId === "undefined" || sessionStorage.lastLocationWatchId === '';
-                if (notWatching && shouldWatchLocation) {
+                var watching = Boolean(sessionStorage.lastLocationWatchId);
+                if (!watching && shouldWatchLocation) {
                     sessionStorage.lastLocationWatchId = navigator.geolocation.watchPosition(Menus.Util.recordPosition);
-                } else if (!notWatching && !shouldWatchLocation) {
+                } else if (watching && !shouldWatchLocation) {
                     navigator.geolocation.clearWatch(sessionStorage.lastLocationWatchId);
                     sessionStorage.lastLocationWatchId = '';
                 }
