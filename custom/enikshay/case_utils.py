@@ -99,11 +99,8 @@ def get_person_case_from_episode(domain, episode_case_id):
 
 
 def get_all_occurrence_cases_from_person(domain, person_case_id):
-    case_accessor = CaseAccessors(domain)
-    all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    occurrence_cases = [case for case in all_cases
-                        if case.type == CASE_TYPE_OCCURRENCE]
-    return occurrence_cases
+    return CaseAccessors(domain).get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_OCCURRENCE])
 
 
 def get_open_occurrence_case_from_person(domain, person_case_id):
@@ -114,10 +111,8 @@ def get_open_occurrence_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence
 
     """
-    case_accessor = CaseAccessors(domain)
-    occurrence_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    open_occurrence_cases = [case for case in occurrence_cases
-                             if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
+    open_occurrence_cases = CaseAccessors(domain).get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_OCCURRENCE], is_closed=False)
     if not open_occurrence_cases:
         raise ENikshayCaseNotFound(
             "Person with id: {} exists but has no open occurrence cases".format(person_case_id)
@@ -153,15 +148,12 @@ def get_associated_episode_case_for_test(test_case, occurrence_case_id):
 
 
 def get_all_episode_cases_from_person(domain, person_case_id):
-    case_accessor = CaseAccessors(domain)
-    episode_cases = []
     occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
-    for occurrence_case in occurrence_cases:
-        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.get_id])
-        episode_cases += [case for case in all_cases
-                          if case.type == CASE_TYPE_EPISODE and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
-    return episode_cases
+    return [
+        case for case in CaseAccessors(domain).get_reverse_indexed_cases(
+            [c.case_id for c in occurrence_cases], case_types=[CASE_TYPE_EPISODE])
+        if case.dynamic_case_properties().get('episode_type') == "confirmed_tb"
+    ]
 
 
 def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
@@ -172,13 +164,12 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     Occurrence <--ext-- Episode
 
     """
-    case_accessor = CaseAccessors(domain)
-    episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
-    open_episode_cases = [case for case in episode_cases
-                          if not case.closed and case.type == CASE_TYPE_EPISODE and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
-    if open_episode_cases:
-        return open_episode_cases[0]
+    open_episode_cases = CaseAccessors(domain).get_reverse_indexed_cases(
+        [occurrence_case_id], case_types=[CASE_TYPE_EPISODE], is_closed=False)
+    confirmed_episode_cases = [case for case in open_episode_cases
+                               if case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+    if confirmed_episode_cases:
+        return confirmed_episode_cases[0]
     else:
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
@@ -193,10 +184,8 @@ def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
     episode <--ext-- drtb-hiv-referral
     """
     case_accessor = CaseAccessors(domain)
-    open_drtb_cases = [
-        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
-        if not case.closed and case.type == CASE_TYPE_DRTB_HIV_REFERRAL
-    ]
+    open_drtb_cases = case_accessor.get_reverse_indexed_cases(
+        [episode_case_id], case_types=[CASE_TYPE_DRTB_HIV_REFERRAL], is_closed=False)
     if open_drtb_cases:
         return open_drtb_cases[0]
     else:
@@ -220,19 +209,20 @@ def get_open_episode_case_from_person(domain, person_case_id):
 
 def get_open_referral_case_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_REFERRAL, CASE_TYPE_OCCURRENCE], is_closed=False)
     open_referral_cases = [
         case for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     ]
     occurrence_case_ids = [
         case.case_id for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+        if case.type == CASE_TYPE_OCCURRENCE
     ]
-    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
     open_referral_cases.extend(
-        case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        case_accessor.get_reverse_indexed_cases(
+            occurrence_case_ids, case_types=[CASE_TYPE_REFERRAL], is_closed=False
+        )
     )
     if not open_referral_cases:
         return None
@@ -242,7 +232,8 @@ def get_open_referral_case_from_person(domain, person_case_id):
 
 def get_latest_trail_case_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_TRAIL, CASE_TYPE_OCCURRENCE])
     trail_cases = [
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
@@ -253,8 +244,8 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case.case_id for case in reverse_indexed_cases
         if case.type == CASE_TYPE_OCCURRENCE and not case.closed
     ]
-    reverse_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
-    trail_cases.extend([case for case in reverse_indexed_occurrence if case.type == CASE_TYPE_TRAIL])
+    trail_cases.extend(case_accessor.get_reverse_indexed_cases(
+        occurrence_case_ids, case_types=[CASE_TYPE_TRAIL]))
 
     trails_with_server_opened_on = []
     for trail in trail_cases:
@@ -291,13 +282,11 @@ def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
     """Returns all test cases for a particular episode
     """
     occurrence_case = get_occurrence_case_from_episode(domain, episode_case_id)
-    case_accessor = CaseAccessors(domain)
-    indexed_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.case_id])
+    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases(
+        [occurrence_case.case_id], case_types=[CASE_TYPE_TEST], is_closed=False)
     open_test_cases = [
         case for case in indexed_cases
-        if not case.closed
-        and case.type == CASE_TYPE_TEST
-        and case.get_case_property('purpose_of_test') == 'diagnostic'
+        if case.get_case_property('purpose_of_test') == 'diagnostic'
         and case.get_case_property('date_reported') is not None
         and case.get_case_property('date_reported') != ''
         and case.get_case_property('enrolled_in_private') == 'true'
@@ -308,13 +297,13 @@ def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     episode = get_open_episode_case_from_person(domain, person_case_id)
     case_accessor = CaseAccessors(domain)
-    indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [episode.case_id], case_types=[CASE_TYPE_ADHERENCE], is_closed=False)
     open_pertinent_adherence_cases = [
         case for case in indexed_cases
-        if not case.closed and case.type == CASE_TYPE_ADHERENCE and
-        (start_date.astimezone(pytz.UTC) <=
-         parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
-         end_date.astimezone(pytz.UTC))
+        if (start_date.astimezone(pytz.UTC) <=
+            parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
+            end_date.astimezone(pytz.UTC))
     ]
 
     return open_pertinent_adherence_cases
@@ -450,8 +439,8 @@ def _get_private_locations(person_case, episode_case=None):
 @hqnottest
 def get_lab_referral_from_test(domain, test_case_id):
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
-    lab_referral_cases = [case for case in reverse_indexed_cases if case.type == CASE_TYPE_LAB_REFERRAL]
+    lab_referral_cases = case_accessor.get_reverse_indexed_cases(
+        [test_case_id], case_types=[CASE_TYPE_LAB_REFERRAL])
     if lab_referral_cases:
         return lab_referral_cases[0]
     else:
@@ -487,12 +476,8 @@ def get_person_case_from_trail(domain, trail_case_id):
 
 
 def get_adherence_cases_from_episode(domain, episode_case_id):
-    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
-    adherence_cases = [
-        case for case in indexed_cases
-        if case.type == CASE_TYPE_ADHERENCE
-    ]
-    return adherence_cases
+    return CaseAccessors(domain).get_reverse_indexed_cases(
+        [episode_case_id], case_types=[CASE_TYPE_ADHERENCE])
 
 
 def get_adherence_cases_by_day(domain, episode_case_id):
@@ -587,14 +572,10 @@ def get_person_case_from_voucher(domain, voucher_case_id):
 
 def get_prescription_vouchers_from_episode(domain, episode_case_id):
     case_accessor = CaseAccessors(domain)
-    prescription_cases = [
-        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
-        if case.type == CASE_TYPE_PRESCRIPTION
-    ]
-    return [
-        c for c in case_accessor.get_reverse_indexed_cases([case.case_id for case in prescription_cases])
-        if c.type == CASE_TYPE_VOUCHER
-    ]
+    prescription_cases = case_accessor.get_reverse_indexed_cases(
+        [episode_case_id], case_types=[CASE_TYPE_PRESCRIPTION])
+    return case_accessor.get_reverse_indexed_cases(
+        [case.case_id for case in prescription_cases], case_types=[CASE_TYPE_VOUCHER])
 
 
 def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
@@ -673,20 +654,19 @@ def person_has_any_nikshay_notifiable_episode(person_case):
 
 def get_most_recent_referral_case_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_REFERRAL, CASE_TYPE_OCCURRENCE])
     open_referral_cases = [
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_REFERRAL
     ]
-    occurrence_cases = [
+    occurrence_case_ids = [
         case.case_id for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_OCCURRENCE
     ]
-    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
     open_referral_cases.extend(
-        case for case in reversed_indexed_occurrence
-        if case.type == CASE_TYPE_REFERRAL
-    )
+        case_accessor.get_reverse_indexed_cases(
+            occurrence_case_ids, case_types=[CASE_TYPE_REFERRAL]))
     valid_referral_cases = [
         case for case in open_referral_cases if (
             case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
@@ -699,21 +679,14 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
 
 
 def get_most_recent_episode_case_from_person(domain, person_case_id):
-    case_accessor = CaseAccessors(domain)
-    episode_cases = []
     occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
-    for occurrence_case in occurrence_cases:
-        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.get_id])
-        episode_cases += [
-            case for case in all_cases
-            if case.type == CASE_TYPE_EPISODE and (
-                case.dynamic_case_properties().get('close_reason') not in [
-                    'invalid_episode',
-                    'duplicate',
-                    'invalid_registration'
-                ]
-            )
+    episode_cases = [
+        case for case in CaseAccessors(domain).get_reverse_indexed_cases(
+            [c.case_id for c in occurrence_cases], case_types=[CASE_TYPE_EPISODE])
+        if case.dynamic_case_properties().get('close_reason') not in [
+            'invalid_episode', 'duplicate', 'invalid_registration'
         ]
+    ]
     if not episode_cases:
         return None
     else:
@@ -723,19 +696,20 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
 def get_all_vouchers_from_person(domain, person_case):
     """Returns all voucher cases under tests or prescriptions"""
     accessor = CaseAccessors(domain)
-    for occurrence_case in accessor.get_reverse_indexed_cases([person_case.case_id]):
-        if occurrence_case.type == CASE_TYPE_OCCURRENCE:
-            for case in accessor.get_reverse_indexed_cases([occurrence_case.case_id]):
-                if case.type == CASE_TYPE_TEST:
-                    for voucher_case in accessor.get_reverse_indexed_cases([case.case_id]):
-                        if voucher_case.type == CASE_TYPE_VOUCHER:
-                            yield voucher_case
-                if case.type == CASE_TYPE_EPISODE:
-                    for prescription_case in accessor.get_reverse_indexed_cases([case.case_id]):
-                        if prescription_case.type == CASE_TYPE_PRESCRIPTION:
-                            for voucher_case in accessor.get_reverse_indexed_cases([prescription_case.case_id]):
-                                if voucher_case.type == CASE_TYPE_VOUCHER:
-                                    yield voucher_case
+    for occurrence_case in accessor.get_reverse_indexed_cases(
+            [person_case.case_id], case_types=[CASE_TYPE_OCCURRENCE]):
+        for case in accessor.get_reverse_indexed_cases(
+                [occurrence_case.case_id], case_types=[CASE_TYPE_TEST, CASE_TYPE_EPISODE]):
+            if case.type == CASE_TYPE_TEST:
+                for voucher_case in accessor.get_reverse_indexed_cases(
+                        [case.case_id], case_types=[CASE_TYPE_VOUCHER]):
+                    yield voucher_case
+            if case.type == CASE_TYPE_EPISODE:
+                for prescription_case in accessor.get_reverse_indexed_cases(
+                        [case.case_id], case_types=[CASE_TYPE_PRESCRIPTION]):
+                    for voucher_case in accessor.get_reverse_indexed_cases(
+                            [prescription_case.case_id], case_types=[CASE_TYPE_VOUCHER]):
+                        yield voucher_case
 
 
 def get_adherence_cases_by_date(adherence_cases):
