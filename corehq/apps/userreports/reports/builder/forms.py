@@ -407,7 +407,9 @@ class DataSourceBuilder(object):
         indicators = OrderedDict()
         for column in columns:
             column_option = self.report_column_options[column['property']]
-            for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
+            for indicator in column_option.get_indicators(column['calculation'],
+                                                          column.get('calculation_config'),
+                                                          is_multiselect_chart_report):
                 indicators.setdefault(str(indicator), indicator)
 
         for filter_ in filters:
@@ -729,7 +731,7 @@ _shared_properties = ['exists_in_current_version', 'display_text', 'property', '
 UserFilterViewModel = namedtuple("UserFilterViewModel", _shared_properties + ['format'])
 DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",
                                     _shared_properties + ['format', 'pre_value', 'pre_operator'])
-ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
+ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation', 'calculation_config'])
 
 class ConfigureNewReportBase(forms.Form):
     user_filters = FilterField(required=False)
@@ -799,7 +801,8 @@ class ConfigureNewReportBase(forms.Form):
         if location:
             configured_columns += [{
                 "property": location,
-                "calculation": AGGREGATION_SIMPLE  # Not aggregated
+                "calculation": AGGREGATION_SIMPLE,  # Not aggregated,
+                "calculation_config": None,
             }]
         return configured_columns
 
@@ -1191,7 +1194,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     exists_in_current_version=exists,
                     property=c['property'] if exists else None,
                     data_source_field=c['property'] if not exists else None,
-                    calculation=c['calculation']
+                    calculation=c['calculation'],
+                    calculation_config=c.get('calculation_config'),
                 ))
             return cols
         elif self.existing_report:
@@ -1252,7 +1256,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         if exists else None
                     ),
                     data_source_field=indicator_id if not exists else None,
-                    calculation=reverse_agg_map.get(agg, AGGREGATION_COUNT_PER_CHOICE)
+                    calculation=reverse_agg_map.get(agg, AGGREGATION_COUNT_PER_CHOICE),
+                    calculation_config=None,
                 )
             )
         return cols
@@ -1270,14 +1275,16 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             exists_in_current_version=True,
             property="name",
             data_source_field=None,
-            calculation=AGGREGATION_COUNT_PER_CHOICE
+            calculation=AGGREGATION_COUNT_PER_CHOICE,
+            calculation_config=None,
         ))
         cols.append(ColumnViewModel(
             display_text="Owner",
             exists_in_current_version=True,
             property=COMPUTED_OWNER_NAME_PROPERTY_ID,
             data_source_field=None,
-            calculation=AGGREGATION_COUNT_PER_CHOICE
+            calculation=AGGREGATION_COUNT_PER_CHOICE,
+            calculation_config=None,
         ))
         case_props_found = 0
 
@@ -1291,6 +1298,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     property=prop.get_id(),
                     data_source_field=None,
                     calculation=AGGREGATION_COUNT_PER_CHOICE,
+                    calculation_config=None,
                 ))
                 if case_props_found == 3:
                     break
@@ -1304,7 +1312,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             exists_in_current_version=True,
             property=prop.get_id(),
             data_source_field=None,
-            calculation=AGGREGATION_COUNT_PER_CHOICE
+            calculation=AGGREGATION_COUNT_PER_CHOICE,
+            calculation_config=None,
         ))
         questions = [p for p in self.data_source_properties.values()
                      if p.get_type() == PROPERTY_TYPE_QUESTION]
@@ -1317,6 +1326,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 property=q.get_id(),
                 data_source_field=None,
                 calculation=AGGREGATION_COUNT_PER_CHOICE,
+                calculation_config=None,
             ))
         return cols
 
@@ -1326,7 +1336,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
                 self.ds_builder.report_column_options[conf['property']].to_column_dicts(
-                    i, conf.get('display_text', conf['property']), UCR_REPORT_AGGREGATION_SIMPLE
+                    index=i,
+                    display_text=conf.get('display_text', conf['property']),
+                    aggregation=UCR_REPORT_AGGREGATION_SIMPLE,
+                    calculation_config=conf.get('calculation_config')
                 )
             )
         return columns
@@ -1390,7 +1403,8 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                     index=i,
                     display_text=conf['display_text'],
                     aggregation=conf['calculation'],
-                    is_aggregated_on=conf.get('calculation') == AGGREGATION_GROUP_BY
+                    is_aggregated_on=conf.get('calculation') == AGGREGATION_GROUP_BY,
+                    calculation_config=conf.get('calculation_config')
                 ))
         return columns
 

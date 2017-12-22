@@ -23,6 +23,12 @@ from dimagi.utils.decorators.memoized import memoized
 import six
 
 
+def _get_column_name_with_value(column_name, value):
+    value = value.encode('unicode-escape')
+    value_hash = hashlib.sha1(value).hexdigest()[:8]
+    return "{}_{}".format(column_name, value_hash)
+
+
 class ColumnOption(object):
     """
     This class represents column options in the report builder. That is, a case property, meta property, or form
@@ -88,13 +94,39 @@ class ColumnOption(object):
         """
         raise NotImplementedError
 
-    def get_indicators(self, aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, aggregation, calculation_config=None, is_multiselect_chart_report=False):
         """
         Return the indicators corresponding to this column option.
         """
+
+        # Generate multiple columns for the ID map
+        if aggregation == AGGREGATION_ID_MAP:
+            # This is in the format value: display_name
+            id_map = calculation_config or {}
+            indicator = self.get_indicator(aggregation,
+                                           is_multiselect_chart_report=is_multiselect_chart_report)
+            base_boolean_indicator = {
+                "column_id": indicator['column_id'],
+                "type": "boolean",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "in_multi",
+                    "expression": indicator['expression'],
+                    "property_value": None
+                }
+            }
+
+            indicators = []
+            for value in id_map.keys():
+                i = base_boolean_indicator.copy()
+                i['column_id'] = _get_column_name_with_value(i['column_id'], value)
+                i['filter']['property_value'] = value
+                indicators.append(i)
+            return indicators
+
         return [self.get_indicator(aggregation)]
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+    def to_column_dicts(self, index, display_text, aggregation, calculation_config=None, is_aggregated_on=False):
         """
         Return a UCR report column configuration dictionary
         :param index: The index of the column in the list of columns, e.g. 0, 1, 2, etc.
@@ -103,6 +135,31 @@ class ColumnOption(object):
         :param is_aggregated_on: True if the user chose to "group by" this column
         :return:
         """
+
+        # Generate multiple report columns for the ID map
+        if aggregation == AGGREGATION_ID_MAP:
+            # This is in the format {value: display_name}
+            id_map = calculation_config or {}
+            indicator = self.get_indicator(aggregation)
+            base_report_column = {
+                "format": "default",
+                "aggregation": self._get_aggregation_config(aggregation),
+                "field": "",
+                "column_id": "",
+                "type": "field",
+                "display": "",
+                "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
+            }
+
+            cols = []
+            for i, value in id_map.keys():
+                col = base_report_column.copy()
+                col['display'] = id_map[value]
+                col["column_id"] = "column_{}_{}".format(index, i)
+                col["field"] = _get_column_name_with_value(indicator['column_id'], value)
+                cols.append(col)
+            return cols
+
         return [{
             "format": "default",
             "aggregation": self._get_aggregation_config(aggregation),
@@ -176,6 +233,16 @@ class FormMetaColumnOption(ColumnOption):
             self._meta_property_spec, column_id, root_doc=is_multiselect_chart_report
         )
 
+    @property
+    def aggregation_options(self):
+        if "decimal" in self._data_types:
+            return (AGGREGATION_GROUP_BY,
+                    AGGREGATION_COUNT_PER_CHOICE,
+                    AGGREGATION_SUM,
+                    AGGREGATION_AVERAGE)
+        else:
+            return (AGGREGATION_GROUP_BY, AGGREGATION_COUNT_PER_CHOICE)
+
 
 class MultiselectQuestionColumnOption(QuestionColumnOption):
     """
@@ -189,7 +256,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
             property, ["string"], default_display, question_source
         )
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+    def to_column_dicts(self, index, display_text, aggregation, calculation_config=None, is_aggregated_on=False):
         assert aggregation in [AGGREGATION_COUNT_PER_CHOICE, AGGREGATION_SIMPLE]
 
         if is_aggregated_on:
@@ -233,7 +300,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         column_id = get_column_name(self._property.strip("/"))
         return make_multiselect_question_indicator(self._question_source, column_id)
 
-    def get_indicators(self, aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, aggregation, calculation_config=None, is_multiselect_chart_report=False):
         return [self._get_filter_and_agg_indicator(), self._get_choice_indicator()]
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
@@ -284,9 +351,9 @@ class UsernameComputedCasePropertyOption(ColumnOption):
             'expression': expression
         }
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+    def to_column_dicts(self, index, display_text, aggregation, calculation_config=None, is_aggregated_on=False):
         column_dicts = super(UsernameComputedCasePropertyOption, self).to_column_dicts(
-            index, display_text, aggregation
+            index, display_text, aggregation, calculation_config=calculation_config
         )
         column_dicts[0]['transform'] = {
             'type': 'custom',
@@ -315,9 +382,9 @@ class OwnernameComputedCasePropertyOption(ColumnOption):
             'expression': expression
         }
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+    def to_column_dicts(self, index, display_text, aggregation, calculation_config=None, is_aggregated_on=False):
         column_dicts = super(OwnernameComputedCasePropertyOption, self).to_column_dicts(
-            index, display_text, aggregation
+            index, display_text, aggregation, calculation_config=calculation_config
         )
         column_dicts[0]['transform'] = {
             'type': 'custom',
@@ -350,8 +417,9 @@ class CountColumn(ColumnOption):
             "column_id": "count"
         }
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
-        column_dicts = super(CountColumn, self).to_column_dicts(index, display_text, aggregation)
+    def to_column_dicts(self, index, display_text, aggregation, calculation_config=None, is_aggregated_on=False):
+        column_dicts = super(CountColumn, self).to_column_dicts(index, display_text, aggregation,
+                                                                calculation_config=calculation_config)
         del column_dicts[0]['transform']
         return column_dicts
 
