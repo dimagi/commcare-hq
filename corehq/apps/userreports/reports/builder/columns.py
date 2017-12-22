@@ -282,6 +282,7 @@ class UsernameComputedCasePropertyOption(ColumnOption):
         }
         return column_dicts
 
+    @property
     def aggregation_options(self):
         return (AGGREGATION_GROUP_BY,)
 
@@ -312,6 +313,7 @@ class OwnernameComputedCasePropertyOption(ColumnOption):
         }
         return column_dicts
 
+    @property
     def aggregation_options(self):
         return (AGGREGATION_GROUP_BY,)
 
