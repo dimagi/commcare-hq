@@ -42,7 +42,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
+from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram, datadog_counter
 from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
@@ -261,6 +261,7 @@ def _queue_indicators(indicators):
         indicator_doc_ids = [i.doc_id for i in indicators]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         save_document.delay(indicator_doc_ids)
+        datadog_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
     to_queue = []
     for indicator in indicators:
@@ -313,12 +314,16 @@ def save_document(doc_ids):
                 else:
                     failed_indicators.append((indicator, to_remove))
 
+        num_processed = len(processed_indicators)
+        num_failed = len(failed_indicators)
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         with transaction.atomic():
             for indicator, to_remove in failed_indicators:
                 indicator.update_failure(to_remove)
                 indicator.save()
 
+    datadog_counter('commcare.async_indicator.processed_success', num_processed)
+    datadog_counter('commcare.async_indicator.processed_fail', num_failed)
     datadog_histogram(
         'commcare.async_indicator.processing_time', timer.duration,
         tags=[
