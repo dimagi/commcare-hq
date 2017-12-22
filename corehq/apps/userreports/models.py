@@ -433,6 +433,7 @@ class ReportMeta(DocumentSchema):
     edited_manually = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
+    report_builder_columns = ListProperty(default=[])
 
 
 class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):

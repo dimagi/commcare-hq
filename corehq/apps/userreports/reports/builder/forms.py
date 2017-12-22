@@ -851,6 +851,12 @@ class ConfigureNewReportBase(forms.Form):
         self.existing_report.configured_charts = self._report_charts
         self.existing_report.title = self.cleaned_data['report_title'] or _("Report Builder Report")
         self.existing_report.description = self.cleaned_data['report_description']
+        self.existing_report.report_meta = ReportMeta(
+            created_by_builder=True,
+            report_builder_version="2.1",
+            builder_report_type=self.report_type,
+            report_builder_columns=self.cleaned_data['columns'],
+        )
         self.existing_report.validate()
         self.existing_report.save()
         return self.existing_report
@@ -873,8 +879,9 @@ class ConfigureNewReportBase(forms.Form):
             description=self.cleaned_data['report_description'],
             report_meta=ReportMeta(
                 created_by_builder=True,
-                report_builder_version="2.0",
-                builder_report_type=self.report_type
+                report_builder_version="2.1",
+                builder_report_type=self.report_type,
+                report_builder_columns=self.cleaned_data['columns'],
             )
         )
         report.validate()
@@ -899,8 +906,9 @@ class ConfigureNewReportBase(forms.Form):
             configured_charts=self._report_charts,
             report_meta=ReportMeta(
                 created_by_builder=True,
-                report_builder_version="2.0",
-                builder_report_type=self.report_type
+                report_builder_version="2.1",
+                builder_report_type=self.report_type,
+                report_builder_columns=self.cleaned_data['columns'],
             )
         )
         report.validate()
@@ -1178,7 +1186,16 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @property
     @memoized
     def initial_columns(self):
-        if self.existing_report:
+        if self.existing_report and self.existing_report.report_meta.report_builder_version == "2.1":
+            cols = self.existing_report.report_meta.report_builder_columns
+            for c in cols:
+                exists = c['property'] in self.report_column_options.keys()
+                if not exists:
+                    c['exists_in_current_version'] = False
+                    c['property'] = None
+                    c['data_source_field'] =  c['property']
+            return cols
+        elif self.existing_report:
             reverse_agg_map = {
                 UCR_REPORT_AGGREGATION_SIMPLE: AGGREGATION_GROUP_BY,
                 UCR_REPORT_AGGREGATION_AVG: AGGREGATION_AVERAGE,
