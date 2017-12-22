@@ -227,7 +227,7 @@ def get_open_referral_case_from_person(domain, person_case_id):
     if not open_referral_cases:
         return None
     else:
-        return sorted(open_referral_cases, key=(lambda case: case.opened_on))[0]
+        return min(open_referral_cases, key=(lambda case: case.opened_on))
 
 
 def get_latest_trail_case_from_person(domain, person_case_id):
@@ -675,7 +675,7 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
     if not valid_referral_cases:
         return None
     else:
-        return sorted(valid_referral_cases, key=(lambda case: case.opened_on))[-1]
+        return max(valid_referral_cases, key=(lambda case: case.opened_on))
 
 
 def get_most_recent_episode_case_from_person(domain, person_case_id):
@@ -690,7 +690,7 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
     if not episode_cases:
         return None
     else:
-        return sorted(episode_cases, key=(lambda case: case.opened_on))[-1]
+        return max(episode_cases, key=(lambda case: case.opened_on))
 
 
 def get_all_vouchers_from_person(domain, person_case):
