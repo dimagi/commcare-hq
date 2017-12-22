@@ -20,6 +20,7 @@ from corehq.apps.userreports.reports.builder.const import (
 )
 from corehq.apps.userreports.sql import get_column_name
 from dimagi.utils.decorators.memoized import memoized
+import hashlib
 import six
 
 
@@ -105,22 +106,18 @@ class ColumnOption(object):
             id_map = calculation_config or {}
             indicator = self.get_indicator(aggregation,
                                            is_multiselect_chart_report=is_multiselect_chart_report)
-            base_boolean_indicator = {
-                "column_id": indicator['column_id'],
-                "type": "boolean",
-                "filter": {
-                    "type": "boolean_expression",
-                    "operator": "in_multi",
-                    "expression": indicator['expression'],
-                    "property_value": None
-                }
-            }
-
             indicators = []
             for value in id_map.keys():
-                i = base_boolean_indicator.copy()
-                i['column_id'] = _get_column_name_with_value(i['column_id'], value)
-                i['filter']['property_value'] = value
+                i = {
+                    "column_id": _get_column_name_with_value(indicator['column_id'], value),
+                    "type": "boolean",
+                    "filter": {
+                        "type": "boolean_expression",
+                        "operator": "in_multi",
+                        "expression": indicator['expression'],
+                        "property_value": value
+                    }
+                }
                 indicators.append(i)
             return indicators
 
@@ -141,22 +138,18 @@ class ColumnOption(object):
             # This is in the format {value: display_name}
             id_map = calculation_config or {}
             indicator = self.get_indicator(aggregation)
-            base_report_column = {
-                "format": "default",
-                "aggregation": self._get_aggregation_config(aggregation),
-                "field": "",
-                "column_id": "",
-                "type": "field",
-                "display": "",
-                "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
-            }
 
             cols = []
-            for i, value in id_map.keys():
-                col = base_report_column.copy()
-                col['display'] = id_map[value]
-                col["column_id"] = "column_{}_{}".format(index, i)
-                col["field"] = _get_column_name_with_value(indicator['column_id'], value)
+            for i, value in enumerate(id_map.keys()):
+                col = {
+                    "format": "default",
+                    "aggregation": self._get_aggregation_config(aggregation),
+                    "field": _get_column_name_with_value(indicator['column_id'], value),
+                    "column_id": "column_{}_{}".format(index, i),
+                    "type": "field",
+                    "display": id_map[value],
+                    "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
+                }
                 cols.append(col)
             return cols
 
