@@ -524,15 +524,6 @@ class ConfigureReport(ReportBuilderView):
                 if type_ == "pie":
                     return "pie"
 
-    def _get_column_options(self, report_form):
-        options = OrderedDict()
-        for option in report_form.report_column_options.values():
-            key = option.get_uniquenss_key()
-            if key in options:
-                options[key].append(option)
-            else:
-                options[key] = [option]
-
     @property
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
