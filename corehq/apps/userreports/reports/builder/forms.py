@@ -1397,10 +1397,14 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @property
     @memoized
     def _report_aggregation_cols(self):
-        return [
-            self.ds_builder.report_column_options[conf['property']].get_indicator(AGGREGATION_GROUP_BY)['column_id']
-            for conf in self.cleaned_data['columns'] if conf['calculation'] == AGGREGATION_GROUP_BY
-        ]
+        aggregation_cols = []
+        for conf in self.cleaned_data['columns']:
+            aggregation_cols.extend(
+                self.ds_builder.report_column_options[
+                    conf['property']
+                ].to_report_aggregation_list(conf['calculation'])
+            )
+        return aggregation_cols
 
 
 class ConfigureMapReportForm(ConfigureListReportForm):

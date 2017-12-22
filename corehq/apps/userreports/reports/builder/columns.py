@@ -113,6 +113,15 @@ class ColumnOption(object):
             "transform": {'type': 'custom', 'custom_type': 'short_decimal_display'},
         }]
 
+    def to_report_aggregation_list(self, aggregation):
+        """
+        Returns the report aggregation list for this column
+        :param aggregation:
+        :return: list of strings
+        """
+        if aggregation == AGGREGATION_GROUP_BY:
+            return [self.get_indicator(aggregation)['column_id']]
+        return []
 
 class QuestionColumnOption(ColumnOption):
     """
