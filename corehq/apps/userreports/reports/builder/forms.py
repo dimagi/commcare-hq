@@ -1329,7 +1329,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        # TODO SS - this seems wrong (we should be using the column option to do this)
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
