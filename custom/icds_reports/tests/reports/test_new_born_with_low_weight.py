@@ -19,7 +19,7 @@ class TestNewBornWithLowWeight(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of newborns with born with birth weight less than 2500 grams."
@@ -44,13 +44,13 @@ class TestNewBornWithLowWeight(TestCase):
                     "st1": {
                         "in_month": 4,
                         "low_birth": 2,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "20%-60%"
                     },
                     "st2": {
                         "in_month": 3,
                         "low_birth": 0,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-20%"
                     }
                 },
@@ -70,7 +70,7 @@ class TestNewBornWithLowWeight(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of newborns with born with birth weight less than 2500 grams."

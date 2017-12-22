@@ -19,7 +19,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "
@@ -51,7 +51,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "normal": 2,
                         "total_measured": 7,
                         "total": 449,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-25%"
                     },
                     "st2": {
@@ -60,7 +60,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "normal": 13,
                         "total_measured": 25,
                         "total": 490,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-25%"
                     }
                 },
@@ -80,7 +80,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "

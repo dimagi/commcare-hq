@@ -21,6 +21,7 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
+from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from dimagi.utils.couch import get_redis_client
@@ -465,3 +466,19 @@ def indian_formatted_number(number):
         return "".join(r)
     else:
         return 0
+
+
+@quickcache(['domain', 'location_id', 'show_test'], timeout=5 * 60)
+def get_child_locations(domain, location_id, show_test):
+    if location_id:
+        locations = SQLLocation.objects.get(location_id=location_id).get_children()
+    else:
+        locations = SQLLocation.objects.filter(domain=domain, location_type__code=const.LocationTypes.STATE)
+
+    if not show_test:
+        return [
+            sql_location for sql_location in locations
+            if sql_location.metadata.get('is_test_location', 'real') == 'test'
+        ]
+    else:
+        return list(locations)

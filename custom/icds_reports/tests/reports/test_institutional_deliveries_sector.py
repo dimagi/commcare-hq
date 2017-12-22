@@ -19,7 +19,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of pregnant women who delivered in a public or "
@@ -57,13 +57,13 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     "st1": {
                         "all": 13,
                         "children": 9,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "all": 13,
                         "children": 11,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "60%-100%"
                     }
                 },
@@ -83,7 +83,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of pregnant women who delivered in a public or "

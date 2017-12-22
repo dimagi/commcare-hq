@@ -19,7 +19,7 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
@@ -53,13 +53,13 @@ class TestAdolescentGirls(TestCase):
                     "st1": {
                         "valid": 22,
                         "all": 22,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
                         "valid": 25,
                         "all": 25,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Adolescent Girls"
                     }
                 },
@@ -79,7 +79,7 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",

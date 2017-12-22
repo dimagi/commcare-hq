@@ -16,13 +16,13 @@ describe('Indie Map Directive', function () {
         type: "Feature",
     };
 
-    var mockData = [{
+    var mockData = {
         data: {'test-id': {in_month: 0, original_name: ['Uttar Pradesh'], birth: 0, fillKey: "0%-20%"}},
-    }];
+    };
 
-    var mockFakeData = [{
+    var mockFakeData = {
         data: {'test-id': {in_month: 0, original_name: [], birth: 0, fillKey: "0%-20%"}},
-    }];
+    };
 
     var mockLocation = {
         location_type_name: "state",

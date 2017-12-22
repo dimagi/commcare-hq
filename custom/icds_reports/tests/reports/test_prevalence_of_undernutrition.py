@@ -20,7 +20,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'month': (2017, 5, 1)
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 'rightLegend': {
                     'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'
@@ -50,14 +50,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         'severely_underweight': 40,
                         'moderately_underweight': 450,
                         'fillKey': '20%-35%',
-                        'original_name': [],
+                        'original_name': ["st1"],
                         'normal': 1820
                     },
                     'st2': {
                         'total': 2570,
                         'severely_underweight': 70,
                         'moderately_underweight': 420,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         'fillKey': '0%-20%',
                         'normal': 1975
                     }
@@ -78,7 +78,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 'rightLegend': {
                     'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'

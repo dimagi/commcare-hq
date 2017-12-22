@@ -361,12 +361,14 @@ class PrevalenceOfUndernutritionView(View):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_prevalence_of_undernutrition_data_map(domain, config, loc_level, include_test)
+                data = get_prevalence_of_undernutrition_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_prevalence_of_undernutrition_sector_data(domain, config.copy(), loc_level, location, include_test)
+                data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, include_test)
 
@@ -768,12 +770,16 @@ class PrevalenceOfSevereView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_prevalence_of_severe_data_map(domain, config, loc_level, include_test)
+                data = get_prevalence_of_severe_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_prevalence_of_severe_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
 
@@ -816,12 +822,16 @@ class PrevalenceOfStuntingView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_prevalence_of_stunting_data_map(domain, config, loc_level, include_test)
+                data = get_prevalence_of_stunting_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_prevalence_of_stunting_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
 
@@ -861,12 +871,16 @@ class NewbornsWithLowBirthWeightView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_newborn_with_low_birth_weight_map(domain, config, loc_level, include_test)
+                data = get_newborn_with_low_birth_weight_map(domain, config.copy(), loc_level, include_test)
+                sector = get_newborn_with_low_birth_weight_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_newborn_with_low_birth_weight_chart(domain, config, loc_level, include_test)
 
@@ -905,12 +919,16 @@ class EarlyInitiationBreastfeeding(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_early_initiation_breastfeeding_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_early_initiation_breastfeeding_map(domain, config, loc_level, include_test)
+                data = get_early_initiation_breastfeeding_map(domain, config.copy(), loc_level, include_test)
+                sector = get_early_initiation_breastfeeding_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_early_initiation_breastfeeding_chart(domain, config, loc_level, include_test)
 
@@ -948,12 +966,16 @@ class ExclusiveBreastfeedingView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_exclusive_breastfeeding_data_map(domain, config, loc_level, include_test)
+                data = get_exclusive_breastfeeding_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_exclusive_breastfeeding_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_exclusive_breastfeeding_data_chart(domain, config, loc_level, include_test)
 
@@ -991,12 +1013,16 @@ class ChildrenInitiatedView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_children_initiated_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_children_initiated_data_map(domain, config, loc_level, include_test)
+                data = get_children_initiated_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_children_initiated_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_children_initiated_data_chart(domain, config, loc_level, include_test)
 
@@ -1034,12 +1060,16 @@ class InstitutionalDeliveriesView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_institutional_deliveries_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_institutional_deliveries_data_map(domain, config, loc_level, include_test)
+                data = get_institutional_deliveries_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_institutional_deliveries_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_institutional_deliveries_data_chart(domain, config, loc_level, include_test)
 
@@ -1076,12 +1106,16 @@ class ImmunizationCoverageView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_immunization_coverage_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_immunization_coverage_data_map(domain, config, loc_level, include_test)
+                data = get_immunization_coverage_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_immunization_coverage_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_immunization_coverage_data_chart(domain, config, loc_level, include_test)
 
@@ -1107,12 +1141,16 @@ class AWCDailyStatusView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_awc_daily_status_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_awc_daily_status_data_map(domain, config, loc_level, include_test)
+                data = get_awc_daily_status_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_awc_daily_status_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_awc_daily_status_data_chart(domain, config, loc_level, include_test)
 
@@ -1145,11 +1183,16 @@ class AWCsCoveredView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_awcs_covered_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_awcs_covered_data_map(domain, config, loc_level, include_test)
+                data = get_awcs_covered_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_awcs_covered_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
 
@@ -1182,11 +1225,16 @@ class RegisteredHouseholdView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_registered_household_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_registered_household_data_map(domain, config, loc_level, include_test)
+                data = get_registered_household_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_registered_household_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_registered_household_data_chart(domain, config, loc_level, include_test)
 
@@ -1227,12 +1275,16 @@ class EnrolledChildrenView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_enrolled_children_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_enrolled_children_data_map(domain, config, loc_level, include_test)
+                data = get_enrolled_children_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_enrolled_children_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             if 'age' in config:
                 del config['age']
@@ -1268,11 +1320,16 @@ class EnrolledWomenView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_enrolled_women_data_map(domain, config, loc_level, include_test)
+                data = get_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_enrolled_women_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_enrolled_women_data_chart(domain, config, loc_level, include_test)
 
@@ -1305,11 +1362,16 @@ class LactatingEnrolledWomenView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_lactating_enrolled_women_data_map(domain, config, loc_level, include_test)
+                data = get_lactating_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_lactating_enrolled_women_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_lactating_enrolled_data_chart(domain, config, loc_level, include_test)
 
@@ -1342,11 +1404,16 @@ class AdolescentGirlsView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_adolescent_girls_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_adolescent_girls_data_map(domain, config, loc_level, include_test)
+                data = get_adolescent_girls_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_adolescent_girls_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_adolescent_girls_data_chart(domain, config, loc_level, include_test)
 
@@ -1379,12 +1446,16 @@ class AdhaarBeneficiariesView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_adhaar_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_adhaar_data_map(domain, config, loc_level, include_test)
+                data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_adhaar_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_adhaar_data_chart(domain, config, loc_level, include_test)
 
@@ -1416,12 +1487,16 @@ class CleanWaterView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_clean_water_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_clean_water_data_map(domain, config, loc_level, include_test)
+                data = get_clean_water_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_clean_water_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_clean_water_data_chart(domain, config, loc_level, include_test)
 
@@ -1454,12 +1529,16 @@ class FunctionalToiletView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_functional_toilet_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_functional_toilet_data_map(domain, config, loc_level, include_test)
+                data = get_functional_toilet_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_functional_toilet_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_functional_toilet_data_chart(domain, config, loc_level, include_test)
 
@@ -1492,12 +1571,16 @@ class MedicineKitView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_medicine_kit_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_medicine_kit_data_map(domain, config, loc_level, include_test)
+                data = get_medicine_kit_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_medicine_kit_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_medicine_kit_data_chart(domain, config, loc_level, include_test)
 
@@ -1530,12 +1613,16 @@ class InfantsWeightScaleView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_infants_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_infants_weight_scale_data_map(domain, config, loc_level, include_test)
+                data = get_infants_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_infants_weight_scale_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_infants_weight_scale_data_chart(domain, config, loc_level, include_test)
 
@@ -1568,12 +1655,16 @@ class AdultWeightScaleView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = []
+        data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_adult_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_adult_weight_scale_data_map(domain, config, loc_level, include_test)
+                data = get_adult_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
+                sector = get_adult_weight_scale_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
+                data.update(sector)
         elif step == "chart":
             data = get_adult_weight_scale_data_chart(domain, config, loc_level, include_test)
 
