@@ -1104,16 +1104,6 @@ class ConfigureNewReportBase(forms.Form):
         """
         return column_id in self._report_columns_by_column_id
 
-    def _convert_v1_column_id_to_current_format(self, column_id):
-        """
-        Assuming column_id does not exist, assume it's from version 1 of the report builder, and attempt to convert
-        it to the current version.
-
-        This is needed because previously hidden value questions and case property columns didn't have a datatype
-        in their ids, but the builder now expects that, so this attempts to just append a datatype.
-        """
-        return column_id + "_string"
-
 
     def _get_multiselect_indicator_id(self, column_field, indicators):
         """
@@ -1186,63 +1176,87 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     @property
     @memoized
     def initial_columns(self):
+        """
+        This will generate a list of column view models from the existing report
+        or as default columns.
+        :return: a list of ColumnViewModels
+        """
+
         if self.existing_report and self.existing_report.report_meta.report_builder_version == "2.1":
-            cols = self.existing_report.report_meta.report_builder_columns
-            for c in cols:
+            rb_cols = self.existing_report.report_meta.report_builder_columns
+            cols = []
+            for c in rb_cols:
                 exists = c['property'] in self.report_column_options.keys()
-                if not exists:
-                    c['exists_in_current_version'] = False
-                    c['property'] = None
-                    c['data_source_field'] =  c['property']
+                cols.append(ColumnViewModel(
+                    display_text=c['display_text'],
+                    exists_in_current_version=exists,
+                    property=c['property'] if exists else None,
+                    data_source_field=c['property'] if not exists else None,
+                    calculation=c['calculation']
+                ))
             return cols
         elif self.existing_report:
-            reverse_agg_map = {
-                UCR_REPORT_AGGREGATION_SIMPLE: AGGREGATION_GROUP_BY,
-                UCR_REPORT_AGGREGATION_AVG: AGGREGATION_AVERAGE,
-                UCR_REPORT_AGGREGATION_SUM: AGGREGATION_SUM,
-                UCR_REPORT_AGGREGATION_EXPAND: AGGREGATION_COUNT_PER_CHOICE,
-            }
-            added_multiselect_columns = set()
-            cols = []
-            for c in self.existing_report.columns:
-                mselect_indicator_id = self._get_multiselect_indicator_id(
-                    c['field'], self.existing_report.config.configured_indicators
-                )
-                indicator_id = mselect_indicator_id or c['field']
-                display = c['display']
-                agg = c.get("aggregation")
-                exists = self._column_exists(indicator_id)
-                if not exists:
-                    possibly_corrected_column_id = self._convert_v1_column_id_to_current_format(indicator_id)
-                    if self._column_exists(possibly_corrected_column_id):
-                        exists = True
-                        indicator_id = possibly_corrected_column_id
-
-                if mselect_indicator_id:
-                    if mselect_indicator_id not in added_multiselect_columns:
-                        added_multiselect_columns.add(mselect_indicator_id)
-                        display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
-                            display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
-                        )
-                        agg = AGGREGATION_COUNT_PER_CHOICE
-                    else:
-                        continue
-
-                cols.append(
-                    ColumnViewModel(
-                        display_text=display,
-                        exists_in_current_version=exists,
-                        property=(
-                            self._get_column_option_by_indicator_id(indicator_id).get_property()
-                            if exists else None
-                        ),
-                        data_source_field=indicator_id if not exists else None,
-                        calculation=reverse_agg_map.get(agg, AGGREGATION_COUNT_PER_CHOICE)
-                    )
-                )
-            return cols
+            return self._legacy_existing_report_columns()
         else:
             return self._get_default_columns()
+
+    def _legacy_existing_report_columns(self):
+        def convert_v1_column_id_to_current_format(column_id):
+            """
+            Assuming column_id does not exist, assume it's from version 1 of the report builder, and attempt to convert
+            it to the current version.
+
+            This is needed because previously hidden value questions and case property columns didn't have a datatype
+            in their ids, but the builder now expects that, so this attempts to just append a datatype.
+            """
+            return column_id + "_string"
+
+
+        reverse_agg_map = {
+            UCR_REPORT_AGGREGATION_SIMPLE: AGGREGATION_GROUP_BY,
+            UCR_REPORT_AGGREGATION_AVG: AGGREGATION_AVERAGE,
+            UCR_REPORT_AGGREGATION_SUM: AGGREGATION_SUM,
+            UCR_REPORT_AGGREGATION_EXPAND: AGGREGATION_COUNT_PER_CHOICE,
+        }
+        added_multiselect_columns = set()
+        cols = []
+        for c in self.existing_report.columns:
+            mselect_indicator_id = self._get_multiselect_indicator_id(
+                c['field'], self.existing_report.config.configured_indicators
+            )
+            indicator_id = mselect_indicator_id or c['field']
+            display = c['display']
+            agg = c.get("aggregation")
+            exists = self._column_exists(indicator_id)
+            if not exists:
+                possibly_corrected_column_id = convert_v1_column_id_to_current_format(indicator_id)
+                if self._column_exists(possibly_corrected_column_id):
+                    exists = True
+                    indicator_id = possibly_corrected_column_id
+
+            if mselect_indicator_id:
+                if mselect_indicator_id not in added_multiselect_columns:
+                    added_multiselect_columns.add(mselect_indicator_id)
+                    display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
+                        display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
+                    )
+                    agg = AGGREGATION_COUNT_PER_CHOICE
+                else:
+                    continue
+
+            cols.append(
+                ColumnViewModel(
+                    display_text=display,
+                    exists_in_current_version=exists,
+                    property=(
+                        self._get_column_option_by_indicator_id(indicator_id).get_property()
+                        if exists else None
+                    ),
+                    data_source_field=indicator_id if not exists else None,
+                    calculation=reverse_agg_map.get(agg, AGGREGATION_COUNT_PER_CHOICE)
+                )
+            )
+        return cols
 
     def _get_default_columns(self):
         if self.source_type == "case":
@@ -1312,7 +1326,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 calculation=AGGREGATION_COUNT_PER_CHOICE,
             ))
         return cols
-
 
     @property
     def _report_columns(self):
