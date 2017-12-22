@@ -23,4 +23,3 @@ def get_column_name(path):
 
     new_parts = path[-54:].split("/")
     return "_".join(new_parts + [_hash(parts)])
-
