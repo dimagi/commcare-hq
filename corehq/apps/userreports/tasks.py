@@ -261,6 +261,7 @@ def _queue_indicators(indicators):
         indicator_doc_ids = [i.doc_id for i in indicators]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         save_document.delay(indicator_doc_ids)
+        datadog_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
     to_queue = []
     for indicator in indicators:
