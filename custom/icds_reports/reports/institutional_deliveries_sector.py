@@ -12,7 +12,8 @@ from django.utils.translation import ugettext as _
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggCcsRecordMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, get_child_locations
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'

@@ -10,8 +10,8 @@ from django.utils.translation import ugettext as _
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations
+from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, \
+    indian_formatted_number, get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'

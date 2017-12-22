@@ -367,7 +367,9 @@ class PrevalenceOfUndernutritionView(View):
                 data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_undernutrition_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_prevalence_of_undernutrition_sector_data(domain, config.copy(), loc_level, location, include_test)
+                sector = get_prevalence_of_undernutrition_sector_data(
+                    domain, config.copy(), loc_level, location, include_test
+                )
                 data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, include_test)

@@ -231,7 +231,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         } else {
             var location = geography.id || geography;
             if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
-                location = vm.data.data[geography.id].original_name[0]
+                location = vm.data.data[geography.id].original_name[0];
             }
             locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
                 var location = locations[0];
