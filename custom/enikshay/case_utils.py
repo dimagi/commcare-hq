@@ -696,20 +696,27 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
 def get_all_vouchers_from_person(domain, person_case):
     """Returns all voucher cases under tests or prescriptions"""
     accessor = CaseAccessors(domain)
-    for occurrence_case in accessor.get_reverse_indexed_cases(
-            [person_case.case_id], case_types=[CASE_TYPE_OCCURRENCE]):
-        for case in accessor.get_reverse_indexed_cases(
-                [occurrence_case.case_id], case_types=[CASE_TYPE_TEST, CASE_TYPE_EPISODE]):
-            if case.type == CASE_TYPE_TEST:
-                for voucher_case in accessor.get_reverse_indexed_cases(
-                        [case.case_id], case_types=[CASE_TYPE_VOUCHER]):
-                    yield voucher_case
-            if case.type == CASE_TYPE_EPISODE:
-                for prescription_case in accessor.get_reverse_indexed_cases(
-                        [case.case_id], case_types=[CASE_TYPE_PRESCRIPTION]):
-                    for voucher_case in accessor.get_reverse_indexed_cases(
-                            [prescription_case.case_id], case_types=[CASE_TYPE_VOUCHER]):
-                        yield voucher_case
+    potential_voucher_parents = []
+    episode_ids = []
+    occurrence_case_ids = [
+        occurrence_case.case_id
+        for occurrence_case in accessor.get_reverse_indexed_cases(
+            [person_case.case_id], case_types=[CASE_TYPE_OCCURRENCE])
+    ]
+    for case in accessor.get_reverse_indexed_cases(
+            occurrence_case_ids, case_types=[CASE_TYPE_TEST, CASE_TYPE_EPISODE]):
+        if case.type == CASE_TYPE_TEST:
+            potential_voucher_parents.append(case.case_id)
+        if case.type == CASE_TYPE_EPISODE:
+            episode_ids.append(case.case_id)
+
+    potential_voucher_parents.extend(
+        prescription_case.case_id
+        for prescription_case in accessor.get_reverse_indexed_cases(
+            episode_ids, case_types=[CASE_TYPE_PRESCRIPTION])
+    )
+    return accessor.get_reverse_indexed_cases(
+        potential_voucher_parents, case_types=[CASE_TYPE_VOUCHER])
 
 
 def get_adherence_cases_by_date(adherence_cases):
