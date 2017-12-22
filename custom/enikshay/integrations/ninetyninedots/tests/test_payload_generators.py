@@ -354,6 +354,7 @@ class TestUnenrollPatientPayloadGenerator(TestPayloadGeneratorBase):
         self.assertEqual(self._get_actual_payload(cases), expected_payload)
 
     def test_get_payload_source_changed(self):
+        self.episode.attrs['update']['dots_99_enabled'] = 'false'
         cases = self.create_case_structure()
         expected_payload = json.dumps(
             {
