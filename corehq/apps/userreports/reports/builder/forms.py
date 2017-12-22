@@ -796,7 +796,9 @@ class ConfigureNewReportBase(forms.Form):
         """
         To be used by DataSourceBuilder.indicators()
         """
-        configured_columns = self.cleaned_data['columns']
+        configured_columns = [
+            c for c in self.cleaned_data['columns']
+        ]
         location = self.cleaned_data.get("location")
         if location:
             configured_columns += [{
