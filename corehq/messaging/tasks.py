@@ -76,6 +76,7 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
 
 def initiate_messaging_rule_run(domain, rule_id):
     MessagingRuleProgressHelper(rule_id).set_initial_progress()
+    AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=True)
     run_messaging_rule.delay(domain, rule_id)
 
 
@@ -92,6 +93,7 @@ def get_case_ids_for_messaging_rule(domain, case_type):
 
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE)
 def set_rule_complete(rule_id):
+    AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=False)
     MessagingRuleProgressHelper(rule_id).set_rule_complete()
 
 

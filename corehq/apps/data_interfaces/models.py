@@ -92,6 +92,8 @@ class AutomaticUpdateRule(models.Model):
     # that this rule belongs to.
     workflow = models.CharField(max_length=126)
 
+    locked_for_editing = models.BooleanField(default=False)
+
     class Meta:
         app_label = "data_interfaces"
 
