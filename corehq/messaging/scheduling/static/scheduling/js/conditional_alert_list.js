@@ -1,14 +1,13 @@
 hqDefine("scheduling/js/conditional_alert_list", function() {
     $(function() {
         var conditonal_alert_list_url = hqImport("hqwebapp/js/initial_page_data").reverse("conditional_alert_list");
-        var loader_src = hqImport("hqwebapp/js/initial_page_data").get("loader_src");
 
-        $("#conditional-alert-list").dataTable({
+        var table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
             "filter": false,
             "sort": false,
             "displayLength": 10,
-            "processing": true,
+            "processing": false,
             "serverSide": true,
             "ajaxSource": conditonal_alert_list_url,
             "fnServerParams": function(aoData) {
@@ -18,7 +17,6 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
             "language": {
                 "emptyTable": gettext('There are no alerts to display.'),
                 "infoEmpty": gettext('There are no alerts to display.'),
-                "processing": '<img src="' + loader_src + '" /> ' + gettext('Loading alerts...'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ alerts'),
             },
             "columnDefs": [
@@ -38,8 +36,24 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 },
                 {
                     "targets": [3],
-                    "render": function(data) {
-                        return data ? gettext("Active") : gettext("Inactive");
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var locked_for_editing = row[row.length - 3];
+                        var rule_progress_pct = row[row.length - 2];
+
+                        var active_text = '';
+                        if(data) {
+                            active_text = '<span class="label label-success">' + gettext("Active") + '</span> ';
+                        } else {
+                            active_text = '<span class="label label-danger">' + gettext("Inactive") + '</span> ';
+                        }
+
+                        var processing_text = '';
+                        if(locked_for_editing) {
+                            processing_text = '<span class="label label-default">' + gettext("Rule is processing") + ': ' + rule_progress_pct + '%</span> ';
+                        }
+
+                        return active_text + processing_text;
                     },
                 },
                 {
@@ -50,5 +64,13 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 },
             ],
         });
+
+        function reloadTable() {
+            table.fnDraw(false);
+            setTimeout(reloadTable, 10000);
+        };
+
+        setTimeout(reloadTable, 10000);
+
     });
 });

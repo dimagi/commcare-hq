@@ -37,6 +37,7 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
+from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -281,6 +282,8 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 rule.case_type,
                 rule.active,
                 '< action placeholder >',
+                rule.locked_for_editing,
+                MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
                 rule.pk,
             ])
 

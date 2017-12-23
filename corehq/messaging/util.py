@@ -35,3 +35,22 @@ class MessagingRuleProgressHelper(object):
 
     def set_total_case_count(self, value):
         self.client.set(self.total_key, value)
+
+    @staticmethod
+    def _int_or_zero(value):
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
+
+    def get_progress_pct(self):
+        current = self._int_or_zero(self.client.get(self.current_key))
+        total = self._int_or_zero(self.client.get(self.total_key))
+
+        if not current or not total:
+            return 0
+
+        if current >= total:
+            return 100
+
+        return int(round(100.0 * current / total, 0))

@@ -6,6 +6,14 @@
     <script src="{% static "scheduling/js/conditional_alert_list.js" %}"></script>
 {% endblock %}
 
+{% block stylesheets %}{{ block.super }}
+<style>
+    .label {
+        font-size: 100%;
+    }
+</style>
+{% endblock %}
+
 {% block page_content %}
     {% registerurl 'conditional_alert_list' domain %}
     {% registerurl 'edit_conditional_alert' domain '---' %}
