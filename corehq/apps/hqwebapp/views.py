@@ -76,6 +76,7 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 import six
 from six.moves import range
@@ -383,7 +384,7 @@ def login(req):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
 
-    if settings.SERVER_ENVIRONMENT in ('icds', 'icds-new'):
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -503,6 +504,17 @@ def dropbox_upload(request, download_id):
         )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+
+# TODO jschweers: Remove this in Q2 2018 if it hasn't been triggered,
+# change initial_page_data.js to throw an error
+@require_GET
+def assert_initial_page_data(request):
+    _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+    _assert(False, 'Initial page data called before page load complete', {
+        'page': request.META['HTTP_REFERER'],
+    })
+    return json_response({'success': True})
 
 
 @require_superuser

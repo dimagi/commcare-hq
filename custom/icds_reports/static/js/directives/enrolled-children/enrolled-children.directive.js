@@ -86,14 +86,18 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var age = ageIndex > 0 ? ages[ageIndex].name : '0 - 6 years';
+        var delimiter = gender && age ? ', ' : '';
+        var chosenFilters = gender || age ? '(' + gender + delimiter + age + ')' : '';
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of children (0 - 6 years) who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
-            '<div>Total number of children (0 - 6 years) who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered children (0-6 years) who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '<div>Number of children ' + chosenFilters + ' who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Total number of children ' + chosenFilters + ' who are registered: <strong>' + all + '</strong>' +
+            '<div>Percentage of registered children ' + chosenFilters + ' who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 

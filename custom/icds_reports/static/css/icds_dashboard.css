@@ -463,11 +463,14 @@ h4 {
     align-content: center;
 }
 
-.kpi-percents {
+.kpi-justify-center {
     width: 100%;
     display: flex;
-    position: relative;
     justify-content: center;
+}
+
+.kpi-percents {
+    position: relative;
     align-items: center;
 }
 
@@ -475,12 +478,6 @@ h4 {
     display: flex;
     position: absolute;
     align-items: center;
-}
-
-.kpi-justify-center {
-    width: 100%;
-    display: flex;
-    justify-content: center;
 }
 
 .kpi-numbers-format {
@@ -762,4 +759,14 @@ table.dataTable td {
   -webkit-box-sizing: content-box;
   -moz-box-sizing: content-box;
   box-sizing: content-box;
+}
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 7px;
+    margin-left: 2px;
+    min-height: 34px;
+}
+
+hr {
+    border-top: 2px solid #eee;
 }

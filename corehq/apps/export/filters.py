@@ -52,6 +52,16 @@ class NOT(ExportFilter):
     def to_es_filter(self):
         return esfilters.NOT(self.operand_filter.to_es_filter())
 
+
+class TermFilter(ExportFilter):
+    def __init__(self, term, value):
+        self.term = term
+        self.value = value
+
+    def to_es_filter(self):
+        return esfilters.term(self.term, self.value)
+
+
 class AppFilter(ExportFilter):
     """
     Filter on app_id
@@ -107,13 +117,11 @@ class IsClosedFilter(ExportFilter):
         return is_closed(self.is_closed)
 
 
-class NameFilter(ExportFilter):
+class NameFilter(TermFilter):
 
     def __init__(self, case_name):
+        super(NameFilter, self).__init__('name', case_name)
         self.case_name = case_name
-
-    def to_es_filter(self):
-        return esfilters.term('name', self.case_name)
 
 
 class OpenedOnRangeFilter(RangeExportFilter):
@@ -152,13 +160,10 @@ class ClosedOnRangeFilter(RangeExportFilter):
         return closed_range(self.gt, self.gte, self.lt, self.lte)
 
 
-class ClosedByFilter(ExportFilter):
+class ClosedByFilter(TermFilter):
 
     def __init__(self, closed_by):
-        self.closed_by = closed_by
-
-    def to_es_filter(self):
-        return esfilters.term("closed_by", self.closed_by)
+        super(ClosedByFilter, self).__init__('closed_by', closed_by)
 
 
 class GroupFilter(ExportFilter):  # Abstract base class

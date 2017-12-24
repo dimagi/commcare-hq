@@ -1,11 +1,12 @@
 {# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
-समेकित निष्पदान प्रतिवेदन
+आपके कार्य क्षेत्र के समस्त आंगनवाड़ी केंद्रों का पिछले ३० दिनों का समेकित निष्पादन प्रतिवेदन
 
-गृह - भ्रमण : {{ visits }}
+1. भ्रमणों की संख्या / वांछित भ्रमणों की संख्या: {{ visits }} / {{ visits_goal }}
+2. समय से संपन्न किये गए भ्रमणों की संख्या / भ्रमणों की संख्या: {{ on_time_visits }} / {{ visits }}
 
-टी.एच.र.वितरण : {{ thr_distribution }}
+टी.एच.आर. वितरण: {{ thr_distribution }}
 
-वजन किये गए बच्चो की संख्या : {{ children_weighed }}
+वजन किये गए बच्चो की संख्या: {{ children_weighed }}
 
-आँगनवाड़ी केंद्र खुले रहने के दिन : {{ days_open }} / 25
+आँगनवाड़ी केंद्र के खुले रहने के औसत दिनों की संख्या / वांछित लक्ष्य: {{ days_open }} / 25

@@ -855,9 +855,10 @@ def get_updated_fields(existing_properties, new_properties):
 
 
 @task(queue='background_queue', ignore_result=True)
-def run_model_reconciliation(command_name, email, commit=False):
+def run_model_reconciliation(command_name, email, person_case_ids=None, commit=False):
     call_command(command_name,
                  recipient=email,
+                 person_case_ids=person_case_ids,
                  commit=commit)
 
 

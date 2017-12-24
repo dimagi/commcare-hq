@@ -1,17 +1,16 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AWCsCoveredDirective', function () {
+describe('AWCs Covered Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('awcs_covered', 'awcs_covered');
     pageData.registerUrl('icds_locations', 'icds_locations');
-
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
@@ -35,6 +34,9 @@ describe('AWCsCoveredDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');

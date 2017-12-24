@@ -263,12 +263,6 @@ class TestRecentReferralFromPersonExpression(ENikshayCaseStructureMixin, TestCas
         self.assertEqual(expression({}, context), referral.to_json())
 
     def test_expression_when_referral_does_not_pass_filters(self):
-        referral_1_case_id = uuid.uuid4().hex
-        self.create_referral_case(referral_1_case_id)
-        self.update_referral(referral_1_case_id, {
-            "referral_status": "rejected",
-        })
-
         referral_2_case_id = uuid.uuid4().hex
         self.create_referral_case(referral_2_case_id)
         self.update_referral(referral_2_case_id, {

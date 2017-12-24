@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('LactatingEnrolledWomenDirective', function () {
+describe('Lactating Enrolled Women Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -34,6 +34,9 @@ describe('LactatingEnrolledWomenDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');

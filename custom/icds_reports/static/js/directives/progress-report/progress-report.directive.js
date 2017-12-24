@@ -10,6 +10,9 @@ function ProgressReportController($scope, $location, progressReportService,
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
+    vm.selectedLocations = [];
+
     vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
     vm.label = "ICDS-CAS Fact Sheets";
@@ -21,8 +24,9 @@ function ProgressReportController($scope, $location, progressReportService,
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
+
     vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
         var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
         var current_month = new Date().getMonth() + 1;
         var current_year = new Date().getFullYear();
@@ -111,7 +115,7 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });

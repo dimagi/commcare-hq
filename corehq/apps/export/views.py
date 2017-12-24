@@ -44,8 +44,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
-from corehq.apps.domain.decorators import login_and_domain_required, \
-    login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     revert_new_exports,
@@ -268,7 +267,11 @@ class BaseExportView(BaseProjectDataView):
             try:
                 post_data = json.loads(self.request.body)
                 url = self.export_home_url
-                if post_data['is_daily_saved_export']:
+                # short circuit to check if the submit is from a create or edit feed
+                # to redirect it to the list view
+                if isinstance(self, DashboardFeedMixin):
+                    url = reverse(DashboardFeedListView.urlname, args=[self.domain])
+                elif post_data['is_daily_saved_export']:
                     url = reverse(DailySavedExportListView.urlname, args=[self.domain])
             except ValueError:
                 url = self.export_home_url
@@ -2478,7 +2481,7 @@ def can_download_daily_saved_export(export, domain, couch_user):
 
 @location_safe
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
     with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):

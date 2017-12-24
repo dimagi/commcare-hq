@@ -1,19 +1,18 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude
-import six
-
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -67,6 +66,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         data_for_map[on_map_name]['blocks'].append(blocks)
         data_for_map[on_map_name]['districts'].append(districts)
         data_for_map[on_map_name]['states'].append(states)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in six.itervalues(data_for_map):
         data_for_location['awcs'] = (
@@ -107,26 +107,24 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     info = _(
         "Total AWCs that have launched ICDS CAS <br />" +
-        "Number of AWCs launched: %d" % total_awcs
+        "Number of AWCs launched: %s" % indian_formatted_number(total_awcs)
     )
     if level != 5:
         info = _(
             "Total AWCs that have launched ICDS CAS <br />" +
-            "Number of AWCs launched: %d <br />" % total_awcs +
-            "Number of %s launched: %d" % (prop.title(), total)
+            "Number of AWCs launched: %s <br />" % indian_formatted_number(total_awcs) +
+            "Number of %s launched: %s" % (prop.title(), indian_formatted_number(total))
         )
 
-    return [
-        {
-            "slug": "awc_covered",
-            "label": "",
-            "fills": fills,
-            "rightLegend": {
-                "info": info
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "awc_covered",
+        "label": "",
+        "fills": fills,
+        "rightLegend": {
+            "info": info
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
@@ -163,7 +161,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         'awcs': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

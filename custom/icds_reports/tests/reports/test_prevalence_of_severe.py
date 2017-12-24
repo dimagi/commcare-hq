@@ -19,7 +19,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with "
@@ -30,7 +30,16 @@ class TestPrevalenceOfSevere(TestCase):
                             "status for a child who has severe wasting (weight-for-height) below -3 "
                             "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
                             "that has moderate wasting (weight-for-height) below -2Z.",
-                    "average": "1.06"
+                    "average": "1.06",
+                    'extended_info': [
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '32'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.70%'},
+                        {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.21%'},
+                        {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '0.85%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '2.24%'}
+                    ]
                 },
                 "fills": {
                     "0%-5%": "#fee0d2",
@@ -45,7 +54,7 @@ class TestPrevalenceOfSevere(TestCase):
                         "normal": 5,
                         "total_measured": 7,
                         "total": 449,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-5%"
                     },
                     "st2": {
@@ -54,7 +63,7 @@ class TestPrevalenceOfSevere(TestCase):
                         "normal": 16,
                         "total_measured": 25,
                         "total": 490,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-5%"
                     }
                 },
@@ -74,7 +83,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with "
@@ -85,7 +94,16 @@ class TestPrevalenceOfSevere(TestCase):
                             "status for a child who has severe wasting (weight-for-height) below -3 "
                             "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
                             "that has moderate wasting (weight-for-height) below -2Z.",
-                    "average": "0.89"
+                    "average": "0.89",
+                    'extended_info': [
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '449'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '7'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '98.00%'},
+                        {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
+                        {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '0.89%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '1.11%'}
+                    ]
                 },
                 "fills": {
                     "0%-5%": "#fee0d2",

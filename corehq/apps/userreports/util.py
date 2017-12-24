@@ -233,3 +233,7 @@ def get_static_report_mapping(from_domain, to_domain, report_map):
         StaticReportConfiguration.by_id(new_id)
         report_map[static_report.get_id] = new_id
     return report_map
+
+
+def add_tabbed_text(text):
+    return '\t' + '\n\t'.join(text.splitlines(False))

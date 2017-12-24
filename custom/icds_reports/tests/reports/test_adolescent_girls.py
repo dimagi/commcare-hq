@@ -19,12 +19,31 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
                     "average": 23.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': (
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                            ),
+                            'value': "47"
+                        },
+                        {
+                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
+                            'value': "47"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered adolescent girls (11 - 18 years) '
+                                'who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Adolescent Girls": "#006fdf",
@@ -34,13 +53,13 @@ class TestAdolescentGirls(TestCase):
                     "st1": {
                         "valid": 22,
                         "all": 22,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
                         "valid": 25,
                         "all": 25,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Adolescent Girls"
                     }
                 },
@@ -60,12 +79,31 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
                     "average": 11.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': (
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                            ),
+                            'value': "22"
+                        },
+                        {
+                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
+                            'value': "22"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered adolescent girls (11 - 18 years) '
+                                'who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Adolescent Girls": "#006fdf",

@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function
 from collections import defaultdict
 
 from django.core.management.base import CommandError
@@ -12,6 +13,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.management.commands.base_model_reconciliation import (
     BaseModelReconciliationCommand,
     DOMAIN,
+    get_all_occurrence_case_ids_from_person,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
@@ -43,6 +45,7 @@ class Command(BaseModelReconciliationCommand):
         self.drug_id_values = []
         self.sensitivity_values = []
         self.case_accessor = CaseAccessors(DOMAIN)
+        self.person_case_ids = options.get('person_case_ids')
         # iterate all occurrence cases
         for occurrence_case_id in self._get_open_occurrence_case_ids_to_process():
             # Need to consider only public app cases so skip updates if enrolled in private
@@ -145,22 +148,31 @@ class Command(BaseModelReconciliationCommand):
                              "Picked first opened.")
 
     def _get_open_occurrence_case_ids_to_process(self):
-        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-        dbs = get_db_aliases_for_partitioned_query()
-        for db in dbs:
-            case_ids = (
-                CommCareCaseSQL.objects
-                .using(db)
-                .filter(domain=DOMAIN, type="occurrence", closed=False)
-                .values_list('case_id', flat=True)
-            )
-            num_case_ids = len(case_ids)
-            if self.log_progress:
-                print("processing %d docs from db %s" % (num_case_ids, db))
-            for i, case_id in enumerate(case_ids):
-                yield case_id
+        if self.person_case_ids:
+            num_case_ids = len(self.person_case_ids)
+            for i, case_id in enumerate(self.person_case_ids):
+                occurrence_case_ids = get_all_occurrence_case_ids_from_person(case_id)
+                for occurrence_case_id in occurrence_case_ids:
+                    yield occurrence_case_id
                 if i % 1000 == 0 and self.log_progress:
-                    print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
+                    print("processed %d / %d docs" % (i, num_case_ids))
+        else:
+            from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+            dbs = get_db_aliases_for_partitioned_query()
+            for db in dbs:
+                case_ids = (
+                    CommCareCaseSQL.objects
+                    .using(db)
+                    .filter(domain=DOMAIN, type="occurrence", closed=False)
+                    .values_list('case_id', flat=True)
+                )
+                num_case_ids = len(case_ids)
+                if self.log_progress:
+                    print("processing %d docs from db %s" % (num_case_ids, db))
+                for i, case_id in enumerate(case_ids):
+                    yield case_id
+                    if i % 1000 == 0 and self.log_progress:
+                        print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
     def close_cases(self, all_cases, occurrence_case_id, drug_id, retain_case, retain_reason):
         # remove duplicates in case ids to remove so that we dont retain and close

@@ -255,7 +255,8 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
-            ]
+            ],
+            None,
         )
 
     @property

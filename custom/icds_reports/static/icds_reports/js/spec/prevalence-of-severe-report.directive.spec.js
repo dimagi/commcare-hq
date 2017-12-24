@@ -1,10 +1,10 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('PrevalenceOfSevereDirective', function () {
+describe('Prevalence Of Severe Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -49,6 +49,9 @@ describe('PrevalenceOfSevereDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -88,12 +91,12 @@ describe('PrevalenceOfSevereDirective', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
             + '<p>test</p>'
-            + '<div>Total Children weighed in given month: <strong>20</strong></div>'
-            + '<div>Total Children with height measured in given month: <strong>15</strong></div>'
-            + '<div>% Unmeasured: <strong>25.00%</strong></div>'
-            + '<div>% Severely Acute Malnutrition: <strong>25.00%</strong></div>'
-            + '<div>% Moderately Acute Malnutrition: <strong>25.00%</strong></div>'
-            + '<div>% Normal: <strong>25.00%</strong></div></ul>');
+            + '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>'
+            + '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>'
+            + '<div>% Unmeasured (6 - 60 months): <strong>25.00%</strong></div>'
+            + '<div>% Severely Acute Malnutrition (6 - 60 months): <strong>25.00%</strong></div>'
+            + '<div>% Moderately Acute Malnutrition (6 - 60 months): <strong>25.00%</strong></div>'
+            + '<div>% Normal (6 - 60 months): <strong>25.00%</strong></div></ul>');
     });
 
     it('tests location change', function () {

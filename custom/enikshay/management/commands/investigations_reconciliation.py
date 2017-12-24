@@ -1,15 +1,16 @@
+from __future__ import absolute_import, print_function
 from collections import defaultdict
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from custom.enikshay.case_utils import (
-    CASE_TYPE_OCCURRENCE,
     CASE_TYPE_EPISODE,
     CASE_TYPE_INVESTIGATION,
 )
 from custom.enikshay.management.commands.base_model_reconciliation import (
     BaseModelReconciliationCommand,
     DOMAIN,
+    get_all_occurrence_case_ids_from_person,
 )
 from corehq.apps.hqcase.utils import bulk_update_cases
 
@@ -53,6 +54,7 @@ class Command(BaseModelReconciliationCommand):
         self.result_file_name = self.setup_result_file()
         self.case_accessor = CaseAccessors(DOMAIN)
         self.investigation_interval_values = []
+        self.person_case_ids = options.get('person_case_ids')
         # iterate all person cases
         for person_case_id in self._get_open_person_case_ids_to_process():
             person_case = self.case_accessor.get_case(person_case_id)
@@ -66,11 +68,11 @@ class Command(BaseModelReconciliationCommand):
                     investigations_to_be_reconciled = self.episode_case_needs_reconciliation(episode_case)
                     if investigations_to_be_reconciled:
                         for interval_type, investigation_cases in investigations_to_be_reconciled.items():
-                            self.reconcile_investigation_cases(episode_case_id, investigation_cases, csvfile)
+                            self.reconcile_investigation_cases(episode_case_id, investigation_cases)
 
         self.email_report()
 
-    def reconcile_investigation_cases(self, episode_case_id, investigation_cases, csvfile):
+    def reconcile_investigation_cases(self, episode_case_id, investigation_cases):
         # fetch latest investigation case which would retain final values
         latest_investigation_case = sorted(investigation_cases, key=lambda x: x.modified_on)[0]
         retain_case_id = latest_investigation_case.case_id
@@ -169,28 +171,29 @@ class Command(BaseModelReconciliationCommand):
         return investigation_cases_to_reconcile
 
     def _get_open_person_case_ids_to_process(self):
-        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-        dbs = get_db_aliases_for_partitioned_query()
-        for db in dbs:
-            case_ids = (
-                CommCareCaseSQL.objects
-                .using(db)
-                .filter(domain=DOMAIN, type="person", closed=False)
-                .values_list('case_id', flat=True)
-            )
-            num_case_ids = len(case_ids)
-            if self.log_progress:
-                print("processing %d docs from db %s" % (num_case_ids, db))
-            for i, case_id in enumerate(case_ids):
+        if self.person_case_ids:
+            num_case_ids = len(self.person_case_ids)
+            for i, case_id in enumerate(self.person_case_ids):
                 yield case_id
                 if i % 1000 == 0 and self.log_progress:
-                    print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
-
-
-def get_all_occurrence_case_ids_from_person(person_case_id):
-    case_accessor = CaseAccessors(DOMAIN)
-    all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    return [case.case_id for case in all_cases if case.type == CASE_TYPE_OCCURRENCE]
+                    print("processed %d / %d docs" % (i, num_case_ids))
+        else:
+            from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+            dbs = get_db_aliases_for_partitioned_query()
+            for db in dbs:
+                case_ids = (
+                    CommCareCaseSQL.objects
+                    .using(db)
+                    .filter(domain=DOMAIN, type="person", closed=False)
+                    .values_list('case_id', flat=True)
+                )
+                num_case_ids = len(case_ids)
+                if self.log_progress:
+                    print("processing %d docs from db %s" % (num_case_ids, db))
+                for i, case_id in enumerate(case_ids):
+                    yield case_id
+                    if i % 1000 == 0 and self.log_progress:
+                        print("processed %d / %d docs from db %s" % (i, num_case_ids, db))
 
 
 def get_open_confirmed_drtb_episode_cases(person_case_id):

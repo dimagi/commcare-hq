@@ -209,16 +209,8 @@ hqDefine('app_manager/js/preview_app', function() {
             hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Refresh App Preview");
             hqImport('analytix/js/google').track.event("App Preview", "Clicked Refresh App Preview");
         });
-        $(document).ajaxComplete(function(e, xhr, options) {
-            if (/edit_form_attr/.test(options.url) ||
-                /edit_module_attr/.test(options.url) ||
-                /edit_module_detail_screens/.test(options.url) ||
-                /edit_app_attr/.test(options.url) ||
-                /edit_form_actions/.test(options.url) ||
-                /edit_commcare_settings/.test(options.url) ||
-                /patch_xform/.test(options.url)) {
-                $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
-            }
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
+            $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
         });
         var onload = function() {
             if (localStorage.getItem(module.DATA.TABLET)) {

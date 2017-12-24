@@ -33,8 +33,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     } else {
                         FormplayerFrontend.trigger('clearProgress');
                         defer.resolve(parsedMenus);
-                        if (response.menuSessionId) {
-                            FormplayerFrontend.trigger('configureDebugger', response.menuSessionId);
+                        // Only configure menu debugger if we didn't get a form entry response
+                        if (!(response.session_id)) {
+                            FormplayerFrontend.trigger('configureDebugger');
                         }
                     }
                 },
