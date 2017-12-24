@@ -1,16 +1,17 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, indian_formatted_number
-import six
+from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, \
+    indian_formatted_number, get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -56,8 +57,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
         total += all_children
         data_for_map[on_map_name]['valid'] += valid
         data_for_map[on_map_name]['all'] += all_children
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Children': BLUE})
@@ -65,44 +65,42 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
 
     gender_ignored, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 6 years')
 
-    return [
-        {
-            "slug": "enrolled_children",
-            "label": "",
-            "fills": fills,
-            "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
-                "average_format": 'number',
-                "info": _((
-                    "Total number of children between the age of ({}) who are enrolled for ICDS services"
-                    .format(age_label)
-                )),
-                "extended_info": [
-                    {
-                        'indicator':
-                            'Number of children{} who are enrolled for ICDS services:'
-                            .format(chosen_filters),
-                        'value': indian_formatted_number(total_valid)
-                    },
-                    {
-                        'indicator': (
-                            'Total number of children{} who are registered: '
-                            .format(chosen_filters)
-                        ),
-                        'value': indian_formatted_number(total)
-                    },
-                    {
-                        'indicator': (
-                            'Percentage of registered children{} who are enrolled for ICDS services:'
-                            .format(chosen_filters)
-                        ),
-                        'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "enrolled_children",
+        "label": "",
+        "fills": fills,
+        "rightLegend": {
+            "average": sum(average) / float(len(average) or 1),
+            "average_format": 'number',
+            "info": _((
+                "Total number of children between the age of ({}) who are enrolled for ICDS services"
+                .format(age_label)
+            )),
+            "extended_info": [
+                {
+                    'indicator':
+                        'Number of children{} who are enrolled for ICDS services:'
+                        .format(chosen_filters),
+                    'value': indian_formatted_number(total_valid)
+                },
+                {
+                    'indicator': (
+                        'Total number of children{} who are registered: '
+                        .format(chosen_filters)
+                    ),
+                    'value': indian_formatted_number(total)
+                },
+                {
+                    'indicator': (
+                        'Percentage of registered children{} who are enrolled for ICDS services:'
+                        .format(chosen_filters)
+                    ),
+                    'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -191,7 +189,7 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

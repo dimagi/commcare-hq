@@ -19,7 +19,7 @@ class TestEnrolledChildren(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of children between the age "
@@ -52,13 +52,13 @@ class TestEnrolledChildren(TestCase):
                     "st1": {
                         "valid": 618,
                         "all": 618,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Children"
                     },
                     "st2": {
                         "valid": 669,
                         "all": 669,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Children"
                     }
                 },
@@ -78,7 +78,7 @@ class TestEnrolledChildren(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of children between the age "

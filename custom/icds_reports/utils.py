@@ -21,8 +21,9 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
+from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
-from custom.icds_reports.queries import get_test_state_locations_id
+from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from dimagi.utils.couch import get_redis_client
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
@@ -243,7 +244,8 @@ def get_value(data, prop):
 
 def apply_exclude(domain, queryset):
     return queryset.exclude(
-        state_id__in=get_test_state_locations_id(domain)
+        state_id__in=get_test_state_locations_id(domain),
+        district_id__in=get_test_district_locations_id(domain)
     )
 
 
@@ -367,8 +369,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
         data_for_map[on_map_name][num_prop] += in_month
         data_for_map[on_map_name][denom_prop] += valid
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in six.itervalues(data_for_map):
         value = data_for_location[num_prop] * 100 / (data_for_location[denom_prop] or 1)
@@ -465,3 +466,19 @@ def indian_formatted_number(number):
         return "".join(r)
     else:
         return 0
+
+
+@quickcache(['domain', 'location_id', 'show_test'], timeout=5 * 60)
+def get_child_locations(domain, location_id, show_test):
+    if location_id:
+        locations = SQLLocation.objects.get(location_id=location_id).get_children()
+    else:
+        locations = SQLLocation.objects.filter(domain=domain, location_type__code=const.LocationTypes.STATE)
+
+    if not show_test:
+        return [
+            sql_location for sql_location in locations
+            if sql_location.metadata.get('is_test_location', 'real') == 'test'
+        ]
+    else:
+        return list(locations)
