@@ -32,7 +32,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends, FormProcess
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
-
+from corehq.util.test_utils import flag_enabled
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -850,6 +850,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
 
     @run_with_all_backends
+    @flag_enabled('ENABLE_REPEATER_EDIT_AND_PAUSE')
     def test_trigger_when_paused(self):
         # not paused
         with patch.object(RepeatRecord, 'fire') as mock_fire:

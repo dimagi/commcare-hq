@@ -575,6 +575,7 @@ def drop_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+@toggles.ENABLE_REPEATER_EDIT_AND_PAUSE.required_decorator()
 def pause_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.pause()
@@ -584,6 +585,7 @@ def pause_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+@toggles.ENABLE_REPEATER_EDIT_AND_PAUSE.required_decorator()
 def resume_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.resume()

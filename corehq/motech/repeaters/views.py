@@ -13,7 +13,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.decorators import method_decorator
 
 from corehq.apps.domain.decorators import LoginAndDomainMixin
-
+from corehq import toggles
 from dimagi.utils.web import json_response
 from dimagi.utils.decorators.memoized import memoized
 
@@ -98,6 +98,7 @@ class EditRepeaterView(BaseRepeaterView):
             )
 
     @method_decorator(domain_admin_required)
+    @method_decorator(toggles.ENABLE_REPEATER_EDIT_AND_PAUSE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         if self.request.GET.get('repeater_type'):
             self.kwargs['repeater_type'] = self.request.GET['repeater_type']

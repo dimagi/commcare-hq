@@ -1401,3 +1401,10 @@ CUSTOM_ICON_BADGES = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+ENABLE_REPEATER_EDIT_AND_PAUSE = StaticToggle(
+    'enable_repeater_edit_and_pause',
+    "Turn on ability to edit a repeater and pause/resume it",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
