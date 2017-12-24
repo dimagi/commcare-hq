@@ -123,9 +123,6 @@ class TableauView(TemplateView):
         return self.request.couch_user
 
     def get_context_data(self, **kwargs):
-        if settings.SERVER_ENVIRONMENT == 'icds-new':
-            messages.error(self.request, "ICDS Tableau Dashboard is not available.")
-            raise Http404()
         location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(
             self.couch_user, self.domain
         )
