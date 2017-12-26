@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import mock
 from datetime import datetime
 import pytz
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -11,7 +10,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.integrations.ninetyninedots.views import (
     validate_adherence_values,
     validate_beneficiary_id,
-    update_ledger_for_episode,
 )
 from custom.enikshay.case_utils import get_open_episode_case_from_person
 from custom.enikshay.integrations.ninetyninedots.utils import (
@@ -21,24 +19,6 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 )
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
-from custom.enikshay.ledger_utils import get_episode_adherence_ledger
-
-MOCK_FIXTURE_ITEMS = {
-    '99DOTS': {
-        'directly_observed_dose': '13',
-        'manual': '18',
-        'missed_dose': '15',
-        'missing_data': '16',
-        'self_administered_dose': '17',
-        'unobserved_dose': '14'},
-    'enikshay': {
-        'directly_observed_dose': '1',
-        'manual': '6',
-        'missed_dose': '3',
-        'missing_data': '4',
-        'self_administered_dose': '5',
-        'unobserved_dose': '2'},
-}
 
 
 class Receiver99DotsTests(SimpleTestCase):
@@ -102,54 +82,6 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
                 adherence_case.dynamic_case_properties().get('adherence_confidence'),
                 'high'
             )
-
-    @mock.patch('custom.enikshay.utils.get_id_of_fixture_tagged_adherence_ledger_values', lambda x: '123')
-    @mock.patch('custom.enikshay.utils.get_all_fixture_items', lambda x, y: MOCK_FIXTURE_ITEMS)
-    def test_update_patient_adherence(self):
-        cases = self.create_case_structure()
-        episode_case = cases['episode']
-        adherence_values = [
-            {
-                "timestamp": "2009-03-05T01:00:01-05:00",
-                "numberFromWhichPatientDialled": "+910123456789",
-                "sharedNumber": False,
-                "adherenceSource": "99DOTS",
-            },
-            {
-                "timestamp": "2009-03-05T02:00:01-05:00",
-                "numberFromWhichPatientDialled": "+910123456789",
-                "sharedNumber": False,
-                "adherenceSource": "enikshay",
-            },
-            {
-                "timestamp": "2016-03-05T02:00:01-05:00",
-                "numberFromWhichPatientDialled": "+910123456787",
-                "sharedNumber": True,
-                "adherenceSource": "99DOTS",
-            },
-            {
-                "timestamp": "2016-03-05T19:00:01-05:00",  # next day in india
-                "numberFromWhichPatientDialled": "+910123456787",
-                "sharedNumber": True,
-            }
-        ]
-        create_adherence_cases(self.domain, 'person', adherence_values)
-
-        update_ledger_for_episode(self.domain, episode_case)
-
-        # in case of two doses the relevant one takes over and ledger is updated according to it
-        # so balance is 2 for enikshay instead of 14 for 99Dots
-        enikshay_adherence_ledger = get_episode_adherence_ledger(self.domain, episode_case.case_id,
-                                                                 "date_2009-03-05")
-        self.assertEqual(enikshay_adherence_ledger.balance, 2)
-
-        # the only adherence on 2016-03-05
-        ninetynine_dots_ledger = get_episode_adherence_ledger(self.domain, episode_case.case_id, "date_2016-03-05")
-        ninetynine_dots_ledger.balance = 14
-
-        # the default ledger which had no source mentioned goes to 99dots and is on the next day i.e 2016-03-06
-        default_ledger = get_episode_adherence_ledger(self.domain, episode_case.case_id, "date_2016-03-06")
-        default_ledger.balance = 14
 
     def test_update_adherence_confidence(self):
         self.create_case_structure()

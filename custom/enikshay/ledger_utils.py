@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 from collections import defaultdict
+from xml.etree import cElementTree as ElementTree
 
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.form_processor.exceptions import LedgerValueNotFound
@@ -13,6 +14,8 @@ from casexml.apps.stock.mock import (
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from custom.enikshay.const import FIXTURE_FOR_EPISODE_LEDGERS, EPISODE_LEDGER_SECTION_ID
+
+LEDGER_UPDATE_DEVICE_ID = "%s.%s" % (__name__, 'reconcile_episode_ledger')
 
 
 def get_episode_adherence_ledger(domain, episode_case_id, entry_id):
@@ -36,7 +39,7 @@ def _adherence_values_fixture_id(domain):
 
 
 @quickcache(['domain', 'fixture_id'], memoize_timeout=12 * 60 * 60, timeout=12 * 60 * 60)
-def get_all_fixture_items(domain, fixture_id):
+def _get_all_fixture_items(domain, fixture_id):
     """
     :return: returns a dict mapped like
     defaultdict(dict,
@@ -68,41 +71,41 @@ def get_all_fixture_items(domain, fixture_id):
         return {}
 
 
-def _update_ledger_for_episode(episode_case, entry_id, adherence_source, adherence_value):
-    """
-    :param episode_case: episode case for the adherence
-    :param entry_id: example "date_2017-12-09" which would be the adherence date
-    """
-    def needs_update(new_value):
-        ledger = get_episode_adherence_ledger(domain, episode_case.case_id, entry_id)
-        if ledger:
-            return ledger.balance != new_value
-        return True
-
-    domain = episode_case.domain
-    if adherence_source and adherence_value:
-        fixture_id = _adherence_values_fixture_id(domain)
-        if fixture_id:
-            ledger_value = get_all_fixture_items(
-                domain,
-                fixture_id
-            )[adherence_source].get(adherence_value)
-            if ledger_value:
-                if needs_update(ledger_value):
-                    balance = Balance()
-                    balance.entity_id = episode_case.case_id
-                    balance.date = datetime.utcnow()
-                    balance.section_id = "adherence"
-                    entry = Entry()
-                    entry.id = entry_id
-                    entry.quantity = ledger_value
-                    balance.entry = entry
-                    device_id = "%s.%s" % (__name__, 'reconcile_episode_ledger')
-                    return submit_case_blocks([balance.as_string()],
-                                              domain,
-                                              device_id=device_id)
+def ledger_entry_id_for_adherence(adherence_date):
+    return "date_%s" % adherence_date
 
 
-def update_episode_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value):
-    entry_id = "date_%s" % adherence_date
-    _update_ledger_for_episode(episode_case, entry_id, adherence_source, adherence_value)
+def ledger_needs_update(domain, episode_case_id, entry_id, new_value):
+    ledger = get_episode_adherence_ledger(domain, episode_case_id, entry_id)
+    if ledger:
+        return ledger.balance != new_value
+    return True
+
+
+def get_expected_fixture_value(domain, adherence_source, adherence_value):
+    fixture_id = _adherence_values_fixture_id(domain)
+    if fixture_id:
+        return (_get_all_fixture_items(domain, fixture_id)
+                [adherence_source]
+                .get(adherence_value))
+
+
+def _ledger_update_xml(episode_case_id, entry_id, ledger_value):
+    balance = Balance()
+    balance.entity_id = episode_case_id
+    balance.date = datetime.utcnow()
+    balance.section_id = EPISODE_LEDGER_SECTION_ID
+    entry = Entry()
+    entry.id = entry_id
+    entry.quantity = ledger_value
+    balance.entry = entry
+    return balance
+
+
+def bulk_update_ledger_cases(domain, ledger_updates):
+    case_blocks = []
+    for episode_case_id, entry_id, balance in ledger_updates:
+        balance = _ledger_update_xml(episode_case_id, entry_id, balance)
+        case_blocks.append(ElementTree.tostring(balance.as_xml()))
+    if case_blocks:
+        submit_case_blocks(case_blocks, domain, device_id=LEDGER_UPDATE_DEVICE_ID)

@@ -27,7 +27,10 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from custom.enikshay.ledger_utils import (
-    update_episode_ledger_for_adherence,
+    ledger_needs_update,
+    get_expected_fixture_value,
+    ledger_entry_id_for_adherence,
+    bulk_update_ledger_cases,
 )
 
 from custom.enikshay.case_utils import (
@@ -61,7 +64,8 @@ import six
 logger = get_task_logger(__name__)
 
 DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source value')
-BatchStatus = namedtuple('BatchStatus', 'update_count noupdate_count success_count errors case_batches duration')
+BatchStatus = namedtuple('BatchStatus',
+                         'update_count noupdate_count success_count errors case_batches ledger_batches duration')
 
 CACHE_KEY = "reconciliation-task-{}"
 cache = get_redis_client()
@@ -160,20 +164,23 @@ class EpisodeUpdater(object):
         error_count = 0
         success_count = 0
         case_batches = 0
+        ledger_batches = 0
 
         errors = []
         with Timer() as t:
             batch_size = 100
-            updates = []
+            case_updates = []
+            ledger_updates = []
             for episode in self._get_open_episode_cases(case_ids):
                 did_error = False
-                dose_status_by_date = None
                 update_json = {}
                 for updater in self.updaters:
                     try:
                         potential_update = updater(self.domain, episode).update_json()
                         if isinstance(updater, EpisodeAdherenceUpdate):
-                            dose_status_by_date = updater.dose_status_by_date
+                            episode_ledger_updates = updater.ledger_updates()
+                            if episode_ledger_updates:
+                                ledger_updates.extend(episode_ledger_updates)
                         update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
                     except Exception as e:
                         did_error = True
@@ -186,30 +193,26 @@ class EpisodeUpdater(object):
                     success_count += 1
 
                 if update_json:
-                    updates.append((episode.case_id, update_json, False))
+                    case_updates.append((episode.case_id, update_json, False))
                     update_count += 1
                 else:
                     noupdate_count += 1
-                if dose_status_by_date:
-                    for dose_date, dose_status in dose_status_by_date:
-                        self._update_ledger_values(episode,
-                                                   dose_date,
-                                                   dose_status.source,
-                                                   dose_status.value)
-                if len(updates) >= batch_size:
-                    bulk_update_cases(self.domain, updates, device_id)
-                    updates = []
+                if len(case_updates) >= batch_size:
+                    bulk_update_cases(self.domain, case_updates, device_id)
+                    case_updates = []
                     case_batches += 1
+                if len(ledger_updates) >= batch_size:
+                    bulk_update_ledger_cases(self.domain, ledger_updates)
+                    ledger_updates = []
+                    ledger_batches += 1
 
-            if len(updates) > 0:
-                bulk_update_cases(self.domain, updates, device_id)
+            if len(case_updates) > 0:
+                bulk_update_cases(self.domain, case_updates, device_id)
+            if len(ledger_updates) > 0:
+                bulk_update_ledger_cases(self.domain, ledger_updates)
 
-        return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
-
-    @staticmethod
-    def _update_ledger_values(episode_case, adherence_date, adherence_source, adherence_value):
-        if adherence_date and adherence_source and adherence_value:
-            update_episode_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value)
+        return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, ledger_batches,
+                           t.interval)
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
@@ -642,6 +645,16 @@ class EpisodeAdherenceUpdate(object):
         else:
             return None
 
+    def ledger_updates(self):
+        _updates = []
+        for dose_date, dose_status in self.dose_status_by_date.items():
+            if dose_status.source and dose_status.value:
+                expected_value = get_expected_fixture_value(self.domain, dose_status.source, dose_status.value)
+                entry_id = ledger_entry_id_for_adherence(dose_date)
+                if ledger_needs_update(self.domain, self.episode.case_id, entry_id, expected_value):
+                    _updates.append((self.episode.case_id, entry_id, expected_value))
+        return _updates
+
 
 class EpisodeVoucherUpdate(object):
     """
@@ -880,7 +893,11 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
 
 @task
 def update_single_episode(domain, episode_case):
-    update_json = EpisodeAdherenceUpdate(domain, episode_case).update_json()
+    updater = EpisodeAdherenceUpdate(domain, episode_case)
+    update_json = updater.update_json()
+    ledger_updates = updater.ledger_updates()
     if update_json:
         update_case(domain, episode_case.case_id, update_json,
                     device_id="%s.%s" % (__name__, 'update_single_episode'))
+    if ledger_updates:
+        bulk_update_ledger_cases(domain, ledger_updates)
