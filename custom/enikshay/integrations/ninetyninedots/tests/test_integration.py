@@ -21,7 +21,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 )
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
-from custom.enikshay.utils import get_episode_adherence_ledger
+from custom.enikshay.ledger_utils import get_episode_adherence_ledger
 
 MOCK_FIXTURE_ITEMS = {
     '99DOTS': {

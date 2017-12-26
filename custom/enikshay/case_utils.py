@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 import pytz
 from collections import namedtuple, defaultdict
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import (
+    parse_datetime,
+    parse_date,
+)
 from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
@@ -688,3 +691,13 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
         return None
     else:
         return sorted(episode_cases, key=(lambda case: case.opened_on))[-1]
+
+
+def get_adherence_cases_by_date(adherence_cases):
+    adherence_cases_by_date = defaultdict(list)
+    for case in adherence_cases:
+        adherence_date = case.get('adherence_date')
+        if adherence_date:
+            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
+            adherence_cases_by_date[adherence_date].append(case)
+    return adherence_cases_by_date

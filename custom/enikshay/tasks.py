@@ -26,17 +26,17 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from custom.enikshay.utils import (
-    update_ledger_for_adherence,
-    get_adherence_cases_by_date,
+from custom.enikshay.ledger_utils import (
+    update_episode_ledger_for_adherence,
 )
 
-from .case_utils import (
+from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     get_prescription_vouchers_from_episode,
     get_private_diagnostic_test_cases_from_episode,
     get_prescription_from_voucher,
     get_person_case_from_episode,
+    get_adherence_cases_by_date,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
@@ -209,7 +209,7 @@ class EpisodeUpdater(object):
     @staticmethod
     def _update_ledger_values(episode_case, adherence_date, adherence_source, adherence_value):
         if adherence_date and adherence_source and adherence_value:
-            update_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value)
+            update_episode_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value)
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
@@ -817,7 +817,7 @@ def calculate_dose_status_by_day(adherence_cases):
     status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True,
                                                    source=False, value=None))
     for day, cases in six.iteritems(adherence_cases_by_date):
-        case = get_relevent_case(cases)
+        case = get_primary_adherence_case(cases)
         if not case:
             pass  # unknown
         elif case.get('adherence_value') in DOSE_TAKEN_INDICATORS:
@@ -832,7 +832,7 @@ def calculate_dose_status_by_day(adherence_cases):
     return status_by_day
 
 
-def get_relevent_case(cases):
+def get_primary_adherence_case(cases):
     """
     If there are multiple cases on one day filter to a single case as per below
     1. Find most relevant case

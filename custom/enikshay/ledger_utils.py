@@ -3,8 +3,6 @@ from __future__ import absolute_import
 from datetime import datetime
 from collections import defaultdict
 
-from django.utils.dateparse import parse_datetime, parse_date
-
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
@@ -14,15 +12,7 @@ from casexml.apps.stock.mock import (
     Entry,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.util import SYSTEM_USER_ID
-
-
-def get_adherence_cases_by_date(adherence_cases):
-    adherence_cases_by_date = defaultdict(list)
-    for case in adherence_cases:
-        adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
-        adherence_cases_by_date[adherence_date].append(case)
-    return adherence_cases_by_date
+from custom.enikshay.const import FIXTURE_FOR_EPISODE_LEDGERS, EPISODE_LEDGER_SECTION_ID
 
 
 def get_episode_adherence_ledger(domain, episode_case_id, entry_id):
@@ -33,14 +23,14 @@ def get_episode_adherence_ledger(domain, episode_case_id, entry_id):
     """
     ledger_accessor = LedgerAccessors(domain)
     try:
-        return ledger_accessor.get_ledger_value(episode_case_id, "adherence", entry_id)
+        return ledger_accessor.get_ledger_value(episode_case_id, EPISODE_LEDGER_SECTION_ID, entry_id)
     except LedgerValueNotFound:
         return None
 
 
 @quickcache(['domain'], memoize_timeout=7 * 24 * 60 * 60, timeout=7 * 24 * 60 * 60)
-def get_id_of_fixture_tagged_adherence_ledger_values(domain):
-    fixture = FixtureDataType.by_domain_tag(domain, "adherence_ledger_values").first()
+def _adherence_values_fixture_id(domain):
+    fixture = FixtureDataType.by_domain_tag(domain, FIXTURE_FOR_EPISODE_LEDGERS).first()
     if fixture:
         return fixture.get_id
 
@@ -78,7 +68,7 @@ def get_all_fixture_items(domain, fixture_id):
         return {}
 
 
-def update_ledger_with_episode(episode_case, entry_id, adherence_source, adherence_value):
+def _update_ledger_for_episode(episode_case, entry_id, adherence_source, adherence_value):
     """
     :param episode_case: episode case for the adherence
     :param entry_id: example "date_2017-12-09" which would be the adherence date
@@ -91,12 +81,12 @@ def update_ledger_with_episode(episode_case, entry_id, adherence_source, adheren
 
     domain = episode_case.domain
     if adherence_source and adherence_value:
-        fixture_id = get_id_of_fixture_tagged_adherence_ledger_values(domain)
+        fixture_id = _adherence_values_fixture_id(domain)
         if fixture_id:
             ledger_value = get_all_fixture_items(
                 domain,
                 fixture_id
-            ).get(adherence_source, {}).get(adherence_value)
+            )[adherence_source].get(adherence_value)
             if ledger_value:
                 if needs_update(ledger_value):
                     balance = Balance()
@@ -107,11 +97,12 @@ def update_ledger_with_episode(episode_case, entry_id, adherence_source, adheren
                     entry.id = entry_id
                     entry.quantity = ledger_value
                     balance.entry = entry
+                    device_id = "%s.%s" % (__name__, 'reconcile_episode_ledger')
                     return submit_case_blocks([balance.as_string()],
-                                              episode_case.domain,
-                                              SYSTEM_USER_ID)
+                                              domain,
+                                              device_id=device_id)
 
 
-def update_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value):
+def update_episode_ledger_for_adherence(episode_case, adherence_date, adherence_source, adherence_value):
     entry_id = "date_%s" % adherence_date
-    update_ledger_with_episode(episode_case, entry_id, adherence_source, adherence_value)
+    _update_ledger_for_episode(episode_case, entry_id, adherence_source, adherence_value)

@@ -12,7 +12,10 @@ from dimagi.utils.web import json_response
 from dimagi.utils.logging import notify_exception
 
 from corehq.motech.repeaters.views import AddCaseRepeaterView
-from custom.enikshay.case_utils import get_adherence_cases_from_episode
+from custom.enikshay.case_utils import (
+    get_adherence_cases_from_episode,
+    get_adherence_cases_by_date,
+)
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     AdherenceCaseFactory,
@@ -21,10 +24,9 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
 )
 import six
 
-from custom.enikshay.tasks import get_relevent_case
-from custom.enikshay.utils import (
-    update_ledger_for_adherence,
-    get_adherence_cases_by_date,
+from custom.enikshay.tasks import get_primary_adherence_case
+from custom.enikshay.ledger_utils import (
+    update_episode_ledger_for_adherence,
 )
 
 
@@ -98,13 +100,13 @@ def update_ledger_for_episode(domain, episode_case):
     _cases = [case.to_json() for case in adherence_cases_for_episode]
     adherence_cases_by_date = get_adherence_cases_by_date(_cases)
     for day, cases in six.iteritems(adherence_cases_by_date):
-        adherence_case = get_relevent_case(cases)
+        adherence_case = get_primary_adherence_case(cases)
         if adherence_case and adherence_case['adherence_date']:
-            update_ledger_for_adherence(episode_case,
-                                        adherence_case['adherence_date'],
-                                        adherence_case['adherence_source'],
-                                        adherence_case['adherence_value'],
-                                        )
+            update_episode_ledger_for_adherence(episode_case,
+                                                adherence_case['adherence_date'],
+                                                adherence_case['adherence_source'],
+                                                adherence_case['adherence_value'],
+                                                )
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()
