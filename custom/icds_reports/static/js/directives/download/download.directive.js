@@ -1,10 +1,16 @@
 /* global moment */
 
-function DownloadController($location, locationHierarchy, locationsService, userLocationId) {
+function DownloadController($scope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures) {
     var vm = this;
 
     vm.months = [];
     vm.years = [];
+    vm.showPdfMessage = $location.search()['show_pdf_message'] || false;
+    setTimeout(function() {
+        $scope.$apply(function() {
+            vm.showPdfMessage = false;
+        });
+    }, 3000);
 
     vm.filterOptions = [
         {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
@@ -39,6 +45,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
+    vm.selectedPDFFormat = 'many';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
     vm.now = new Date().getMonth() + 1;
@@ -57,6 +64,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 'xls', name: 'Excel'},
     ];
 
+    vm.pdfFormats = [
+        {id: 'many', name: 'One PDF per AWC'},
+        {id: 'one', name: 'One Combined PDF for all AWCs'},
+    ];
+
+    vm.awcLocations = [];
+
     vm.indicators = [
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant Women'},
@@ -64,7 +78,12 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
+
     ];
+
+    if (haveAccessToFeatures) {
+        vm.indicators.push({id: 7, name: 'ISSNIP Monthly Register'});
+    }
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
@@ -217,6 +236,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
         return selectedLocationIndex() !== -1 && i >= level;
     };
 
+    vm.onSelectForISSNIP = function ($item, level) {
+        locationsService.getAwcLocations($item.location_id).then(function (data) {
+            vm.awcLocations = [ALL_OPTION].concat(data);
+        });
+        vm.onSelect($item, level);
+    };
+
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
 
@@ -234,6 +260,10 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+    };
+
+    vm.getAwcs = function () {
+        locationsService.getAncestors();
     };
 
     vm.getFormats = function() {
@@ -271,12 +301,16 @@ function DownloadController($location, locationHierarchy, locationsService, user
         return vm.selectedIndicator === 6;
     };
 
+    vm.isISSNIPMonthlyRegisterSelected = function () {
+        return vm.selectedIndicator === 7;
+    };
+
     vm.isDistrictOrBelowSelected = function() {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
     };
 }
 
-DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
+DownloadController.$inject = ['$scope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

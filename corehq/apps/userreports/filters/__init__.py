@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from exceptions import NotImplementedError
 from corehq.apps.userreports.operators import OPERATOR_DISPLAY
 from corehq.apps.userreports.util import add_tabbed_text
+from corehq.apps.userreports.const import NAMED_FILTER_PREFIX
 class Filter(object):
     """
     Base filter class
@@ -106,4 +107,4 @@ class NamedFilter(Filter):
         return self.filter(item, context)
 
     def __str__(self):
-        return "NamedF:{}".format(self.filter_name)
+        return "{}:{}".format(NAMED_FILTER_PREFIX, self.filter_name)

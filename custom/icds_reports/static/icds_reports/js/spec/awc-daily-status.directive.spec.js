@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AWCDailyStatusDirective', function () {
+describe('AWC Daily Status Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -35,6 +35,9 @@ describe('AWCDailyStatusDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');

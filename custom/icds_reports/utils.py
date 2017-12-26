@@ -1,15 +1,19 @@
 from __future__ import absolute_import, division
 import json
 import os
+import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
 
 import operator
 
+from six.moves import cStringIO
 from dateutil.relativedelta import relativedelta
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
+from xhtml2pdf import pisa
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
@@ -17,12 +21,14 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.util.quickcache import quickcache
+from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
-from custom.icds_reports.queries import get_test_state_locations_id
+from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
+from dimagi.utils.couch import get_redis_client
 from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
-
+import uuid
 
 OPERATORS = {
     "==": operator.eq,
@@ -238,7 +244,8 @@ def get_value(data, prop):
 
 def apply_exclude(domain, queryset):
     return queryset.exclude(
-        state_id__in=get_test_state_locations_id(domain)
+        state_id__in=get_test_state_locations_id(domain),
+        district_id__in=get_test_district_locations_id(domain)
     )
 
 
@@ -362,8 +369,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
         data_for_map[on_map_name][num_prop] += in_month
         data_for_map[on_map_name][denom_prop] += valid
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in six.itervalues(data_for_map):
         value = data_for_location[num_prop] * 100 / (data_for_location[denom_prop] or 1)
@@ -414,11 +420,65 @@ def chosen_filters_to_labels(config, default_interval=''):
     elif age_in:
         chosen_age = '{age}'.format(age=age_intervals.get(age_in[-1]))
     else:
-        chosen_age = ''
-    age_label = chosen_age if chosen_age else default_interval
+        chosen_age = default_interval
 
-    delimiter = ', ' if gender and (age or age_in) else ''
+    delimiter = ', ' if gender and chosen_age else ''
     chosen_filters = ' ({gender}{delimiter}{age})'\
-        .format(gender=chosen_gender, delimiter=delimiter, age=chosen_age) if gender or age else ''
+        .format(gender=chosen_gender, delimiter=delimiter, age=chosen_age) if gender or chosen_age else ''
 
-    return gender_label, age_label, chosen_filters
+    return gender_label, chosen_age, chosen_filters
+
+
+def zip_folder(pdf_files):
+    zip_hash = uuid.uuid4().hex
+    client = get_redis_client()
+    in_memory = cStringIO()
+    zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
+    for pdf_file in pdf_files:
+        file = client.get(pdf_file['uuid'])
+        zip_file.writestr('ISSNIP_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
+    zip_file.close()
+    client.set(zip_hash, in_memory.getvalue())
+    return zip_hash
+
+
+def create_pdf_file(pdf_hash, pdf_context):
+    template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
+    resultFile = cStringIO()
+    client = get_redis_client()
+    pisa.CreatePDF(
+        template.render(pdf_context),
+        dest=resultFile)
+    client.set(pdf_hash, resultFile.getvalue())
+    client.expire(pdf_hash, 24 * 60 * 60)
+    resultFile.close()
+    return pdf_hash
+
+
+def icds_pre_release_features(user):
+    return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)
+
+
+def indian_formatted_number(number):
+    s = str(number)
+    if s.isdigit():
+        r = ",".join([s[x - 2:x] for x in range(-3, -len(s), -2)][::-1] + [s[-3:]])
+        return "".join(r)
+    else:
+        return 0
+
+
+@quickcache(['domain', 'location_id', 'show_test'], timeout=5 * 60)
+def get_child_locations(domain, location_id, show_test):
+    if location_id:
+        locations = SQLLocation.objects.get(location_id=location_id).get_children()
+    else:
+        locations = SQLLocation.objects.filter(domain=domain, location_type__code=const.LocationTypes.STATE)
+
+    if not show_test:
+        return [
+            sql_location for sql_location in locations
+            if sql_location.metadata.get('is_test_location', 'real') == 'test'
+        ]
+    else:
+        return list(locations)

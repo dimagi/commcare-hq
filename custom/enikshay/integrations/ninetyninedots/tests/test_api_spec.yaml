@@ -1,0 +1,76 @@
+api_params:
+- api_param_name: beneficiary_id
+  required: true
+  case_type:
+    both: person
+  case_property:
+    both: case_id
+- api_param_name: required_param
+  required: true
+  case_type:
+    both: person
+  case_property:
+    both: required_param
+- api_param_name: has_choices
+  case_type:
+    both: episode
+  case_property:
+    both: has_choices
+  choices:
+    both:
+      - foo
+      - bar
+      - baz
+      - buzz
+- api_param_name: outbound_only
+  direction: 1                  # Outbound
+  case_type:
+    both: person
+  case_property:
+    both: outbound_only
+- api_param_name: inbound_only
+  direction: 2                  # Inbound
+  case_type:
+    both: person
+  case_property:
+    both: inbound_only
+- api_param_name: with_setter
+  setter: custom.enikshay.integrations.ninetyninedots.tests.test_integration.property_setter
+  case_type:
+    both: person
+  case_property:
+    both: inbound_only
+- api_param_name: split_name
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.split_name
+  case_type:
+    both: person
+  case_properties:
+    both:
+      - foo
+      - bar
+- api_param_name: unwrap_number
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.unwrap_phone_number
+  case_type:
+    both: person
+  case_properties:
+    both:
+      - foo
+- api_param_name: private_only
+  case_type:
+    both: person
+  case_property:
+    private: foo
+- api_param_name: merm_params
+  payload_object: custom.enikshay.integrations.ninetyninedots.api_spec.MermParams
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.set_merm_params
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - merm_id
+      - merm_alarm_enabled
+      - merm_daily_reminder_time
+      - merm_refill_reminder_status
+      - merm_refill_reminder_date
+      - merm_refill_reminder_time
+      - merm_rt_hours

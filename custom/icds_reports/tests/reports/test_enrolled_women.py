@@ -19,7 +19,7 @@ class TestEnrolledWomen(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
@@ -28,11 +28,11 @@ class TestEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 155
+                            'value': "155"
                         },
                         {
                             'indicator': 'Total number of pregnant women who are registered:',
-                            'value': 155
+                            'value': "155"
                         },
                         {
                             'indicator': (
@@ -50,13 +50,13 @@ class TestEnrolledWomen(TestCase):
                     "st1": {
                         "valid": 70,
                         "all": 70,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 85,
                         "all": 85,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Women"
                     }
                 },
@@ -76,7 +76,7 @@ class TestEnrolledWomen(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
@@ -85,11 +85,11 @@ class TestEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 70
+                            'value': "70"
                         },
                         {
                             'indicator': 'Total number of pregnant women who are registered:',
-                            'value': 70
+                            'value': "70"
                         },
                         {
                             'indicator': (

@@ -143,7 +143,7 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
@@ -152,9 +152,9 @@ class TestLactatingEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 166
+                            'value': "166"
                         },
-                        {'indicator': 'Total number of pregnant women who are registered:', 'value': 166},
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "166"},
                         {
                             'indicator': (
                                 'Percentage of registered pregnant women who are enrolled for ICDS services:'
@@ -171,13 +171,13 @@ class TestLactatingEnrolledWomen(TestCase):
                     "st1": {
                         "valid": 87,
                         "all": 87,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 79,
                         "all": 79,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Women"
                     }
                 },
@@ -197,7 +197,7 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
@@ -206,9 +206,9 @@ class TestLactatingEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 87
+                            'value': "87"
                         },
-                        {'indicator': 'Total number of pregnant women who are registered:', 'value': 87},
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "87"},
                         {
                             'indicator': (
                                 'Percentage of registered pregnant women who are enrolled for ICDS services:'

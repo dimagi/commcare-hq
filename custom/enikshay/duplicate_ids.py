@@ -16,9 +16,11 @@ from corehq.form_processor.models import CaseTransaction
 from dimagi.utils.couch.database import iter_docs
 
 from .const import VOUCHER_ID, ENIKSHAY_ID
+from .models import IssuerId
+from .user_setup import compress_nikshay_id
 
 
-def get_cases_with_duplicate_ids(domain, case_type):
+def get_duplicated_case_stubs(domain, case_type):
     accessor = CaseAccessors(domain)
     id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[case_type]
     all_case_ids = accessor.get_case_ids_in_domain(case_type)
@@ -89,3 +91,51 @@ def _get_user_info(user_ids):
         }
         for user_doc in iter_docs(CommCareUser.get_db(), user_ids)
     }
+
+
+class ReadableIdGenerator(object):
+
+    def __init__(self, domain, commit):
+        self.domain = domain
+        self.commit = commit
+        self._issuer_id = -1
+        self._device_number = 0
+        self._serial_count = -1
+
+    def _bump_issuer_id(self):
+        if self.commit:
+            issuer_id, _ = IssuerId.objects.get_or_create(domain=self.domain,
+                                                          user_id="duplicate_generator")
+            self._issuer_id = issuer_id.pk
+        else:
+            # this isn't going to be saved, just start at 0
+            self._issuer_id += 1
+
+    def _get_issuer_id(self):
+        if self._issuer_id == -1:
+            self._bump_issuer_id()
+        return self._issuer_id
+
+    def _get_device_number(self):
+        if self._device_number == 10:
+            self._bump_issuer_id()
+            self._device_number = 0
+        return self._device_number
+
+    def _get_serial_count(self):
+        self._serial_count += 1
+        if self._serial_count == 5000:
+            self._serial_count = 0
+            self._device_number += 1
+        return self._serial_count
+
+    def get_next(self):
+        # order matters, since more specific ones roll up the next
+        serial_count = self._get_serial_count()
+        device_number = self._get_device_number()
+        issuer_id = self._get_issuer_id()
+        return "{}{}{}".format(
+            compress_nikshay_id(issuer_id, 3),
+            compress_nikshay_id(device_number, 0),
+            compress_nikshay_id(serial_count, 2),
+        )

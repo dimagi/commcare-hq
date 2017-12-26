@@ -1,18 +1,19 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels
-import six
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
+    get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -79,8 +80,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         data_for_map[on_map_name]['normal'] += normal
         data_for_map[on_map_name]['total'] += valid
         data_for_map[on_map_name]['total_measured'] += total_measured
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
@@ -103,55 +103,56 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
 
-    return [
-        {
-            "slug": "severe",
-            "label": "Percent of Children{gender} Wasted ({age})".format(
-                gender=gender_label,
-                age=age_label
-            ),
-            "fills": fills,
-            "rightLegend": {
-                "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
-                "info": _((
-                    "Percentage of children between {} enrolled for ICDS services with "
-                    "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
-                    "<br/><br/>"
-                    "Wasting in children is a symptom of acute undernutrition usually as a consequence "
-                    "of insufficient food intake or a high incidence of infectious diseases. Severe Acute "
-                    "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
-                    "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
-                    "status for a child that has moderate wasting (weight-for-height) below -2Z."
-                    .format(age_label)
-                )),
-                "extended_info": [
-                    {
-                        'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
-                        'value': valid_total},
-                    {
-                        'indicator': 'Total Children{} with height measured in given month:'
-                        .format(chosen_filters),
-                        'value': measured_total},
-                    {
-                        'indicator': '% Unmeasured{}:'.format(chosen_filters),
-                        'value': '%.2f%%' % percent_unmeasured},
-                    {
-                        'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
-                        'value': '%.2f%%' % (severe_total * 100 / float(valid_total or 1))
-                    },
-                    {
-                        'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
-                        'value': '%.2f%%' % (moderate_total * 100 / float(valid_total or 1))
-                    },
-                    {
-                        'indicator': '% Normal{}:'.format(chosen_filters),
-                        'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "severe",
+        "label": "Percent of Children{gender} Wasted ({age})".format(
+            gender=gender_label,
+            age=age_label
+        ),
+        "fills": fills,
+        "rightLegend": {
+            "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
+            "info": _((
+                "Percentage of children between {} enrolled for ICDS services with "
+                "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
+                "<br/><br/>"
+                "Wasting in children is a symptom of acute undernutrition usually as a consequence "
+                "of insufficient food intake or a high incidence of infectious diseases. Severe Acute "
+                "Malnutrition (SAM) is nutritional status for a child who has severe wasting "
+                "(weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional "
+                "status for a child that has moderate wasting (weight-for-height) below -2Z."
+                .format(age_label)
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': 'Total Children{} with height measured in given month:'
+                    .format(chosen_filters),
+                    'value': indian_formatted_number(measured_total)
+                },
+                {
+                    'indicator': '% Unmeasured{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % percent_unmeasured
+                },
+                {
+                    'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (severe_total * 100 / float(valid_total or 1))
+                },
+                {
+                    'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (moderate_total * 100 / float(valid_total or 1))
+                },
+                {
+                    'indicator': '% Normal{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -302,7 +303,7 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         'total_measured': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

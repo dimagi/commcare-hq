@@ -19,15 +19,15 @@ class TestAWCDailyStatus(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': 19},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': 0},
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "19"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "0"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
@@ -41,13 +41,13 @@ class TestAWCDailyStatus(TestCase):
                     "st1": {
                         "in_day": 0,
                         "all": 8,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-50%"
                     },
                     "st2": {
                         "in_day": 0,
                         "all": 11,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-50%"
                     }
                 },
@@ -65,7 +65,7 @@ class TestAWCDailyStatus(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",
@@ -73,11 +73,11 @@ class TestAWCDailyStatus(TestCase):
                     "extended_info": [
                         {
                             "indicator": "Total number of AWCs that were open yesterday:",
-                            "value": 19
+                            "value": "19"
                         },
                         {
                             "indicator": "Total number of AWCs that have been launched:",
-                            "value": 0
+                            "value": "0"
                         },
                         {
                             "indicator": "% of AWCs open yesterday:",
@@ -91,13 +91,13 @@ class TestAWCDailyStatus(TestCase):
                     "st1": {
                         "in_day": 0,
                         "all": 8,
-                        "original_name": [],
+                        "original_name": ["st1"],
                         "fillKey": "0%-50%"
                     },
                     "st2": {
                         "in_day": 0,
                         "all": 11,
-                        "original_name": [],
+                        "original_name": ["st2"],
                         "fillKey": "0%-50%"
                     }
                 },
@@ -122,15 +122,15 @@ class TestAWCDailyStatus(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': 8},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': 0},
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "8"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "0"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },

@@ -705,7 +705,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         this_month_institutional_delivery_data,
                         'institutional_delivery_in_month_sum'
                     ),
-                    'all': get_value(prev_month_institutional_delivery_data, 'delivered_in_month_sum'),
+                    'all': get_value(this_month_institutional_delivery_data, 'delivered_in_month_sum'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -1010,9 +1010,31 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
-    ).order_by('-month', order)
+    )
 
-    data_count = data.count()
+    if 'current_month_nutrition_status' in order:
+        sort_order = {
+            'Severely underweight': 1,
+            'Moderately underweight': 2,
+            'Normal weight for age': 3,
+            'Data Not Entered': 4
+        }
+        reverse = '-' in order
+        data = sorted(
+            data,
+            key=lambda val: (sort_order[
+                get_status(
+                    val.current_month_nutrition_status,
+                    'underweight',
+                    'Normal weight for age'
+                )['value']
+            ]),
+            reverse=reverse
+        )
+    else:
+        data = data.order_by('-month', order)
+
+    data_count = len(data)
     data = data[start:(start + length)]
 
     config = {

@@ -19,13 +19,16 @@ class TestCleanWater(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with a source of clean drinking water",
                     "average": 58.0,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a source of clean drinking water:', 'value': 29},
+                        {
+                            'indicator': 'Total number of AWCs with a source of clean drinking water:',
+                            'value': "29"
+                        },
                         {'indicator': '% of AWCs with a source of clean drinking water:', 'value': '58.00%'}
                     ]
                 },
@@ -39,13 +42,13 @@ class TestCleanWater(TestCase):
                     "st1": {
                         "in_month": 17,
                         "all": 26,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 12,
                         "all": 24,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "25%-75%"
                     }
                 },
@@ -65,13 +68,16 @@ class TestCleanWater(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with a source of clean drinking water",
                     "average": 65.38461538461539,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a source of clean drinking water:', 'value': 17},
+                        {
+                            'indicator': 'Total number of AWCs with a source of clean drinking water:',
+                            'value': "17"
+                        },
                         {'indicator': '% of AWCs with a source of clean drinking water:', 'value': '65.38%'}
                     ]
                 },

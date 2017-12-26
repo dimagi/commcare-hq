@@ -20,7 +20,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'month': (2017, 5, 1)
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 'rightLegend': {
                     'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'
@@ -30,11 +30,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' have a higher risk of mortality',
                     'average': 17.593528816986854,
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 4945},
-                        {'indicator': '% Unweighed:', 'value': '5.66%'},
-                        {'indicator': '% Severely Underweight:', 'value': '0.00%'},
-                        {'indicator': '% Moderately Underweight:', 'value': '17.59%'},
-                        {'indicator': '% Normal:', 'value': '76.74%'}]
+                        {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '4,945'},
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '5.66%'},
+                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '0.00%'},
+                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '17.59%'},
+                        {'indicator': '% Normal (0 - 5 years):', 'value': '76.74%'}]
                 },
                 'fills': OrderedDict(
                     [
@@ -50,14 +50,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         'severely_underweight': 40,
                         'moderately_underweight': 450,
                         'fillKey': '20%-35%',
-                        'original_name': [],
+                        'original_name': ["st1"],
                         'normal': 1820
                     },
                     'st2': {
                         'total': 2570,
                         'severely_underweight': 70,
                         'moderately_underweight': 420,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         'fillKey': '0%-20%',
                         'normal': 1975
                     }
@@ -78,7 +78,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 'rightLegend': {
                     'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'
@@ -88,11 +88,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' have a higher risk of mortality',
                     'average': 18.94736842105263,
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 475},
-                        {'indicator': '% Unweighed:', 'value': '4.42%'},
-                        {'indicator': '% Severely Underweight:', 'value': '0.00%'},
-                        {'indicator': '% Moderately Underweight:', 'value': '18.95%'},
-                        {'indicator': '% Normal:', 'value': '76.63%'}
+                        {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '475'},
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '4.42%'},
+                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '0.00%'},
+                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.95%'},
+                        {'indicator': '% Normal (0 - 5 years):', 'value': '76.63%'}
                     ]
                 },
                 'fills': OrderedDict(

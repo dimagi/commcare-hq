@@ -38,9 +38,9 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
     deprecated_format_names = ('case_json',)
 
     def get_payload(self, repeat_record, episode_case):
-        occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
-        person_case = get_person_case_from_occurrence(episode_case.domain, occurence_case)
-        return json.dumps(get_patient_payload(person_case, episode_case).to_json())
+        occurrence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
+        person_case = get_person_case_from_occurrence(episode_case.domain, occurrence_case)
+        return json.dumps(get_patient_payload(person_case, occurrence_case, episode_case).to_json())
 
     def handle_success(self, response, episode_case, repeat_record):
         if response.status_code == 201:
@@ -79,21 +79,22 @@ class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
         if episode_or_person.type == CASE_TYPE_PERSON:
             person_case = episode_or_person
             episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+            occurrence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
         elif episode_or_person.type == CASE_TYPE_EPISODE:
             episode_case = episode_or_person
             occurrence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
             person_case = get_person_case_from_occurrence(episode_case.domain, occurrence_case.case_id)
         else:
             raise ENikshayCaseNotFound("wrong case passed to repeater")
-        return person_case, episode_case
+        return person_case, occurrence_case, episode_case
 
     def get_payload(self, repeat_record, episode_or_person):
-        person_case, episode_case = self._get_cases(episode_or_person)
-        return json.dumps(get_patient_payload(person_case, episode_case).to_json())
+        person_case, occurrence_case, episode_case = self._get_cases(episode_or_person)
+        return json.dumps(get_patient_payload(person_case, occurrence_case, episode_case).to_json())
 
     def handle_success(self, response, episode_or_person, repeat_record):
         try:
-            person_case, episode_case = self._get_cases(episode_or_person)
+            person_case, occurrence_case, episode_case = self._get_cases(episode_or_person)
         except ENikshayCaseNotFound as e:
             self.handle_exception(e, repeat_record)
 
@@ -108,7 +109,7 @@ class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def handle_failure(self, response, episode_or_person, repeat_record):
         try:
-            person_case, episode_case = self._get_cases(episode_or_person)
+            person_case, occurrence_case, episode_case = self._get_cases(episode_or_person)
         except ENikshayCaseNotFound as e:
             self.handle_exception(e, repeat_record)
 

@@ -19,13 +19,13 @@ class TestMedicineKit(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with a Medicine Kit",
                     "average": 40.0,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': 20},
+                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "20"},
                         {'indicator': '% of AWCs with a Medicine Kit:', 'value': '40.00%'}
                     ]
                 },
@@ -39,13 +39,13 @@ class TestMedicineKit(TestCase):
                     "st1": {
                         "in_month": 9,
                         "all": 26,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 11,
                         "all": 24,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "25%-75%"
                     }
                 },
@@ -65,13 +65,13 @@ class TestMedicineKit(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with a Medicine Kit",
                     "average": 34.61538461538461,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': 9},
+                        {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "9"},
                         {'indicator': '% of AWCs with a Medicine Kit:', 'value': '34.62%'}
                     ]
                 },

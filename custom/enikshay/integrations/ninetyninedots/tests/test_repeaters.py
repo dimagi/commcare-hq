@@ -285,6 +285,8 @@ class TestTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, ENikshayRepea
 
 class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStructureMixin, TestCase):
 
+    maxDiff = None
+
     def tearDown(self):
         super(TestPayloadGeneratorBase, self).tearDown()
         delete_all_cases()
@@ -292,7 +294,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
     def _get_actual_payload(self, casedb):
         raise NotImplementedError()
 
-    def _assert_payload_equal(self, casedb, expected_numbers=False, sector=u'public'):
+    def _assert_payload_contains_subset(self, casedb, expected_numbers=False, sector=u'public'):
         person_case = casedb[self.person_id]
         episode_case = casedb[self.episode_id]
         person_case_properties = person_case.dynamic_case_properties()
@@ -341,7 +343,8 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             })
         expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
-        self.assertDictEqual(expected_payload, actual_payload)
+        self.assertDictContainsSubset(expected_payload, actual_payload)
+        return actual_payload
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -354,7 +357,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         del self.episode.attrs['update']['merm_id']
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        self._assert_payload_equal(cases)
+        self._assert_payload_contains_subset(cases)
 
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
@@ -362,20 +365,20 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        self._assert_payload_equal(cases, None)
+        self._assert_payload_contains_subset(cases, None)
 
     def test_get_payload_secondary_number_only(self):
         self.primary_phone_number = None
         self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
+        self._assert_payload_contains_subset(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
 
     def test_get_payload_private_sector(self):
         self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.pcp.location_id)
-        self._assert_payload_equal(cases, sector='private')
+        self._assert_payload_contains_subset(cases, sector='private')
 
     def test_handle_success(self):
         cases = self.create_case_structure()
@@ -418,6 +421,7 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
         return UpdatePatientPayloadGenerator(None).get_payload(None, casedb[self.person_id])
 
     def test_get_payload(self):
+        self.person.attrs['update']['language_code'] = ''
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         expected_numbers = u"+91{}, +91{}, +91{}".format(
@@ -425,7 +429,8 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
             self.secondary_phone_number.replace("0", ""),
             self.other_number.replace("0", "")
         )
-        self._assert_payload_equal(cases, expected_numbers)
+        payload = self._assert_payload_contains_subset(cases, expected_numbers)
+        self.assertFalse('language_code' in payload)
 
     def test_handle_success(self):
         cases = self.create_case_structure()
