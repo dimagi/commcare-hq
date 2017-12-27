@@ -536,13 +536,13 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
         return {
             'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
-            'ESTABLISHMENT_NAME': location.name,
+            'ESTABLISHMENT_NAME': sanitize_text_for_xml(location.name),
             'MCI_HR_NO': self._get_value_or_dummy_value(location_user_data, 'registration_number'),
-            'CONTACT_PNAME': location_user.full_name,
+            'CONTACT_PNAME': sanitize_text_for_xml(location_user.full_name),
             'CONTACT_PDESIGNATION': (location_user_data.get('pcp_qualification') or NOT_AVAILABLE_VALUE),
             'TELEPHONE_NO': self._get_telephone_number(location_user_data),
             'MOBILE_NO': self._get_mobile_number(location_user_data),
-            'COMPLETE_ADDRESS': self._get_address(location_user_data),
+            'COMPLETE_ADDRESS': sanitize_text_for_xml(self._get_address(location_user_data)),
             'PINCODE': self._get_value_or_dummy_value(location_user_data, 'pincode'),
             'EMAILID': self._get_value_or_dummy_value(location_user_data, 'email'),
             'STATE_CODE': location_hierarchy_codes.stcode,
@@ -561,8 +561,13 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             response,
             verify=repeat_record.repeater.verify,
         )
-        message_text = message.find("NewDataSet/HE_DETAILS/Message").text
-        health_facility_id = re.match(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text).groups()[0]
+        message_node = message.find("NewDataSet/HE_DETAILS/Message")
+        already_registered_id_node = message.find("NewDataSet/Table1/HE_ID")
+        if already_registered_id_node is not None:
+            health_facility_id = already_registered_id_node.text
+        else:
+            message_text = message_node.text
+            health_facility_id = re.match(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text).groups()[0]
         if payload_doc.metadata.get('nikshay_code'):
             # The repeater checks for this to be absent but in case its added after the trigger
             # and before its fetched from Nikshay, just keep a copy of the older value for ref
