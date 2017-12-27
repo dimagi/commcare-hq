@@ -1,7 +1,12 @@
 from __future__ import absolute_import
+
+from datetime import timedelta, datetime
+
 import pytz
 from celery.schedules import crontab
 from celery.task import task, periodic_task
+from django.conf import settings
+
 from corehq.apps.locations.dbaccessors import (
     generate_user_ids_from_primary_location_ids_from_couch,
     get_location_ids_with_location_type,
@@ -11,6 +16,9 @@ from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.sms.api import send_sms, MessageMetadata
 from corehq.apps.users.models import CommCareUser
+from corehq.blobs import get_blob_db
+from corehq.form_processor.models import XFormAttachmentSQL
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.timezones.conversions import ServerTime
 from custom.icds.const import (
     AWC_LOCATION_TYPE_CODE,
@@ -34,8 +42,6 @@ from custom.icds.messaging.indicators import (
     LSSubmissionPerformanceIndicator,
     LSVHNDSurveyIndicator,
 )
-from datetime import datetime
-from django.conf import settings
 
 
 @task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True)
@@ -159,3 +165,37 @@ def run_user_indicators(phased_rollout=True):
             if is_monday:
                 run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator, language_code)
                 run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator, language_code)
+
+
+@periodic_task(run_every=crontab(minute=0, hour='22'))
+def delete_old_images():
+    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
+        return
+
+    start = datetime.utcnow()
+    max_age = start - timedelta(days=90)
+    db = get_blob_db()
+    paths = []
+    deleted_attachments = []
+
+    def _get_query(db_name, max_age):
+        return XFormAttachmentSQL.objects.using(db_name).filter(
+            content_type='image/jpeg',
+            form__domain='icds-cas',
+            form__received_on__lt=max_age
+        )
+
+    for db_name in get_db_aliases_for_partitioned_query():
+        attachments = _get_query(db_name, max_age)
+        while attachments.exists():
+            for attachment in attachments[10000]:
+                paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
+                deleted_attachments.append(attachment.pk)
+
+            if paths:
+                db.bulk_delete(paths)
+                XFormAttachmentSQL.objects.using(db_name).filter(pk__in=deleted_attachments).delete()
+                paths = []
+                deleted_attachments = []
+
+            attachments = _get_query(db_name, max_age)
