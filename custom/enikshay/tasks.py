@@ -176,9 +176,10 @@ class EpisodeUpdater(object):
                 update_json = {}
                 for updater in self.updaters:
                     try:
-                        potential_update = updater(self.domain, episode).update_json()
-                        if isinstance(updater, EpisodeAdherenceUpdate):
-                            episode_ledger_updates = updater.ledger_updates()
+                        _updater = updater(self.domain, episode)
+                        potential_update = _updater.update_json()
+                        if isinstance(_updater, EpisodeAdherenceUpdate):
+                            episode_ledger_updates = _updater.ledger_updates()
                             if episode_ledger_updates:
                                 ledger_updates.extend(episode_ledger_updates)
                         update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
