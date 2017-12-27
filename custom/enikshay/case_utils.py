@@ -34,6 +34,7 @@ CASE_TYPE_PRESCRIPTION_ITEM = "prescription_item"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
+CASE_TYPE_INVESTIGATION = "investigation"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -221,11 +222,11 @@ def get_open_referral_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_REFERRAL
     ]
-    occurrence_cases = [
+    occurrence_case_ids = [
         case.case_id for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_OCCURRENCE
     ]
-    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
+    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
     open_referral_cases.extend(
         case for case in reversed_indexed_occurrence
         if not case.closed and case.type == CASE_TYPE_REFERRAL
@@ -343,7 +344,7 @@ def get_person_locations(person_case, episode_case=None):
     sto-> cto -> dto -> pcp
     """
     if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
-        return _get_private_locations(person_case)
+        return _get_private_locations(person_case, episode_case)
     else:
         return _get_public_locations(person_case, episode_case)
 
@@ -384,15 +385,34 @@ def _get_public_locations(person_case, episode_case):
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
 
-def _get_private_locations(person_case):
+def _get_private_locations(person_case, episode_case=None):
+    """
+    if episode case is passed
+    - find the location id as episode_treating_hospital on episode
+     - if this location has nikshay code
+      - consider this as the pcp
+     - else
+      - fallback to owner id as the pcp itself
+    """
     PrivatePersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto pcp tu')
-    try:
-        pcp_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
-    except SQLLocation.DoesNotExist:
-        raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
-            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
-        )
+    pcp_location = None
+    if episode_case:
+        episode_treating_hospital = episode_case.get_case_property('episode_treating_hospital')
+        if episode_treating_hospital:
+            pcp_location = SQLLocation.active_objects.get_or_None(
+                location_id=episode_treating_hospital)
+            if pcp_location:
+                if not pcp_location.metadata.get('nikshay_code'):
+                    pcp_location = None
+    if not pcp_location:
+        try:
+            pcp_location = SQLLocation.active_objects.get(
+                domain=person_case.domain, location_id=person_case.owner_id)
+        except SQLLocation.DoesNotExist:
+            raise NikshayLocationNotFound(
+                "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+                .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+            )
 
     try:
         tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id'] or None
@@ -406,11 +426,18 @@ def _get_private_locations(person_case):
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
     try:
+        dto_code = district_location.metadata['nikshay_code']
+        # HACK: remove this when we have all of the "HE ids" imported from Nikshay
+        pcp_code = pcp_location.metadata.get('nikshay_code') or None
+        # append 0 in beginning to make the code 6-digit
+        if pcp_code and len(pcp_code) == 5:
+            pcp_code = '0' + pcp_code
+        if not dto_code:
+            dto_code = pcp_location.metadata.get('rntcp_district_code')
         return PrivatePersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
-            dto=district_location.metadata['nikshay_code'],
-            # HACK: remove this when we have all of the "HE ids" imported from Nikshay
-            pcp=pcp_location.metadata.get('nikshay_code') or None,
+            dto=dto_code,
+            pcp=pcp_code,
             tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:
@@ -585,6 +612,15 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
+def get_sector(case):
+    valid_types = [CASE_TYPE_EPISODE, CASE_TYPE_PERSON]
+    if case.type not in valid_types:
+        raise ValueError('Must pass in an {} case'.format(", ".join(valid_types)))
+    if case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
+        return PRIVATE_SECTOR
+    return PUBLIC_SECTOR
+
+
 def iter_all_active_person_episode_cases(domain, case_ids, sector=None):
     """From a list of case_ids, return all the active episodes and associate person case
     """
@@ -637,7 +673,7 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     open_referral_cases = [
         case for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     ]
     occurrence_cases = [
         case.case_id for case in reverse_indexed_cases
@@ -646,11 +682,10 @@ def get_most_recent_referral_case_from_person(domain, person_case_id):
     reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
     open_referral_cases.extend(
         case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     )
     valid_referral_cases = [
         case for case in open_referral_cases if (
-            case.dynamic_case_properties().get('referral_status') != 'rejected' and
             case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
         )
     ]
@@ -669,7 +704,7 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
         episode_cases += [
             case for case in all_cases
             if case.type == CASE_TYPE_EPISODE and (
-                case.dynamic_case_properties().get('referral_status') not in [
+                case.dynamic_case_properties().get('close_reason') not in [
                     'invalid_episode',
                     'duplicate',
                     'invalid_registration'
@@ -680,3 +715,21 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
         return None
     else:
         return sorted(episode_cases, key=(lambda case: case.opened_on))[-1]
+
+
+def get_all_vouchers_from_person(domain, person_case):
+    """Returns all voucher cases under tests or prescriptions"""
+    accessor = CaseAccessors(domain)
+    for occurrence_case in accessor.get_reverse_indexed_cases([person_case.case_id]):
+        if occurrence_case.type == CASE_TYPE_OCCURRENCE:
+            for case in accessor.get_reverse_indexed_cases([occurrence_case.case_id]):
+                if case.type == CASE_TYPE_TEST:
+                    for voucher_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if voucher_case.type == CASE_TYPE_VOUCHER:
+                            yield voucher_case
+                if case.type == CASE_TYPE_EPISODE:
+                    for prescription_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if prescription_case.type == CASE_TYPE_PRESCRIPTION:
+                            for voucher_case in accessor.get_reverse_indexed_cases([prescription_case.case_id]):
+                                if voucher_case.type == CASE_TYPE_VOUCHER:
+                                    yield voucher_case

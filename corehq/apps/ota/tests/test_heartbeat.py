@@ -6,12 +6,14 @@ from uuid import uuid4
 
 from django.test import TestCase
 from django.urls.base import reverse
+from unittest2.case import skip
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 
 
+@skip("temporarily disabled")
 class HeartbeatTests(TestCase):
 
     @classmethod

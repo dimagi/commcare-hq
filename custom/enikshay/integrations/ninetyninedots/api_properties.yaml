@@ -1,0 +1,592 @@
+---
+api_params:
+  # https://docs.google.com/spreadsheets/d/1_dAoOrvXHATQoS5wEnAeQVoH5VvZlFzbKiquXmryuqI/edit#gid=0
+- api_param_name: none
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.noop
+  case_type:
+    both: person
+  case_properties:
+    both:
+      - owner_id
+- api_param_name: beneficiary_id
+  required: true
+  case_type:
+    both: person
+  case_property:
+    both: case_id
+- api_param_name: 99dots_id
+  case_type:
+    both: episode
+  case_property:
+    both: dots_99_id
+  direction: 2                  # inbound
+- api_param_name: enikshay_id
+  case_type:
+    both: person
+  case_property:
+    both: person_id
+  direction: 1                  # outbound
+- api_param_name: first_name
+  case_type:
+    both: person
+  case_property:
+    both: first_name
+- api_param_name: last_name
+  case_type:
+    both: person
+  case_property:
+    both: last_name
+- api_param_name: sex
+  choices:
+    both:
+      - female
+      - male
+      - transgender
+  case_type:
+    both: person
+  case_property:
+    both: sex
+- api_param_name: language_code
+  choices:
+    public:
+    - en
+    - hin
+    - bho
+    - mar
+    - guj
+    private:
+    - en
+    - hin
+    - bho
+    - mar
+    - guj
+  case_type:
+    both: person
+  case_property:
+    both: language_code
+- api_param_name: address
+  case_type:
+    both: person
+  case_property:
+    both: current_address
+- api_param_name: phone_numbers
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.concat_phone_numbers
+  exclude_if_none: false
+  direction: 1                  # outbound
+  case_type:
+    both: person
+  case_properties:
+    both:
+      - phone_number
+      - secondary_contact_phone_number
+      - secondary_phone
+      - phone_number_alternate_1
+      - phone_number_alternate_2
+      - phone_number_alternate_3
+      - phone_number_other
+- api_param_name: phone_number
+  case_type:
+    both: person
+  case_property:
+    both: phone_number
+  direction: 2                  # inbound
+- api_param_name: secondary_contact_phone_number
+  case_type:
+    both: person
+  case_property:
+    both: secondary_contact_phone_number
+  direction: 2                  # inbound
+- api_param_name: phone_number_alternate_1
+  case_type:
+    both: person
+  case_property:
+    both: phone_number_alternate_1
+  direction: 2                  # inbound
+- api_param_name: phone_number_alternate_2
+  case_type:
+    both: person
+  case_property:
+    both: phone_number_alternate_2
+  direction: 2                  # inbound
+- api_param_name: phone_number_alternate_3
+  case_type:
+    both: person
+  case_property:
+    both: phone_number_alternate_3
+  direction: 2                  # inbound
+- api_param_name: treatment_supporter_name
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.concat_properties
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.split_name
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - treatment_supporter_first_name
+      - treatment_supporter_last_name
+- api_param_name: treatment_supporter_phone_number
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.concat_phone_numbers
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.unwrap_phone_number
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - treatment_supporter_mobile_number
+- api_param_name: art_number
+  case_type:
+    both: episode
+  case_property:
+    public: art_number
+- api_param_name: weight_band
+  case_type:
+    both: episode
+  case_property:
+    both: weight_band
+- api_param_name: patient_type_choice
+  case_type:
+    both: episode
+  case_property:
+    public: patient_type_choice
+    private: new_retreatment
+- api_param_name: nikshay_id
+  case_type:
+    both: episode
+  case_property:
+    both: nikshay_id
+- api_param_name: tb_number
+  case_type:
+    both: episode
+  case_property:
+    public: tb_number
+- api_param_name: merm_params
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.get_merm_params
+  payload_object: custom.enikshay.integrations.ninetyninedots.api_spec.MermParams
+  setter: custom.enikshay.integrations.ninetyninedots.api_spec.set_merm_params
+  case_type:
+    both: episode
+  case_properties:
+    both:
+      - merm_id
+      - merm_alarm_enabled
+      - merm_daily_reminder_time
+      - merm_refill_reminder_status
+      - merm_refill_reminder_date
+      - merm_refill_reminder_time
+      - merm_rt_hours
+- api_param_name: drug_regimen
+  case_type:
+    both: episode
+  case_property:
+    public: adherence_schedule_id
+    private: treatment_options
+  choices:
+    private:
+      - fdc
+      - private
+    public:
+      - schedule_mwf
+      - schedule_daily
+      - schedule_trs
+- api_param_name: treatment_start_date
+  direction: 1                  # outbound
+  case_type:
+    both: episode
+  case_property:
+    both: treatment_initiation_date
+- api_param_name: disease_classification
+  case_type:
+    public: occurrence
+    private: episode
+  case_property:
+    both: disease_classification
+- api_param_name: site_choice
+  case_type:
+    public: occurrence
+    private: episode
+  case_property:
+    both: site_choice
+  choices:
+    private:
+      - pleural_effusion
+      - bones_and_joints
+      - brain
+      - spine
+      - lymph_node
+      - intestines
+      - skin
+      - genitourinary
+      - abdominal
+      - eye
+      - other
+    public:
+      - lymph_node
+      - spine
+      - brain
+      - pleural_effusion
+      - abdominal
+      - other
+- api_param_name: hiv_test_date
+  case_type:
+    public: person
+  case_property:
+    public: hiv_test_date
+- api_param_name: hiv_status
+  case_type:
+    both: person
+  case_property:
+    both: hiv_status
+  choices:
+    both:
+      - reactive
+      - non_reactive
+      - unknown
+- api_param_name: cpt_initiation_date
+  case_type:
+    public: person
+  case_property:
+    public: cpt_initiation_date
+- api_param_name: art_initiation_date
+  case_type:
+    public: person
+  case_property:
+    public: art_initiation_date
+- api_param_name: diabetes_test_random_blood_sugar
+  case_type:
+    public: person
+  case_property:
+    public: diabetes_test_random_blood_sugar
+- api_param_name: adt_initiated
+  case_type:
+    public: person
+  case_property:
+    public: adt_initiated
+- api_param_name: adt_initiation_date
+  case_type:
+    public: person
+  case_property:
+    public: adt_initiation_date
+- api_param_name: area
+  direction: 1                  # outbound
+  case_type:
+    public: person
+  case_property:
+    public: area
+  choices:
+    public:
+      - tribal
+      - rural
+      - urban
+      - urban_slum
+- api_param_name: diabetes_status
+  direction: 1                  # outbound
+  case_type:
+    public: person
+  case_property:
+    public: diabetes_status
+  choices:
+    public:
+      - diabetic
+      - non_diabetic
+      - unknown
+- api_param_name: dob
+  case_type:
+    public: person
+  case_property:
+    public: dob
+- api_param_name: history_of_att
+  direction: 1
+  case_type:
+    public: person
+  case_property:
+    public: history_of_att
+  choices:
+    public:
+      - 'yes'
+      - 'no'
+- api_param_name: marital_status
+  direction: 1
+  case_type:
+    public: person
+  case_property:
+    public: marital_status
+  choices:
+    public:
+      - unmarried
+      - married
+      - widowed
+      - separated
+- api_param_name: occupation
+  direction: 1
+  case_type:
+    public: person
+  case_property:
+    public: occupation
+  choices:
+    public:
+      - office_clerk
+      - other_craft_and_related
+      - corporate_manager
+      - legislators_or_senior_official
+      - general_manager
+      - other_professional
+      - physical_mathematical_and_engineering
+      - subsistence_agriculture_fishery
+      - sales_and_services_elementary
+      - extraction_and_building_trade
+      - model_sales_persons_demonstrator
+      - mining_construction_manufacturing_transport
+      - agriculture_fishery_and_related
+      - occupation_unidentifiable
+      - stationary_plant_and_related
+      - teaching_associate
+      - life_sciences_and_health_associate
+      - other_associate
+      - customer_services_clerk
+      - life_sciences_and_health
+      - person_protective_service_provider
+      - metal_machinery_and_related
+      - driver_and_mobile_plant_operator
+      - teaching_professional
+      - no_occupation_reported
+      - machine_operator_or_assembler
+      - new_worker_seeking_employment
+      - precision_handicraft_printing_and_related
+      - market_oriented_agriculture_fishery
+      - physical_and_engineering_science_associate
+      - housewife
+      - workers_not_reporting_any_occupation
+      - not_known
+- api_param_name: socioeconomic_status
+  direction: 1
+  case_type:
+    public: person
+  case_property:
+    public: socioeconomic_status
+  choices:
+    public:
+      - apl
+      - bpl
+      - unknown
+- api_param_name: other_comorbidity
+  direction: 1
+  case_type:
+    public: person
+  case_property:
+    public: other_comorbidity
+  choices:
+    public:
+      - 'yes'
+      - 'no'
+- api_param_name: other_comorbidity_detail
+  direction: 1
+  case_type:
+    public: person
+  case_property:
+    public: other_comorbidity_detail
+- api_param_name: ihv_by
+  direction: 1
+  case_type:
+    public: occurrence
+  case_property:
+    public: ihv_by
+  choices:
+    public:
+      - asha
+      - tbhv
+      - sts
+      - other
+- api_param_name: ihv_date
+  direction: 1
+  case_type:
+    public: occurrence
+  case_property:
+    public: ihv_date
+- api_param_name: initial_home_visit_status
+  direction: 1
+  case_type:
+    public: occurrence
+  case_property:
+    public: initial_home_visit_status
+- api_param_name: key_population_status
+  direction: 1
+  case_type:
+    public: occurrence
+  case_property:
+    public: key_population_status
+  choices:
+    public:
+      - pediatric
+      - plhiv
+- api_param_name: key_populations
+  direction: 1
+  case_type:
+    public: occurrence
+  case_property:
+    public: key_populations
+  choices:
+    public:
+      - known_patient_contact
+      - prison_inmate
+      - miner
+      - migrant
+      - refugee
+      - slum_dweller
+      - health_care_worker
+      - tribal_population
+      - other
+- api_param_name: key_populations_other_detail
+  direction: 1
+  case_type:
+    public: occurrence
+  case_property:
+    public: key_populations_other_detail
+- api_param_name: date_of_diagnosis
+  direction: 1
+  case_type:
+    public: episode
+  case_property:
+    public: date_of_diagnosis
+- api_param_name: dosage_fdc
+  direction: 1
+  case_type:
+    public: episode
+  case_property:
+    public: dosage_fdc
+- api_param_name: dosage_summary
+  direction: 1
+  case_type:
+    public: episode
+  case_property:
+    public: dosage_summary
+- api_param_name: episode_type
+  direction: 1
+  case_type:
+    both: episode
+  case_property:
+    both: episode_type
+  choices:
+    both:
+      - presumptive_tb
+      - confirmed_tb
+      - confirmed_drtb
+- api_param_name: patient_type_detail
+  direction: 1
+  case_type:
+    public: episode
+  case_property:
+    public: patient_type_detail
+- api_param_name: pmdt_tb_number
+  direction: 1
+  case_type:
+    public: episode
+  case_property:
+    public: pmdt_tb_number
+- api_param_name: predominant_symptom
+  direction: 1
+  case_type:
+    public: episode
+  case_property:
+    public: predominant_symptom
+  choices:
+    public:
+      - cough
+      - fever
+      - blood_in_sputum
+      - weight_loss
+      - night_sweat
+      - no_symptom
+- api_param_name: refill_last_date
+  direction: 1
+  case_type:
+    both: episode
+  case_property:
+    public: refill_last_date
+    private: date_last_refill   # we're good at things
+- api_param_name: refill_next_date
+  direction: 1
+  case_type:
+    both: episode
+  case_property:
+    public: refill_next_date
+    private: refill_due_date   # so good at them
+- api_param_name: weight_history
+  direction: 1
+  case_type:
+    public: episode
+  case_property:
+    public: weight_history
+- api_param_name: organization_name
+  direction: 1
+  case_type:
+    private: person
+  case_property:
+    private: private_sector_organization_name
+- api_param_name: date_of_registration
+  direction: 1
+  case_type:
+    private: person
+  case_property:
+    private: date_of_registration
+- api_param_name: registering_provider_name
+  direction: 1
+  case_type:
+    private: person
+  case_property:
+    private: registering_provider_name
+- api_param_name: pvt_initial_home_visit_completed
+  direction: 1
+  case_type:
+    private: occurrence
+  case_property:
+    private: pvt_initial_home_visit_completed
+- api_param_name: dst_status
+  direction: 1
+  case_type:
+    private: episode
+  case_property:
+    private: dst_status
+  choices:
+    private:
+      - pending
+      - not_done
+      - rif_sensitive
+      - rif_resistant
+      - xdr
+- api_param_name: current_interim_outcome
+  direction: 1
+  case_type:
+    private: episode
+  case_property:
+    private: current_interim_outcome
+  choices:
+    private:
+      - completed
+      - death
+      - ltfu_migrated
+      - regimen_change
+      - not_evaluated
+      - traceless
+      - other
+- api_param_name: fo_name
+  direction: 1
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.location_name_getter
+  case_type:
+    private: person
+  case_properties:
+    private:
+      - fo
+- api_param_name: treating_hospital_name
+  direction: 1
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.location_name_getter
+  case_type:
+    private: person
+  case_properties:
+    private:
+      - treating_hospital_name
+- api_param_name: facility_assigned_to_name
+  direction: 1
+  getter: custom.enikshay.integrations.ninetyninedots.api_spec.location_name_getter
+  case_type:
+    private: person
+  case_properties:
+    private:
+      - facility_assigned_to_name

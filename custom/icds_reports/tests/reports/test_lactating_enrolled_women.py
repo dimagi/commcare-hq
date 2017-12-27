@@ -143,12 +143,25 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
                     "average": 83.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': "166"
+                        },
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "166"},
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",
@@ -158,13 +171,13 @@ class TestLactatingEnrolledWomen(TestCase):
                     "st1": {
                         "valid": 87,
                         "all": 87,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 79,
                         "all": 79,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Women"
                     }
                 },
@@ -184,12 +197,25 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
                     "average": 43.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': "87"
+                        },
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "87"},
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",

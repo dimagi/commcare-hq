@@ -1,18 +1,19 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
-import six
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
+    indian_formatted_number, get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -54,23 +55,41 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
     fills.update({'60%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
-    return [
-        {
-            "slug": "early_initiation",
-            "label": "Percent Early Initiation of Breastfeeding",
-            "fills": fills,
-            "rightLegend": {
-                "average": (birth_total * 100) / float(in_month_total or 1),
-                "info": _((
-                    "Percentage of children who were put to the breast within one hour of birth."
-                    "<br/><br/>"
-                    "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
-                    "nutrients and encourages exclusive breastfeeding practice"
-                ))
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
+
+    return {
+        "slug": "early_initiation",
+        "label": "Percent Early Initiation of Breastfeeding{}".format(chosen_filters),
+        "fills": fills,
+        "rightLegend": {
+            "average": (birth_total * 100) / float(in_month_total or 1),
+            "info": _((
+                "Percentage of children who were put to the breast within one hour of birth."
+                "<br/><br/>"
+                "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
+                "nutrients and encourages exclusive breastfeeding practice"
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Total Number of Children born in the given month{}:'.format(chosen_filters),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': (
+                        'Total Number of Children who were put to the breast within one hour of birth{}:'
+                        .format(chosen_filters)
+                    ),
+                    'value': indian_formatted_number(birth_total)
+                },
+                {
+                    'indicator': '% children who were put to the breast within one hour of '
+                                 'birth{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (birth_total * 100 / float(in_month_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -175,7 +194,7 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, location_
         'birth': 0,
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

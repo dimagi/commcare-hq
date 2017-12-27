@@ -472,7 +472,8 @@ def num_exports(domain):
 
 
 def num_saved_exports(domain):
-    return len([e for e in _get_domain_exports(domain) if e.is_daily_saved_export])
+    return len([e for e in _get_domain_exports(domain)
+                if hasattr(e, "is_daily_saved_export") and e.is_daily_saved_export])
 
 
 def num_lookup_tables(domain):

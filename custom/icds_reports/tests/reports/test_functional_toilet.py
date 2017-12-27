@@ -21,11 +21,15 @@ class TestFunctionalToilet(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with a functional toilet",
-                    "average": 30.0
+                    "average": 30.0,
+                    'extended_info': [
+                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "15"},
+                        {'indicator': '% of AWCs with a functional toilet:', 'value': '30.00%'}
+                    ]
                 },
                 "fills": {
                     "0%-25%": "#de2d26",
@@ -37,13 +41,13 @@ class TestFunctionalToilet(TestCase):
                     "st1": {
                         "in_month": 8,
                         "all": 26,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 7,
                         "all": 24,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "25%-75%"
                     }
                 },
@@ -63,11 +67,15 @@ class TestFunctionalToilet(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with a functional toilet",
-                    "average": 30.76923076923077
+                    "average": 30.76923076923077,
+                    'extended_info': [
+                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "8"},
+                        {'indicator': '% of AWCs with a functional toilet:', 'value': '30.77%'}
+                    ]
                 },
                 "fills": {
                     "0%-25%": "#de2d26",

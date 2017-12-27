@@ -6,7 +6,7 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
@@ -137,6 +137,10 @@ class GenericReportView(object):
     # against.
     parent_report_class = None
 
+    is_deprecated = False
+    deprecation_email_message = ugettext("This report has been deprecated.")
+    deprecation_message = ugettext("This report has been deprecated.")
+
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
             raise NotImplementedError("Missing a required parameter: (name: %(name)s, section_name: %(section_name)s,"
@@ -183,7 +187,8 @@ class GenericReportView(object):
                 PATH_INFO=self.request.META.get('PATH_INFO')
             ),
             datespan=self.request.datespan,
-            couch_user=None
+            couch_user=None,
+            can_access_all_locations=self.request.can_access_all_locations,
         )
 
         try:
@@ -214,12 +219,14 @@ class GenericReportView(object):
             META = {}
             couch_user = None
             datespan = None
+            can_access_all_locations = None
 
         request_data = state.get('request')
         request = FakeHttpRequest()
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
+        request.can_access_all_locations = request_data.get('can_access_all_locations')
 
         try:
             couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
@@ -561,18 +568,30 @@ class GenericReportView(object):
         self.context.update(self._validate_context_dict(self.report_context))
 
     @property
+    def deprecate_response(self):
+        from django.contrib import messages
+        messages.warning(
+            self.request,
+            self.deprecation_message
+        )
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', '/'))
+
+    @property
     def view_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the general view of the report template.
         """
-        self.update_template_context()
-        template = self.template_base
-        if not self.asynchronous:
-            self.update_filter_context()
-            self.update_report_context()
-            template = self.template_report
-        return render(self.request, template, self.context)
+        if self.is_deprecated:
+            return self.deprecate_response
+        else:
+            self.update_template_context()
+            template = self.template_base
+            if not self.asynchronous:
+                self.update_filter_context()
+                self.update_report_context()
+                template = self.template_report
+            return render(self.request, template, self.context)
 
     @property
     @request_cache()

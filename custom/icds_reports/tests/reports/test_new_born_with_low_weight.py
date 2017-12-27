@@ -19,14 +19,20 @@ class TestNewBornWithLowWeight(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of newborns with born with birth weight less than 2500 grams."
                             "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
                             "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
                             " and chronic diseases later in life",
-                    "average": 28.571428571428573
+                    "average": 28.571428571428573,
+                    'extended_info': [
+                        {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
+                        {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
+                        {'indicator': '% newborns with LBW in given month:', 'value': '28.57%'},
+                        {'indicator': '% Unweighed:', 'value': '71.43%'}
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#fee0d2",
@@ -38,13 +44,13 @@ class TestNewBornWithLowWeight(TestCase):
                     "st1": {
                         "in_month": 4,
                         "low_birth": 2,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "20%-60%"
                     },
                     "st2": {
                         "in_month": 3,
                         "low_birth": 0,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-20%"
                     }
                 },
@@ -64,14 +70,20 @@ class TestNewBornWithLowWeight(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of newborns with born with birth weight less than 2500 grams."
                             "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
                             "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
                             " and chronic diseases later in life",
-                    "average": 50.0
+                    "average": 50.0,
+                    'extended_info': [
+                        {'indicator': 'Total Number of Newborns born in given month:', 'value': "4"},
+                        {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
+                        {'indicator': '% newborns with LBW in given month:', 'value': '50.00%'},
+                        {'indicator': '% Unweighed:', 'value': '50.00%'}
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#fee0d2",

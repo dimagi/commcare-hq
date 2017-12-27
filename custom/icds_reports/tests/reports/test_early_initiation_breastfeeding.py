@@ -19,14 +19,27 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children who were put to the breast within one hour of birth."
                             "<br/><br/>Early initiation of breastfeeding ensure the newborn "
                             "recieves the 'first milk' rich in nutrients"
                             " and encourages exclusive breastfeeding practice",
-                    "average": 57.142857142857146
+                    "average": 57.142857142857146,
+                    'extended_info': [
+                        {'indicator': 'Total Number of Children born in the given month:', 'value': "7"},
+                        {
+                            'indicator': (
+                                'Total Number of Children who were put to the breast within one hour of birth:'
+                            ),
+                            'value': "4"
+                        },
+                        {
+                            'indicator': '% children who were put to the breast within one hour of birth:',
+                            'value': '57.14%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",
@@ -38,13 +51,13 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     "st1": {
                         "in_month": 4,
                         "birth": 3,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "in_month": 3,
                         "birth": 1,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "20%-60%"
                     }
                 },
@@ -64,14 +77,27 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children who were put to the breast within one hour of birth."
                             "<br/><br/>Early initiation of breastfeeding ensure the newborn "
                             "recieves the 'first milk' rich in nutrients"
                             " and encourages exclusive breastfeeding practice",
-                    "average": 75.0
+                    "average": 75.0,
+                    'extended_info': [
+                        {'indicator': 'Total Number of Children born in the given month:', 'value': "4"},
+                        {
+                            'indicator': (
+                                'Total Number of Children who were put to the breast within one hour of birth:'
+                            ),
+                            'value': "3"
+                        },
+                        {
+                            'indicator': '% children who were put to the breast within one hour of birth:',
+                            'value': '75.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",

@@ -48,7 +48,7 @@
         <script type="text/javascript" src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/topojsons/states.topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/topojsons/district.topojson.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/topojsons/block.topojson.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/topojsons/block_v2.topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
@@ -239,6 +239,7 @@
                     {% registerurl 'medicine_kit' domain '---' %}
                     {% registerurl 'infants_weight_scale' domain '---' %}
                     {% registerurl 'adult_weight_scale' domain '---' %}
+                    {% registerurl 'awc_locations' domain %}
                     <div class="ng-view"></div>
                 </div>
             </div>
@@ -276,6 +277,7 @@
     angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
     angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
     angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
+    angular.module('icdsApp').constant('haveAccessToFeatures', {{ have_access | JSON }});
     angular.module('icdsApp').constant('genders', [
         {id: '', name: 'All'},
         {id: 'M', name: 'Male'},

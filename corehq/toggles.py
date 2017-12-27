@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 
 from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
+from toggle.models import Toggle
 from toggle.shortcuts import toggle_enabled, set_toggle
 import six
 
@@ -150,7 +151,6 @@ class StaticToggle(object):
         return decorator
 
     def get_enabled_domains(self):
-        from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -228,8 +228,8 @@ class PredictablyRandomToggle(StaticToggle):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description,
                                                       always_disabled=always_disabled)
-        assert namespaces, 'namespaces must be defined!'
-        assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(randomness)
         self.randomness = randomness
 
     @property
@@ -254,7 +254,7 @@ class PredictablyRandomToggle(StaticToggle):
                 )
             )
 
-        if settings.UNIT_TESTING:
+        if settings.DISABLE_RANDOM_TOGGLES:
             return False
         elif item in self.always_disabled:
             return False
@@ -265,9 +265,46 @@ class PredictablyRandomToggle(StaticToggle):
             or super(PredictablyRandomToggle, self).enabled(item, namespace)
         )
 
+
+class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
+    """
+    A PredictablyRandomToggle whose randomness can be configured via the database/UI.
+    """
+    RANDOMNESS_KEY = 'hq_dynamic_randomness'
+
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces,
+        default_randomness=0,
+        help_link=None,
+        description=None,
+        always_disabled=None
+    ):
+        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
+                                                      help_link=help_link, description=description,
+                                                      always_disabled=always_disabled)
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(default_randomness)
+        self.default_randomness = default_randomness
+
+    @property
+    @quickcache(vary_on=['self.slug'])
+    def randomness(self):
+        # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return self.default_randomness
+        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+
+
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_OTHER = 'other'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
@@ -334,6 +371,16 @@ def toggle_values_by_name(username=None, domain=None):
     return {toggle_name: (toggle.enabled(username, NAMESPACE_USER) or
                           toggle.enabled(domain, NAMESPACE_DOMAIN))
             for toggle_name, toggle in all_toggles_by_name().items()}
+
+
+def _ensure_valid_namespaces(namespaces):
+    if not namespaces:
+        raise Exception('namespaces must be defined!')
+
+
+def _ensure_valid_randomness(randomness):
+    if not 0 <= randomness <= 1:
+        raise Exception('randomness must be between 0 and 1!')
 
 
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
@@ -845,6 +892,13 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
+    'features_in_dashboard_icds_reports',
+    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 NINETYNINE_DOTS = StaticToggle(
     '99dots_integration',
     'Enikshay: Enable access to 99DOTS',
@@ -1352,6 +1406,13 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BULK_UPLOAD_DATE_OPENED = StaticToggle(
+    'bulk_upload_date_opened',
+    "Allow updating of the date_opened field with the bulk uploader",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
@@ -1374,23 +1435,17 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     [NAMESPACE_USER]
 )
 
-ANALYTICS_DEBUG = StaticToggle(
-    'analytics_debug',
-    "Turn on DEBUG level output for debugging analytics.",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
+CUSTOM_ICON_BADGES = StaticToggle(
+    'custom_icon_badges',
+    'eNikshay: Custom Icon Badges for modules and forms',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
-ANALYTICS_VERBOSE = StaticToggle(
-    'analytics_verbose',
-    "Turn on VERBOSE level output for debugging analytics.",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
 
-ANALYTICS_WARNING = StaticToggle(
-    'analytics_warning',
-    "Turn on WARNING level output for debugging analytics.",
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
+ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
+    'icds_ucr_elasticsearch_doc_loading',
+    'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
 )

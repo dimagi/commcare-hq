@@ -705,7 +705,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         this_month_institutional_delivery_data,
                         'institutional_delivery_in_month_sum'
                     ),
-                    'all': get_value(prev_month_institutional_delivery_data, 'delivered_in_month_sum'),
+                    'all': get_value(this_month_institutional_delivery_data, 'delivered_in_month_sum'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -714,10 +714,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
-@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
-def get_awc_report_demographics(domain, config, month, show_test=False):
+@quickcache(['domain', 'config', 'now_date', 'month', 'show_test'], timeout=30 * 60)
+def get_awc_report_demographics(domain, config, now_date, month, show_test=False):
     selected_month = datetime(*month)
-
+    now_date = datetime(*now_date)
     chart = AggChildHealthMonthly.objects.filter(
         month=selected_month, **config
     ).values(
@@ -771,15 +771,18 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    yesterday = datetime.now() - relativedelta(days=1)
+    yesterday = now_date - relativedelta(days=1)
     two_days_ago = yesterday - relativedelta(days=1)
-    now = datetime.utcnow()
     previous_month = selected_month - relativedelta(months=1)
-    if selected_month.month == now.month and selected_month.year == now.year:
+    if selected_month.month == now_date.month and selected_month.year == now_date.year:
         config['date'] = yesterday
         data = get_data_for(AggAwcDailyView, config)
         config['date'] = two_days_ago
         prev_data = get_data_for(AggAwcDailyView, config)
+        if not data:
+            data = prev_data
+            config['date'] = (two_days_ago - relativedelta(days=1)).date()
+            prev_data = get_data_for(AggAwcDailyView, config)
         frequency = 'day'
     else:
         config['month'] = selected_month
@@ -1007,9 +1010,31 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
-    ).order_by('-month', order)
+    )
 
-    data_count = data.count()
+    if 'current_month_nutrition_status' in order:
+        sort_order = {
+            'Severely underweight': 1,
+            'Moderately underweight': 2,
+            'Normal weight for age': 3,
+            'Data Not Entered': 4
+        }
+        reverse = '-' in order
+        data = sorted(
+            data,
+            key=lambda val: (sort_order[
+                get_status(
+                    val.current_month_nutrition_status,
+                    'underweight',
+                    'Normal weight for age'
+                )['value']
+            ]),
+            reverse=reverse
+        )
+    else:
+        data = data.order_by('-month', order)
+
+    data_count = len(data)
     data = data[start:(start + length)]
 
     config = {

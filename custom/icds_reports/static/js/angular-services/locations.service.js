@@ -34,5 +34,12 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                 return response.data.locations;
             });
         },
+        getAwcLocations: function(locationId) {
+            return $http.get(url('awc_locations'), {
+                params: {location_id: locationId},
+            }).then(function(response) {
+                return response.data.locations;
+            });
+        },
     };
 }]);

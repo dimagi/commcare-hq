@@ -582,6 +582,10 @@ class NestedTermAggregationsHelper(object):
         ],
         inner_most_aggregation=SumAggregation('balance', 'balance'),
     ).get_data()
+
+    This works by bucketing docs first by one terms aggregation, then within
+    that bucket, bucketing further by the next term, and so on. This is then
+    flattened out to appear like a group-by-multiple.
     """
 
     def __init__(self, base_query, terms, inner_most_aggregation=None):

@@ -821,662 +821,17 @@
                 "display_name": "referred_by_name",
                 "datatype": "string",
                 "expression": {
-                    "test": {
-                        "operator": "in",
-                        "expression": {
-                            "test": {
-                                "operator": "in",
-                                "expression": {
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "location_id"
-                                    },
-                                    "type": "related_doc",
-                                    "related_doc_type": "CommCareUser",
-                                    "doc_id_expression": {
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "type": "enikshay_most_recent_referral_from_person",
-                                            "person_id_expression": {
-                                                "type": "property_name",
-                                                "property_name": "_id"
-                                            }
-                                        },
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "opened_by"
-                                        }
-                                    }
-                                },
-                                "type": "boolean_expression",
-                                "property_value": [
-                                    "",
-                                    null,
-                                    "None",
-                                    "null"
-                                ]
-                            },
-                            "expression_if_true": {
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "enikshay_most_recent_referral_from_person",
-                                    "person_id_expression": {
-                                        "type": "property_name",
-                                        "property_name": "_id"
-                                    }
-                                },
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "opened_by"
-                                }
-                            },
-                            "type": "conditional",
-                            "expression_if_false": {
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "location_id"
-                                },
-                                "type": "related_doc",
-                                "related_doc_type": "CommCareUser",
-                                "doc_id_expression": {
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "enikshay_most_recent_referral_from_person",
-                                        "person_id_expression": {
-                                            "type": "property_name",
-                                            "property_name": "_id"
-                                        }
-                                    },
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "opened_by"
-                                    }
-                                }
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": [
-                            "",
-                            null,
-                            "None",
-                            "null"
-                        ]
-                    },
-                    "expression_if_true": "",
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "default": {
-                            "value_expression": {
-                                "type": "property_name",
-                                "property_name": "name"
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "test": {
-                                    "operator": "in",
-                                    "expression": {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "location_id"
-                                        },
-                                        "type": "related_doc",
-                                        "related_doc_type": "CommCareUser",
-                                        "doc_id_expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "enikshay_most_recent_referral_from_person",
-                                                "person_id_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "_id"
-                                                }
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "opened_by"
-                                            }
-                                        }
-                                    },
-                                    "type": "boolean_expression",
-                                    "property_value": [
-                                        "",
-                                        null,
-                                        "None",
-                                        "null"
-                                    ]
-                                },
-                                "expression_if_true": {
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "enikshay_most_recent_referral_from_person",
-                                        "person_id_expression": {
-                                            "type": "property_name",
-                                            "property_name": "_id"
-                                        }
-                                    },
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "opened_by"
-                                    }
-                                },
-                                "type": "conditional",
-                                "expression_if_false": {
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "location_id"
-                                    },
-                                    "type": "related_doc",
-                                    "related_doc_type": "CommCareUser",
-                                    "doc_id_expression": {
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "type": "enikshay_most_recent_referral_from_person",
-                                            "person_id_expression": {
-                                                "type": "property_name",
-                                                "property_name": "_id"
-                                            }
-                                        },
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "opened_by"
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        "cases": {
-                            "phi": {
-                                "separator": ", ",
-                                "expressions": [
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "location_id": {
-                                                "test": {
-                                                    "operator": "in",
-                                                    "expression": {
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "location_id"
-                                                        },
-                                                        "type": "related_doc",
-                                                        "related_doc_type": "CommCareUser",
-                                                        "doc_id_expression": {
-                                                            "type": "nested",
-                                                            "argument_expression": {
-                                                                "type": "enikshay_most_recent_referral_from_person",
-                                                                "person_id_expression": {
-                                                                    "type": "property_name",
-                                                                    "property_name": "_id"
-                                                                }
-                                                            },
-                                                            "value_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "opened_by"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "boolean_expression",
-                                                    "property_value": [
-                                                        "",
-                                                        null,
-                                                        "None",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "expression_if_true": {
-                                                    "type": "nested",
-                                                    "argument_expression": {
-                                                        "type": "enikshay_most_recent_referral_from_person",
-                                                        "person_id_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "_id"
-                                                        }
-                                                    },
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "opened_by"
-                                                    }
-                                                },
-                                                "type": "conditional",
-                                                "expression_if_false": {
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "location_id"
-                                                    },
-                                                    "type": "related_doc",
-                                                    "related_doc_type": "CommCareUser",
-                                                    "doc_id_expression": {
-                                                        "type": "nested",
-                                                        "argument_expression": {
-                                                            "type": "enikshay_most_recent_referral_from_person",
-                                                            "person_id_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "_id"
-                                                            }
-                                                        },
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "opened_by"
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            "type": "ancestor_location",
-                                            "location_type": "dto"
-                                        }
-                                    },
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "location_id": {
-                                                "test": {
-                                                    "operator": "in",
-                                                    "expression": {
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "location_id"
-                                                        },
-                                                        "type": "related_doc",
-                                                        "related_doc_type": "CommCareUser",
-                                                        "doc_id_expression": {
-                                                            "type": "nested",
-                                                            "argument_expression": {
-                                                                "type": "enikshay_most_recent_referral_from_person",
-                                                                "person_id_expression": {
-                                                                    "type": "property_name",
-                                                                    "property_name": "_id"
-                                                                }
-                                                            },
-                                                            "value_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "opened_by"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "boolean_expression",
-                                                    "property_value": [
-                                                        "",
-                                                        null,
-                                                        "None",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "expression_if_true": {
-                                                    "type": "nested",
-                                                    "argument_expression": {
-                                                        "type": "enikshay_most_recent_referral_from_person",
-                                                        "person_id_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "_id"
-                                                        }
-                                                    },
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "opened_by"
-                                                    }
-                                                },
-                                                "type": "conditional",
-                                                "expression_if_false": {
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "location_id"
-                                                    },
-                                                    "type": "related_doc",
-                                                    "related_doc_type": "CommCareUser",
-                                                    "doc_id_expression": {
-                                                        "type": "nested",
-                                                        "argument_expression": {
-                                                            "type": "enikshay_most_recent_referral_from_person",
-                                                            "person_id_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "_id"
-                                                            }
-                                                        },
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "opened_by"
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            "type": "ancestor_location",
-                                            "location_type": "tu"
-                                        }
-                                    },
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "related_doc",
-                                        "related_doc_type": "Location",
-                                        "doc_id_expression": {
-                                            "test": {
-                                                "operator": "in",
-                                                "expression": {
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "location_id"
-                                                    },
-                                                    "type": "related_doc",
-                                                    "related_doc_type": "CommCareUser",
-                                                    "doc_id_expression": {
-                                                        "type": "nested",
-                                                        "argument_expression": {
-                                                            "type": "enikshay_most_recent_referral_from_person",
-                                                            "person_id_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "_id"
-                                                            }
-                                                        },
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "opened_by"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "boolean_expression",
-                                                "property_value": [
-                                                    "",
-                                                    null,
-                                                    "None",
-                                                    "null"
-                                                ]
-                                            },
-                                            "expression_if_true": {
-                                                "type": "nested",
-                                                "argument_expression": {
-                                                    "type": "enikshay_most_recent_referral_from_person",
-                                                    "person_id_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "_id"
-                                                    }
-                                                },
-                                                "value_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "opened_by"
-                                                }
-                                            },
-                                            "type": "conditional",
-                                            "expression_if_false": {
-                                                "value_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "location_id"
-                                                },
-                                                "type": "related_doc",
-                                                "related_doc_type": "CommCareUser",
-                                                "doc_id_expression": {
-                                                    "type": "nested",
-                                                    "argument_expression": {
-                                                        "type": "enikshay_most_recent_referral_from_person",
-                                                        "person_id_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "_id"
-                                                        }
-                                                    },
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "opened_by"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                ],
-                                "type": "concatenate_strings"
-                            },
-                            "tu": {
-                                "separator": ", ",
-                                "expressions": [
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "location_id": {
-                                                "test": {
-                                                    "operator": "in",
-                                                    "expression": {
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "location_id"
-                                                        },
-                                                        "type": "related_doc",
-                                                        "related_doc_type": "CommCareUser",
-                                                        "doc_id_expression": {
-                                                            "type": "nested",
-                                                            "argument_expression": {
-                                                                "type": "enikshay_most_recent_referral_from_person",
-                                                                "person_id_expression": {
-                                                                    "type": "property_name",
-                                                                    "property_name": "_id"
-                                                                }
-                                                            },
-                                                            "value_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "opened_by"
-                                                            }
-                                                        }
-                                                    },
-                                                    "type": "boolean_expression",
-                                                    "property_value": [
-                                                        "",
-                                                        null,
-                                                        "None",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "expression_if_true": {
-                                                    "type": "nested",
-                                                    "argument_expression": {
-                                                        "type": "enikshay_most_recent_referral_from_person",
-                                                        "person_id_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "_id"
-                                                        }
-                                                    },
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "opened_by"
-                                                    }
-                                                },
-                                                "type": "conditional",
-                                                "expression_if_false": {
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "location_id"
-                                                    },
-                                                    "type": "related_doc",
-                                                    "related_doc_type": "CommCareUser",
-                                                    "doc_id_expression": {
-                                                        "type": "nested",
-                                                        "argument_expression": {
-                                                            "type": "enikshay_most_recent_referral_from_person",
-                                                            "person_id_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "_id"
-                                                            }
-                                                        },
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "opened_by"
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            "type": "ancestor_location",
-                                            "location_type": "dto"
-                                        }
-                                    },
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "related_doc",
-                                        "related_doc_type": "Location",
-                                        "doc_id_expression": {
-                                            "test": {
-                                                "operator": "in",
-                                                "expression": {
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "location_id"
-                                                    },
-                                                    "type": "related_doc",
-                                                    "related_doc_type": "CommCareUser",
-                                                    "doc_id_expression": {
-                                                        "type": "nested",
-                                                        "argument_expression": {
-                                                            "type": "enikshay_most_recent_referral_from_person",
-                                                            "person_id_expression": {
-                                                                "type": "property_name",
-                                                                "property_name": "_id"
-                                                            }
-                                                        },
-                                                        "value_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "opened_by"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "boolean_expression",
-                                                "property_value": [
-                                                    "",
-                                                    null,
-                                                    "None",
-                                                    "null"
-                                                ]
-                                            },
-                                            "expression_if_true": {
-                                                "type": "nested",
-                                                "argument_expression": {
-                                                    "type": "enikshay_most_recent_referral_from_person",
-                                                    "person_id_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "_id"
-                                                    }
-                                                },
-                                                "value_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "opened_by"
-                                                }
-                                            },
-                                            "type": "conditional",
-                                            "expression_if_false": {
-                                                "value_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "location_id"
-                                                },
-                                                "type": "related_doc",
-                                                "related_doc_type": "CommCareUser",
-                                                "doc_id_expression": {
-                                                    "type": "nested",
-                                                    "argument_expression": {
-                                                        "type": "enikshay_most_recent_referral_from_person",
-                                                        "person_id_expression": {
-                                                            "type": "property_name",
-                                                            "property_name": "_id"
-                                                        }
-                                                    },
-                                                    "value_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "opened_by"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                ],
-                                "type": "concatenate_strings"
-                            }
-                        },
-                        "type": "switch",
-                        "switch_on": {
-                            "location_id_expression": {
-                                "test": {
-                                    "operator": "in",
-                                    "expression": {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "location_id"
-                                        },
-                                        "type": "related_doc",
-                                        "related_doc_type": "CommCareUser",
-                                        "doc_id_expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "enikshay_most_recent_referral_from_person",
-                                                "person_id_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "_id"
-                                                }
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "opened_by"
-                                            }
-                                        }
-                                    },
-                                    "type": "boolean_expression",
-                                    "property_value": [
-                                        "",
-                                        null,
-                                        "None",
-                                        "null"
-                                    ]
-                                },
-                                "expression_if_true": {
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "enikshay_most_recent_referral_from_person",
-                                        "person_id_expression": {
-                                            "type": "property_name",
-                                            "property_name": "_id"
-                                        }
-                                    },
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "opened_by"
-                                    }
-                                },
-                                "type": "conditional",
-                                "expression_if_false": {
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "location_id"
-                                    },
-                                    "type": "related_doc",
-                                    "related_doc_type": "CommCareUser",
-                                    "doc_id_expression": {
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "type": "enikshay_most_recent_referral_from_person",
-                                            "person_id_expression": {
-                                                "type": "property_name",
-                                                "property_name": "_id"
-                                            }
-                                        },
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "opened_by"
-                                        }
-                                    }
-                                }
-                            },
-                            "type": "location_type_name"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
                         }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "referred_by_name"
                     }
                 },
                 "type": "expression"
@@ -1486,206 +841,17 @@
                 "create_index": false,
                 "datatype": "string",
                 "expression": {
-                    "test": {
-                        "operator": "in",
-                        "expression":{
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "enikshay_most_recent_referral_from_person",
-                                "person_id_expression": {
-                                    "type": "property_name",
-                                    "property_name": "_id"
-                                }
-                            },
-                            "value_expression": {
-                                "type": "property_name",
-                                "property_name": "owner_id"
-                            }
-                        },
-                        "type": "boolean_expression",
-                        "property_value": [
-                            "",
-                            null,
-                            "None",
-                            "null"
-                        ]
-                    },
-                    "expression_if_true": "",
-                    "type": "conditional",
-                    "expression_if_false": {
-                        "default": {
-                            "value_expression": {
-                                "type": "property_name",
-                                "property_name": "name"
-                            },
-                            "type": "related_doc",
-                            "related_doc_type": "Location",
-                            "doc_id_expression": {
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "enikshay_most_recent_referral_from_person",
-                                    "person_id_expression": {
-                                        "type": "property_name",
-                                        "property_name": "_id"
-                                    }
-                                },
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "owner_id"
-                                }
-                            }
-                        },
-                        "cases": {
-                            "phi": {
-                                "separator": ", ",
-                                "expressions": [
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "location_id": {
-                                                "type": "nested",
-                                                "argument_expression": {
-                                                    "type": "enikshay_most_recent_referral_from_person",
-                                                    "person_id_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "_id"
-                                                    }
-                                                },
-                                                "value_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "owner_id"
-                                                }
-                                            },
-                                            "type": "ancestor_location",
-                                            "location_type": "dto"
-                                        }
-                                    },
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "location_id": {
-                                                "type": "nested",
-                                                "argument_expression": {
-                                                    "type": "enikshay_most_recent_referral_from_person",
-                                                    "person_id_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "_id"
-                                                    }
-                                                },
-                                                "value_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "owner_id"
-                                                }
-                                            },
-                                            "type": "ancestor_location",
-                                            "location_type": "tu"
-                                        }
-                                    },
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "related_doc",
-                                        "related_doc_type": "Location",
-                                        "doc_id_expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "enikshay_most_recent_referral_from_person",
-                                                "person_id_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "_id"
-                                                }
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "owner_id"
-                                            }
-                                        }
-                                    }
-                                ],
-                                "type": "concatenate_strings"
-                            },
-                            "tu": {
-                                "separator": ", ",
-                                "expressions": [
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "location_id": {
-                                                "type": "nested",
-                                                "argument_expression": {
-                                                    "type": "enikshay_most_recent_referral_from_person",
-                                                    "person_id_expression": {
-                                                        "type": "property_name",
-                                                        "property_name": "_id"
-                                                    }
-                                                },
-                                                "value_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "owner_id"
-                                                }
-                                            },
-                                            "type": "ancestor_location",
-                                            "location_type": "dto"
-                                        }
-                                    },
-                                    {
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "name"
-                                        },
-                                        "type": "related_doc",
-                                        "related_doc_type": "Location",
-                                        "doc_id_expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "enikshay_most_recent_referral_from_person",
-                                                "person_id_expression": {
-                                                    "type": "property_name",
-                                                    "property_name": "_id"
-                                                }
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "owner_id"
-                                            }
-                                        }
-                                    }
-                                ],
-                                "type": "concatenate_strings"
-                            }
-                        },
-                        "type": "switch",
-                        "switch_on": {
-                            "location_id_expression": {
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "enikshay_most_recent_referral_from_person",
-                                    "person_id_expression": {
-                                        "type": "property_name",
-                                        "property_name": "_id"
-                                    }
-                                },
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "owner_id"
-                                }
-                            },
-                            "type": "location_type_name"
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
                         }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "referred_to_name"
                     }
                 },
                 "column_id": "referred_to_name",
@@ -1756,23 +922,47 @@
                          "expression_if_true": {
                              "type": "conditional",
                              "test": {
-                                 "type": "boolean_expression",
-                                 "operator": "eq",
-                                 "expression": {
-                                     "type": "nested",
-                                     "argument_expression": {
-                                        "type": "enikshay_most_recent_episode_from_person",
-                                        "person_id_expression": {
-                                          "type": "property_name",
-                                          "property_name": "_id"
-                                        }
-                                      },
-                                     "value_expression": {
-                                         "type": "property_name",
-                                         "property_name": "patient_type_choice"
+                                 "type": "and",
+                                 "filters": [
+                                     {
+                                         "type": "boolean_expression",
+                                         "operator": "eq",
+                                         "expression": {
+                                             "type": "nested",
+                                             "argument_expression": {
+                                                "type": "enikshay_most_recent_episode_from_person",
+                                                "person_id_expression": {
+                                                  "type": "property_name",
+                                                  "property_name": "_id"
+                                                }
+                                              },
+                                             "value_expression": {
+                                                 "type": "property_name",
+                                                 "property_name": "patient_type_choice"
+                                             }
+                                         },
+                                         "property_value": "new"
+                                     },
+                                     {
+                                         "type": "boolean_expression",
+                                         "operator": "in",
+                                         "expression": {
+                                             "type": "nested",
+                                             "argument_expression": {
+                                                "type": "enikshay_most_recent_episode_from_person",
+                                                "person_id_expression": {
+                                                  "type": "property_name",
+                                                  "property_name": "_id"
+                                                }
+                                              },
+                                             "value_expression": {
+                                                 "type": "property_name",
+                                                 "property_name": "treatment_initiated"
+                                             }
+                                         },
+                                         "property_value": ["yes_phi", "yes_private"]
                                      }
-                                 },
-                                 "property_value": "new"
+                                 ]
                              },
                              "expression_if_true": {
                                  "type": "constant",
@@ -1806,27 +996,51 @@
                                  "expression_if_false": {
                                      "type": "conditional",
                                      "test": {
-                                        "type": "boolean_expression",
-                                         "operator": "in",
-                                         "expression": {
-                                             "type": "nested",
-                                             "argument_expression": {
-                                                "type": "enikshay_most_recent_episode_from_person",
-                                                "person_id_expression": {
-                                                  "type": "property_name",
-                                                  "property_name": "_id"
-                                                }
-                                              },
-                                             "value_expression": {
-                                                 "type": "property_name",
-                                                 "property_name": "patient_type_choice"
+                                         "type": "and",
+                                         "filters": [
+                                             {
+                                                "type": "boolean_expression",
+                                                 "operator": "in",
+                                                 "expression": {
+                                                     "type": "nested",
+                                                     "argument_expression": {
+                                                        "type": "enikshay_most_recent_episode_from_person",
+                                                        "person_id_expression": {
+                                                          "type": "property_name",
+                                                          "property_name": "_id"
+                                                        }
+                                                      },
+                                                     "value_expression": {
+                                                         "type": "property_name",
+                                                         "property_name": "patient_type_choice"
+                                                     }
+                                                 },
+                                                 "property_value": [
+                                                     "recurrent",
+                                                     "treatment_after_failure",
+                                                     "treatment_after_lfu",
+                                                     "other_previously_treated"
+                                                 ]
+                                             },
+                                             {
+                                                 "type": "boolean_expression",
+                                                 "operator": "in",
+                                                 "expression": {
+                                                     "type": "nested",
+                                                     "argument_expression": {
+                                                         "type": "enikshay_most_recent_episode_from_person",
+                                                         "person_id_expression": {
+                                                             "type": "property_name",
+                                                             "property_name": "_id"
+                                                         }
+                                                     },
+                                                     "value_expression": {
+                                                         "type": "property_name",
+                                                         "property_name": "treatment_initiated"
+                                                     }
+                                                 },
+                                                 "property_value": ["yes_phi", "yes_private"]
                                              }
-                                         },
-                                         "property_value": [
-                                             "recurrent",
-                                             "treatment_after_failure",
-                                             "treatment_after_lfu",
-                                             "other_previously_treated"
                                          ]
                                      },
                                      "expression_if_true": {
@@ -1936,6 +1150,114 @@
                     "value_expression": {
                         "type": "property_name",
                         "property_name": "enikshay_enabled"
+                    }
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "have_referral",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "enikshay_most_recent_referral_from_person",
+                                "person_id_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "operator": "in",
+                        "property_value": ["", null]
+                    }
+                }
+            },
+            {
+                "display_name": "person_owner_id",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "person_owner_id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id"
+                }
+            },
+            {
+                "display_name": "referral_closed_reason",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "referral_closed_reason",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "referral_closed_reason"
+                    }
+                }
+            },
+            {
+                "display_name": "referral_status",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "referral_status",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "referral_status"
+                    }
+                }
+            },
+            {
+                "display_name": "referral_reason",
+                "transform": {},
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "referral_reason",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "enikshay_most_recent_referral_from_person",
+                        "person_id_expression": {
+                            "type": "property_name",
+                            "property_name": "_id"
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "referral_reason"
                     }
                 }
             }

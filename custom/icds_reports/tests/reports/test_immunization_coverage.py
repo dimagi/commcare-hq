@@ -19,7 +19,7 @@ class TestImmunizationCoverage(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children 1 year+ who have received complete immunization as per "
@@ -28,7 +28,28 @@ class TestImmunizationCoverage(TestCase):
                             "This includes the following immunizations:<br/>"
                             "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
                             "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
-                    "average": 10.896898575020955
+                    "average": 10.896898575020955,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
+                            'value': "1,193"
+                        },
+                        {
+                            'indicator': (
+                                'Total number of children who have recieved '
+                                'complete immunizations required by age 1:'
+                            ),
+                            'value': "130"
+                        },
+                        {
+                            'indicator': (
+                                '% of children who have recieved complete immunizations required by age 1:'
+                            ),
+                            'value': '10.90%'
+                        }
+                    ]
+
+
                 },
                 "fills": {
                     "0%-20%": "#de2d26",
@@ -40,13 +61,13 @@ class TestImmunizationCoverage(TestCase):
                     "st1": {
                         "all": 573,
                         "children": 85,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-20%"
                     },
                     "st2": {
                         "all": 620,
                         "children": 45,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-20%"
                     }
                 },
@@ -66,7 +87,7 @@ class TestImmunizationCoverage(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children 1 year+ who have received complete immunization as per "
@@ -75,7 +96,26 @@ class TestImmunizationCoverage(TestCase):
                             "This includes the following immunizations:<br/>"
                             "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
                             "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
-                    "average": 14.834205933682373
+                    "average": 14.834205933682373,
+                    'extended_info': [
+                        {
+                            'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
+                            'value': "573"
+                        },
+                        {
+                            'indicator': (
+                                'Total number of children who have recieved '
+                                'complete immunizations required by age 1:'
+                            ),
+                            'value': "85"
+                        },
+                        {
+                            'indicator': (
+                                '% of children who have recieved complete immunizations required by age 1:'
+                            ),
+                            'value': '14.83%'
+                        }
+                    ]
                 },
                 "fills": {
                     "0%-20%": "#de2d26",

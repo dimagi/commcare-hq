@@ -6,7 +6,7 @@ from corehq.apps.data_interfaces.models import (
     CreateScheduleInstanceActionDefinition,
 )
 from corehq.messaging.scheduling.const import VISIT_WINDOW_END
-from corehq.messaging.scheduling.models import TimedSchedule, SMSContent, CustomContent
+from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, CustomContent
 from datetime import time
 from django.db import transaction
 
@@ -15,7 +15,7 @@ def create_beneficiary_indicator_1(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={
                 u'en': u'{case.host.name} is severely malnourished. Please consult the Anganwadi for advice in the next visit',
                 u'hin': u'{case.host.name} \u0917\u093e\u0902\u092d\u0940\u0930 \u0930\u0942\u092a \u0938\u0947 \u0915\u0941\u092a\u094b\u0937\u093f\u0924 \u0939\u0948\u0902 | \u0915\u0943\u092a\u093e \u0905\u0917\u0932\u0947 \u0917\u094d\u0930\u0939 \u092d\u094d\u0930\u092e\u0923 \u092e\u0947\u0902 \u0906\u0901\u0917\u0928\u0935\u093e\u095c\u0940 \u0938\u0947 \u092a\u0930\u093e\u092e\u0930\u094d\u0936 \u0915\u0930 \u0938\u0932\u093e\u0939 \u092a\u094d\u0930\u093e\u092a\u094d\u0924  \u0915\u0930\u0947 |',
@@ -56,7 +56,7 @@ def create_beneficiary_indicator_2(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE'),
             total_iterations=1
         )
@@ -92,7 +92,7 @@ def create_aww_indicator_3(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_AWW'),
             total_iterations=1,
             start_offset=1,
@@ -134,7 +134,7 @@ def create_ls_indicator_3(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_LS'),
             total_iterations=1,
             start_offset=1,
@@ -176,7 +176,7 @@ def _create_ls_indicator_5(domain, visit_num):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_MISSED_PNC_VISIT_TO_LS'),
             total_iterations=1,
             start_offset=1,
@@ -224,7 +224,7 @@ def create_aww_indicator_6(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_CF_VISITS_COMPLETE'),
             total_iterations=1,
         )
@@ -259,7 +259,7 @@ def create_ls_indicator_4a(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED'),
             total_iterations=1,
         )
@@ -294,7 +294,7 @@ def create_ls_indicator_4b(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED'),
             total_iterations=1,
             start_offset=7,
@@ -342,7 +342,7 @@ def create_aww_indicator_4(domain):
         # Monthly schedule for the last day of the month
         schedule = TimedSchedule.create_simple_monthly_schedule(
             domain,
-            time(9, 30),
+            TimedEvent(time=time(9, 30)),
             [-1],
             CustomContent(custom_content_id='ICDS_DPT3_AND_MEASLES_ARE_DUE'),
             total_iterations=TimedSchedule.REPEAT_INDEFINITELY
@@ -376,7 +376,7 @@ def create_aww_indicator_5(domain):
     with transaction.atomic():
         schedule = TimedSchedule.create_simple_daily_schedule(
             domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             CustomContent(custom_content_id='ICDS_CHILD_VACCINATIONS_COMPLETE'),
             total_iterations=1,
         )

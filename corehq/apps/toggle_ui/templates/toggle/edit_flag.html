@@ -33,6 +33,8 @@
     {% initial_page_data 'items' toggle.enabled_users %}
     {% initial_page_data 'namespaces' namespaces %}
     {% initial_page_data 'last_used' last_used %}
+    {% initial_page_data 'is_random_editable' is_random_editable %}
+    {% initial_page_data 'randomness' toggle_meta.randomness %}
     <div class="row" style="margin-bottom: 50px;">
         <div class="col-sm-12">
             {% if not usage_info %}
@@ -44,7 +46,12 @@
             {% if toggle_meta.description %}
                 <p>{{ toggle_meta.description|safe }}</p>
             {% endif %}
-            <p><span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+            <p>
+                <span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span>
+                {% if is_random %}
+                    <span class="label label-info">Random: {{ toggle_meta.randomness }}</span>
+                {% endif %}
+            </p>
             <p>{{ toggle_meta.tag.description }}</p>
             {% if toggle_meta.help_link %}
             <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
@@ -69,25 +76,14 @@
             <hr/>
             <div id="toggle_editing_ko">
                 <div data-bind="saveButton: saveButton"></div>
-                <h4>{% trans "Enabled toggle items" %}</h4>
-                <div>
-                    {% if toggle_meta.randomness %}
-                        <p>
-                            {% blocktrans with percent=toggle_meta.randomness_percent namespace=toggle_meta.namespace %}
-                            And <strong>{{ percent }}%</strong> of all other {{ namespace }}s.
-                            {% endblocktrans %}
-                            {% if not expanded %}
-                                <a href="{% url 'edit_toggle' toggle_meta.slug %}?expand=true">({% trans "see all" %})</a>
-                            {% endif %}
-                            <br/>
-                            <ul>
-                                <li>
-                                    <span class="text-muted">{% trans "Go to the project settings page to see if a toggle is randomly enabled for your domain." %}</span>
-                                </li>
-                            </ul>
-                        </p>
-                    {% endif %}
+                {% if is_random_editable %}
+                <div class="input-group">
+                    <label for="randomness-edit">Randomness Level: </label>
+                    <input id="randomness-edit" class="input-medium form-control" type="number" data-bind="value: randomness">
                 </div>
+                {% endif %}
+                {% if allows_items %}
+                <h4>{% trans "Enabled toggle items" %}</h4>
                 <hr/>
                 <div class="row" data-bind="visible: latest_use().name">
                     <div class="col-sm-6">
@@ -115,27 +111,8 @@
                         <i class="fa fa-plus"></i> {% trans "Add " %}{{ namespace }}
                     </button>
                 {% endfor %}
+                {% endif %}
             </div>
-            {% if expanded %}
-                <hr/>
-                <h1>{% trans "All domain/toggle statuses" %}</h1>
-                    <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>{% trans "Domain" %}</th>
-                            <th>{% trans "Enabled?" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for domain, enabled in domain_toggle_list %}
-                        <tr {% if enabled %}class="info"{% endif %}>
-                            <td>{{ domain }}</td>
-                            <td>{{ enabled }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            {% endif %}
         </div>
     </div>
 {% endblock %}

@@ -255,7 +255,8 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
-            ]
+            ],
+            None,
         )
 
     @property
@@ -829,6 +830,7 @@ class AsyncIndicator(models.Model):
         new_indicators = set(self.indicator_config_ids) - set(to_remove)
         self.indicator_config_ids = sorted(list(new_indicators))
         self.unsuccessful_attempts += 1
+        self.date_queued = None
 
 
 def get_datasource_config(config_id, domain):

@@ -1,20 +1,19 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
-import six
-
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
+    get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -54,6 +53,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
     moderately_underweight_total = 0
     severely_underweight_total = 0
+    normal_total = 0
     valid_total = 0
 
     for row in get_data_for(config):
@@ -66,14 +66,14 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
         moderately_underweight_total += moderately_underweight
         severely_underweight_total += severely_underweight_total
+        normal_total += normal
         valid_total += valid
 
         data_for_map[on_map_name]['severely_underweight'] += severely_underweight
         data_for_map[on_map_name]['moderately_underweight'] += moderately_underweight
         data_for_map[on_map_name]['normal'] += normal
         data_for_map[on_map_name]['total'] += valid
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']
@@ -95,23 +95,52 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         (moderately_underweight_total or 0) + (severely_underweight_total or 0)
     ) * 100 / float(valid_total or 1)
 
-    return [
-        {
-            "slug": "moderately_underweight",
-            "label": "Percent of Children Underweight (0-5 years)",
-            "fills": fills,
-            "rightLegend": {
-                "average": average,
-                "info": _((
-                    "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
-                    "less than -2 standard deviations of the WHO Child Growth Standards median. "
-                    "<br/><br/>"
-                    "Children who are moderately or severely underweight have a higher risk of mortality"
-                ))
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    sum_of_indicators = moderately_underweight_total + severely_underweight_total + normal_total
+    percent_unweighed = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
+
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 5 years')
+
+    return {
+        "slug": "moderately_underweight",
+        "label": "Percent of Children{gender} Underweight ({age})".format(
+            gender=gender_label,
+            age=age_label
+        ),
+        "fills": fills,
+        "rightLegend": {
+            "average": average,
+            "info": _((
+                "Percentage of children between {} enrolled for ICDS services with weight-for-age "
+                "less than -2 standard deviations of the WHO Child Growth Standards median. "
+                "<br/><br/>"
+                "Children who are moderately or severely underweight have a higher risk of mortality"
+                .format(age_label)
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': '% Unweighed{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % percent_unweighed
+                },
+                {
+                    'indicator': '% Severely Underweight{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (severely_underweight_total * 100 / float(valid_total or 1))
+                },
+                {
+                    'indicator': '% Moderately Underweight{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (moderately_underweight_total * 100 / float(valid_total or 1))
+                },
+                {
+                    'indicator': '% Normal{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map)
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -262,7 +291,7 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         'normal': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

@@ -4,6 +4,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
     function ToggleView() {
         var self = this;
         self.items = ko.observableArray();
+        self.randomness = ko.observable();
 
         self.init = function (config) {
             self.padded_ns = {};
@@ -15,6 +16,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             });
             self.init_items(config);
             self.latest_use = ko.observable(config.last_used._latest || '');
+            self.randomness(config.randomness);
         };
 
         self.init_items = function (config) {
@@ -64,7 +66,8 @@ hqDefine('toggle_ui/js/edit-flag', function () {
                     type: 'post',
                     url: hqImport('hqwebapp/js/initial_page_data').reverse('edit_toggle') + location.search,
                     data: {
-                        item_list: JSON.stringify(items)
+                        item_list: JSON.stringify(items),
+                        randomness: self.randomness(),
                     },
                     dataType: 'json',
                     success: function (data) {
@@ -93,6 +96,8 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             items: initial_page_data('items'),
             namespaces: initial_page_data('namespaces'),
             last_used: initial_page_data('last_used'),
+            is_random_editable: initial_page_data('is_random_editable'),
+            randomness: initial_page_data('randomness'),
         });
         $home.koApplyBindings(view);
         $home.on('change', 'input', view.change);

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import json
 
 import mock
-from datetime import datetime
+from datetime import date
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
@@ -297,7 +297,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -491,7 +491,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -742,7 +742,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -936,7 +936,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -1053,7 +1053,7 @@ class TestExportData(TestCase):
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",
@@ -1074,7 +1074,7 @@ class TestExportData(TestCase):
                 BeneficiaryExport(
                     config={
                         'domain': 'icds-cas',
-                        'month': datetime(2017, 5, 1),
+                        'month': date(2017, 5, 1),
                         'awc_id': 'a7'
                     },
                     loc_level=5
@@ -1086,18 +1086,18 @@ class TestExportData(TestCase):
                     "Child Beneficiary",
                     [
                         [
-                            "Name",
+                            "Child Name",
                             "Date of Birth",
-                            "Current Age (In years)",
+                            "Current Age (as of 2017-05-01)",
                             "Sex ",
                             "1 Year Immunizations Complete",
                             "Month for data shown",
-                            "Weight recorded",
-                            "Height recorded",
-                            "Weight-for-Age Status",
-                            "Weight-for-Height Status",
-                            "Height-for-Age status",
-                            "PSE Attendance (Days)"
+                            "Weight Recorded (in Month)",
+                            "Height Recorded (in Month)",
+                            "Weight-for-Age Status (in Month)",
+                            "Weight-for-Height Status (in Month)",
+                            "Height-for-Age status (in Month)",
+                            "Days attended PSE (as of 2017-05-01)"
                         ],
                         [
                             "Name 1783",
@@ -1107,7 +1107,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.80",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1121,7 +1121,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "12.10",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1135,7 +1135,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "13.70",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1148,11 +1148,11 @@ class TestExportData(TestCase):
                             "F",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             25
                         ],
                         [
@@ -1163,7 +1163,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.30",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1177,7 +1177,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "15.70",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1190,11 +1190,11 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             19
                         ],
                         [
@@ -1204,11 +1204,11 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             23
                         ],
                         [
@@ -1218,11 +1218,11 @@ class TestExportData(TestCase):
                             "F",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             21
                         ],
                         [
@@ -1232,11 +1232,11 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             17
                         ],
                         [
@@ -1246,12 +1246,12 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
-                            None
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered"
                         ],
                         [
                             "Name 1832",
@@ -1261,11 +1261,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "10.60",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 1876",
@@ -1275,11 +1275,11 @@ class TestExportData(TestCase):
                             "Yes",
                             "2017-05-01",
                             "8.80",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2027",
@@ -1288,12 +1288,12 @@ class TestExportData(TestCase):
                             "F",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
                             "Data Not Entered",
-                            None,
-                            None,
-                            None
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2054",
@@ -1303,11 +1303,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "8.60",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2056",
@@ -1317,11 +1317,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.40",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2060",
@@ -1331,11 +1331,11 @@ class TestExportData(TestCase):
                             "Yes",
                             "2017-05-01",
                             "8.80",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2073",
@@ -1345,11 +1345,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "9.50",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2094",
@@ -1359,11 +1359,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "10.50",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2117",
@@ -1373,11 +1373,11 @@ class TestExportData(TestCase):
                             "Yes",
                             "2017-05-01",
                             "9.80",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2134",
@@ -1387,11 +1387,11 @@ class TestExportData(TestCase):
                             "Yes",
                             "2017-05-01",
                             "7.90",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2141",
@@ -1401,11 +1401,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "10.00",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2171",
@@ -1415,11 +1415,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "7.50",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2173",
@@ -1429,11 +1429,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "9.40",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2182",
@@ -1443,11 +1443,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.50",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2188",
@@ -1457,11 +1457,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.40",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2192",
@@ -1471,11 +1471,11 @@ class TestExportData(TestCase):
                             "Yes",
                             "2017-05-01",
                             "8.00",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2207",
@@ -1485,11 +1485,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "8.70",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2210",
@@ -1499,11 +1499,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "9.60",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2241",
@@ -1513,7 +1513,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "13.00",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1527,11 +1527,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.70",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2254",
@@ -1541,7 +1541,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "14.00",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1555,11 +1555,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "8.70",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2265",
@@ -1569,7 +1569,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.80",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1583,7 +1583,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.60",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1597,7 +1597,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "13.60",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1611,7 +1611,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "12.20",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1624,11 +1624,11 @@ class TestExportData(TestCase):
                             "F",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             22
                         ],
                         [
@@ -1639,7 +1639,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "13.80",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1653,7 +1653,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "13.50",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1667,7 +1667,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "12.40",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1680,11 +1680,11 @@ class TestExportData(TestCase):
                             "F",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             25
                         ],
                         [
@@ -1695,11 +1695,11 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "10.70",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
-                            None
+                            "Data Not Entered"
                         ],
                         [
                             "Name 2335",
@@ -1709,7 +1709,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.90",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1723,7 +1723,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "12.60",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1737,7 +1737,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "14.20",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1751,7 +1751,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "12.90",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1765,7 +1765,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "13.10",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1779,7 +1779,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "14.20",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1793,7 +1793,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "11.00",
-                            None,
+                            "Data Not Entered",
                             "Moderately underweight",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1806,11 +1806,11 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             23
                         ],
                         [
@@ -1821,7 +1821,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "13.40",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1834,11 +1834,11 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             17
                         ],
                         [
@@ -1849,7 +1849,7 @@ class TestExportData(TestCase):
                             "No",
                             "2017-05-01",
                             "12.70",
-                            None,
+                            "Data Not Entered",
                             "Normal weight for age",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1862,11 +1862,11 @@ class TestExportData(TestCase):
                             "F",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             25
                         ],
                         [
@@ -1876,11 +1876,11 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             19
                         ],
                         [
@@ -1890,11 +1890,11 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             22
                         ],
                         [
@@ -1904,17 +1904,17 @@ class TestExportData(TestCase):
                             "M",
                             "No",
                             "2017-05-01",
-                            None,
-                            None,
-                            None,
-                            None,
-                            None,
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
+                            "Data Not Entered",
                             18
                         ]
                     ]
                 ],
                 [
-                    "Filters",
+                    "Export Info",
                     [
                         [
                             "Generated at",

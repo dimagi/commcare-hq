@@ -164,7 +164,9 @@ ANALYTICS_IDS = {
 }
 
 ANALYTICS_CONFIG = {
-    "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
+    "HQ_INSTANCE": '',  # e.g. "www", or "india", or "staging"
+    "DEBUG": DEBUG,
+    "LOG_LEVEL": "debug",   # "warning", "debug", "verbose", or "" for no logging
 }
 
 # Green house api key

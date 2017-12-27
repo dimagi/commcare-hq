@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test import SimpleTestCase
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter
+from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter, NamedFilter
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.specs import FactoryContext
 from six.moves import filter  # keep unused import so py3 conversion scripts don't rewrite file
@@ -417,7 +417,8 @@ class ConfigurableNamedFilterTest(SimpleTestCase):
                 })
             })
         )
-        self.assertTrue(isinstance(self.filter, NOTFilter))
+        self.assertTrue(isinstance(self.filter, NamedFilter))
+        self.assertTrue(isinstance(self.filter.filter, NOTFilter))
 
     def test_filter_match(self):
         self.assertTrue(self.filter(dict(foo='not bar')))

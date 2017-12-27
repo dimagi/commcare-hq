@@ -39,6 +39,7 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
@@ -534,6 +535,9 @@ class AdminRestoreView(TemplateView):
                 for report in reports
                 if 'report_id' in report.attrib
             }
+            num_ledger_entries = len(xml_payload.findall(
+                "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
+            ))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -553,6 +557,7 @@ class AdminRestoreView(TemplateView):
             location_type_counts = {}
             num_reports = 0
             report_row_counts = {}
+            num_ledger_entries = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
@@ -567,6 +572,7 @@ class AdminRestoreView(TemplateView):
             'case_type_counts': case_type_counts,
             'location_type_counts': location_type_counts,
             'report_row_counts': report_row_counts,
+            'num_ledger_entries': num_ledger_entries,
         })
         return context
 

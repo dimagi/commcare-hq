@@ -21,6 +21,22 @@ web:
     - ..:/mnt/commcare-hq-ro:ro
     - hqservice-lib:/mnt/lib
 
+formplayer:
+  extends:
+    file: hq-compose.yml
+    service: formplayer
+  environment:
+    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
+    WEB_HOST: "web"
+  links:
+    - postgres
+    - couch
+    - redis
+  expose:
+    - 8010
+  ports:
+    - "8010:8010"
+
 postgres:
   extends:
     file: hq-compose-services.yml

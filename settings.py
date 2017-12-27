@@ -30,6 +30,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
+DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -114,6 +115,7 @@ UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
+DEBUG_USER_SAVE_LOG_FILE = "%s/%s" % (FILEPATH, "debug_user_save.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -143,6 +145,7 @@ MIDDLEWARE = [
     'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
+    'corehq.middleware.LogLongRequestMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
@@ -501,6 +504,7 @@ DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+ICDS_ENVS = ('icds', 'icds-new')
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
@@ -723,11 +727,14 @@ ANALYTICS_IDS = {
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
     'HUBSPOT_API_ID': '',
-    'GTM_ID': ''
+    'GTM_ID': '',
+    'DRIFT_ID': '',
 }
 
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
+    "DEBUG": False,
+    "LOG_LEVEL": "warning",     # "warning", "debug", "verbose", or "" for no logging
 }
 
 GREENHOUSE_API_KEY = ''
@@ -915,6 +922,10 @@ ASYNC_INDICATOR_QUEUE_CRONTAB = crontab(minute="*/5")
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+# Allow overriding the synclog DB
+# This allows us to periodically rotate the synclog DB to remove deleted docs
+CUSTOM_SYNCLOGS_DB = None
 
 from env_settings import *
 
@@ -1168,7 +1179,15 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        }
+        },
+        'debug_user_save': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': DEBUG_USER_SAVE_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 5  # Backup 50 MB of logs
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1275,6 +1294,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'debug_user_save': {
+            'handlers': ['debug_user_save'],
+            'level': 'INFO' if SERVER_ENVIRONMENT == 'localdev' else 'ERROR',
+            'propagate': False,
+        }
     }
 }
 
@@ -1325,7 +1349,7 @@ DOMAINS_DB = NEW_DOMAINS_DB
 NEW_APPS_DB = 'apps'
 APPS_DB = NEW_APPS_DB
 
-SYNCLOGS_DB = 'synclogs'
+SYNCLOGS_DB = CUSTOM_SYNCLOGS_DB or 'synclogs'
 
 META_DB = 'meta'
 
@@ -1593,6 +1617,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
         ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
          "TB: Agency user case from voucher_fulfilled_by_id"],
+    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.beneficiary_registration_recipients',
+         "TB: Beneficiary Registration Recipients"],
+    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.prescription_voucher_alert_recipients',
+         "TB: Prescription Voucher Alert Recipients"],
 }
 
 # Used by the new reminders framework
@@ -1880,6 +1910,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_private.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
@@ -1892,9 +1923,12 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_patients.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'patient_overview_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_treatment_outcome_mobile.json'),
@@ -1920,10 +1954,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),

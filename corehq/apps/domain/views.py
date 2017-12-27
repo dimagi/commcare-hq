@@ -2450,7 +2450,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def _make_row(self, record):
         row = [
             self._make_state_label(record),
-            record.repeater.get_url if record.repeater else _(u'Unable to generate url for record'),
+            record.repeater.get_url(record) if record.repeater else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
             render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),

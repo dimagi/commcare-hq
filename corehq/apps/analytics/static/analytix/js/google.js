@@ -19,59 +19,56 @@ hqDefine('analytix/js/google', [
     'use strict';
     var _get = initialAnalytics.getFn('google'),
         _global = initialAnalytics.getFn('global'),
-        logger = logging.getLoggerForApi('Google Analytics'),
         _data = {},
         module = {},
-        _gtag = function () {};
+        _logger = logging.getLoggerForApi('Google Analytics'),
+        _ready;
 
-    var __init__ = function () {
-        _data.apiId = _get('apiId');
-        logger.verbose.log(_data.apiId || "NOT SET",["DATA", "API ID"]);
-
-        if (_data.apiId) {
-            _data.scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + _data.apiId;
-            utils.insertScript(_data.scriptUrl, logger.debug.log);
-        }
-
-        window.dataLayer = window.dataLayer || [];
-        _gtag = function () {
-            window.dataLayer.push(arguments);
-            logger.verbose.log(arguments, 'gtag');
-        };
-        _gtag('js', new Date());
-
-        _data.user = {
-            user_id: _get('userId', 'none'),
-            isDimagi: _get('userIsDimagi', 'no', 'yes'),
-            isCommCare: _get('userIsCommCare', 'no', 'yes'),
-            domain: _get('domain', 'none'),
-            hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
-        };
-
-        // Update User Data & Legacy "Dimensions"
-        _data.dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
-        if (_data.user.user_id !== 'none') {
-            _data.user.daysOld = _get('userDaysSinceCreated');
-            _data.user.isFirstDay = _data.user.daysOld < 1 ? 'yes' : 'no';
-            _data.dimLabels.push('isFirstDay');
-            _data.user.isFirstWeek = _data.user.daysOld >= 1 && _data.user.daysOld < 7 ? 'yes' : 'no';
-            _data.dimLabels.push('isFirstWeek');
-        }
-        // Legacy Dimensions
-        _data.user.custom_map = {};
-        _.each(_data.dimLabels, function (val, ind) {
-            _data.user.custom_map['dimension' + ind] = _data.user[val];
-        });
-
-        // Configure Gtag with User Info
-        _gtag('config', _data.apiId, _data.user);
+    var _gtag = function () {
+        // This should never run, because all calls to _gtag should be
+        // inside done handlers for ready, but just in case...
+        _logger.warning.log(arguments, 'skipped gtag');
     };
 
-    $(function() {
-        if (_global('isEnabled')) {
-            __init__();
-            logger.debug.log('Initialized');
-        }
+    $(function () {
+        var apiId = _get('apiId'),
+            scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
+
+        _logger = logging.getLoggerForApi('Google Analytics');
+        _ready = utils.initApi(apiId, scriptUrl, _logger, function() {
+            window.dataLayer = window.dataLayer || [];
+            _gtag = function () {
+                window.dataLayer.push(arguments);
+                _logger.verbose.log(arguments, 'gtag');
+            };
+            _gtag('js', new Date());
+
+            var user = {
+                user_id: _get('userId', 'none'),
+                isDimagi: _get('userIsDimagi', 'no', 'yes'),
+                isCommCare: _get('userIsCommCare', 'no', 'yes'),
+                domain: _get('domain', 'none'),
+                hasBuiltApp: _get('userHasBuiltApp', 'no', 'yes'),
+            };
+
+            // Update User Data & Legacy "Dimensions"
+            var dimLabels = ['isDimagi', 'user_id', 'isCommCare', 'domain', 'hasBuiltApp'];
+            if (user.user_id !== 'none') {
+                user.daysOld = _get('userDaysSinceCreated');
+                user.isFirstDay = user.daysOld < 1 ? 'yes' : 'no';
+                dimLabels.push('isFirstDay');
+                user.isFirstWeek = user.daysOld >= 1 && user.daysOld < 7 ? 'yes' : 'no';
+                dimLabels.push('isFirstWeek');
+            }
+            // Legacy Dimensions
+            user.custom_map = {};
+            _.each(dimLabels, function (val, ind) {
+                user.custom_map['dimension' + ind] = user[val];
+            });
+
+            // Configure Gtag with User Info
+            _gtag('config', apiId, user);
+        });
     });
 
     /**
@@ -85,7 +82,7 @@ hqDefine('analytix/js/google', [
      * @param {function} eventCallback - (optional) Event callback fn
      */
     var trackEvent = function (eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-        if (_global('isEnabled')) {
+        _ready.done(function() {
             var params = {
                 event_category: eventCategory,
                 event_label: eventLabel,
@@ -96,11 +93,13 @@ hqDefine('analytix/js/google', [
             if (_.isObject(eventParameters)) {
                 params = _.extend(params, eventParameters);
             }
-            logger.debug.log(logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
+            _logger.debug.log(_logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
             _gtag('event', eventAction, params);
-        } else if (eventCallback) {
-            eventCallback();
-        }
+        }).fail(function() {
+            if (_.isFunction(eventCallback)) {
+                eventCallback();
+            }
+        });
     };
 
     /**
@@ -116,24 +115,15 @@ hqDefine('analytix/js/google', [
      * @param {object} eventParameters - (optional) Extra event parameters
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
-        if (_global('isEnabled')) {
+        _ready.done(function() {
             utils.trackClickHelper(
                 element,
                 function (callbackFn) {
                     trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);
                 }
             );
-            logger.debug.log(logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
-        }
-    };
-
-
-    module = {
-        logger: logger,
-        track: {
-            event: trackEvent,
-            click: trackClick,
-        },
+            _logger.debug.log(_logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
+        });
     };
 
     /**
@@ -154,7 +144,7 @@ hqDefine('analytix/js/google', [
              * @param {function} eventCallback - (optional) Event callback fn
              */
             event: function (eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
-                module.track.event(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
+                trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback);
             },
             /**
              * @param {(object|string)} element - The element (or a selector) whose clicks you want to track.
@@ -166,11 +156,16 @@ hqDefine('analytix/js/google', [
             click: function (element, eventAction, eventLabel, eventValue, eventParameters) {
                 // directly reference what the module returns instead of the private function,
                 // as some mocha tests will want to replace the module's returned functions
-                module.track.click(element, eventCategory, eventLabel, eventValue, eventParameters);
+                trackClick(element, eventCategory, eventLabel, eventValue, eventParameters);
             },
         };
     };
 
-    module.trackCategory = trackCategory;
-    return module;
+    return {
+        track: {
+            event: trackEvent,
+            click: trackClick,
+        },
+        trackCategory: trackCategory,
+    };
 });

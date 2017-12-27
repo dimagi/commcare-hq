@@ -19,12 +19,28 @@ class TestEnrolledWomen(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
                     "average": 77.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': "155"
+                        },
+                        {
+                            'indicator': 'Total number of pregnant women who are registered:',
+                            'value': "155"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",
@@ -34,13 +50,13 @@ class TestEnrolledWomen(TestCase):
                     "st1": {
                         "valid": 70,
                         "all": 70,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 85,
                         "all": 85,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Women"
                     }
                 },
@@ -60,12 +76,28 @@ class TestEnrolledWomen(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
                     "average": 35.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': "70"
+                        },
+                        {
+                            'indicator': 'Total number of pregnant women who are registered:',
+                            'value': "70"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
                     "Women": "#006fdf",

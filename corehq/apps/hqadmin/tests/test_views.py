@@ -37,4 +37,5 @@ class AdminRestoreViewTests(SimpleTestCase):
                 'case_type_counts': {},
                 'location_type_counts': {},
                 'report_row_counts': {},
+                'num_ledger_entries': 0,
             })
