@@ -129,9 +129,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
 
 
-SAMPLE_DATA_MAX_ROWS = 100
 TEMP_REPORT_PREFIX = '__tmp'
-TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -295,64 +293,6 @@ class ReportBuilderView(BaseDomainView):
     def section_url(self):
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
-    def _build_temp_data_source(self, app_source, username):
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **self._get_config_kwargs(app_source)
-        )
-        data_source_config.validate()
-        data_source_config.save()
-        self._expire_data_source(data_source_config._id)
-        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
-        self.filter_data_source_changes(data_source_config._id)
-        return data_source_config._id
-
-    def _expire_data_source(self, data_source_config_id):
-        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
-        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
-        settings.CELERY_ALWAYS_EAGER = False
-        delete_data_source_task.apply_async(
-            (self.domain, data_source_config_id),
-            countdown=TEMP_DATA_SOURCE_LIFESPAN
-        )
-        settings.CELERY_ALWAYS_EAGER = always_eager
-
-    def _get_config_kwargs(self, app_source):
-        app = Application.get(app_source.application)
-        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
-        return {
-            'display_name': builder.data_source_name,
-            'referenced_doc_type': builder.source_doc_type,
-            'configured_filter': builder.filter,
-            'configured_indicators': builder.all_possible_indicators(),
-            'base_item_expression': builder.base_item_expression(False),
-            'meta': DataSourceMeta(
-                build=DataSourceBuildInformation(
-                    source_id=app_source.source,
-                    app_id=app._id,
-                    app_version=app.version,
-                )
-            )
-        }
-
-    @staticmethod
-    def filter_data_source_changes(data_source_config_id):
-        """
-        Add filter to data source to prevent it from being updated by DB changes
-        """
-        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
-        data_source_config = DataSourceConfiguration.get(data_source_config_id)
-        data_source_config.configured_filter = {
-            # An expression that is always false:
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": 1,
-            "property_value": 2,
-        }
-        data_source_config.validate()
-        data_source_config.save()
-
 
 @quickcache(["domain"], timeout=0, memoize_timeout=4)
 def paywall_home(domain):
@@ -460,7 +400,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            data_source_config_id = self._build_temp_data_source(app_source, request.user.username)
 
             track_workflow(
                 request.user.email,
@@ -479,7 +418,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'application': app_source.application,
                 'source_type': app_source.source_type,
                 'source': app_source.source,
-                'data_source': data_source_config_id,
             }
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
@@ -556,25 +494,6 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
-    @memoized
-    def _get_preview_data_source(self):
-        """
-        Return the ID of the report's DataSourceConfiguration
-        """
-
-        if self.existing_report:
-            source_type = {
-                "CommCareCase": "case",
-                "XFormInstance": "form"
-            }[self.existing_report.config.referenced_doc_type]
-            source_id = self.existing_report.config.meta.build.source_id
-            app_id = self.existing_report.config.meta.build.app_id
-            app_source = ApplicationDataSource(app_id, source_type, source_id)
-            data_soruce_id = self._build_temp_data_source(app_source, self.request.user.username)
-            return data_soruce_id
-        else:
-            return self.request.GET['data_source']
-
     def _get_existing_report_type(self):
         if self.existing_report:
             type_ = "list"
@@ -627,6 +546,8 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
+        temp_ds_id = report_form.create_temp_data_source(self.request.user.username)
+
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
@@ -645,8 +566,8 @@ class ConfigureReport(ReportBuilderView):
             'source_id': self.source_id,
             'application': self.app_id,
             'report_preview_url': reverse(ReportPreview.urlname,
-                                          args=[self.domain, self._get_preview_data_source()]),
-            'preview_datasource_id': self._get_preview_data_source(),
+                                          args=[self.domain, temp_ds_id]),
+            'preview_datasource_id': temp_ds_id,
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
@@ -762,21 +683,6 @@ def _munge_report_data(report_data):
     :param report_data:
     :return:
     """
-    agg_columns = []
-    if report_data['report_type'] == "table":
-        clean_columns = []
-
-        for col in report_data['columns']:
-            if col['calculation'] == "Group By":
-                agg_columns.append(col)
-            else:
-                clean_columns.append(col)
-        agg_columns = [x['property'] for x in agg_columns]
-
-        report_data['columns'] = clean_columns
-
-    report_data['group_by'] = agg_columns or None
-
     report_data['columns'] = json.dumps(report_data['columns'])
     report_data['user_filters'] = json.dumps(report_data['user_filters'])
     report_data['default_filters'] = json.dumps(report_data['default_filters'])
@@ -803,7 +709,7 @@ class ReportPreview(BaseDomainView):
             report_data
         )
         if bound_form.is_valid():
-            temp_report = bound_form.create_temp_report(data_source)
+            temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
             response_data = ConfigurableReport.report_preview_data(self.domain, temp_report)
             if response_data:
                 return json_response(response_data)

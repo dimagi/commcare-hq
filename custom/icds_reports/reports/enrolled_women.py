@@ -1,18 +1,18 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggCcsRecordMonthly
-from custom.icds_reports.utils import apply_exclude, indian_formatted_number
-import six
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -60,46 +60,43 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
 
         data_for_map[on_map_name]['valid'] += valid
         data_for_map[on_map_name]['all'] += all_pregnant
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
     fills.update({'Women': BLUE})
     fills.update({'defaultFill': GREY})
 
-    return [
-        {
-            "slug": "enrolled_women",
-            "label": "",
-            "fills": fills,
-            "rightLegend": {
-                "average": sum(average) / float(len(average) or 1),
-                "average_format": 'number',
-                "info": _((
-                    "Total number of pregnant women who are enrolled for ICDS services."
-                )),
-                "extended_info": [
-                    {
-                        'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                        'value': indian_formatted_number(total_valid)
-                    },
-                    {
-                        'indicator': (
-                            'Total number of pregnant women who are registered:'
-                        ),
-                        'value': indian_formatted_number(total)
-                    },
-                    {
-                        'indicator': (
-                            'Percentage of registered pregnant women who are enrolled for ICDS services:'
-                        ),
-                        'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "enrolled_women",
+        "label": "",
+        "fills": fills,
+        "rightLegend": {
+            "average": sum(average) / float(len(average) or 1),
+            "average_format": 'number',
+            "info": _((
+                "Total number of pregnant women who are enrolled for ICDS services."
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                    'value': indian_formatted_number(total_valid)
+                },
+                {
+                    'indicator': (
+                        'Total number of pregnant women who are registered:'
+                    ),
+                    'value': indian_formatted_number(total)
+                },
+                {
+                    'indicator': (
+                        'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                    ),
+                    'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
@@ -128,7 +125,7 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

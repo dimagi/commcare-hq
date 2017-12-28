@@ -12,6 +12,7 @@ class TestAWCSCovered(TestCase):
 
     def test_map_data(self):
         self.assertDictEqual(
+
             get_awcs_covered_data_map(
                 'icds-cas',
                 config={
@@ -19,7 +20,7 @@ class TestAWCSCovered(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": (
@@ -40,7 +41,7 @@ class TestAWCSCovered(TestCase):
                         "awcs": 8,
                         "states": 1,
                         "supervisors": 4,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Launched"
                     },
                     "st2": {
@@ -49,7 +50,7 @@ class TestAWCSCovered(TestCase):
                         "awcs": 11,
                         "states": 1,
                         "supervisors": 4,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Launched"
                     }
                 },
@@ -69,7 +70,7 @@ class TestAWCSCovered(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": (
@@ -88,7 +89,7 @@ class TestAWCSCovered(TestCase):
                         'states': 1,
                         'blocks': 2,
                         'awcs': 8,
-                        'original_name': [],
+                        'original_name': ['b1', 'b2'],
                         'districts': 1,
                         'supervisors': 4,
                         'fillKey': 'Launched'

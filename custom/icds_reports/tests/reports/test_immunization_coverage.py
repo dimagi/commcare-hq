@@ -19,7 +19,7 @@ class TestImmunizationCoverage(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children 1 year+ who have received complete immunization as per "
@@ -61,13 +61,13 @@ class TestImmunizationCoverage(TestCase):
                     "st1": {
                         "all": 573,
                         "children": 85,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-20%"
                     },
                     "st2": {
                         "all": 620,
                         "children": 45,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-20%"
                     }
                 },
@@ -87,7 +87,7 @@ class TestImmunizationCoverage(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children 1 year+ who have received complete immunization as per "
