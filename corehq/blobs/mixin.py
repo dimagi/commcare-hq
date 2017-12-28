@@ -93,7 +93,7 @@ class BlobMixin(Document):
         old_meta = self.blobs.get(name)
 
         if isinstance(content, six.text_type):
-            content = StringIO(content.encode("utf-8"))
+            content = BytesIO(content.encode("utf-8"))
         elif isinstance(content, bytes):
             content = BytesIO(content)
         else:
