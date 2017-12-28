@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from unittest import TestCase
-from io import StringIO
+from io import BytesIO, StringIO
 
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import InvalidContext, NotFound
@@ -21,13 +21,13 @@ class TestFilesystemBlobDB(TestCase):
 
     def test_put(self):
         with AtomicBlobs(self.db) as db:
-            info = db.put(StringIO(b"content"), get_id())
+            info = db.put(BytesIO(b"content"), get_id())
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_failed(self):
         with self.assertRaises(Boom), AtomicBlobs(self.db) as db:
-            info = db.put(StringIO(b"content"), get_id())
+            info = db.put(BytesIO(b"content"), get_id())
             raise Boom()
         with self.assertRaises(NotFound):
             self.db.get(info.identifier)
@@ -36,17 +36,17 @@ class TestFilesystemBlobDB(TestCase):
         with AtomicBlobs(self.db) as db:
             pass
         with self.assertRaises(InvalidContext):
-            db.put(StringIO(b"content"), get_id())
+            db.put(BytesIO(b"content"), get_id())
 
     def test_delete(self):
-        info = self.db.put(StringIO(b"content"), get_id())
+        info = self.db.put(BytesIO(b"content"), get_id())
         with AtomicBlobs(self.db) as db:
             db.delete(info.identifier)
         with self.assertRaises(NotFound):
             self.db.get(info.identifier)
 
     def test_delete_failed(self):
-        info = self.db.put(StringIO(b"content"), get_id())
+        info = self.db.put(BytesIO(b"content"), get_id())
         with self.assertRaises(Boom), AtomicBlobs(self.db) as db:
             db.delete(info.identifier)
             raise Boom()
@@ -57,7 +57,7 @@ class TestFilesystemBlobDB(TestCase):
         with AtomicBlobs(self.db) as db:
             pass
         with self.assertRaises(InvalidContext):
-            db.delete(StringIO(b"content"))
+            db.delete(BytesIO(b"content"))
 
 
 class Boom(Exception):
