@@ -10,7 +10,7 @@ from collections import (
 )
 from datetime import datetime
 
-from io import StringIO
+from io import BytesIO, StringIO
 from django.db import models
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject
@@ -439,8 +439,10 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         content_readable = content
-        if isinstance(content, six.string_types):
+        if isinstance(content, six.text_type):
             content_readable = StringIO(content)
+        elif isinstance(content, six.binary_type):
+            content_readable = BytesIO(content)
 
         db = get_blob_db()
         bucket = self.blobdb_bucket()

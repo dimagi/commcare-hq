@@ -4,7 +4,7 @@ import sys
 import uuid
 from collections import defaultdict
 from contextlib import contextmanager, nested
-from io import StringIO
+from io import BytesIO, StringIO
 from hashlib import sha1
 from itertools import chain
 from os.path import join
@@ -95,7 +95,9 @@ class BlobMixin(Document):
         if isinstance(content, six.text_type):
             content = StringIO(content.encode("utf-8"))
         elif isinstance(content, bytes):
-            content = StringIO(content)
+            content = BytesIO(content)
+        else:
+            raise Exception
 
         bucket = self._blobdb_bucket()
         # do we need to worry about BlobDB reading beyond content_length?
