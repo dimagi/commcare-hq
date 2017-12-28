@@ -15,9 +15,10 @@ print()
 time.sleep(2)
 if 'y' == input('Do you want instructions for how to migrate? [y/N]'):
     print()
-    ansible_repo = os.path.join(os.path.dirname(__file__), '..', 'commcarehq-ansible')
+    ansible_repo = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'commcarehq-ansible'))
     if not os.path.isdir(os.path.join(ansible_repo, '.git')):
-        print("""
+        if 'y' != input('Do you have a local commcarehq-ansible repository already? [y/N]'):
+            print("""
     Set up commcarehq-ansible
     =========================
 
@@ -32,9 +33,25 @@ if 'y' == input('Do you want instructions for how to migrate? [y/N]'):
       mkvirtualenv ansible
 
 """)
+        else:
+            print("""
+    Link commcarehq-ansible repo
+    ============================
+
+    Symlink your commcarehq-ansible repo so that it lives alongside this one:
+
+      ln -s <path/to/commcarehq-ansible> {ansible_repo}
+
+    When you have done that, run
+
+      fab
+
+    to see more instructions.
+""".format(ansible_repo=ansible_repo))
+            exit(1)
     else:
         print("✓ You already have the commcarehq-ansible repo alonside this one: {}"
-              .format(os.path.realpath(ansible_repo)))
+              .format(ansible_repo))
         print()
         time.sleep(1)
     print("""
