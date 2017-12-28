@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 import logging
-from io import StringIO
+from io import BytesIO
 
 from couchdbkit import ResourceNotFound
 from django.test.client import Client
@@ -35,7 +35,7 @@ def fetch_and_wrap_form(doc_id):
 @unit_testing_only
 def spoof_submission(submit_url, body):
     client = Client()
-    f = StringIO(body.encode('utf-8'))
+    f = BytesIO(body.encode('utf-8'))
     f.name = 'form.xml'
     response = client.post(submit_url, {
         'xml_submission_file': f,

@@ -3,7 +3,7 @@ import hashlib
 import logging
 import mimetypes
 from datetime import datetime
-from io import StringIO
+from io import BytesIO
 
 import magic
 from couchdbkit.exceptions import ResourceConflict
@@ -350,13 +350,13 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_image_object(cls, data):
-        return Image.open(StringIO(data))
+        return Image.open(BytesIO(data))
 
     @classmethod
     def _get_resized_image(cls, image, size):
         if image.mode not in ["RGB", "RGBA"]:
             image = image.convert("RGB")
-        o = StringIO()
+        o = BytesIO()
         try:
             image.thumbnail(size, Image.ANTIALIAS)
         except IndexError:

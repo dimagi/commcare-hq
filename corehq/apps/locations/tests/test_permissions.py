@@ -3,7 +3,7 @@ import json
 import uuid
 import random
 import string
-from io import StringIO
+from io import BytesIO
 import mock
 
 from django.urls import reverse
@@ -268,7 +268,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
                 'HTTP_DJNG_REMOTE_METHOD': method_name,
                 'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest',
                 'CONTENT_LENGTH': len(data),
-                'wsgi.input': StringIO(data),
+                'wsgi.input': BytesIO(data),
             })
 
     def test_restricted_worker_list(self):

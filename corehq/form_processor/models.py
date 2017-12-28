@@ -83,7 +83,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
         return data
 
     def content_as_file(self):
-        return StringIO(self.content)
+        return BytesIO(self.content)
 
 
 class SaveStateMixin(object):

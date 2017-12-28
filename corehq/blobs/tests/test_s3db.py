@@ -73,7 +73,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from os.path import join
 from unittest import TestCase
-from io import StringIO
+from io import BytesIO
 
 from django.conf import settings
 
@@ -98,5 +98,5 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
-        self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
+        self.db.put(BytesIO(b"content"), get_id(), bucket=bucket)
         self.assertEqual(self.db.get_path(bucket=bucket), bucket)

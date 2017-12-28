@@ -500,7 +500,7 @@ class HtmlExportWriter(OnDiskExportWriter):
             self.file.write(
                 render_to_string(
                     "couchexport/html_export.html", context
-                ).encode("utf-8")
+                )
             )
 
         write({"section": "doc_begin"})
@@ -508,6 +508,9 @@ class HtmlExportWriter(OnDiskExportWriter):
             table_writer = self.tables[index]
             write({"section": "table_begin", "name": name})
             for line in table_writer.get_file():
+                print type(self.file)
+                print line
+                print type(line)
                 self.file.write(line)
             write({"section": "table_end"})
         write({"section": "doc_end"})

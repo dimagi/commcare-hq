@@ -3,7 +3,7 @@ import copy
 from functools import cmp_to_key
 import logging
 from PIL import Image
-from io import StringIO
+from io import BytesIO
 from couchdbkit import BadValueError
 import sys
 from datetime import date, datetime
@@ -349,7 +349,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                 v.attachment_size = len(attach_data)
 
                 if v.is_image:
-                    img = Image.open(StringIO(attach_data))
+                    img = Image.open(BytesIO(attach_data))
                     img_size = img.size
                     props = dict(width=img_size[0], height=img_size[1])
                     v.attachment_properties = props
