@@ -78,6 +78,132 @@ class BaseScheduleTest(TestCase):
 @partitioned
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
+class TimedScheduleActiveFlagTest(BaseScheduleTest):
+
+    def setUp(self):
+        super(TimedScheduleActiveFlagTest, self).setUp()
+        self.schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            total_iterations=2,
+        )
+
+    def tearDown(self):
+        self.schedule.delete()
+        super(TimedScheduleActiveFlagTest, self).tearDown()
+
+    def test_deactivate(self, utcnow_patch, send_patch):
+        self.assertNumInstancesForSchedule(0)
+
+        # Schedule the instance
+        utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2017, 3, 16))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # Deactivate
+        self.schedule.active = False
+        self.schedule.save()
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2017, 3, 16))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+    def test_activate_without_moving_to_next_event(self, utcnow_patch, send_patch):
+        self.schedule.active = False
+        self.schedule.save()
+
+        # Schedule the instance
+        utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2017, 3, 16))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # Activate
+        self.schedule.active = True
+        self.schedule.save()
+        utcnow_patch.return_value = datetime(2017, 3, 16, 7, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2017, 3, 16))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), True, date(2017, 3, 16),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+    def test_activate_with_moving_to_next_event(self, utcnow_patch, send_patch):
+        self.schedule.active = False
+        self.schedule.save()
+
+        # Schedule the instance
+        utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2017, 3, 16))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # Activate
+        self.schedule.active = True
+        self.schedule.save()
+        utcnow_patch.return_value = datetime(2017, 3, 16, 17, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2017, 3, 16))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 2, datetime(2017, 3, 17, 16, 0), True, date(2017, 3, 16),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+    def test_activate_when_total_iterations_are_done(self, utcnow_patch, send_patch):
+        self.schedule.active = False
+        self.schedule.save()
+
+        # Schedule the instance
+        utcnow_patch.return_value = datetime(2017, 3, 16, 6, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2017, 3, 16))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 16, 0), False, date(2017, 3, 16),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # Activate
+        # On the first iteration, it tries to reactivate but the instance ends up moving
+        # to the end of the schedule and being put into an inactive state as a result.
+        # On the second iteration, it realizes the total iterations have been completed,
+        # so nothing changes.
+        self.schedule.active = True
+        self.schedule.save()
+        utcnow_patch.return_value = datetime(2017, 4, 1, 17, 0)
+        for i in range(2):
+            refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+                date(2017, 3, 16))
+            self.assertNumInstancesForSchedule(1)
+            [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+            self.assertTimedScheduleInstance(instance, 0, 3, datetime(2017, 3, 18, 16, 0), False,
+                date(2017, 3, 16), self.user1)
+            self.assertEqual(send_patch.call_count, 0)
+
+
+@partitioned
+@patch('corehq.messaging.scheduling.models.content.SMSContent.send')
+@patch('corehq.messaging.scheduling.util.utcnow')
 class DailyScheduleTest(BaseScheduleTest):
 
     @classmethod
