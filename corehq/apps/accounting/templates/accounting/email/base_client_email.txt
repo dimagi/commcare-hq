@@ -1,0 +1,17 @@
+{% load i18n %}
+
+{% block header %}
+{{ greeting }}
+{% endblock %}
+
+{% block content %}
+{% endblock %}
+
+{% block footer %}
+{% blocktrans %}
+Best Regards,<br />
+Dimagi, Inc.
+585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
+www.commcarehq.org
+{% endblocktrans %}
+{% endblock %}

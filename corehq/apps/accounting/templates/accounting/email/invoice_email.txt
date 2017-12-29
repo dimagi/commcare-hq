@@ -1,7 +1,8 @@
+{% extends 'accounting/email/base_client_email.html' %}
 {% load i18n %}
-{% blocktrans %}
-{{ greeting }}
 
+{% block content %}
+{% blocktrans %}
 Your {{ plan_name }} Billing Statement is now available for {{ month_name }}.
 
 Statement No.: {{ statement_number }}
@@ -12,10 +13,10 @@ Amount Due this Month: {{ amount_due }}
 Total Balance: {{ total_balance }}
 {% endblocktrans %}
 {% if total_balance > 0 %}
-{% blocktrans %}
+    {% blocktrans %}
     Payment Due Date: {{ date_due }}
-{% endblocktrans %}
-{% endif  %}
+    {% endblocktrans %}
+{% endif %}
 
 {% if is_total_balance_due %}
     {% if is_small_invoice %}
@@ -26,7 +27,6 @@ Total Balance: {{ total_balance }}
         your balance within the next 30 days.
         {% endblocktrans %}
     {% endif %}
-
 
     {% if can_view_statement %}
         {% blocktrans %}
@@ -55,11 +55,11 @@ Total Balance: {{ total_balance }}
     {% endblocktrans %}
 {% else %}
     {% if total_balance > 0 %}
-    {% blocktrans %}
+        {% blocktrans %}
         Please note that the due date for this payment has been postponed, as
         the amount due this month is less than $100.  You will start receiving
         reminder emails for payments once your total balance reaches $100.
-    {% endblocktrans %}
+        {% endblocktrans %}
     {% endif  %}
 
     {% if can_view_statement %}
@@ -77,13 +77,6 @@ Total Balance: {{ total_balance }}
 
 {% blocktrans %}
 Thank you for using {{ plan_name }}. If you have any questions, please don't hesitate to contact {{ invoicing_contact_email }}.
-
-Best Regards,
-The CommCare HQ Team
-www.commcarehq.org
-
-
-Statement From:
-CommCare HQ and the corporation Dimagi, Inc.
-585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
 {% endblocktrans %}
+
+{% endblock %}
