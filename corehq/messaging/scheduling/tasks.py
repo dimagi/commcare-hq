@@ -30,6 +30,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
 from dimagi.utils.couch import CriticalSection
+from django.conf import settings
 import six
 
 
@@ -283,7 +284,7 @@ class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
         return False
 
 
-@task(ignore_result=True)
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_alert_schedule_instances(schedule_id, recipients):
     """
     :param schedule_id: the AlertSchedule schedule_id
@@ -299,7 +300,7 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
         ).refresh()
 
 
-@task(ignore_result=True)
+@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
     """
     :param schedule_id: the TimedSchedule schedule_id
