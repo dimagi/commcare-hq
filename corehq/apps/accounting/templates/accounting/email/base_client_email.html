@@ -10,6 +10,12 @@
 {% block footer %}
     <p>
         {% blocktrans %}
+        Thank you for using {{ plan_name }}.
+        If you have any questions, please don't hesitate to contact <a href="{{ invoicing_contact_email }}">{{ invoicing_contact_email }}</a>.
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans %}
         Best Regards,<br />
         Dimagi, Inc.
         585 Massachusetts Ave, Ste 4, Cambridge, MA 02139 USA
