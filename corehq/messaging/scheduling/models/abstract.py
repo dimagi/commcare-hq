@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import jsonfield
 import uuid
 from dimagi.utils.decorators.memoized import memoized
-from django.db import models
+from django.db import models, transaction
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
@@ -99,6 +99,17 @@ class Schedule(models.Model):
                 result |= set(content.message)
 
         return result
+
+    def delete_related_events(self):
+        """
+        Deletes all Event and Content objects related to this Schedule.
+        """
+        raise NotImplementedError()
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.delete_related_events()
+            super(Schedule, self).delete(*args, **kwargs)
 
 
 class ContentForeignKeyMixin(models.Model):
