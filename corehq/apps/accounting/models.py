@@ -115,19 +115,6 @@ class FeatureType(object):
     )
 
 
-class SoftwareProductType(object):
-    COMMCARE = "CommCare"
-    COMMTRACK = "CommTrack"
-    COMMCONNECT = "CommConnect"
-    ANY = ""
-
-    CHOICES = (
-        (COMMCARE, COMMCARE),
-        (COMMTRACK, COMMTRACK),
-        (COMMCONNECT, COMMCONNECT),
-    )
-
-
 class SoftwarePlanEdition(object):
     COMMUNITY = "Community"
     STANDARD = "Standard"
