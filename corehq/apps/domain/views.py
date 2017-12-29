@@ -89,7 +89,7 @@ from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
+    Subscription, CreditLine, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
@@ -776,9 +776,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_product_summary(self, plan_version, account, subscription):
         product_rate = plan_version.product_rate
         return {
-            'name': SoftwareProductType.COMMCARE,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
                     subscription, is_product=True
