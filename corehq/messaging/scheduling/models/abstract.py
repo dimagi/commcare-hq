@@ -56,6 +56,23 @@ class Schedule(models.Model):
     def get_current_event_content(self, instance):
         raise NotImplementedError()
 
+    def total_iterations_complete(self, instance):
+        """
+        Should return True if the schedule instance has completed the total
+        number of iterations for this schedule.
+        """
+        raise NotImplementedError()
+
+    def move_to_next_event(self, instance):
+        instance.current_event_num += 1
+        if instance.current_event_num >= len(self.memoized_events):
+            instance.schedule_iteration_num += 1
+            instance.current_event_num = 0
+        self.set_next_event_due_timestamp(instance)
+
+        if self.total_iterations_complete(instance):
+            instance.active = False
+
     def move_to_next_event_not_in_the_past(self, instance):
         while instance.active and instance.next_event_due < util.utcnow():
             self.move_to_next_event(instance)

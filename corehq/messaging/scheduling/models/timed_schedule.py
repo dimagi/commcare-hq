@@ -188,18 +188,11 @@ class TimedSchedule(Schedule):
         current_event = self.memoized_events[instance.current_event_num]
         return current_event.memoized_content
 
-    def move_to_next_event(self, instance):
-        instance.current_event_num += 1
-        if instance.current_event_num >= len(self.memoized_events):
-            instance.schedule_iteration_num += 1
-            instance.current_event_num = 0
-        self.set_next_event_due_timestamp(instance)
-
-        if (
+    def total_iterations_complete(self, instance):
+        return (
             self.total_iterations != self.REPEAT_INDEFINITELY and
             instance.schedule_iteration_num > self.total_iterations
-        ):
-            instance.active = False
+        )
 
     def delete_related_events(self):
         for event in self.event_set.all():

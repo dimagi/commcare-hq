@@ -143,6 +143,9 @@ class ScheduleInstanceRefresher(object):
                 self.delete_instance(instance)
 
         for instance, needs_saving in refreshed_list:
+            if instance.check_active_flag_against_schedule():
+                needs_saving = True
+
             if needs_saving:
                 self.save_instance(instance)
 
@@ -384,6 +387,7 @@ def _handle_schedule_instance(instance, save_function):
     """
     if instance.active and instance.next_event_due < datetime.utcnow():
         instance.handle_current_event()
+        instance.check_active_flag_against_schedule()
         save_function(instance)
         return True
 
