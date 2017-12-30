@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseRedirect,
     HttpResponseBadRequest,
 )
@@ -63,6 +64,8 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
     LIST_SCHEDULED = 'list_scheduled'
     LIST_IMMEDIATE = 'list_immediate'
+    ACTION_ACTIVATE_SCHEDULED_BROADCAST = 'activate_scheduled_broadcast'
+    ACTION_DEACTIVATE_SCHEDULED_BROADCAST = 'deactivate_scheduled_broadcast'
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -122,6 +125,23 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             ])
         return self.datatables_ajax_response(data, total_records)
 
+    def get_scheduled_broadcast(self, broadcast_id):
+        try:
+            return ScheduledBroadcast.objects.get(domain=self.domain, pk=broadcast_id, deleted=False)
+        except cls.DoesNotExist:
+            raise Http404()
+
+    def get_scheduled_broadcast_activate_ajax_response(self, active_flag, broadcast_id):
+        broadcast = self.get_scheduled_broadcast(broadcast_id)
+        TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=active_flag)
+        refresh_timed_schedule_instances.delay(
+            broadcast.schedule_id,
+            broadcast.recipients,
+            start_date=broadcast.start_date
+        )
+
+        return HttpResponse()
+
     def get(self, request, *args, **kwargs):
         action = request.GET.get('action')
         if action == self.LIST_SCHEDULED:
@@ -130,6 +150,17 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             return self.get_immediate_ajax_response()
 
         return super(BroadcastListView, self).get(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        broadcast_id = request.POST.get('broadcast_id')
+
+        if action == self.ACTION_ACTIVATE_SCHEDULED_BROADCAST:
+            return self.get_scheduled_broadcast_activate_ajax_response(True, broadcast_id)
+        elif action == self.ACTION_DEACTIVATE_SCHEDULED_BROADCAST:
+            return self.get_scheduled_broadcast_activate_ajax_response(False, broadcast_id)
+        else:
+            return HttpResponseBadRequest()
 
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
