@@ -6,6 +6,14 @@
     <script src="{% static "scheduling/js/broadcasts_list.js" %}"></script>
 {% endblock %}
 
+{% block stylesheets %}{{ block.super }}
+<style>
+    .label {
+        font-size: 100%;
+    }
+</style>
+{% endblock %}
+
 {% block page_content %}
     {% registerurl 'new_list_broadcasts' domain %}
     {% registerurl 'edit_schedule' domain '---' '---' %}

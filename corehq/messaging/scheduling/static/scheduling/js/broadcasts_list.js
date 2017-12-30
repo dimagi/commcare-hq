@@ -43,7 +43,11 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 {
                     "targets": [3],
                     "render": function(data) {
-                        return data ? gettext("Active") : gettext("Inactive");
+                        if(data) {
+                            return '<span class="label label-success">' + gettext("Active") + '</span>';
+                        } else {
+                            return '<span class="label label-danger">' + gettext("Inactive") + '</span>';
+                        }
                     },
                 },
                 {
