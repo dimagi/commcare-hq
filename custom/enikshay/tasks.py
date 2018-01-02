@@ -280,10 +280,7 @@ class EpisodeAdherenceUpdate(object):
         self.episode = episode_case
         self.adherence_data_store = get_datastore(self.domain)
         self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
-        self.purge_date = datetime.datetime.now(
-            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
-
-
+        self.purge_date = self.date_today_in_india - datetime.timedelta(days=30)
         self._cache_dose_taken_by_date = False
 
     @memoized
@@ -477,7 +474,8 @@ class EpisodeAdherenceUpdate(object):
                 'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
-                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1),
+                'adherence_latest_date_recorded': (
+                    latest_adherence_date or adherence_schedule_date_start - datetime.timedelta(days=1)),
             }
 
         update = {}
