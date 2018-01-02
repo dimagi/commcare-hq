@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import json
-from StringIO import StringIO
+from io import StringIO
 
 import re
 from django.test import SimpleTestCase

@@ -12,7 +12,7 @@ from corehq.pillows.utils import get_all_expected_es_indices
 
 from corehq.elastic import get_es_new
 
-from cStringIO import StringIO
+from io import StringIO
 import traceback
 from datetime import datetime
 from django.core.mail import mail_admins

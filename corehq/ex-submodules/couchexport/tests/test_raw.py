@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from StringIO import StringIO
+from io import StringIO
 import json
 from django.test import TestCase
 import itertools

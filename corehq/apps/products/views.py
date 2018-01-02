@@ -15,7 +15,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-from StringIO import StringIO
+from io import StringIO
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized

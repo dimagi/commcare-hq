@@ -6,7 +6,7 @@ from collections import namedtuple
 import datetime
 import json
 import logging
-from StringIO import StringIO
+from io import StringIO
 import time
 
 from django.core import cache

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-from StringIO import StringIO
+from io import StringIO
 import base64
 from datetime import datetime, timedelta, time
 import re

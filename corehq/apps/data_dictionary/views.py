@@ -27,7 +27,7 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
 
-from StringIO import StringIO
+from io import StringIO
 
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
