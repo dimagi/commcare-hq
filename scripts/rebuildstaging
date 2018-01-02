@@ -67,7 +67,8 @@ fi
 
 if [[ $deploy = 'y' && $no_push != 'y' ]]
 then
-    rebuildstaging $args && git checkout autostaging && git submodule update --init --recursive && fab staging awesome_deploy:confirm=no
+    rebuildstaging $args && \
+        echo "rebuildstaging will no longer deploy for you. From commcarehq-ansible, run `fab staging deploy`"
 else
     rebuildstaging $args
 fi
