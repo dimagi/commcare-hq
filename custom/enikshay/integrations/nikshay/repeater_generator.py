@@ -405,7 +405,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
         return get_person_case_from_episode(episode_case.domain, episode_case.get_id)
 
     @staticmethod
-    def _get_fh_name(person_case_properties):
+    def _get_husband_father_name(person_case_properties):
         husband_father_name = person_case_properties.get('husband_father_name')
         if husband_father_name:
             return husband_father_name
@@ -428,7 +428,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             "TBUcode": person_locations.tu,
             "HFIDNO": person_locations.pcp,
             "pname": sanitize_text_for_xml(person_case.name),
-            "fhname": sanitize_text_for_xml(self._get_fh_name(person_case_properties)),
+            "fhname": sanitize_text_for_xml(self._get_husband_father_name(person_case_properties)),
             "age": _get_person_age(person_case_properties),
             "gender": person_case_properties.get('sex', '').capitalize(),
             # API for Address with char ',' returns Invalid data format error
