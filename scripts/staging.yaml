@@ -64,7 +64,5 @@ submodules:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
-  deployment/commcare-hq-deploy:
-    branches: []
   submodules/commcare-translations:
     branches: []
