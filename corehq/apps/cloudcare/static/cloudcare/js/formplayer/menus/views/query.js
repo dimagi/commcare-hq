@@ -42,7 +42,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
 
         submitAction: function (e) {
-            e.preventDefault()
+            e.preventDefault();
             var payload = {};
             var fields = $(".query-field");
             var model = this.parentModel;
