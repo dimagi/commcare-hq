@@ -23,6 +23,7 @@ class Schedule(models.Model):
     schedule_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126, db_index=True)
     active = models.BooleanField(default=True)
+    deleted = models.BooleanField(default=False)
 
     # Only matters when the recipient of a ScheduleInstance is a Location
     # If False, only include users at that location as recipients

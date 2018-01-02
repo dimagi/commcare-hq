@@ -26,6 +26,8 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_schedule_instance,
     save_case_schedule_instance,
     delete_case_schedule_instance,
+    delete_alert_schedule_instances_for_schedule,
+    delete_timed_schedule_instances_for_schedule,
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
@@ -318,6 +320,32 @@ def refresh_timed_schedule_instances(schedule_id, recipients, start_date=None):
         ).refresh()
 
 
+@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+                default_retry_delay=60 * 60, max_retries=24, bind=True)
+def delete_alert_schedule_instances(self, schedule_id):
+    """
+    :param schedule_id: the AlertSchedule schedule_id
+    """
+    try:
+        with CriticalSection(['refresh-alert-schedule-instances-for-%s' % schedule_id.hex], timeout=30 * 60):
+            delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule_id)
+    except Exception as e:
+        self.retry(exc=e)
+
+
+@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+                default_retry_delay=60 * 60, max_retries=24, bind=True)
+def delete_timed_schedule_instances(self, schedule_id):
+    """
+    :param schedule_id: the TimedSchedule schedule_id
+    """
+    try:
+        with CriticalSection(['refresh-timed-schedule-instances-for-%s' % schedule_id.hex], timeout=30 * 60):
+            delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, schedule_id)
+    except Exception as e:
+        self.retry(exc=e)
+
+
 def handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value):
     if instance.last_reset_case_property_value != reset_case_property_value:
         instance.reset_schedule(schedule)
@@ -367,25 +395,14 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
     ).refresh()
 
 
-@task(ignore_result=True)
-def deactivate_schedule_instances(schedule):
-    pass
-
-
-@task(ignore_result=True)
-def reactivate_schedule_instances(schedule):
-    pass
-
-
-@task(ignore_result=True)
-def delete_broadcast(broadcast):
-    pass
-
-
 def _handle_schedule_instance(instance, save_function):
     """
     :return: True if the event was handled, otherwise False
     """
+    if instance.memoized_schedule.deleted:
+        instance.delete()
+        return False
+
     if instance.active and instance.next_event_due < datetime.utcnow():
         instance.handle_current_event()
         instance.check_active_flag_against_schedule()
