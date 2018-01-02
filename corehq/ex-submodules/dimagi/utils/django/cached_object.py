@@ -204,7 +204,7 @@ class CachedObject(object):
     def fetch_stream(self, key):
         stream = self.rcache.get(self.stream_key(key))
         if stream is not None:
-            return io.StringIO(stream)
+            return io.BytesIO(stream)
         else:
             return None
 
