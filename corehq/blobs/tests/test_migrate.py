@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import json
 import os
 import uuid
-from cStringIO import StringIO
+from io import BytesIO
 from os.path import join
 
 import corehq.blobs.migrate as mod
@@ -544,7 +544,7 @@ class TestMigrateBackend(TestCase):
         for rex in (x() for x in self.sql_reindex_accessors):
             item, ident = create_obj(rex)
             helper = rex.blob_helper({"_obj_not_json": item})
-            db1.put(StringIO(data), ident, helper._blobdb_bucket())
+            db1.put(BytesIO(data), ident, helper._blobdb_bucket())
             self.sql_docs.append(item)
             lost, lost_blob_id = create_obj(rex)
             self.sql_docs.append(lost)
