@@ -4,7 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
-from io import BytesIO, StringIO
+from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
