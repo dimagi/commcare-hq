@@ -629,16 +629,6 @@ class SQLLocation(MPTTModel):
         # For backwards compatability
         return self
 
-    def parents(self):
-        # get locations in path except the last one which is self
-        return SQLLocation.objects.get_locations(self.path[:-1])
-
-    def get_parent_of_type(self, parent_type):
-        parents = self.parents().filter(location_type__name=parent_type)
-        if len(parents) > 1:
-            raise ValueError("More than one parents for the same type")
-        return parents
-
 
 def filter_for_archived(locations, include_archive_ancestors):
     """
