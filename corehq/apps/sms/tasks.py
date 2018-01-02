@@ -134,18 +134,25 @@ def connection_slot_key_base(backend):
 
 
 def reserve_connection_slot(backend, max_simultaneous_connections):
-    with CriticalSection(['reserve-connection-slot-for-%' % backend.couch_id]):
+    """
+    There is one redis key per connection slot, numbered from 1 to
+    max_simultaneous_connections.
+    A slot is considered taken if the corresponding redis key exists,
+    or is considered free if it does not exist.
+    """
+    with CriticalSection(['reserve-connection-slot-for-%s' % backend.couch_id]):
         client = get_redis_client()
         key_base = connection_slot_key_base(backend)
         slot_keys = client.keys(key_base + '*')
-        slot_numbers = [int(slot_key.replace(key_base, '')) for slot_key in slot_keys]
+        reserved_slots = [slot_key.replace(key_base, '') for slot_key in slot_keys]
 
         for slot_number in range(1, max_simultaneous_connections + 1):
-            if slot_number not in slot_numbers:
-                key = key_base + slot_number
+            slot_string = str(slot_number)
+            if slot_string not in reserved_slots:
+                key = key_base + slot_string
                 client.set(key, 1)
                 client.expire(key, 60)
-                return slot_number
+                return slot_string
 
     return None
 
