@@ -404,6 +404,23 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
     def _get_person_case(self, episode_case):
         return get_person_case_from_episode(episode_case.domain, episode_case.get_id)
 
+    @staticmethod
+    def _get_treatment_initiation_status(episode_case_properties):
+        """
+        :return: mapped value for dst status if available else fallback to
+        treatment_initiation_status if available else
+        finally send NOT_AVAILABLE_VALUE
+        """
+        dst_status = episode_case_properties.get('dst_status')
+        if dst_status:
+            if dst_status == 'pending':
+                return NOT_AVAILABLE_VALUE
+            if dst_status == 'rif_resistant':
+                return drug_susceptibility_test_status.get('rif_resistant')
+            if dst_status == 'rif_sensitive':
+                return drug_susceptibility_test_status.get('rif_sensitive')
+        return episode_case_properties.get('treatment_initiation_status', NOT_AVAILABLE_VALUE)
+
     def get_payload(self, repeat_record, episode_case):
         person_case = self._get_person_case(episode_case)
         episode_case_properties = episode_case.dynamic_case_properties()
@@ -434,8 +451,9 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
                 episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
             "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''), ''),
             "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis', ''), ''),
-            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status', '')),
-            "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
+            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status',
+                                                                                         NOT_AVAILABLE_VALUE)),
+            "Treat_I": self._get_treatment_initiation_status(episode_case_properties),
             "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
             "Source": ENIKSHAY_ID,
