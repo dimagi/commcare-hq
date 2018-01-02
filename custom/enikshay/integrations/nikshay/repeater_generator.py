@@ -405,21 +405,11 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
         return get_person_case_from_episode(episode_case.domain, episode_case.get_id)
 
     @staticmethod
-    def _get_treatment_initiation_status(episode_case_properties):
-        """
-        :return: mapped value for dst status if available else fallback to
-        treatment_initiation_status if available else
-        finally send NOT_AVAILABLE_VALUE
-        """
-        dst_status = episode_case_properties.get('dst_status')
-        if dst_status:
-            if dst_status == 'pending':
-                return NOT_AVAILABLE_VALUE
-            if dst_status == 'rif_resistant':
-                return drug_susceptibility_test_status.get('rif_resistant')
-            if dst_status == 'rif_sensitive':
-                return drug_susceptibility_test_status.get('rif_sensitive')
-        return episode_case_properties.get('treatment_initiation_status', NOT_AVAILABLE_VALUE)
+    def _get_fh_name(person_case_properties):
+        husband_father_name = person_case_properties.get('husband_father_name')
+        if husband_father_name:
+            return husband_father_name
+        return person_case_properties.get('last_name', '')
 
     def get_payload(self, repeat_record, episode_case):
         person_case = self._get_person_case(episode_case)
@@ -438,22 +428,23 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             "TBUcode": person_locations.tu,
             "HFIDNO": person_locations.pcp,
             "pname": sanitize_text_for_xml(person_case.name),
-            "fhname": sanitize_text_for_xml(person_case_properties.get('husband_father_name', '')),
+            "fhname": sanitize_text_for_xml(self._get_fh_name(person_case_properties)),
             "age": _get_person_age(person_case_properties),
             "gender": person_case_properties.get('sex', '').capitalize(),
             # API for Address with char ',' returns Invalid data format error
-            "Address": sanitize_text_for_xml(person_case_properties.get('current_address', '').replace(',', '')),
-            "pin": person_case_properties.get('current_address_postal_code', ''),
+            "Address": sanitize_text_for_xml(person_case_properties.get('current_address', 'NULL').replace(',', '')),
+            "pin": person_case_properties.get('current_address_postal_code', DUMMY_VALUES['pincode']),
             "lno": person_case_properties.get('phone_number', ''),
             "mno": '0',
             "tbdiagdate": _format_date(str(episode_date)),
             "tbstdate": _format_date(
                 episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
-            "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''), ''),
+            "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''),
+                                               NOT_AVAILABLE_VALUE),
             "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis', ''), ''),
             "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status',
                                                                                          NOT_AVAILABLE_VALUE)),
-            "Treat_I": self._get_treatment_initiation_status(episode_case_properties),
+            "Treat_I": episode_case_properties.get('treatment_initiation_status', NOT_AVAILABLE_VALUE),
             "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
             "Source": ENIKSHAY_ID,
@@ -618,6 +609,8 @@ def _get_person_age(person_case_properties):
     person_age = person_age.split('.')[0]
     if person_age == '0':
         person_age = '1'
+    if not person_age:
+        person_age = '0'
     return person_age
 
 
