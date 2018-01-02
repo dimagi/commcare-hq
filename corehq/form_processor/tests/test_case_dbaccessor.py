@@ -114,7 +114,7 @@ class CaseAccessorTestsSQL(TestCase):
         self.assertEqual(set(expected_case_ids), {c.case_id for c in cases})
 
         cases = CaseAccessorSQL.get_reverse_indexed_cases(
-            DOMAIN, referenced_case_ids, case_types=['child',], is_closed=False)
+            DOMAIN, referenced_case_ids, case_types=['child'], is_closed=False)
         self.assertEqual(1, len(cases))
 
         cases[0].closed = True
