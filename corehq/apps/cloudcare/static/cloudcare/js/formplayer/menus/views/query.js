@@ -41,7 +41,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             'click @ui.submitButton': 'submitAction',
         },
 
-        submitAction: function () {
+        submitAction: function (e) {
+            e.preventDefault()
             var payload = {};
             var fields = $(".query-field");
             var model = this.parentModel;
