@@ -178,7 +178,7 @@ def check_postgres():
         except OperationalError:
             c_status = 'FAIL'
             connected = False
-        status_str += "%s:%s " % (settings.DATABASES[db]['NAME'], c_status)
+        status_str += "%s:%s:%s " % (db, settings.DATABASES[db]['NAME'], c_status)
 
     a_user = User.objects.first()
     if a_user is None:
