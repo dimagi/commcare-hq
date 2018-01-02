@@ -4,8 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
-from io import FileIO
-from io import StringIO
+from io import BytesIO, StringIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
@@ -212,7 +211,7 @@ class AsyncRestoreResponse(object):
     def get_http_response(self):
         headers = {"Retry-After": self.progress['retry_after']}
         response = stream_response(
-            StringIO(self.compile_response()),
+            BytesIO(self.compile_response()),
             status=202,
             headers=headers,
         )

@@ -36,9 +36,9 @@ class CachedObjectTests(TestCase):
         cached_object.MOCK_REDIS_CACHE = fake_cache
 
     def testBasicObjects(self):
-        text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        text = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         filename = "something"
-        buffer = io.StringIO(text)
+        buffer = io.BytesIO(text)
 
         obj = CachedObject(filename)
 
@@ -59,7 +59,7 @@ class CachedObjectTests(TestCase):
         return (im, buf)
 
     def test_is_cached_lost_meta_key(self):
-        text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        text = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         filename = "something"
         buffer = io.BytesIO(text)
         metadata = {'content_type': 'text/plain'}
@@ -71,7 +71,7 @@ class CachedObjectTests(TestCase):
         self.assertFalse(obj.is_cached())
 
     def test_is_cached_lost_stream_key(self):
-        text = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        text = b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
         filename = "something"
         buffer = io.BytesIO(text)
         metadata = {'content_type': 'text/plain'}

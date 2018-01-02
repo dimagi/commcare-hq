@@ -4,7 +4,7 @@ import sys
 import uuid
 from collections import defaultdict
 from contextlib import contextmanager, nested
-from io import BytesIO, StringIO
+from io import BytesIO
 from hashlib import sha1
 from itertools import chain
 from os.path import join
@@ -407,7 +407,7 @@ class DeferredBlobMixin(BlobMixin):
                     ))
             body = self._deferred_blobs[name]["content"]
             if stream:
-                return ClosingContextProxy(StringIO(body))
+                return ClosingContextProxy(BytesIO(body))
             try:
                 body = body.decode("utf-8", "strict")
             except UnicodeDecodeError:

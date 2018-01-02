@@ -282,7 +282,7 @@ class CachedImage(CachedObject):
     def fetch_image(self, key):
         stream = self.rcache.get(self.stream_key(key))
         if stream is not None:
-            source_image_obj = Image.open(io.StringIO(stream))
+            source_image_obj = Image.open(io.BytesIO(stream))
             return source_image_obj
         else:
             #if the stream is None, then that means that size is too big.

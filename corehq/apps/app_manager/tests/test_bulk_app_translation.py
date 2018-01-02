@@ -440,7 +440,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
            '', '', '', '', '', '', '', '', ''))))
 
     def get_worksheet(self, title):
-        string_io = StringIO()
+        string_io = BytesIO()
         export_raw(self.headers, self.data, string_io, format=Format.XLS_2007)
         string_io.seek(0)
         workbook = WorkbookJSONReader(string_io)  # __init__ will read string_io
