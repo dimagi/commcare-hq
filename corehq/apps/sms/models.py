@@ -2181,6 +2181,15 @@ class SQLSMSBackend(SQLMobileBackend):
         proxy = True
         app_label = 'sms'
 
+    def get_max_simultaneous_connections(self):
+        """
+        Return None to ignore.
+        Otherwise, return the maximum number of simultaneous connections
+        that should be allowed when making requests to the gateway API
+        for sending outbound SMS.
+        """
+        return None
+
     def get_sms_rate_limit(self):
         """
         Override to use rate limiting. Return None to not use rate limiting,

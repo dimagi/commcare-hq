@@ -52,6 +52,13 @@ class PushBackend(SQLSMSBackend):
         app_label = 'sms'
         proxy = True
 
+    def get_max_simultaneous_connections(self):
+        """
+        Only allow a maximum of eight simultaneous connections to the gateway
+        when sending outbound SMS as per the documentation.
+        """
+        return 8
+
     @classmethod
     def get_available_extra_fields(cls):
         return [
