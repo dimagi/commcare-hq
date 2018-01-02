@@ -1442,10 +1442,16 @@ CUSTOM_ICON_BADGES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
 ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     'icds_ucr_elasticsearch_doc_loading',
     'ICDS: Load related form docs from ElasticSearch instead of Riak',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
+)
+
+ENABLE_REPEATER_EDIT_AND_PAUSE = StaticToggle(
+    'enable_repeater_edit_and_pause',
+    "Turn on ability to edit a repeater and pause/resume it",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
