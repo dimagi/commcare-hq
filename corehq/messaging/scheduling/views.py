@@ -42,6 +42,11 @@ from corehq.messaging.util import MessagingRuleProgressHelper
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from dimagi.utils.couch import CriticalSection
+
+
+def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
+    return CriticalSection(['edit-broadcast-%s-%s' % (broadcast_type, broadcast_id)], timeout=5 * 60)
 
 
 def _requires_new_reminder_framework():
@@ -155,12 +160,13 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         action = request.POST.get('action')
         broadcast_id = request.POST.get('broadcast_id')
 
-        if action == self.ACTION_ACTIVATE_SCHEDULED_BROADCAST:
-            return self.get_scheduled_broadcast_activate_ajax_response(True, broadcast_id)
-        elif action == self.ACTION_DEACTIVATE_SCHEDULED_BROADCAST:
-            return self.get_scheduled_broadcast_activate_ajax_response(False, broadcast_id)
-        else:
-            return HttpResponseBadRequest()
+        with get_broadcast_edit_critical_section(EditScheduleView.SCHEDULED_BROADCAST, broadcast_id):
+            if action == self.ACTION_ACTIVATE_SCHEDULED_BROADCAST:
+                return self.get_scheduled_broadcast_activate_ajax_response(True, broadcast_id)
+            elif action == self.ACTION_DEACTIVATE_SCHEDULED_BROADCAST:
+                return self.get_scheduled_broadcast_activate_ajax_response(False, broadcast_id)
+            else:
+                return HttpResponseBadRequest()
 
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
@@ -260,14 +266,14 @@ class EditScheduleView(CreateScheduleView):
     @cached_property
     def broadcast(self):
         try:
-            broadcast = self.broadcast_class.objects.prefetch_related('schedule').get(pk=self.broadcast_id)
+            return (
+                self.broadcast_class
+                .objects
+                .prefetch_related('schedule')
+                .get(pk=self.broadcast_id, domain=self.domain, deleted=False)
+            )
         except self.broadcast_class.DoesNotExist:
             raise Http404()
-
-        if broadcast.domain != self.domain:
-            raise Http404()
-
-        return broadcast
 
     @property
     def read_only_mode(self):
@@ -276,6 +282,10 @@ class EditScheduleView(CreateScheduleView):
     @property
     def schedule(self):
         return self.broadcast.schedule
+
+    def post(self, request, *args, **kwargs):
+        with get_broadcast_edit_critical_section(self.broadcast_type, self.broadcast_id):
+            return super(EditScheduleView, self).post(request, *args, **kwargs)
 
 
 class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
