@@ -1,19 +1,19 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, DAILY
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcDailyView
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
-import six
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -63,34 +63,33 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
-    return [
-        {
-            "slug": "awc_daily_statuses",
-            "label": "Percent AWCs Open Yesterday",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_day_total or 0) * 100 / float(valid_total or 1),
-                "info": _((
-                    "Percentage of Angwanwadi Centers that were open yesterday."
-                )),
-                'period': 'Daily',
-                "extended_info": [
-                    {
-                        'indicator': 'Total number of AWCs that were open yesterday:',
-                        'value': valid_total},
-                    {
-                        'indicator': 'Total number of AWCs that have been launched:',
-                        'value': in_day_total
-                    },
-                    {
-                        'indicator': '% of AWCs open yesterday:',
-                        'value': '%.2f%%' % (in_day_total * 100 / float(valid_total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "awc_daily_statuses",
+        "label": "Percent AWCs Open Yesterday",
+        "fills": fills,
+        "rightLegend": {
+            "average": (in_day_total or 0) * 100 / float(valid_total or 1),
+            "info": _((
+                "Percentage of Angwanwadi Centers that were open yesterday."
+            )),
+            'period': 'Daily',
+            "extended_info": [
+                {
+                    'indicator': 'Total number of AWCs that were open yesterday:',
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': 'Total number of AWCs that have been launched:',
+                    'value': indian_formatted_number(in_day_total)
+                },
+                {
+                    'indicator': '% of AWCs open yesterday:',
+                    'value': '%.2f%%' % (in_day_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -222,7 +221,7 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     sector_data = get_data_for(config)

@@ -1,7 +1,7 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
-describe('PropertyFilter', function () {
+describe('Property Filter', function () {
 
     var $filter;
 
@@ -13,7 +13,11 @@ describe('PropertyFilter', function () {
         });
     });
 
-    it('should filter when not array', function () {
+    it('tests instantiate the filter properly', function () {
+        chai.expect($filter).not.to.be.a('undefined');
+    });
+
+    it('tests filter when not array', function () {
         // Arrange.
         var testValue = { id: '1'};
 

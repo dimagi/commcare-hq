@@ -19,20 +19,20 @@ class TestChildrenInitiated(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 8 months"
                             " given timely introduction to solid, semi-solid or soft food.",
                     "average": 85.0,
                     'extended_info': [
-                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': 40},
+                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': "40"},
                         {
                             'indicator': (
                                 'Total number of children (6-8 months) given timely introduction '
                                 'to sold or semi-solid food in the given month:'
                             ),
-                            'value': 34
+                            'value': "34"
                         },
                         {
                             'indicator': (
@@ -53,13 +53,13 @@ class TestChildrenInitiated(TestCase):
                     "st1": {
                         "all": 17,
                         "children": 14,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "all": 23,
                         "children": 20,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "60%-100%"
                     }
                 },
@@ -79,20 +79,20 @@ class TestChildrenInitiated(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 8 months"
                             " given timely introduction to solid, semi-solid or soft food.",
                     "average": 82.3529411764706,
                     'extended_info': [
-                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': 17},
+                        {'indicator': 'Total number of children between age 6 - 8 months:', 'value': "17"},
                         {
                             'indicator': (
                                 'Total number of children (6-8 months) given timely introduction '
                                 'to sold or semi-solid food in the given month:'
                             ),
-                            'value': 14
+                            'value': "14"
                         },
                         {
                             'indicator': (

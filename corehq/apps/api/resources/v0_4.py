@@ -394,7 +394,7 @@ class ApplicationResource(BaseApplicationResource):
     build_comment = fields.CharField(attribute='build_comment', null=True)
     built_from_app_id = fields.CharField(attribute='copy_of', null=True)
     modules = fields.ListField()
-    versions = fields.ListField(use_in='detail')
+    versions = fields.ListField()
 
     @staticmethod
     def dehydrate_versions(bundle):

@@ -19,7 +19,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of pregnant women who delivered in a public or "
@@ -29,14 +29,14 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of pregnant women who delivered in the last month:',
-                            'value': 26
+                            'value': "26"
                         },
                         {
                             'indicator': (
                                 'Total number of pregnant women who delivered in a public/private '
                                 'medical facilitiy in the last month:'
                             ),
-                            'value': 20
+                            'value': "20"
                         },
                         {
                             'indicator': (
@@ -57,13 +57,13 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     "st1": {
                         "all": 13,
                         "children": 9,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "all": 13,
                         "children": 11,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "60%-100%"
                     }
                 },
@@ -83,7 +83,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of pregnant women who delivered in a public or "
@@ -93,14 +93,14 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of pregnant women who delivered in the last month:',
-                            'value': 13
+                            'value': "13"
                         },
                         {
                             'indicator': (
                                 'Total number of pregnant women who delivered in a public/private '
                                 'medical facilitiy in the last month:'
                             ),
-                            'value': 9
+                            'value': "9"
                         },
                         {
                             'indicator': (

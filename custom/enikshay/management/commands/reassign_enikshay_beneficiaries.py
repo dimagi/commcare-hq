@@ -88,8 +88,8 @@ class Command(BaseCommand):
             case_id=data['case_id'],
             owner_id=data.get('new owner_id', CaseBlock.undefined),
             update=(
-                {'facility_assigned_to': data['new owner_id']}
-                if 'new owner_id' in data else None
+                {'facility_assigned_to': data['new facility_assigned_to']}
+                if 'new facility_assigned_to' in data else None
             ),
         )
 

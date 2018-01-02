@@ -254,7 +254,7 @@ class PredictablyRandomToggle(StaticToggle):
                 )
             )
 
-        if settings.UNIT_TESTING:
+        if settings.DISABLE_RANDOM_TOGGLES:
             return False
         elif item in self.always_disabled:
             return False
@@ -304,6 +304,7 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_OTHER = 'other'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
@@ -891,6 +892,13 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
+    'features_in_dashboard_icds_reports',
+    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 NINETYNINE_DOTS = StaticToggle(
     '99dots_integration',
     'Enikshay: Enable access to 99DOTS',
@@ -1432,4 +1440,12 @@ CUSTOM_ICON_BADGES = StaticToggle(
     'eNikshay: Custom Icon Badges for modules and forms',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+
+ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
+    'icds_ucr_elasticsearch_doc_loading',
+    'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
 )

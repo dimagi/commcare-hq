@@ -18,7 +18,7 @@ class TestAdhaar(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
@@ -27,7 +27,7 @@ class TestAdhaar(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': 131
+                            'value': "131"
                         },
                         {
                             'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
@@ -45,13 +45,13 @@ class TestAdhaar(TestCase):
                     "st1": {
                         "in_month": 64,
                         "all": 221,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "25%-50%"
                     },
                     "st2": {
                         "in_month": 67,
                         "all": 279,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-25%"
                     }
                 },
@@ -71,7 +71,7 @@ class TestAdhaar(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
@@ -80,7 +80,7 @@ class TestAdhaar(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': 64
+                            'value': "64"
                         },
                         {
                             'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',

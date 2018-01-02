@@ -426,11 +426,18 @@ def _get_private_locations(person_case, episode_case=None):
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
     try:
+        dto_code = district_location.metadata['nikshay_code']
+        # HACK: remove this when we have all of the "HE ids" imported from Nikshay
+        pcp_code = pcp_location.metadata.get('nikshay_code') or None
+        # append 0 in beginning to make the code 6-digit
+        if pcp_code and len(pcp_code) == 5:
+            pcp_code = '0' + pcp_code
+        if not dto_code:
+            dto_code = pcp_location.metadata.get('rntcp_district_code')
         return PrivatePersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
-            dto=district_location.metadata['nikshay_code'],
-            # HACK: remove this when we have all of the "HE ids" imported from Nikshay
-            pcp=pcp_location.metadata.get('nikshay_code') or None,
+            dto=dto_code,
+            pcp=pcp_code,
             tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:
@@ -605,10 +612,11 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def get_sector(episode_case):
-    if episode_case.type != CASE_TYPE_EPISODE:
-        raise ValueError('Must pass in an episode case')
-    if episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
+def get_sector(case):
+    valid_types = [CASE_TYPE_EPISODE, CASE_TYPE_PERSON]
+    if case.type not in valid_types:
+        raise ValueError('Must pass in an {} case'.format(", ".join(valid_types)))
+    if case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
         return PRIVATE_SECTOR
     return PUBLIC_SECTOR
 
@@ -707,3 +715,21 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
         return None
     else:
         return sorted(episode_cases, key=(lambda case: case.opened_on))[-1]
+
+
+def get_all_vouchers_from_person(domain, person_case):
+    """Returns all voucher cases under tests or prescriptions"""
+    accessor = CaseAccessors(domain)
+    for occurrence_case in accessor.get_reverse_indexed_cases([person_case.case_id]):
+        if occurrence_case.type == CASE_TYPE_OCCURRENCE:
+            for case in accessor.get_reverse_indexed_cases([occurrence_case.case_id]):
+                if case.type == CASE_TYPE_TEST:
+                    for voucher_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if voucher_case.type == CASE_TYPE_VOUCHER:
+                            yield voucher_case
+                if case.type == CASE_TYPE_EPISODE:
+                    for prescription_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if prescription_case.type == CASE_TYPE_PRESCRIPTION:
+                            for voucher_case in accessor.get_reverse_indexed_cases([prescription_case.case_id]):
+                                if voucher_case.type == CASE_TYPE_VOUCHER:
+                                    yield voucher_case

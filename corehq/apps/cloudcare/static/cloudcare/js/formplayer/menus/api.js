@@ -10,6 +10,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.request('currentUser'),
+                lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -72,6 +73,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "useLiveQuery": user.useLiveQuery,
                 "sortIndex": params.sortIndex,
                 "preview": params.preview,
+                "geo_location": lastRecordedLocation,
             });
             options.url = formplayerUrl + '/' + route;
 

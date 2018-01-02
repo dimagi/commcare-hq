@@ -1,10 +1,10 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('EnrolledChildrenDirective', function () {
+describe('Enrolled Children Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -49,6 +49,9 @@ describe('EnrolledChildrenDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -90,7 +93,7 @@ describe('EnrolledChildrenDirective', function () {
             '<p>test</p>' +
             '<div>Number of children (0 - 6 years) who are enrolled for ICDS services: <strong>2</strong>' +
             '<div>Total number of children (0 - 6 years) who are registered: <strong>4</strong>' +
-            '<div>Percentage of registered children (0-6 years) who are enrolled for ICDS services: <strong>50.00%</strong>' +
+            '<div>Percentage of registered children (0 - 6 years) who are enrolled for ICDS services: <strong>50.00%</strong>' +
             '</div>';
         assert.equal(result, expected);
     });

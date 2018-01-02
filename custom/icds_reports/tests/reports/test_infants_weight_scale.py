@@ -19,13 +19,13 @@ class TestInfantsWeightScale(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with weighing scale for infants",
                     "average": 48.0,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a weighing scale for infants:', 'value': 24},
+                        {'indicator': 'Total number of AWCs with a weighing scale for infants:', 'value': "24"},
                         {'indicator': '% of AWCs with a weighing scale for infants:', 'value': '48.00%'}
                     ]
                 },
@@ -39,13 +39,13 @@ class TestInfantsWeightScale(TestCase):
                     "st1": {
                         "in_month": 13,
                         "all": 26,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 11,
                         "all": 24,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "25%-75%"
                     }
                 },
@@ -65,13 +65,13 @@ class TestInfantsWeightScale(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs with weighing scale for infants",
                     "average": 50.0,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a weighing scale for infants:', 'value': 13},
+                        {'indicator': 'Total number of AWCs with a weighing scale for infants:', 'value': "13"},
                         {'indicator': '% of AWCs with a weighing scale for infants:', 'value': '50.00%'}
                     ]
                 },
