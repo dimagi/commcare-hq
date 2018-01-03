@@ -1565,7 +1565,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         if reminder_handler.user_data_filter:
             initial['use_custom_user_data_filter'] = True
-            user_data_field_value = reminder_handler.user_data_filter.items()[0]
+            user_data_field_value = list(reminder_handler.user_data_filter.items())[0]
             initial['custom_user_data_filter_field'] = user_data_field_value[0]
             initial['custom_user_data_filter_value'] = user_data_field_value[1][0]
         else:

@@ -354,7 +354,7 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
                 for name, value in key_columns.items():
                     if value is None:
                         key_columns[name] = default_null_value_placeholder(types[name])
-                all_columns = dict(key_columns.items() + columns.items())
+                all_columns = dict(list(key_columns.items()) + list(columns.items()))
 
                 try:
                     insert = self._table.insert().values(**all_columns)

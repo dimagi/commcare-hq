@@ -60,7 +60,7 @@ class BaseReportFixturesProvider(FixtureProvider):
             return False
 
         apps = self._get_apps(restore_state, restore_user)
-        report_configs = self._get_report_configs(apps).values()
+        report_configs = list(self._get_report_configs(apps).values())
         if not report_configs:
             return False
 
@@ -144,7 +144,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
-            fixtures.extend(self._v1_fixture(restore_user, self._get_report_configs(apps).values()))
+            fixtures.extend(self._v1_fixture(restore_user, list(self._get_report_configs(apps).values())))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
 
@@ -268,7 +268,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            report_configs = self._get_report_configs(apps).values()
+            report_configs = list(self._get_report_configs(apps).values())
             synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
             fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
             for report_uuid in purged_fixture_ids:

@@ -111,7 +111,7 @@ class MediaSuiteGenerator(object):
             for lang in self.build_profile.langs:
                 media_list += self.app.media_language_map[lang].media_refs
             requested_media = set(media_list)
-        for path, m in sorted(self.app.multimedia_map.items(), key=lambda item: item[0]):
+        for path, m in sorted(list(self.app.multimedia_map.items()), key=lambda item: item[0]):
             if filter_multimedia and m.form_media and path not in requested_media:
                 continue
             unchanged_path = path

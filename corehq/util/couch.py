@@ -204,7 +204,7 @@ class IterDB(object):
                 success_ids = {d['_id'] for d in docs}
 
         if self.callback:
-            self.callback.post_commit(op_slug, docs, success_ids, categorized_errors.values())
+            self.callback.post_commit(op_slug, docs, success_ids, list(categorized_errors.values()))
 
         if self.throttle_secs:
             sleep(self.throttle_secs)

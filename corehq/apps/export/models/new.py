@@ -2173,7 +2173,7 @@ def _merge_lists(one, two, keyfn, resolvefn):
         merged.append(new_obj)
 
     # Get the rest of the objects in the second list
-    merged.extend(two_keys.values())
+    merged.extend(list(two_keys.values()))
     return merged
 
 
@@ -2190,13 +2190,13 @@ def _merge_dicts(one, two, resolvefn):
     # keys either in one or two, but not both
     merged = {
         key: one.get(key, two.get(key))
-        for key in one.viewkeys() ^ two.viewkeys()
+        for key in six.viewkeys(one) ^ six.viewkeys(two)
     }
 
     # merge keys that exist in both
     merged.update({
         key: resolvefn(one[key], two[key])
-        for key in one.viewkeys() & two.viewkeys()
+        for key in six.viewkeys(one) & six.viewkeys(two)
     })
     return merged
 

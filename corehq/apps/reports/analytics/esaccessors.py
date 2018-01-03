@@ -620,7 +620,7 @@ def scroll_case_names(domain, case_ids):
 
 def _get_attachment_dicts_from_form(form):
     if 'external_blobs' in form:
-        return form['external_blobs'].values()
+        return list(form['external_blobs'].values())
     return []
 
 

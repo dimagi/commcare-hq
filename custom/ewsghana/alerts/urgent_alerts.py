@@ -7,6 +7,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.alert import Notification
+import six
 
 
 class UrgentAlert(object):
@@ -52,7 +53,7 @@ class UrgentStockoutAlert(UrgentAlert):
 
         return [
             sql_product
-            for sql_product, result in product_result_map.iteritems()
+            for sql_product, result in six.iteritems(product_result_map)
             if result['total'] != 0 and result['stockouts'] / float(result['total']) > 0.5
         ]
 
