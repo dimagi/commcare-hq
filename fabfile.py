@@ -78,33 +78,9 @@ if 'y' == input('Do you want instructions for how to migrate? [y/N]'):
     Run a fab command!
     ==================
 
-    Enter the fab directory of commcarehq-ansible
-
-      cd commcarehq-ansible/fab
-
-    Run your fab command
-
       fab production deploy
 
-
-    Bonus: Run fab from any directory
-    =================================
-
-    You will always need to enter the ansible virtualenv to run fab from now on,
-    but if you use the following alias, you can run it from anywhere.
-
-      alias fab='fab -f ~/.commcare-cloud/repo/fab/fabfile.py'
-
-    to make alias always available, add it to the profile file you use for your aliases,
-    possibly one of the following:
-
-      echo "alias fab='fab -f ~/.commcare-cloud/repo/fab/fabfile.py'" >> ~/.profile
-      echo "alias fab='fab -f ~/.commcare-cloud/repo/fab/fabfile.py'" >> ~/.bash_profile
-      echo "alias fab='fab -f ~/.commcare-cloud/repo/fab/fabfile.py'" >> ~/.bashrc
-
-    Now from anywhere
-
-      workon ansible
-      fab production deploy
+    Remember that in steady state, you will need to workon the ansible virtualenv
+    and enter the commcarehq-ansible directory before you will be able to run a fab command.
 """)
 exit(1)
