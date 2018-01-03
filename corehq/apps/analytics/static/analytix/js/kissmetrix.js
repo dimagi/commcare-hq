@@ -18,6 +18,7 @@ hqDefine('analytix/js/kissmetrix', [
         _allAbTests = {},
         _init = {},
         _logger = logging.getLoggerForApi('Kissmetrics'),
+        _abReady = $.Deferred(),
         _ready;
 
     window.dataLayer = window.dataLayer || [];
@@ -79,6 +80,10 @@ hqDefine('analytix/js/kissmetrix', [
                     _.extend(_allAbTests, test);
                 }
             });
+        });
+
+        _ready.always(function() {
+            _abReady.resolve();
         });
     });
 
@@ -165,6 +170,10 @@ hqDefine('analytix/js/kissmetrix', [
         return _allAbTests[testSlug];
     };
 
+    var whenReady = function(callback) {
+        _abReady.done(callback);
+    };
+
     return {
         identify: identify,
         identifyTraits: identifyTraits,
@@ -174,5 +183,6 @@ hqDefine('analytix/js/kissmetrix', [
             outboundLink: trackOutboundLink,
         },
         getAbTest: getAbTest,
+        whenReady: whenReady,
     };
 });
