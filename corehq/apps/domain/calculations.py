@@ -407,6 +407,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_lookup_tables": num_lookup_tables(dom),
         "cp_has_project_icon": has_domain_icon(dom),
         "cp_n_apps_with_icon": num_apps_with_icon(dom),
+        "cp_n_apps": len(_get_domain_apps(dom)),
     }
 
 
