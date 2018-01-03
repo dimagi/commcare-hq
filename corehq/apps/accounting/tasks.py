@@ -28,7 +28,6 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
-    CONSISTENT_DATES_CHECK,
     Currency,
     DefaultProductPlan,
     EntryPoint,
@@ -81,7 +80,6 @@ def _activate_subscription(subscription):
 
 def activate_subscriptions(based_on_date=None):
     starting_subscriptions = Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK,
         is_active=False,
     )
     if based_on_date:
@@ -133,7 +131,6 @@ def _deactivate_subscription(subscription):
 
 def deactivate_subscriptions(based_on_date=None):
     ending_subscriptions = Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK,
         is_active=True,
     )
     if based_on_date:
@@ -579,8 +576,6 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
 
 def ensure_explicit_community_subscription(domain_name, from_date):
     if not Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK
-    ).filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,
         subscriber__domain=domain_name,
@@ -590,13 +585,11 @@ def ensure_explicit_community_subscription(domain_name, from_date):
 
 def assign_explicit_community_subscription(domain_name, start_date, account=None):
     future_subscriptions = Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK
-    ).filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
     )
     if future_subscriptions.exists():
-        end_date = future_subscriptions.latest('date_start').date_start
+        end_date = future_subscriptions.earliest('date_start').date_start
     else:
         end_date = None
 

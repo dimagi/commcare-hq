@@ -76,8 +76,6 @@ SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
 
-CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
-
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=False,
@@ -1103,7 +1101,6 @@ class Subscription(models.Model):
         """
         assert date_start is not None
         for sub in Subscription.objects.filter(
-            CONSISTENT_DATES_CHECK,
             subscriber=self.subscriber,
         ).exclude(
             id=self.id,
