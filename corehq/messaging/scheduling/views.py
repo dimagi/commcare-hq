@@ -49,6 +49,10 @@ def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
     return CriticalSection(['edit-broadcast-%s-%s' % (broadcast_type, broadcast_id)], timeout=5 * 60)
 
 
+def get_conditional_alert_edit_critical_section(rule_id):
+    return CriticalSection(['edit-conditional-alert-%s' % rule_id], timeout=5 * 60)
+
+
 def _requires_new_reminder_framework():
     def decorate(fn):
         @wraps(fn)
@@ -291,9 +295,9 @@ class EditScheduleView(CreateScheduleView):
     def schedule(self):
         return self.broadcast.schedule
 
-    def post(self, request, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         with get_broadcast_edit_critical_section(self.broadcast_type, self.broadcast_id):
-            return super(EditScheduleView, self).post(request, *args, **kwargs)
+            return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
 class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
@@ -509,7 +513,8 @@ class EditConditionalAlertView(CreateConditionalAlertView):
         return action_definition.schedule
 
     def dispatch(self, request, *args, **kwargs):
-        if self.rule.locked_for_editing:
-            messages.warning(request, _("Please allow the rule to finish processing before editing."))
-            return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
-        return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
+        with get_conditional_alert_edit_critical_section(self.rule_id):
+            if self.rule.locked_for_editing:
+                messages.warning(request, _("Please allow the rule to finish processing before editing."))
+                return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
+            return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
