@@ -346,6 +346,30 @@ def delete_timed_schedule_instances(self, schedule_id):
         self.retry(exc=e)
 
 
+@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+                default_retry_delay=60 * 60, max_retries=24, bind=True)
+def delete_case_alert_schedule_instances(self, schedule_id):
+    """
+    :param schedule_id: the AlertSchedule schedule_id
+    """
+    try:
+        delete_alert_schedule_instances_for_schedule(CaseAlertScheduleInstance, schedule_id)
+    except Exception as e:
+        self.retry(exc=e)
+
+
+@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+                default_retry_delay=60 * 60, max_retries=24, bind=True)
+def delete_case_timed_schedule_instances(self, schedule_id):
+    """
+    :param schedule_id: the TimedSchedule schedule_id
+    """
+    try:
+        delete_timed_schedule_instances_for_schedule(CaseTimedScheduleInstance, schedule_id)
+    except Exception as e:
+        self.retry(exc=e)
+
+
 def handle_case_alert_schedule_instance_reset(instance, schedule, reset_case_property_value):
     if instance.last_reset_case_property_value != reset_case_property_value:
         instance.reset_schedule(schedule)

@@ -308,6 +308,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
+    ACTION_DELETE = 'delete'
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -379,6 +380,10 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
 
         return HttpResponse()
 
+    def get_delete_ajax_response(self, rule):
+        rule.soft_delete()
+        return HttpResponse()
+
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
         rule_id = request.POST.get('rule_id')
@@ -392,6 +397,8 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 return self.get_activate_ajax_response(True, rule)
             elif action == self.ACTION_DEACTIVATE:
                 return self.get_activate_ajax_response(False, rule)
+            elif action == self.ACTION_DELETE:
+                return self.get_delete_ajax_response(rule)
             else:
                 return HttpResponseBadRequest()
 
@@ -542,6 +549,7 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                 pk=self.rule_id,
                 domain=self.domain,
                 workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                deleted=False,
             )
         except AutomaticUpdateRule.DoesNotExist:
             raise Http404()

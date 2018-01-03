@@ -25,6 +25,8 @@ from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
+    delete_case_alert_schedule_instances,
+    delete_case_timed_schedule_instances,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
@@ -256,8 +258,19 @@ class AutomaticUpdateRule(models.Model):
         self.save()
 
     def soft_delete(self):
-        self.deleted = True
-        self.save()
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            if self.workflow == self.WORKFLOW_SCHEDULING:
+                schedule = self.get_messaging_rule_schedule()
+                schedule.deleted = True
+                schedule.save()
+                if isinstance(schedule, AlertSchedule):
+                    delete_case_alert_schedule_instances.delay(schedule.schedule_id)
+                elif isinstance(schedule, TimedSchedule):
+                    delete_case_timed_schedule_instances.delay(schedule.schedule_id)
+                else:
+                    raise TypeError("Unexpected schedule type")
 
     @unit_testing_only
     def hard_delete(self):

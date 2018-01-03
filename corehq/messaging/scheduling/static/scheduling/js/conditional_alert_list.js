@@ -24,8 +24,17 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
             "columnDefs": [
                 {
                     "targets": [0],
-                    "render": function() {
-                        return 'Delete button';
+                    "className": "text-center",
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var button_id = 'delete-button-for-' + id;
+                        var locked_for_editing = row[row.length - 3];
+                        var disabled = locked_for_editing ? 'disabled' : '';
+                        return '<button id="' + button_id + '" \
+                                        class="btn btn-danger" \
+                                        onclick="hqImport(\'scheduling/js/conditional_alert_list\').deleteAlert(' + id + ')" \
+                                        ' + disabled + '> \
+                                <i class="fa fa-remove" aria-hidden="true"></i></button>';
                     },
                 },
                 {
@@ -95,6 +104,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
 
     function alertAction(action, rule_id) {
         $('#activate-button-for-' + rule_id).prop('disabled', true);
+        $('#delete-button-for-' + rule_id).prop('disabled', true);
 
         $.ajax({
             url: '',
@@ -118,8 +128,15 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
         alertAction('deactivate', rule_id);
     }
 
+    function deleteAlert(rule_id) {
+        if(confirm(gettext("Are you sure you want to delete this conditional message?"))) {
+            alertAction('delete', rule_id);
+        }
+    }
+
     return {
         activateAlert: activateAlert,
         deactivateAlert: deactivateAlert,
+        deleteAlert: deleteAlert,
     };
 });
