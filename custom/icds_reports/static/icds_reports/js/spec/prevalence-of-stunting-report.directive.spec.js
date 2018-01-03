@@ -91,12 +91,12 @@ describe('Prevalence Of Stunting Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
             + '<p>test</p>'
-            + '<div>Total Children weighed in given month: <strong>20</strong></div>'
-            + '<div>Total Children with height measured in given month: <strong>15</strong></div>'
-            + '<div>% Unmeasured: <strong>25.00%</strong></div>'
-            + '<div>% Severely stunted: <strong>25.00%</strong></div>'
-            + '<div>% Moderately stunted: <strong>25.00%</strong></div>'
-            + '<div>% Normal: <strong>25.00%</strong></div>');
+            + '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>'
+            + '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>'
+            + '<div>% Unmeasured (6 - 60 months): <strong>25.00%</strong></div>'
+            + '<div>% Severely stunted (6 - 60 months): <strong>25.00%</strong></div>'
+            + '<div>% Moderately stunted (6 - 60 months): <strong>25.00%</strong></div>'
+            + '<div>% Normal (6 - 60 months): <strong>25.00%</strong></div>');
     });
 
     it('tests location change', function () {

@@ -22,6 +22,14 @@ then
     abort "You must be on master to run this command."
 fi
 
+git fetch
+tracking_branch=`git rev-parse --abbrev-ref --symbolic-full-name @{u}`
+upstream_changes=`git rev-list HEAD...$tracking_branch --count`
+if [[ $upstream_changes > 0 ]]
+then
+    abort "There are changes upstream that you should pull with 'git pull' before running this command."
+fi
+
 if [[ ! `command -v tx` || ! -f ~/.transifexrc ]]
 then
     echo "It looks like you haven't yet configured transifex."

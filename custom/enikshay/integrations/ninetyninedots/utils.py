@@ -12,6 +12,7 @@ from dimagi.utils.modules import to_function
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from custom.enikshay.const import ENIKSHAY_TIMEZONE
+from custom.enikshay.integrations.ninetyninedots.const import VALID_ADHERENCE_VALUES
 from custom.enikshay.integrations.ninetyninedots.api_spec import load_api_spec, DIRECTION_INBOUND
 from custom.enikshay.integrations.ninetyninedots.exceptions import NinetyNineDotsException
 from custom.enikshay.case_utils import (
@@ -193,7 +194,7 @@ class AdherenceCaseFactory(BaseNinetyNineDotsUpdater):
     def _get_adherence_case_properties(self, adherence_point):
         return {
             "name": adherence_point.get("timestamp", None),
-            "adherence_value": self.DEFAULT_ADHERENCE_VALUE,
+            "adherence_value": self._parse_adherence_value(adherence_point),
             "adherence_source": adherence_point.get('adherenceSource', '99DOTS'),
             "adherence_date": self._parse_adherence_date(adherence_point["timestamp"]),
             "person_name": self._person_case.name,
@@ -213,6 +214,14 @@ class AdherenceCaseFactory(BaseNinetyNineDotsUpdater):
                 "Adherence date should be an ISO8601 formated string with timezone information."
             )
         return datetime_in_india.date()
+
+    def _parse_adherence_value(self, adherence_point):
+        value = adherence_point.get('adherenceValue', self.DEFAULT_ADHERENCE_VALUE)
+        if value not in VALID_ADHERENCE_VALUES:
+            raise NinetyNineDotsException(
+                "adherenceValue must be one of {}".format(", ".join(VALID_ADHERENCE_VALUES))
+            )
+        return value
 
     def update_adherence_cases(self, start_date, end_date, confidence_level):
         try:

@@ -6,7 +6,7 @@
     "enikshay",
     "softlayer"
   ],
-  "data_source_table": "episode_v4",
+  "data_source_table": "voucher_v4",
   "report_id": "diagnostic_register",
   "config": {
     "description": "",

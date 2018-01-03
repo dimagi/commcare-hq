@@ -1,19 +1,19 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
-import six
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -54,34 +54,32 @@ def get_clean_water_data_map(domain, config, loc_level, show_test=False):
     fills.update({'75%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
-    return [
-        {
-            "slug": "clean_water",
-            "label": "Percent AWCs with Clean Drinking Water",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_month_total * 100) / float(valid_total or 1),
-                "info": _((
-                    "Percentage of AWCs with a source of clean drinking water"
-                )),
-                "extended_info": [
-                    {
-                        'indicator': (
-                            'Total number of AWCs with a source of clean drinking water:'
-                        ),
-                        'value': indian_formatted_number(in_month_total)
-                    },
-                    {
-                        'indicator': (
-                            '% of AWCs with a source of clean drinking water:'
-                        ),
-                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "clean_water",
+        "label": "Percent AWCs with Clean Drinking Water",
+        "fills": fills,
+        "rightLegend": {
+            "average": (in_month_total * 100) / float(valid_total or 1),
+            "info": _((
+                "Percentage of AWCs with a source of clean drinking water"
+            )),
+            "extended_info": [
+                {
+                    'indicator': (
+                        'Total number of AWCs with a source of clean drinking water:'
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': (
+                        '% of AWCs with a source of clean drinking water:'
+                    ),
+                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -193,7 +191,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

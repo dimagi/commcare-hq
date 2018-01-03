@@ -278,6 +278,10 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
     include_app_id_param = False
     friendly_name = _("Forward Nikshay Health Establishments")
 
+    @property
+    def verify(self):
+        return False
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -303,8 +307,6 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             return False
         return True
 
-
-
     def handle_response(self, result, repeat_record):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
@@ -323,9 +325,11 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         # message does not give the final node message here so need to find the real message
         # look at SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE for example
         message_node = message.find("NewDataSet/HE_DETAILS/Message")
-        if message_node:
-            message_text = message_node.text
-        if message_node and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text):
+        already_registered_id_node = message.find("NewDataSet/Table1/HE_ID")
+        if already_registered_id_node is not None:
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        elif message_node is not None and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_node.text):
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:

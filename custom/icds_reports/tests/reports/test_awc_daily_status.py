@@ -19,7 +19,7 @@ class TestAWCDailyStatus(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",
@@ -41,13 +41,13 @@ class TestAWCDailyStatus(TestCase):
                     "st1": {
                         "in_day": 0,
                         "all": 8,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-50%"
                     },
                     "st2": {
                         "in_day": 0,
                         "all": 11,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-50%"
                     }
                 },
@@ -65,7 +65,7 @@ class TestAWCDailyStatus(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",
@@ -91,13 +91,13 @@ class TestAWCDailyStatus(TestCase):
                     "st1": {
                         "in_day": 0,
                         "all": 8,
-                        "original_name": [],
+                        "original_name": ["st1"],
                         "fillKey": "0%-50%"
                     },
                     "st2": {
                         "in_day": 0,
                         "all": 11,
-                        "original_name": [],
+                        "original_name": ["st2"],
                         "fillKey": "0%-50%"
                     }
                 },
@@ -122,7 +122,7 @@ class TestAWCDailyStatus(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of Angwanwadi Centers that were open yesterday.",

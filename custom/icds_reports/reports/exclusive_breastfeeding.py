@@ -1,21 +1,19 @@
 from __future__ import absolute_import, division
-from datetime import datetime
 
 from collections import defaultdict, OrderedDict
+from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
-    indian_formatted_number
-import six
+    indian_formatted_number, get_child_locations
 
 RED = '#de2d26'
 ORANGE = '#fc9272'
@@ -58,42 +56,40 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
 
-    return [
-        {
-            "slug": "severe",
-            "label": "Percent Exclusive Breastfeeding{}".format(chosen_filters),
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_month_total * 100) / (float(valid_total) or 1),
-                "info": _((
-                    "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                    "<br/><br/>"
-                    "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
-                    "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
-                )),
-                "extended_info": [
-                    {
-                        'indicator': 'Total number of children between ages 0 - 6 months{}:'
-                        .format(chosen_filters),
-                        'value': indian_formatted_number(valid_total)
-                    },
-                    {
-                        'indicator': (
-                            'Total number of children (0-6 months) exclusively breastfed in the given month{}:'
-                            .format(chosen_filters)
-                        ),
-                        'value': indian_formatted_number(in_month_total)
-                    },
-                    {
-                        'indicator': '% children (0-6 months) exclusively breastfed in the '
-                                     'given month{}:'.format(chosen_filters),
-                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "severe",
+        "label": "Percent Exclusive Breastfeeding{}".format(chosen_filters),
+        "fills": fills,
+        "rightLegend": {
+            "average": (in_month_total * 100) / (float(valid_total) or 1),
+            "info": _((
+                "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+                "<br/><br/>"
+                "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
+                "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Total number of children between ages 0 - 6 months{}:'
+                    .format(chosen_filters),
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': (
+                        'Total number of children (0-6 months) exclusively breastfed in the given month{}:'
+                        .format(chosen_filters)
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': '% children (0-6 months) exclusively breastfed in the '
+                                 'given month{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -198,7 +194,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

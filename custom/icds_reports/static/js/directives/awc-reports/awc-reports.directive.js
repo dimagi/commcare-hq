@@ -1727,6 +1727,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('oLanguage', {
             "sProcessing": "Loading. Please wait...",
         })
+        .withOption('order', [[4, 'asc']])
         .withDOM('ltipr');
 
     vm.dtColumns = [
