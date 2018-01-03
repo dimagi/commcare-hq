@@ -534,7 +534,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         in the future.
         """
         from corehq.apps.accounting.models import Subscription
-        later_subs = Subscription.objects.filter(
+        later_subs = Subscription.visible_objects.filter(
             subscriber__domain=self.domain.name,
             date_start__gt=self.date_start
         ).order_by('date_start')
