@@ -24,7 +24,7 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.domain.models import Domain
 from datetime import datetime
-
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.sms.util import register_sms_contact, strip_plus
 from corehq import toggles
 import six
@@ -272,8 +272,31 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.save()
         return True
     except Exception:
-        log_sms_exception(msg)
+        should_log_exception = True
+
+        if backend:
+            should_log_exception = should_log_exception_for_backend(backend)
+
+        if should_log_exception:
+            log_sms_exception(msg)
+
         return False
+
+
+def should_log_exception_for_backend(backend):
+    """
+    Only returns True if an exception hasn't been logged for the given backend
+    in the last hour.
+    """
+    client = get_redis_client()
+    key = 'exception-logged-for-backend-%s' % backend.couch_id
+
+    if client.get(key):
+        return False
+    else:
+        client.set(key, 1)
+        client.expire(key, 60 * 60)
+        return True
 
 
 def random_password():
