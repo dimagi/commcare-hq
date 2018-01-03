@@ -496,6 +496,7 @@ def num_apps_with_profile(domain):
     apps = _get_domain_apps(domain)
     return len([a for a in apps if a.build_profiles])
 
+
 def num_apps_with_multi_languages(domain):
     apps = _get_domain_apps(domain)
     return len([a for a in apps if len(a.langs) > 1])
