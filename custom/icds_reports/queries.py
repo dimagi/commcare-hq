@@ -11,3 +11,12 @@ def get_test_state_locations_id(domain):
         for sql_location in SQLLocation.by_domain(domain).filter(location_type__code=const.LocationTypes.STATE)
         if sql_location.metadata.get('is_test_location', 'real') == 'test'
     ]
+
+
+@quickcache(['domain'], timeout=5 * 60)
+def get_test_district_locations_id(domain):
+    return [
+        sql_location.location_id
+        for sql_location in SQLLocation.by_domain(domain).filter(location_type__code=const.LocationTypes.DISTRICT)
+        if sql_location.metadata.get('is_test_location', 'real') == 'test'
+    ]

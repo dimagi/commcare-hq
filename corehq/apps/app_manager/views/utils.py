@@ -199,7 +199,7 @@ def _update_form_ids(app, master_app, id_map):
     updated_source = update_form_unique_ids(app_source, id_map)
 
     attachments = app_source.pop('_attachments')
-    new_wrapped_app = Application.wrap(updated_source)
+    new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
 

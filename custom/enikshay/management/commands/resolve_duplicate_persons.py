@@ -18,12 +18,11 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_INVESTIGATION,
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
-    CASE_TYPE_PRESCRIPTION,
     CASE_TYPE_REFERRAL,
     CASE_TYPE_SECONDARY_OWNER,
     CASE_TYPE_TEST,
     CASE_TYPE_TRAIL,
-    CASE_TYPE_VOUCHER,
+    get_all_vouchers_from_person,
 )
 from custom.enikshay.duplicate_ids import (
     get_duplicated_case_stubs, ReadableIdGenerator)
@@ -192,21 +191,3 @@ def get_name_update(case, old_id, new_id):
     if case.get_case_property('name') and old_id:
         new_name = case.get_case_property('name').replace(old_id, new_id)
         return get_case_update(case, {'name': new_name})
-
-
-def get_all_vouchers_from_person(domain, person_case):
-    """Returns all voucher cases under tests or prescriptions"""
-    accessor = CaseAccessors(domain)
-    for occurrence_case in accessor.get_reverse_indexed_cases([person_case.case_id]):
-        if occurrence_case.type == CASE_TYPE_OCCURRENCE:
-            for case in accessor.get_reverse_indexed_cases([occurrence_case.case_id]):
-                if case.type == CASE_TYPE_TEST:
-                    for voucher_case in accessor.get_reverse_indexed_cases([case.case_id]):
-                        if voucher_case.type == CASE_TYPE_VOUCHER:
-                            yield voucher_case
-                if case.type == CASE_TYPE_EPISODE:
-                    for prescription_case in accessor.get_reverse_indexed_cases([case.case_id]):
-                        if prescription_case.type == CASE_TYPE_PRESCRIPTION:
-                            for voucher_case in accessor.get_reverse_indexed_cases([prescription_case.case_id]):
-                                if voucher_case.type == CASE_TYPE_VOUCHER:
-                                    yield voucher_case
