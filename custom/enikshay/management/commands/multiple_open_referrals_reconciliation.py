@@ -1,4 +1,8 @@
 from __future__ import absolute_import, print_function
+import datetime
+
+import pytz
+
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
@@ -6,6 +10,7 @@ from custom.enikshay.case_utils import (
     get_person_case_from_occurrence,
     CASE_TYPE_REFERRAL,
 )
+from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.management.commands.base_model_reconciliation import (
     BaseModelReconciliationCommand,
     DOMAIN,
@@ -33,8 +38,7 @@ class Command(BaseModelReconciliationCommand):
     ]
 
     def handle(self, *args, **options):
-        # self.commit = options.get('commit')
-        self.commit = False
+        self.commit = options.get('commit')
         self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
@@ -155,7 +159,10 @@ class Command(BaseModelReconciliationCommand):
             "person_case_dataset": self.person_case.get_case_property('dataset')
         })
         if self.commit:
-            updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
+            updates = [(case_id,
+                        {'referral_closed_reason': "duplicate_reconciliation",
+                         'referral_closed_date': datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
+                         }, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 

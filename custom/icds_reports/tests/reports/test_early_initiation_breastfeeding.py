@@ -19,7 +19,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children who were put to the breast within one hour of birth."
@@ -51,13 +51,13 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     "st1": {
                         "in_month": 4,
                         "birth": 3,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "60%-100%"
                     },
                     "st2": {
                         "in_month": 3,
                         "birth": 1,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "20%-60%"
                     }
                 },
@@ -77,7 +77,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children who were put to the breast within one hour of birth."

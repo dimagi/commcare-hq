@@ -8,11 +8,11 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 import six
 
 
@@ -55,34 +55,32 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
     fills.update({'50%-100%': PINK})
     fills.update({'defaultFill': GREY})
 
-    return [
-        {
-            "slug": "adhaar",
-            "label": "Percent Aadhaar-seeded Beneficiaries",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_month_total * 100) / float(valid_total or 1),
-                "info": _((
-                    "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
-                )),
-                "extended_info": [
-                    {
-                        'indicator': (
-                            'Total number of ICDS beneficiaries whose Aadhaar has been captured:'
-                        ),
-                        'value': indian_formatted_number(in_month_total)
-                    },
-                    {
-                        'indicator': (
-                            '% of ICDS beneficiaries whose Aadhaar has been captured:'
-                        ),
-                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "adhaar",
+        "label": "Percent Aadhaar-seeded Beneficiaries",
+        "fills": fills,
+        "rightLegend": {
+            "average": (in_month_total * 100) / float(valid_total or 1),
+            "info": _((
+                "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
+            )),
+            "extended_info": [
+                {
+                    'indicator': (
+                        'Total number of ICDS beneficiaries whose Aadhaar has been captured:'
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': (
+                        '% of ICDS beneficiaries whose Aadhaar has been captured:'
+                    ),
+                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
@@ -111,7 +109,7 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:

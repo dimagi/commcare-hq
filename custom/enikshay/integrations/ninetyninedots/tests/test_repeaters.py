@@ -344,6 +344,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
         expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictContainsSubset(expected_payload, actual_payload)
+        return actual_payload
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -420,6 +421,7 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
         return UpdatePatientPayloadGenerator(None).get_payload(None, casedb[self.person_id])
 
     def test_get_payload(self):
+        self.person.attrs['update']['language_code'] = ''
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         expected_numbers = u"+91{}, +91{}, +91{}".format(
@@ -427,7 +429,8 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
             self.secondary_phone_number.replace("0", ""),
             self.other_number.replace("0", "")
         )
-        self._assert_payload_contains_subset(cases, expected_numbers)
+        payload = self._assert_payload_contains_subset(cases, expected_numbers)
+        self.assertFalse('language_code' in payload)
 
     def test_handle_success(self):
         cases = self.create_case_structure()

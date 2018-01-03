@@ -288,7 +288,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         def display(loc):
             if self.show_full_path:
                 if loc.parent_id in cached_path_display:
-                    path_display = '{}/{}'.format(cached_path_display[loc.parent_id], loc.name)
+                    path_display = u'{}/{}'.format(cached_path_display[loc.parent_id], loc.name)
                 else:
                     path_display = loc.get_path_display()
                 cached_path_display[loc.id] = path_display

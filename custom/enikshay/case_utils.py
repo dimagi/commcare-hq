@@ -715,3 +715,21 @@ def get_most_recent_episode_case_from_person(domain, person_case_id):
         return None
     else:
         return sorted(episode_cases, key=(lambda case: case.opened_on))[-1]
+
+
+def get_all_vouchers_from_person(domain, person_case):
+    """Returns all voucher cases under tests or prescriptions"""
+    accessor = CaseAccessors(domain)
+    for occurrence_case in accessor.get_reverse_indexed_cases([person_case.case_id]):
+        if occurrence_case.type == CASE_TYPE_OCCURRENCE:
+            for case in accessor.get_reverse_indexed_cases([occurrence_case.case_id]):
+                if case.type == CASE_TYPE_TEST:
+                    for voucher_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if voucher_case.type == CASE_TYPE_VOUCHER:
+                            yield voucher_case
+                if case.type == CASE_TYPE_EPISODE:
+                    for prescription_case in accessor.get_reverse_indexed_cases([case.case_id]):
+                        if prescription_case.type == CASE_TYPE_PRESCRIPTION:
+                            for voucher_case in accessor.get_reverse_indexed_cases([prescription_case.case_id]):
+                                if voucher_case.type == CASE_TYPE_VOUCHER:
+                                    yield voucher_case

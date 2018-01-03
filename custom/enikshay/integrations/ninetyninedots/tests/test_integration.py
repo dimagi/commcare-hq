@@ -180,6 +180,7 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
                 "timestamp": "2009-03-05T01:00:01-05:00",
                 "numberFromWhichPatientDialled": "+910123456789",
                 "sharedNumber": False,
+                "adherenceValue": 'manual',
                 "adherenceSource": "99DOTS",
             },
             {
@@ -207,11 +208,27 @@ class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
             [case.dynamic_case_properties().get('adherence_source') for case in adherence_cases],
             ['99DOTS', 'MERM', '99DOTS']
         )
+        self.assertItemsEqual(
+            [case.dynamic_case_properties().get('adherence_value') for case in adherence_cases],
+            ['manual', 'unobserved_dose', 'unobserved_dose']
+        )
         for adherence_case in adherence_cases:
             self.assertEqual(
                 adherence_case.dynamic_case_properties().get('adherence_confidence'),
                 'high'
             )
+
+    def test_invalid_adherence_value(self):
+        self.create_case_structure()
+        adherence_values = [
+            {
+                "timestamp": "2009-03-05T01:00:01-05:00",
+                "numberFromWhichPatientDialled": "+910123456789",
+                "adherenceValue": 'foo',
+            },
+        ]
+        with self.assertRaises(NinetyNineDotsException):
+            create_adherence_cases(self.domain, 'person', adherence_values)
 
     def test_update_adherence_confidence(self):
         self.create_case_structure()

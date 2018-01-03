@@ -57,7 +57,7 @@ class Command(BaseCommand):
         if options['check']:
             exit(0 if get_preindex_complete(head) else 1)
 
-        if get_preindex_complete(head):
+        if get_preindex_complete(head) and email:
             mail_admins('Already preindexed', "Skipping this step")
             return
         else:

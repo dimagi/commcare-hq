@@ -9,12 +9,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         if (newValue === oldValue) {
             return;
         }
-        if (newValue[0].data) {
-            vm.map.data = getData(newValue[0]);
+        if (newValue.data) {
+            vm.map.data = getData(newValue);
         }
-        vm.map.fills = newValue[0].fills;
-        vm.map.rightLegend = newValue[0].rightLegend;
-        vm.indicator = newValue[0].slug;
+        vm.map.fills = newValue.fills;
+        vm.map.rightLegend = newValue.rightLegend;
+        vm.indicator = newValue.slug;
     }, true);
 
     $scope.$watch(function () {
@@ -44,6 +44,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     var location_level = parseInt($location.search()['selectedLocationLevel']);
     var location_id = $location.search().location_id;
     vm.type = '';
+    vm.mapHeight = 0;
 
     vm.initTopoJson = function (location_level, location) {
         if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
@@ -51,13 +52,16 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = STATES_TOPOJSON;
         } else if (location_level === 0) {
-            vm.scope = location;
+            vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
         } else if (location_level === 1) {
-            vm.scope = location;
+            vm.scope = location.map_location_name;
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+        }
+        if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
+            vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
         }
     };
 
@@ -67,11 +71,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
         vm.map = {
             scope: vm.scope,
-            rightLegend: vm.data && vm.data[0] !== void(0) ? vm.data[0].rightLegend : null,
-            label: vm.data && vm.data[0] !== void(0) ? vm.data[0].label : null,
+            rightLegend: vm.data && vm.data !== void(0) ? vm.data.rightLegend : null,
+            label: vm.data && vm.data !== void(0) ? vm.data.label : null,
             data: getData(vm.data),
-            fills: vm.data && vm.data[0] !== void(0) ? vm.data[0].fills : null,
-            height: Datamap.prototype[vm.type].objects[vm.scope].height,
+            fills: vm.data && vm.data !== void(0) ? vm.data.fills : null,
+            height: vm.mapHeight,
             geographyConfig: {
                 highlightFillColor: '#00f8ff',
                 highlightBorderColor: '#000000',
@@ -166,27 +170,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     }
                 },
             });
-            _.extend(vm.mapPlugins, {
-                indicators: function () {
-                    var data = vm.data;
-                    if (data.length > 1) {
-                        var html = [];
-                        window.angular.forEach(data, function (indi) {
-                            var row = [
-                                '<label class="radio-inline" style="float: right; margin-left: 10px;">',
-                                '<input type="radio" ng-model="$ctrl.indicator" ng-change="$ctrl.changeIndicator(\'' + indi.slug + '\')" ng-checked="$ctrl.indicator == \'' + indi.slug + '\'" name="indi" ng-value="' + indi.slug + '">' + indi.label,
-                                '</label>',
-                            ];
-                            html.push(row.join(''));
-                        });
-                        var ele = d3.select(this.options.element).append('div')
-                            .attr('class', '')
-                            .attr('style', 'position: absolute; width: 100%; top: 5%; right: 25%; z-index: -1;')
-                            .html(html.join(''));
-                        $compile(ele[0])($scope);
-                    }
-                },
-            });
         }
     };
 
@@ -194,7 +177,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         mapConfiguration(location);
     });
 
-    vm.indicator = vm.data && vm.data[0] !== void(0) ? vm.data[0].slug : null;
+    vm.indicator = vm.data && vm.data !== void(0) ? vm.data.slug : null;
 
     vm.changeIndicator = function (value) {
         window.angular.forEach(vm.data, function (row) {
@@ -214,7 +197,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     var getData = function (data) {
-        var mapData = data && data[0] !== void(0) ? data[0].data : null;
+        var mapData = data && data !== void(0) ? data.data : null;
         if (!mapData) {
             return null;
         }
@@ -228,22 +211,29 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
     vm.getContent = function (geography) {
         var html = "";
-        window.angular.forEach(vm.data[0].data[geography.id].original_name, function (value) {
+        window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
         });
         return html;
     };
 
     vm.updateMap = function (geography) {
-        if (geography.id !== void(0) && vm.data[0].data[geography.id] && vm.data[0].data[geography.id].original_name.length > 0) {
-            var html = vm.getContent(geography);
+        if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
+            var html = "";
+            window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
+                html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
+            });
             var css = 'display: block; left: ' + event.clientX + 'px; top: ' + event.clientY + 'px;';
             var ele = d3.select('#locPopup')
                 .attr('style', css)
                 .html(html);
             $compile(ele[0])($scope);
         } else {
-            locationsService.getLocationByNameAndParent((geography.id || geography), location_id).then(function (locations) {
+            var location = geography.id || geography;
+            if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
+                location = vm.data.data[geography.id].original_name[0];
+            }
+            locationsService.getLocationByNameAndParent(location, location_id).then(function (locations) {
                 var location = locations[0];
                 if (!location) {
                     return;
