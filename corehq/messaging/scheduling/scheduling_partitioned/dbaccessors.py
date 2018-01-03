@@ -206,6 +206,11 @@ def delete_case_schedule_instance(instance):
 
 
 def delete_alert_schedule_instances_for_schedule(cls, schedule_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        AlertScheduleInstance,
+        CaseAlertScheduleInstance,
+    )
+
     if cls not in (AlertScheduleInstance, CaseAlertScheduleInstance):
         raise TypeError("Expected AlertScheduleInstance or CaseAlertScheduleInstance")
 
@@ -216,6 +221,11 @@ def delete_alert_schedule_instances_for_schedule(cls, schedule_id):
 
 
 def delete_timed_schedule_instances_for_schedule(cls, schedule_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        TimedScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
     if cls not in (TimedScheduleInstance, CaseTimedScheduleInstance):
         raise TypeError("Expected TimedScheduleInstance or CaseTimedScheduleInstance")
 

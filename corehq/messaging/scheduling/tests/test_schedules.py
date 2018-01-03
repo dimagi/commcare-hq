@@ -9,6 +9,12 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_timed_schedule_instance,
     get_alert_schedule_instances_for_schedule,
     get_timed_schedule_instances_for_schedule,
+    delete_alert_schedule_instances_for_schedule,
+    delete_timed_schedule_instances_for_schedule,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+    TimedScheduleInstance,
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
@@ -41,10 +47,6 @@ class BaseScheduleTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         super(BaseScheduleTest, cls).tearDownClass()
-
-    def tearDown(self):
-        for instance in get_timed_schedule_instances_for_schedule(self.schedule):
-            delete_timed_schedule_instance(instance)
 
     def assertTimedScheduleInstance(self, instance, current_event_num, schedule_iteration_num,
             next_event_due, active, start_date, recipient):
@@ -90,6 +92,7 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
         )
 
     def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
         self.schedule.delete()
         super(TimedScheduleActiveFlagTest, self).tearDown()
 
@@ -202,6 +205,74 @@ class TimedScheduleActiveFlagTest(BaseScheduleTest):
 
 
 @partitioned
+class DeleteScheduleInstancesTest(BaseScheduleTest):
+
+    def setUp(self):
+        super(DeleteScheduleInstancesTest, self).setUp()
+        self.timed_schedule_1 = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            total_iterations=1,
+        )
+        self.timed_schedule_2 = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            total_iterations=1,
+        )
+        self.alert_schedule_1 = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+        self.alert_schedule_2 = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+
+    def tearDown(self):
+        for schedule in (self.alert_schedule_1, self.alert_schedule_2):
+            delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id)
+            schedule.delete()
+
+        for schedule in (self.timed_schedule_1, self.timed_schedule_2):
+            delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, schedule.schedule_id)
+            schedule.delete()
+
+        super(DeleteScheduleInstancesTest, self).tearDown()
+
+    @staticmethod
+    def count(generator):
+        return len(list(generator))
+
+    def test_delete_alert_schedule_instances_for_schedule(self):
+        refresh_alert_schedule_instances(
+            self.alert_schedule_1.schedule_id,
+            (('CommCareUser', self.user1.get_id),)
+        )
+        refresh_alert_schedule_instances(
+            self.alert_schedule_2.schedule_id,
+            (('CommCareUser', self.user1.get_id), ('CommCareUser', self.user2.get_id))
+        )
+        self.assertEqual(self.count(get_alert_schedule_instances_for_schedule(self.alert_schedule_1)), 1)
+        self.assertEqual(self.count(get_alert_schedule_instances_for_schedule(self.alert_schedule_2)), 2)
+
+        delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, self.alert_schedule_2.schedule_id)
+        self.assertEqual(self.count(get_alert_schedule_instances_for_schedule(self.alert_schedule_1)), 1)
+        self.assertEqual(self.count(get_alert_schedule_instances_for_schedule(self.alert_schedule_2)), 0)
+
+    def test_delete_timed_schedule_instances_for_schedule(self):
+        refresh_timed_schedule_instances(
+            self.timed_schedule_1.schedule_id,
+            (('CommCareUser', self.user1.get_id),)
+        )
+        refresh_timed_schedule_instances(
+            self.timed_schedule_2.schedule_id,
+            (('CommCareUser', self.user1.get_id), ('CommCareUser', self.user2.get_id))
+        )
+        self.assertEqual(self.count(get_timed_schedule_instances_for_schedule(self.timed_schedule_1)), 1)
+        self.assertEqual(self.count(get_timed_schedule_instances_for_schedule(self.timed_schedule_2)), 2)
+
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.timed_schedule_2.schedule_id)
+        self.assertEqual(self.count(get_timed_schedule_instances_for_schedule(self.timed_schedule_1)), 1)
+        self.assertEqual(self.count(get_timed_schedule_instances_for_schedule(self.timed_schedule_2)), 0)
+
+
+@partitioned
 @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
 @patch('corehq.messaging.scheduling.util.utcnow')
 class DailyScheduleTest(BaseScheduleTest):
@@ -220,6 +291,10 @@ class DailyScheduleTest(BaseScheduleTest):
     def tearDownClass(cls):
         cls.schedule.delete()
         super(DailyScheduleTest, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(DailyScheduleTest, self).tearDown()
 
     def test_schedule_start_to_finish(self, utcnow_patch, send_patch):
         self.assertNumInstancesForSchedule(0)
@@ -348,6 +423,10 @@ class RandomTimedEventTest(BaseScheduleTest):
         cls.schedule.delete()
         super(RandomTimedEventTest, cls).tearDownClass()
 
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(RandomTimedEventTest, self).tearDown()
+
     def test_schedule_start_to_finish(self, utcnow_patch, send_patch):
         self.assertNumInstancesForSchedule(0)
 
@@ -400,6 +479,10 @@ class RandomTimedEventSpanningTwoDaysTest(BaseScheduleTest):
         cls.schedule.delete()
         super(RandomTimedEventSpanningTwoDaysTest, cls).tearDownClass()
 
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(RandomTimedEventSpanningTwoDaysTest, self).tearDown()
+
     def test_schedule(self, utcnow_patch, send_patch):
         self.assertNumInstancesForSchedule(0)
 
@@ -434,6 +517,10 @@ class StartDayOfWeekTest(BaseScheduleTest):
     def tearDownClass(cls):
         cls.schedule.delete()
         super(StartDayOfWeekTest, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(StartDayOfWeekTest, self).tearDown()
 
     def test_setting_first_event_for_next_monday(self, utcnow_patch, send_patch):
         self.assertNumInstancesForSchedule(0)
@@ -554,6 +641,10 @@ class StartDayOfWeekWithStartOffsetTest(BaseScheduleTest):
     def tearDownClass(cls):
         cls.schedule.delete()
         super(StartDayOfWeekWithStartOffsetTest, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(StartDayOfWeekWithStartOffsetTest, self).tearDown()
 
     def test_schedule_start_to_finish(self, utcnow_patch, send_patch):
         self.assertNumInstancesForSchedule(0)
@@ -799,8 +890,7 @@ class AlertTest(TestCase):
         self.schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
 
     def tearDown(self):
-        for instance in get_alert_schedule_instances_for_schedule(self.schedule):
-            delete_alert_schedule_instance(instance)
+        delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, self.schedule.schedule_id)
         self.schedule.delete()
         self.domain_obj.delete()
         super(AlertTest, self).tearDown()
