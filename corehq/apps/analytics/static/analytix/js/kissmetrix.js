@@ -165,6 +165,11 @@ hqDefine('analytix/js/kissmetrix', [
         return _allAbTests[testSlug];
     };
 
+    /**
+     * Run some code once all data and scripts are loaded.
+     * @param callback
+     * @returns Nothing
+     */
     var whenReadyAlways = function(callback) {
         _ready.always(callback);
     };
