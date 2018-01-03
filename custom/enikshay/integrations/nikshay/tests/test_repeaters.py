@@ -1596,7 +1596,7 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         })
         self.pcp.save()
         payload = NikshayHealthEstablishmentPayloadGenerator(None).get_payload(None, self.pcp)
-        self.assertEqual(payload['ESTABLISHMENT_TYPE'], health_establishment_type.get('lab'))
+        self.assertEqual(payload['ESTABLISHMENT_TYPE'], health_establishment_type.get('Lab'))
         self.assertEqual(payload['SECTOR'], health_establishment_sector.get(self.pcp.metadata['sector'], ''))
         self.assertEqual(payload['ESTABLISHMENT_NAME'], self.pcp.name)
         self.assertEqual(payload['MCI_HR_NO'], "14321")
