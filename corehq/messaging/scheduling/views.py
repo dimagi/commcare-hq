@@ -71,6 +71,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     LIST_IMMEDIATE = 'list_immediate'
     ACTION_ACTIVATE_SCHEDULED_BROADCAST = 'activate_scheduled_broadcast'
     ACTION_DEACTIVATE_SCHEDULED_BROADCAST = 'deactivate_scheduled_broadcast'
+    ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -93,7 +94,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     def get_scheduled_ajax_response(self):
         query = (
             ScheduledBroadcast.objects
-            .filter(domain=self.domain)
+            .filter(domain=self.domain, deleted=False)
             .order_by('-last_sent_timestamp', 'id')
         )
         total_records = query.count()
@@ -115,7 +116,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     def get_immediate_ajax_response(self):
         query = (
             ImmediateBroadcast.objects
-            .filter(domain=self.domain)
+            .filter(domain=self.domain, deleted=False)
             .order_by('-last_sent_timestamp', 'id')
         )
         total_records = query.count()
@@ -133,7 +134,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     def get_scheduled_broadcast(self, broadcast_id):
         try:
             return ScheduledBroadcast.objects.get(domain=self.domain, pk=broadcast_id, deleted=False)
-        except cls.DoesNotExist:
+        except ScheduledBroadcast.DoesNotExist:
             raise Http404()
 
     def get_scheduled_broadcast_activate_ajax_response(self, active_flag, broadcast_id):
@@ -145,6 +146,11 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             start_date=broadcast.start_date
         )
 
+        return HttpResponse()
+
+    def get_scheduled_broadcast_delete_ajax_response(self, broadcast_id):
+        broadcast = self.get_scheduled_broadcast(broadcast_id)
+        broadcast.soft_delete()
         return HttpResponse()
 
     def get(self, request, *args, **kwargs):
@@ -165,6 +171,8 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
                 return self.get_scheduled_broadcast_activate_ajax_response(True, broadcast_id)
             elif action == self.ACTION_DEACTIVATE_SCHEDULED_BROADCAST:
                 return self.get_scheduled_broadcast_activate_ajax_response(False, broadcast_id)
+            elif action == self.ACTION_DELETE_SCHEDULED_BROADCAST:
+                return self.get_scheduled_broadcast_delete_ajax_response(broadcast_id)
             else:
                 return HttpResponseBadRequest()
 

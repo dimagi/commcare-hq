@@ -239,3 +239,6 @@ class Broadcast(models.Model):
 
     class Meta:
         abstract = True
+
+    def soft_delete(self):
+        raise NotImplementedError()

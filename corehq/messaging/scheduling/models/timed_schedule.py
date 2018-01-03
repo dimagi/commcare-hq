@@ -459,3 +459,13 @@ class CasePropertyTimedEvent(AbstractTimedEvent):
 class ScheduledBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
     start_date = models.DateField()
+
+    def soft_delete(self):
+        from corehq.messaging.scheduling.tasks import delete_timed_schedule_instances
+
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            self.schedule.deleted = True
+            self.schedule.save()
+            delete_timed_schedule_instances.delay(self.schedule_id)

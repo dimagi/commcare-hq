@@ -75,3 +75,13 @@ class AlertEvent(Event):
 
 class ImmediateBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)
+
+    def soft_delete(self):
+        from corehq.messaging.scheduling.tasks import delete_alert_schedule_instances
+
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            self.schedule.deleted = True
+            self.schedule.save()
+            delete_alert_schedule_instances.delay(self.schedule_id)

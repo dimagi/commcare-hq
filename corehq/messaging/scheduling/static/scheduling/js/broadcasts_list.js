@@ -9,7 +9,7 @@ hqDefine("scheduling/js/broadcasts_list", function() {
             "lengthChange": false,
             "filter": false,
             "sort": false,
-            "displayLength": 5,
+            "displayLength": 10,
             "processing": false,
             "serverSide": true,
             "ajaxSource": list_broadcasts_url,
@@ -27,9 +27,14 @@ hqDefine("scheduling/js/broadcasts_list", function() {
             "columnDefs": [
                 {
                     "targets": [0],
-                    "render": function() {
-                        // TODO construct this from ID
-                        return 'Delete button';
+                    "className": "text-center",
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var button_id = 'delete-button-for-scheduled-broadcast-' + id;
+                        return '<button id="' + button_id + '" \
+                                        class="btn btn-danger" \
+                                        onclick="hqImport(\'scheduling/js/broadcasts_list\').deleteScheduledBroadcast(' + id + ')"> \
+                                <i class="fa fa-remove" aria-hidden="true"></i></button>';
                     },
                 },
                 {
@@ -76,7 +81,7 @@ hqDefine("scheduling/js/broadcasts_list", function() {
             "lengthChange": false,
             "filter": false,
             "sort": false,
-            "displayLength": 5,
+            "displayLength": 10,
             "processing": false,
             "serverSide": true,
             "ajaxSource": list_broadcasts_url,
@@ -104,9 +109,10 @@ hqDefine("scheduling/js/broadcasts_list", function() {
         });
     });
 
-    function activateDeactivate(action, broadcast_id) {
-        var button_id = 'activate-button-for-scheduled-broadcast-' + broadcast_id;
-        $('#' + button_id).prop('disabled', true);
+    function broadcastAction(action, broadcast_id) {
+        $('#activate-button-for-scheduled-broadcast-' + broadcast_id).prop('disabled', true);
+        $('#delete-button-for-scheduled-broadcast-' + broadcast_id).prop('disabled', true);
+
         $.ajax({
             url: '',
             type: 'post',
@@ -122,15 +128,20 @@ hqDefine("scheduling/js/broadcasts_list", function() {
     }
 
     function activateScheduledBroadcast(broadcast_id) {
-        activateDeactivate('activate_scheduled_broadcast', broadcast_id);
+        broadcastAction('activate_scheduled_broadcast', broadcast_id);
     }
 
     function deactivateScheduledBroadcast(broadcast_id) {
-        activateDeactivate('deactivate_scheduled_broadcast', broadcast_id);
+        broadcastAction('deactivate_scheduled_broadcast', broadcast_id);
+    }
+
+    function deleteScheduledBroadcast(broadcast_id) {
+        broadcastAction('delete_scheduled_broadcast', broadcast_id);
     }
 
     return {
         activateScheduledBroadcast: activateScheduledBroadcast,
         deactivateScheduledBroadcast: deactivateScheduledBroadcast,
+        deleteScheduledBroadcast: deleteScheduledBroadcast,
     };
 });
