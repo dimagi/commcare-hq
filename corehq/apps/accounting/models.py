@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import datetime
 from decimal import Decimal
 import itertools
-from StringIO import StringIO
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 
@@ -2048,7 +2048,7 @@ class BillingRecordBase(models.Model):
     def send_email(self, contact_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
-            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
+            'file_obj': BytesIO(self.pdf.get_data(self.invoice)),
             'mimetype': 'application/pdf',
         }
         domain = self.invoice.get_domain()
