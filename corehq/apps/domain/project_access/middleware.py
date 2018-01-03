@@ -6,7 +6,7 @@ from corehq.util.quickcache import quickcache
 
 class ProjectAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if hasattr(request, 'couch_user') and request.couch_user.is_superuser \
+        if getattr(request, 'couch_user') and request.couch_user.is_superuser \
                 and hasattr(request, 'domain'):
             return self.record_entry(request.domain, request.couch_user.username)
 
