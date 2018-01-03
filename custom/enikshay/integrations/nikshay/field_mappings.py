@@ -158,6 +158,7 @@ health_establishment_type = {
     'hospital': 'H',
     'lab': 'L',
     'pharmacy': 'P',
+    'doctor': 'P'
 }
 
 health_establishment_sector = {
