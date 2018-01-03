@@ -512,7 +512,7 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
     @staticmethod
     def _get_establishment_type(location):
         if location.location_type.name == AGENCY_LOCATION_TYPES['plc']:
-            return health_establishment_type.get('lab')
+            return health_establishment_type.get('Lab')
         if location.location_type.name == AGENCY_LOCATION_TYPES['pcp']:
             return health_establishment_type.get(
                 location.metadata.get('facility_type')
