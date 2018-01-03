@@ -282,6 +282,7 @@ class ReportBuilderView(BaseDomainView):
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
             'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
 
