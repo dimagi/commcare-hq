@@ -136,7 +136,9 @@ hqDefine("scheduling/js/broadcasts_list", function() {
     }
 
     function deleteScheduledBroadcast(broadcast_id) {
-        broadcastAction('delete_scheduled_broadcast', broadcast_id);
+        if(confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
+            broadcastAction('delete_scheduled_broadcast', broadcast_id);
+        }
     }
 
     return {
