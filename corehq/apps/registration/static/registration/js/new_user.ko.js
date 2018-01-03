@@ -15,7 +15,7 @@ hqDefine('registration/js/new_user.ko', function () {
     var _private = {},
         _kissmetrics = hqImport('analytix/js/kissmetrix');
 
-    _kissmetrics.whenReady(function() {
+    _kissmetrics.whenReadyAlways(function() {
         _private.isAbPersona = _kissmetrics.getAbTest('New User Persona Field') === 'show_persona';
         _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
 

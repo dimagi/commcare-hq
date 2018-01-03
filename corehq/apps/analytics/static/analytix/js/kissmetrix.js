@@ -18,8 +18,7 @@ hqDefine('analytix/js/kissmetrix', [
         _allAbTests = {},
         _init = {},
         _logger = logging.getLoggerForApi('Kissmetrics'),
-        _abReady = $.Deferred(),
-        _ready;
+        _ready = $.Deferred();
 
     window.dataLayer = window.dataLayer || [];
 
@@ -55,7 +54,7 @@ hqDefine('analytix/js/kissmetrix', [
             ];
 
         _logger = logging.getLoggerForApi('Kissmetrics');
-        _ready = utils.initApi(apiId, scriptUrls, _logger, function() {
+        _ready = utils.initApi(_ready, apiId, scriptUrls, _logger, function() {
             // Identify user and HQ instance
             // This needs to happen before any events are sent or any traits are set
             var username = _get('username');
@@ -80,10 +79,6 @@ hqDefine('analytix/js/kissmetrix', [
                     _.extend(_allAbTests, test);
                 }
             });
-        });
-
-        _ready.always(function() {
-            _abReady.resolve();
         });
     });
 
@@ -170,8 +165,8 @@ hqDefine('analytix/js/kissmetrix', [
         return _allAbTests[testSlug];
     };
 
-    var whenReady = function(callback) {
-        _abReady.done(callback);
+    var whenReadyAlways = function(callback) {
+        _ready.always(callback);
     };
 
     return {
@@ -183,6 +178,6 @@ hqDefine('analytix/js/kissmetrix', [
             outboundLink: trackOutboundLink,
         },
         getAbTest: getAbTest,
-        whenReady: whenReady,
+        whenReadyAlways: whenReadyAlways,
     };
 });
