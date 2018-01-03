@@ -244,8 +244,8 @@ def get_value(data, prop):
 
 def apply_exclude(domain, queryset):
     return queryset.exclude(
-        state_id__in=get_test_state_locations_id(domain),
-        district_id__in=get_test_district_locations_id(domain)
+        Q(state_id__in=get_test_state_locations_id(domain)) |
+        Q(district_id__in=get_test_district_locations_id(domain))
     )
 
 
