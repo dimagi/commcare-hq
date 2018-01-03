@@ -12,7 +12,6 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
     toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.utils import find_static_toggle
