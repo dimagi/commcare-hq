@@ -183,6 +183,10 @@ class ToggleEditView(ToggleBaseView):
         )
         if save_randomness and (0 <= randomness <= 1):
             setattr(toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, randomness)
+            # clear cache
+            if isinstance(self.toggle_meta(), DynamicallyPredictablyRandomToggle):
+                _clear_caches_for_dynamic_toggle(self.toggle_meta())
+
         elif save_randomness:
             messages.error(request, _("The randomness value {} must be between 0 and 1".format(randomness)))
 
@@ -237,6 +241,13 @@ def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enable
             toggle_js_user_cachebuster.clear(username)
 
         clear_toggle_cache(toggle_slug, entry, namespace=namespace)
+
+
+def _clear_caches_for_dynamic_toggle(toggle_meta):
+    # note: this is rather coupled with python property internals
+    DynamicallyPredictablyRandomToggle.randomness.fget.clear(toggle_meta)
+    # also have to do this since the toggle itself is cached
+    all_toggles.clear()
 
 
 def _get_usage_info(toggle):
