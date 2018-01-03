@@ -260,15 +260,21 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
             report_context['reports'].append(context)
         else:
             report_context['reports'] = [context]
-            create_pdf_file(
-                pdf_hash,
-                report_context
-            )
+            try:
+                create_pdf_file(
+                    pdf_hash,
+                    report_context
+                )
+            except Exception as ex:
+                celery_task_logger.error(ex.message)
 
     if pdf_format == 'many':
         cache_key = zip_folder(pdf_files)
     else:
-        cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
+        try:
+            cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
+        except Exception as ex:
+            celery_task_logger.error(ex.message)
 
     params = {
         'domain': 'icds-cas',
