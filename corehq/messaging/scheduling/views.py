@@ -306,6 +306,8 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     page_title = ugettext_lazy('Schedule a Conditional Message')
 
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
+    ACTION_ACTIVATE = 'activate'
+    ACTION_DEACTIVATE = 'deactivate'
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -318,7 +320,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         return (
             AutomaticUpdateRule
             .objects
-            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+            .filter(domain=self.domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
             .order_by('case_type', 'name', 'id')
         )
 
@@ -333,7 +335,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
                 '< delete placeholder >',
                 rule.name,
                 rule.case_type,
-                rule.active,
+                rule.get_messaging_rule_schedule().active,
                 '< action placeholder >',
                 rule.locked_for_editing,
                 MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
@@ -348,6 +350,50 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
             return self.get_conditional_alerts_ajax_response()
 
         return super(ConditionalAlertListView, self).get(*args, **kwargs)
+
+    def get_rule(self, rule_id):
+        try:
+            return AutomaticUpdateRule.objects.get(
+                domain=self.domain,
+                pk=rule_id,
+                deleted=False,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            raise Http404()
+
+    def get_activate_ajax_response(self, active_flag, rule):
+        """
+        When we deactivate a conditional alert from the UI, we are only
+        deactivating the schedule that sends the content. The rule itself
+        stays active.
+        This is because we want to be keeping all the schedule instances
+        up to date (though inactive), so that if the schedule is reactivated,
+        we don't send a large quantity of stale messages.
+        """
+        with transaction.atomic():
+            schedule = rule.get_messaging_rule_schedule()
+            schedule.active = active_flag
+            schedule.save()
+            initiate_messaging_rule_run(self.domain, rule.pk)
+
+        return HttpResponse()
+
+    def post(self, request, *args, **kwargs):
+        action = request.POST.get('action')
+        rule_id = request.POST.get('rule_id')
+
+        with get_conditional_alert_edit_critical_section(rule_id):
+            rule = self.get_rule(rule_id)
+            if rule.locked_for_editing:
+                return HttpResponseBadRequest()
+
+            if action == self.ACTION_ACTIVATE:
+                return self.get_activate_ajax_response(True, rule)
+            elif action == self.ACTION_DEACTIVATE:
+                return self.get_activate_ajax_response(False, rule)
+            else:
+                return HttpResponseBadRequest()
 
 
 class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
@@ -502,15 +548,7 @@ class EditConditionalAlertView(CreateConditionalAlertView):
 
     @cached_property
     def schedule(self):
-        if len(self.rule.memoized_actions) != 1:
-            raise ValueError("Expected exactly 1 action")
-
-        action = self.rule.memoized_actions[0]
-        action_definition = action.definition
-        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
-            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
-
-        return action_definition.schedule
+        return self.rule.get_messaging_rule_schedule()
 
     def dispatch(self, request, *args, **kwargs):
         with get_conditional_alert_edit_critical_section(self.rule_id):

@@ -1,8 +1,10 @@
 hqDefine("scheduling/js/conditional_alert_list", function() {
+    var table = null;
+
     $(function() {
         var conditonal_alert_list_url = hqImport("hqwebapp/js/initial_page_data").reverse("conditional_alert_list");
 
-        var table = $("#conditional-alert-list").dataTable({
+        table = $("#conditional-alert-list").dataTable({
             "lengthChange": false,
             "filter": false,
             "sort": false,
@@ -58,8 +60,25 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 },
                 {
                     "targets": [4],
-                    "render": function() {
-                        return 'Activate or Deactivate button';
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var button_id = 'activate-button-for-' + id;
+                        var active = row[3];
+                        var locked_for_editing = row[row.length - 3];
+                        var disabled = locked_for_editing ? 'disabled' : '';
+                        if(active) {
+                            return '<button id="' + button_id + '" \
+                                            class="btn btn-default" \
+                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').deactivateAlert(' + id + ')" \
+                                            ' + disabled + '> \
+                                   ' + gettext("Deactivate") + '</button>';
+                        } else {
+                            return '<button id="' + button_id + '" + \
+                                            class="btn btn-default" + \
+                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').activateAlert(' + id + ')" \
+                                            ' + disabled + '> \
+                                   ' + gettext("Activate") + '</button>';
+                        }
                     },
                 },
             ],
@@ -73,4 +92,34 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
         setTimeout(reloadTable, 10000);
 
     });
+
+    function alertAction(action, rule_id) {
+        $('#activate-button-for-' + rule_id).prop('disabled', true);
+
+        $.ajax({
+            url: '',
+            type: 'post',
+            dataType: 'json',
+            data: {
+                action: action,
+                rule_id: rule_id,
+            },
+        })
+        .always(function() {
+            table.fnDraw(false);
+        });
+    }
+
+    function activateAlert(rule_id) {
+        alertAction('activate', rule_id);
+    }
+
+    function deactivateAlert(rule_id) {
+        alertAction('deactivate', rule_id);
+    }
+
+    return {
+        activateAlert: activateAlert,
+        deactivateAlert: deactivateAlert,
+    };
 });

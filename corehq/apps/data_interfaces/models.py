@@ -405,6 +405,20 @@ class AutomaticUpdateRule(models.Model):
                 active_only=active_only,
             )
 
+    def get_messaging_rule_schedule(self):
+        if self.workflow != self.WORKFLOW_SCHEDULING:
+            raise ValueError("Expected scheduling workflow")
+
+        if len(self.memoized_actions) != 1:
+            raise ValueError("Expected exactly 1 action")
+
+        action = self.memoized_actions[0]
+        action_definition = action.definition
+        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
+            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
+
+        return action_definition.schedule
+
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
