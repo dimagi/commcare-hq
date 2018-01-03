@@ -1548,7 +1548,7 @@ class Subscription(models.Model):
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name):
         try:
-            return cls.objects.select_related(
+            return cls.visible_objects.select_related(
                 'plan_version__role'
             ).get(
                 is_active=True,
