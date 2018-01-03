@@ -1032,14 +1032,15 @@ class ConfigureNewReportBase(forms.Form):
         the knockout view model representing this filter in the report builder.
 
         """
-        exists = self._column_exists(filter['field'])
+        field = filter['field']
+        field, exists = self._check_and_update_column(field)
         if filter['type'] == 'pre':
             return DefaultFilterViewModel(
                 exists_in_current_version=exists,
                 display_text='',
                 format='Value' if filter['pre_value'] else 'Date',
-                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-                data_source_field=filter['field'] if not exists else None,
+                property=self._get_property_id_by_indicator_id(field) if exists else None,
+                data_source_field=field if not exists else None,
                 pre_value=filter['pre_value'],
                 pre_operator=filter['pre_operator'],
             )
@@ -1055,8 +1056,8 @@ class ConfigureNewReportBase(forms.Form):
                 exists_in_current_version=exists,
                 display_text=filter['display'],
                 format=filter_type_map[filter['type']],
-                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-                data_source_field=filter['field'] if not exists else None
+                property=self._get_property_id_by_indicator_id(field) if exists else None,
+                data_source_field=field if not exists else None
             )
 
     def _get_column_option_by_indicator_id(self, indicator_column_id):
@@ -1083,28 +1084,30 @@ class ConfigureNewReportBase(forms.Form):
         if column:
             return column.get_property()
 
-    def _column_exists(self, column_id):
+    def _check_and_update_column(self, column_id):
         """
-        Return True if this column corresponds to a question/case property in
-        the current version of this form/case configuration.
+        :param column_id: a string like "data_date_q_d1b3693e"
 
-        This could be true if a user makes a report, modifies the app, then
-        edits the report.
+        :return: (column_id, exists) tuple where:
 
-        column_id is a string like "data_date_q_d1b3693e"
+            column_id is the valid column id. If the column is from version 1
+            of the report builder, it will be converted to the current version.
+
+            exists = True if column corresponds to a question/case property in
+            the current version of this form/case configuration. May be False
+            if the user makes a report, modifies the app, then edits the report.
         """
-        return column_id in self._report_columns_by_column_id
+        if column_id in self._report_columns_by_column_id:
+            return column_id, True
 
-    def _convert_v1_column_id_to_current_format(self, column_id):
-        """
-        Assuming column_id does not exist, assume it's from version 1 of the report builder, and attempt to convert
-        it to the current version.
+        # This is needed because previously hidden value questions and case
+        # property columns didn't have a datatype in their ids, but the builder
+        # now expects that, so this attempts to just append a datatype.
+        possibly_corrected_column_id = column_id + "_string"
+        if possibly_corrected_column_id in self._report_columns_by_column_id:
+            return possibly_corrected_column_id, True
 
-        This is needed because previously hidden value questions and case property columns didn't have a datatype
-        in their ids, but the builder now expects that, so this attempts to just append a datatype.
-        """
-        return column_id + "_string"
-
+        return column_id, False
 
     def _get_multiselect_indicator_id(self, column_field, indicators):
         """
@@ -1193,12 +1196,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 indicator_id = mselect_indicator_id or c['field']
                 display = c['display']
                 agg = c.get("aggregation")
-                exists = self._column_exists(indicator_id)
-                if not exists:
-                    possibly_corrected_column_id = self._convert_v1_column_id_to_current_format(indicator_id)
-                    if self._column_exists(possibly_corrected_column_id):
-                        exists = True
-                        indicator_id = possibly_corrected_column_id
+                indicator_id, exists = self._check_and_update_column(indicator_id)
 
                 if mselect_indicator_id:
                     if mselect_indicator_id not in added_multiselect_columns:
