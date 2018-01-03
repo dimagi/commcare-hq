@@ -68,7 +68,7 @@ class DomainInvoiceFactory(object):
                 )
 
     def _get_subscriptions(self):
-        subscriptions = Subscription.objects.filter(
+        subscriptions = Subscription.visible_objects.filter(
             Q(date_end=None) | (
                 Q(date_end__gt=self.date_start)
                 & Q(date_end__gt=F('date_start'))

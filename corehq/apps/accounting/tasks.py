@@ -79,7 +79,7 @@ def _activate_subscription(subscription):
 
 
 def activate_subscriptions(based_on_date=None):
-    starting_subscriptions = Subscription.objects.filter(
+    starting_subscriptions = Subscription.visible_objects.filter(
         is_active=False,
     )
     if based_on_date:
@@ -130,7 +130,7 @@ def _deactivate_subscription(subscription):
 
 
 def deactivate_subscriptions(based_on_date=None):
-    ending_subscriptions = Subscription.objects.filter(
+    ending_subscriptions = Subscription.visible_objects.filter(
         is_active=True,
     )
     if based_on_date:
@@ -150,7 +150,7 @@ def deactivate_subscriptions(based_on_date=None):
 
 def warn_subscriptions_still_active(based_on_date=None):
     ending_date = based_on_date or datetime.date.today()
-    subscriptions_still_active = Subscription.objects.filter(
+    subscriptions_still_active = Subscription.visible_objects.filter(
         date_end__lte=ending_date,
         is_active=True,
     )
@@ -160,7 +160,7 @@ def warn_subscriptions_still_active(based_on_date=None):
 
 def warn_subscriptions_not_active(based_on_date=None):
     based_on_date = based_on_date or datetime.date.today()
-    subscriptions_not_active = Subscription.objects.filter(
+    subscriptions_not_active = Subscription.visible_objects.filter(
         Q(date_end=None) | Q(date_end__gt=based_on_date),
         date_start__lte=based_on_date,
         is_active=False,
@@ -171,7 +171,7 @@ def warn_subscriptions_not_active(based_on_date=None):
 
 def warn_active_subscriptions_per_domain_not_one():
     for domain_name in Domain.get_all_names():
-        active_subscription_count = Subscription.objects.filter(
+        active_subscription_count = Subscription.visible_objects.filter(
             subscriber__domain=domain_name,
             is_active=True,
         ).count()
@@ -317,7 +317,7 @@ def remind_dimagi_contact_subscription_ending_60_days():
 def send_subscription_reminder_emails(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(
+    ending_subscriptions = Subscription.visible_objects.filter(
         date_end=date_in_n_days, do_not_email_reminder=False, is_trial=False
     )
     for subscription in ending_subscriptions:
@@ -335,7 +335,7 @@ def send_subscription_reminder_emails(num_days):
 def send_subscription_reminder_emails_dimagi_contact(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = (Subscription.objects
+    ending_subscriptions = (Subscription.visible_objects
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
                             .filter(do_not_email_reminder=False)
@@ -455,7 +455,7 @@ def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
 
-    ending_in_forty_days = [sub for sub in Subscription.objects.filter(
+    ending_in_forty_days = [sub for sub in Subscription.visible_objects.filter(
             date_end__lte=in_forty_days,
             date_end__gte=today,
             is_active=True,
@@ -575,7 +575,7 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
 
 
 def ensure_explicit_community_subscription(domain_name, from_date):
-    if not Subscription.objects.filter(
+    if not Subscription.visible_objects.filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,
         subscriber__domain=domain_name,
@@ -584,7 +584,7 @@ def ensure_explicit_community_subscription(domain_name, from_date):
 
 
 def assign_explicit_community_subscription(domain_name, start_date, account=None):
-    future_subscriptions = Subscription.objects.filter(
+    future_subscriptions = Subscription.visible_objects.filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
     )

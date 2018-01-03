@@ -981,11 +981,16 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
-class SubscriptionManager(models.Manager):
+class VisibleSubscriptionManager(models.Manager):
 
     def get_queryset(self):
-        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
+        return super(VisibleSubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
+
+class DisabledManager(models.Manager):
+
+    def get_queryset(self):
+        raise NotImplementedError
 
 class Subscription(models.Model):
     """
@@ -1026,7 +1031,9 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
 
-    objects = SubscriptionManager()
+    visible_objects = VisibleSubscriptionManager()
+    visible_and_suppressed_objects = models.Manager()
+    objects = DisabledManager()
 
     class Meta:
         app_label = 'accounting'
@@ -1075,7 +1082,7 @@ class Subscription(models.Model):
 
     @property
     def next_subscription_filter(self):
-        return (Subscription.objects.
+        return (Subscription.visible_objects.
                 filter(subscriber=self.subscriber, date_start__gt=self.date_start).
                 exclude(pk=self.pk).
                 filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
@@ -1100,7 +1107,7 @@ class Subscription(models.Model):
         conflicts with other subscriptions related to this subscriber.
         """
         assert date_start is not None
-        for sub in Subscription.objects.filter(
+        for sub in Subscription.visible_objects.filter(
             subscriber=self.subscriber,
         ).exclude(
             id=self.id,
@@ -1541,7 +1548,7 @@ class Subscription(models.Model):
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name):
         try:
-            return cls.objects.select_related(
+            return cls.visible_objects.select_related(
                 'plan_version__role'
             ).get(
                 is_active=True,
@@ -1578,7 +1585,7 @@ class Subscription(models.Model):
         date_start = date_start or today
 
         # find subscriptions that end in the future / after this subscription
-        available_subs = Subscription.objects.filter(
+        available_subs = Subscription.visible_objects.filter(
             subscriber=subscriber,
         )
 
@@ -1625,7 +1632,7 @@ class Subscription(models.Model):
             return last_subscription
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        subscription = Subscription.objects.create(
+        subscription = Subscription.visible_objects.create(
             account=account,
             plan_version=plan_version,
             subscriber=subscriber,
@@ -1655,7 +1662,7 @@ class Subscription(models.Model):
                                            date_start=None):
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         date_start = date_start or datetime.date.today()
-        last_subscription = Subscription.objects.filter(
+        last_subscription = Subscription.visible_objects.filter(
             subscriber=subscriber, date_end=date_start
         )
         if not last_subscription.exists():
