@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import inspect
 import json
 import uuid
-from StringIO import StringIO
+from io import StringIO
 from collections import Counter
 from datetime import datetime
 

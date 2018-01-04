@@ -4,7 +4,7 @@ import uuid
 import functools
 import json
 import logging
-from StringIO import StringIO
+from io import StringIO
 
 import mock
 import os

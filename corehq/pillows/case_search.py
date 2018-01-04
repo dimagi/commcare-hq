@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import traceback
 from collections import OrderedDict
-from cStringIO import StringIO
+from io import StringIO
 
 from django.db import ProgrammingError
 from django.core.mail import mail_admins

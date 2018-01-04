@@ -3,7 +3,7 @@ import six.moves.html_parser
 import json
 import socket
 import uuid
-from StringIO import StringIO
+from io import StringIO
 from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 

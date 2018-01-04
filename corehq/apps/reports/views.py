@@ -22,7 +22,7 @@ import langcodes
 import os
 import pytz
 import re
-from StringIO import StringIO
+from io import StringIO
 import tempfile
 from six.moves.urllib.error import URLError
 

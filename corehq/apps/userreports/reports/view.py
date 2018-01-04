@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import json
-from StringIO import StringIO
+from io import StringIO
 from contextlib import contextmanager, closing
 from datetime import datetime
 

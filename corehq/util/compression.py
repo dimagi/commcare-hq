@@ -1,6 +1,6 @@
 # http://rosettacode.org/wiki/LZW_compression#Python
 from __future__ import absolute_import
-from cStringIO import StringIO
+from io import StringIO
 from six.moves import range
 
 
