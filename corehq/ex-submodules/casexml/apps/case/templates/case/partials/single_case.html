@@ -17,7 +17,7 @@
 <div id="tabbed-content-container">
     <div class="row">
         <div class="col-sm-12">
-            {% render_tables default_properties %}
+            {% include "hqwebapp/proptable/property_table.html" with tables=default_properties %}
         </div>
     </div>
     <div class="row">
@@ -45,7 +45,7 @@
                 {% if dynamic_properties %}
                 <div class="tab-pane active" id="properties">
                     <div class="row-fluid">
-                        {% render_tables dynamic_properties %}
+                        {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties %}
                     </div>
                 </div><!-- end properties tab -->
                 {% endif %}

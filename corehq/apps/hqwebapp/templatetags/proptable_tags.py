@@ -235,20 +235,6 @@ def get_tables_as_columns(*args, **kwargs):
     return sections
 
 
-@register.simple_tag
-def render_tables(tables):
-    return render_to_string("hqwebapp/proptable/property_table.html", {
-        "tables": tables,
-    })
-
-
-@register.simple_tag
-def render_tables_as_dl(tables):
-    return render_to_string("hqwebapp/proptable/dl_property_table.html", {
-        "tables": tables,
-    })
-
-
 def get_default_definition(keys, num_columns=1, name=None, assume_phonetimes=True):
     """
     Get a default single table layout definition for `keys` split across
