@@ -242,7 +242,6 @@ class CaseAlertScheduleInstanceRefresher(ScheduleInstanceRefresher):
         return False
 
 
-
 class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
 
     def __init__(self, case, action_definition, rule, schedule,

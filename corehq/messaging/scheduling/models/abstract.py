@@ -51,9 +51,6 @@ class Schedule(models.Model):
     def set_first_event_due_timestamp(self, instance, start_date=None):
         raise NotImplementedError()
 
-    def move_to_next_event(self, instance):
-        raise NotImplementedError()
-
     def get_current_event_content(self, instance):
         raise NotImplementedError()
 

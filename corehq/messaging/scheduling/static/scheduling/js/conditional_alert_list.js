@@ -48,7 +48,6 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 {
                     "targets": [3],
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
                         var locked_for_editing = row[row.length - 3];
                         var rule_progress_pct = row[row.length - 2];
 
@@ -96,7 +95,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
         function reloadTable() {
             table.fnDraw(false);
             setTimeout(reloadTable, 10000);
-        };
+        }
 
         setTimeout(reloadTable, 10000);
 
