@@ -74,7 +74,7 @@ class HtmlExportWriterTests(SimpleTestCase):
         table = (headers, row, row, row)
         export_tables = (('Spam', table),)
 
-        with closing(io.StringIO()) as file_:
+        with closing(io.BytesIO()) as file_:
             export_from_tables(export_tables, file_, Format.HTML)
             html_string = file_.getvalue()
 

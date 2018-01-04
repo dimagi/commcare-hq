@@ -500,7 +500,7 @@ class HtmlExportWriter(OnDiskExportWriter):
             self.file.write(
                 render_to_string(
                     "couchexport/html_export.html", context
-                )
+                ).encode('utf-8')
             )
 
         write({"section": "doc_begin"})
