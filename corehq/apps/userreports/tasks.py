@@ -306,7 +306,7 @@ def save_document(doc_ids):
         indicator_config_ids = first_indicator.indicator_config_ids
 
         with timer:
-            for doc in doc_store.iter_documents(doc_ids):
+            for doc in doc_store.iter_documents(indicator_by_doc_id.keys()):
                 indicator = indicator_by_doc_id[doc['_id']]
                 successfully_processed, to_remove = _save_document_helper(indicator, doc)
                 if successfully_processed:
