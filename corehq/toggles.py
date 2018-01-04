@@ -298,7 +298,9 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
             return self.default_randomness
-        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        dynamic_randomness = getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        dynamic_randomness = float(dynamic_randomness)
+        return dynamic_randomness
 
 
 # if no namespaces are specified the user namespace is assumed
