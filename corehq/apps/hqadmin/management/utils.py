@@ -46,15 +46,11 @@ def _get_pr_numbers(last_deploy, current_deploy):
     current_deploy_sha = repo.get_commit(current_deploy).sha
     comparison = repo.compare(last_deploy_sha, current_deploy_sha)
 
-    merge_commits = [
-        repo_commit for repo_commit in comparison.commits
+    return [
+        int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1))
+        for repo_commit in comparison.commits
         if repo_commit.commit.message.startswith('Merge pull request')
     ]
-    pr_numbers = [
-        int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1))
-        for repo_commit in merge_commits
-    ]
-    return pr_numbers
 
 
 def _get_pr_info(pr_number):
