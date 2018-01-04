@@ -26,7 +26,7 @@ def hack_local_url(url):
 
 
 def rebuild_stream(response_iter):
-    data = io.StringIO()
+    data = io.BytesIO()
     try:
         while True:
             payload = next(response_iter)
