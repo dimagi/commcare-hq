@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import re
 from collections import defaultdict
-from github3 import GitHub
+from github import Github
 from django.template.loader import render_to_string
 import requests
 from gevent.pool import Pool
@@ -41,10 +41,19 @@ def get_deploy_email_message_body(environment, user, compare_url):
 
 
 def _get_pr_numbers(last_deploy, current_deploy):
-    repo = GitHub().repository('dimagi', 'commcare-hq')
-    comparison = repo.compare_commits(last_deploy, current_deploy)
+    repo = Github().get_organization('dimagi').get_repo('commcare-hq')
+    last_deploy_sha = repo.get_commit(last_deploy).sha
+    current_deploy_sha = repo.get_commit(current_deploy).sha
+    comparison = repo.compare(last_deploy_sha, current_deploy_sha)
 
-    pr_numbers = [int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1)) for repo_commit in [repo_commit for repo_commit in comparison.commits if repo_commit.commit.message.startswith('Merge pull request')]]
+    merge_commits = [
+        repo_commit for repo_commit in comparison.commits
+        if repo_commit.commit.message.startswith('Merge pull request')
+    ]
+    pr_numbers = [
+        int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1))
+        for repo_commit in merge_commits
+    ]
     return pr_numbers
 
 
