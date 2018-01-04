@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import inspect
 import json
 import uuid
-from io import StringIO
+from io import BytesIO
 from collections import Counter
 from datetime import datetime
 
@@ -67,7 +67,7 @@ class BaseDumpLoadTest(TestCase):
         models = list(expected_object_counts)
         self._check_signals_handle_raw(models)
 
-        output_stream = StringIO()
+        output_stream = BytesIO()
         SqlDataDumper(self.domain_name, []).dump(output_stream)
 
         self.delete_sql_data()
