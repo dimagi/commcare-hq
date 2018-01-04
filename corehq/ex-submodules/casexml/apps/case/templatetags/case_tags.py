@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from functools import partial
 import copy
 import datetime
+import math
 import numbers
 import pytz
 import json
@@ -278,9 +279,12 @@ def render_case(request, case, options):
 
     repeat_records = get_repeat_records_by_payload_id(case.domain, case.case_id)
 
+    dynamic_properties_per_page = 10
     return render_to_string("case/partials/single_case.html", {
         "default_properties_as_table": default_properties,
         "dynamic_properties": dynamic_data,
+        "dynamic_properties_pages": range(int(math.ceil(len(dynamic_data) / float(dynamic_properties_per_page)))),
+        "dynamic_properties_per_page": dynamic_properties_per_page,
         "dynamic_properties_as_table": dynamic_properties,
         "case": wrapped_case.case,
         "case_actions": mark_safe(json.dumps(wrapped_case.actions())),

@@ -176,7 +176,8 @@
 <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
 <script src="{% static "case/js/case_details.js" %}"></script>
 
-<div class="modal fade" id="edit-dynamic-properties" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<div class="modal fade" id="edit-dynamic-properties" tabindex="-1"
+     data-total-pages="{{ dynamic_properties_pages|length }}" data-items-per-page="{{ dynamic_properties_per_page }}">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="{% url "edit_case" case.domain case.case_id %}">
@@ -189,7 +190,7 @@
                 </div>
                 <div class="modal-body">
                     {% for key, value in dynamic_properties.items %}
-                        <div class="form-group container-fluid">
+                        <div class="form-group container-fluid" data-bind="visible: visibleItems.indexOf({{ forloop.counter0 }}) != -1">
                             <label class="col-sm-6 control-label">{{ key }}</label>
                             <div class="col-sm-6">
                                 <input type="text" class="form-control" value="{% html_attr value %}" name="{{ key }}" />
@@ -198,6 +199,19 @@
                     {% endfor %}
                 </div>
                 <div class="modal-footer">
+                    {% if dynamic_properties_pages|length > 1 %}
+                        <ul class="pagination pull-left">
+                            <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
+                            {% for page in dynamic_properties_pages %}
+                                <li data-bind="css: {active: currentPage() == {{ forloop.counter }}}">
+                                    <a href="#" data-bind="click: function() { currentPage({{ forloop.counter }}); }">
+                                        {{ forloop.counter }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                            <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
+                        </ul>
+                    {% endif %}
                     <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                     <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
                 </div>
