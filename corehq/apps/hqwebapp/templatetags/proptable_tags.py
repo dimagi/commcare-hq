@@ -236,27 +236,21 @@ def get_tables_as_columns(*args, **kwargs):
 
 
 @register.simple_tag
-def render_tables(tables, options=None):
-    options = options or {}
-    id = options.get('id')
-    style = options.get('style', 'dl')
-    assert style in ('table', 'dl')
+def render_tables(tables):
+    return render_to_string("hqwebapp/proptable/property_table.html", {
+        "tables": tables,
+    })
 
-    if id is None:
-        import uuid
-        id = "a" + str(uuid.uuid4())
-   
-    if style == 'table':
-        return render_to_string("hqwebapp/proptable/property_table.html", {
-            "tables": tables,
-            "id": id
-        })
 
-    else:
-        return render_to_string("hqwebapp/proptable/dl_property_table.html", {
-            "tables": tables,
-            "id": id,
-        })
+@register.simple_tag
+def render_tables_as_dl(tables):
+    import uuid
+    id = "a" + str(uuid.uuid4())
+
+    return render_to_string("hqwebapp/proptable/dl_property_table.html", {
+        "tables": tables,
+        "id": id,
+    })
 
 
 def get_default_definition(keys, num_columns=1, name=None, assume_phonetimes=True):

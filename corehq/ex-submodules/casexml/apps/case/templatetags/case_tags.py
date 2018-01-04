@@ -280,13 +280,7 @@ def render_case(case, options):
 
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
-        "default_properties_options": {
-            "style": "table"
-        },
         "dynamic_properties": dynamic_properties,
-        "dynamic_properties_options": {
-            "style": "table"
-        },
         "case": wrapped_case.case,
         "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
         "timezone": timezone,
