@@ -192,14 +192,13 @@ class FormsInDateExpressionSpec(JsonObject):
 
     @staticmethod
     def _get_filtered_forms_from_es(case_id, xform_ids, context):
-        cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids))
+        es_toggle_enabled = ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER)
+        cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids),
+                     es_toggle_enabled)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        source = (
-            True if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER)
-            else ['form.meta.timeEnd', 'xmlns', '_id']
-        )
+        source = True if es_toggle_enabled else ['form.meta.timeEnd', 'xmlns', '_id']
         forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
         context.set_cache_value(cache_key, forms)
         return forms
