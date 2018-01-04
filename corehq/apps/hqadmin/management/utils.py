@@ -42,7 +42,9 @@ def get_deploy_email_message_body(environment, user, compare_url):
 
 def _get_pr_numbers(last_deploy, current_deploy):
     repo = Github().get_organization('dimagi').get_repo('commcare-hq')
-    comparison = repo.compare(last_deploy, current_deploy)
+    last_deploy_sha = repo.get_commit(last_deploy).sha
+    current_deploy_sha = repo.get_commit(current_deploy).sha
+    comparison = repo.compare(last_deploy_sha, current_deploy_sha)
 
     merge_commits = [
         repo_commit for repo_commit in comparison.commits
