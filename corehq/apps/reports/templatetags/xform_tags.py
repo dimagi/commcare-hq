@@ -89,10 +89,7 @@ def render_form(form, domain, options):
         "domain": domain,
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,
-        "form_table_options": {
-            # todo: wells if display config has more than one column
-            "put_loners_in_wells": False
-        },
+        "form_table_options": {},
         "side_pane": side_pane,
     }
 
