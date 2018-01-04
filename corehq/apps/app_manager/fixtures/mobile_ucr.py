@@ -60,11 +60,7 @@ class BaseReportFixturesProvider(FixtureProvider):
             return False
 
         apps = self._get_apps(restore_state, restore_user)
-        report_configs = list(self._get_report_configs(apps).values())
-        if not report_configs:
-            return False
-
-        return True
+        return bool(self._get_report_configs(apps))
 
     def _get_apps(self, restore_state, restore_user):
         app_aware_sync_app = restore_state.params.app
