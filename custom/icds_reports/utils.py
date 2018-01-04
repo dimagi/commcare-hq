@@ -484,7 +484,7 @@ def get_child_locations(domain, location_id, show_test):
     if not show_test:
         return [
             sql_location for sql_location in locations
-            if sql_location.metadata.get('is_test_location', 'real') == 'test'
+            if sql_location.metadata.get('is_test_location', 'real') != 'test'
         ]
     else:
         return list(locations)

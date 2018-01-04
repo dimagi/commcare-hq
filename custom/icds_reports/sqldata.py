@@ -8,7 +8,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn, CountUniqueColumn
-from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter, GT, GTE
+from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter, GT, GTE, LTE
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
@@ -1859,6 +1859,9 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     table_name = 'child_health_monthly_view'
 
     def __init__(self, config=None, loc_level=1, show_test=False):
+        config.update({
+            '5_years': 60,
+        })
         self.config = config
         self.loc_level = loc_level
         self.show_test = show_test
@@ -1897,9 +1900,9 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
     @property
     def filters(self):
-        filters = []
+        filters = [LTE('age_in_months', '5_years')]
         for key, value in six.iteritems(self.config):
-            if key == 'domain':
+            if key == 'domain' or key == '5_years':
                 continue
             elif key == 'filters':
                 filters.append(self._build_additional_filters(value))
