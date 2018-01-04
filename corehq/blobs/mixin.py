@@ -96,8 +96,6 @@ class BlobMixin(Document):
             content = BytesIO(content.encode("utf-8"))
         elif isinstance(content, bytes):
             content = BytesIO(content)
-        else:
-            raise Exception
 
         bucket = self._blobdb_bucket()
         # do we need to worry about BlobDB reading beyond content_length?
