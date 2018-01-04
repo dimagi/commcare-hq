@@ -46,6 +46,7 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
+  - np/py3/github # NP 1/4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
