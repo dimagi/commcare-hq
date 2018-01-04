@@ -8,13 +8,6 @@ from lxml import etree
 import os
 from corehq.apps.app_manager.models import Application, RemoteApp
 
-try:
-    from guppy import hpy
-    track_perf = True
-except ImportError:
-    track_perf = False
-
-
 _parser = etree.XMLParser(remove_blank_text=True)
 
 
@@ -78,11 +71,7 @@ class Command(BaseCommand):
                 app.domain = "test"
             build_path = os.path.join(path, build_slug, slug)
             print(' Creating files...')
-            if track_perf:
-                with record_performance_stats(perfpath, slug):
-                    files = app.create_all_files()
-            else:
-                files = app.create_all_files()
+            files = app.create_all_files()
 
             self.write_files(files, build_path)
 
