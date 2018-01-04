@@ -149,7 +149,6 @@ hqDefine('userreports/js/builder_view_models', function () {
             calculation: self.calculation(),
             pre_value: self.filterValue(),
             pre_operator: self.filterOperator(),
-            exists_in_current_version: self.existsInCurrentVersion(),
         };
     };
     /**
