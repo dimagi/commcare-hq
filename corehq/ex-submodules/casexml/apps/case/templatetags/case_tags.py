@@ -216,7 +216,7 @@ def normalize_date(val):
 
 
 @register.simple_tag
-def render_case(case, options):
+def render_case(request, case, options):
     """
     Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
     Change to kwargs when we're on a version of Django that does.
@@ -296,7 +296,7 @@ def render_case(case, options):
         "show_transaction_export": show_transaction_export,
         "xform_api_url": reverse('single_case_forms', args=[case.domain, case.case_id]),
         "repeat_records": repeat_records,
-    })
+    }, request=request)
 
 
 def get_inverse(val):

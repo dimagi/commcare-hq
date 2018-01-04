@@ -18,7 +18,7 @@
 
 {% block page_content %}
 <div class="hq-generic-report">
-    {% render_case case case_display_options %}
+    {% render_case request case case_display_options %}
     {% if can_edit_data %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
