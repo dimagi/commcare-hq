@@ -313,14 +313,8 @@ var reportBuilder = function () {  // eslint-disable-line
         });
         self.previewError = ko.observable(false);
         self._suspendPreviewRefresh = false;
-        self._pendingUpdate = false;
         self.refreshPreview = function (serializedColumns) {
-            if (self._suspendPreviewRefresh) {
-                self._pendingUpdate = true;
-            } else {
-                self._suspendPreviewRefresh = true;
-                self._pendingUpdate = false;
-
+            if (!self._suspendPreviewRefresh) {
                 serializedColumns = typeof serializedColumns !== "undefined" ? serializedColumns : self.columnList.serializedProperties();
                 $('#preview').hide();
 
@@ -341,21 +335,9 @@ var reportBuilder = function () {  // eslint-disable-line
                         }
                     )),
                     dataType: 'json',
-                    success: function (data) {
-                        self._suspendPreviewRefresh = false;
-                        if (self._pendingUpdate) {
-                            self.refreshPreview();
-                        } else {
-                            self.renderReportPreview(data);
-                        }
-                    },
+                    success: self.renderReportPreview,
                     error: function () {
-                        self._suspendPreviewRefresh = false;
-                        if (self._pendingUpdate) {
-                            self.refreshPreview();
-                        } else {
-                            self.previewError(true);
-                        }
+                        self.previewError(true);
                     },
                 });
             }
