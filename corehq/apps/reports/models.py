@@ -482,7 +482,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except Exception:
             pass
 
-        if self.report.is_deprecated:
+        if getattr(self.report, 'is_deprecated', False):
             return ReportContent(
                 self.report.deprecation_email_message or
                 _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
