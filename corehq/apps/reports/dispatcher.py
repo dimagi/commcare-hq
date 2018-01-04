@@ -87,8 +87,8 @@ class ReportDispatcher(View):
             project = None
 
         def process(reports):
-            if project and callable(reports):
-                reports = reports(project)
+            if callable(reports):
+                reports = reports(project) if project else tuple()
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
