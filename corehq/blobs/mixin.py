@@ -94,7 +94,7 @@ class BlobMixin(Document):
 
         if isinstance(content, six.text_type):
             content = BytesIO(content.encode("utf-8"))
-        elif isinstance(content, bytes):
+        elif isinstance(content, six.binary_type):
             content = BytesIO(content)
 
         bucket = self._blobdb_bucket()
