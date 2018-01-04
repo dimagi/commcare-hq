@@ -10,6 +10,7 @@ from corehq.apps.builds.models import CommCareBuild
 from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.decorators.memoized import memoized
 from six.moves import input
+import six
 
 
 class Command(BaseCommand):
@@ -80,7 +81,7 @@ class Command(BaseCommand):
     @memoized
     def jenkin_projects(self):
         print("Pinging Jenkins build server. Pelase wait...")
-        return list(self.build_server.iterkeys())
+        return list(six.iterkeys(self.build_server))
 
     @property
     @memoized

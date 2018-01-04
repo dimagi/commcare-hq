@@ -135,7 +135,7 @@ class ItemListsProvider(FixtureProvider):
             if data_type not in items_by_type:
                 items_by_type[data_type] = []
         fixtures = []
-        for data_type, items in sorted(items_by_type.items(), key=tag):
+        for data_type, items in sorted(list(items_by_type.items()), key=tag):
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
             items = sorted(items, key=sort_key)

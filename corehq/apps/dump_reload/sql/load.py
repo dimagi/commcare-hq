@@ -75,7 +75,7 @@ class SqlDataLoader(DataLoader):
         if chunk:
             _process_chunk(chunk)
 
-        _reset_sequences(load_stats_by_db.values())
+        _reset_sequences(list(load_stats_by_db.values()))
 
         loaded_model_counts = Counter()
         for db_stats in load_stats_by_db.values():
@@ -111,7 +111,7 @@ def load_objects(objects):
 
         _update_stats(load_stats_by_db, [load_stat])
 
-    return load_stats_by_db.values()
+    return list(load_stats_by_db.values())
 
 
 def _update_stats(current_stats_by_db, new_stats):
@@ -175,7 +175,7 @@ def _group_objects_by_db(objects):
             db_alias = ShardAccessor.get_database_for_doc(doc_id)
 
         objects_by_db[db_alias].append(obj)
-    return objects_by_db.items()
+    return list(objects_by_db.items())
 
 
 def _get_doc_id(app_label, model_json):

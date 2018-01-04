@@ -261,7 +261,7 @@ class TestDumpLoadToggles(SimpleTestCase):
             toggle.slug: Toggle(_id=generate_toggle_id(toggle.slug), slug=toggle.slug)
             for toggle in random.sample(all_toggles(), 3)
         }
-        toggles = mocked_toggles.values()
+        toggles = list(mocked_toggles.values())
         domain_item = namespaced_item(self.domain_name, NAMESPACE_DOMAIN)
         toggles[0].enabled_users = [domain_item]
         toggles[1].enabled_users = ['user1', 'other-user', 'user2']

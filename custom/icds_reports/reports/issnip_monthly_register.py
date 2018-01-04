@@ -86,12 +86,12 @@ class ISSNIPMonthlyReport(object):
     @property
     def infrastructure_data(self):
         data = AWCInfrastructureUCR(self.config).data
-        return data.values()[-1] if data else None
+        return list(data.values())[-1] if data else None
 
     @property
     def vhnd_data(self):
         data = VHNDFormUCR(self.config).data
-        return data.values()[-1] if data else None
+        return list(data.values())[-1] if data else None
 
     @property
     def ccs_record_monthly_ucr(self):

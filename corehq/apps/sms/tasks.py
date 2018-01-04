@@ -353,7 +353,7 @@ def _sync_case_phone_number(contact_case):
         if len(phone_numbers) == 0:
             phone_number = None
         elif len(phone_numbers) == 1:
-            phone_number = phone_numbers.values()[0]
+            phone_number = list(phone_numbers.values())[0]
         else:
             # We use locks to make sure this scenario doesn't happen, but if it
             # does, just clear the phone number entries and the right one will

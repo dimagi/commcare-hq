@@ -972,7 +972,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     @memoized
     def selected_form_data(self):
-        forms = FormsByApplicationFilter.get_value(self.request, self.domain).values()
+        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
         if len(forms) == 1 and forms[0]['xmlns']:
             return forms[0]
         non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
@@ -1464,10 +1464,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
-            all_users = flatten_list(self.users_by_group.values())
+            all_users = flatten_list(list(self.users_by_group.values()))
             all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
             all_users.extend([user for user in self.get_admins_and_demo_users()])
-            return dict([(user['user_id'], user) for user in all_users]).values()
+            return list(dict([(user['user_id'], user) for user in all_users]).values())
 
     @property
     def user_ids(self):

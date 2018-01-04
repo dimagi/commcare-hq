@@ -854,7 +854,7 @@ class XForm(WrappedNode):
         if not node_group:
             return None
 
-        lang = lang or self.translations().keys()[0]
+        lang = lang or list(self.translations().keys())[0]
         text_node = node_group.nodes.get(lang)
         if not text_node:
             return None
@@ -930,7 +930,7 @@ class XForm(WrappedNode):
         if not self.exists():
             return []
 
-        return self.translations().keys()
+        return list(self.translations().keys())
 
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, form=None):
@@ -2028,7 +2028,7 @@ def _index_on_fields(dicts, fields):
 
 
 VELLUM_TYPE_INDEX = _index_on_fields(
-    [{field: value for field, value in (dct.items() + [('name', key)])}
+    [{field: value for field, value in (list(dct.items()) + [('name', key)])}
      for key, dct in VELLUM_TYPES.items()],
     ('tag', 'type', 'media', 'appearance')
 )

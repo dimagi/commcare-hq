@@ -28,7 +28,7 @@ def total_size(o, handlers={}, verbose=False):
         print(total_size(d, verbose=True))
 
     """
-    dict_handler = lambda d: chain.from_iterable(d.items())
+    dict_handler = lambda d: chain.from_iterable(list(d.items()))
     all_handlers = {
         tuple: iter,
         list: iter,

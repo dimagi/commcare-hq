@@ -49,4 +49,4 @@ class ExportRawTest(TestCase):
             for key in set(headers.keys()) | set(data.keys()):
                 tables[key] = itertools.chain([headers[key]], data[key])
 
-            export_from_tables(tables.items(), buffer, format=Format.JSON)
+            export_from_tables(list(tables.items()), buffer, format=Format.JSON)

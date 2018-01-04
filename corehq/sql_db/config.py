@@ -72,7 +72,7 @@ class PartitionConfig(object):
 
         shards_seen = set()
         previous_range = None
-        for group, shard_range, in sorted(self.partition_config['shards'].items(), key=lambda x: x[1]):
+        for group, shard_range, in sorted(list(self.partition_config['shards'].items()), key=lambda x: x[1]):
             if not previous_range:
                 if shard_range[0] != 0:
                     raise NotZeroStartError('Shard numbering must start at 0')
