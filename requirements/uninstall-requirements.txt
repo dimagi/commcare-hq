@@ -1,3 +1,2 @@
-guppy
 djtables
 xlutils
