@@ -279,6 +279,11 @@ class DyanmicPredictablyRandomToggleTests(TestCase):
     def test_override_default_randomness_string(self):
         self._run_toggle_overrride_test('.5', .5, 'string')
 
+    def test_override_default_randomness_invalid(self):
+        default_randomness = .1
+        self._run_toggle_overrride_test('not-a-number', default_randomness, 'invalid',
+                                        default_randomness=default_randomness)
+
     def _run_toggle_overrride_test(self, input_override, expected_override, test_id, default_randomness=0):
         toggle = DynamicallyPredictablyRandomToggle(
             'override_dynamic_toggle_{}'.format(test_id),
