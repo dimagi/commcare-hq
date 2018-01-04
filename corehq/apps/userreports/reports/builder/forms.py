@@ -405,14 +405,17 @@ class DataSourceBuilder(object):
 
         indicators = OrderedDict()
         for column in columns:
-            column_option = self.report_column_options[column['property']]
-            for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
-                indicators.setdefault(str(indicator), indicator)
+            if column['exists_in_current_version']:
+                column_option = self.report_column_options[column['property']]
+                for indicator in column_option.get_indicators(column['calculation'],
+                                                              is_multiselect_chart_report):
+                    indicators.setdefault(str(indicator), indicator)
 
         for filter_ in filters:
-            property_ = self.data_source_properties[filter_['property']]
-            indicator = property_.to_report_filter_indicator(filter_)
-            indicators.setdefault(str(indicator), indicator)
+            if filter_['exists_in_current_version']:
+                property_ = self.data_source_properties[filter_['property']]
+                indicator = property_.to_report_filter_indicator(filter_)
+                indicators.setdefault(str(indicator), indicator)
 
         return list(indicators.values())
 
