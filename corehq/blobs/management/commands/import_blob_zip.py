@@ -24,7 +24,7 @@ class Command(BaseCommand):
         for filename in from_zip.namelist():
             bucket = '/'.join(filename.split('/')[:-1])
             identifier = filename.split('/')[-1]
-            blob = io.StringIO(from_zip.read(filename))
+            blob = io.BytesIO(from_zip.read(filename))
             # copy_blob only needs the identifier
             blob_info = BlobInfo(identifier=identifier, length="", digest="")
             try:
