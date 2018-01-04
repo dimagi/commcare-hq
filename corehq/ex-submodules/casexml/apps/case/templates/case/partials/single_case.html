@@ -17,14 +17,19 @@
 <div id="tabbed-content-container">
     <div class="row">
         <div class="col-sm-12">
-            {% include "hqwebapp/proptable/property_table.html" with tables=default_properties %}
+            {% include "hqwebapp/proptable/property_table.html" with tables=default_properties_as_table %}
         </div>
     </div>
     <div class="row">
         <div class="col-sm-12">
             <ul class="nav nav-tabs" style="margin-bottom: 10px;">
                 {% if dynamic_properties %}
-                <li class="active"><a href="#properties" data-toggle="tab">{% trans "Case Properties" %}</a></li>
+                <li class="active">
+                    <a href="#properties" data-toggle="tab">
+                        {% trans "Case Properties" %}
+                        <i class="fa fa-edit clickable" id="edit-dynamic-properties-trigger"></i>
+                    </a>
+                </li>
                 {% endif %}
                 <li {% if not dynamic_properties %}class="active"{% endif %}><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
                 {% if case.has_indices %}
@@ -45,7 +50,7 @@
                 {% if dynamic_properties %}
                 <div class="tab-pane active" id="properties">
                     <div class="row-fluid">
-                        {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties %}
+                        {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
                     </div>
                 </div><!-- end properties tab -->
                 {% endif %}
@@ -170,3 +175,28 @@
 <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
 <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
 <script src="{% static "case/js/case_details.js" %}"></script>
+
+<div class="modal fade" id="edit-dynamic-properties" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{% trans "Edit Case Properties" %}</h4>
+            </div>
+            <div class="modal-body">
+                <dl class="dl-horizontal">
+                {% for key, value in dynamic_properties.items %}
+                    <dt>{{ key }}</dt>
+                    <dd>{{ value }}</dd>
+                {% endfor %}
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary">{% trans "Save" %}</button>
+            </div>
+        </div>
+    </div>
+</div>

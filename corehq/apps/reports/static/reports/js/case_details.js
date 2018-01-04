@@ -6,5 +6,9 @@ hqDefine("reports/js/case_details", function() {
             });
             return false;
         });
+
+        $("#edit-dynamic-properties-trigger").click(function() {
+            $("#edit-dynamic-properties").modal();
+        });
     });
 });

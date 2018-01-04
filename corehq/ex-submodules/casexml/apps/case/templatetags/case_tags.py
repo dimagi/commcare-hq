@@ -279,8 +279,9 @@ def render_case(case, options):
     repeat_records = get_repeat_records_by_payload_id(case.domain, case.case_id)
 
     return render_to_string("case/partials/single_case.html", {
-        "default_properties": default_properties,
-        "dynamic_properties": dynamic_properties,
+        "default_properties_as_table": default_properties,
+        "dynamic_properties": dynamic_data,
+        "dynamic_properties_as_table": dynamic_properties,
         "case": wrapped_case.case,
         "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
         "timezone": timezone,
