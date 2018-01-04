@@ -253,13 +253,11 @@ def render_tables(tables, options=None):
         })
 
     else:
-        adjust_heights = options.get('adjust_heights', True)
         put_loners_in_wells = options.get('put_loners_in_wells', True)
 
         return render_to_string("hqwebapp/proptable/dl_property_table.html", {
             "tables": tables,
             "id": id,
-            "adjust_heights": adjust_heights,
             "put_loners_in_wells": put_loners_in_wells
         })
 

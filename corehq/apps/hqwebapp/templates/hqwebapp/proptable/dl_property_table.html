@@ -3,13 +3,7 @@
 
 <script>
     $(function () {
-        var id = {{ id|JSON }},
-            adjustHeights = {{ adjust_heights|JSON }};
-
-        if (!adjustHeights) {
-            return;
-        }
-
+        var id = {{ id|JSON }};
         $("#" + id).dlTableRow();
     });
 </script>
