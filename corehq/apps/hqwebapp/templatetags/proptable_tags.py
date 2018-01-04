@@ -244,12 +244,8 @@ def render_tables(tables):
 
 @register.simple_tag
 def render_tables_as_dl(tables):
-    import uuid
-    id = "a" + str(uuid.uuid4())
-
     return render_to_string("hqwebapp/proptable/dl_property_table.html", {
         "tables": tables,
-        "id": id,
     })
 
 
