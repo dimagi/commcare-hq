@@ -405,6 +405,7 @@ class DataSourceBuilder(object):
 
         indicators = OrderedDict()
         for column in columns:
+            # Property is only set if the column exists in report_column_options
             if column['property']:
                 column_option = self.report_column_options[column['property']]
                 for indicator in column_option.get_indicators(column['calculation'],
@@ -412,6 +413,7 @@ class DataSourceBuilder(object):
                     indicators.setdefault(str(indicator), indicator)
 
         for filter_ in filters:
+            # Property is only set if the filter exists in report_column_options
             if filter_['property']:
                 property_ = self.data_source_properties[filter_['property']]
                 indicator = property_.to_report_filter_indicator(filter_)
