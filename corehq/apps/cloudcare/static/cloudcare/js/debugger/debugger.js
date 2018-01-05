@@ -466,6 +466,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             return API.request(url, 'menu_debugger_content', params);
         },
         request: function(url, action, params) {
+            params['tz_offset_millis'] = FormplayerFrontend.request('timezoneOffset');
             return $.ajax({
                 type: 'POST',
                 url: url + "/" + action,

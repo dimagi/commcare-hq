@@ -8,11 +8,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
     Menus.API = {
 
-         queryFormplayer: function (params, route) {
+        queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.request('currentUser'),
                 lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
-                // JS's implementation of getTimezoneOffset() returns the offset in minutes and (inexplicably) with the sign inverted
-                timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
+                timezoneOffsetMillis = FormplayerFrontend.request('timezoneOffset'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),

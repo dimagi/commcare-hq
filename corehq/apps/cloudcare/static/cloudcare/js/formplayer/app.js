@@ -91,6 +91,11 @@ FormplayerFrontend.reqres.setHandler('lastRecordedLocation', function() {
     }
 });
 
+FormplayerFrontend.reqres.setHandler('timezoneOffset', function() {
+    // JS's implementation of getTimezoneOffset() returns the offset in minutes and (inexplicably) with the sign inverted
+    return (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
+});
+
 FormplayerFrontend.on('clearBreadcrumbs', function () {
     $('#persistent-case-tile').html("");
 });
