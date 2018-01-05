@@ -1169,139 +1169,14 @@ class TestAWCReport(TestCase):
             json.dumps({
                 "draw": 1,
                 "last_month": "May 2017",
-                "recordsTotal": 32,
+                "recordsTotal": 27,
                 "months": [
                     "May 2017",
                     "Apr 2017",
                     "Mar 2017"
                 ],
-                "recordsFiltered": 32,
+                "recordsFiltered": 27,
                 "data": [
-                    {
-                        "recorded_weight": 0,
-                        "age_in_months": 70,
-                        "current_month_stunting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "pse_days_attended": 7,
-                        "dob": "2011-07-23",
-                        "age": "5 years 10 months ",
-                        "current_month_wasting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "current_month_nutrition_status": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "case_id": "a6be5e49-9a06-42f3-862d-20b296a45942",
-                        "recorded_height": 0,
-                        "fully_immunized": "No",
-                        "person_name": "Name 4406",
-                        "sex": "F",
-                        "mother_name": "टीना पति मुकेश"
-                    },
-                    {
-                        "recorded_weight": 0,
-                        "age_in_months": 67,
-                        "current_month_stunting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "pse_days_attended": 2,
-                        "dob": "2011-10-21",
-                        "age": "5 years 7 months ",
-                        "current_month_wasting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "current_month_nutrition_status": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "case_id": "f810b284-abfc-40a0-959f-d12c8573777a",
-                        "recorded_height": 0,
-                        "fully_immunized": "No",
-                        "person_name": "Name 2991",
-                        "sex": "M",
-                        "mother_name": "सिमाबाई"
-                    },
-                    {
-                        "recorded_weight": 0,
-                        "age_in_months": 65,
-                        "current_month_stunting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "pse_days_attended": 15,
-                        "dob": "2012-01-01",
-                        "age": "5 years 4 months ",
-                        "current_month_wasting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "current_month_nutrition_status": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "case_id": "a72e7e04-c402-4da0-a316-0e7b35263f09",
-                        "recorded_height": 0,
-                        "fully_immunized": "No",
-                        "person_name": "Name 4404",
-                        "sex": "F",
-                        "mother_name": "लक्षमी बाई"
-                    },
-                    {
-                        "recorded_weight": 0,
-                        "age_in_months": 63,
-                        "current_month_stunting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "pse_days_attended": 14,
-                        "dob": "2012-02-13",
-                        "age": "5 years 3 months ",
-                        "current_month_wasting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "current_month_nutrition_status": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "case_id": "7bb65d64-9dd4-4efd-b0f4-6533a6498d4c",
-                        "recorded_height": 0,
-                        "fully_immunized": "No",
-                        "person_name": "Name 4421",
-                        "sex": "M",
-                        "mother_name": "अनीता बाई"
-                    },
-                    {
-                        "recorded_weight": 0,
-                        "age_in_months": 62,
-                        "current_month_stunting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "pse_days_attended": 17,
-                        "dob": "2012-03-27",
-                        "age": "5 years 2 months ",
-                        "current_month_wasting": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "current_month_nutrition_status": {
-                            "color": "black",
-                            "value": "Data Not Entered"
-                        },
-                        "case_id": "36f44ce2-7d99-4110-8552-1ed2181a227a",
-                        "recorded_height": 0,
-                        "fully_immunized": "No",
-                        "person_name": "Name 4413",
-                        "sex": "M",
-                        "mother_name": "विष्णु बाई"
-                    },
                     {
                         "recorded_weight": "12.8000000000000000",
                         "age_in_months": 59,
@@ -1326,8 +1201,7 @@ class TestAWCReport(TestCase):
                         "person_name": "Name 4416",
                         "sex": "F",
                         "mother_name": "रामकन्या"
-                    },
-                    {
+                    }, {
                         "recorded_weight": "14.3000000000000000",
                         "age_in_months": 59,
                         "current_month_stunting": {
@@ -1351,8 +1225,7 @@ class TestAWCReport(TestCase):
                         "person_name": "Name 4445",
                         "sex": "F",
                         "mother_name": "किरणबाई"
-                    },
-                    {
+                    }, {
                         "recorded_weight": "19.0000000000000000",
                         "age_in_months": 59,
                         "current_month_stunting": {
@@ -1376,8 +1249,7 @@ class TestAWCReport(TestCase):
                         "person_name": "Name 2617",
                         "sex": "M",
                         "mother_name": "ताराकुँवर पति राजेन्द्रसिंह"
-                    },
-                    {
+                    }, {
                         "recorded_weight": "14.6000000000000000",
                         "age_in_months": 58,
                         "current_month_stunting": {
@@ -1401,8 +1273,7 @@ class TestAWCReport(TestCase):
                         "person_name": "Name 4412",
                         "sex": "M",
                         "mother_name": "जशोदा"
-                    },
-                    {
+                    }, {
                         "recorded_weight": "14.8000000000000000",
                         "age_in_months": 58,
                         "current_month_stunting": {
@@ -1426,6 +1297,126 @@ class TestAWCReport(TestCase):
                         "person_name": "Name 4411",
                         "sex": "F",
                         "mother_name": "लक्ष्मी बाई"
+                    }, {
+                        "recorded_weight": "13.5000000000000000",
+                        "age_in_months": 58,
+                        "current_month_stunting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "pse_days_attended": 10,
+                        "dob": "2012-07-19",
+                        "age": "4 years 10 months ",
+                        "current_month_wasting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "current_month_nutrition_status": {
+                            "color": "black",
+                            "value": "Moderately underweight"
+                        },
+                        "case_id": "532f3754-e231-40ec-a861-abbb2a06dff5",
+                        "recorded_height": 0,
+                        "fully_immunized": "No",
+                        "person_name": "Name 4408",
+                        "sex": "F",
+                        "mother_name": "छनुकुवर पति चोकसिंह"
+                    }, {
+                        "recorded_weight": "14.5000000000000000",
+                        "age_in_months": 57,
+                        "current_month_stunting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "pse_days_attended": 9,
+                        "dob": "2012-08-24",
+                        "age": "4 years 9 months ",
+                        "current_month_wasting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "current_month_nutrition_status": {
+                            "color": "black",
+                            "value": "Normal weight for age"
+                        },
+                        "case_id": "4cd07ebf-abce-4345-a930-f6db7ede8996",
+                        "recorded_height": 0,
+                        "fully_immunized": "No",
+                        "person_name": "Name 4399",
+                        "sex": "F",
+                        "mother_name": "संगीताबाई पति धनसिंह"
+                    }, {
+                        "recorded_weight": "11.0000000000000000",
+                        "age_in_months": 52,
+                        "current_month_stunting": {
+                            "color": "black",
+                            "value": "Moderately stunted"
+                        },
+                        "pse_days_attended": 17,
+                        "dob": "2013-01-02",
+                        "age": "4 years 4 months ",
+                        "current_month_wasting": {
+                            "color": "black",
+                            "value": "Moderately wasted"
+                        },
+                        "current_month_nutrition_status": {
+                            "color": "red",
+                            "value": "Severely underweight"
+                        },
+                        "case_id": "c9ee2435-d7fc-4307-9c18-9d5d83d2a691",
+                        "recorded_height": "94.0000000000000000",
+                        "fully_immunized": "No",
+                        "person_name": "Name 4402",
+                        "sex": "M",
+                        "mother_name": "पोपा बाई"
+                    }, {
+                        "recorded_weight": "14.8000000000000000",
+                        "age_in_months": 51,
+                        "current_month_stunting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "pse_days_attended": 13,
+                        "dob": "2013-02-07",
+                        "age": "4 years 3 months ",
+                        "current_month_wasting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "current_month_nutrition_status": {
+                            "color": "black",
+                            "value": "Normal weight for age"
+                        },
+                        "case_id": "d44f7902-83d4-4f1d-a913-4176cf41094e",
+                        "recorded_height": 0,
+                        "fully_immunized": "No",
+                        "person_name": "Name 4414",
+                        "sex": "M",
+                        "mother_name": "भूराकुवर पति धर्मेन्द्रसिंह"
+                    }, {
+                        "recorded_weight": "12.6000000000000000",
+                        "age_in_months": 51,
+                        "current_month_stunting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "pse_days_attended": 9,
+                        "dob": "2013-02-11",
+                        "age": "4 years 3 months ",
+                        "current_month_wasting": {
+                            "color": "black",
+                            "value": "Data Not Entered"
+                        },
+                        "current_month_nutrition_status": {
+                            "color": "black",
+                            "value": "Normal weight for age"
+                        },
+                        "case_id": "71230690-c828-4863-b2c1-f61a75aed9d7",
+                        "recorded_height": 0,
+                        "fully_immunized": "No",
+                        "person_name": "Name 4407",
+                        "sex": "M",
+                        "mother_name": "ममता बाई"
                     }
                 ]
             }, cls=DjangoJSONEncoder)
