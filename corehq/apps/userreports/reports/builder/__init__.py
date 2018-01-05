@@ -63,10 +63,7 @@ def make_case_property_indicator(property_name, column_id=None, datatype=None):
     }
     if parts:
         case_expression = {
-            'type': 'root_doc',
-            'expression': {
-                'type': 'identity',
-            }
+            'type': 'identity',
         }
         for index in parts:
             case_expression = {
