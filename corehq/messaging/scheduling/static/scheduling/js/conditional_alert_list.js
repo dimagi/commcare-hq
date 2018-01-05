@@ -34,7 +34,7 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                                         class="btn btn-danger" \
                                         onclick="hqImport(\'scheduling/js/conditional_alert_list\').deleteAlert(' + id + ')" \
                                         ' + disabled + '> \
-                                <i class="fa fa-remove" aria-hidden="true"></i></button>';
+                                <i class="fa fa-remove"></i></button>';
                     },
                 },
                 {

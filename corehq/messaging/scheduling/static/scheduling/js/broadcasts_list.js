@@ -34,7 +34,7 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                         return '<button id="' + button_id + '" \
                                         class="btn btn-danger" \
                                         onclick="hqImport(\'scheduling/js/broadcasts_list\').deleteScheduledBroadcast(' + id + ')"> \
-                                <i class="fa fa-remove" aria-hidden="true"></i></button>';
+                                <i class="fa fa-remove"></i></button>';
                     },
                 },
                 {
