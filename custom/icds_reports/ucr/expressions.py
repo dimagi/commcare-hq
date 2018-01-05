@@ -375,16 +375,16 @@ def parent_id(spec, context):
         'argument_expression': {
             'type': 'indexed_case',
             'case_expression': {
-                "type": "root_doc",
-                "expression": {
-                    "type": "identity"
+                'type': 'root_doc',
+                'expression': {
+                    'type': 'identity'
                 }
             },
             'index': 'parent'
         },
-        "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
+        'value_expression': {
+            'type': 'property_name',
+            'property_name': '_id'
         }
     }
     return ExpressionFactory.from_spec(spec, context)
