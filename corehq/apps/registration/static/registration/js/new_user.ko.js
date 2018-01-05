@@ -15,40 +15,38 @@ hqDefine('registration/js/new_user.ko', function () {
     var _private = {},
         _kissmetrics = hqImport('analytix/js/kissmetrix');
 
-    _kissmetrics.whenReadyAlways(function() {
-        _private.isAbPersona = _kissmetrics.getAbTest('New User Persona Field') === 'show_persona';
-        _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
+    _private.isAbPersona = _kissmetrics.getAbTest('New User Persona Field') === 'show_persona';
+    _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
 
-        _private.rmiUrl = null;
-        _private.csrf = null;
-        _private.showPasswordFeedback = false;
-        _private.rmi = function () {
-            throw "Please call initRMI first.";
-        };
-        _private.resetEmailFeedback = function (isValidating) {
-            throw "please call setResetEmailFeedbackFn. " +
-                  "Expects boolean isValidating. " + isValidating;
-        };
-        _private.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
-            _kissmetrics.track.event("Clicked Create Account");
-        };
-        _private.getPhoneNumberFn = function () {
-            // number to return phone number
-        };
+    _private.rmiUrl = null;
+    _private.csrf = null;
+    _private.showPasswordFeedback = false;
+    _private.rmi = function () {
+        throw "Please call initRMI first.";
+    };
+    _private.resetEmailFeedback = function (isValidating) {
+        throw "please call setResetEmailFeedbackFn. " +
+              "Expects boolean isValidating. " + isValidating;
+    };
+    _private.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
+        _kissmetrics.track.event("Clicked Create Account");
+    };
+    _private.getPhoneNumberFn = function () {
+        // number to return phone number
+    };
 
-        _private.submitSuccessAnalytics = function (data) {
-            _kissmetrics.track.event("Account Creation was Successful");
-            if (_private.isAbPersona) {
-                _kissmetrics.track.event("Persona Field Filled Out", {
-                    personaChoice: data.persona,
-                    personaOther: data.persona_other,
-                });
-            }
-            if (_private.isAbPhoneNumber) {
-                _kissmetrics.track.event("Phone Number Field Filled Out");
-            }
-        };
-    });
+    _private.submitSuccessAnalytics = function (data) {
+        _kissmetrics.track.event("Account Creation was Successful");
+        if (_private.isAbPersona) {
+            _kissmetrics.track.event("Persona Field Filled Out", {
+                personaChoice: data.persona,
+                personaOther: data.persona_other,
+            });
+        }
+        if (_private.isAbPhoneNumber) {
+            _kissmetrics.track.event("Phone Number Field Filled Out");
+        }
+    };
 
     module.setResetEmailFeedbackFn = function (callback) {
         // use this function to reset the form-control-feedback ui
@@ -322,7 +320,7 @@ hqDefine('registration/js/new_user.ko', function () {
 
             var submitData = _getDataForSubmission();
             _private.submitAttemptAnalytics(submitData);
-
+            
             _private.rmi(
                 "register_new_user",
                 {data : submitData},
