@@ -6,7 +6,7 @@
 {% load i18n %}
 
 {% block head %}{{ block.super }}
-    {% include "imports/proptable.html" %}
+    <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
 {% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
