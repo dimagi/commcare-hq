@@ -46,7 +46,6 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - np/py3/github # NP 1/4
   - jls/data-corrections-cases # Jenny 1/4
   - jls/source-maps # Jenny 1/5
 submodules:
