@@ -26,26 +26,20 @@ class TestMedicineKit(TestCase):
                     "average": 66.66666666666667,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "20"},
-                        {'indicator': '% of AWCs with a Medicine Kit:', 'value': '40.00%'}
+                        {'indicator': '% of AWCs with a Medicine Kit:', 'value': '66.67%'}
                     ]
-                },
-                "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
                 },
                 "label": "Percentage of AWCs that reported having a Medicine Kit",
                 "data": {
                     "st1": {
                         "in_month": 9,
-                        "original_name": [],
+                        "original_name": ["st1"],
                         "all": 17,
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 11,
-                        "original_name": [],
+                        "original_name": ["st2"],
                         "all": 13,
                         "fillKey": "75%-100%"
                     }
@@ -78,7 +72,7 @@ class TestMedicineKit(TestCase):
                     "average": 52.94117647058823,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "9"},
-                        {'indicator': '% of AWCs with a Medicine Kit:', 'value': '34.62%'}
+                        {'indicator': '% of AWCs with a Medicine Kit:', 'value': '52.94%'}
                     ]
                 },
                 "label": "Percentage of AWCs that reported having a Medicine Kit",

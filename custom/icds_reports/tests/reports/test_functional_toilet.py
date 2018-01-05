@@ -30,26 +30,20 @@ class TestFunctionalToilet(TestCase):
                     "average": 50.0,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "15"},
-                        {'indicator': '% of AWCs with a functional toilet:', 'value': '30.00%'}
+                        {'indicator': '% of AWCs with a functional toilet:', 'value': '50.00%'}
                     ]
-                },
-                "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
                 },
                 "label": "Percentage of AWCs that reported having a functional toilet",
                 "data": {
                     "st1": {
                         "in_month": 8,
-                        "original_name": [],
+                        "original_name": ["st1"],
                         "all": 17,
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 7,
-                        "original_name": [],
+                        "original_name": ["st2"],
                         "all": 13,
                         "fillKey": "25%-75%"
                     }
@@ -82,7 +76,7 @@ class TestFunctionalToilet(TestCase):
                     "average": 47.05882352941177,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "8"},
-                        {'indicator': '% of AWCs with a functional toilet:', 'value': '30.77%'}
+                        {'indicator': '% of AWCs with a functional toilet:', 'value': '47.06%'}
                     ]
                 },
                 "label": "Percentage of AWCs that reported having a functional toilet",

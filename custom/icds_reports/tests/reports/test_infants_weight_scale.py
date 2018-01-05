@@ -26,26 +26,20 @@ class TestInfantsWeightScale(TestCase):
                     "average": 80.0,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a weighing scale for infants:', 'value': "24"},
-                        {'indicator': '% of AWCs with a weighing scale for infants:', 'value': '48.00%'}
+                        {'indicator': '% of AWCs with a weighing scale for infants:', 'value': '80.00%'}
                     ]
-                },
-                "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
                 },
                 "label": "Percentage of AWCs that reported having a weighing scale for infants",
                 "data": {
                     "st1": {
                         "in_month": 13,
-                        "original_name": [],
+                        "original_name": ["st1"],
                         "all": 17,
                         "fillKey": "75%-100%"
                     },
                     "st2": {
                         "in_month": 11,
-                        "original_name": [],
+                        "original_name": ["st2"],
                         "all": 13,
                         "fillKey": "75%-100%"
                     }
@@ -78,7 +72,7 @@ class TestInfantsWeightScale(TestCase):
                     "average": 76.47058823529412,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a weighing scale for infants:', 'value': "13"},
-                        {'indicator': '% of AWCs with a weighing scale for infants:', 'value': '50.00%'}
+                        {'indicator': '% of AWCs with a weighing scale for infants:', 'value': '76.47%'}
                     ]
                 },
                 "label": "Percentage of AWCs that reported having a weighing scale for infants",
