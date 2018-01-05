@@ -9,7 +9,7 @@ hqDefine("userreports/js/data_source_select", function() {
         };
         $("#report-builder-form").koApplyBindings(dataSourceSelector);
         $('#js-next-data-source').click(function () {
-            hqImport('userreports/js/report_analytics').track.event('Data Source Next', hqImport('hqwebapp/js/main').capitalize(dataSourceSelector.sourceType()));
+            hqImport('userreports/js/report_analytix').track.event('Data Source Next', hqImport('hqwebapp/js/main').capitalize(dataSourceSelector.sourceType()));
             hqImport('analytix/js/kissmetrix').track.event("RBv2 - Data Source");
         });
     });
