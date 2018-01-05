@@ -5,6 +5,7 @@ from django.test.utils import override_settings
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \
     get_clean_water_sector_data
 from django.test import TestCase
+from custom.icds_reports.const import ChartColors, MapColors
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
@@ -49,10 +50,10 @@ class TestCleanWater(TestCase):
                 },
                 "slug": "clean_water",
                 "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.RED,
+                    "25%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 }
             }
         )
@@ -95,10 +96,10 @@ class TestCleanWater(TestCase):
                 },
                 "slug": "clean_water",
                 "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.RED,
+                    "25%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 }
             }
         )
@@ -116,7 +117,7 @@ class TestCleanWater(TestCase):
             {
                 "chart_data": [
                     {
-                        "color": "#005ebd",
+                        "color": ChartColors.BLUE,
                         "values": [
                             {
                                 "y": 0.0,
@@ -206,7 +207,7 @@ class TestCleanWater(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "values": [
                             [
                                 "s1",

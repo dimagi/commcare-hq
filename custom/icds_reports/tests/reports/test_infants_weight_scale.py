@@ -5,6 +5,7 @@ from django.test.utils import override_settings
 from custom.icds_reports.reports.infants_weight_scale import get_infants_weight_scale_data_map, \
     get_infants_weight_scale_data_chart, get_infants_weight_scale_sector_data
 from django.test import TestCase
+from custom.icds_reports.const import ChartColors, MapColors
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
@@ -46,10 +47,10 @@ class TestInfantsWeightScale(TestCase):
                 },
                 "slug": "infants_weight_scale",
                 "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.RED,
+                    "25%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 }
             }
         )
@@ -89,10 +90,10 @@ class TestInfantsWeightScale(TestCase):
                 },
                 "slug": "infants_weight_scale",
                 "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.RED,
+                    "25%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 }
             }
         )
@@ -131,7 +132,7 @@ class TestInfantsWeightScale(TestCase):
                 ],
                 "chart_data": [
                     {
-                        "color": "#005ebd",
+                        "color": ChartColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -200,7 +201,7 @@ class TestInfantsWeightScale(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
