@@ -17,7 +17,6 @@
 {% block page_content %}
     {% registerurl 'conditional_alert_list' domain %}
     {% registerurl 'edit_conditional_alert' domain '---' %}
-    {% initial_page_data 'loader_src' 'hqwebapp/images/ajax-loader.gif'|static %}
 
     <div class="btn-group">
         <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-success">
