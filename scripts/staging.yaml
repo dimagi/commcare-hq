@@ -48,6 +48,7 @@ branches:
   - vellum-staging # J$ 11/13
   - jls/data-corrections-cases # Jenny 1/4
   - jls/source-maps # Jenny 1/5
+  - revert-19038-revert-19020-jls/fix-ab-tests # Jenny 1/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
