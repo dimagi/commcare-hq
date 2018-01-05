@@ -948,7 +948,7 @@ class IndexedCaseExpressionTest(TestCase):
             case_id=child_id,
             indices=[
                 CaseIndex(CaseStructure(case_id=parent_id, attrs={'create': True}),
-                          identifier = 'mother')
+                          identifier='mother')
             ],
             attrs={'create': True}
         ))
