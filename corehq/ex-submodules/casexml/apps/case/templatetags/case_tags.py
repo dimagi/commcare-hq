@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from functools import partial
 import copy
 import datetime
+import math
 import numbers
 import pytz
 import json
@@ -216,7 +217,7 @@ def normalize_date(val):
 
 
 @register.simple_tag
-def render_case(case, options):
+def render_case(request, case, options):
     """
     Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
     Change to kwargs when we're on a version of Django that does.
@@ -278,15 +279,13 @@ def render_case(case, options):
 
     repeat_records = get_repeat_records_by_payload_id(case.domain, case.case_id)
 
+    dynamic_properties_per_page = 10
     return render_to_string("case/partials/single_case.html", {
-        "default_properties": default_properties,
-        "default_properties_options": {
-            "style": "table"
-        },
-        "dynamic_properties": dynamic_properties,
-        "dynamic_properties_options": {
-            "style": "table"
-        },
+        "default_properties_as_table": default_properties,
+        "dynamic_properties": dynamic_data,
+        "dynamic_properties_pages": range(int(math.ceil(len(dynamic_data) / float(dynamic_properties_per_page)))),
+        "dynamic_properties_per_page": dynamic_properties_per_page,
+        "dynamic_properties_as_table": dynamic_properties,
         "case": wrapped_case.case,
         "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
         "timezone": timezone,
@@ -301,7 +300,7 @@ def render_case(case, options):
         "show_transaction_export": show_transaction_export,
         "xform_api_url": reverse('single_case_forms', args=[case.domain, case.case_id]),
         "repeat_records": repeat_records,
-    })
+    }, request=request)
 
 
 def get_inverse(val):
