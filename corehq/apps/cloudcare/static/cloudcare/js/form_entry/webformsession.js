@@ -1,4 +1,4 @@
-/*global Formplayer */
+/*global Formplayer, FormplayerFrontend */
 
 // IE compliance
 if (!Array.prototype.indexOf) {

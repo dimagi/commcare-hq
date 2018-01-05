@@ -1,4 +1,4 @@
-/* globals CodeMirror, gettext, Clipboard */
+/* globals CodeMirror, gettext, Clipboard, FormplayerFrontend */
 hqDefine('cloudcare/js/debugger/debugger', function () {
 
     /**
