@@ -59,6 +59,7 @@ from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
@@ -115,6 +116,7 @@ from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
     location_restricted_exception, user_can_access_case
@@ -1409,6 +1411,29 @@ def case_xml(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def edit_case_view(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    user = request.couch_user
+    update = {}
+    for name, value in case.dynamic_properties().items():
+        if name in request.POST and request.POST[name] != value:
+            update[name] = request.POST[name]
+
+    if update:
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            owner_id=case.owner_id,
+            update=update,
+        ).as_string()], domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case")
+        messages.success(request, _(u'Case properties saved for %s.' % case.name))
+    else:
+        messages.success(request, _(u'No changes made to %s.' % case.name))
+    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
 @require_case_view_permission
