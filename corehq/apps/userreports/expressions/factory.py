@@ -15,6 +15,7 @@ from corehq.apps.userreports.expressions.specs import (
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec,
     IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec,
     CaseSharingGroupsExpressionSpec, ReportingGroupsExpressionSpec, CoalesceExpressionSpec,
+    IndexedCaseExpressionSpec,
 )
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
@@ -272,6 +273,15 @@ def _coalesce_expression(spec, context):
     return wrapped
 
 
+def _indexed_case_expression(spec, context):
+    wrapped = IndexedCaseExpressionSpec.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.case_expression, context),
+        context
+    )
+    return wrapped
+
+
 class ExpressionFactory(object):
     spec_map = {
         'identity': _identity_expression,
@@ -305,6 +315,7 @@ class ExpressionFactory(object):
         'sort_items': _sort_items_expression,
         'split_string': _split_string_expression,
         'coalesce': _coalesce_expression,
+        'indexed_case': _indexed_case_expression,
     }
     # Additional items are added to the spec_map by use of the `register` method.
 
