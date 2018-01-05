@@ -102,8 +102,15 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
     });
 
     function alertAction(action, rule_id) {
-        $('#activate-button-for-' + rule_id).prop('disabled', true);
-        $('#delete-button-for-' + rule_id).prop('disabled', true);
+        var activateButton = $('#activate-button-for-' + rule_id);
+        var deleteButton = $('#delete-button-for-' + rule_id);
+        if(action === 'delete') {
+            deleteButton.disableButton();
+            activateButton.prop('disabled', true);
+        } else {
+            activateButton.disableButton();
+            deleteButton.prop('disabled', true);
+        }
 
         $.ajax({
             url: '',

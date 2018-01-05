@@ -110,8 +110,15 @@ hqDefine("scheduling/js/broadcasts_list", function() {
     });
 
     function broadcastAction(action, broadcast_id) {
-        $('#activate-button-for-scheduled-broadcast-' + broadcast_id).prop('disabled', true);
-        $('#delete-button-for-scheduled-broadcast-' + broadcast_id).prop('disabled', true);
+        var activateButton = $('#activate-button-for-scheduled-broadcast-' + broadcast_id);
+        var deleteButton = $('#delete-button-for-scheduled-broadcast-' + broadcast_id);
+        if(action === 'delete_scheduled_broadcast') {
+            deleteButton.disableButton();
+            activateButton.prop('disabled', true);
+        } else {
+            activateButton.disableButton();
+            deleteButton.prop('disabled', true);
+        }
 
         $.ajax({
             url: '',
