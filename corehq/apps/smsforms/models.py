@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import jsonfield
 from datetime import datetime
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchdbkit import MultipleResultsFound
@@ -25,6 +26,8 @@ class SQLXFormsSession(models.Model):
     start_time = models.DateTimeField()
     modified_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True)
+
+    # True if all the questions in the survey were answered.
     completed = models.BooleanField(default=False)
 
     # HQ specific properties
@@ -38,8 +41,40 @@ class SQLXFormsSession(models.Model):
     workflow = models.CharField(null=True, blank=True, max_length=20)
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
 
+    # The number of minutes after which this session should expire, starting from the start_date.
+    expire_after = models.IntegerField(default=90 * 24 * 60)
+
+    # True if the session is still open.
+    session_is_open = models.BooleanField(default=True)
+
+    # A list of integers representing the intervals, in minutes, that reminders should be sent.
+    # A reminder in this context just sends the current question of an open survey to the contact
+    # in order to remind them to answer it. This can be empty list if no reminders are desired.
+    reminder_intervals = jsonfield.JSONField(default=list)
+
+    # A zero-based index pointing to the entry in reminder_intervals which represents the
+    # currently scheduled reminder.
+    current_reminder_num = models.IntegerField(default=0)
+
+    # The date and time that the survey framework must take the next action, which would be
+    # either sending a reminder or closing the survey session.
+    next_action_due = models.DateTimeField()
+
+    # If True, when the session expires, the form will be submitted with any information collected
+    # and the rest of the questions left blank.
+    submit_partially_completed_forms = models.BooleanField(default=False)
+
+    # Only matters when submit_partially_completed_forms is True.
+    # If True, any case changes will be included in the submission.
+    # If False, any case changes will be removed from the submission.
+    include_case_updates_in_partial_submissions = models.BooleanField(default=False)
+
     class Meta:
         app_label = 'smsforms'
+        index_together = [
+            ['session_is_open', 'next_action_due'],
+            ['session_is_open', 'connection_id'],
+        ]
 
     def __unicode__(self):
         return 'Form %(form)s in domain %(domain)s. Last modified: %(mod)s' % \
