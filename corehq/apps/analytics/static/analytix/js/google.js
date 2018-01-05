@@ -22,7 +22,7 @@ hqDefine('analytix/js/google', [
         _data = {},
         module = {},
         _logger = logging.getLoggerForApi('Google Analytics'),
-        _ready;
+        _ready = $.Deferred();
 
     var _gtag = function () {
         // This should never run, because all calls to _gtag should be
@@ -35,7 +35,7 @@ hqDefine('analytix/js/google', [
             scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
 
         _logger = logging.getLoggerForApi('Google Analytics');
-        _ready = utils.initApi(apiId, scriptUrl, _logger, function() {
+        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function() {
             window.dataLayer = window.dataLayer || [];
             _gtag = function () {
                 window.dataLayer.push(arguments);

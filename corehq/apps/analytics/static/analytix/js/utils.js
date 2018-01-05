@@ -90,6 +90,8 @@ hqDefine('analytix/js/utils', [
 
     /**
      * Initialize an API.
+     * @param {Deferred} ready The promise to return (see below). Passed as a parameter
+     *  so the calling code can attach callbacks to it before calling this function.
      * @param {string} apiId
      * @param {string/array} scriptUrls - Accepts string or array of strings
      * @param {Logger} logger
@@ -99,9 +101,7 @@ hqDefine('analytix/js/utils', [
      *  This promise will be rejected if the API fails to initialize for any reason, most
      *  likely because analytics is disabled or because a script failed to load.
      */
-    var initApi = function(apiId, scriptUrls, logger, initCallback) {
-        var ready = $.Deferred();
-
+    var initApi = function(ready, apiId, scriptUrls, logger, initCallback) {
         logger.verbose.log(apiId || "NOT SET", ["DATA", "API ID"]);
 
         if (_.isString(scriptUrls)) {
