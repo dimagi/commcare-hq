@@ -17,14 +17,19 @@
 <div id="tabbed-content-container">
     <div class="row">
         <div class="col-sm-12">
-            {% render_tables default_properties default_properties_options %}
+            {% include "hqwebapp/proptable/property_table.html" with tables=default_properties_as_table %}
         </div>
     </div>
     <div class="row">
         <div class="col-sm-12">
             <ul class="nav nav-tabs" style="margin-bottom: 10px;">
                 {% if dynamic_properties %}
-                <li class="active"><a href="#properties" data-toggle="tab">{% trans "Case Properties" %}</a></li>
+                <li class="active">
+                    <a href="#properties" data-toggle="tab">
+                        {% trans "Case Properties" %}
+                        <i class="fa fa-edit clickable" id="edit-dynamic-properties-trigger"></i>
+                    </a>
+                </li>
                 {% endif %}
                 <li {% if not dynamic_properties %}class="active"{% endif %}><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
                 {% if case.has_indices %}
@@ -45,7 +50,7 @@
                 {% if dynamic_properties %}
                 <div class="tab-pane active" id="properties">
                     <div class="row-fluid">
-                        {% render_tables dynamic_properties dynamic_properties_options %}
+                        {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
                     </div>
                 </div><!-- end properties tab -->
                 {% endif %}
@@ -170,3 +175,47 @@
 <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
 <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
 <script src="{% static "case/js/case_details.js" %}"></script>
+
+<div class="modal fade" id="edit-dynamic-properties" tabindex="-1"
+     data-total-pages="{{ dynamic_properties_pages|length }}" data-items-per-page="{{ dynamic_properties_per_page }}">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url "edit_case" case.domain case.case_id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">{% trans "Edit Case Properties" %}</h4>
+                </div>
+                <div class="modal-body">
+                    {% for key, value in dynamic_properties.items %}
+                        <div class="form-group container-fluid" data-bind="visible: visibleItems.indexOf({{ forloop.counter0 }}) != -1">
+                            <label class="col-sm-6 control-label">{{ key }}</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" value="{% html_attr value %}" name="{{ key }}" />
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    {% if dynamic_properties_pages|length > 1 %}
+                        <ul class="pagination pull-left">
+                            <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
+                            {% for page in dynamic_properties_pages %}
+                                <li data-bind="css: {active: currentPage() == {{ forloop.counter }}}">
+                                    <a href="#" data-bind="click: function() { currentPage({{ forloop.counter }}); }">
+                                        {{ forloop.counter }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                            <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
+                        </ul>
+                    {% endif %}
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
