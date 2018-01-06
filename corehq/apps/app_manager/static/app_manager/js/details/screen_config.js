@@ -97,7 +97,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function(){
-            return module.DetailScreenConfig.field_val_re.test(self.textField.val());
+            return true;
         };
         self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
         self.display.subscribe(function () {
