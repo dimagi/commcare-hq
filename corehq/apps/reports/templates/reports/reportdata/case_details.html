@@ -19,6 +19,10 @@
 {% endblock %}
 
 {% block page_content %}
+
+{% initial_page_data 'dynamic_properties_names' dynamic_properties_names %}
+{% initial_page_data 'dynamic_properties' dynamic_properties %}
+
 <div class="hq-generic-report">
     <script>
         var CASE_DETAILS = {};

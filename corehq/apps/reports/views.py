@@ -1368,6 +1368,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
 
             "default_properties_as_table": default_properties,
+            "dynamic_properties_names": dynamic_data.keys(),
             "dynamic_properties": dynamic_data,
             "dynamic_properties_pages": range(int(math.ceil(len(dynamic_data) / float(dynamic_properties_per_page)))),
             "dynamic_properties_columns": 2,    # TODO
