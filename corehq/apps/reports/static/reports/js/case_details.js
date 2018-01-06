@@ -5,6 +5,7 @@ hqDefine("reports/js/case_details", function() {
         self.currentPage = new ko.observable();
         self.totalPages = options.totalPages;
         self.itemsPerPage = options.itemsPerPage;
+        self.query = new ko.observable("");
 
         self.incrementPage = function(increment) {
             var newCurrentPage = self.currentPage() + increment;
@@ -20,10 +21,20 @@ hqDefine("reports/js/case_details", function() {
             return true;
         });
 
+        self.query.subscribe(function(newValue) {
+            self.currentPage(1);
+        });
+
         self.currentPage.subscribe(function(newValue) {
             self.visibleItems.splice(0);    // remove all items
-            for (var index = 0; index < self.itemsPerPage; index++) {
-                self.visibleItems.push(self.itemsPerPage * (newValue - 1) + index);
+            var added = 0,
+                index = self.itemsPerPage * (newValue - 1);
+            while (added < self.itemsPerPage) {
+                if (true) { // TODO: check query
+                    self.visibleItems.push(index);
+                    added++;
+                }
+                index++;
             }
         });
 

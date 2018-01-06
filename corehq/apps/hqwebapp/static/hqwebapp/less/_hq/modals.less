@@ -1,18 +1,29 @@
 .modal-body {
-  legend {
-    border-bottom: 1px solid @cc-bg;
-    font-size: 14px;
-    font-weight: 500;
-    border-bottom: 1px solid @cc-bg;
-    margin-bottom: 20px;
-    padding: 10px 0;
-  }
+    legend {
+        border-bottom: 1px solid @cc-bg;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 1px solid @cc-bg;
+        margin-bottom: 20px;
+        padding: 10px 0;
+    }
 }
 
 .modal-title {
-  font-size: 16px;
+    font-size: 16px;
 }
 
-.modal-footer .pagination {
-  margin: 0;
+// Modal that has some kind of control (pagination, search box, etc.) in header or footer
+.modal-header.with-controls, .modal-footer.with-controls {
+    h4 {
+        margin-top: 3px;    // vertically align better with controls, which are taller than plain text
+    }
+
+    .close {
+        margin-left: 10px;
+    }
+
+    .pagination {
+        margin: 0;
+    }
 }

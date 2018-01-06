@@ -182,11 +182,23 @@
         <div class="modal-content">
             <form method="POST" action="{% url "edit_case" case.domain case.case_id %}">
                 {% csrf_token %}
-                <div class="modal-header">
+                <div class="modal-header with-controls">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                    <h4 class="modal-title">{% trans "Edit Case Properties" %}</h4>
+                    <div class="form-inline pull-right">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'afterkeydown'" />
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                    <h4 class="modal-title">
+                        {% trans "Edit Case Properties" %}
+                    </h4>
                 </div>
                 <div class="modal-body">
                     {% for key, value in dynamic_properties.items %}
@@ -198,7 +210,7 @@
                         </div>
                     {% endfor %}
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer with-controls">
                     {% if dynamic_properties_pages|length > 1 %}
                         <ul class="pagination pull-left">
                             <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
