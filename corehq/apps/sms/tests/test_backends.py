@@ -1217,7 +1217,7 @@ def mock_get_backend_classes():
     }
 
 
-@patch('corehq.apps.sms.util.get_backend_classes', new=mock_get_backend_classes)
+@patch('corehq.apps.sms.util.get_sms_backend_classes', new=mock_get_backend_classes)
 class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
 
     def setUp(self):

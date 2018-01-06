@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend, IncomingRequest
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.util import strip_plus
-from corehq.apps.ivr.api import incoming as incoming_ivr
 from celery.task import task
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
@@ -43,5 +42,3 @@ def process_incoming_message(*args, **kwargs):
             domain_scope = backend.domain if not backend.is_global else None
             incoming_sms(from_number, kwargs["content"], SQLTelerivetBackend.get_api_id(),
                 domain_scope=domain_scope, backend_id=backend.couch_id)
-        elif kwargs["message_type"] == MESSAGE_TYPE_CALL:
-            incoming_ivr(from_number, "TELERIVET-%s" % kwargs["message_id"], None)
