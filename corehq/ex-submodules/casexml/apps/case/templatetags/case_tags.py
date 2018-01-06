@@ -284,6 +284,7 @@ def render_case(request, case, options):
         "default_properties_as_table": default_properties,
         "dynamic_properties": dynamic_data,
         "dynamic_properties_pages": range(int(math.ceil(len(dynamic_data) / float(dynamic_properties_per_page)))),
+        "dynamic_properties_columns": 2,    # TODO
         "dynamic_properties_per_page": dynamic_properties_per_page,
         "dynamic_properties_as_table": dynamic_properties,
         "case": wrapped_case.case,

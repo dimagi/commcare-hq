@@ -176,7 +176,7 @@
 <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
 <script src="{% static "case/js/case_details.js" %}"></script>
 
-<div class="modal fade" id="edit-dynamic-properties" tabindex="-1"
+<div class="modal fade{% if dynamic_properties_columns > 1 %} full-screen-modal{% endif %}" id="edit-dynamic-properties" tabindex="-1"
      data-total-pages="{{ dynamic_properties_pages|length }}" data-items-per-page="{{ dynamic_properties_per_page }}">
     <div class="modal-dialog">
         <div class="modal-content">
