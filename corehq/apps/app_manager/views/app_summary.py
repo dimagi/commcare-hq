@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from copy import copy
-from StringIO import StringIO
+from io import StringIO
 from collections import namedtuple
 
 from django.urls import reverse

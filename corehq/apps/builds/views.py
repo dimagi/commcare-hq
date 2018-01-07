@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from cStringIO import StringIO
+from io import StringIO
 from couchdbkit import ResourceNotFound, BadValueError
 from django.urls import reverse
 from django.http import HttpResponseBadRequest, HttpResponse, Http404

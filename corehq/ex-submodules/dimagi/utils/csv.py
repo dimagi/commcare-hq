@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 import csv
 import codecs
-import cStringIO
+import io
 import six
 
 
@@ -54,7 +54,7 @@ class UnicodeWriter:
     """
     def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
         # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
+        self.queue = io.StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
         self.stream = f
         self.encoder = codecs.getincrementalencoder(encoding)()

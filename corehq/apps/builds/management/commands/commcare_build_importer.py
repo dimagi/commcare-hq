@@ -3,7 +3,7 @@ from __future__ import print_function
 import logging
 import requests
 
-from cStringIO import StringIO
+from io import StringIO
 from jenkinsapi.jenkins import Jenkins
 
 from corehq.apps.builds.models import CommCareBuild
@@ -107,7 +107,7 @@ class Command(BaseCommand):
              352366: 2.22.0}
         """
         from lxml import etree
-        from StringIO import StringIO
+        from io import StringIO
 
         to_ret = {}
         count = 0

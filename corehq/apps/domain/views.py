@@ -4,7 +4,7 @@ import datetime
 from decimal import Decimal
 import logging
 import json
-import cStringIO
+import io
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -2090,7 +2090,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             if image:
                 im = Image.open(image)
-                out = cStringIO.StringIO()
+                out = io.StringIO()
                 im.thumbnail((200, 200), Image.ANTIALIAS)
                 im.save(out, new_domain.image_type.split('/')[-1])
                 new_domain.put_attachment(content=out.getvalue(), name=image.name)

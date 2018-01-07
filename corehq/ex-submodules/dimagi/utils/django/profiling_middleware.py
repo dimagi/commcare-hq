@@ -8,7 +8,7 @@ import os
 import re
 import hotshot, hotshot.stats
 import tempfile
-import StringIO
+import io
 
 from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
@@ -93,7 +93,7 @@ class ProfileMiddleware(MiddlewareMixin):
         if (settings.DEBUG or request.user.is_superuser) and 'prof' in request.GET:
             self.prof.close()
 
-            out = StringIO.StringIO()
+            out = io.StringIO()
             old_stdout = sys.stdout
             sys.stdout = out
 

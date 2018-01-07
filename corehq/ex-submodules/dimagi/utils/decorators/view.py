@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from cStringIO import StringIO
+from io import StringIO
 from functools import wraps
 
 def get_file(filename):
