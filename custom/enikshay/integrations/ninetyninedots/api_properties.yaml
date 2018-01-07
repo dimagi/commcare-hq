@@ -433,6 +433,7 @@ api_params:
     public:
       - known_patient_contact
       - prison_inmate
+      - prison  # replacing prison_inmate
       - miner
       - migrant
       - refugee
