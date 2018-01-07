@@ -182,6 +182,7 @@ api_params:
     private:
       - fdc
       - private
+      - private_drugs
     public:
       - schedule_mwf
       - schedule_daily
@@ -276,6 +277,7 @@ api_params:
       - rural
       - urban
       - urban_slum
+      - not_known
 - api_param_name: diabetes_status
   direction: 1                  # outbound
   case_type:
@@ -314,6 +316,7 @@ api_params:
       - married
       - widowed
       - separated
+      - single
 - api_param_name: occupation
   direction: 1
   case_type:
@@ -416,6 +419,10 @@ api_params:
     public:
       - pediatric
       - plhiv
+      - known_patient_contact
+      - migrant
+      - slum_dweller
+      - other
 - api_param_name: key_populations
   direction: 1
   case_type:
@@ -432,6 +439,9 @@ api_params:
       - slum_dweller
       - health_care_worker
       - tribal_population
+      - urban_slum
+      - diabetes
+      - not_applicable
       - other
 - api_param_name: key_populations_other_detail
   direction: 1
