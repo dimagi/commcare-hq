@@ -67,7 +67,7 @@
                     <li><a href="#repeat-records" data-toggle="tab">{% trans "Forwarded Records" %}</a></li>
                 {% endif %}
                 </ul>
-    
+
                 <div class="tab-content">
                     {% if dynamic_properties %}
                     <div class="tab-pane active" id="properties">
@@ -76,25 +76,25 @@
                         </div>
                     </div><!-- end properties tab -->
                     {% endif %}
-    
+
                     {% if case.has_indices %}
                     <div class="tab-pane" id="related">
                         {% render_case_hierarchy case case_hierarchy_options %}
                     </div>
                     {% endif %}
-    
+
                     {% if case.case_attachments %}
                     <div class="tab-pane" id="case-attachments">
                         {% include "case/partials/case_attachments.html" %}
                     </div> <!-- end case-attachments tab -->
                     {% endif %}
-    
+
                     {% if repeat_records %}
                         <div class="tab-pane" id="repeat-records">
                             {% include "case/partials/repeat_records.html" %}
                         </div>
                     {% endif %}
-    
+
                     {% if ledgers %}
                     <div class="tab-pane" id="case-ledgers">
                     {% if show_transaction_export %}
@@ -125,7 +125,7 @@
                     {% endfor %}
                     </div> <!-- end case-ledgers tab -->
                     {% endif %}
-    
+
                     <div class="tab-pane {% if not dynamic_properties %}active{% endif %} row" id="history">
                         <div class="col-sm-5 dataTables_wrapper">
                             <ul data-bind="foreach: $root.form_type_facets">
@@ -166,7 +166,7 @@
                                 <div class="dataTables_length form-inline">
                                     <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
                                 </div>
-    
+
                                 <div class="pull-right" data-bind="visible: $root.page_count() > 1">
                                     <ul class="pagination">
                                         <li>
@@ -187,15 +187,14 @@
                         </div>
                     </div> <!-- end case-history tab -->
                 </div>
-    
+
             </div>
         </div>
-    
+
     </div> {# end tabbed-content-container div #}
     </div> {# end report-container #}
-    
-    <div class="modal fade{% if dynamic_properties_columns > 1 %} full-screen-modal{% endif %}" id="edit-dynamic-properties" tabindex="-1"
-         data-total-pages="{{ dynamic_properties_pages|length }}" data-items-per-page="{{ dynamic_properties_per_page }}">
+
+    <div class="modal fade{% if dynamic_properties_columns > 1 %} full-screen-modal{% endif %}" id="edit-dynamic-properties" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form method="POST" action="{% url "edit_case" case.domain case.case_id %}">
@@ -219,29 +218,26 @@
                         </h4>
                     </div>
                     <div class="modal-body">
-                        {% for key, value in dynamic_properties.items %}
-                            <div class="form-group container-fluid" data-bind="visible: visibleItems.indexOf({{ forloop.counter0 }}) != -1">
-                                <label class="col-sm-6 control-label">{{ key }}</label>
+                        <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
+                        <!-- ko foreach: visibleItems -->
+                            <div class="form-group container-fluid">
+                                <label class="col-sm-6 control-label" data-bind="text: name"></label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="form-control" value="{% html_attr value %}" name="{{ key }}" />
+                                    <input type="text" class="form-control" data-bind="value: value, attr: { name: name }" />
                                 </div>
                             </div>
-                        {% endfor %}
+                        <!-- /ko -->
                     </div>
                     <div class="modal-footer with-controls">
-                        {% if dynamic_properties_pages|length > 1 %}
-                            <ul class="pagination pull-left">
-                                <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
-                                {% for page in dynamic_properties_pages %}
-                                    <li data-bind="css: {active: currentPage() == {{ forloop.counter }}}">
-                                        <a href="#" data-bind="click: function() { currentPage({{ forloop.counter }}); }">
-                                            {{ forloop.counter }}
-                                        </a>
-                                    </li>
-                                {% endfor %}
-                                <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
-                            </ul>
-                        {% endif %}
+                        <ul class="pagination pull-left" data-bind="visible: showPagination">
+                            <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
+                            <!-- ko foreach: visiblePages -->
+                                <li data-bind="css: { active: $parent.currentPage() == $data }">
+                                    <a href="#" data-bind="click: function() { $parent.currentPage($data); }, text: $data"></a>
+                                </li>
+                            <!-- /ko -->
+                            <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
+                        </ul>
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                         <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
                     </div>
