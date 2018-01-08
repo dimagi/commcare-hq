@@ -44,7 +44,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
         ).size(0).run()
 
         return sorted(
-            results.aggregations.explosions.counts_by_bucket().items(),
+            list(results.aggregations.explosions.counts_by_bucket().items()),
             key=lambda x: -x[1]  # sorted by number of cases
         )
 

@@ -385,7 +385,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     except (FormNotFoundException, ModuleNotFoundException):
         raise Http404()
 
-    form_name = form.name.values()[0]
+    form_name = list(form.name.values())[0]
 
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(

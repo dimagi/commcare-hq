@@ -7,7 +7,7 @@ register = template.Library()
 @register.filter(name='icds_format')
 def icds_format(data, prop):
     if data:
-        return data[prop] if data[prop] is not None else 'Data Not Entered'
+        return data[prop] if prop in data and data[prop] is not None else 'Data Not Entered'
     else:
         return ''
 
@@ -16,7 +16,7 @@ def icds_format(data, prop):
 def icds_type_of_building(data):
     housed = ['', 'Owned', 'Rented']
     provided_buildings = [
-        '', 'Panchayat', 'Community', 'Urban Municipality/Corporation', ' Rural Development/ DRDA',
+        '', 'Panchayat', 'Community', 'Urban Municipality/Corporation', 'Rural Development/ DRDA',
         'ICDS', 'Other'
     ]
     if data:

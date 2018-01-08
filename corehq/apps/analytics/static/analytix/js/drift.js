@@ -20,14 +20,14 @@ hqDefine('analytix/js/drift', [
     var _get = initialAnalytics.getFn('drift'),
         _drift = {},
         _logger = logging.getLoggerForApi('Drift'),
-        _ready = $.Deferred(); // eslint-disable-line no-unused-vars
+        _ready; // eslint-disable-line no-unused-vars
 
     $(function () {
         var apiId = _get('apiId'),
             scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + apiId + '.js';
 
         _logger = logging.getLoggerForApi('Drift');
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function() {
+        _ready = utils.initApi(apiId, scriptUrl, _logger, function() {
             _drift = window.driftt = window.drift = window.driftt || [];
             if (!_drift.init && !_drift.invoked ) {
                 _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];

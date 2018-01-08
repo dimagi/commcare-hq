@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+import six
 INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
 
 OPERATEUR_XMLNSES = (
@@ -32,7 +34,7 @@ _PRODUCT_NAMES = {
     u'collier': [u"collier"]
 }
 
-PRODUCT_NAMES = {v: k for k, values in _PRODUCT_NAMES.iteritems() for v in values}
+PRODUCT_NAMES = {v: k for k, values in six.iteritems(_PRODUCT_NAMES) for v in values}
 
 PRODUCT_MAPPING = {
     "collier": "Collier",

@@ -3,6 +3,7 @@ from pytz import timezone
 
 from corehq.util.timezones.conversions import ServerTime
 from custom.zipline.models import EmergencyOrderStatusUpdate
+import six
 
 
 def format_date(datetime):
@@ -30,7 +31,7 @@ def zipline_status_date_or_empty_string(status):
 def convert_products_dict_to_list(products_dict):
     return [
         '{} {}'.format(product_code, d['quantity'])
-        for product_code, d in products_dict.iteritems()
+        for product_code, d in six.iteritems(products_dict)
     ]
 
 
@@ -44,7 +45,7 @@ def products_delivered(emergency_order):
 
 def products_requested_not_confirmed(emergency_order):
     result_dict = {}
-    for product_code, d in emergency_order.products_requested.iteritems():
+    for product_code, d in six.iteritems(emergency_order.products_requested):
         requested_quantity = int(d['quantity'])
         confirmed_quantity = 0
         if product_code in emergency_order.products_confirmed:
@@ -53,7 +54,7 @@ def products_requested_not_confirmed(emergency_order):
         result_dict[product_code] = {'quantity': requested_quantity - confirmed_quantity}
     products_requested_not_confirmed_dict = {
         product_code: d
-        for product_code, d in result_dict.iteritems()
+        for product_code, d in six.iteritems(result_dict)
         if d['quantity'] > 0
     }
     return ' '.join(convert_products_dict_to_list(products_requested_not_confirmed_dict))

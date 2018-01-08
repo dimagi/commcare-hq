@@ -23,6 +23,7 @@ from custom.ilsgateway.tanzania.reports.utils import link_format
 from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
+import six
 
 
 class ReportingRates(ReportingRatesData):
@@ -180,7 +181,7 @@ class SummaryReportingRates(ReportingRatesData):
     def rows(self):
         rows = []
         if self.location_id and self.locations:
-            for location_name, values in self.config['summary_reporting_rates'].iteritems():
+            for location_name, values in six.iteritems(self.config['summary_reporting_rates']):
                 url = make_url(
                     ReportingRatesReport,
                     self.config['domain'],
@@ -444,7 +445,7 @@ class ReportingRatesReport(MultiReport):
             else:
                 grouped_by_case[case_id] = {product_id}
 
-        for case_id, products in grouped_by_case.iteritems():
+        for case_id, products in six.iteritems(grouped_by_case):
             location = SQLLocation.objects.get(
                 supply_point_id=case_id
             )
@@ -482,12 +483,12 @@ class ReportingRatesReport(MultiReport):
             'non_reporting': all_locations_count - (complete + incomplete),
             'non_reporting_table': [
                 [status['name'], status['location_id'], status['date'], key]
-                for key, status in report_status.iteritems()
+                for key, status in six.iteritems(report_status)
                 if not status['date']
             ],
             'incomplete_table': [
                 [status['name'], status['location_id'], status['date']]
-                for key, status in report_status.iteritems()
+                for key, status in six.iteritems(report_status)
                 if status['status'] == 'incomplete'
             ]
         }

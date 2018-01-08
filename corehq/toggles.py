@@ -339,7 +339,7 @@ def all_toggles():
     """
     Loads all toggles
     """
-    return all_toggles_by_name_in_scope(globals()).values()
+    return list(all_toggles_by_name_in_scope(globals()).values())
 
 
 def all_toggles_by_name():

@@ -186,7 +186,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
 
     @property
     def ordering(self):
-        by, direction = self.get_sorting_block()[0].items()[0]
+        by, direction = list(self.get_sorting_block()[0].items())[0]
         return '-' + by if direction == 'desc' else by
 
     @property

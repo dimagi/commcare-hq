@@ -618,7 +618,7 @@ SMS_QUEUE_ENABLED = False
 
 # If an SMS still has not been processed in this number of minutes, enqueue it
 # again.
-SMS_QUEUE_ENQUEUING_TIMEOUT = 60
+SMS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -785,9 +785,6 @@ COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
 }
-
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 PREVIEWER_RE = '^$'
 
@@ -1552,17 +1549,8 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
 ]
 
-IVR_LOADED_SQL_BACKENDS = [
-    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
-]
-
-IVR_BACKEND_MAP = {
-    "91": "MOBILE_BACKEND_KOOKOO",
-}
-
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 5
-IVR_GATEWAY_TIMEOUT = 60
 
 # These are functions that can be called
 # to retrieve custom content in a reminder event.

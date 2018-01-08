@@ -27,6 +27,7 @@ from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import get_location, SQLLocation
 from six.moves import range
+import six
 
 
 class StockLevelsLegend(EWSData):
@@ -228,8 +229,8 @@ class InventoryManagementData(EWSData):
                     rows[product_name][i] = calculate_weeks_remaining(
                         state, consumptions.get(state.product_id, None), date)
 
-        for k, v in rows.iteritems():
-            rows[k] = [{'x': key, 'y': value} for key, value in v.iteritems()]
+        for k, v in six.iteritems(rows):
+            rows[k] = [{'x': key, 'y': value} for key, value in six.iteritems(v)]
 
         rows['Understock'] = []
         rows['Overstock'] = []
@@ -247,7 +248,7 @@ class InventoryManagementData(EWSData):
                                  y_axis=Axis(self.chart_y_label, '.1f'))
             chart.height = 600
             values = []
-            for product, value in self.chart_data.iteritems():
+            for product, value in six.iteritems(self.chart_data):
                 values.extend([a['y'] for a in value])
                 chart.add_dataset(product, value,
                                   color='black' if product in ['Understock', 'Overstock'] else None)

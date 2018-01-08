@@ -91,7 +91,7 @@ class CareDataFormatter(DataFormatter):
                     missing_rows[key] = {'0', '1', '2'}.difference({row[-1]})
                 else:
                     missing_rows[key] = missing_rows[key].difference({row[-1]})
-            for k, v in missing_rows.iteritems():
+            for k, v in six.iteritems(missing_rows):
                 for missing_val in v:
                     dict_key = k + (missing_val,)
                     tmp_missing.update({dict_key: dict(all=0, some=0, none=0, gender=missing_val)})
@@ -104,12 +104,12 @@ class CareDataFormatter(DataFormatter):
             f = lambda x: (x[0][0], x[0][1], x[0][2], x[0][3])
         else:
             f = lambda x: x
-        chunks = _chunks(sorted(data.items(), key=f), chunk_size)
+        chunks = _chunks(sorted(list(data.items()), key=f), chunk_size)
         for chunk in chunks:
             group_row = dict(all=0, some=0, none=0)
             disp_name = None
             for val in chunk:
-                for k, v in val[1].iteritems():
+                for k, v in six.iteritems(val[1]):
                     if k in group_row:
                         group_row[k] += v
                 value_chains = get_domain_configuration(domain).by_type_hierarchy
@@ -240,7 +240,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in data.iteritems():
+        for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
 
@@ -274,7 +274,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in data.iteritems():
+        for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
             id_to_name[key[0]] = u'{} ({})'.format(key[1], key[2])

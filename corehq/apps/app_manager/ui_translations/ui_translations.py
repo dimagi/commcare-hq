@@ -20,7 +20,7 @@ def process_ui_translation_upload(app, trans_file):
     commcare_version = get_commcare_version_from_workbook(workbook.wb)
     translations = workbook.get_worksheet(title='translations')
 
-    commcare_ui_strings = load_translations('en', version=2, commcare_version=commcare_version).keys()
+    commcare_ui_strings = list(load_translations('en', version=2, commcare_version=commcare_version).keys())
     default_trans = get_default_translations_for_download(app, commcare_version)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 
@@ -63,7 +63,7 @@ def build_ui_translation_download_file(app):
             row_dict[prop].extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
             row_dict[prop].append(trans)
 
-    rows = row_dict.values()
+    rows = list(row_dict.values())
     try:
         commcare_version = str(StrictVersion(app.build_version.vstring))
     except ValueError:

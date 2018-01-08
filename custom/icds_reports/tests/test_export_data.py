@@ -1142,20 +1142,6 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
-                            "Name 1794",
-                            "2012-04-03",
-                            "5 years 1 month ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            25
-                        ],
-                        [
                             "Name 1795",
                             "2014-01-20",
                             "3 years 4 months ",
@@ -1182,62 +1168,6 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             23
-                        ],
-                        [
-                            "Name 1801",
-                            "2011-12-27",
-                            "5 years 5 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            19
-                        ],
-                        [
-                            "Name 1807",
-                            "2011-10-16",
-                            "5 years 7 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            23
-                        ],
-                        [
-                            "Name 1811",
-                            "2011-11-29",
-                            "5 years 6 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            21
-                        ],
-                        [
-                            "Name 1812",
-                            "2012-02-06",
-                            "5 years 3 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            17
                         ],
                         [
                             "Name 1814",
@@ -1618,20 +1548,6 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
-                            "Name 2275",
-                            "2011-09-27",
-                            "5 years 8 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            22
-                        ],
-                        [
                             "Name 2276",
                             "2012-07-22",
                             "4 years 10 months ",
@@ -1672,20 +1588,6 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             19
-                        ],
-                        [
-                            "Name 2332",
-                            "2012-02-20",
-                            "5 years 3 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            25
                         ],
                         [
                             "Name 2333",
@@ -1800,20 +1702,6 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
-                            "Name 2343",
-                            "2011-07-30",
-                            "5 years 10 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            23
-                        ],
-                        [
                             "Name 2344",
                             "2013-03-09",
                             "4 years 2 months ",
@@ -1828,20 +1716,6 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
-                            "Name 2345",
-                            "2011-08-20",
-                            "5 years 9 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            17
-                        ],
-                        [
                             "Name 2346",
                             "2014-01-20",
                             "3 years 4 months ",
@@ -1854,62 +1728,6 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             16
-                        ],
-                        [
-                            "Name 2347",
-                            "2011-11-21",
-                            "5 years 6 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            25
-                        ],
-                        [
-                            "Name 2531",
-                            "2011-10-16",
-                            "5 years 7 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            19
-                        ],
-                        [
-                            "Name 2534",
-                            "2011-10-20",
-                            "5 years 7 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            22
-                        ],
-                        [
-                            "Name 4377",
-                            "2011-06-22",
-                            "5 years 11 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            18
                         ]
                     ]
                 ],

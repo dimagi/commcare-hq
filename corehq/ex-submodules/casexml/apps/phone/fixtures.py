@@ -64,7 +64,7 @@ class FixtureGenerator(object):
         if not isinstance(user, OTARestoreUser):
             return []
 
-        providers = list(itertools.chain(*self._generator_providers.values()))
+        providers = list(itertools.chain(*list(self._generator_providers.values())))
 
         if fixture_id:
             full_id = fixture_id

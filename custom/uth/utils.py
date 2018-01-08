@@ -8,6 +8,7 @@ import uuid
 from django.core.files.uploadedfile import UploadedFile
 from custom.uth.const import UTH_DOMAIN
 import re
+import six
 
 
 def scan_case(scanner_serial, scan_id):
@@ -213,7 +214,7 @@ def submit_error_case(case_id):
 
 
 def put_request_files_in_doc(request, doc):
-    for name, f in request.FILES.iteritems():
+    for name, f in six.iteritems(request.FILES):
         doc.put_attachment(
             f,
             name,
