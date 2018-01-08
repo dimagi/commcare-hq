@@ -433,7 +433,8 @@ api_params:
     public: occurrence
   case_property:
     public: key_populations
-  choices:
+  validator: custom.enikshay.integrations.ninetyninedots.api_spec.checkbox_validator
+  validator_values:
     public:
       - known_patient_contact
       - diabetes

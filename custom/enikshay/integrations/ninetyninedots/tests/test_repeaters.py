@@ -395,6 +395,30 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
             ''
         )
 
+    def test_get_payload_valid_checkbox(self):
+        self.occurrence.attrs['update']['key_populations'] = 'urban_slum tobacco'  # test checkbox type
+        self._test_checkbox_type()
+
+    def test_get_payload_invalid_checkbox(self):
+        self.occurrence.attrs['update']['key_populations'] = 'foo bar'
+        with self.assertRaises(ValueError):
+            self._test_checkbox_type()
+
+    def _test_checkbox_type(self):
+
+        cases = self.create_case_structure()
+        cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
+
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
+            self.primary_phone_number.replace("0", ""),
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
+        )
+        payload = self._assert_payload_contains_subset(cases, expected_numbers)
+
+        self.assertTrue('key_populations' in payload)
+        self.assertEqual(payload['key_populations'], 'urban_slum tobacco')
+
     def test_handle_failure(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
