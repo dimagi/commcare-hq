@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from corehq.apps.ivr.api import log_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
@@ -38,17 +37,3 @@ class TwilioIncomingSMSView(IncomingBackendView):
             backend_id=self.backend_couch_id
         )
         return HttpResponse(EMPTY_RESPONSE)
-
-
-class TwilioIncomingIVRView(IncomingBackendView):
-    urlname = 'twilio_ivr'
-
-    @property
-    def backend_class(self):
-        return SQLTwilioBackend
-
-    def post(self, request, api_key, *args, **kwargs):
-        from_number = request.POST.get('From')
-        call_sid = request.POST.get('CallSid')
-        log_call(from_number, '%s-%s' % (SQLTwilioBackend.get_api_id(), call_sid))
-        return HttpResponse(IVR_RESPONSE)

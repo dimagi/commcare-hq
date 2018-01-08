@@ -5,7 +5,6 @@ from tropo import Tropo
 from corehq.apps.sms.api import incoming as incoming_sms
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
-from corehq.apps.ivr.models import Call
 from corehq.apps.sms.models import INCOMING, PhoneNumber
 from datetime import datetime
 from corehq.apps.sms.util import strip_plus
@@ -42,42 +41,6 @@ def sms_in(request):
         incoming_sms(phone_number, text, SQLTropoBackend.get_api_id())
         t = Tropo()
         t.hangup()
-        return HttpResponse(t.RenderJson())
-    else:
-        return HttpResponseBadRequest("Bad Request")
-
-
-@csrf_exempt
-def ivr_in(request):
-    """
-    Handles tropo call requests
-    """
-    if request.method == "POST":
-        data = json.loads(request.body)
-        phone_number = data["session"]["from"]["id"]
-        # TODO: Implement tropo as an ivr backend. In the meantime, just log the call.
-
-        if phone_number:
-            cleaned_number = strip_plus(phone_number)
-            v = PhoneNumber.by_extensive_search(cleaned_number)
-        else:
-            v = None
-
-        # Save the call entry
-        msg = Call(
-            phone_number=cleaned_number,
-            direction=INCOMING,
-            date=datetime.utcnow(),
-            backend_api=SQLTropoBackend.get_api_id(),
-        )
-        if v is not None:
-            msg.domain = v.domain
-            msg.couch_recipient_doc_type = v.owner_doc_type
-            msg.couch_recipient = v.owner_id
-        msg.save()
-
-        t = Tropo()
-        t.reject()
         return HttpResponse(t.RenderJson())
     else:
         return HttpResponseBadRequest("Bad Request")
