@@ -161,19 +161,6 @@ def get_sms_backend_classes():
     return _get_backend_classes(settings.SMS_LOADED_SQL_BACKENDS)
 
 
-@memoized
-def get_ivr_backend_classes():
-    return _get_backend_classes(settings.IVR_LOADED_SQL_BACKENDS)
-
-
-@memoized
-def get_backend_classes():
-    return _get_backend_classes(
-        settings.SMS_LOADED_SQL_BACKENDS +
-        settings.IVR_LOADED_SQL_BACKENDS
-    )
-
-
 CLEAN_TEXT_REPLACEMENTS = (
     # Common emoticon replacements
     (":o", ": o"),
