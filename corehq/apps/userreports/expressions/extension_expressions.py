@@ -70,6 +70,7 @@ class IndexedCaseExpressionSpec(JsonObject):
             index=self.index or "parent"
         )
 
+
 def indexed_case_expression(spec, context):
     wrapped = IndexedCaseExpressionSpec.wrap(spec)
     wrapped.configure(
