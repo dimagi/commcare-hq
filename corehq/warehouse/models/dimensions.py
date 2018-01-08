@@ -58,7 +58,7 @@ class UserDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = USER_DIM_SLUG
 
-    user_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, unique=True)
     username = models.CharField(max_length=150)
     user_type = models.CharField(max_length=100)
     first_name = models.CharField(max_length=30, null=True)
@@ -86,7 +86,7 @@ class GroupDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = GROUP_DIM_SLUG
 
-    group_id = models.CharField(max_length=255)
+    group_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
 
     case_sharing = models.NullBooleanField()
@@ -107,7 +107,7 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = LOCATION_DIM_SLUG
 
-    location_id = models.CharField(max_length=100)
+    location_id = models.CharField(max_length=100, unique=True)
     sql_location_id = models.IntegerField()
     name = models.CharField(max_length=255)
     site_code = models.CharField(max_length=255)
@@ -159,7 +159,7 @@ class DomainDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = DOMAIN_DIM_SLUG
 
-    domain_id = models.CharField(max_length=255)
+    domain_id = models.CharField(max_length=255, unique=True)
     default_timezone = models.CharField(max_length=255)
     hr_name = models.CharField(max_length=255, null=True)
     creating_user_id = models.CharField(max_length=255, null=True)
@@ -222,7 +222,7 @@ class ApplicationDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = APPLICATION_DIM_SLUG
 
-    application_id = models.CharField(max_length=255)
+    application_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     application_last_modified = models.DateTimeField(null=True)
 
