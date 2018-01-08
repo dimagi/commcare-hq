@@ -31,7 +31,7 @@ We welcome contributions, see our [CONTRIBUTING.rst](CONTRIBUTING.rst) document 
 Setting up CommCare HQ for developers
 -------------------------------------
 
-Please note that these instructions are targeted toward UNIX-based systems.
+Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI.
 
 ### Downloading and configuring CommCare HQ
 
