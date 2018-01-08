@@ -189,6 +189,10 @@ import six
 from six.moves import range
 
 
+# Number of columns in case property history popup
+DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
+
+
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",
@@ -1245,9 +1249,6 @@ def render_full_report_notification(request, content, email=None, report_notific
 def view_scheduled_report(request, domain, scheduled_report_id):
     content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
     return render_full_report_notification(request, content)
-
-
-DYNAMIC_CASE_PROPERTIES_COLUMNS = 4     # TODO: stuck somewhere else?
 
 
 @location_safe
