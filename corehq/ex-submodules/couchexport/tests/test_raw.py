@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from StringIO import StringIO
+from io import BytesIO
 import json
 from django.test import TestCase
 import itertools
@@ -22,7 +22,7 @@ class ExportRawTest(TestCase):
         class Tester(object):
 
             def __enter__(self):
-                self.buffer = StringIO()
+                self.buffer = BytesIO()
                 return self.buffer
 
             def __exit__(self, exc_type, exc_val, exc_tb):
