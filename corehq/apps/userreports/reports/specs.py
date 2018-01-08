@@ -88,7 +88,7 @@ class BaseReportColumn(JsonObject):
         """
         return [self.column_id]
 
-    def get_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang, user_location_type, by_location_type):
         raise NotImplementedError('subclasses must override this')
 
     def aggregations(self, data_source_config, lang):
@@ -176,7 +176,7 @@ class FieldColumn(ReportColumn):
                     float(row[column_name]) / total
                 )
 
-    def get_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang, user_location_type, by_location_type):
         return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
@@ -254,7 +254,7 @@ class LocationColumn(ReportColumn):
             except BadValueError:
                 row[column_name] = u'{} ({})'.format(row[column_name], _('Invalid Location'))
 
-    def get_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang, user_location_type, by_location_type):
         return ColumnConfig(columns=[
             DatabaseColumn(
                 header=self.get_header(lang),
@@ -279,19 +279,19 @@ class ExpandedColumn(ReportColumn):
         _add_column_id_if_missing(obj)
         return super(ExpandedColumn, cls).wrap(obj)
 
-    def get_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang, user_location_type, by_location_type):
         return get_expanded_column_config(data_source_config, self, lang)
 
     def get_fields(self, data_source_config, lang):
         return [self.field] + [
-            c.aggregation.name for c in self.get_column_config(data_source_config, lang).columns
+            c.aggregation.name for c in self.get_column_config(data_source_config, lang, None, None).columns
         ]
 
     def aggregations(self, data_source_config, lang):
-        return [c.aggregation for c in self.get_column_config(data_source_config, lang).columns]
+        return [c.aggregation for c in self.get_column_config(data_source_config, lang, None, None).columns]
 
     def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
-        sub_columns = self.get_column_config(data_source_config, lang).columns
+        sub_columns = self.get_column_config(data_source_config, lang, None, None).columns
         ret = {}
 
         if not from_aggregation:
@@ -315,7 +315,7 @@ class AggregateDateColumn(ReportColumn):
     field = StringProperty(required=True)
     format = StringProperty(required=False)
 
-    def get_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang, user_location_type, by_location_type):
         return ColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
@@ -357,10 +357,10 @@ class PercentageColumn(ReportColumn):
         default='percent'
     )
 
-    def get_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang, user_location_type, by_location_type):
         # todo: better checks that fields are not expand
-        num_config = self.numerator.get_column_config(data_source_config, lang)
-        denom_config = self.denominator.get_column_config(data_source_config, lang)
+        num_config = self.numerator.get_column_config(data_source_config, lang, user_location_type, by_location_type)
+        denom_config = self.denominator.get_column_config(data_source_config, lang, user_location_type, by_location_type)
         return ColumnConfig(columns=[
             AggregateColumn(
                 header=self.get_header(lang),
@@ -477,7 +477,7 @@ class ExpressionColumn(BaseReportColumn):
     def wrapped_expression(self):
         return ExpressionFactory.from_spec(self.expression)
 
-    def get_column_config(self, data_source_config, lang):
+    def get_column_config(self, data_source_config, lang, user_location_type, by_location_type):
         return ColumnConfig(columns=[
             CalculatedColumn(
                 header=self.get_header(lang),

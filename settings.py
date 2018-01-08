@@ -2080,10 +2080,12 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
 
 CUSTOM_UCR_REPORT_FILTERS = [
     ('enikshay_location_hierarchy', "custom.enikshay.ucr_filters._build_enikshay_location_hierarchy"),
+    ('enikshay_by_location_type', 'custom.enikshay.ucr_filters._build_enikshay_by_location_type_filter'),
 ]
 
 CUSTOM_UCR_REPORT_FILTER_VALUES = [
     ("enikshay_location_hierarchy", "custom.enikshay.ucr_filters.ENikshayLocationHierarchyFilterValue"),
+    ('enikshay_by_location_type', 'custom.enikshay.ucr_filters.EnikshayByLocationTypeFilterValue'),
 ]
 
 CUSTOM_MODULES = [

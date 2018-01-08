@@ -10,6 +10,7 @@ import six
 class ConfigurableReportDataSourceMixin(object):
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
         self.lang = None
+        self.user = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
             self._config = config_or_config_id
@@ -62,7 +63,9 @@ class ConfigurableReportDataSourceMixin(object):
         """
         return [
             inner_col for col in self.top_level_columns
-            for inner_col in col.get_column_config(self.config, self.lang).columns
+            for inner_col in col.get_column_config(
+                self.config, self.lang, self.user_location_type_code, self.by_location_type(col.column_id)
+            ).columns
         ]
 
     @property
@@ -90,7 +93,12 @@ class ConfigurableReportDataSourceMixin(object):
 
     @property
     def column_configs(self):
-        return [col.get_column_config(self.config, self.lang) for col in self.top_level_db_columns]
+        return [
+            col.get_column_config(
+                self.config, self.lang, self.user_location_type_code, self.by_location_type(col.column_id)
+            )
+            for col in self.top_level_db_columns
+        ]
 
     @property
     def column_warnings(self):
@@ -116,3 +124,28 @@ class ConfigurableReportDataSourceMixin(object):
         else:
             # if the column isn't found just treat it as a normal field
             return [column_id]
+
+    @property
+    def user_location_type_code(self):
+        if self.user:
+            location = self.user.get_location_id(self.domain)
+            if location:
+                return location.location_type.code
+        return None
+
+    def by_location_type(self, column_id):
+        for filter in self._filters.values():
+            if (
+                filter.type == 'enikshay_by_location_type'
+                and filter.field == column_id
+                and self._filter_values.get(filter.slug)
+            ):
+                return self._filter_values[filter.slug].value
+        return None
+
+
+    @property
+    def by_location_type(self):
+        return None # TODO - implement
+        raise NotImplementedError
+        # TODO - memoize

@@ -1,16 +1,18 @@
 from __future__ import absolute_import
 from collections import namedtuple
 
+from jsonobject import ListProperty
 from sqlagg.filters import ORFilter, EQFilter
 
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es import filters
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter
+from corehq.apps.reports_core.filters import Choice, ChoiceListFilter, DynamicChoiceListFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.reports.filters.values import FilterValue, dynamic_choice_list_url, SHOW_ALL_CHOICE
+from corehq.apps.userreports.specs import TypeProperty
 
 _LocationFilter = namedtuple("_LocationFilter", "column parameter_slug filter_value")
 
@@ -129,4 +131,33 @@ def _build_enikshay_location_hierarchy(spec, report):
         label=wrapped.get_display(),
         choice_provider=choice_provider,
         url_generator=dynamic_choice_list_url,
+    )
+
+
+class EnikshayByLocationTypeFilterValue(FilterValue):
+
+    def to_sql_filter(self):
+        return None
+
+    def to_sql_values(self):
+        return {}
+
+    def to_es_filter(self):
+        return None
+
+
+class ByLocationTypeFilterSpec(FilterSpec):
+    type = TypeProperty('enikshay_by_location_type')
+    location_types = ListProperty(required=True)
+
+
+def _build_enikshay_by_location_type_filter(spec, report):
+    wrapped = ByLocationTypeFilterSpec.wrap(spec) # maybe at some point we should validate that by filter + by column are together TODO
+    choices = [Choice(loc_type, loc_type) for loc_type in wrapped.location_types]
+    return ChoiceListFilter(
+        name=wrapped.slug,
+        field=wrapped.field,
+        datatype=wrapped.datatype,
+        label=wrapped.display,
+        choices=choices,
     )

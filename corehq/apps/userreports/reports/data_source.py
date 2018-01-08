@@ -59,6 +59,14 @@ class ConfigurableReportDataSource(object):
         self.data_source.lang = lang
 
     @property
+    def user(self):
+        return self.data_source.user
+
+    @user.setter
+    def user(self, user):
+        self.data_source.user = user
+
+    @property
     def config(self):
         if self._config is None:
             self._config, _ = get_datasource_config(self._config_id, self.domain)

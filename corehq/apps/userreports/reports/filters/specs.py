@@ -66,7 +66,7 @@ class FilterSpec(JsonObject):
         choices=[
             'date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list',
             'multi_field_dynamic_choice_list', 'location_drilldown',
-            'enikshay_location_hierarchy'
+            'enikshay_location_hierarchy', 'enikshay_by_location_type',
         ]
     )
     # this shows up as the ID in the filter HTML.
