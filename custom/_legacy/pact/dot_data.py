@@ -120,7 +120,7 @@ class DOTDay(object):
         for ix, dose_data in enumerate([self.nonart, self.art]):
             drug_arr = []
             labels_arr = regimen_labels[ix]
-            dose_nums = dose_data.dose_dict.keys()
+            dose_nums = list(dose_data.dose_dict.keys())
             dose_nums.sort()
 
             for dose_num in dose_nums:

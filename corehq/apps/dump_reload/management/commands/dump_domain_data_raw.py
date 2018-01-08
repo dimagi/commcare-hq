@@ -54,11 +54,11 @@ class Command(BaseCommand):
         )
         self._create_bucket()
 
-        exporters = {
+        exporters = list({
             'forms': _get_form_query,
             'cases': functools.partial(_get_query, CaseES),
             'ledgers': functools.partial(_get_query, LedgerES),
-        }.items()
+        }.items())
 
         if options['type']:
             exporters = [exp for exp in exporters if exp[0] == options['type']]

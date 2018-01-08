@@ -1,14 +1,16 @@
 hqDefine("scheduling/js/broadcasts_list", function() {
-    $(function() {
-        var list_broadcasts_url = hqImport("hqwebapp/js/initial_page_data").reverse("new_list_broadcasts"),
-            loader_src = hqImport("hqwebapp/js/initial_page_data").get("loader_src");
 
-        $("#scheduled-table").dataTable({
+    var scheduledTable = null;
+
+    $(function() {
+        var list_broadcasts_url = hqImport("hqwebapp/js/initial_page_data").reverse("new_list_broadcasts");
+
+        scheduledTable = $("#scheduled-table").dataTable({
             "lengthChange": false,
             "filter": false,
             "sort": false,
-            "displayLength": 5,
-            "processing": true,
+            "displayLength": 10,
+            "processing": false,
             "serverSide": true,
             "ajaxSource": list_broadcasts_url,
             "fnServerParams": function(aoData) {
@@ -19,16 +21,20 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 "emptyTable": gettext('There are no messages to display.'),
                 "infoEmpty": gettext('There are no messages to display.'),
                 "lengthMenu": gettext('Show _MENU_ messages per page'),
-                "processing": '<img src="' + loader_src + '" /> ' + gettext('Loading messages...'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ broadcasts'),
                 "infoFiltered": gettext('(filtered from _MAX_ total broadcasts)'),
             },
             "columnDefs": [
                 {
                     "targets": [0],
-                    "render": function() {
-                        // TODO construct this from ID
-                        return 'Delete button';
+                    "className": "text-center",
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var button_id = 'delete-button-for-scheduled-broadcast-' + id;
+                        return '<button id="' + button_id + '" \
+                                        class="btn btn-danger" \
+                                        onclick="hqImport(\'scheduling/js/broadcasts_list\').deleteScheduledBroadcast(' + id + ')"> \
+                                <i class="fa fa-remove"></i></button>';
                     },
                 },
                 {
@@ -42,14 +48,30 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 {
                     "targets": [3],
                     "render": function(data) {
-                        return data ? gettext("Active") : gettext("Inactive");
+                        if(data) {
+                            return '<span class="label label-success">' + gettext("Active") + '</span>';
+                        } else {
+                            return '<span class="label label-danger">' + gettext("Inactive") + '</span>';
+                        }
                     },
                 },
                 {
                     "targets": [4],
-                    "render": function() {
-                        // TODO construct this from ID
-                        return 'activate or deactivate button';
+                    "render": function(data, type, row) {
+                        var id = row[row.length - 1];
+                        var button_id = 'activate-button-for-scheduled-broadcast-' + id;
+                        var active = row[3];
+                        if(active) {
+                            return '<button id="' + button_id + '" \
+                                            class="btn btn-default" \
+                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').deactivateScheduledBroadcast(' + id + ')"> \
+                                   ' + gettext("Deactivate") + '</button>';
+                        } else {
+                            return '<button id="' + button_id + '" + \
+                                            class="btn btn-default" + \
+                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').activateScheduledBroadcast(' + id + ')"> \
+                                   ' + gettext("Activate") + '</button>';
+                        }
                     },
                 },
             ],
@@ -59,8 +81,8 @@ hqDefine("scheduling/js/broadcasts_list", function() {
             "lengthChange": false,
             "filter": false,
             "sort": false,
-            "displayLength": 5,
-            "processing": true,
+            "displayLength": 10,
+            "processing": false,
             "serverSide": true,
             "ajaxSource": list_broadcasts_url,
             "fnServerParams": function(aoData) {
@@ -71,7 +93,6 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 "emptyTable": gettext('There are no messages to display.'),
                 "infoEmpty": gettext('There are no messages to display.'),
                 "lengthMenu": gettext('Show _MENU_ messages per page'),
-                "processing": '<img src="' + loader_src + '" /> ' + gettext('Loading Messages...'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ messages'),
                 "infoFiltered": gettext('(filtered from _MAX_ total messages)'),
             },
@@ -87,4 +108,49 @@ hqDefine("scheduling/js/broadcasts_list", function() {
             ],
         });
     });
+
+    function broadcastAction(action, broadcast_id) {
+        var activateButton = $('#activate-button-for-scheduled-broadcast-' + broadcast_id);
+        var deleteButton = $('#delete-button-for-scheduled-broadcast-' + broadcast_id);
+        if(action === 'delete_scheduled_broadcast') {
+            deleteButton.disableButton();
+            activateButton.prop('disabled', true);
+        } else {
+            activateButton.disableButton();
+            deleteButton.prop('disabled', true);
+        }
+
+        $.ajax({
+            url: '',
+            type: 'post',
+            dataType: 'json',
+            data: {
+                action: action,
+                broadcast_id: broadcast_id,
+            },
+        })
+        .always(function() {
+            scheduledTable.fnDraw(false);
+        });
+    }
+
+    function activateScheduledBroadcast(broadcast_id) {
+        broadcastAction('activate_scheduled_broadcast', broadcast_id);
+    }
+
+    function deactivateScheduledBroadcast(broadcast_id) {
+        broadcastAction('deactivate_scheduled_broadcast', broadcast_id);
+    }
+
+    function deleteScheduledBroadcast(broadcast_id) {
+        if(confirm(gettext("Are you sure you want to delete this scheduled message?"))) {
+            broadcastAction('delete_scheduled_broadcast', broadcast_id);
+        }
+    }
+
+    return {
+        activateScheduledBroadcast: activateScheduledBroadcast,
+        deactivateScheduledBroadcast: deactivateScheduledBroadcast,
+        deleteScheduledBroadcast: deleteScheduledBroadcast,
+    };
 });

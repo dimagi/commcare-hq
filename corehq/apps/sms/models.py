@@ -1983,7 +1983,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
                    we have to support both for a little while until all
                    foreign keys are migrated over
         """
-        backend_classes = smsutil.get_backend_classes()
+        backend_classes = smsutil.get_sms_backend_classes()
         api_id = api_id or cls.get_backend_api_id(backend_id, is_couch_id=is_couch_id)
 
         if api_id not in backend_classes:
@@ -2270,7 +2270,7 @@ class BackendMap(object):
         """
         self.catchall_backend_id = catchall_backend_id
         self.backend_map_dict = backend_map
-        self.backend_map_tuples = backend_map.items()
+        self.backend_map_tuples = list(backend_map.items())
         # Sort by length of prefix descending
         self.backend_map_tuples.sort(key=lambda x: len(x[0]), reverse=True)
 

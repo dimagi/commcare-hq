@@ -46,9 +46,10 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-#  - nh/240812/mw_pwd_reset  # Norman 3/23
-  - mk-hackathon-repeater-edit # MK 12/Dec
-  - jls/shadow-parent-child-selection # Jenny 12/20
+  - jls/data-corrections-cases # Jenny 1/4
+  - jls/source-maps # Jenny 1/5
+  - revert-19038-revert-19020-jls/fix-ab-tests # Jenny 1/5
+  - np/tb/calculate_xpath # NP 1/6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

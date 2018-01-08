@@ -1408,6 +1408,10 @@ class CaseReminderHandler(Document):
         Double-checks the model for any inconsistencies and raises an
         IllegalModelStateException if any exist.
         """
+        if self.method in (METHOD_IVR_SURVEY, METHOD_SMS_CALLBACK) and self.active:
+            # This shouldn't happen anymore, but include here as a precation
+            raise IllegalModelStateException("IVR functionality has been removed")
+
         def check_attr(name, obj=self):
             # don't allow None or empty string, but allow 0
             if getattr(obj, name) in [None, ""]:

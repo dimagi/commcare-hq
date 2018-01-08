@@ -279,7 +279,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
-        uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()
+        uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         uploaders = [

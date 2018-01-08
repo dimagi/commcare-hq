@@ -364,10 +364,11 @@ class PrevalenceOfUndernutritionView(View):
                 data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_undernutrition_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_prevalence_of_undernutrition_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_prevalence_of_undernutrition_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, include_test)
 
@@ -775,10 +776,11 @@ class PrevalenceOfSevereView(View):
                 data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_severe_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_prevalence_of_severe_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_prevalence_of_severe_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
 
@@ -827,10 +829,11 @@ class PrevalenceOfStuntingView(View):
                 data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_stunting_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_prevalence_of_stunting_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_prevalence_of_stunting_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
 
@@ -876,10 +879,11 @@ class NewbornsWithLowBirthWeightView(View):
                 data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_newborn_with_low_birth_weight_map(domain, config.copy(), loc_level, include_test)
-                sector = get_newborn_with_low_birth_weight_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_newborn_with_low_birth_weight_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_newborn_with_low_birth_weight_chart(domain, config, loc_level, include_test)
 
@@ -924,10 +928,11 @@ class EarlyInitiationBreastfeeding(View):
                 data = get_early_initiation_breastfeeding_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_early_initiation_breastfeeding_map(domain, config.copy(), loc_level, include_test)
-                sector = get_early_initiation_breastfeeding_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_early_initiation_breastfeeding_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_early_initiation_breastfeeding_chart(domain, config, loc_level, include_test)
 
@@ -971,10 +976,11 @@ class ExclusiveBreastfeedingView(View):
                 data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_exclusive_breastfeeding_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_exclusive_breastfeeding_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_exclusive_breastfeeding_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_exclusive_breastfeeding_data_chart(domain, config, loc_level, include_test)
 
@@ -1018,10 +1024,11 @@ class ChildrenInitiatedView(View):
                 data = get_children_initiated_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_children_initiated_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_children_initiated_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_children_initiated_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_children_initiated_data_chart(domain, config, loc_level, include_test)
 
@@ -1065,10 +1072,11 @@ class InstitutionalDeliveriesView(View):
                 data = get_institutional_deliveries_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_institutional_deliveries_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_institutional_deliveries_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_institutional_deliveries_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_institutional_deliveries_data_chart(domain, config, loc_level, include_test)
 
@@ -1111,10 +1119,11 @@ class ImmunizationCoverageView(View):
                 data = get_immunization_coverage_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_immunization_coverage_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_immunization_coverage_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_immunization_coverage_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_immunization_coverage_data_chart(domain, config, loc_level, include_test)
 
@@ -1146,10 +1155,11 @@ class AWCDailyStatusView(View):
                 data = get_awc_daily_status_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_awc_daily_status_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_awc_daily_status_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_awc_daily_status_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_awc_daily_status_data_chart(domain, config, loc_level, include_test)
 
@@ -1188,10 +1198,11 @@ class AWCsCoveredView(View):
                 data = get_awcs_covered_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_awcs_covered_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_awcs_covered_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_awcs_covered_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
 
@@ -1230,10 +1241,11 @@ class RegisteredHouseholdView(View):
                 data = get_registered_household_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_registered_household_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_registered_household_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_registered_household_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_registered_household_data_chart(domain, config, loc_level, include_test)
 
@@ -1280,10 +1292,11 @@ class EnrolledChildrenView(View):
                 data = get_enrolled_children_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_enrolled_children_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_enrolled_children_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_enrolled_children_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             if 'age' in config:
                 del config['age']
@@ -1325,10 +1338,11 @@ class EnrolledWomenView(View):
                 data = get_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_enrolled_women_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_enrolled_women_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_enrolled_women_data_chart(domain, config, loc_level, include_test)
 
@@ -1367,10 +1381,11 @@ class LactatingEnrolledWomenView(View):
                 data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_lactating_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_lactating_enrolled_women_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_lactating_enrolled_women_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_lactating_enrolled_data_chart(domain, config, loc_level, include_test)
 
@@ -1409,10 +1424,11 @@ class AdolescentGirlsView(View):
                 data = get_adolescent_girls_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adolescent_girls_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_adolescent_girls_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_adolescent_girls_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_adolescent_girls_data_chart(domain, config, loc_level, include_test)
 
@@ -1451,10 +1467,11 @@ class AdhaarBeneficiariesView(View):
                 data = get_adhaar_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_adhaar_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_adhaar_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_adhaar_data_chart(domain, config, loc_level, include_test)
 
@@ -1492,10 +1509,11 @@ class CleanWaterView(View):
                 data = get_clean_water_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_clean_water_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_clean_water_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_clean_water_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_clean_water_data_chart(domain, config, loc_level, include_test)
 
@@ -1534,10 +1552,11 @@ class FunctionalToiletView(View):
                 data = get_functional_toilet_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_functional_toilet_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_functional_toilet_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_functional_toilet_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_functional_toilet_data_chart(domain, config, loc_level, include_test)
 
@@ -1576,10 +1595,11 @@ class MedicineKitView(View):
                 data = get_medicine_kit_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_medicine_kit_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_medicine_kit_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_medicine_kit_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_medicine_kit_data_chart(domain, config, loc_level, include_test)
 
@@ -1618,10 +1638,11 @@ class InfantsWeightScaleView(View):
                 data = get_infants_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_infants_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_infants_weight_scale_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_infants_weight_scale_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_infants_weight_scale_data_chart(domain, config, loc_level, include_test)
 
@@ -1660,10 +1681,11 @@ class AdultWeightScaleView(View):
                 data = get_adult_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adult_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_adult_weight_scale_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_adult_weight_scale_sector_data(
+                        domain, config.copy(), loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_adult_weight_scale_data_chart(domain, config, loc_level, include_test)
 

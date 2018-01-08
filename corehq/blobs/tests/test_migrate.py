@@ -228,7 +228,7 @@ class TestApplicationMigrations(BaseMigrationTest):
         db.save_doc(doc)
         apps["Application"] = Application.get(app._id)  # update _rev
 
-        self.do_migration(apps.values())
+        self.do_migration(list(apps.values()))
 
         for app in apps.values():
             exp = type(app).get(app._id)
@@ -351,7 +351,7 @@ class TestXFormInstanceMigrations(BaseMigrationTest):
             item.save()
             items[doc_type] = item
 
-        self.do_migration(items.values(), num_attachments=2)
+        self.do_migration(list(items.values()), num_attachments=2)
 
         for item in items.values():
             exp = type(item).get(item._id)
@@ -407,7 +407,7 @@ class TestCommCareCaseMigrations(BaseMigrationTest):
             item.save()
             items[doc_type] = item
 
-        self.do_migration(items.values(), num_attachments=1)
+        self.do_migration(list(items.values()), num_attachments=1)
 
         for item in items.values():
             exp = type(item).get(item._id)

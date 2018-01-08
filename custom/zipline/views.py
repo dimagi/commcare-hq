@@ -247,7 +247,7 @@ class BaseZiplineStatusUpdateView(View, DomainViewMixin):
                 'package_id': dispatched_status.package_id,
                 'vehicle_id': dispatched_status.vehicle_id,
                 'products': [ProductQuantity(code, data.get('quantity'))
-                             for code, data in dispatched_status.products.iteritems()],
+                             for code, data in six.iteritems(dispatched_status.products)],
             }
         else:
             return {}

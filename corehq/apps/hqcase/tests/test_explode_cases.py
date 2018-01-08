@@ -250,7 +250,7 @@ class ExplodeLedgersTest(BaseSyncTest):
             )
         }
         self.device.post_changes([case1, case2])
-        self.device.post_changes(self.ledgers.values())
+        self.device.post_changes(list(self.ledgers.values()))
 
     def test_explode_ledgers(self):
         explode_cases(self.project.name, self.user_id, 5)

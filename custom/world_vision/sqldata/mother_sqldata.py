@@ -9,6 +9,7 @@ from custom.utils.utils import clean_IN_filter_value
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails
 from six.moves import range
+import six
 
 
 class MotherRegistrationDetails(BaseSqlData):
@@ -671,7 +672,7 @@ class NumberOfPNCVisits(BaseSqlData):
         for row in rows:
             counter[row[-1]['html']] += 1
 
-        for k, v in counter.iteritems():
+        for k, v in six.iteritems(counter):
             percent = self.percent_fn(len(rows), v)
             result.append([{'sort_key': "Mothers with %d PNC visits within 42 days of delivery" % k,
                             'html': "Mothers with %d PNC visits within 42 days of delivery" % k},

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import inspect
 import json
 import uuid
-from StringIO import StringIO
+from io import BytesIO
 from collections import Counter
 from datetime import datetime
 
@@ -67,7 +67,7 @@ class BaseDumpLoadTest(TestCase):
         models = list(expected_object_counts)
         self._check_signals_handle_raw(models)
 
-        output_stream = StringIO()
+        output_stream = BytesIO()
         SqlDataDumper(self.domain_name, []).dump(output_stream)
 
         self.delete_sql_data()
@@ -130,7 +130,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain_name)
         super(TestSQLDumpLoadShardedModels, cls).tearDownClass()
 
-    def test_dump_laod_form(self):
+    def test_dump_load_form(self):
         expected_object_counts = Counter({
             XFormInstanceSQL: 2,
             XFormAttachmentSQL: 2

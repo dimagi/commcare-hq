@@ -246,7 +246,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             else:
                 specific_doc = "couch"
             unique["%s.%s.%s" % (ind.slug, ind.namespace, specific_doc)] = ind
-        return unique.values()
+        return list(unique.values())
 
     @classmethod
     def get_nice_name(cls):
@@ -590,7 +590,7 @@ class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
     def get_value(self, user_ids, datespan=None, is_debug=False):
         results = self.get_raw_results(user_ids, datespan)
         data = dict([(r['id'], r['value']) for r in results])
-        value = numpy.median(data.values()) if data.values() else None
+        value = numpy.median(list(data.values())) if list(data.values()) else None
         if is_debug:
             return value, data
         return value

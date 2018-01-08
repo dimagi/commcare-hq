@@ -9,17 +9,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 import six
-
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -64,8 +57,8 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
-    fills.update({'Adolescent Girls': BLUE})
-    fills.update({'defaultFill': GREY})
+    fills.update({'Adolescent Girls': MapColors.BLUE})
+    fills.update({'defaultFill': MapColors.GREY})
 
     return {
         "slug": "adolescent_girls",
@@ -168,7 +161,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
                 "key": "Number Of Girls",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

@@ -1,5 +1,4 @@
 django-debug-toolbar==1.8
-guppy==0.1.10
 werkzeug==0.11.15
 line_profiler==1.0
 git+git://github.com/dimagi/couchdbkit-debugpanel.git
@@ -17,6 +16,6 @@ wheel==0.29.0
 graphviz==0.7
 git+git://github.com/nickpell/django-package-monitor@np/handle-no-semver
 transifex-client==0.12.4
-git+git://github.com/python-modernize/python-modernize.git@7370cc96e70313ba19dfa45f7c8e106d1396681e
+modernize==0.6
 
 --requirement=test-requirements.txt
