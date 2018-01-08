@@ -313,7 +313,7 @@ class DataSourceBuilder(object):
         if self.source_type == 'case':
             prop_map = get_case_properties(
                 self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
-                include_parent_properties=False
+                include_parent_properties=True,
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
