@@ -22,7 +22,9 @@ hqDefine("reports/js/case_details", function() {
         self.visiblePages = ko.observableArray([]);
 
         self.query.subscribe(function(newValue) {
-            self.currentPage.valueHasMutated();
+            if (self.currentPage() == 1) {
+                self.currentPage.valueHasMutated();     // force items to filter, which is handled by currentPage.subscribe below
+            }
             self.currentPage(1);
             self.totalPages(Math.ceil(_.filter(self.propertyNames, self.matchesQuery).length / self.itemsPerPage) || 1);
         });
@@ -63,6 +65,23 @@ hqDefine("reports/js/case_details", function() {
                 index++;
             }
         });
+
+        self.propertyChange = function(model, e) {
+            var $input = $(e.currentTarget);
+            self.properties[$input.data('name')] = $input.val();
+        };
+
+        self.submitForm = function(model, e) {
+            $(e.currentTarget).disableButton();
+            $.post({
+                url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
+                data: self.properties,
+                success: function(data) {
+                    window.location.reload();
+                },
+            });
+            return true;
+        };
 
         // Initialize
         self.currentPage(1);

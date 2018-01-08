@@ -40,6 +40,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.http.response import (
     HttpResponse,
@@ -1505,7 +1506,7 @@ def edit_case_view(request, domain, case_id):
         messages.success(request, _(u'Case properties saved for %s.' % case.name))
     else:
         messages.success(request, _(u'No changes made to %s.' % case.name))
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+    return JsonResponse({ 'success': 1 })
 
 
 @require_case_view_permission

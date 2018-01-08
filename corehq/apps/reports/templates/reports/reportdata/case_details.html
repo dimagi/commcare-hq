@@ -22,6 +22,7 @@
 
 {% initial_page_data 'dynamic_properties_names' dynamic_properties_names %}
 {% initial_page_data 'dynamic_properties' dynamic_properties %}
+{% registerurl "edit_case" case.domain case.case_id %}
 
 <div class="hq-generic-report">
     <script>
@@ -197,51 +198,49 @@
     <div class="modal fade{% if dynamic_properties_columns > 1 %} full-screen-modal{% endif %}" id="edit-dynamic-properties" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form method="POST" action="{% url "edit_case" case.domain case.case_id %}">
-                    {% csrf_token %}
-                    <div class="modal-header with-controls">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        <div class="form-inline pull-right">
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'afterkeydown'" />
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button">
-                                        <i class="fa fa-search"></i>
-                                    </button>
-                                </span>
+                <div class="modal-header with-controls">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div class="form-inline pull-right">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" data-bind="value: query, valueUpdate: 'afterkeydown'" />
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                    <h4 class="modal-title">
+                        {% trans "Edit Case Properties" %}
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
+                    <!-- ko foreach: visibleItems -->
+                        <div class="form-group container-fluid">
+                            <label class="col-sm-6 control-label" data-bind="text: name"></label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control"
+                                       data-bind="value: value, attr: { 'data-name': name }, event: { change: $parent.propertyChange }" />
                             </div>
                         </div>
-                        <h4 class="modal-title">
-                            {% trans "Edit Case Properties" %}
-                        </h4>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
-                        <!-- ko foreach: visibleItems -->
-                            <div class="form-group container-fluid">
-                                <label class="col-sm-6 control-label" data-bind="text: name"></label>
-                                <div class="col-sm-6">
-                                    <input type="text" class="form-control" data-bind="value: value, attr: { name: name }" />
-                                </div>
-                            </div>
+                    <!-- /ko -->
+                </div>
+                <div class="modal-footer with-controls">
+                    <ul class="pagination pull-left" data-bind="visible: showPagination">
+                        <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
+                        <!-- ko foreach: visiblePages -->
+                            <li data-bind="css: { active: $parent.currentPage() == $data }">
+                                <a href="#" data-bind="click: function() { $parent.currentPage($data); }, text: $data"></a>
+                            </li>
                         <!-- /ko -->
-                    </div>
-                    <div class="modal-footer with-controls">
-                        <ul class="pagination pull-left" data-bind="visible: showPagination">
-                            <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
-                            <!-- ko foreach: visiblePages -->
-                                <li data-bind="css: { active: $parent.currentPage() == $data }">
-                                    <a href="#" data-bind="click: function() { $parent.currentPage($data); }, text: $data"></a>
-                                </li>
-                            <!-- /ko -->
-                            <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
-                        </ul>
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
-                    </div>
-                </form>
+                        <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
+                    </ul>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary" data-bind="click: submitForm">{% trans "Save" %}</button>
+                </div>
             </div>
         </div>
     </div>
