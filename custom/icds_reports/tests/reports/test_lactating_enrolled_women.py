@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from django.test import TestCase
@@ -114,7 +114,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -143,7 +143,7 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
@@ -152,9 +152,9 @@ class TestLactatingEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 166
+                            'value': "166"
                         },
-                        {'indicator': 'Total number of pregnant women who are registered:', 'value': 166},
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "166"},
                         {
                             'indicator': (
                                 'Percentage of registered pregnant women who are enrolled for ICDS services:'
@@ -164,20 +164,20 @@ class TestLactatingEnrolledWomen(TestCase):
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "valid": 87,
                         "all": 87,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 79,
                         "all": 79,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Women"
                     }
                 },
@@ -197,7 +197,7 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
@@ -206,9 +206,9 @@ class TestLactatingEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 87
+                            'value': "87"
                         },
-                        {'indicator': 'Total number of pregnant women who are registered:', 'value': 87},
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "87"},
                         {
                             'indicator': (
                                 'Percentage of registered pregnant women who are enrolled for ICDS services:'
@@ -218,8 +218,8 @@ class TestLactatingEnrolledWomen(TestCase):
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {

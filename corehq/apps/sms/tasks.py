@@ -129,6 +129,39 @@ def message_is_stale(msg, utcnow):
         return True
 
 
+def connection_slot_key_base(backend):
+    return 'backend-%s-connection-slot-' % backend.couch_id
+
+
+def reserve_connection_slot(backend, max_simultaneous_connections):
+    """
+    There is one redis key per connection slot, numbered from 1 to
+    max_simultaneous_connections.
+    A slot is considered taken if the corresponding redis key exists,
+    or is considered free if it does not exist.
+    """
+    with CriticalSection(['reserve-connection-slot-for-%s' % backend.couch_id]):
+        client = get_redis_client()
+        key_base = connection_slot_key_base(backend)
+        slot_keys = client.keys(key_base + '*')
+        reserved_slots = [slot_key.replace(key_base, '') for slot_key in slot_keys]
+
+        for slot_number in range(1, max_simultaneous_connections + 1):
+            slot_string = str(slot_number)
+            if slot_string not in reserved_slots:
+                key = key_base + slot_string
+                client.set(key, 1)
+                client.expire(key, 60)
+                return slot_string
+
+    return None
+
+
+def free_connection_slot(backend, slot):
+    client = get_redis_client()
+    client.delete(connection_slot_key_base(backend) + slot)
+
+
 def handle_outgoing(msg):
     """
     Should return a requeue flag, so if it returns True, the message will be
@@ -139,6 +172,7 @@ def handle_outgoing(msg):
     sms_rate_limit = backend.get_sms_rate_limit()
     use_rate_limit = sms_rate_limit is not None
     use_load_balancing = isinstance(backend, PhoneLoadBalancingMixin)
+    max_simultaneous_connections = backend.get_max_simultaneous_connections()
     orig_phone_number = None
 
     if use_load_balancing:
@@ -154,11 +188,20 @@ def handle_outgoing(msg):
             # Requeue the message and try it again shortly
             return True
 
+    if max_simultaneous_connections:
+        connection_slot = reserve_connection_slot(backend, max_simultaneous_connections)
+        if not connection_slot:
+            # Requeue the message and try it again shortly
+            return True
+
     result = send_message_via_backend(
         msg,
         backend=backend,
         orig_phone_number=orig_phone_number
     )
+
+    if max_simultaneous_connections:
+        free_connection_slot(backend, connection_slot)
 
     if msg.error:
         remove_from_queue(msg)
@@ -310,7 +353,7 @@ def _sync_case_phone_number(contact_case):
         if len(phone_numbers) == 0:
             phone_number = None
         elif len(phone_numbers) == 1:
-            phone_number = phone_numbers.values()[0]
+            phone_number = list(phone_numbers.values())[0]
         else:
             # We use locks to make sure this scenario doesn't happen, but if it
             # does, just clear the phone number entries and the right one will

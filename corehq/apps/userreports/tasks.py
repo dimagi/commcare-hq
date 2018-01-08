@@ -42,7 +42,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
+from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram, datadog_counter
 from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
@@ -241,13 +241,13 @@ def run_queue_async_indicators_task():
 def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
-    day_ago = start - timedelta(days=1)
+    retry_threshold = start - timedelta(hours=1)
     # don't requeue anything that has been retired more than 20 times
     indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
-        # don't requeue anything that's be queued in the past day
-        if not indicator.date_queued or indicator.date_queued < day_ago:
+        # only requeue things that have were last queued earlier than the threshold
+        if not indicator.date_queued or indicator.date_queued < retry_threshold:
             indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
     for k, indicators in indicators_by_domain_doc_type.items():
@@ -262,6 +262,7 @@ def _queue_indicators(indicators):
         indicator_doc_ids = [i.doc_id for i in indicators]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         save_document.delay(indicator_doc_ids)
+        datadog_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
     to_queue = []
     for indicator in indicators:
@@ -307,7 +308,7 @@ def save_document(doc_ids):
         related_docs_to_rebuild = set()
 
         with timer:
-            for doc in doc_store.iter_documents(doc_ids):
+            for doc in doc_store.iter_documents(indicator_by_doc_id.keys()):
                 indicator = indicator_by_doc_id[doc['_id']]
                 successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
                 if rebuild_related_docs:
@@ -317,6 +318,8 @@ def save_document(doc_ids):
                 else:
                     failed_indicators.append((indicator, to_remove))
 
+        num_processed = len(processed_indicators)
+        num_failed = len(failed_indicators)
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         with transaction.atomic():
             for indicator, to_remove in failed_indicators:
@@ -330,6 +333,8 @@ def save_document(doc_ids):
         doc_id__in=related_docs_to_rebuild, date_queued=None
     ))
 
+    datadog_counter('commcare.async_indicator.processed_success', num_processed)
+    datadog_counter('commcare.async_indicator.processed_fail', num_failed)
     datadog_histogram(
         'commcare.async_indicator.processing_time', timer.duration,
         tags=[
@@ -399,8 +404,8 @@ def async_indicators_metrics():
         datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
     oldest_100_indicators = AsyncIndicator.objects.all()[:100]
-    oldest_indicator = oldest_100_indicators[0]
-    if oldest_indicator:
+    if oldest_100_indicators.exists():
+        oldest_indicator = oldest_100_indicators[0]
         lag = (now - oldest_indicator.date_created).total_seconds()
         datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 

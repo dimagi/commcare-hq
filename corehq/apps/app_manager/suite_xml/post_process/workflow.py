@@ -83,10 +83,10 @@ class WorkflowHelper(PostProcessor):
         if module_command == id_strings.ROOT:
             datums_list = self.root_module_datums
         else:
-            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+            datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
             root_module = target_form.get_module().root_module
             if root_module and include_target_root:
-                datums_list = datums_list + self.get_module_datums(id_strings.menu_id(root_module)).values()
+                datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]

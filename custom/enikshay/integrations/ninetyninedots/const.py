@@ -7,3 +7,5 @@ MERM_REFILL_REMINDER_STATUS = "merm_refill_reminder_status"
 MERM_REFILL_REMINDER_DATE = "merm_refill_reminder_date"
 MERM_REFILL_REMINDER_TIME = "merm_refill_reminder_time"
 MERM_RT_HOURS = "merm_rt_hours"
+
+VALID_ADHERENCE_VALUES = ['manual', 'unobserved_dose']

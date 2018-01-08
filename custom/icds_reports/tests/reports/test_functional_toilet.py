@@ -1,12 +1,13 @@
 
 from __future__ import absolute_import
+
 from django.test.utils import override_settings
 
 from django.test import TestCase
 
-from custom.icds_reports.const import ChartColors
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_map, \
     get_functional_toilet_data_chart, get_functional_toilet_sector_data
+from custom.icds_reports.const import ChartColors, MapColors
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
@@ -21,38 +22,38 @@ class TestFunctionalToilet(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs with a functional toilet",
-                    "average": 30.0,
+                    "info": "Percentage of AWCs that reported having a functional toilet",
+                    "average": 50.0,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': 15},
-                        {'indicator': '% of AWCs with a functional toilet:', 'value': '30.00%'}
+                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "15"},
+                        {'indicator': '% of AWCs with a functional toilet:', 'value': '50.00%'}
                     ]
                 },
-                "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
-                },
+                "label": "Percentage of AWCs that reported having a functional toilet",
                 "data": {
                     "st1": {
                         "in_month": 8,
-                        "all": 26,
-                        'original_name': [],
+                        "original_name": ["st1"],
+                        "all": 17,
                         "fillKey": "25%-75%"
                     },
                     "st2": {
                         "in_month": 7,
-                        "all": 24,
-                        'original_name': [],
+                        "original_name": ["st2"],
+                        "all": 13,
                         "fillKey": "25%-75%"
                     }
                 },
                 "slug": "functional_toilet",
-                "label": "Percent AWCs with Functional Toilet"
+                "fills": {
+                    "0%-25%": MapColors.RED,
+                    "25%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
+                }
             }
         )
 
@@ -67,32 +68,35 @@ class TestFunctionalToilet(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs with a functional toilet",
-                    "average": 30.76923076923077,
+                    "info": "Percentage of AWCs that reported having a functional toilet",
+                    "average": 47.05882352941177,
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': 8},
-                        {'indicator': '% of AWCs with a functional toilet:', 'value': '30.77%'}
+                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "8"},
+                        {'indicator': '% of AWCs with a functional toilet:', 'value': '47.06%'}
                     ]
                 },
-                "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
-                },
+                "label": "Percentage of AWCs that reported having a functional toilet",
                 "data": {
-                    'block_map': {
-                        'in_month': 8,
-                        'original_name': ['b1', 'b2'],
-                        'all': 26,
-                        'fillKey': '25%-75%'
+                    "block_map": {
+                        "in_month": 8,
+                        "original_name": [
+                            "b1",
+                            "b2"
+                        ],
+                        "all": 17,
+                        "fillKey": "25%-75%"
                     }
                 },
                 "slug": "functional_toilet",
-                "label": "Percent AWCs with Functional Toilet"
+                "fills": {
+                    "0%-25%": MapColors.RED,
+                    "25%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
+                }
             }
         )
 
@@ -107,32 +111,9 @@ class TestFunctionalToilet(TestCase):
                 loc_level='state'
             ),
             {
-                "location_type": "State",
-                "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 30.76923076923077
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 29.166666666666668
-                    }
-                ],
-                "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 30.76923076923077
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 29.166666666666668
-                    }
-                ],
                 "chart_data": [
                     {
                         "color": ChartColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
                         "values": [
                             {
                                 "y": 0.0,
@@ -155,17 +136,40 @@ class TestFunctionalToilet(TestCase):
                                 "in_month": 15
                             }
                         ],
-                        "key": "% of AWCs with a functional toilet."
+                        "strokeWidth": 2,
+                        "classed": "dashed",
+                        "key": "Percentage of AWCs that reported having a functional toilet"
                     }
                 ],
-                "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 30.76923076923077
-                    },
+                "top_five": [
                     {
                         "loc_name": "st2",
-                        "percent": 29.166666666666668
+                        "percent": 53.84615384615385
+                    },
+                    {
+                        "loc_name": "st1",
+                        "percent": 47.05882352941177
+                    }
+                ],
+                "location_type": "State",
+                "all_locations": [
+                    {
+                        "loc_name": "st2",
+                        "percent": 53.84615384615385
+                    },
+                    {
+                        "loc_name": "st1",
+                        "percent": 47.05882352941177
+                    }
+                ],
+                "bottom_five": [
+                    {
+                        "loc_name": "st2",
+                        "percent": 53.84615384615385
+                    },
+                    {
+                        "loc_name": "st1",
+                        "percent": 47.05882352941177
                     }
                 ]
             }
@@ -186,32 +190,32 @@ class TestFunctionalToilet(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs with a functional toilet",
+                "info": "Percentage of AWCs that reported having a functional toilet",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 0,
-                        "all": 7
+                        "all": 3
                     },
                     "s1": {
                         "in_month": 4,
-                        "all": 7
+                        "all": 5
                     }
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
-                        "classed": "dashed",
-                        "strokeWidth": 2,
+                        "color": MapColors.BLUE,
                         "values": [
                             [
                                 "s1",
-                                0.5714285714285714
+                                0.8
                             ],
                             [
                                 "s2",
                                 0.0
                             ]
                         ],
+                        "strokeWidth": 2,
+                        "classed": "dashed",
                         "key": ""
                     }
                 ]

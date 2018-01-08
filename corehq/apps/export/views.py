@@ -267,7 +267,11 @@ class BaseExportView(BaseProjectDataView):
             try:
                 post_data = json.loads(self.request.body)
                 url = self.export_home_url
-                if post_data['is_daily_saved_export']:
+                # short circuit to check if the submit is from a create or edit feed
+                # to redirect it to the list view
+                if isinstance(self, DashboardFeedMixin):
+                    url = reverse(DashboardFeedListView.urlname, args=[self.domain])
+                elif post_data['is_daily_saved_export']:
                     url = reverse(DailySavedExportListView.urlname, args=[self.domain])
             except ValueError:
                 url = self.export_home_url
@@ -670,6 +674,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         try:
             context = get_download_context(download_id)
         except TaskFailedError:
+            notify_exception(self.request, "Export download failed",
+                             details={'download_id': download_id})
             return format_angular_error(
                 _("Download Task Failed to Start. It seems that the server "
                   "might be under maintenance."),

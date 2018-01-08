@@ -1,27 +1,19 @@
 from __future__ import absolute_import, division
-from collections import defaultdict, OrderedDict
 
+from collections import defaultdict, OrderedDict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggCcsRecordMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
-import six
-
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 
 
 @quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
@@ -50,7 +42,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:
@@ -92,7 +84,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }
@@ -125,47 +117,46 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
     )
 
     fills = OrderedDict()
-    fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': ORANGE})
-    fills.update({'60%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-20%': MapColors.RED})
+    fills.update({'20%-60%': MapColors.ORANGE})
+    fills.update({'60%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
-    return [
-        {
-            "slug": "institutional_deliveries",
-            "label": "Percent Instituitional Deliveries",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_month_total * 100) / float(valid_total or 1),
-                "info": _((
-                    "Percentage of pregnant women who delivered in a public or private medical facility "
-                    "in the last month. "
-                    "<br/><br/>"
-                    "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
-                )),
-                "extended_info": [
-                    {
-                        'indicator': 'Total number of pregnant women who delivered in the last month:',
-                        'value': valid_total},
-                    {
-                        'indicator': (
-                            'Total number of pregnant women who delivered in a '
-                            'public/private medical facilitiy in the last month:'
-                        ),
-                        'value': in_month_total
-                    },
-                    {
-                        'indicator': (
-                            '% pregnant women who delivered in a public or private medical '
-                            'facility in the last month:'
-                        ),
-                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
-                    }
-                ]
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "institutional_deliveries",
+        "label": "Percent Instituitional Deliveries",
+        "fills": fills,
+        "rightLegend": {
+            "average": (in_month_total * 100) / float(valid_total or 1),
+            "info": _((
+                "Percentage of pregnant women who delivered in a public or private medical facility "
+                "in the last month. "
+                "<br/><br/>"
+                "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Total number of pregnant women who delivered in the last month:',
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': (
+                        'Total number of pregnant women who delivered in a '
+                        'public/private medical facilitiy in the last month:'
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': (
+                        '% pregnant women who delivered in a public or private medical '
+                        'facility in the last month:'
+                    ),
+                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)

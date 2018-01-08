@@ -30,6 +30,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
+DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -503,6 +504,7 @@ DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+ICDS_ENVS = ('icds', 'icds-new')
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
@@ -616,7 +618,7 @@ SMS_QUEUE_ENABLED = False
 
 # If an SMS still has not been processed in this number of minutes, enqueue it
 # again.
-SMS_QUEUE_ENQUEUING_TIMEOUT = 60
+SMS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -725,7 +727,8 @@ ANALYTICS_IDS = {
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
     'HUBSPOT_API_ID': '',
-    'GTM_ID': ''
+    'GTM_ID': '',
+    'DRIFT_ID': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -782,9 +785,6 @@ COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
 }
-
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 PREVIEWER_RE = '^$'
 
@@ -1549,17 +1549,8 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
 ]
 
-IVR_LOADED_SQL_BACKENDS = [
-    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
-]
-
-IVR_BACKEND_MAP = {
-    "91": "MOBILE_BACKEND_KOOKOO",
-}
-
 # The number of seconds to use as a timeout when making gateway requests
-SMS_GATEWAY_TIMEOUT = 30
-IVR_GATEWAY_TIMEOUT = 60
+SMS_GATEWAY_TIMEOUT = 5
 
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
@@ -1614,6 +1605,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
         ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
          "TB: Agency user case from voucher_fulfilled_by_id"],
+    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.beneficiary_registration_recipients',
+         "TB: Beneficiary Registration Recipients"],
+    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.prescription_voucher_alert_recipients',
+         "TB: Prescription Voucher Alert Recipients"],
 }
 
 # Used by the new reminders framework
@@ -1915,6 +1912,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),
@@ -1976,6 +1974,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),

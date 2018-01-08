@@ -286,7 +286,7 @@ class IndicatorSet(object):
             self.indicators[ispec["slug"]] = Indicator(ispec)
 
     def get_indicators(self):
-        return self.indicators.values()
+        return list(self.indicators.values())
 
     def get_indicator(self, slug):
         return self.indicators[slug]
@@ -364,7 +364,7 @@ class IndicatorDataProvider(object):
 
     @memoized
     def get_case_ids(self, indicator):
-        return self.get_case_data(indicator).keys()
+        return list(self.get_case_data(indicator).keys())
 
     @memoized
     def get_case_data(self, indicator):

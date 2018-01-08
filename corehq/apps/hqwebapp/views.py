@@ -384,7 +384,7 @@ def login(req):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
 
-    if settings.SERVER_ENVIRONMENT in ('icds', 'icds-new'):
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -621,7 +621,7 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.objects.filter(
+            matching_subscriptions = Subscription.visible_objects.filter(
                 is_active=True,
                 subscriber__domain=domain,
             )

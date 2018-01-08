@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunting_data_map, \
     get_prevalence_of_stunting_data_chart, get_prevalence_of_stunting_sector_data
 from django.test import TestCase
@@ -19,7 +19,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "
@@ -29,19 +29,20 @@ class TestPrevalenceOfStunting(TestCase):
                             "lasting harmful consequences on the growth of a child",
                     "average": "2.77",
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 939},
-                        {'indicator': 'Total Children with height measured in given month:', 'value': 32},
-                        {'indicator': '% Unmeasured:', 'value': '95.63%'},
-                        {'indicator': '% Severely stunted:', 'value': '1.70%'},
-                        {'indicator': '% Moderately stunted:', 'value': '1.06%'},
-                        {'indicator': '% Normal:', 'value': '1.60%'}
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '32'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '95.63%'},
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '1.70%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '1.06%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '1.60%'}
                     ]
                 },
                 "fills": {
-                    "0%-25%": "#fee0d2",
-                    "25%-38%": "#fc9272",
-                    "38%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.PINK,
+                    "25%-38%": MapColors.ORANGE,
+                    "38%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -50,7 +51,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "normal": 2,
                         "total_measured": 7,
                         "total": 449,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-25%"
                     },
                     "st2": {
@@ -59,7 +60,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "normal": 13,
                         "total_measured": 25,
                         "total": 490,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-25%"
                     }
                 },
@@ -79,7 +80,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "
@@ -89,19 +90,20 @@ class TestPrevalenceOfStunting(TestCase):
                             "lasting harmful consequences on the growth of a child",
                     "average": "1.78",
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 449},
-                        {'indicator': 'Total Children with height measured in given month:', 'value': 7},
-                        {'indicator': '% Unmeasured:', 'value': '97.77%'},
-                        {'indicator': '% Severely stunted:', 'value': '0.67%'},
-                        {'indicator': '% Moderately stunted:', 'value': '1.11%'},
-                        {'indicator': '% Normal:', 'value': '0.45%'}
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '449'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '7'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '97.77%'},
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '0.67%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '1.11%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '0.45%'}
                     ]
                 },
                 "fills": {
-                    "0%-25%": "#fee0d2",
-                    "25%-38%": "#fc9272",
-                    "38%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.PINK,
+                    "25%-38%": MapColors.ORANGE,
+                    "38%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -287,7 +289,7 @@ class TestPrevalenceOfStunting(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

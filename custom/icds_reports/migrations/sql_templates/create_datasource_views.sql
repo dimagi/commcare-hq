@@ -159,6 +159,7 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."infra_cooking_utensils" AS "infra_cooking_utensils",
         "agg_awc"."infra_medicine_kits" AS "infra_medicine_kits",
         "agg_awc"."infra_adequate_space_pse" AS "infra_adequate_space_pse",
+        "agg_awc"."num_awc_infra_last_update" AS "num_awc_infra_last_update",
         COALESCE("agg_awc"."usage_num_hh_reg", 0) AS "usage_num_hh_reg",
         COALESCE("agg_awc"."usage_num_add_person", 0) AS "usage_num_add_person",
         COALESCE("agg_awc"."usage_num_add_pregnancy", 0) AS "usage_num_add_pregnancy",

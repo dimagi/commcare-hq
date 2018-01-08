@@ -28,7 +28,7 @@ import six
 
 
 def choose_handler(keyword, handlers):
-    for k, v in handlers.iteritems():
+    for k, v in six.iteritems(handlers):
         if keyword.lower() in k:
             return v
     return None
@@ -110,12 +110,12 @@ def handle(verified_contact, text, msg):
 
     if (
         not user and
-        handler_class not in handlers_for_unregistered_or_registered_users.values()
+        handler_class not in list(handlers_for_unregistered_or_registered_users.values())
     ):
         return True
 
     if (
-        handler_class in handlers_for_registered_users_with_location.values() and
+        handler_class in list(handlers_for_registered_users_with_location.values()) and
         (not user or not user.location_id)
     ):
         return True

@@ -15,13 +15,8 @@ from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, Da
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, get_status, \
     current_age, exclude_records_by_age_for_column, calculate_date_for_age
+from custom.icds_reports.const import MapColors
 import six
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -296,7 +291,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
-                    "color": BLUE
+                    "color": MapColors.BLUE
                 }
             ],
             [
@@ -312,7 +307,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
-                    "color": BLUE
+                    "color": MapColors.BLUE
                 },
             ]
         ],
@@ -705,7 +700,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         this_month_institutional_delivery_data,
                         'institutional_delivery_in_month_sum'
                     ),
-                    'all': get_value(prev_month_institutional_delivery_data, 'delivered_in_month_sum'),
+                    'all': get_value(this_month_institutional_delivery_data, 'delivered_in_month_sum'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -921,7 +916,6 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('num_awcs'),
             clean_water=Sum('infra_clean_water'),
             functional_toilet=Sum('infra_functional_toilet'),
             medicine_kits=Sum('infra_medicine_kits'),
@@ -1009,10 +1003,32 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
-        age_in_months__lte=72
-    ).order_by('-month', order)
+        age_in_months__lte=60
+    )
 
-    data_count = data.count()
+    if 'current_month_nutrition_status' in order:
+        sort_order = {
+            'Severely underweight': 1,
+            'Moderately underweight': 2,
+            'Normal weight for age': 3,
+            'Data Not Entered': 4
+        }
+        reverse = '-' in order
+        data = sorted(
+            data,
+            key=lambda val: (sort_order[
+                get_status(
+                    val.current_month_nutrition_status,
+                    'underweight',
+                    'Normal weight for age'
+                )['value']
+            ]),
+            reverse=reverse
+        )
+    else:
+        data = data.order_by('-month', order)
+
+    data_count = len(data)
     data = data[start:(start + length)]
 
     config = {

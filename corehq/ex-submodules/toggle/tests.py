@@ -3,8 +3,8 @@ import uuid
 
 from couchdbkit import ResourceConflict
 from couchdbkit.exceptions import ResourceNotFound
-from django.conf import settings
-from django.test import TestCase, SimpleTestCase
+from decimal import Decimal
+from django.test import TestCase, SimpleTestCase, override_settings
 
 from corehq.toggles import (
     NAMESPACE_USER,
@@ -138,15 +138,8 @@ class ToggleTestCase(TestCase):
         self.assertTrue(toggle_enabled(self.slug, 'fizbod', namespace=ns))
 
 
+@override_settings(DISABLE_RANDOM_TOGGLES=False)
 class PredictablyRandomToggleSimpleTests(SimpleTestCase):
-
-    def setUp(self):
-        # Lie to get past settings.UNIT_TESTING check in PredictablyRandomToggle.enabled()
-        self.unit_testing = settings.UNIT_TESTING
-        settings.UNIT_TESTING = False
-
-    def tearDown(self):
-        settings.UNIT_TESTING = self.unit_testing
 
     def test_deterministic(self):
         self.assertEqual(
@@ -225,13 +218,7 @@ class PredictablyRandomToggleTests(TestCase):
         cls.user_toggle.delete()
         cls.domain_toggle.delete()
 
-    def setUp(self):
-        self.unit_testing = settings.UNIT_TESTING
-        settings.UNIT_TESTING = False
-
-    def tearDown(self):
-        settings.UNIT_TESTING = self.unit_testing
-
+    @override_settings(DISABLE_RANDOM_TOGGLES=False)
     def test_user_namespace_disabled(self):
         toggle = PredictablyRandomToggle(
             'user_toggle',
@@ -243,6 +230,7 @@ class PredictablyRandomToggleTests(TestCase):
         self.assertTrue(toggle.enabled('diana', namespace=NAMESPACE_USER))
         self.assertFalse(toggle.enabled('jessica', namespace=NAMESPACE_USER))
 
+    @override_settings(DISABLE_RANDOM_TOGGLES=False)
     def test_domain_namespace_disabled(self):
         toggle = PredictablyRandomToggle(
             'domain_toggle',
@@ -282,21 +270,34 @@ class DyanmicPredictablyRandomToggleTests(TestCase):
             self.addCleanup(db_toggle.delete)
             self.assertEqual(randomness, toggle.randomness)
 
-    def test_override_default_randomness(self):
-        randomness = 0
-        overridden_randomness = .5
+    def test_override_default_randomness_decimal(self):
+        self._run_toggle_overrride_test(Decimal('.5'), .5, 'decimal')
+
+    def test_override_default_randomness_float(self):
+        self._run_toggle_overrride_test(.5, .5, 'float')
+
+    def test_override_default_randomness_string(self):
+        self._run_toggle_overrride_test('.5', .5, 'string')
+
+    def test_override_default_randomness_invalid(self):
+        default_randomness = .1
+        self._run_toggle_overrride_test('not-a-number', default_randomness, 'invalid',
+                                        default_randomness=default_randomness)
+
+    def _run_toggle_overrride_test(self, input_override, expected_override, test_id, default_randomness=0):
         toggle = DynamicallyPredictablyRandomToggle(
-            'override_dynamic_toggle{}'.format(randomness),
+            'override_dynamic_toggle_{}'.format(test_id),
             'A toggle for testing',
             TAG_CUSTOM,
             [NAMESPACE_USER],
-            default_randomness=randomness,
+            default_randomness=default_randomness,
         )
         db_toggle = Toggle(slug=toggle.slug)
-        setattr(db_toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, overridden_randomness)
+        setattr(db_toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, input_override)
         db_toggle.save()
+        db_toggle = Toggle.get(toggle.slug)
         self.addCleanup(db_toggle.delete)
-        self.assertEqual(overridden_randomness, toggle.randomness)
+        self.assertEqual(expected_override, toggle.randomness)
 
 
 class ShortcutTests(TestCase):

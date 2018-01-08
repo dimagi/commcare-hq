@@ -1,4 +1,8 @@
 from __future__ import absolute_import, print_function
+import datetime
+
+import pytz
+
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
@@ -6,12 +10,18 @@ from custom.enikshay.case_utils import (
     get_person_case_from_occurrence,
     CASE_TYPE_REFERRAL,
 )
+from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.management.commands.base_model_reconciliation import (
     BaseModelReconciliationCommand,
     DOMAIN,
     get_all_occurrence_case_ids_from_person,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
+
+from custom.enikshay.management.commands.duplicate_occurrences_and_episodes_reconciliation import (
+    get_case_recently_modified_on_phone,
+)
 
 
 class Command(BaseModelReconciliationCommand):
@@ -28,8 +38,7 @@ class Command(BaseModelReconciliationCommand):
     ]
 
     def handle(self, *args, **options):
-        # self.commit = options.get('commit')
-        self.commit = False
+        self.commit = options.get('commit')
         self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
         self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
@@ -40,8 +49,25 @@ class Command(BaseModelReconciliationCommand):
             if self.public_app_case(occurrence_case_id):
                 referral_cases = get_open_referral_cases_from_occurrence(occurrence_case_id)
                 if len(referral_cases) > 1:
-                    self.reconcile_cases(referral_cases, occurrence_case_id)
+                    if self.needs_manual_reconciliation():
+                        self.record_manual_reconciliation(occurrence_case_id)
+                    else:
+                        self.reconcile_cases(referral_cases, occurrence_case_id)
         self.email_report()
+
+    def needs_manual_reconciliation(self):
+        if (self.person_case.owner_id == ARCHIVED_CASE_OWNER_ID and
+                self.person_case.get_case_property('archive_reason') == 'referred_outside_enikshay'):
+            return True
+        return False
+
+    def record_manual_reconciliation(self, occurrence_case_id):
+        self.writerow({
+            "occurrence_case_id": occurrence_case_id,
+            "person_case_version": self.person_case.get_case_property('case_version'),
+            "person_case_dataset": self.person_case.get_case_property('dataset'),
+            "notes": "Manual Reconciliation Required"
+        })
 
     def reconcile_cases(self, referral_cases, occurrence_case_id):
         retain_case = self.get_case_to_be_retained(referral_cases, occurrence_case_id)
@@ -64,12 +90,13 @@ class Command(BaseModelReconciliationCommand):
         if not relevant_cases:
             for referral_case in referral_cases:
                 if self.person_case.owner_id not in ['-', '']:
-                    if referral_case.get_case_property('referral_reason') != 'enrollment':
+                    if referral_case.get_case_property('referral_reason') != 'enrolment':
                         relevant_cases.append(referral_case)
 
         if relevant_cases:
             if len(relevant_cases) > 1:
-                return self.get_first_opened_case(relevant_cases)
+                return get_case_recently_modified_on_phone(relevant_cases,
+                                                           log_progress=self.log_progress)
             else:
                 return relevant_cases[0]
 
@@ -132,7 +159,10 @@ class Command(BaseModelReconciliationCommand):
             "person_case_dataset": self.person_case.get_case_property('dataset')
         })
         if self.commit:
-            updates = [(case_id, {'close_reason': "duplicate_reconciliation"}, True)
+            updates = [(case_id,
+                        {'referral_closed_reason': "duplicate_reconciliation",
+                         'referral_closed_date': datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
+                         }, True)
                        for case_id in case_ids_to_close]
             bulk_update_cases(DOMAIN, updates, self.__module__)
 

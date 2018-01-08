@@ -20,6 +20,7 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 # specified with --include
 from dimagi.utils.parsing import json_format_date
 from six.moves import range
+import six
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
@@ -221,13 +222,13 @@ class Command(BaseCommand):
 
         doc_count = dict([(row['key'][1], row['value']) for row in doc_types])
         if since:
-            for doc_type in sorted(doc_count.iterkeys()):
+            for doc_type in sorted(six.iterkeys(doc_count)):
                 num_since = sourcedb.view("by_domain_doc_type_date/view", startkey=[domain, doc_type, since],
                                           endkey=[domain, doc_type, {}], reduce=True).all()
                 num = num_since[0]['value'] if num_since else 0
                 print("{0:<30}- {1:<6} total {2}".format(doc_type, num, doc_count[doc_type]))
         else:
-            for doc_type in sorted(doc_count.iterkeys()):
+            for doc_type in sorted(six.iterkeys(doc_count)):
                 print("{0:<30}- {1}".format(doc_type, doc_count[doc_type]))
 
     def copy_docs(self, sourcedb, domain, simulate, startkey=None, endkey=None, doc_ids=None,

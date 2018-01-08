@@ -12,10 +12,6 @@
         <td>{{ datasource_display_name }}</td>
     </tr>
     <tr>
-        <td>Description</td>
-        <td>{{ datasource_description }}</td>
-    </tr>
-    <tr>
         <td>Filter</td>
         <td><pre>{{ filter_summary }}</pre></td>
     </tr>
@@ -54,7 +50,7 @@
     </tr>
 {% for expression in named_expression_summary %}
     <tr>
-        <td id="NamedE:{{ expression.name }}">{{ expression.name }}</td>
+        <td id="{{ named_expression_prefix }}:{{ expression.name }}">{{ expression.name }}</td>
         <td>{{ expression.comment }}</td>
         <td><pre>{{ expression.readable_output|safe }}</pre></td>
     </tr>
@@ -74,7 +70,7 @@
     </tr>
 {% for filter in named_filter_summary %}
     <tr>
-        <td id="NamedF:{{ filter.name }}">{{ filter.name }}</td>
+        <td id="{{ named_filter_prefix }}:{{ filter.name }}">{{ filter.name }}</td>
         <td>{{ filter.comment }}</td>
         <td><pre>{{ filter.readable_output|safe }}</pre></td>
     </tr>

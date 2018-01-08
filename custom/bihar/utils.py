@@ -72,9 +72,9 @@ def assign_case(case_or_case_id, owner_id, acting_user=None, include_subcases=Tr
         primary_case = case_or_case_id
     cases_to_assign = [primary_case]
     if include_subcases:
-        cases_to_assign.extend(get_related_cases([primary_case], primary_case.domain, search_up=False).values())
+        cases_to_assign.extend(list(get_related_cases([primary_case], primary_case.domain, search_up=False).values()))
     if include_parent_cases:
-        cases_to_assign.extend(get_related_cases([primary_case], primary_case.domain, search_up=True).values())
+        cases_to_assign.extend(list(get_related_cases([primary_case], primary_case.domain, search_up=True).values()))
     if exclude_function:
         cases_to_assign = [c for c in cases_to_assign if not exclude_function(c)]
     return assign_cases(cases_to_assign, owner_id, acting_user, update=update)

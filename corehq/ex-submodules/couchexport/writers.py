@@ -330,7 +330,7 @@ class UnzippedCsvExportWriter(OnDiskExportWriter):
 
     def _write_final_result(self):
 
-        tablefile = self.tables.values()[0].get_file()
+        tablefile = list(self.tables.values())[0].get_file()
         for line in tablefile:
             self.file.write(line)
         self.file.seek(0)

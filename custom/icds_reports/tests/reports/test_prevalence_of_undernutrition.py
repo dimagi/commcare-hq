@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_map, \
     get_prevalence_of_undernutrition_data_chart, get_prevalence_of_undernutrition_sector_data
 from django.test import TestCase
@@ -20,7 +20,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'month': (2017, 5, 1)
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 'rightLegend': {
                     'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'
@@ -30,18 +30,18 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' have a higher risk of mortality',
                     'average': 17.593528816986854,
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 4945},
-                        {'indicator': '% Unweighed:', 'value': '5.66%'},
-                        {'indicator': '% Severely Underweight:', 'value': '0.00%'},
-                        {'indicator': '% Moderately Underweight:', 'value': '17.59%'},
-                        {'indicator': '% Normal:', 'value': '76.74%'}]
+                        {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '4,945'},
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '5.66%'},
+                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '0.00%'},
+                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '17.59%'},
+                        {'indicator': '% Normal (0 - 5 years):', 'value': '76.74%'}]
                 },
                 'fills': OrderedDict(
                     [
-                        ('0%-20%', '#fee0d2'),
-                        ('20%-35%', '#fc9272'),
-                        ('35%-100%', '#de2d26'),
-                        ('defaultFill', '#9D9D9D')
+                        ('0%-20%', MapColors.PINK),
+                        ('20%-35%', MapColors.ORANGE),
+                        ('35%-100%', MapColors.RED),
+                        ('defaultFill', MapColors.GREY)
                     ]
                 ),
                 'data': {
@@ -50,14 +50,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         'severely_underweight': 40,
                         'moderately_underweight': 450,
                         'fillKey': '20%-35%',
-                        'original_name': [],
+                        'original_name': ["st1"],
                         'normal': 1820
                     },
                     'st2': {
                         'total': 2570,
                         'severely_underweight': 70,
                         'moderately_underweight': 420,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         'fillKey': '0%-20%',
                         'normal': 1975
                     }
@@ -78,7 +78,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 'rightLegend': {
                     'info': u'Percentage of children between 0 - 5 years enrolled for ICDS services'
@@ -88,19 +88,19 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' have a higher risk of mortality',
                     'average': 18.94736842105263,
                     'extended_info': [
-                        {'indicator': 'Total Children weighed in given month:', 'value': 475},
-                        {'indicator': '% Unweighed:', 'value': '4.42%'},
-                        {'indicator': '% Severely Underweight:', 'value': '0.00%'},
-                        {'indicator': '% Moderately Underweight:', 'value': '18.95%'},
-                        {'indicator': '% Normal:', 'value': '76.63%'}
+                        {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '475'},
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '4.42%'},
+                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '0.00%'},
+                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.95%'},
+                        {'indicator': '% Normal (0 - 5 years):', 'value': '76.63%'}
                     ]
                 },
                 'fills': OrderedDict(
                     [
-                        ('0%-20%', '#fee0d2'),
-                        ('20%-35%', '#fc9272'),
-                        ('35%-100%', '#de2d26'),
-                        ('defaultFill', '#9D9D9D')
+                        ('0%-20%', MapColors.PINK),
+                        ('20%-35%', MapColors.ORANGE),
+                        ('35%-100%', MapColors.RED),
+                        ('defaultFill', MapColors.GREY)
                     ]
                 ),
                 'data': {
@@ -288,7 +288,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

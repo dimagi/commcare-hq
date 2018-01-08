@@ -1,17 +1,16 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('ChildrenInitiatedDirective', function () {
+describe('Children Initiated Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('children_initiated', 'children_initiated');
     pageData.registerUrl('icds_locations', 'icds_locations');
-
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("genders", [
@@ -42,6 +41,9 @@ describe('ChildrenInitiatedDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');

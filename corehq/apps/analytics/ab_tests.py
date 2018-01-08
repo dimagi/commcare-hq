@@ -53,16 +53,6 @@ NEW_USER_NUMBER = ABTestConfig(
 )
 
 
-APP_BUILDER_VIDEO_ON = 'on'
-APP_BUILDER_VIDEO_OFF = 'off'
-
-
-APP_BUILDER_VIDEO = ABTestConfig(
-    'Onboarding Video Inside App Builder',
-    'app_builder_video_aug2017',
-    (APP_BUILDER_VIDEO_ON, APP_BUILDER_VIDEO_OFF)
-)
-
 NEW_USER_PERSONA_OPTION_SHOW = 'show_persona'
 NEW_USER_PERSONA_OPTION_HIDE = 'hide_persona'
 

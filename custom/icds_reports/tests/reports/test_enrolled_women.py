@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, \
     get_enrolled_women_data_chart, get_enrolled_women_sector_data
 from django.test import TestCase
@@ -19,7 +19,7 @@ class TestEnrolledWomen(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
@@ -28,11 +28,11 @@ class TestEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 155
+                            'value': "155"
                         },
                         {
                             'indicator': 'Total number of pregnant women who are registered:',
-                            'value': 155
+                            'value': "155"
                         },
                         {
                             'indicator': (
@@ -43,20 +43,20 @@ class TestEnrolledWomen(TestCase):
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "valid": 70,
                         "all": 70,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 85,
                         "all": 85,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Women"
                     }
                 },
@@ -76,7 +76,7 @@ class TestEnrolledWomen(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of pregnant women who are enrolled for ICDS services.",
@@ -85,11 +85,11 @@ class TestEnrolledWomen(TestCase):
                     'extended_info': [
                         {
                             'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
-                            'value': 70
+                            'value': "70"
                         },
                         {
                             'indicator': 'Total number of pregnant women who are registered:',
-                            'value': 70
+                            'value': "70"
                         },
                         {
                             'indicator': (
@@ -100,8 +100,8 @@ class TestEnrolledWomen(TestCase):
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -219,7 +219,7 @@ class TestEnrolledWomen(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

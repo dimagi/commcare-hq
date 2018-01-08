@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from django.urls import reverse
 
+from corehq import toggles
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
@@ -88,6 +89,10 @@ class TableauReport(CustomProjectReport):
         worksheet_name = 'Dashboard'
         return reverse('icds_tableau', args=[domain, workbook_name, worksheet_name])
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return toggles.ICDS_REPORTS.enabled(domain)
+
 
 @location_safe
 class DashboardReport(CustomProjectReport):
@@ -97,3 +102,7 @@ class DashboardReport(CustomProjectReport):
     @classmethod
     def get_url(cls, domain=None, **kwargs):
         return reverse('icds_dashboard', args=[domain])
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return toggles.DASHBOARD_ICDS_REPORT.enabled(domain)

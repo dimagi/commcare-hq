@@ -161,7 +161,7 @@ def get_model_iterator_builders_to_dump(domain, excludes):
     app_config_models = _get_app_list(excluded_apps)
 
     # Collate the objects to be serialized.
-    for model_class in serializers.sort_dependencies(app_config_models.items()):
+    for model_class in serializers.sort_dependencies(list(app_config_models.items())):
         if model_class in excluded_models:
             continue
 

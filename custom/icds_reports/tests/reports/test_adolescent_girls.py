@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_data_chart, get_adolescent_girls_sector_data
 from django.test import TestCase
@@ -19,7 +19,7 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
@@ -30,11 +30,11 @@ class TestAdolescentGirls(TestCase):
                             'indicator': (
                                 'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
                             ),
-                            'value': 47
+                            'value': "47"
                         },
                         {
                             'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
-                            'value': 47
+                            'value': "47"
                         },
                         {
                             'indicator': (
@@ -46,20 +46,20 @@ class TestAdolescentGirls(TestCase):
                     ]
                 },
                 "fills": {
-                    "Adolescent Girls": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Adolescent Girls": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "valid": 22,
                         "all": 22,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
                         "valid": 25,
                         "all": 25,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "Adolescent Girls"
                     }
                 },
@@ -79,7 +79,7 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
@@ -90,11 +90,11 @@ class TestAdolescentGirls(TestCase):
                             'indicator': (
                                 'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
                             ),
-                            'value': 22
+                            'value': "22"
                         },
                         {
                             'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
-                            'value': 22
+                            'value': "22"
                         },
                         {
                             'indicator': (
@@ -106,8 +106,8 @@ class TestAdolescentGirls(TestCase):
                     ]
                 },
                 "fills": {
-                    "Adolescent Girls": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Adolescent Girls": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -224,7 +224,7 @@ class TestAdolescentGirls(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

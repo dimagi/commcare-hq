@@ -20,9 +20,18 @@ from custom.enikshay.const import (
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
     ENROLLED_IN_PRIVATE,
     PERSON_CASE_2B_VERSION,
-    REAL_DATASET_PROPERTY_VALUE)
+    REAL_DATASET_PROPERTY_VALUE,
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
+    AGENCY_LOCATION_TYPES,
+    HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD,
+    DUMMY_VALUES,
+    NOT_AVAILABLE_VALUE,
+)
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
-from custom.enikshay.integrations.nikshay.field_mappings import health_establishment_sector
+from custom.enikshay.integrations.nikshay.field_mappings import (
+    health_establishment_sector,
+    health_establishment_type,
+)
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
     NikshayHIVTestRepeater,
@@ -52,6 +61,7 @@ from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from casexml.apps.case.tests.util import delete_all_cases
 import six
+from corehq.apps.locations.tasks import make_location_user
 
 DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"
 
@@ -92,6 +102,7 @@ SUCCESSFUL_SOAP_RESPONSE = (
     '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
 
 DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
+DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID = '987654'
 
 SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?>'
@@ -113,6 +124,41 @@ SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
         '</soap:Body>'
     '</soap:Envelope>'
 ).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID)
+
+ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?>'
+    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+        '<soap:Body>'
+            '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
+                '<HE_RegistrationResult>'
+                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" '
+                        'xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
+                    '<NewDataSet xmlns="">'
+                        '<Table1 diffgr:id="Table11" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
+                            '<HE_ID>{dummy_id}</HE_ID>'
+                            '<ESTABLISHMENT_TYPE>Laboratory</ESTABLISHMENT_TYPE>'
+                            '<SECTOR>Private (including NGOs)</SECTOR>'
+                            '<ESTABLISHMENT_NAME>Health Care Diagnostic Centre 700800</ESTABLISHMENT_NAME>'
+                            '<MCI_HR_NO>12345</MCI_HR_NO>'
+                            '<CONTACT_PNAME>Health Care Diagnostic Centre</CONTACT_PNAME>'
+                            '<CONTACT_PESIGNATION>NA</CONTACT_PESIGNATION>'
+                            '<TELEPHONE_NO>9999999999</TELEPHONE_NO>'
+                            '<MOBILE_NO>9999999999</MOBILE_NO>'
+                            '<COMPLETE_ADDRESS>V N Desai Hospital 179 B Jama Masjid Lane </COMPLETE_ADDRESS>'
+                            '<PINCODE>400098</PINCODE>'
+                            '<EMAILID>abc@xyz.com</EMAILID>'
+                            '<STATE>Maharashtra</STATE>'
+                            '<DISTRICT>Bandra East</DISTRICT>'
+                            '<Status>Already Exists</Status>'
+                        '</Table1>'
+                    '</NewDataSet>'
+                    '</diffgr:diffgram>'
+                '</HE_RegistrationResult>'
+            '</HE_RegistrationResponse>'
+        '</soap:Body>'
+    '</soap:Envelope>'
+).format(dummy_id=DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID)
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
@@ -1379,10 +1425,29 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
         self.assertEqual(0, len(self.repeat_records().all()))
         # on create
         _, locations = setup_enikshay_locations(self.domain)
-        # all locations have been created with nikshay code so nothing should get queued here
+        # all locations have been created with nikshay code
+        # and without sector set up as private
+        # so nothing should get queued here
         self.assertEqual(0, len(self.repeat_records().all()))
-        # on update
+
+        # save location user for pcp
         self.pcp = locations['PCP']
+        location_user = make_location_user(self.pcp)
+        location_user.user_data.update({'usertype': self.pcp.location_type.code})
+        location_user.is_active = True
+        location_user.user_location_id = self.pcp.location_id
+        location_user.set_location(self.pcp, commit=False)
+        location_user.save()
+
+        # set up pcp location under private sector to make it valid for notification
+        self.pcp.metadata.update({
+            'sector': PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
+        })
+        self.pcp.save()
+        # Nikshay code still missing so should be no records
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        # on update
         self.pcp.name = "Nikshay PCP"
         self.pcp.metadata.update({
             'email_address': 'pcp@email.com',
@@ -1390,13 +1455,13 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
             'nikshay_code': '',
         })
         self.pcp.save()
-        self.assertTrue(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
+        self.assertTrue(self.pcp.location_id in [record.payload_id for record in RepeatRecord.all()])
 
         # update on test location
         delete_all_repeat_records()
         self.pcp.metadata['is_test'] = 'yes'
         self.pcp.save()
-        self.assertFalse(locations['PCP'].location_id in [record.payload_id for record in RepeatRecord.all()])
+        self.assertFalse(self.pcp.location_id in [record.payload_id for record in RepeatRecord.all()])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, ENIKSHAY_PRIVATE_API_PASSWORD="123",
@@ -1416,41 +1481,135 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         )
         self.repeater.save()
 
-    def test_payload_properties(self):
+    def test_trigger(self):
         _, locations = setup_enikshay_locations(self.domain)
+        self.assertEqual(RepeatRecord.count(), 0)
 
+        # register a location without a location user
         self.pcp = locations['PCP']
-        self.pcp.name = "Nikshay PCP"
+        self.pcp.location_type.name = AGENCY_LOCATION_TYPES['plc']
+        self.pcp.location_type.save()
         self.pcp.metadata.update({
-            'establishment_type': 'lab',
-            'sector': 'public',
-            'registration_number': '123',
-            'contact_name': 'PCP contact person name',
-            'contact_designation': 'Lab Manager',
-            'phone_number': '01127477587',
-            'mobile_number': '9818710071',
-            'address': 'PCP Address',
-            'address_pincode': '110088',
-            'email_address': 'pcp@email.com',
-            'tbu_code': '123',
+            'sector': 'private',
+            'nikshay_code': ''
         })
         self.pcp.save()
+        self.assertEqual(RepeatRecord.count(), 0)
 
+        location_user = make_location_user(self.pcp)
+        location_user.is_active = True
+        location_user.user_location_id = self.pcp.location_id
+        location_user.set_location(self.pcp, commit=False)
+        location_user.user_data.update({
+            'usertype': self.pcp.location_type.code,
+            'email': "test_user@enikshay.com",
+            'landline_no': "09898989898",
+            'contact_phone_number': "918888999988",
+            'address_line_1': "Address line 1",
+            'address_line_2': "Address line 2",
+            'pincode': "110088",
+            'registration_number': "14321",
+            'pcp_qualification': "Doc",
+        })
+        location_user.first_name = "First"
+        location_user.last_name = "Last"
+        location_user.save()
+
+        self.pcp.save()
+        self.assertEqual(RepeatRecord.count(), 1)
+
+        # test location
+        self.pcp.metadata['is_test'] = 'yes'
+        self.pcp.save()
+        self.assertEqual(RepeatRecord.count(), 1)
+
+        # not private location
+        self.pcp.metadata.update({
+            'is_test': 'no',
+            'sector': 'public',
+        })
+        self.pcp.save()
+        self.assertEqual(RepeatRecord.count(), 1)
+
+        # not one of the location type to be triggered
+        self.pcp.location_type.code = "random"
+        self.pcp.location_type.save()
+        self.pcp.metadata.update({
+            'sector': PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
+        })
+        self.pcp.save()
+        self.assertEqual(RepeatRecord.count(), 1)
+
+        self.pcp.location_type.code = HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD[0]
+        self.pcp.location_type.save()
+        self.pcp.metadata['nikshay_code'] = "Somecode"
+        self.pcp.save()
+        self.assertEqual(RepeatRecord.count(), 1)
+
+        self.pcp.metadata['nikshay_code'] = ''
+        self.pcp.save()
+        self.assertEqual(RepeatRecord.count(), 2)
+
+    def test_payload_properties(self):
+        _, locations = setup_enikshay_locations(self.domain)
+        self.pcp = locations['PCP']
+        self.pcp.location_type.name = AGENCY_LOCATION_TYPES['plc']
+        self.pcp.location_type.save()
+        self.pcp.metadata.update({
+            'sector': 'private'
+        })
+        self.pcp.save()
+        location_user = make_location_user(self.pcp)
+        location_user.is_active = True
+        location_user.user_location_id = self.pcp.location_id
+        location_user.set_location(self.pcp, commit=False)
+        location_user.user_data.update({
+            'usertype': self.pcp.location_type.code,
+        })
+        location_user.save()
+        # Test dummy values
         payload = NikshayHealthEstablishmentPayloadGenerator(None).get_payload(None, self.pcp)
-        self.assertEqual(payload['ESTABLISHMENT_TYPE'], 'L')
+        self.assertEqual(payload['MCI_HR_NO'], DUMMY_VALUES['registration_number'])
+        self.assertEqual(payload['CONTACT_PDESIGNATION'], NOT_AVAILABLE_VALUE)
+        self.assertEqual(payload['TELEPHONE_NO'], DUMMY_VALUES['phone_number'])
+        self.assertEqual(payload['MOBILE_NO'], DUMMY_VALUES['phone_number'])
+        self.assertEqual(payload['PINCODE'], DUMMY_VALUES['pincode'])
+        self.assertEqual(payload['EMAILID'], DUMMY_VALUES['email'])
+        self.assertEqual(payload['COMPLETE_ADDRESS'], NOT_AVAILABLE_VALUE)
+
+        location_user.user_data.update({
+            'email': "test_user@enikshay.com",
+            'landline_no': "9898989898",
+            'contact_phone_number': "8888999988",
+            'address_line_1': "Address line 1",
+            'address_line_2': "Address line 2",
+            'pincode': "110088",
+            'registration_number': "14321",
+            'pcp_qualification': "Doc",
+        })
+        location_user.first_name = "First"
+        location_user.last_name = "Last"
+        location_user.save()
+        self.pcp.name = "Nikshay PCP"
+        self.pcp.metadata.update({
+            'nikshay_tu_id': '141'
+        })
+        self.pcp.save()
+        payload = NikshayHealthEstablishmentPayloadGenerator(None).get_payload(None, self.pcp)
+        self.assertEqual(payload['ESTABLISHMENT_TYPE'], health_establishment_type.get('Lab'))
         self.assertEqual(payload['SECTOR'], health_establishment_sector.get(self.pcp.metadata['sector'], ''))
         self.assertEqual(payload['ESTABLISHMENT_NAME'], self.pcp.name)
-        self.assertEqual(payload['MCI_HR_NO'], self.pcp.metadata['registration_number'])
-        self.assertEqual(payload['CONTACT_PNAME'], self.pcp.metadata['contact_name'])
-        self.assertEqual(payload['CONTACT_PDESIGNATION'], self.pcp.metadata['contact_designation'])
-        self.assertEqual(payload['TELEPHONE_NO'], self.pcp.metadata['phone_number'])
-        self.assertEqual(payload['MOBILE_NO'], self.pcp.metadata['mobile_number'])
-        self.assertEqual(payload['COMPLETE_ADDRESS'], self.pcp.metadata['address'])
-        self.assertEqual(payload['PINCODE'], self.pcp.metadata['address_pincode'])
-        self.assertEqual(payload['EMAILID'], self.pcp.metadata['email_address'])
+        self.assertEqual(payload['MCI_HR_NO'], "14321")
+        self.assertEqual(payload['CONTACT_PNAME'], "First Last")
+        self.assertEqual(payload['CONTACT_PDESIGNATION'], "Doc")
+        self.assertEqual(payload['TELEPHONE_NO'], "9898989898")
+        self.assertEqual(payload['MOBILE_NO'], "8888999988")
+        self.assertEqual(payload['COMPLETE_ADDRESS'], "Address line 1 Address line 2")
+        self.assertEqual(payload['PINCODE'], "110088")
+        self.assertEqual(payload['EMAILID'], "test_user@enikshay.com")
         self.assertEqual(payload['STATE_CODE'], locations['STO'].metadata['nikshay_code'])
         self.assertEqual(payload['DISTRICT_CODE'], locations['DTO'].metadata['nikshay_code'])
-        self.assertEqual(payload['TBU_CODE'], self.pcp.metadata.get('tbu_code', ''))
+        self.assertEqual(payload['TBU_CODE'], "141")
         self.assertEqual(payload['MUST_CREATE_NEW'], 'N')
         self.assertEqual(payload['USER_ID'], 'test-mh14')
         self.assertEqual(payload['PASSWORD'], '123')
@@ -1460,6 +1619,18 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         _, locations = setup_enikshay_locations(self.domain)
         payload_generator = NikshayHealthEstablishmentPayloadGenerator(None)
         self.pcp = locations["PCP"]
+        self.pcp.location_type.name = AGENCY_LOCATION_TYPES['plc']
+        self.pcp.location_type.save()
+        self.pcp.metadata.update({'sector': 'private'})
+        self.pcp.save()
+        location_user = make_location_user(self.pcp)
+        location_user.is_active = True
+        location_user.user_location_id = self.pcp.location_id
+        location_user.set_location(self.pcp, commit=False)
+        location_user.user_data.update({
+            'usertype': self.pcp.location_type.code,
+        })
+        location_user.save()
         self.pcp.metadata['nikshay_code'] = ''
         # save with no nikshay code to add a repeat record
         self.pcp.save()
@@ -1475,3 +1646,12 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
         self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)
         self.assertEqual(updated_location.metadata['old_nikshay_code'], 'old_id_value')
+
+        payload_generator.handle_success(
+            MockSoapResponse(200, ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE),
+            self.pcp,
+            repeat_record
+        )
+        updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
+        self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID)
+        self.assertEqual(updated_location.metadata['old_nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)

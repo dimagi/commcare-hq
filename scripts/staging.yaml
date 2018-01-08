@@ -46,13 +46,11 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-#  - nh/240812/mw_pwd_reset  # Norman 3/23
-  - br/kill-old-cloucare  # Danny 7/21
-  - mk-search-under-location # Manish 4-Oct
-  - es/loc-safe-reports  # Ethan 11/1
-  - jls/analytics-improvements  # Jenny 12/6
-  - mk-265955-kill-user-sync-history # MK 8/Dec
-  - mk-hackathon-repeater-edit # MK 12/Dec
+  - jls/data-corrections-cases # Jenny 1/4
+  - jls/source-maps # Jenny 1/5
+  - revert-19038-revert-19020-jls/fix-ab-tests # Jenny 1/5
+  - np/tb/calculate_xpath # NP 1/6
+  - je/cythonized-jsonobject # j$ 1/8
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -63,8 +61,6 @@ submodules:
   corehq/apps/prelogin:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
-    branches: []
-  deployment/commcare-hq-deploy:
     branches: []
   submodules/commcare-translations:
     branches: []

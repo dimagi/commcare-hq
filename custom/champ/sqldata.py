@@ -406,7 +406,7 @@ class ChampFilter(SqlData):
 
     @property
     def data(self):
-        data = sorted(filter(bool, self._get_data().keys()))
+        data = sorted(filter(bool, list(self._get_data().keys())))
         options = [{'id': '', 'value': 'All'}] + [
             {'id': x, 'value': x} for x in data
         ]

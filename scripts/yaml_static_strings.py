@@ -50,7 +50,7 @@ if __name__ == "__main__":
         doc = yaml.load(f)
 
     for entry in doc:
-        for key, value in entry.iteritems():
+        for key, value in six.iteritems(entry):
             if key in fields:
                 if not isinstance(value, six.string_types):
                     for v in value:

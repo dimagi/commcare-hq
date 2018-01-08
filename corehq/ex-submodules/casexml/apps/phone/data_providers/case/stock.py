@@ -42,7 +42,7 @@ class StockPayloadGenerator(object):
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
             for section_id in sorted(case_ledgers.keys()):
                 state_map = case_ledgers[section_id]
-                stock_states = sorted(state_map.values(), key=lambda s: s.product_id)
+                stock_states = sorted(list(state_map.values()), key=lambda s: s.product_id)
                 as_of = json_format_datetime(max(txn.last_modified_date for txn in stock_states))
                 section_timestamp_map[section_id] = as_of
                 yield self.elem_maker.balance(

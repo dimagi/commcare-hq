@@ -11,7 +11,7 @@ from corehq.apps.es import CaseES
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext, LocationChoiceProvider
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
-from custom.enikshay.duplicate_ids import get_cases_with_duplicate_ids, add_debug_info_to_cases
+from custom.enikshay.duplicate_ids import get_duplicated_case_stubs, add_debug_info_to_cases
 from custom.enikshay.reports.utils import StubReport
 from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
 
@@ -67,7 +67,7 @@ class DuplicateIdsReport(TemplateView):
     @staticmethod
     def get_duplicate_id_case_info(domain, case_type, limit_debug_to=None):
         total_cases = CaseES().domain(domain).case_type(case_type).count()
-        bad_cases = get_cases_with_duplicate_ids(domain, case_type)
+        bad_cases = get_duplicated_case_stubs(domain, case_type)
         add_debug_info_to_cases(bad_cases, limit_debug_to)
         context = {
             'case_type': case_type,

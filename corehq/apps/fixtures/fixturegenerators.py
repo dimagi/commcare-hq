@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from xml.etree import cElementTree as ElementTree
-from cStringIO import StringIO
+from io import BytesIO
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import ITEMS_COMMENT_PREFIX
@@ -86,7 +86,7 @@ class ItemListsProvider(FixtureProvider):
             except NotFound:
                 pass
         global_items = self._get_global_items(global_types, domain)
-        io = StringIO()
+        io = BytesIO()
         io.write(ITEMS_COMMENT_PREFIX)
         io.write(bytes(len(global_items)))
         io.write(b'-->')
@@ -135,7 +135,7 @@ class ItemListsProvider(FixtureProvider):
             if data_type not in items_by_type:
                 items_by_type[data_type] = []
         fixtures = []
-        for data_type, items in sorted(items_by_type.items(), key=tag):
+        for data_type, items in sorted(list(items_by_type.items()), key=tag):
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
             items = sorted(items, key=sort_key)

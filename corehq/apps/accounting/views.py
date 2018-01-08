@@ -180,9 +180,14 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
             'subscription_list': [
-                (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due
-                      if Invoice.objects.filter(subscription=sub).count() else 'None on record',
-                ) for sub in Subscription.objects.filter(account=self.account).order_by('subscriber__domain', 'date_end')
+                (
+                    sub,
+                    Invoice.objects.filter(subscription=sub).latest('date_due').date_due
+                    if Invoice.objects.filter(subscription=sub).count() else 'None on record'
+                )
+                for sub in Subscription.visible_objects.filter(account=self.account).order_by(
+                    'subscriber__domain', 'date_end'
+                )
             ],
         }
 
@@ -312,7 +317,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def subscription(self):
         try:
-            return Subscription.objects.get(id=self.subscription_id)
+            return Subscription.visible_objects.get(id=self.subscription_id)
         except Subscription.DoesNotExist:
             raise Http404()
 

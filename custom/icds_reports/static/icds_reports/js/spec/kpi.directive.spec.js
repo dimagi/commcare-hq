@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('KpiDirective', function () {
+describe('Kpi Directive', function () {
 
     var $scope, $compile, $location, controller, $httpBackend;
 
@@ -28,6 +28,10 @@ describe('KpiDirective', function () {
         $scope.$digest();
         controller = compiled.controller("kpi");
     }));
+
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests get empty page path', function () {
         var result = controller.goToStep("test");
@@ -59,35 +63,50 @@ describe('KpiDirective', function () {
     });
 
     it('tests shows percent info from month parameter', function () {
+        var fakeDate = new Date(2016, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+
         $location.search('month', new Date().getMonth());
         var expected = true;
 
         var result = controller.showPercentInfo();
         assert.equal(result, expected);
+        clock.restore();
     });
 
     it('tests not shows percent info from wrong month parameter', function () {
-        //$location.search('month', null);
+        var fakeDate = new Date(2016, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+
         $location.search('month', new Date().getMonth() + 1);
         var expected = false;
 
         var result = controller.showPercentInfo();
         assert.equal(result, expected);
+        clock.restore();
     });
 
     it('tests shows percent info from year parameter', function () {
+        var fakeDate = new Date(2016, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+
         $location.search('year', new Date().getFullYear() + 1);
         var expected = true;
 
         var result = controller.showPercentInfo();
         assert.equal(result, expected);
+        clock.restore();
     });
 
     it('tests not shows percent info from wrong year parameter', function () {
+        var fakeDate = new Date(2016, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+
         $location.search('year', new Date().getFullYear());
         var expected = false;
 
         var result = controller.showPercentInfo();
         assert.equal(result, expected);
+        clock.restore();
     });
 });

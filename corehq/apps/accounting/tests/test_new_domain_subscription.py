@@ -65,7 +65,7 @@ class TestNewDomainSubscription(BaseAccountingTest):
             date_start=week_after_30, date_end=next_year,
         )
 
-        final_sub = Subscription.objects.get(pk=subscription.id)
+        final_sub = Subscription.visible_objects.get(pk=subscription.id)
 
         self.assertEqual(final_sub.date_start, week_after_30)
         self.assertEqual(final_sub.date_end, next_year)

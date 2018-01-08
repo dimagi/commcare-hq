@@ -92,7 +92,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
-            form_values = self.all_relevant_forms.values()
+            form_values = list(self.all_relevant_forms.values())
             if form_values:
                 query = query.OR(*[self._form_filter(f) for f in form_values])
 

@@ -254,7 +254,7 @@ class PredictablyRandomToggle(StaticToggle):
                 )
             )
 
-        if settings.UNIT_TESTING:
+        if settings.DISABLE_RANDOM_TOGGLES:
             return False
         elif item in self.always_disabled:
             return False
@@ -298,12 +298,18 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
             return self.default_randomness
-        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        dynamic_randomness = getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        try:
+            dynamic_randomness = float(dynamic_randomness)
+            return dynamic_randomness
+        except ValueError:
+            return self.default_randomness
 
 
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_OTHER = 'other'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
@@ -333,7 +339,7 @@ def all_toggles():
     """
     Loads all toggles
     """
-    return all_toggles_by_name_in_scope(globals()).values()
+    return list(all_toggles_by_name_in_scope(globals()).values())
 
 
 def all_toggles_by_name():
@@ -891,6 +897,13 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
+    'features_in_dashboard_icds_reports',
+    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
 NINETYNINE_DOTS = StaticToggle(
     '99dots_integration',
     'Enikshay: Enable access to 99DOTS',
@@ -1432,4 +1445,18 @@ CUSTOM_ICON_BADGES = StaticToggle(
     'eNikshay: Custom Icon Badges for modules and forms',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
+    'icds_ucr_elasticsearch_doc_loading',
+    'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+ENABLE_REPEATER_EDIT_AND_PAUSE = StaticToggle(
+    'enable_repeater_edit_and_pause',
+    "Turn on ability to edit a repeater and pause/resume it",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
 )
