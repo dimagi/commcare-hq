@@ -4,7 +4,8 @@ from corehq.apps.userreports.specs import TypeProperty
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DictProperty
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ('indexed_case', 'corehq.apps.userreports.expressions.indexed_case_expression'),
+    ('indexed_case',
+     'corehq.apps.userreports.expressions.extension_expressions.indexed_case_expression'),
 ]
 
 
