@@ -10,15 +10,9 @@ from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -101,9 +95,9 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     total = sum([(x[prop] or 0) for x in six.itervalues(data_for_map)])
 
     fills = OrderedDict()
-    fills.update({'Launched': PINK})
-    fills.update({'Not launched': GREY})
-    fills.update({'defaultFill': GREY})
+    fills.update({'Launched': MapColors.PINK})
+    fills.update({'Not launched': MapColors.GREY})
+    fills.update({'defaultFill': MapColors.GREY})
 
     info = _(
         "Total AWCs that have launched ICDS CAS <br />" +
@@ -227,7 +221,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

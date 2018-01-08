@@ -214,6 +214,7 @@ class AggAwcMonthly(models.Model):
     infra_cooking_utensils = models.IntegerField(blank=True, null=True)
     infra_medicine_kits = models.IntegerField(blank=True, null=True)
     infra_adequate_space_pse = models.IntegerField(blank=True, null=True)
+    num_awc_infra_last_update = models.IntegerField(blank=True, null=True)
     usage_num_hh_reg = models.IntegerField(blank=True, null=True)
     usage_num_add_person = models.IntegerField(blank=True, null=True)
     usage_num_add_pregnancy = models.IntegerField(blank=True, null=True)
