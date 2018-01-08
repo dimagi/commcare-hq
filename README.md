@@ -44,7 +44,9 @@ Please note that these instructions are targeted toward UNIX-based systems.
 
 #### Setup virtualenv
 
-`mkvirtualenv --no-site-packages commcare-hq -p python2.7`
+Run the following command:
+
+    $ mkvirtualenv --no-site-packages commcare-hq -p python2.7
 
 #### Clone and setup repo / requirements
 
