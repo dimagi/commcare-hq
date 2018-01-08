@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import itertools
 import os
 import shlex
-from StringIO import StringIO
+from io import BytesIO
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -178,7 +178,7 @@ class JadJar(object):
         jad_properties = jad_properties or {}
 
         # pack files into jar
-        buffer = StringIO(self.jar)
+        buffer = BytesIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
             for path, f in files.items():
                 zipper.writestr(path, convert_XML_To_J2ME(f, path, self.use_j2me_endpoint))

@@ -67,7 +67,7 @@ class Command(BaseCommand):
         self.ensure_roles(self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS, dry_run)
 
         ensure_grants(
-            self.BOOTSTRAP_GRANTS.items(),  # py3 iterable
+            list(self.BOOTSTRAP_GRANTS.items()),  # py3 iterable
             dry_run=dry_run,
             verbose=self.verbose,
             roles_by_slug=self.roles_by_slug,

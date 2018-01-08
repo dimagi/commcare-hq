@@ -22,7 +22,7 @@ class CachedCouchDB(Database):
         """
         Gets all docs currently in the cache.
         """
-        return self._docs.values()
+        return list(self._docs.values())
 
     def doc_exist(self, doc_id):
         return doc_id in self._docs or super(CachedCouchDB, self).doc_exist(doc_id)

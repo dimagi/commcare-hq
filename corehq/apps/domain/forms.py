@@ -231,7 +231,7 @@ class SnapshotSettingsForm(forms.Form):
         required=True,
         help_text=ugettext_noop("e.g. MCH, HIV, etc.")
     )
-    license = ChoiceField(label=ugettext_noop("License"), required=True, choices=LICENSES.items(),
+    license = ChoiceField(label=ugettext_noop("License"), required=True, choices=list(LICENSES.items()),
                           widget=Select(attrs={'class': 'input-xxlarge'}))
     description = CharField(
         label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
@@ -898,7 +898,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     countries = forms.MultipleChoiceField(
         label="Countries",
-        choices=sorted(COUNTRIES.items(), key=lambda x: x[0]),
+        choices=sorted(list(COUNTRIES.items()), key=lambda x: x[0]),
         required=False,
     )
     commtrack_domain = ChoiceField(

@@ -3,7 +3,7 @@ import hashlib
 import logging
 import mimetypes
 from datetime import datetime
-from StringIO import StringIO
+from io import BytesIO
 
 import magic
 from couchdbkit.exceptions import ResourceConflict
@@ -350,13 +350,13 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_image_object(cls, data):
-        return Image.open(StringIO(data))
+        return Image.open(BytesIO(data))
 
     @classmethod
     def _get_resized_image(cls, image, size):
         if image.mode not in ["RGB", "RGBA"]:
             image = image.convert("RGB")
-        o = StringIO()
+        o = BytesIO()
         try:
             image.thumbnail(size, Image.ANTIALIAS)
         except IndexError:
@@ -500,7 +500,7 @@ class ApplicationMediaReference(object):
             return raw_name
         if lang is None:
             lang = self.app_lang
-        return raw_name.get(lang, raw_name.values()[0])
+        return raw_name.get(lang, list(raw_name.values())[0])
 
     def get_module_name(self, lang=None):
         return self._get_name(self.module_name, lang=lang)
@@ -578,7 +578,7 @@ class HQMediaMixin(Document):
                     if column.format == 'enum-image':
                         for map_item in column.enum:
                             # iterate over icons of each lang
-                            icons = map_item.value.values()
+                            icons = list(map_item.value.values())
                             media.extend([ApplicationMediaReference(
                                 icon,
                                 media_class=CommCareImage,

@@ -305,7 +305,7 @@ class SubscriptionFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
     @property
     def query(self):
-        query = Subscription.objects
+        query = Subscription.visible_objects
         if self.action == 'contract_id':
             query = query.exclude(
                 salesforce_contract_id=None

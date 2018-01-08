@@ -31,7 +31,10 @@ from corehq.apps.users.signals import couch_user_post_save
 from corehq.apps.analytics.utils import get_instance_string
 
 
-_no_cookie_soft_assert = soft_assert('{}@{}'.format('cellowitz', 'dimagi.com'), send_to_ops=False)
+_no_cookie_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
+                                         '{}@{}'.format('biyeun', 'dimagi.com'),
+                                         '{}@{}'.format('jschweers', 'dimagi.com')],
+                                     send_to_ops=False)
 
 
 @receiver(couch_user_post_save)

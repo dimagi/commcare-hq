@@ -74,10 +74,9 @@ describe('Medicine Kit Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, in_month: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>test</p>'
-            + '<div>Total number of AWCs with a Medicine Kit: <strong>5</strong></div>'
-            + '<div>% of AWCs with a Medicine Kit: <strong>50.00%</strong></div>');
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p>' +
+            '<div>Total number of AWCs that reported having a Medicine Kit: <strong>5</strong></div>' +
+            '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>50.00%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -171,8 +170,7 @@ describe('Medicine Kit Directive', function () {
             'width': '900px',
         });
         assert.equal(controller.chartOptions.caption.html,
-            '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of AWCs with a Medicine Kit'
+            '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a Medicine Kit'
         );
     });
 
@@ -180,9 +178,8 @@ describe('Medicine Kit Directive', function () {
         var data = {in_month: 5, y: 0.72};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Number of AWCs with a Medicine Kit: <strong>5</strong></p>'
-            + '<p>% of AWCs with a Medicine Kit: <strong>72.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/><p>Number of AWCs that reported having a Medicine Kit:' +
+            ' <strong>5</strong></p><p>Percentage of AWCs that reported having a Medicine Kit: <strong>72.00%</strong></p>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

@@ -674,6 +674,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         try:
             context = get_download_context(download_id)
         except TaskFailedError:
+            notify_exception(self.request, "Export download failed",
+                             details={'download_id': download_id})
             return format_angular_error(
                 _("Download Task Failed to Start. It seems that the server "
                   "might be under maintenance."),

@@ -621,7 +621,7 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.objects.filter(
+            matching_subscriptions = Subscription.visible_objects.filter(
                 is_active=True,
                 subscriber__domain=domain,
             )

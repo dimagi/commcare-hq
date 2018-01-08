@@ -98,23 +98,23 @@ class TestSubscription(BaseAccountingTest):
 
     def test_no_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start - datetime.timedelta(30))
-        subscription = Subscription.objects.get(id=self.subscription.id)
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
         self.assertFalse(subscription.is_active)
 
     def test_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
-        subscription = Subscription.objects.get(id=self.subscription.id)
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
         self.assertTrue(subscription.is_active)
 
     def test_no_deactivation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
         tasks.deactivate_subscriptions(based_on_date=self.subscription.date_end - datetime.timedelta(30))
-        subscription = Subscription.objects.get(id=self.subscription.id)
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
         self.assertTrue(subscription.is_active)
 
     def test_deactivation(self):
         tasks.deactivate_subscriptions(based_on_date=self.subscription.date_end)
-        subscription = Subscription.objects.get(id=self.subscription.id)
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
         self.assertFalse(subscription.is_active)
 
     def test_deletions(self):
@@ -125,11 +125,11 @@ class TestSubscription(BaseAccountingTest):
     def test_is_hidden_to_ops(self):
         self.subscription.is_hidden_to_ops = True
         self.subscription.save()
-        self.assertEqual(0, len(Subscription.objects.filter(id=self.subscription.id)))
+        self.assertEqual(0, len(Subscription.visible_objects.filter(id=self.subscription.id)))
 
         self.subscription.is_hidden_to_ops = False
         self.subscription.save()
-        self.assertEqual(1, len(Subscription.objects.filter(id=self.subscription.id)))
+        self.assertEqual(1, len(Subscription.visible_objects.filter(id=self.subscription.id)))
 
     def test_next_subscription(self):
         this_subscription_date_end = self.subscription.date_end

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from django.test import TestCase
@@ -114,7 +114,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -164,8 +164,8 @@ class TestLactatingEnrolledWomen(TestCase):
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -218,8 +218,8 @@ class TestLactatingEnrolledWomen(TestCase):
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {

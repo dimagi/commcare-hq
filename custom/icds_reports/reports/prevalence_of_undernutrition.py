@@ -10,16 +10,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
     get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -86,10 +80,10 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
             data_for_location.update({'fillKey': '35%-100%'})
 
     fills = OrderedDict()
-    fills.update({'0%-20%': PINK})
-    fills.update({'20%-35%': ORANGE})
-    fills.update({'35%-100%': RED})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-20%': MapColors.PINK})
+    fills.update({'20%-35%': MapColors.ORANGE})
+    fills.update({'35%-100%': MapColors.RED})
+    fills.update({'defaultFill': MapColors.GREY})
 
     average = (
         (moderately_underweight_total or 0) + (severely_underweight_total or 0)
@@ -333,7 +327,7 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

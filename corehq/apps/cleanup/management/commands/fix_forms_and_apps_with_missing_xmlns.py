@@ -132,7 +132,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def fix_apps(unique_id_to_xmlns_map, app_to_unique_ids_map, log_file, dry_run):
-        for (app_id, domain), form_unique_ids in with_progress_bar(app_to_unique_ids_map.items()):
+        for (app_id, domain), form_unique_ids in with_progress_bar(list(app_to_unique_ids_map.items())):
             app = get_app(domain, app_id)
             for build in [app] + get_saved_apps(app):
                 for form_unique_id in form_unique_ids:
@@ -336,7 +336,7 @@ def get_xmlns(form_unique_id, app_id, domain):
 
 
 def name_matches(xform_name, form_names):
-    if xform_name in form_names.values():
+    if xform_name in list(form_names.values()):
         return True
     if xform_name in [u"{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
         return True

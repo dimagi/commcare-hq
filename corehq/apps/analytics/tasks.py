@@ -39,6 +39,8 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
+                                               '{}@{}'.format('biyeun', 'dimagi.com'),
+                                               '{}@{}'.format('jschweers', 'dimagi.com'),
                                                '{}@{}'.format('aphilippot', 'dimagi.com'),
                                                '{}@{}'.format('colaughlin', 'dimagi.com')],
                                            send_to_ops=False)

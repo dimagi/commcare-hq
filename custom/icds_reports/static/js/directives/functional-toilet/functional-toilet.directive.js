@@ -11,7 +11,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWCs with Functional Toilet";
+    vm.label = "AWCs Reported Functional Toilet";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/functional_toilet/map', label: 'Map View'},
@@ -29,7 +29,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs with a functional toilet',
+        info: 'Percentage of AWCs that reported having a functional toilet',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -67,8 +67,8 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs with a functional toilet: <strong>' + in_month + '</strong></div>' +
-            '<div>% of AWCs with a functional toilet: <strong>' + percent + '</strong></div>';
+            '<div>Number of AWCs that reported having a functional toilet: <strong>' + in_month + '</strong></div>' +
+            '<div>% of AWCs that reported having a functional toilet: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -200,16 +200,16 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
                     var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
                     return vm.tooltipContent(d.value, dataInMonth);
+
                 });
                 return chart;
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs with a functional toilet',
+            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a functional toilet',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -219,9 +219,11 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     };
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Number of AWCs with a functional toilet: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
-            + "<p>% of AWCs with a functional toilet: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+        var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
+        tooltip_content += "<p>Number of AWCs that reported having a functional toilet: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>";
+        tooltip_content += "<p>% of AWCs that reported having a functional toilet: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+
+        return tooltip_content;
     };
 
     vm.showAllLocations = function () {

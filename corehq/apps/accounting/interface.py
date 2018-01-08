@@ -292,7 +292,7 @@ class SubscriptionInterface(AddItemInterface):
 
     @property
     def _subscriptions(self):
-        queryset = Subscription.objects.all()
+        queryset = Subscription.visible_objects.all()
 
         if StartDateFilter.use_filter(self.request):
             queryset = queryset.filter(

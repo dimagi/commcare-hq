@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.prevalence_of_stunting import get_prevalence_of_stunting_data_map, \
     get_prevalence_of_stunting_data_chart, get_prevalence_of_stunting_sector_data
 from django.test import TestCase
@@ -39,10 +39,10 @@ class TestPrevalenceOfStunting(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-25%": "#fee0d2",
-                    "25%-38%": "#fc9272",
-                    "38%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.PINK,
+                    "25%-38%": MapColors.ORANGE,
+                    "38%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -100,10 +100,10 @@ class TestPrevalenceOfStunting(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-25%": "#fee0d2",
-                    "25%-38%": "#fc9272",
-                    "38%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.PINK,
+                    "25%-38%": MapColors.ORANGE,
+                    "38%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -289,7 +289,7 @@ class TestPrevalenceOfStunting(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

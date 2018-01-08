@@ -1401,6 +1401,11 @@ BEGIN
 	'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'num_awc_infra_last_update = 1 WHERE infra_last_update_date IS NOT NULL';
+
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'num_awc_infra_last_update = 0 WHERE infra_last_update_date IS NULL';
 
 	-- Roll Up by Location
 	_rollup_text = 	'sum(num_awcs), ' ||
@@ -1517,7 +1522,8 @@ BEGIN
         'sum(infra_infant_weighing_scale), ' ||
         'sum(cases_person_beneficiary), ' ||
         quote_nullable(_null_value) || ', ' ||
-        quote_nullable(_null_value) || ' ';
+        quote_nullable(_null_value) || ', ' ||
+        'sum(num_awc_infra_last_update)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||

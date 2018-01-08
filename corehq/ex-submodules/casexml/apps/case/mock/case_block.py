@@ -179,7 +179,7 @@ class _DictToXML(object):
         if '_text' in dct:
             block.text = six.text_type(dct['_text'])
 
-        for (key, value) in sorted(dct.items(), key=self.sort_key):
+        for (key, value) in sorted(list(dct.items()), key=self.sort_key):
             if value is not CaseBlock.undefined and not key.startswith('_'):
                 elem = ElementTree.Element(key)
                 block.append(elem)

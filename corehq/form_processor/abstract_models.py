@@ -256,7 +256,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
         return get_index_map(indices)
 
     def get_properties_in_api_format(self):
-        return dict(self.dynamic_case_properties().items() + {
+        return dict(list(self.dynamic_case_properties().items()) + list({
             "external_id": self.external_id,
             "owner_id": self.owner_id,
             # renamed
@@ -266,7 +266,7 @@ class AbstractCommCareCase(CaseToXMLMixin):
             # renamed
             "date_opened": self.opened_on,
             # all custom properties go here
-        }.items())
+        }.items()))
 
     @memoized
     def get_attachment_map(self):

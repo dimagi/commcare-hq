@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevalence_of_undernutrition_data_map, \
     get_prevalence_of_undernutrition_data_chart, get_prevalence_of_undernutrition_sector_data
 from django.test import TestCase
@@ -38,10 +38,10 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 },
                 'fills': OrderedDict(
                     [
-                        ('0%-20%', '#fee0d2'),
-                        ('20%-35%', '#fc9272'),
-                        ('35%-100%', '#de2d26'),
-                        ('defaultFill', '#9D9D9D')
+                        ('0%-20%', MapColors.PINK),
+                        ('20%-35%', MapColors.ORANGE),
+                        ('35%-100%', MapColors.RED),
+                        ('defaultFill', MapColors.GREY)
                     ]
                 ),
                 'data': {
@@ -97,10 +97,10 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 },
                 'fills': OrderedDict(
                     [
-                        ('0%-20%', '#fee0d2'),
-                        ('20%-35%', '#fc9272'),
-                        ('35%-100%', '#de2d26'),
-                        ('defaultFill', '#9D9D9D')
+                        ('0%-20%', MapColors.PINK),
+                        ('20%-35%', MapColors.ORANGE),
+                        ('35%-100%', MapColors.RED),
+                        ('defaultFill', MapColors.GREY)
                     ]
                 ),
                 'data': {
@@ -288,7 +288,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

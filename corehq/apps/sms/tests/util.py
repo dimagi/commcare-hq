@@ -12,7 +12,6 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
-from corehq.apps.ivr.models import Call
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
@@ -247,13 +246,6 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
 
     def get_last_outbound_sms(self, contact):
         return SMS.get_last_log_for_recipient(
-            contact.doc_type,
-            contact.get_id,
-            direction=OUTGOING
-        )
-
-    def get_last_outbound_call(self, contact):
-        return Call.get_last_log_for_recipient(
             contact.doc_type,
             contact.get_id,
             direction=OUTGOING

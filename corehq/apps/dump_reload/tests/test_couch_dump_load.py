@@ -3,7 +3,7 @@ import json
 import os
 import random
 import uuid
-from StringIO import StringIO
+from io import BytesIO
 from collections import Counter
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -55,7 +55,7 @@ class CouchDumpLoadTest(TestCase):
             self.assertEqual(0, len(get_docs(db, doc_ids)))
 
     def _dump_and_load(self, expected_objects, not_expected_objects=None, doc_to_doc_class=None):
-        output_stream = StringIO()
+        output_stream = BytesIO()
         CouchDataDumper(self.domain_name, []).dump(output_stream)
 
         self._delete_couch_data()
@@ -241,7 +241,7 @@ class TestDumpLoadToggles(SimpleTestCase):
         dumper = ToggleDumper(self.domain_name, [])
         dumper._user_ids_in_domain = Mock(return_value={'user1', 'user2', 'user3'})
 
-        output_stream = StringIO()
+        output_stream = BytesIO()
 
         with mock_out_couch(docs=[doc.to_json() for doc in mocked_toggles.values()]):
             dump_counter = dumper.dump(output_stream)
@@ -261,7 +261,7 @@ class TestDumpLoadToggles(SimpleTestCase):
             toggle.slug: Toggle(_id=generate_toggle_id(toggle.slug), slug=toggle.slug)
             for toggle in random.sample(all_toggles(), 3)
         }
-        toggles = mocked_toggles.values()
+        toggles = list(mocked_toggles.values())
         domain_item = namespaced_item(self.domain_name, NAMESPACE_DOMAIN)
         toggles[0].enabled_users = [domain_item]
         toggles[1].enabled_users = ['user1', 'other-user', 'user2']

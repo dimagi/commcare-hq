@@ -1335,7 +1335,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
-            'subscription_management_forms': self.slug_to_form.values(),
+            'subscription_management_forms': list(self.slug_to_form.values()),
             'today': datetime.date.today(),
         }
 
@@ -2167,7 +2167,7 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'media': self.project_media_data,
-            'licenses': LICENSES.items(),
+            'licenses': list(LICENSES.items()),
         }
 
     @retry_resource(3)
