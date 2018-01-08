@@ -3,8 +3,6 @@ from django.db import models
 
 
 class Batch(models.Model):
-    batch_id = models.UUIDField(unique=True, db_index=True, primary_key=True)
-
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
 
