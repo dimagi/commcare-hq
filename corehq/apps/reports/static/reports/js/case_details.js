@@ -6,19 +6,29 @@ hqDefine("reports/js/case_details", function() {
         self.properties = options.properties  || {};        // map of name => value
         self.currentPage = new ko.observable();
         self.totalPages = new ko.observable();
-        self.itemsPerPage = 10;
+
+        self.itemsPerPage = 4;
+        self.columnsPerPage = 1;
+        //self.columnsPerPage = Math.min(3, Math.ceil(self.propertyNames.length / self.itemsPerPage));
+        self.itemsPerPage *= self.columnsPerPage;
+
+        self.columnClass = "col-sm-" + (12 / self.columnsPerPage);
+        self.modalClass = self.columnsPerPage === 3 ? "full-screen-modal" : "";
+        self.modalDialogClass = self.columnsPerPage === 2 ? "modal-lg" : "";
         self.showPagination = self.propertyNames.length > self.itemsPerPage;
+
         self.query = new ko.observable();
 
         self.incrementPage = function(increment) {
             var newCurrentPage = self.currentPage() + increment;
-            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages) {
+            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
                 return;
             }
             self.currentPage(newCurrentPage);
         }
 
         self.visibleItems = ko.observableArray([]);
+        self.visibleColumns = ko.observableArray([]);
         self.visiblePages = ko.observableArray([]);
 
         self.query.subscribe(function(newValue) {
@@ -63,6 +73,12 @@ hqDefine("reports/js/case_details", function() {
                     added++;
                 }
                 index++;
+            }
+
+            self.visibleColumns.splice(0);
+            var itemsPerColumn = self.itemsPerPage / self.columnsPerPage;
+            for (var i = 0; i < self.itemsPerPage; i += itemsPerColumn) {
+                self.visibleColumns.push(self.visibleItems.slice(i, i + itemsPerColumn));
             }
         });
 

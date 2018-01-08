@@ -195,8 +195,8 @@
     </div> {# end tabbed-content-container div #}
     </div> {# end report-container #}
 
-    <div class="modal fade{% if dynamic_properties_columns > 1 %} full-screen-modal{% endif %}" id="edit-dynamic-properties" tabindex="-1">
-        <div class="modal-dialog">
+    <div id="edit-dynamic-properties" tabindex="-1" data-bind="attr: { 'class': 'modal fade ' + $root.modalClass }">
+        <div data-bind="attr: { 'class': 'modal-dialog ' + $root.modalDialogClass }">
             <div class="modal-content">
                 <div class="modal-header with-controls">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -218,15 +218,21 @@
                 </div>
                 <div class="modal-body">
                     <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
-                    <!-- ko foreach: visibleItems -->
-                        <div class="form-group container-fluid">
-                            <label class="col-sm-6 control-label" data-bind="text: name"></label>
-                            <div class="col-sm-6">
-                                <input type="text" class="form-control"
-                                       data-bind="value: value, attr: { 'data-name': name }, event: { change: $parent.propertyChange }" />
+                    <div class="container-fluid">
+                        <!-- ko foreach: visibleColumns -->
+                            <div data-bind="attr: { 'class': $root.columnClass }">
+                                <!-- ko foreach: $data -->
+                                    <div class="form-group container-fluid">
+                                        <label class="col-sm-6 control-label" data-bind="text: name"></label>
+                                        <div class="col-sm-6">
+                                            <input type="text" class="form-control"
+                                                   data-bind="value: value, attr: { 'data-name': name }, event: { change: $root.propertyChange }" />
+                                        </div>
+                                    </div>
+                                <!-- /ko -->
                             </div>
-                        </div>
-                    <!-- /ko -->
+                        <!-- /ko -->
+                    </div>
                 </div>
                 <div class="modal-footer with-controls">
                     <ul class="pagination pull-left" data-bind="visible: showPagination">

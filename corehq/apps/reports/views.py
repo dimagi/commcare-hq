@@ -1370,7 +1370,6 @@ class CaseDetailsView(BaseProjectReportSectionView):
             "default_properties_as_table": default_properties,
             "dynamic_properties_names": dynamic_data.keys(),
             "dynamic_properties": dynamic_data,
-            "dynamic_properties_columns": 2,    # TODO
             "dynamic_properties_as_table": dynamic_properties,
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
