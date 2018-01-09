@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load humanize %}
 {% comment %}
-requires imports/proptable.html to be included in the main template
+requires proptable.css to be included in the main template
 {% endcomment %}
 <style media="print">
     header {
@@ -321,7 +321,7 @@ requires imports/proptable.html to be included in the main template
                     {% if cases|length == 1 %}in{% endif %}" 
                     id="form-case-acc-{{ forloop.counter }}">
                     <div class="accordion-inner">
-                        {% render_tables case_data.table form_table_options %}
+                        {% include "hqwebapp/proptable/dl_property_table.html" with tables=case_data.table %}
                     </div>
                 </div>
             </div>
@@ -332,7 +332,7 @@ requires imports/proptable.html to be included in the main template
 
     {% if form_meta_data %}
     <div class="tab-pane" id="form-metadata">
-        {% render_tables form_meta_data form_table_options %}
+        {% include "hqwebapp/proptable/dl_property_table.html" with tables=form_meta_data %}
     </div>
     {% endif %}
 
