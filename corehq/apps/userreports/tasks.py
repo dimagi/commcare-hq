@@ -240,7 +240,7 @@ def run_queue_async_indicators_task():
 def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
-    retry_threshold = start - timedelta(hours=1)
+    retry_threshold = start - timedelta(hours=4)
     # don't requeue anything that has been retired more than 20 times
     indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
