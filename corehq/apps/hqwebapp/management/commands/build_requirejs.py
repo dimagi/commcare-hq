@@ -71,6 +71,9 @@ class Command(ResourceStaticCommand):
         for module in config['modules']:
             filename = os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js")
             file_hash = self.get_hash(filename)
+
+            # Overwrite source map reference. Source maps are accessed on the CDN,
+            # so they need to have the version hash appended.
             with open(filename, 'r') as fin:
                 lines = fin.readlines()
             with open(filename, 'w') as fout:
