@@ -91,6 +91,7 @@ The easiest way to do this is using the docker instructions below.
 Populate your database:
 
     $ ./manage.py sync_couch_views
+	$ ./manage.py create_kafka_topics
     $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
     $ ./manage.py compilejsi18n
 
