@@ -50,7 +50,9 @@
                     <li class="active">
                         <a href="#properties" data-toggle="tab">
                             {% trans "Case Properties" %}
-                            <i class="fa fa-edit clickable" id="edit-dynamic-properties-trigger"></i>
+                            {% if show_properties_edit %}
+                                <i class="fa fa-edit clickable" id="edit-dynamic-properties-trigger"></i>
+                            {% endif %}
                         </a>
                     </li>
                     {% endif %}
@@ -195,6 +197,7 @@
     </div> {# end tabbed-content-container div #}
     </div> {# end report-container #}
 
+    {% if show_properties_edit %}
     <div id="edit-dynamic-properties" tabindex="-1" data-bind="attr: { 'class': 'modal fade ' + $root.modalClass }, event: { 'hidden.bs.modal': init }">
         <div data-bind="attr: { 'class': 'modal-dialog ' + $root.modalDialogClass }">
             <div class="modal-content">
@@ -250,6 +253,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     {% if can_edit_data %}
     <div id="case-actions" class="clearfix form-actions">

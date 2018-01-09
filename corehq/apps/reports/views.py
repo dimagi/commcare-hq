@@ -1362,17 +1362,20 @@ class CaseDetailsView(BaseProjectReportSectionView):
 
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
 
+        can_edit_data = self.request.couch_user.can_edit_data
+
         return {
             "case_id": self.case_id,
             "case": self.case_instance,
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
-            "can_edit_data": self.request.couch_user.can_edit_data,
+            "can_edit_data": can_edit_data,
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
 
             "default_properties_as_table": default_properties,
             "dynamic_properties_names": dynamic_data.keys(),
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
+            "show_properties_edit": can_edit_data and has_privilege(self.request, privileges.DATA_CLEANUP),
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
@@ -1491,6 +1494,9 @@ def case_xml(request, domain, case_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 def edit_case_view(request, domain, case_id):
+    if not (has_privilege(request, privileges.DATA_CLEANUP)):
+        raise Http404()
+
     case = _get_case_or_404(domain, case_id)
     user = request.couch_user
     update = {}
