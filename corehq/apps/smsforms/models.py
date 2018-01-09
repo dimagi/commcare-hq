@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import jsonfield
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchdbkit import MultipleResultsFound
 from django.db import models
@@ -18,6 +19,9 @@ class SQLXFormsSession(models.Model):
     """
     Keeps information about an SMS XForm session.
     """
+    # Default expiry of 90 days
+    DEFAULT_EXPIRY = 90 * 24 * 60
+
     # generic properties
     couch_id = models.CharField(db_index=True, max_length=50)
     connection_id = models.CharField(null=True, blank=True, db_index=True, max_length=50)
@@ -42,9 +46,9 @@ class SQLXFormsSession(models.Model):
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
 
     # The number of minutes after which this session should expire, starting from the start_date.
-    expire_after = models.IntegerField(default=90 * 24 * 60)
+    expire_after = models.IntegerField(default=DEFAULT_EXPIRY)
 
-    # True if the session is still open.
+    # True if the session is still open. An open session allows answers to come in to the survey.
     session_is_open = models.BooleanField(default=True)
 
     # A list of integers representing the intervals, in minutes, that reminders should be sent.
@@ -58,7 +62,7 @@ class SQLXFormsSession(models.Model):
 
     # The date and time that the survey framework must take the next action, which would be
     # either sending a reminder or closing the survey session.
-    next_action_due = models.DateTimeField()
+    current_action_due = models.DateTimeField()
 
     # If True, when the session expires, the form will be submitted with any information collected
     # and the rest of the questions left blank.
@@ -72,7 +76,7 @@ class SQLXFormsSession(models.Model):
     class Meta:
         app_label = 'smsforms'
         index_together = [
-            ['session_is_open', 'next_action_due'],
+            ['session_is_open', 'current_action_due'],
             ['session_is_open', 'connection_id'],
         ]
 
@@ -90,6 +94,7 @@ class SQLXFormsSession(models.Model):
         """
         Marks this as ended (by setting end time).
         """
+        self.session_is_open = False
         self.completed = completed
         self.modified_time = self.end_time = datetime.utcnow()
 
@@ -160,6 +165,54 @@ class SQLXFormsSession(models.Model):
         elif len(objs) == 0:
             return None
         return objs[0]
+
+
+    @classmethod
+    def create_session_object(cls, domain, contact, app, form, expire_after=DEFAULT_EXPIRY,
+            reminder_intervals=None, submit_partially_completed_forms=False,
+            include_case_updates_in_partial_submissions=False):
+
+        now = datetime.utcnow()
+
+        session = cls(
+            couch_id=uuid.uuid4().hex,
+            connection_id=contact.get_id,
+            form_xmlns=form.xmlns,
+            start_time=now,
+            modified_time=now,
+            completed=False,
+            domain=domain,
+            user_id=contact.get_id,
+            app_id=app.get_id,
+            session_type=XFORMS_SESSION_SMS,
+            expire_after=expire_after,
+            session_is_open=True,
+            reminder_intervals=reminder_intervals or [],
+            current_reminder_num=0,
+            submit_partially_completed_forms=submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=include_case_updates_in_partial_submissions,
+        )
+
+        session.set_current_action_due_timestamp()
+
+        return session
+
+    @property
+    def current_action_is_a_reminder(self):
+        return self.current_reminder_num < len(self.reminder_intervals)
+
+    def set_current_action_due_timestamp(self):
+        if self.expire_after == 0:
+            self.end_time = self.start_time
+            self.current_action_due = self.start_time
+            self.session_is_open = False
+            return
+
+        if self.current_action_is_a_reminder:
+            minutes_from_beginning = sum(self.reminder_intervals[0:self.current_reminder_num + 1])
+            self.current_action_due = self.start_time + timedelta(minutes=minutes_from_beginning)
+        else:
+            self.current_action_due = self.start_time + timedelta(minutes=self.expire_after)
 
 
 def get_session_by_session_id(id):

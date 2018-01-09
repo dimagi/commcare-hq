@@ -346,14 +346,28 @@ def get_app_module_form(form_unique_id, logged_subevent=None):
         return (None, None, None, True, MSG_FORM_NOT_FOUND)
 
 
-def start_session_with_error_handling(domain, contact, app, module, form,
+def start_session_for_structured_sms(domain, contact, app, module, form,
         case_id, keyword, logged_subevent=None):
     """
     Returns (session, responses, error, error_code)
     """
     try:
-        session, responses = start_session(domain, contact, app, module,
-            form, case_id=case_id, yield_responses=True)
+        session, responses = start_session(
+            SQLXFormsSession.create_session_object(
+                domain,
+                contact,
+                app,
+                form,
+                expire_after=0,
+            ),
+            domain,
+            contact,
+            app,
+            module,
+            form,
+            case_id=case_id,
+            yield_responses=True
+        )
         if logged_subevent:
             logged_subevent.xforms_session_id = session.pk
             logged_subevent.save()
@@ -404,7 +418,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
             verified_number, send_response, logged_event, logged_subevent)
         return False
 
-    session, responses, error_occurred, error_code = start_session_with_error_handling(
+    session, responses, error_occurred, error_code = start_session_for_structured_sms(
         domain, contact, app, module, form, case_id, keyword, logged_subevent)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)

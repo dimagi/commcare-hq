@@ -26,8 +26,8 @@ AUTH = DigestAuth(settings.TOUCHFORMS_API_USER,
                   settings.TOUCHFORMS_API_PASSWORD)
 
 
-def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False,
-                  session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
+def start_session(session, domain, contact, app, module, form, case_id=None, yield_responses=False,
+                  case_for_case_submission=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -66,22 +66,8 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
                           session_data=session_data,
                           auth=AUTH)
 
-    now = datetime.utcnow()
-
-    # just use the contact id as the connection id
-    connection_id = contact.get_id
-
     session_start_info = tfsms.start_session(config)
-    session = SQLXFormsSession(
-        couch_id=uuid.uuid4().hex,  # for legacy reasons we just generate a couch_id for now
-        connection_id=connection_id,
-        session_id=session_start_info.session_id,
-        start_time=now, modified_time=now,
-        form_xmlns=form.xmlns,
-        completed=False, domain=domain,
-        app_id=app.get_id, user_id=contact.get_id,
-        session_type=session_type,
-    )
+    session.session_id = session_start_info.session_id
     session.save()
     responses = session_start_info.first_responses
 

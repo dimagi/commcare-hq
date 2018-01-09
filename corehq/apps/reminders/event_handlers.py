@@ -404,9 +404,24 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
                 # Start the new session
                 try:
-                    session, responses = start_session(reminder.domain, recipient,
-                        app, module, form, case_id,
-                        case_for_case_submission=handler.force_surveys_to_use_triggered_case)
+                    session, responses = start_session(
+                        SQLXFormsSession.create_session_object(
+                            reminder.domain,
+                            recipient,
+                            app,
+                            form,
+                            reminder_intervals=reminder.current_event.callback_timeout_intervals,
+                            submit_partially_completed_forms=handler.submit_partial_forms,
+                            include_case_updates_in_partial_submissions=handler.include_case_side_effects
+                        ),
+                        reminder.domain,
+                        recipient,
+                        app,
+                        module,
+                        form,
+                        case_id,
+                        case_for_case_submission=handler.force_surveys_to_use_triggered_case
+                    )
                 except TouchformsError as e:
                     human_readable_message = e.response_data.get('human_readable_message', None)
 
