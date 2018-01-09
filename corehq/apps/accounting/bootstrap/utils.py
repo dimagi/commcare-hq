@@ -127,8 +127,6 @@ def _ensure_product_rate(monthly_fee, edition, verbose, apps):
         # TODO - remove after squashing migrations
         SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
         product = SoftwareProduct(name=product_name, product_type='CommCare')
-        if hasattr(product, 'product_type'):
-            product.product_type = 'CommCare'
         try:
             product = SoftwareProduct.objects.get(name=product.name)
             if verbose:
