@@ -186,7 +186,7 @@ def import_build(request):
             }, status_code=400)
 
         build = CommCareBuild.create_from_zip(
-            io.BytesIO()(r.content), version, build_number)
+            io.BytesIO(r.content), version, build_number)
 
     else:
         build = CommCareBuild.create_without_artifacts(version, build_number)
