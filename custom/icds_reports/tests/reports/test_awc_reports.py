@@ -70,7 +70,7 @@ class TestAWCReport(TestCase):
                         {
                             "all": 0,
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Percentage of eligible children (ICDS beneficiaries between 0-6 years)"
                                      " who have been weighed in the current month",
@@ -650,100 +650,100 @@ class TestAWCReport(TestCase):
                 "kpi": [
                     [
                         {
-                            "color": "green",
+                            "color": "red",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Underweight (Weight-for-Age)"
                         },
                         {
-                            "color": "green",
+                            "color": "red",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Wasting (Weight-for-Height)"
                         }
                     ],
                     [
                         {
-                            "color": "green",
-                            "all": 0,
-                            "frequency": "month",
-                            "format": "percent_and_div",
-                            "percent": 0.0,
-                            "value": 0,
-                            "label": "Stunting (Height-for-Age)"
-                        },
-                        {
                             "color": "red",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
+                            "value": 0,
+                            "label": "Stunting (Height-for-Age)"
+                        },
+                        {
+                            "color": "green",
+                            "all": 0,
+                            "frequency": "month",
+                            "format": "percent_and_div",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Weighing Efficiency"
                         }
                     ],
                     [
                         {
-                            "color": "green",
-                            "all": 0,
-                            "frequency": "month",
-                            "format": "percent_and_div",
-                            "percent": 0.0,
-                            "value": 0,
-                            "label": "Newborns with Low Birth Weight"
-                        },
-                        {
                             "color": "red",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
+                            "value": 0,
+                            "label": "Newborns with Low Birth Weight"
+                        },
+                        {
+                            "color": "green",
+                            "all": 0,
+                            "frequency": "month",
+                            "format": "percent_and_div",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Early Initiation of Breastfeeding"
                         }
                     ],
                     [
                         {
-                            "color": "red",
+                            "color": "green",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Exclusive breastfeeding"
                         },
                         {
-                            "color": "red",
+                            "color": "green",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Children initiated appropriate Complementary Feeding"
                         }
                     ],
                     [
                         {
-                            "color": "red",
+                            "color": "green",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Immunization Coverage (at age 1 year)"
                         },
                         {
-                            "color": "red",
+                            "color": "green",
                             "all": 0,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Institutional Deliveries"
                         }
@@ -782,7 +782,7 @@ class TestAWCReport(TestCase):
                         {
                             "all": 1,
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Percent Aadhaar-seeded Beneficiaries",
                             "frequency": "month",
@@ -794,8 +794,8 @@ class TestAWCReport(TestCase):
                         {
                             "all": 0,
                             "format": "percent_and_div",
-                            "color": "red",
-                            "percent": 0.0,
+                            "color": "green",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Percent children (0-6 years) enrolled for ICDS services",
                             "frequency": "month",
@@ -891,7 +891,7 @@ class TestAWCReport(TestCase):
                             "all": "",
                             "format": "number",
                             "color": "green",
-                            "percent": 13900.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 139,
                             "label": "Registered Households",
                             "frequency": "day",
@@ -900,7 +900,7 @@ class TestAWCReport(TestCase):
                         {
                             "all": 1,
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Percent Aadhaar-seeded Beneficiaries",
                             "frequency": "day",
@@ -913,8 +913,8 @@ class TestAWCReport(TestCase):
                         {
                             "all": 0,
                             "format": "percent_and_div",
-                            "color": "red",
-                            "percent": 0.0,
+                            "color": "green",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Percent children (0-6 years) enrolled for ICDS services",
                             "frequency": "day",
@@ -927,7 +927,7 @@ class TestAWCReport(TestCase):
                             "all": 2,
                             "format": "percent_and_div",
                             "color": "green",
-                            "percent": 10000.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 2,
                             "label": "Percent pregnant women enrolled for ICDS services",
                             "frequency": "day",
@@ -941,7 +941,7 @@ class TestAWCReport(TestCase):
                             "all": 3,
                             "format": "percent_and_div",
                             "color": "green",
-                            "percent": 10000.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 3,
                             "label": "Percent lactating women enrolled for ICDS services",
                             "frequency": "day",
@@ -952,8 +952,8 @@ class TestAWCReport(TestCase):
                         {
                             "all": 0,
                             "format": "percent_and_div",
-                            "color": "red",
-                            "percent": 0.0,
+                            "color": "green",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": (
                                 "Percent adolescent girls (11-18 years) enrolled for ICDS services"
@@ -1002,7 +1002,7 @@ class TestAWCReport(TestCase):
                             "all": "",
                             "format": "number",
                             "color": "green",
-                            "percent": 13900.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 139,
                             "label": "Registered Households",
                             "frequency": "day",
@@ -1011,7 +1011,7 @@ class TestAWCReport(TestCase):
                         {
                             "all": 1,
                             "format": "percent_and_div",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Percent Aadhaar-seeded Beneficiaries",
                             "frequency": "day",
@@ -1024,8 +1024,8 @@ class TestAWCReport(TestCase):
                         {
                             "all": 0,
                             "format": "percent_and_div",
-                            "color": "red",
-                            "percent": 0.0,
+                            "color": "green",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Percent children (0-6 years) enrolled for ICDS services",
                             "frequency": "day",
@@ -1038,7 +1038,7 @@ class TestAWCReport(TestCase):
                             "all": 2,
                             "format": "percent_and_div",
                             "color": "green",
-                            "percent": 10000.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 2,
                             "label": "Percent pregnant women enrolled for ICDS services",
                             "frequency": "day",
@@ -1052,7 +1052,7 @@ class TestAWCReport(TestCase):
                             "all": 3,
                             "format": "percent_and_div",
                             "color": "green",
-                            "percent": 10000.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 3,
                             "label": "Percent lactating women enrolled for ICDS services",
                             "frequency": "day",
@@ -1063,8 +1063,8 @@ class TestAWCReport(TestCase):
                         {
                             "all": 0,
                             "format": "percent_and_div",
-                            "color": "red",
-                            "percent": 0.0,
+                            "color": "green",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": (
                                 "Percent adolescent girls (11-18 years) enrolled for ICDS services"
