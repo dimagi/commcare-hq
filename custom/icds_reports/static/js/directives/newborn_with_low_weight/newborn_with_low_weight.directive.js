@@ -223,6 +223,16 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             + "<p>% Unweighed: <strong>" + d3.format('.2%')(1 - dataInMonth.y) + "</strong></p>";
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key !== null && key.location_id === vm.userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
