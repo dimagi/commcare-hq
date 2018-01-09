@@ -23,7 +23,7 @@ function KpiController($location) {
         return selected_month !== current_month || selected_year !== current_year;
     };
 
-    this.isNumber = angular.isNumber;
+    this.isNumber = window.angular.isNumber;
 }
 
 KpiController.$inject = ['$location'];
