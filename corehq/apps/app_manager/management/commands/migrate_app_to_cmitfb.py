@@ -43,7 +43,7 @@ class Command(BaseCommand):
             help='Fix bad user property references based on form.case_references.')
         parser.add_argument('--force', action='store_true',
             help='Migrate even if app.vellum_case_management is already true.')
-        parser.add_argument('-n', '--dry-run', action='store_true',
+        parser.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
             help='Do not save updated apps, just print log output.')
 
     def handle(self, **options):
