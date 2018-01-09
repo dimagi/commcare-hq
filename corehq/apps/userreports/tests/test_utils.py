@@ -62,3 +62,19 @@ class UtilitiesTestCase(SimpleTestCase):
         self.assertNotEqual(real, trap2)
         self.assertNotEqual(real, trap3)
         self.assertEqual(trap4, trap4_expected)
+
+    def test_column_name_suffix(self):
+        self.assertEqual(
+            get_column_name("its/a/path", suffix="string"),
+            "its_a_path_dab095d5_string"
+        )
+
+    def test_column_length_with_suffix(self):
+        long_path = ("its/a/path/that/also/happens/to/be/a/bunch/longer/than/"
+                     "sixty/three/characters")
+        column_name = get_column_name(long_path, suffix="decimal")
+        self.assertEqual(len(column_name), 63)
+        self.assertEqual(
+            column_name,
+            '_be_a_bunch_longer_than_sixty_three_characters_6174b354_decimal',
+        )

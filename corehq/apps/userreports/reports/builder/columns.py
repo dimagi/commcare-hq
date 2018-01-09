@@ -119,9 +119,7 @@ class QuestionColumnOption(ColumnOption):
         else:
             data_type = None  # use the default
 
-        column_id = get_column_name(self._property.strip("/"))
-        if data_type:
-            column_id += ("_" + data_type)
+        column_id = get_column_name(self._property.strip("/"), suffix=data_type)
         return make_form_question_indicator(
             self._question_source, column_id, data_type, root_doc=is_multiselect_chart_report
         )
@@ -236,7 +234,7 @@ class CasePropertyColumnOption(ColumnOption):
         return map[self._get_aggregation_config(aggregation)]
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        column_id = get_column_name(self._property) + "_" + self._get_datatype(aggregation)
+        column_id = get_column_name(self._property, suffix=self._get_datatype(aggregation))
         return make_case_property_indicator(self._property, column_id, datatype=self._get_datatype(aggregation))
 
 
