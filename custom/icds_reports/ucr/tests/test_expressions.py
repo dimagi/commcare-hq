@@ -233,6 +233,23 @@ class TestICDSRelatedDocs(TestCase):
             },
         )
 
+        irrelavant_child_case = CaseStructure(
+            case_id='other-' + ccs_case_id,
+            attrs={
+                'case_type': 'other-person-level',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=household_case.attrs['case_type'],
+            )],
+        )
+
         ccs_record_person_case = CaseStructure(
             case_id='p-' + ccs_case_id,
             attrs={
@@ -247,6 +264,23 @@ class TestICDSRelatedDocs(TestCase):
                 identifier='parent',
                 relationship=CASE_INDEX_CHILD,
                 related_type=household_case.attrs['case_type'],
+            )],
+        )
+
+        other_irrelavent_case = CaseStructure(
+            case_id='other' + ccs_case_id,
+            attrs={
+                'case_type': 'other',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                ccs_record_person_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=ccs_record_person_case.attrs['case_type'],
             )],
         )
 
@@ -300,7 +334,9 @@ class TestICDSRelatedDocs(TestCase):
                 related_type=ccs_record_person_case.attrs['case_type'],
             )],
         )
-        cls.casefactory.create_or_update_cases([ccs_record_case, child_health_case])
+        cls.casefactory.create_or_update_cases(
+            [ccs_record_case, child_health_case, irrelavant_child_case, other_irrelavent_case]
+        )
 
     @classmethod
     def setUpClass(cls):
