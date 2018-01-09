@@ -789,7 +789,7 @@ def icds_get_related_docs_ids(case_id):
          household -----> person  --<
                                       \---->  child_health
 
-    This could likley be optimized pretty easily to take in multiple case_ids but we
+    This could likely be optimized pretty easily to take in multiple case_ids but we
     don't currently have an interface to do so
     """
     db = CaseAccessors('icds-cas')
@@ -812,5 +812,5 @@ def icds_get_related_docs_ids(case_id):
     return [
         case.case_id
         for case in db.get_reverse_indexed_cases(person_case_ids)
-        if case.type in ('ccs_record', 'child_health')
+        if case.case_id != case_id and case.type in ('ccs_record', 'child_health')
     ]
