@@ -1,4 +1,7 @@
 language: python
+python:
+  - "2.7"
+  - "3.6"
 sudo: required
 group: edge
 branches:
@@ -33,7 +36,7 @@ script:
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
   - export DATADOG_API_KEY=$DATADOG_API_KEY
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --threshold=10"
+  - "scripts/docker test --noinput --verbosity=2 --divide-depth=1 --with-timing --threshold=10 --db=skip"
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
