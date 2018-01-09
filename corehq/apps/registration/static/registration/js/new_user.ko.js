@@ -11,6 +11,7 @@
 hqDefine('registration/js/new_user.ko', function () {
     'use strict';
     var module = {};
+    throw new Error("something went wrong");
 
     var _private = {},
         _kissmetrics = hqImport('analytix/js/kissmetrix');
