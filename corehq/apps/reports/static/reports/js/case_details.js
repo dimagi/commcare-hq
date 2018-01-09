@@ -26,7 +26,7 @@ hqDefine("reports/js/case_details", function() {
                 return;
             }
             self.currentPage(newCurrentPage);
-        }
+        };
 
         self.visibleItems = ko.observableArray([]);     // All items visible on the current page
         self.visibleColumns = ko.observableArray([]);   // visibleItems broken down into columns for rendering; an array of arrays
@@ -69,7 +69,7 @@ hqDefine("reports/js/case_details", function() {
             }
         };
 
-        self.query.subscribe(function(newValue) {
+        self.query.subscribe(function() {
             self.currentPage(1);
             self.totalPages(Math.ceil(_.filter(self.propertyNames, self.matchesQuery).length / self.itemsPerPage) || 1);
             self.render();
@@ -102,7 +102,7 @@ hqDefine("reports/js/case_details", function() {
             $.post({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
                 data: self.properties,
-                success: function(data) {
+                success: function() {
                     window.location.reload();
                 },
             });

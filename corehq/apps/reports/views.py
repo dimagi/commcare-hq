@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, date
 from functools import partial
 import itertools
 import json
-import math
 from wsgiref.util import FileWrapper
 from dimagi.utils.couch import CriticalSection
 
@@ -1312,7 +1311,9 @@ class CaseDetailsView(BaseProjectReportSectionView):
         _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
         display = self.request.project.get_case_display(self.case_instance) or wrapped_case.get_display_config()
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
-        get_case_url = lambda case_id: absolute_reverse(self.urlname, args=[self.domain, case_id])
+
+        def _get_case_url(case_id):
+            return absolute_reverse(self.urlname, args=[self.domain, case_id])
 
         data = copy.deepcopy(wrapped_case.to_full_dict())
         default_properties = _get_tables_as_rows(data, display)
@@ -1330,7 +1331,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
 
             info_url = None
             if toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request) \
-                or toggles.SUPPORT.enabled_for_request(self.request):
+                    or toggles.SUPPORT.enabled_for_request(self.request):
                 info_url = reverse('case_property_changes', args=[self.domain, self.case_id, '__placeholder__'])
 
             dynamic_properties = _get_tables_as_rows(
@@ -1377,7 +1378,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
             "tz_abbrev": tz_abbrev,
             "case_hierarchy_options": {
                 "show_view_buttons": True,
-                "get_case_url": get_case_url,
+                "get_case_url": _get_case_url,
                 "timezone": timezone
             },
             "ledgers": ledger_map,
@@ -1510,7 +1511,7 @@ def edit_case_view(request, domain, case_id):
         messages.success(request, _(u'Case properties saved for %s.' % case.name))
     else:
         messages.success(request, _(u'No changes made to %s.' % case.name))
-    return JsonResponse({ 'success': 1 })
+    return JsonResponse({'success': 1})
 
 
 @require_case_view_permission

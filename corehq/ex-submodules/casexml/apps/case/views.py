@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 from corehq.apps.users.util import cached_owner_id_to_display
 
