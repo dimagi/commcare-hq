@@ -31,31 +31,9 @@ hqDefine("reports/js/case_details", function() {
         self.visibleItems = ko.observableArray([]);     // All items visible on the current page
         self.visibleColumns = ko.observableArray([]);   // visibleItems broken down into columns for rendering; an array of arrays
 
-        self.query.subscribe(function(newValue) {
-            if (self.currentPage() == 1) {
-                self.currentPage.valueHasMutated();     // force items to filter, which is handled by currentPage.subscribe below
-            }
-            self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.propertyNames, self.matchesQuery).length / self.itemsPerPage) || 1);
-        });
-
-        // Track an array of page numbers, e.g., [1, 2, 3], to render the pagination widget.
-        // Having it as an array makes knockout rendering simpler.
-        self.visiblePages = ko.observableArray([]);
-        self.totalPages.subscribe(function(newValue) {
-            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
-        });
-
-        self.matchesQuery = function(propertyName) {
-            return !self.query() || propertyName.indexOf(self.query()) !== -1;
-        };
-
-        self.showNoData = ko.computed(function() {
-            return self.visibleItems().length === 0;
-        });
-
         // Handle pagination and filtering, filling visibleItems with whatever should be on the current page
-        self.currentPage.subscribe(function(newValue) {
+        // Forces a re-render because it clears and re-fills visibleColumns
+        self.render = function() {
             var added = 0,
                 index = 0;
 
@@ -63,7 +41,7 @@ hqDefine("reports/js/case_details", function() {
             self.visibleItems.splice(0);
 
             // Cycle over all items on previous pages
-            while (added < self.itemsPerPage * (newValue - 1) && index < self.propertyNames.length) {
+            while (added < self.itemsPerPage * (self.currentPage() - 1) && index < self.propertyNames.length) {
                 if (self.matchesQuery(self.propertyNames[index])) {
                     added++;
                 }
@@ -89,7 +67,30 @@ hqDefine("reports/js/case_details", function() {
             for (var i = 0; i < self.itemsPerPage; i += itemsPerColumn) {
                 self.visibleColumns.push(self.visibleItems.slice(i, i + itemsPerColumn));
             }
+        };
+
+        self.query.subscribe(function(newValue) {
+            self.currentPage(1);
+            self.totalPages(Math.ceil(_.filter(self.propertyNames, self.matchesQuery).length / self.itemsPerPage) || 1);
+            self.render();
         });
+
+        // Track an array of page numbers, e.g., [1, 2, 3], to render the pagination widget.
+        // Having it as an array makes knockout rendering simpler.
+        self.visiblePages = ko.observableArray([]);
+        self.totalPages.subscribe(function(newValue) {
+            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
+        });
+
+        self.matchesQuery = function(propertyName) {
+            return !self.query() || propertyName.indexOf(self.query()) !== -1;
+        };
+
+        self.showNoData = ko.computed(function() {
+            return self.visibleItems().length === 0;
+        });
+
+        self.currentPage.subscribe(self.render);
 
         self.propertyChange = function(model, e) {
             var $input = $(e.currentTarget);
@@ -112,7 +113,7 @@ hqDefine("reports/js/case_details", function() {
             self.properties = _.extend({}, options.properties);
             self.query("");
             self.currentPage(1);
-            self.currentPage.valueHasMutated();     // force re-render
+            self.render();
         };
         self.init();
 
