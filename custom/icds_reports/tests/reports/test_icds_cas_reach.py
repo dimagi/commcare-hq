@@ -38,8 +38,8 @@ class TestICDSCASReach(TestCase):
                             "redirect": "awc_daily_status",
                             "all": 0,
                             "format": "div",
-                            "color": "red",
-                            "percent": 0.0,
+                            "color": "green",
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Number of AWCs Open yesterday",
                             "frequency": "day",
@@ -122,13 +122,13 @@ class TestICDSCASReach(TestCase):
                         },
                         {
                             "redirect": "awc_daily_status",
-                            "color": "red",
+                            "color": "green",
                             "all": 50,
                             "frequency": "day",
                             "format": "div",
                             "help_text": "Total Number of Angwanwadi Centers that"
                                          " were open yesterday by the AWW or the AWW helper",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Number of AWCs Open yesterday"
                         }
@@ -206,13 +206,13 @@ class TestICDSCASReach(TestCase):
                         },
                         {
                             "redirect": "awc_daily_status",
-                            "color": "red",
+                            "color": "green",
                             "all": 50,
                             "frequency": "day",
                             "format": "div",
                             "help_text": "Total Number of Angwanwadi Centers that"
                                          " were open yesterday by the AWW or the AWW helper",
-                            "percent": 0.0,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": "Number of AWCs Open yesterday"
                         }

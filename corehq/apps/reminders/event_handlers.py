@@ -27,7 +27,6 @@ from corehq.apps.sms.models import (
 )
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
-from corehq.apps.ivr.tasks import initiate_outbound_call
 from corehq.form_processor.utils import is_commcarecase
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext_noop
@@ -453,56 +452,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
 
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logged_event):
-    domain_obj = Domain.get_by_name(reminder.domain, strict=True)
-    for recipient in recipients:
-        initiate_call = True
-        if reminder.callback_try_count > 0 and reminder.event_initiation_timestamp:
-            initiate_call = not Call.answered_call_exists(
-                recipient.doc_type,
-                recipient.get_id,
-                reminder.event_initiation_timestamp
-            )
-
-        if initiate_call:
-            if (is_commcarecase(recipient) and
-                not handler.force_surveys_to_use_triggered_case):
-                case_id = recipient.case_id
-            else:
-                case_id = reminder.case_id
-            verified_number, unverified_number = get_recipient_phone_number(
-                reminder, recipient, verified_numbers)
-            if verified_number:
-                initiate_outbound_call.delay(
-                    recipient,
-                    reminder.current_event.form_unique_id,
-                    handler.submit_partial_forms,
-                    handler.include_case_side_effects,
-                    handler.max_question_retries,
-                    logged_event.pk,
-                    verified_number=verified_number,
-                    case_id=case_id,
-                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
-                    timestamp=CaseReminderHandler.get_now(),
-                )
-            elif domain_obj.send_to_duplicated_case_numbers and unverified_number:
-                initiate_outbound_call.delay(
-                    recipient,
-                    reminder.current_event.form_unique_id,
-                    handler.submit_partial_forms,
-                    handler.include_case_side_effects,
-                    handler.max_question_retries,
-                    logged_event.pk,
-                    unverified_number=unverified_number,
-                    case_id=case_id,
-                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
-                    timestamp=CaseReminderHandler.get_now(),
-                )
-            else:
-                # initiate_outbound_call will create the subevent automatically,
-                # so since we're not initiating the call here, we have to create
-                # the subevent explicitly in order to log the error.
-                logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
-                logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
+    return
 
 
 def fire_email_event(reminder, handler, recipients, verified_numbers, logged_event):

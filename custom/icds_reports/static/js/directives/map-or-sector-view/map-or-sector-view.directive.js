@@ -4,6 +4,8 @@ function MapOrSectorController($location, storageService, locationsService) {
     var vm = this;
     var location_id = $location.search().location_id;
 
+    vm.showChart = parseInt($location.search().selectedLocationLevel) === 1;
+
     vm.chartOptions = {
 
         chart: {

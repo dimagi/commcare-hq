@@ -1,6 +1,6 @@
 /* globals $ */
 
-hqDefine('userreports/js/report_analytics', function() {
+hqDefine('userreports/js/report_analytix', function() {
     var trackReportBuilder = hqImport('analytix/js/google').trackCategory("Report Builder v2");
     $(function () {
         $('#js-click-preview-subscribe').click(function () {

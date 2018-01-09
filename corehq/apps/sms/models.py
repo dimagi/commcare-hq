@@ -1983,7 +1983,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
                    we have to support both for a little while until all
                    foreign keys are migrated over
         """
-        backend_classes = smsutil.get_backend_classes()
+        backend_classes = smsutil.get_sms_backend_classes()
         api_id = api_id or cls.get_backend_api_id(backend_id, is_couch_id=is_couch_id)
 
         if api_id not in backend_classes:

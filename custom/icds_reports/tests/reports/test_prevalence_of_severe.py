@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_map, \
     get_prevalence_of_severe_data_chart, get_prevalence_of_severe_sector_data
 from django.test import TestCase
@@ -42,10 +42,10 @@ class TestPrevalenceOfSevere(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-5%": "#fee0d2",
-                    "5%-7%": "#fc9272",
-                    "7%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-5%": MapColors.PINK,
+                    "5%-7%": MapColors.ORANGE,
+                    "7%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -106,10 +106,10 @@ class TestPrevalenceOfSevere(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-5%": "#fee0d2",
-                    "5%-7%": "#fc9272",
-                    "7%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-5%": MapColors.PINK,
+                    "5%-7%": MapColors.ORANGE,
+                    "7%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -296,7 +296,7 @@ class TestPrevalenceOfSevere(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

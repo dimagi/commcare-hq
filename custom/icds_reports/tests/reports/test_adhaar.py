@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.adhaar import get_adhaar_data_map, get_adhaar_data_chart, get_adhaar_sector_data
 from django.test import TestCase
 
@@ -36,10 +36,10 @@ class TestAdhaar(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-50%": "#fc9272",
-                    "50%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.RED,
+                    "25%-50%": MapColors.ORANGE,
+                    "50%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -89,10 +89,10 @@ class TestAdhaar(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-25%": "#de2d26",
-                    "25%-50%": "#fc9272",
-                    "50%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-25%": MapColors.RED,
+                    "25%-50%": MapColors.ORANGE,
+                    "50%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -211,7 +211,7 @@ class TestAdhaar(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
