@@ -43,7 +43,7 @@ class IndicatorSpecBase(JsonObject):
         return wrapped
 
     def readable_output(self, context):
-        raise NotImplementedError
+        return self.type
 
 
 class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
