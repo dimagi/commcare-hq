@@ -115,8 +115,6 @@ WHERE
     location_dim_target.sql_location_id = l0.sql_location_id;
 ON CONFLICT (location_id) DO UPDATE
 SET domain = EXCLUDED.domain,
-    location_id = EXCLUDED.location_id,
-    sql_location_id = EXCLUDED.sql_location_id,
     location_level_0 = EXCLUDED.location_level_0,
     location_level_1 = EXCLUDED.location_level_1,
     name = EXCLUDED.name,
@@ -132,6 +130,5 @@ SET domain = EXCLUDED.domain,
     location_last_modified = EXCLUDED.location_last_modified,
     location_created_on = EXCLUDED.location_created_on,
     dim_last_modified = EXCLUDED.dim_last_modified,
-    dim_created_on = EXCLUDED.dim_created_on,
     deleted = EXCLUDED.deleted,
     batch_id = EXCLUDED.batch_id;
