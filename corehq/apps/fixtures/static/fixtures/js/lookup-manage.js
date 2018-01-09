@@ -13,7 +13,6 @@ define([
     initialPageData
 ) {
     "use strict";
-    throw new Error("something went wrong");
     var somethingWentWrong = $("#FailText").text();
     function log (x) {
         return x;
