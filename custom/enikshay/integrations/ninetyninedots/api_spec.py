@@ -108,6 +108,12 @@ class DotsApiParam(StrictJsonObject):
     direction = jsonobject.IntegerProperty(default=DIRECTION_BOTH,
                                            choices=[DIRECTION_INBOUND, DIRECTION_OUTBOUND, DIRECTION_BOTH])
 
+    # path to a function that takes a sector parameter and returns a validator function
+    # see checkbox_validator in this file for an example
+    validator = jsonobject.StringProperty()
+    # values passed into the validator function
+    validator_values = jsonobject.ObjectProperty(DotsApiParamChoices)
+
     def get_by_sector(self, prop, sector):
         prop = getattr(self, prop)
         if isinstance(prop, DotsApiSectorParam):
@@ -260,6 +266,22 @@ def location_name_getter(case_properties, props_to_check):
         return None
 
 
+def checkbox_validator(sector, validator_values):
+    """Ensure that multiple answers to checkbox questions are all valid
+    """
+
+    def sector_validator(value):
+        valid_values = getattr(validator_values, sector) + validator_values.both
+        for individual_value in value.split(" "):
+            if individual_value not in valid_values:
+                raise ValueError('Error while parsing "{}". "{}" not in {}'.format(
+                    value, individual_value, ", ".join(valid_values))
+                )
+        return True
+
+    return sector_validator
+
+
 class MermParams(StrictJsonObject):
     IMEI = jsonobject.StringProperty(required=False, exclude_if_none=True)
     daily_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)
@@ -359,6 +381,8 @@ def get_payload_properties(sector):
                 choices=param.get_by_sector('choices', sector),
                 required=param.required_,
                 exclude_if_none=param.exclude_if_none,
+                validators=([to_function(param.validator)(sector, param.validator_values)]
+                            if param.validator else []),
             )
     return properties
 

@@ -321,6 +321,7 @@ class ENikshayCaseStructureMixin(object):
         self.other_number = "0123456666"
         self._episode = None
         self._person = None
+        self._occurrence = None
 
     def tearDown(self):
         delete_all_users()
@@ -343,10 +344,12 @@ class ENikshayCaseStructureMixin(object):
 
     @property
     def occurrence(self):
-        return get_occurrence_case_structure(
-            self.occurrence_id,
-            self.person
-        )
+        if not self._occurrence:
+            self._occurrence = get_occurrence_case_structure(
+                self.occurrence_id,
+                self.person
+            )
+        return self._occurrence
 
     @property
     def episode(self):
