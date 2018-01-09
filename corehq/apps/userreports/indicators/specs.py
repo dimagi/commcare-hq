@@ -121,7 +121,7 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         return in_multiselect if self.select_style == 'multiple' else equal
 
     def readable_output(self, context):
-        readable_output = super(ChoiceListIndicatorSpec).readable_output(context)
+        readable_output = super(ChoiceListIndicatorSpec, self).readable_output(context)
         return "{} for choices:\n{}".format(readable_output,
                                             add_tabbed_text(str(self.choices)))
 
