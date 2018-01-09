@@ -860,6 +860,42 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
                  commit=commit)
 
 
+@periodic_task(run_every=crontab(hour=6, minute=30), queue='background_queue')
+def run_duplicate_occurrences_and_episodes_reconciliation():
+    run_model_reconciliation(
+        'duplicate_occurrences_and_episodes_reconciliation',
+        recipient='sshah@dimagi.com',
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=7), queue='background_queue')
+def run_drug_resistance_reconciliation():
+    run_model_reconciliation(
+        'drug_resistance_reconciliation',
+        recipient='sshah@dimagi.com',
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=7, minute=30), queue='background_queue')
+def run_multiple_open_referrals_reconciliation():
+    run_model_reconciliation(
+        'multiple_open_referrals_reconciliation',
+        recipient=['kmehrotra@dimagi.com', 'jdaniel@dimagi.com'],
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=8), queue='background_queue')
+def run_investigations_reconciliation():
+    run_model_reconciliation(
+        'investigations_reconciliation',
+        recipient=['mkangia@dimagi.com'],
+        commit=False
+    )
+
+
 @task
 def update_single_episode(domain, episode_case):
     update_json = EpisodeAdherenceUpdate(domain, episode_case).update_json()
