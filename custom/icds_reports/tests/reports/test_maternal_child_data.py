@@ -76,7 +76,7 @@ class TestMaternalChildData(TestCase):
                                          "with foetal and neonatal mortality and morbidity,"
                                          " inhibited growth and cognitive development,"
                                          " and chronic diseases later in life",
-                            "percent": 2857.142857142857,
+                            "percent": "Data in the previous reporting period was 0",
                             "value": 2,
                             "label": "Newborns with Low Birth Weight"
                         }
