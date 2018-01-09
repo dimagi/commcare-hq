@@ -233,8 +233,8 @@ class TestICDSRelatedDocs(TestCase):
             },
         )
 
-        irrelavant_child_case = CaseStructure(
-            case_id='other-' + ccs_case_id,
+        irrelavant_person_case = CaseStructure(
+            case_id='person-other-' + ccs_case_id,
             attrs={
                 'case_type': 'other-person-level',
                 'create': True,
@@ -267,8 +267,8 @@ class TestICDSRelatedDocs(TestCase):
             )],
         )
 
-        other_irrelavent_case = CaseStructure(
-            case_id='other' + ccs_case_id,
+        irrelavant_ccs_case = CaseStructure(
+            case_id='ccs-other-' + ccs_case_id,
             attrs={
                 'case_type': 'other',
                 'create': True,
@@ -335,7 +335,7 @@ class TestICDSRelatedDocs(TestCase):
             )],
         )
         cls.casefactory.create_or_update_cases(
-            [ccs_record_case, child_health_case, irrelavant_child_case, other_irrelavent_case]
+            [ccs_record_case, child_health_case, irrelavant_person_case, irrelavant_ccs_case]
         )
 
     @classmethod
@@ -356,3 +356,19 @@ class TestICDSRelatedDocs(TestCase):
 
     def test_child_health_case(self):
         self.assertEqual(icds_get_related_docs_ids(self.child_health_case_id), [self.ccs_record_id])
+
+    def test_irrelavant_person_level_case(self):
+        self.assertEqual(icds_get_related_docs_ids('person-other-' + self.ccs_record_id), [])
+
+    def test_irrelavant_ccs_level_case(self):
+        self.assertEqual(icds_get_related_docs_ids('ccs-other-' + self.ccs_record_id), [])
+
+    def test_nonexistant_case(self):
+        self.assertEqual(icds_get_related_docs_ids('nothing'), [])
+
+    def test_household_case(self):
+        self.assertEqual(icds_get_related_docs_ids('hh-' + self.ccs_record_id), [])
+
+    def test_person_case(self):
+        self.assertEqual(icds_get_related_docs_ids('p-' + self.ccs_record_id), [])
+        self.assertEqual(icds_get_related_docs_ids('p-' + self.child_health_case_id), [])

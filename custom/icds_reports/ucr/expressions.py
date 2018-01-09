@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from datetime import datetime
+
 from jsonobject.base_properties import DefaultProperty
+from six.moves import filter
+from six.moves import map
+
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
@@ -8,11 +12,10 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.elastic import mget_query
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
-from six.moves import filter
-from six.moves import map
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -793,15 +796,27 @@ def icds_get_related_docs_ids(case_id):
     don't currently have an interface to do so
     """
     db = CaseAccessors('icds-cas')
-    current_case = db.get_case(case_id)
-    if not current_case or not current_case.indices:
+    try:
+        current_case = db.get_case(case_id)
+    except CaseNotFound:
         return []
-    person_case = db.get_case(current_case.indices[0].referenced_id)
-    if not person_case or not person_case.indices:
+    if not current_case.indices or current_case.type not in ('ccs_record', 'child_health'):
         return []
-    house_case = db.get_case(person_case.indices[0].referenced_id)
-    if not house_case:
+
+    try:
+        person_case = db.get_case(current_case.indices[0].referenced_id)
+    except CaseNotFound:
         return []
+    if not person_case.indices or person_case.type != 'person':
+        return []
+
+    try:
+        house_case = db.get_case(person_case.indices[0].referenced_id)
+    except CaseNotFound:
+        return []
+    if house_case.type != 'household':
+        return []
+
     person_case_ids = [
         case.case_id
         for case in db.get_reverse_indexed_cases([house_case.case_id])
@@ -809,6 +824,7 @@ def icds_get_related_docs_ids(case_id):
     ]
     if not person_case_ids:
         return []
+
     return [
         case.case_id
         for case in db.get_reverse_indexed_cases(person_case_ids)
