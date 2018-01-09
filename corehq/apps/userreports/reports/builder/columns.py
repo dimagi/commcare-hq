@@ -313,11 +313,15 @@ class CountColumn(ColumnOption):
         return {
             "column_id": "count",
             "display_name": "Count",
-            "type": "expression",
-            "datatype": "integer",
-            "expression": {
-                "type": "constant",
-                "constant": 1
+            "type": "boolean",
+            "filter": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "constant",
+                    "constant": 1
+                },
+                "property_value": 1
             }
         }
 
