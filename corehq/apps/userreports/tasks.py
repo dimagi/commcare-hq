@@ -47,7 +47,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
-from custom.icds_reports.ucr.expressions import get_related_docs_ids
+from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -312,7 +312,7 @@ def save_document(doc_ids):
                 indicator = indicator_by_doc_id[doc['_id']]
                 successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
                 if rebuild_related_docs:
-                    related_docs_to_rebuild = related_docs_to_rebuild.union(get_related_docs_ids(doc['_id']))
+                    related_docs_to_rebuild = related_docs_to_rebuild.union(icds_get_related_docs_ids(doc['_id']))
                 if successfully_processed:
                     processed_indicators.append(indicator.pk)
                 else:
@@ -388,7 +388,7 @@ def _save_document_helper(indicator, doc):
         else:
             configs_to_remove.append(config_id)
 
-    rebuild_related_docs = any(config.rebuild_related_docs for config in six.itervalues(configs) if config)
+    rebuild_related_docs = any(config.icds_rebuild_related_docs for config in six.itervalues(configs) if config)
     return (not something_failed, configs_to_remove, rebuild_related_docs)
 
 

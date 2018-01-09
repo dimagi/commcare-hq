@@ -116,7 +116,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
-    rebuild_related_docs = BooleanProperty(default=False)  # Only used for ICDS
+    icds_rebuild_related_docs = BooleanProperty(default=False)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.

@@ -783,7 +783,7 @@ def datetime_now(spec, context):
     return DateTimeNow.wrap(spec)
 
 
-def get_related_docs_ids(case_id):
+def icds_get_related_docs_ids(case_id):
     """gets a related case id from an ICDS ccs_record or child_health case. Expects the hierarchy:
                                       /---->  ccs_record
          household -----> person  --<
