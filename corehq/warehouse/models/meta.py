@@ -8,6 +8,7 @@ class Batch(models.Model):
 
     created_on = models.DateTimeField(auto_now_add=True)
     completed_on = models.DateTimeField(null=True)
+    dag_slug = models.CharField(max_length=100)
 
 
 class CommitRecord(models.Model):
