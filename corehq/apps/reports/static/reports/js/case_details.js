@@ -3,7 +3,7 @@ hqDefine("reports/js/case_details", function() {
         var self = this;
 
         self.propertyNames = options.propertyNames || [];   // ordered list of names
-        self.properties = options.properties  || {};        // map of name => value
+        self.properties;                                    // map of name => value
 
         // If there are a lot of items, make a bigger modal and render properties as columns
         // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal
@@ -108,9 +108,13 @@ hqDefine("reports/js/case_details", function() {
             return true;
         };
 
-        // Initialize widget
-        self.currentPage(1);
-        self.query("");
+        self.init = function() {
+            self.properties = _.extend({}, options.properties);
+            self.query("");
+            self.currentPage(1);
+            self.currentPage.valueHasMutated();     // force re-render
+        };
+        self.init();
 
         return self;
     };

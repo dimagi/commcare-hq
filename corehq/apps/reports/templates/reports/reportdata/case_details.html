@@ -195,7 +195,7 @@
     </div> {# end tabbed-content-container div #}
     </div> {# end report-container #}
 
-    <div id="edit-dynamic-properties" tabindex="-1" data-bind="attr: { 'class': 'modal fade ' + $root.modalClass }">
+    <div id="edit-dynamic-properties" tabindex="-1" data-bind="attr: { 'class': 'modal fade ' + $root.modalClass }, event: { 'hidden.bs.modal': init }">
         <div data-bind="attr: { 'class': 'modal-dialog ' + $root.modalDialogClass }">
             <div class="modal-content">
                 <div class="modal-header with-controls">
