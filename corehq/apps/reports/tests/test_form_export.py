@@ -1,6 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
-from StringIO import StringIO
+from io import BytesIO
 import json
 import datetime
 
@@ -167,7 +167,7 @@ class FormExportTest(TestCase):
 
     def post_it(self, user_id=None, form_id=XFORM_ID):
         user_id = user_id or self.couch_user._id
-        f = StringIO(XML_DATA.format(
+        f = BytesIO(XML_DATA.format(
             user_id=user_id,
             xmlns=XMLNS,
             xform_id=form_id,

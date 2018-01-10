@@ -10,16 +10,11 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+from django.db.models import Case, When, Q, IntegerField
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -33,7 +28,7 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             in_month=Sum('infra_infant_weighing_scale'),
-            all=Sum('num_awcs'),
+            all=Sum('num_awc_infra_last_update'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -49,19 +44,19 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
     )
 
     fills = OrderedDict()
-    fills.update({'0%-25%': RED})
-    fills.update({'25%-75%': ORANGE})
-    fills.update({'75%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-25%': MapColors.RED})
+    fills.update({'25%-75%': MapColors.ORANGE})
+    fills.update({'75%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
     return {
         "slug": "infants_weight_scale",
-        "label": "Percent AWCs with Weighing Scale: Infants",
+        "label": "Percentage of AWCs that reported having a weighing scale for infants",
         "fills": fills,
         "rightLegend": {
             "average": (in_month_total * 100) / float(valid_total or 1),
             "info": _((
-                "Percentage of AWCs with weighing scale for infants"
+                "Percentage of AWCs that reported having a weighing scale for infants"
             )),
             "extended_info": [
                 {
@@ -96,7 +91,13 @@ def get_infants_weight_scale_data_chart(domain, config, loc_level, show_test=Fal
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
-        all=Sum('num_awcs'),
+        all=Sum(
+            Case(
+                When(Q(infra_last_update_date=None), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ),
     ).order_by('month')
 
     if not show_test:
@@ -151,7 +152,7 @@ def get_infants_weight_scale_data_chart(domain, config, loc_level, show_test=Fal
                         'in_month': value['in_month']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "% of AWCs with a weighing scale for infants.",
+                "key": "Percentage of AWCs that reported having a weighing scale for infants",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -175,7 +176,13 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
         *group_by
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
-        all=Sum('num_awcs'),
+        all=Sum(
+            Case(
+                When(Q(infra_last_update_date=None), then=1),
+                default=0,
+                output_field=IntegerField()
+            )
+        ),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -221,7 +228,7 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs with weighing scale for infants"
+            "Percentage of AWCs that reported having a weighing scale for infants"
         )),
         "chart_data": [
             {
@@ -229,7 +236,7 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }

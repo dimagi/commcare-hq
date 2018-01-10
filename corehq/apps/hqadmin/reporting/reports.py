@@ -201,7 +201,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
 
 
 def domains_matching_plan(software_plan_edition, start, end):
-    matching_subscriptions = Subscription.objects.filter(
+    matching_subscriptions = Subscription.visible_objects.filter(
         Q(date_start__lte=end) & Q(date_end__gte=start),
         plan_version__plan__edition=software_plan_edition,
     )
@@ -213,7 +213,7 @@ def domains_matching_plan(software_plan_edition, start, end):
 
 
 def plans_on_date(software_plan_edition, date):
-    matching_subscriptions = Subscription.objects.filter(
+    matching_subscriptions = Subscription.visible_objects.filter(
         Q(date_start__lte=date) & Q(date_end__gte=date),
         plan_version__plan__edition=software_plan_edition,
     )

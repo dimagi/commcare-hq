@@ -124,6 +124,8 @@ def get_task_status(task, is_multiple_download_task=False):
 
     if failed:
         state = STATES.failed
+        if isinstance(task.result, Exception) and not context_error:
+            context_error = "%s: %s" % (type(task.result).__name__, task.result)
     elif is_ready:
         state = STATES.success
     elif _is_task_pending(task):

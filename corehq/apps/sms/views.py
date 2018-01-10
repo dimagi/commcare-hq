@@ -255,7 +255,7 @@ def send_to_recipients(request, domain):
         for username in usernames:
             if username not in login_ids:
                 unknown_usernames.append(username)
-        login_ids = login_ids.values()
+        login_ids = list(login_ids.values())
 
         users = []
         empty_groups = []

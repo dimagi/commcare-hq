@@ -134,7 +134,7 @@ def validate_langs(request, existing_langs):
     assert set(rename.keys()).issubset(existing_langs)
     assert set(rename.values()).issubset(langs)
     # assert that there are no repeats in the values of rename
-    assert len(set(rename.values())) == len(rename.values())
+    assert len(set(rename.values())) == len(list(rename.values()))
     # assert that no lang is renamed to an already existing lang
     for old, new in rename.items():
         if old != new:
@@ -199,7 +199,7 @@ def _update_form_ids(app, master_app, id_map):
     updated_source = update_form_unique_ids(app_source, id_map)
 
     attachments = app_source.pop('_attachments')
-    new_wrapped_app = Application.wrap(updated_source)
+    new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
 

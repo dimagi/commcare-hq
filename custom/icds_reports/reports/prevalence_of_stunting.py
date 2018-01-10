@@ -10,16 +10,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
     get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -92,10 +86,10 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             data_for_location.update({'fillKey': '38%-100%'})
 
     fills = OrderedDict()
-    fills.update({'0%-25%': PINK})
-    fills.update({'25%-38%': ORANGE})
-    fills.update({'38%-100%': RED})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-25%': MapColors.PINK})
+    fills.update({'25%-38%': MapColors.ORANGE})
+    fills.update({'38%-100%': MapColors.RED})
+    fills.update({'defaultFill': MapColors.GREY})
 
     sum_of_indicators = moderate_total + severe_total + normal_total
     percent_unmeasured = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
@@ -349,7 +343,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }

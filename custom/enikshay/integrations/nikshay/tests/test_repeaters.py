@@ -102,6 +102,7 @@ SUCCESSFUL_SOAP_RESPONSE = (
     '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
 
 DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
+DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID = '987654'
 
 SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?>'
@@ -123,6 +124,41 @@ SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
         '</soap:Body>'
     '</soap:Envelope>'
 ).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID)
+
+ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?>'
+    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+        '<soap:Body>'
+            '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
+                '<HE_RegistrationResult>'
+                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" '
+                        'xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
+                    '<NewDataSet xmlns="">'
+                        '<Table1 diffgr:id="Table11" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
+                            '<HE_ID>{dummy_id}</HE_ID>'
+                            '<ESTABLISHMENT_TYPE>Laboratory</ESTABLISHMENT_TYPE>'
+                            '<SECTOR>Private (including NGOs)</SECTOR>'
+                            '<ESTABLISHMENT_NAME>Health Care Diagnostic Centre 700800</ESTABLISHMENT_NAME>'
+                            '<MCI_HR_NO>12345</MCI_HR_NO>'
+                            '<CONTACT_PNAME>Health Care Diagnostic Centre</CONTACT_PNAME>'
+                            '<CONTACT_PESIGNATION>NA</CONTACT_PESIGNATION>'
+                            '<TELEPHONE_NO>9999999999</TELEPHONE_NO>'
+                            '<MOBILE_NO>9999999999</MOBILE_NO>'
+                            '<COMPLETE_ADDRESS>V N Desai Hospital 179 B Jama Masjid Lane </COMPLETE_ADDRESS>'
+                            '<PINCODE>400098</PINCODE>'
+                            '<EMAILID>abc@xyz.com</EMAILID>'
+                            '<STATE>Maharashtra</STATE>'
+                            '<DISTRICT>Bandra East</DISTRICT>'
+                            '<Status>Already Exists</Status>'
+                        '</Table1>'
+                    '</NewDataSet>'
+                    '</diffgr:diffgram>'
+                '</HE_RegistrationResult>'
+            '</HE_RegistrationResponse>'
+        '</soap:Body>'
+    '</soap:Envelope>'
+).format(dummy_id=DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID)
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
@@ -1560,7 +1596,7 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         })
         self.pcp.save()
         payload = NikshayHealthEstablishmentPayloadGenerator(None).get_payload(None, self.pcp)
-        self.assertEqual(payload['ESTABLISHMENT_TYPE'], health_establishment_type.get('lab'))
+        self.assertEqual(payload['ESTABLISHMENT_TYPE'], health_establishment_type.get('Lab'))
         self.assertEqual(payload['SECTOR'], health_establishment_sector.get(self.pcp.metadata['sector'], ''))
         self.assertEqual(payload['ESTABLISHMENT_NAME'], self.pcp.name)
         self.assertEqual(payload['MCI_HR_NO'], "14321")
@@ -1610,3 +1646,12 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
         self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)
         self.assertEqual(updated_location.metadata['old_nikshay_code'], 'old_id_value')
+
+        payload_generator.handle_success(
+            MockSoapResponse(200, ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE),
+            self.pcp,
+            repeat_record
+        )
+        updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
+        self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID)
+        self.assertEqual(updated_location.metadata['old_nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)

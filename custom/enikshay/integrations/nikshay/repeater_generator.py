@@ -404,6 +404,22 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
     def _get_person_case(self, episode_case):
         return get_person_case_from_episode(episode_case.domain, episode_case.get_id)
 
+    @staticmethod
+    def _get_husband_father_name(person_case_properties):
+        husband_father_name = sanitize_text_for_xml(person_case_properties.get('husband_father_name', ''))
+        # check after sanitize for xml to consider cases where it would become blank after being sanitized
+        if husband_father_name:
+            return husband_father_name
+        return sanitize_text_for_xml(person_case_properties.get('last_name', ''))
+
+    @staticmethod
+    def _get_address(person_case_properties):
+        # API for Address with char sanitize_text_for_xml ',' returns Invalid data format error
+        current_address = sanitize_text_for_xml(person_case_properties.get('current_address', '')).replace(',', '')
+        if current_address:
+            return current_address
+        return "NULL"
+
     def get_payload(self, repeat_record, episode_case):
         person_case = self._get_person_case(episode_case)
         episode_case_properties = episode_case.dynamic_case_properties()
@@ -421,21 +437,22 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             "TBUcode": person_locations.tu,
             "HFIDNO": person_locations.pcp,
             "pname": sanitize_text_for_xml(person_case.name),
-            "fhname": sanitize_text_for_xml(person_case_properties.get('husband_father_name', '')),
-            "age": _get_person_age(person_case_properties),
+            "fhname": self._get_husband_father_name(person_case_properties),
+            "age": (_get_person_age(person_case_properties) or '0'),
             "gender": person_case_properties.get('sex', '').capitalize(),
-            # API for Address with char ',' returns Invalid data format error
-            "Address": sanitize_text_for_xml(person_case_properties.get('current_address', '').replace(',', '')),
-            "pin": person_case_properties.get('current_address_postal_code', ''),
+            "Address": self._get_address(person_case_properties),
+            "pin": (person_case_properties.get('current_address_postal_code') or DUMMY_VALUES['pincode']),
             "lno": person_case_properties.get('phone_number', ''),
             "mno": '0',
             "tbdiagdate": _format_date(str(episode_date)),
             "tbstdate": _format_date(
                 episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
-            "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''), ''),
-            "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis', ''), ''),
-            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status', '')),
-            "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
+            "Type": (disease_classification.get(episode_case_properties.get('disease_classification'))
+                     or NOT_AVAILABLE_VALUE),
+            "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis'), ''),
+            "D_SUSTest": (drug_susceptibility_test_status.get(episode_case_properties.get('dst_status'))
+                          or NOT_AVAILABLE_VALUE),
+            "Treat_I": (episode_case_properties.get('treatment_initiation_status') or NOT_AVAILABLE_VALUE),
             "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
             "Source": ENIKSHAY_ID,
@@ -495,7 +512,7 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
     @staticmethod
     def _get_establishment_type(location):
         if location.location_type.name == AGENCY_LOCATION_TYPES['plc']:
-            return health_establishment_type.get('lab')
+            return health_establishment_type.get('Lab')
         if location.location_type.name == AGENCY_LOCATION_TYPES['pcp']:
             return health_establishment_type.get(
                 location.metadata.get('facility_type')
@@ -536,13 +553,13 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
         return {
             'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
             'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
-            'ESTABLISHMENT_NAME': location.name,
+            'ESTABLISHMENT_NAME': sanitize_text_for_xml(location.name),
             'MCI_HR_NO': self._get_value_or_dummy_value(location_user_data, 'registration_number'),
-            'CONTACT_PNAME': location_user.full_name,
+            'CONTACT_PNAME': sanitize_text_for_xml(location_user.full_name),
             'CONTACT_PDESIGNATION': (location_user_data.get('pcp_qualification') or NOT_AVAILABLE_VALUE),
             'TELEPHONE_NO': self._get_telephone_number(location_user_data),
             'MOBILE_NO': self._get_mobile_number(location_user_data),
-            'COMPLETE_ADDRESS': self._get_address(location_user_data),
+            'COMPLETE_ADDRESS': sanitize_text_for_xml(self._get_address(location_user_data)),
             'PINCODE': self._get_value_or_dummy_value(location_user_data, 'pincode'),
             'EMAILID': self._get_value_or_dummy_value(location_user_data, 'email'),
             'STATE_CODE': location_hierarchy_codes.stcode,
@@ -561,8 +578,13 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
             response,
             verify=repeat_record.repeater.verify,
         )
-        message_text = message.find("NewDataSet/HE_DETAILS/Message").text
-        health_facility_id = re.match(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text).groups()[0]
+        message_node = message.find("NewDataSet/HE_DETAILS/Message")
+        already_registered_id_node = message.find("NewDataSet/Table1/HE_ID")
+        if already_registered_id_node is not None:
+            health_facility_id = already_registered_id_node.text
+        else:
+            message_text = message_node.text
+            health_facility_id = re.match(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text).groups()[0]
         if payload_doc.metadata.get('nikshay_code'):
             # The repeater checks for this to be absent but in case its added after the trigger
             # and before its fetched from Nikshay, just keep a copy of the older value for ref

@@ -300,10 +300,7 @@ class EpisodeAdherenceUpdate(object):
         self.episode = episode_case
         self.adherence_data_store = get_datastore(self.domain)
         self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
-        self.purge_date = datetime.datetime.now(
-            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
-        self.dose_status_by_date = {}
-
+        self.purge_date = self.date_today_in_india - datetime.timedelta(days=30)
         self._cache_dose_taken_by_date = False
 
     @memoized
@@ -497,7 +494,8 @@ class EpisodeAdherenceUpdate(object):
                 'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
-                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1),
+                'adherence_latest_date_recorded': (
+                    latest_adherence_date or adherence_schedule_date_start - datetime.timedelta(days=1)),
             }
 
         update = {}
@@ -889,6 +887,42 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
                  recipient=email,
                  person_case_ids=person_case_ids,
                  commit=commit)
+
+
+@periodic_task(run_every=crontab(hour=6, minute=30), queue='background_queue')
+def run_duplicate_occurrences_and_episodes_reconciliation():
+    run_model_reconciliation(
+        'duplicate_occurrences_and_episodes_reconciliation',
+        recipient='sshah@dimagi.com',
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=7), queue='background_queue')
+def run_drug_resistance_reconciliation():
+    run_model_reconciliation(
+        'drug_resistance_reconciliation',
+        recipient='sshah@dimagi.com',
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=7, minute=30), queue='background_queue')
+def run_multiple_open_referrals_reconciliation():
+    run_model_reconciliation(
+        'multiple_open_referrals_reconciliation',
+        recipient=['kmehrotra@dimagi.com', 'jdaniel@dimagi.com'],
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=8), queue='background_queue')
+def run_investigations_reconciliation():
+    run_model_reconciliation(
+        'investigations_reconciliation',
+        recipient=['mkangia@dimagi.com'],
+        commit=False
+    )
 
 
 @task

@@ -281,7 +281,7 @@ def print_imports_until_thread_change():
 @nottest
 @unit_testing_only
 def get_all_test_dbs():
-    all_dbs = couch_config.all_dbs_by_db_name.values()
+    all_dbs = list(couch_config.all_dbs_by_db_name.values())
     for db in all_dbs:
         if '/test_' not in db.uri:
             raise ValueError("not a test db url: db=%s url=%r" % (db.dbname, db.uri))

@@ -431,7 +431,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                 form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
                 form_case_types[f.unique_id] = m.case_type
 
-        case_types = [case_type.name] + case_type.relationships.values()
+        case_types = [case_type.name] + list(case_type.relationships.values())
         opened_by = {}
         closed_by = {}
         for t in case_types:

@@ -354,7 +354,7 @@ class TestCreditTransfers(BaseAccountingTest):
         second_sub.save()
         third_sub = second_sub.renew_subscription()
         deactivate_subscriptions(second_sub.date_end)
-        third_sub = Subscription.objects.get(id=third_sub.id)
+        third_sub = Subscription.visible_objects.get(id=third_sub.id)
 
         third_credits = self._ensure_transfer(second_credits)
         for credit_line in third_credits:

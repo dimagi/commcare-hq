@@ -188,7 +188,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         with patch('corehq.apps.hqmedia.models.CommCareMultimedia.get', side_effect=ResourceNotFound):
             missing_media = _get_missing_multimedia(self.master_app_with_report_modules)
 
-        media_item = self.master_app_with_report_modules.multimedia_map.values()[0]
+        media_item = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         self.assertEqual(missing_media, [('case_list_image.jpg', media_item)])
 
     def test_add_domain_to_media(self):
@@ -217,7 +217,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
             'http://localhost:8000', 'test_domain', 'user', 'key', self.master_app_with_report_modules._id
         )
         data = 'this is a test'
-        media_details = self.master_app_with_report_modules.multimedia_map.values()[0]
+        media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
         with patch('corehq.apps.app_manager.remote_link_accessors._fetch_remote_media_content') as mock:
@@ -226,7 +226,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)
-        content = media.fetch_attachment(media.blobs.keys()[0])
+        content = media.fetch_attachment(list(media.blobs.keys())[0])
         self.assertEqual(data, content)
 
 

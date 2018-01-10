@@ -5,6 +5,7 @@ import jsonfield
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 from django.db import models
+import six
 
 
 class EmergencyOrderStatusUpdate(models.Model):
@@ -259,7 +260,7 @@ class EmergencyOrderPackage(models.Model):
         cost = Decimal(0)
         weight = Decimal(0)
 
-        for code, data in self.products.iteritems():
+        for code, data in six.iteritems(self.products):
             try:
                 product = OrderableProduct.objects.get(domain=self.order.domain, code=code)
             except OrderableProduct.DoesNotExist:

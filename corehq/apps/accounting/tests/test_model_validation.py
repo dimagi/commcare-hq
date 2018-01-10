@@ -23,7 +23,7 @@ class TestCreditAdjustmentValidation(BaseAccountingTest):
             created_by='test@example.com',
             currency=generator.init_default_currency(),
         )
-        subscription = Subscription.objects.create(
+        subscription = Subscription.visible_objects.create(
             account=account,
             date_start=date.today(),
             plan_version=generator.subscribable_plan_version(),

@@ -192,14 +192,13 @@ class FormsInDateExpressionSpec(JsonObject):
 
     @staticmethod
     def _get_filtered_forms_from_es(case_id, xform_ids, context):
-        cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids))
+        es_toggle_enabled = ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER)
+        cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids),
+                     es_toggle_enabled)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        source = (
-            True if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER)
-            else ['form.meta.timeEnd', 'xmlns', '_id']
-        )
+        source = True if es_toggle_enabled else ['form.meta.timeEnd', 'xmlns', '_id']
         forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
         context.set_cache_value(cache_key, forms)
         return forms
@@ -374,35 +373,18 @@ def parent_id(spec, context):
     spec = {
         'type': 'nested',
         'argument_expression': {
-            'type': 'array_index',
-            'array_expression': {
-                'type': 'filter_items',
-                'items_expression': {
-                    'type': 'root_doc',
-                    'expression': {
-                        'datatype': 'array',
-                        'type': 'property_name',
-                        'property_name': 'indices'
-                    }
-                },
-                'filter_expression': {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'property_value': 'parent',
-                    'expression': {
-                        'type': 'property_name',
-                        'property_name': 'identifier'
-                    }
+            'type': 'indexed_case',
+            'case_expression': {
+                'type': 'root_doc',
+                'expression': {
+                    'type': 'identity'
                 }
             },
-            'index_expression': {
-                'type': 'constant',
-                'constant': 0
-            }
+            'index': 'parent'
         },
         'value_expression': {
             'type': 'property_name',
-            'property_name': 'referenced_id'
+            'property_name': '_id'
         }
     }
     return ExpressionFactory.from_spec(spec, context)
@@ -410,44 +392,24 @@ def parent_id(spec, context):
 
 def parent_parent_id(spec, context):
     spec = {
-        'type': 'related_doc',
-        'related_doc_type': 'CommCareCase',
-        'doc_id_expression': {
-            'type': 'icds_parent_id'
-        },
-        'value_expression': {
-            'type': 'nested',
-            'argument_expression': {
-                'type': 'array_index',
-                'array_expression': {
-                    'type': 'filter_items',
-                    'items_expression': {
-                        'type': 'root_doc',
-                        'expression': {
-                            'datatype': 'array',
-                            'type': 'property_name',
-                            'property_name': 'indices'
-                        }
-                    },
-                    'filter_expression': {
-                        'type': 'boolean_expression',
-                        'operator': 'eq',
-                        'property_value': 'parent',
-                        'expression': {
-                            'type': 'property_name',
-                            'property_name': 'identifier'
-                        }
+        'type': 'nested',
+        'argument_expression': {
+            'type': 'indexed_case',
+            'case_expression': {
+                'type': 'indexed_case',
+                'case_expression': {
+                    'type': 'root_doc',
+                    'expression': {
+                        'type': 'identity'
                     }
                 },
-                'index_expression': {
-                    'type': 'constant',
-                    'constant': 0
-                }
+                'index': 'parent'
             },
-            'value_expression': {
-                'type': 'property_name',
-                'property_name': 'referenced_id'
-            }
+            'index': 'parent'
+        },
+        'value_expression': {
+            'type': 'property_name',
+            'property_name': '_id'
         }
     }
     return ExpressionFactory.from_spec(spec, context)

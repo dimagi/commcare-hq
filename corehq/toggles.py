@@ -298,7 +298,12 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
             return self.default_randomness
-        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        dynamic_randomness = getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        try:
+            dynamic_randomness = float(dynamic_randomness)
+            return dynamic_randomness
+        except ValueError:
+            return self.default_randomness
 
 
 # if no namespaces are specified the user namespace is assumed
@@ -334,7 +339,7 @@ def all_toggles():
     """
     Loads all toggles
     """
-    return all_toggles_by_name_in_scope(globals()).values()
+    return list(all_toggles_by_name_in_scope(globals()).values())
 
 
 def all_toggles_by_name():
@@ -1441,7 +1446,6 @@ CUSTOM_ICON_BADGES = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
 
 ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     'icds_ucr_elasticsearch_doc_loading',

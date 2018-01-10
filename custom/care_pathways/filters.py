@@ -87,8 +87,8 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
         return hierarchy
 
     def get_labels(self):
-        return [(v['name'], v['prop']) for k, v in sorted(get_domain_configuration(
-            self.request.domain).geography_hierarchy.iteritems())]
+        return [(v['name'], v['prop']) for k, v in sorted(six.iteritems(get_domain_configuration(
+            self.request.domain).geography_hierarchy))]
 
     @classmethod
     def _get_label_value(cls, request, label):

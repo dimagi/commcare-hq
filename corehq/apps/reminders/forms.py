@@ -530,11 +530,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 (METHOD_SMS_SURVEY, _('SMS Survey')),
             ])
 
-        if is_previewer and can_use_survey:
-            add_field_choices(self, 'method', [
-                (METHOD_IVR_SURVEY, _('IVR Survey')),
-                (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
-            ])
+        if is_edit and is_previewer and can_use_survey:
+            if kwargs['initial']['method'] == METHOD_IVR_SURVEY:
+                add_field_choices(self, 'method', [
+                    (METHOD_IVR_SURVEY, _('IVR Survey')),
+                ])
+
+            if kwargs['initial']['method'] == METHOD_SMS_CALLBACK:
+                add_field_choices(self, 'method', [
+                    (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
+                ])
 
         add_field_choices(self, 'method', [
             (METHOD_EMAIL, _('Email')),
@@ -1565,7 +1570,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         if reminder_handler.user_data_filter:
             initial['use_custom_user_data_filter'] = True
-            user_data_field_value = reminder_handler.user_data_filter.items()[0]
+            user_data_field_value = list(reminder_handler.user_data_filter.items())[0]
             initial['custom_user_data_filter_field'] = user_data_field_value[0]
             initial['custom_user_data_filter_value'] = user_data_field_value[1][0]
         else:

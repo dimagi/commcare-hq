@@ -240,7 +240,7 @@ def run_queue_async_indicators_task():
 def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
-    retry_threshold = start - timedelta(hours=1)
+    retry_threshold = start - timedelta(hours=4)
     # don't requeue anything that has been retired more than 20 times
     indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
@@ -306,7 +306,7 @@ def save_document(doc_ids):
         indicator_config_ids = first_indicator.indicator_config_ids
 
         with timer:
-            for doc in doc_store.iter_documents(doc_ids):
+            for doc in doc_store.iter_documents(indicator_by_doc_id.keys()):
                 indicator = indicator_by_doc_id[doc['_id']]
                 successfully_processed, to_remove = _save_document_helper(indicator, doc)
                 if successfully_processed:

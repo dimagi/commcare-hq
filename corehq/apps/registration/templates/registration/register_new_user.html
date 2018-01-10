@@ -7,7 +7,7 @@
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
 {% block head %}{{ block.super }}
-    {% if is_production %}
+    {% if is_saas_environment %}
     <!-- Facebook Pixel Code -->
     <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -37,7 +37,7 @@
         <script src="{% static 'blazy/blazy.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
     {% endcompress %}
-    {% if is_production %}
+    {% if is_saas_environment %}
       <!-- Google Code for Destination Lead Conversion Page -->
       <script type="text/javascript">
       /* <![CDATA[ */

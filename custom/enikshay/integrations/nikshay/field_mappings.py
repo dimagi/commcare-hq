@@ -1,5 +1,8 @@
 from __future__ import absolute_import
-from custom.enikshay.const import PRIVATE_HEALTH_ESTABLISHMENT_SECTOR
+from custom.enikshay.const import (
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
+    NOT_AVAILABLE_VALUE,
+)
 
 gender_mapping = {
     'male': 'M',
@@ -11,6 +14,8 @@ disease_classification = {
     'pulmonary': 'P',
     'extra_pulmonary': 'EP',
     'extrapulmonary': 'EP',
+    'pulmonary_and_extrapulmonary': 'P',
+    'na': NOT_AVAILABLE_VALUE
 }
 
 patient_type_choice = {
@@ -150,9 +155,10 @@ basis_of_diagnosis = {
 }
 
 health_establishment_type = {
-    'hospital': 'H',
-    'lab': 'L',
+    'Hospital': 'H',
+    'Lab': 'L',
     'pharmacy': 'P',
+    'Doctor': 'P'
 }
 
 health_establishment_sector = {

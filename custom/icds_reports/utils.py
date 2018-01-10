@@ -217,7 +217,11 @@ def percent_increase(prop, data, prev_data):
         current = data[0][prop]
     if prev_data:
         previous = prev_data[0][prop]
-    return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
+
+    if previous:
+        return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
+    else:
+        return "Data in the previous reporting period was 0"
 
 
 def percent_diff(property, current_data, prev_data, all):
@@ -235,7 +239,11 @@ def percent_diff(property, current_data, prev_data, all):
 
     current_percent = current / float(curr_all) * 100
     prev_percent = prev / float(prev_all) * 100
-    return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
+
+    if prev_percent:
+        return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
+    else:
+        return "Data in the previous reporting period was 0"
 
 
 def get_value(data, prop):
@@ -244,8 +252,8 @@ def get_value(data, prop):
 
 def apply_exclude(domain, queryset):
     return queryset.exclude(
-        state_id__in=get_test_state_locations_id(domain),
-        district_id__in=get_test_district_locations_id(domain)
+        Q(state_id__in=get_test_state_locations_id(domain)) |
+        Q(district_id__in=get_test_district_locations_id(domain))
     )
 
 
@@ -439,6 +447,7 @@ def zip_folder(pdf_files):
         zip_file.writestr('ISSNIP_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
     zip_file.close()
     client.set(zip_hash, in_memory.getvalue())
+    client.expire(zip_hash, 24 * 60 * 60)
     return zip_hash
 
 
@@ -446,9 +455,14 @@ def create_pdf_file(pdf_hash, pdf_context):
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     resultFile = cStringIO()
     client = get_redis_client()
+    try:
+        pdf_page = template.render(pdf_context)
+    except Exception as ex:
+        pdf_page = str(ex)
     pisa.CreatePDF(
-        template.render(pdf_context),
-        dest=resultFile)
+        pdf_page,
+        dest=resultFile,
+        show_error_as_pdf=True)
     client.set(pdf_hash, resultFile.getvalue())
     client.expire(pdf_hash, 24 * 60 * 60)
     resultFile.close()
@@ -478,7 +492,7 @@ def get_child_locations(domain, location_id, show_test):
     if not show_test:
         return [
             sql_location for sql_location in locations
-            if sql_location.metadata.get('is_test_location', 'real') == 'test'
+            if sql_location.metadata.get('is_test_location', 'real') != 'test'
         ]
     else:
         return list(locations)

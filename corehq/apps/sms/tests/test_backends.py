@@ -11,7 +11,7 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (SMS, QueuedSMS,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
-from corehq.apps.sms.tasks import handle_outgoing
+from corehq.apps.sms.tasks import handle_outgoing, reserve_connection_slot, free_connection_slot
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -817,6 +817,17 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             self.__test_send_sms_with_backend_name()
             SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
 
+    def test_reserving_connection_slots(self):
+        self.assertEqual(reserve_connection_slot(self.backend1, 4), '1')
+        self.assertEqual(reserve_connection_slot(self.backend1, 4), '2')
+        self.assertEqual(reserve_connection_slot(self.backend1, 4), '3')
+        self.assertEqual(reserve_connection_slot(self.backend1, 4), '4')
+        self.assertIsNone(reserve_connection_slot(self.backend1, 4))
+
+        free_connection_slot(self.backend1, '3')
+        self.assertEqual(reserve_connection_slot(self.backend1, 4), '3')
+        self.assertIsNone(reserve_connection_slot(self.backend1, 4))
+
 
 class SQLMobileBackendTestCase(TestCase):
 
@@ -1198,7 +1209,7 @@ class LoadBalanceAndRateLimitBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin)
         return 'LOAD_BALANCE_RATE_LIMIT'
 
 
-def mock_get_backend_classes():
+def mock_get_sms_backend_classes():
     return {
         LoadBalanceBackend.get_api_id(): LoadBalanceBackend,
         RateLimitBackend.get_api_id(): RateLimitBackend,
@@ -1206,7 +1217,7 @@ def mock_get_backend_classes():
     }
 
 
-@patch('corehq.apps.sms.util.get_backend_classes', new=mock_get_backend_classes)
+@patch('corehq.apps.sms.util.get_sms_backend_classes', new=mock_get_sms_backend_classes)
 class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
 
     def setUp(self):
