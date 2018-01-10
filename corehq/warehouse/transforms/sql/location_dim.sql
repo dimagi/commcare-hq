@@ -60,7 +60,27 @@ FROM
     {{ location_staging }} as l_table
 INNER JOIN
     {{ location_type_staging }} as lt_table
-ON l_table.location_type_id = lt_table.location_type_id AND l_table.domain = lt_table.domain;
+ON l_table.location_type_id = lt_table.location_type_id AND l_table.domain = lt_table.domain
+ON CONFLICT (location_id) DO UPDATE
+SET domain = EXCLUDED.domain,
+    sql_location_id = EXCLUDED.sql_location_id,
+    location_level_0 = EXCLUDED.location_level_0,
+    location_level_1 = EXCLUDED.location_level_1,
+    name = EXCLUDED.name,
+    site_code = EXCLUDED.site_code,
+    external_id = EXCLUDED.external_id,
+    supply_point_id = EXCLUDED.supply_point_id,
+    is_archived = EXCLUDED.is_archived,
+    latitude = EXCLUDED.latitude,
+    longitude = EXCLUDED.longitude,
+    location_type_name = EXCLUDED.location_type_name,
+    location_type_code = EXCLUDED.location_type_code,
+    location_type_id = EXCLUDED.location_type_id,
+    location_last_modified = EXCLUDED.location_last_modified,
+    location_created_on = EXCLUDED.location_created_on,
+    dim_last_modified = EXCLUDED.dim_last_modified,
+    deleted = EXCLUDED.deleted,
+    batch_id = EXCLUDED.batch_id;
 
 
 -- After the join update all dims with their new foreign keys
@@ -113,22 +133,3 @@ LEFT JOIN {{ location_dim }} l7 ON l6.location_level_1 = l7.location_level_0
 
 WHERE
     location_dim_target.sql_location_id = l0.sql_location_id;
-ON CONFLICT (location_id) DO UPDATE
-SET domain = EXCLUDED.domain,
-    location_level_0 = EXCLUDED.location_level_0,
-    location_level_1 = EXCLUDED.location_level_1,
-    name = EXCLUDED.name,
-    site_code = EXCLUDED.site_code,
-    external_id = EXCLUDED.external_id,
-    supply_point_id = EXCLUDED.supply_point_id,
-    is_archived = EXCLUDED.is_archived,
-    latitude = EXCLUDED.latitude,
-    longitude = EXCLUDED.longitude,
-    location_type_name = EXCLUDED.location_type_name,
-    location_type_code = EXCLUDED.location_type_code,
-    location_type_id = EXCLUDED.location_type_id,
-    location_last_modified = EXCLUDED.location_last_modified,
-    location_created_on = EXCLUDED.location_created_on,
-    dim_last_modified = EXCLUDED.dim_last_modified,
-    deleted = EXCLUDED.deleted,
-    batch_id = EXCLUDED.batch_id;
