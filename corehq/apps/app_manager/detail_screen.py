@@ -496,6 +496,14 @@ class Calculate(FormattedDetailColumn):
         return dot_interpolate(self.column.calc_xpath, self.xpath)
 
 
+@register_format_type('markdown')
+class Markdown(FormattedDetailColumn):
+
+    @property
+    def template_form(self):
+        return 'markdown'
+
+
 @register_format_type('address')
 class Address(HideShortColumn):
     template_form = 'address'
