@@ -68,7 +68,7 @@ def _get_all_fixture_items(domain, fixture_id):
             result[source][value] = ledger_value
         return result
     else:
-        return {}
+        return defaultdict(dict)
 
 
 def ledger_entry_id_for_adherence(adherence_date):

@@ -651,9 +651,10 @@ class EpisodeAdherenceUpdate(object):
         for dose_date, dose_status in self.dose_status_by_date.items():
             if dose_status.source and dose_status.value:
                 expected_value = get_expected_fixture_value(self.domain, dose_status.source, dose_status.value)
-                entry_id = ledger_entry_id_for_adherence(dose_date)
-                if ledger_needs_update(self.domain, self.episode.case_id, entry_id, expected_value):
-                    _updates.append((self.episode.case_id, entry_id, expected_value))
+                if expected_value:
+                    entry_id = ledger_entry_id_for_adherence(dose_date)
+                    if ledger_needs_update(self.domain, self.episode.case_id, entry_id, expected_value):
+                        _updates.append((self.episode.case_id, entry_id, expected_value))
         return _updates
 
 
