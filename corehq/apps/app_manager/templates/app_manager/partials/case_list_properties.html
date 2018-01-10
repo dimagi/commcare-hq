@@ -45,6 +45,12 @@
                     <td class="col-sm-3" data-bind="css: {'has-error': showWarning}">
                         <div data-bind="html: hqImport('app_manager/js/details/screen_config').CC_DETAIL_SCREEN.getFieldHtml(field.val()), visible: !field.edit"></div>
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
+                        {% if request|toggle_enabled:'USE_XPATH_EXPRESSION' %}
+                        <div>
+                            <input type="checkbox" data-bind="checked: useXpathExpression">
+                            {% trans "Use xpath expression" %}
+                        </div>
+                        {% endif %}
                         <div data-bind="visible: showWarning">
                             <span class="help-block" data-bind="
                                 text: hqImport('app_manager/js/details/screen_config').DetailScreenConfig.field_format_warning_message

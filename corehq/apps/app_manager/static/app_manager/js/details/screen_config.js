@@ -383,7 +383,14 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }());
 
                 this.saveAttempted = ko.observable(false);
+                this.useXpathExpression = ko.observable(this.original.use_xpath_expression);
+                this.useXpathExpression.subscribe(function(){
+                    that.fire('change');
+                });
                 this.showWarning = ko.computed(function() {
+                    if(this.useXpathExpression()) {
+                        return false;
+                    }
                     if (this.isTab) {
                         // Data tab missing its nodeset
                         return this.hasNodeset && !this.nodeset.observableVal();
@@ -554,6 +561,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             has_nodeset: column.hasNodeset,
                         }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));
                     }
+                    column.use_xpath_expression = this.useXpathExpression();
                     return column;
                 },
                 setGrip: function (grip) {
