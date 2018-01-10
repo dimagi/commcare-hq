@@ -121,3 +121,4 @@ class InternalLocationResource(LocationResource):
         object_class = SQLLocation
         resource_name = 'location_internal'
         limit = 0
+        max_limit = 10000
