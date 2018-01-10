@@ -169,7 +169,7 @@ def aggregate_tables(self, current_task, future_tasks):
 
 @periodic_task(
     queue='background_queue',
-    run_every=crontab(day_of_week='sunday', minute=0, hour=21),
+    run_every=crontab(day_of_week='sunday,wednesday', minute=0, hour=21),
     acks_late=True
 )
 def recalculate_stagnant_cases():
@@ -209,7 +209,7 @@ def recalculate_stagnant_cases():
 
 
 def _find_stagnant_cases(adapter):
-    stagnant_date = datetime.utcnow() - timedelta(days=45)
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
     table = adapter.get_table()
     query = adapter.get_query_object()
     query = query.with_entities(table.columns.doc_id).filter(
