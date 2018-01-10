@@ -13,7 +13,7 @@ from casexml.apps.stock.mock import (
     Entry,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
-from custom.enikshay.const import FIXTURE_FOR_EPISODE_LEDGERS, EPISODE_LEDGER_SECTION_ID
+from custom.enikshay.const import EPISODE_LEDGER_FIXTURE, EPISODE_LEDGER_SECTION_ID
 
 LEDGER_UPDATE_DEVICE_ID = "%s.%s" % (__name__, 'reconcile_episode_ledger')
 
@@ -33,7 +33,7 @@ def get_episode_adherence_ledger(domain, episode_case_id, entry_id):
 
 @quickcache(['domain'], memoize_timeout=7 * 24 * 60 * 60, timeout=7 * 24 * 60 * 60)
 def _adherence_values_fixture_id(domain):
-    fixture = FixtureDataType.by_domain_tag(domain, FIXTURE_FOR_EPISODE_LEDGERS).first()
+    fixture = FixtureDataType.by_domain_tag(domain, EPISODE_LEDGER_FIXTURE).first()
     if fixture:
         return fixture.get_id
 
