@@ -190,23 +190,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         vm.indicator = value;
     };
 
-    var capitalize = function (str) {
-        return str.replace(/(?:^|\s)\S/g, function (a) {
-            return a.toUpperCase();
-        });
-    };
-
     var getData = function (data) {
         var mapData = data && data !== void(0) ? data.data : null;
         if (!mapData) {
             return null;
         }
-
-        var formattedData = {};
-        Object.keys(mapData).forEach(function (key) {
-            formattedData[capitalize(key.toLowerCase())] = mapData[key];
-        });
-        return formattedData;
+        return mapData;
     };
 
     vm.getContent = function (geography) {
