@@ -24,12 +24,12 @@
                 </tr>
                 <tr>
                     <th>{% trans "Request headers" %}:</th>
-                    <td><pre>{{ log.request_headers }}</pre></td>
+                    <td><pre>{{ log.pp_request_headers }}</pre></td>
                 </tr>
                 <tr>
                     <th>{% trans "Request params" %}:</th>
                     <td>{% if log.request_params %}
-                        <pre>{{ log.request_params }}</pre>{% else %}&nbsp;
+                        <pre>{{ log.pp_request_params }}</pre>{% else %}&nbsp;
                     {% endif %}</td>
                 </tr>
                 <tr>
