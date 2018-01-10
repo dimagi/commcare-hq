@@ -302,6 +302,7 @@ class EpisodeAdherenceUpdate(object):
         self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
         self.purge_date = self.date_today_in_india - datetime.timedelta(days=30)
         self._cache_dose_taken_by_date = False
+        self.dose_status_by_date = {}
 
     @memoized
     def get_fixture_column(self, fixture_column_name):
