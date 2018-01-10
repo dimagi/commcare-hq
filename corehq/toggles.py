@@ -1454,13 +1454,6 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-ENABLE_REPEATER_EDIT_AND_PAUSE = StaticToggle(
-    'enable_repeater_edit_and_pause',
-    "Turn on ability to edit a repeater and pause/resume it",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 MOBILE_LOGIN_LOCKOUT = StaticToggle(
     'mobile_user_login_lockout',
     "On too many wrong password attempts, lock out mobile users",
