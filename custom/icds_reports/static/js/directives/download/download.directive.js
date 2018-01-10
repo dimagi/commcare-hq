@@ -70,6 +70,7 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
     ];
 
     vm.awcLocations = [];
+    vm.selectedAWCs = [];
 
     vm.indicators = [
         {id: 1, name: 'Child'},
@@ -237,9 +238,11 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
     };
 
     vm.onSelectForISSNIP = function ($item, level) {
-        locationsService.getAwcLocations($item.location_id).then(function (data) {
+        var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        locationsService.getAwcLocations(selectedLocationId).then(function (data) {
             vm.awcLocations = [ALL_OPTION].concat(data);
         });
+        vm.selectedAWCs = [];
         vm.onSelect($item, level);
     };
 
@@ -260,6 +263,14 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+    };
+
+    vm.onSelectAWCs = function($item, level) {
+        if ($item.location_id === 'all') {
+            vm.selectedAWCs = [$item]
+        } else if (vm.selectedAWCs.indexOf('all') !== -1) {
+            vm.selectedAWCs = [$item]
+        }
     };
 
     vm.getAwcs = function () {
@@ -287,6 +298,10 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
         return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
     };
 
+    vm.hasErrorsISSNIPExport = function() {
+        return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
+    };
+
     vm.isVisible = function(level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all');
     };
@@ -307,6 +322,10 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
 
     vm.isDistrictOrBelowSelected = function() {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
+    };
+
+    vm.isAWCsSelected = function() {
+        return vm.selectedAWCs.length > 0;
     };
 }
 

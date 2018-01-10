@@ -20,8 +20,8 @@ def icds_type_of_building(data):
         'ICDS', 'Other'
     ]
     if data:
-        where_housed = data['where_housed'] or 0
-        building = data['provided_building'] or 0
+        where_housed = int(data['where_housed']) or 0
+        building = int(data['provided_building']) or 0
         if where_housed == 3:
             return provided_buildings[building]
         else:
@@ -33,7 +33,7 @@ def icds_type_of_building(data):
 @register.filter(name='icds_toilet_type')
 def icds_toilet_type(value):
     types = ['', 'Pit type (Latrine)', 'Only urinal', 'Flush system', 'Other']
-    return types[value] if value else ''
+    return types[int(value)] if value else ''
 
 
 @register.filter(name='icds_material_available')

@@ -485,7 +485,7 @@ def indian_formatted_number(number):
 @quickcache(['domain', 'location_id', 'show_test'], timeout=5 * 60)
 def get_child_locations(domain, location_id, show_test):
     if location_id:
-        locations = SQLLocation.objects.get(location_id=location_id).get_children()
+        locations = SQLLocation.objects.get(domain=domain, location_id=location_id).get_children()
     else:
         locations = SQLLocation.objects.filter(domain=domain, location_type__code=const.LocationTypes.STATE)
 
