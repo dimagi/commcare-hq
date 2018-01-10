@@ -177,12 +177,10 @@ class EpisodeUpdater(object):
                 for updater in self.updaters:
                     try:
                         _updater = updater(self.domain, episode)
-                        potential_update = _updater.update_json()
-                        if isinstance(_updater, EpisodeAdherenceUpdate):
-                            episode_ledger_updates = _updater.ledger_updates()
-                            if episode_ledger_updates:
-                                ledger_updates.extend(episode_ledger_updates)
-                        update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
+                        case_update = _updater.update_json()
+                        if hasattr(_updater, 'ledger_updates'):
+                            ledger_updates.extend(_updater.ledger_updates())
+                        update_json.update(get_updated_fields(episode.dynamic_case_properties(), case_update))
                     except Exception as e:
                         did_error = True
                         error = [episode.case_id, episode.domain, updater.__name__, e]
