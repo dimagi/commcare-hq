@@ -265,11 +265,11 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
     };
 
-    vm.onSelectAWCs = function($item, level) {
+    vm.onSelectAWCs = function($item) {
         if ($item.location_id === 'all') {
-            vm.selectedAWCs = [$item]
+            vm.selectedAWCs = [$item];
         } else if (vm.selectedAWCs.indexOf('all') !== -1) {
-            vm.selectedAWCs = [$item]
+            vm.selectedAWCs = [$item];
         }
     };
 

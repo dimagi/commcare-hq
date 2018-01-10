@@ -170,7 +170,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div style="margin-bottom: 15px;" class="col-sm-6">
-                        <ui-select multiple ng-disabled="!$ctrl.isDistrictOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item, $index)" close-on-select="false" theme="bootstrap">
+                        <ui-select multiple ng-disabled="!$ctrl.isDistrictOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
                             <ui-select-match placeholder="Please select AWCs"><span ng-bind="$item.name"></span></ui-select-match>
                               <ui-select-choices repeat="location.location_id as location in $ctrl.awcLocations | propsFilter: {name: $select.search}">
                                   <div ng-bind-html="location.name | highlight: $select.search"></div>
