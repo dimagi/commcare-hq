@@ -45,11 +45,15 @@ class Command(BaseCommand):
             help='Migrate even if app.vellum_case_management is already true.')
         parser.add_argument('-n', '--dry-run', action='store_true', dest='dry_run',
             help='Do not save updated apps, just print log output.')
+        parser.add_argument('--fail-hard', action='store_true', dest='fail_hard',
+            help='Die when encountering a bad app. Useful when calling via migrate_all_apps_to_cmitfb, '
+                 'which only ever passes a single app id.')
 
     def handle(self, **options):
         app_ids_by_domain = defaultdict(set)
         self.force = options["force"]
         self.dry = "DRY RUN " if options["dry_run"] else ""
+        self.fail_hard = options["fail_hard"]
         self.fup_caseref = options["fix_user_props_caseref"]
         self.fix_user_props = options["fix_user_properties"] or self.fup_caseref
         self.migrate_usercase = options["usercase"]
@@ -75,8 +79,10 @@ class Command(BaseCommand):
                             self.migrate_app(app)
                     else:
                         logger.info("Skipping %s/%s because it is a %s", domain, app_id, app.doc_type)
-                except Exception:
+                except Exception as e:
                     logger.exception("skipping app %s/%s", domain, app_id)
+                    if self.fail_hard:
+                        raise e
 
         logger.info('done with migrate_app_to_cmitfb %s', self.dry)
 
