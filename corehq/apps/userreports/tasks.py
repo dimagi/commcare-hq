@@ -47,6 +47,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
+from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -304,11 +305,14 @@ def save_document(doc_ids):
         indicator_by_doc_id = {i.doc_id: i for i in indicators}
         doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
         indicator_config_ids = first_indicator.indicator_config_ids
+        related_docs_to_rebuild = set()
 
         with timer:
             for doc in doc_store.iter_documents(indicator_by_doc_id.keys()):
                 indicator = indicator_by_doc_id[doc['_id']]
-                successfully_processed, to_remove = _save_document_helper(indicator, doc)
+                successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
+                if rebuild_related_docs:
+                    related_docs_to_rebuild = related_docs_to_rebuild.union(icds_get_related_docs_ids(doc['_id']))
                 if successfully_processed:
                     processed_indicators.append(indicator.pk)
                 else:
@@ -321,6 +325,13 @@ def save_document(doc_ids):
             for indicator, to_remove in failed_indicators:
                 indicator.update_failure(to_remove)
                 indicator.save()
+
+    # remove any related docs that were just rebuilt
+    related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
+    # queue the docs that aren't already queued
+    _queue_indicators(AsyncIndicator.objects.filter(
+        doc_id__in=related_docs_to_rebuild, date_queued=None
+    ))
 
     datadog_counter('commcare.async_indicator.processed_success', num_processed)
     datadog_counter('commcare.async_indicator.processed_fail', num_failed)
@@ -336,10 +347,10 @@ def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
     something_failed = False
     configs_to_remove = []
+    configs = dict()
     for config_id in indicator.indicator_config_ids:
-        adapter = None
         try:
-            config = _get_config(config_id)
+            configs[config_id] = _get_config(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             configs_to_remove.append(config_id)
@@ -348,6 +359,9 @@ def _save_document_helper(indicator, doc):
             celery_task_logger.info("ES errored when trying to retrieve config")
             something_failed = True
             continue
+
+    for config_id, config in six.iteritems(configs):
+        adapter = None
         try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
@@ -374,7 +388,8 @@ def _save_document_helper(indicator, doc):
         else:
             configs_to_remove.append(config_id)
 
-    return (not something_failed, configs_to_remove)
+    rebuild_related_docs = any(config.icds_rebuild_related_docs for config in six.itervalues(configs) if config)
+    return (not something_failed, configs_to_remove, rebuild_related_docs)
 
 
 @periodic_task(

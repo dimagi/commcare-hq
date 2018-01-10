@@ -1,14 +1,19 @@
 from __future__ import absolute_import
 from copy import deepcopy
+from datetime import datetime
 import uuid
+
 from django.test import SimpleTestCase, TestCase, override_settings
 import mock
-from casexml.apps.case.mock import CaseStructure, CaseFactory
+
+from casexml.apps.case.const import CASE_INDEX_CHILD
+from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, DynamicallyPredictablyRandomToggle, NAMESPACE_OTHER
+from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from toggle.models import Toggle
 
 es_form_cache = []
@@ -211,3 +216,159 @@ class TestGetAppVersion(SimpleTestCase):
         self.assertEqual(9969, expression({
             "app_version_string": "CommCare Android, version 2.36.2(433756). App v9969. "
                                   "CommCare Version 2.36. Build 433756, built on: 2017-06-23"}))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestICDSRelatedDocs(TestCase):
+    @classmethod
+    def _create_cases(cls, ccs_case_id, child_health_case_id):
+        household_case = CaseStructure(
+            case_id='hh-' + ccs_case_id,
+            attrs={
+                'case_type': 'household',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+        )
+
+        irrelavant_person_case = CaseStructure(
+            case_id='person-other-' + ccs_case_id,
+            attrs={
+                'case_type': 'other-person-level',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=household_case.attrs['case_type'],
+            )],
+        )
+
+        ccs_record_person_case = CaseStructure(
+            case_id='p-' + ccs_case_id,
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=household_case.attrs['case_type'],
+            )],
+        )
+
+        irrelavant_ccs_case = CaseStructure(
+            case_id='ccs-other-' + ccs_case_id,
+            attrs={
+                'case_type': 'other',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                ccs_record_person_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=ccs_record_person_case.attrs['case_type'],
+            )],
+        )
+
+        ccs_record_case = CaseStructure(
+            case_id=ccs_case_id,
+            attrs={
+                'case_type': 'ccs_record',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                ccs_record_person_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=ccs_record_person_case.attrs['case_type'],
+            )],
+        )
+
+        child_health_person_case = CaseStructure(
+            case_id='p-' + child_health_case_id,
+            attrs={
+                'case_type': 'person',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                household_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=household_case.attrs['case_type'],
+            )],
+        )
+
+        child_health_case = CaseStructure(
+            case_id=child_health_case_id,
+            attrs={
+                'case_type': 'child_health',
+                'create': True,
+                'date_opened': datetime.utcnow(),
+                'date_modified': datetime.utcnow(),
+                'update': dict()
+            },
+            indices=[CaseIndex(
+                child_health_person_case,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=ccs_record_person_case.attrs['case_type'],
+            )],
+        )
+        cls.casefactory.create_or_update_cases(
+            [ccs_record_case, child_health_case, irrelavant_person_case, irrelavant_ccs_case]
+        )
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestICDSRelatedDocs, cls).setUpClass()
+        cls.casefactory = CaseFactory(domain='icds-cas')
+        cls.ccs_record_id = uuid.uuid4().hex
+        cls.child_health_case_id = uuid.uuid4().hex
+        cls._create_cases(cls.ccs_record_id, cls.child_health_case_id)
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_cases()
+        super(TestICDSRelatedDocs, cls).tearDownClass()
+
+    def test_ccs_record_case(self):
+        self.assertEqual(icds_get_related_docs_ids(self.ccs_record_id), [self.child_health_case_id])
+
+    def test_child_health_case(self):
+        self.assertEqual(icds_get_related_docs_ids(self.child_health_case_id), [self.ccs_record_id])
+
+    def test_irrelavant_person_level_case(self):
+        self.assertEqual(icds_get_related_docs_ids('person-other-' + self.ccs_record_id), [])
+
+    def test_irrelavant_ccs_level_case(self):
+        self.assertEqual(icds_get_related_docs_ids('ccs-other-' + self.ccs_record_id), [])
+
+    def test_nonexistant_case(self):
+        self.assertEqual(icds_get_related_docs_ids('nothing'), [])
+
+    def test_household_case(self):
+        self.assertEqual(icds_get_related_docs_ids('hh-' + self.ccs_record_id), [])
+
+    def test_person_case(self):
+        self.assertEqual(icds_get_related_docs_ids('p-' + self.ccs_record_id), [])
+        self.assertEqual(icds_get_related_docs_ids('p-' + self.child_health_case_id), [])
