@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import calendar
 import hashlib
 import json
@@ -148,7 +149,7 @@ class TimedSchedule(Schedule):
                 # always schedule a negative day.
                 raise InvalidMonthlyScheduleConfiguration("Day must be between -28 and 31, and not be 0")
 
-            year_offset = (instance.schedule_iteration_num - 1) / 12
+            year_offset = (instance.schedule_iteration_num - 1) // 12
             month_offset = (instance.schedule_iteration_num - 1) % 12
 
             year = start_date_with_offset.year + year_offset
