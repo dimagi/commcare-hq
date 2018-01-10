@@ -32,9 +32,8 @@ class Command(BaseCommand):
         failures = {}
         for hit in hits:
             try:
-                call_command('migrate_app_to_cmitfb', hit['_id'], dry_run=not(commit))
+                call_command('migrate_app_to_cmitfb', hit['_id'], dry_run=not(commit), fail_hard=True)
             except Exception:
-                logger.info('migration failed')
                 failures[hit['_id']] = hit['domain']
 
         for id, domain in six.iteritems(failures):
