@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from decimal import Decimal
 from corehq.apps.consumption.models import DefaultConsumption, TYPE_DOMAIN, TYPE_PRODUCT, TYPE_SUPPLY_POINT
 from corehq.apps.consumption.const import DAYS_IN_MONTH
@@ -50,7 +51,7 @@ def get_default_consumption(domain, product_id, location_type, case_id):
     consumption = get_default_monthly_consumption(domain, product_id, location_type, case_id)
 
     if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
+        return consumption / DAYS_IN_MONTH
     else:
         return None
 
@@ -129,6 +130,6 @@ def get_loaded_default_consumption(consumption_dict, domain, product_id, locatio
     consumption = get_loaded_default_monthly_consumption(consumption_dict, domain, product_id, location_type, case_id)
 
     if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
+        return consumption / DAYS_IN_MONTH
     else:
         return None
