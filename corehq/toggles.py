@@ -1453,3 +1453,10 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
 )
+
+USE_XPATH_EXPRESSION = StaticToggle(
+    'use_xpath_expression',
+    'Enikshay: Allow specifying an xpath expression instead of a case property in the case list.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
