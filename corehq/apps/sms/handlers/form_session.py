@@ -14,6 +14,7 @@ from corehq.apps.smsforms.app import (
     _responses_to_text,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
+from datetime import datetime
 
 
 def form_session_handler(v, text, msg):
@@ -30,6 +31,7 @@ def form_session_handler(v, text, msg):
 
     if session:
         session.phone_number = v.phone_number
+        session.modified_time = datetime.utcnow()
         session.save()
 
         # Metadata to be applied to the inbound message
@@ -86,8 +88,7 @@ def answer_next_question(v, text, msg, session):
     )
 
     if valid:
-        responses = get_responses(v.domain, v.owner_id, text,
-            yield_responses=True)
+        responses = get_responses(v.domain, session.session_id, text)
 
         if has_invalid_response(responses):
             mark_as_invalid_response(msg)

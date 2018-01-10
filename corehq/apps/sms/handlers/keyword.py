@@ -241,9 +241,7 @@ def _handle_structured_sms(domain, args, contact_id, session_id,
                 raise StructuredSMSException(response_text=error_msg,
                     xformsresponse=current_question)
 
-        responses = get_responses(domain, contact_id, answer,
-            yield_responses=True, session_id=session_id,
-            update_timestamp=False)
+        responses = get_responses(domain, session_id, answer)
         current_question = responses[-1]
 
         form_complete = is_form_complete(current_question)

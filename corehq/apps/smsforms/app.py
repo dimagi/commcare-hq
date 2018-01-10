@@ -85,34 +85,14 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
         return (session, _responses_to_text(responses))
 
 
-def get_responses(domain, recipient, text, yield_responses=False, session_id=None, update_timestamp=True):
+def get_responses(domain, session_id, text):
     """
     Try to process this message like a session-based submission against
     an xform.
     
     Returns a list of responses if there are any.
     """
-    session = None
-    if session_id is not None:
-        if update_timestamp:
-            # The IVR workflow passes the session id
-            session = SQLXFormsSession.by_session_id(session_id)
-    else:
-        # The SMS workflow grabs the open sms session
-        session = SQLXFormsSession.get_open_sms_session(domain, recipient)
-        if session is not None:
-            session_id = session.session_id
-
-    if update_timestamp and session is not None:
-        session.modified_time = datetime.utcnow()
-        session.save()
-
-    if session_id is not None:
-        # TODO auth
-        if yield_responses:
-            return list(tfsms.next_responses(session_id, text, auth=None))
-        else:
-            return _responses_to_text(tfsms.next_responses(session_id, text, auth=None))
+    return list(tfsms.next_responses(session_id, text))
 
 
 def _responses_to_text(responses):
