@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 from itertools import groupby
 
 from django.conf import settings
@@ -162,7 +163,7 @@ class Command(BaseCommand):
 
         row = "{:^40} | {:^40}"
         doc_count_row = row.format(n_couch, n_sql)
-        header = ((82 - len(name)) / 2) * '_'
+        header = ((82 - len(name)) // 2) * '_'
 
         print('\n{} {} {}'.format(header, name, header))
         print(row.format('Couch', 'SQL'))
