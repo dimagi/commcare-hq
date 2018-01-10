@@ -397,6 +397,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 if (this.original.format === "graph"){
                     menuOptions = menuOptions.concat([{value: "graph", label: ""}]);
                 }
+                if (this.screen.columnKey == "long") {
+                    menuOptions = menuOptions.concat([{value: "markdown", label: gettext('Markdown')}]);
+                }
 
                 this.format = uiElement.select(menuOptions).val(this.original.format || null);
 
