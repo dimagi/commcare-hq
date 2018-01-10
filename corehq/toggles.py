@@ -1461,3 +1461,10 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+USE_XPATH_EXPRESSION = StaticToggle(
+    'use_xpath_expression',
+    'Enikshay: Allow specifying an xpath expression instead of a case property in the case list.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
