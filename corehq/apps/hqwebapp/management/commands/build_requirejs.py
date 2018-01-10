@@ -70,6 +70,9 @@ class Command(ResourceStaticCommand):
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
             filename = os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js")
+
+            # TODO: it'd be a performance improvement to do this after the `open` below
+            # and pass in the file contents, since get_hash does another read.
             file_hash = self.get_hash(filename)
 
             # Overwrite source map reference. Source maps are accessed on the CDN,
