@@ -1082,7 +1082,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
             {value: "late-flag", label: gettext('Late Flag')},
             {value: "invisible", label: gettext('Search Only')},
             {value: "address", label: gettext('Address')},
-            {value: "distance", label: gettext('Distance from current location')}
+            {value: "distance", label: gettext('Distance from current location')},
+            {value: "markdown", label: gettext('Markdown')}
         ];
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
