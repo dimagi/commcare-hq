@@ -1460,3 +1460,10 @@ ENABLE_REPEATER_EDIT_AND_PAUSE = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )
+
+MOBILE_LOGIN_LOCKOUT = StaticToggle(
+    'mobile_user_login_lockout',
+    "On too many wrong password attempts, lock out mobile users",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)

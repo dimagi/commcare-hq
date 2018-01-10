@@ -967,6 +967,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     analytics_enabled = BooleanProperty(default=True)
 
     two_factor_auth_disabled_until = DateTimeProperty()
+    login_attempts = IntegerProperty(default=0)
+    attempt_date = DateProperty()
 
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
@@ -1027,6 +1029,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @property
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
+
+    def is_locked_out(self):
+        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
     @property
     def raw_username(self):
@@ -1598,6 +1603,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     user_location_id = StringProperty()
 
     is_anonymous = BooleanProperty(default=False)
+    login_attempts = IntegerProperty(default=0)
+    attempt_date = DateProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -2250,8 +2257,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 
-    login_attempts = IntegerProperty(default=0)
-    attempt_date = DateProperty()
     fcm_device_token = StringProperty()
     # this property is used to mark users who signed up from internal invitations
     # such as those going through the recruiting pipeline
@@ -2429,9 +2434,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def get_location(self, domain):
         return self.get_sql_location(domain)
-
-    def is_locked_out(self):
-        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
 
 class FakeUser(WebUser):
