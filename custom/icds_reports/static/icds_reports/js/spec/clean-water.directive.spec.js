@@ -75,10 +75,9 @@ describe('Clean Water Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 10, all: 100});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">'
-            + '<p>test</p>'
-            + '<div>Total number of AWCs with a source of clean drinking water: <strong>10</strong></div>'
-            + '<div>% of AWCs with a source of clean drinking water: <strong>10.00%</strong></div>';
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p>' +
+            '<div>Number of AWCs that reported having a source of clean drinking water: <strong>10</strong></div>' +
+            '<div>% of AWCs that reported having a source of clean drinking water: <strong>10.00%</strong></div>';
 
         assert.equal(result, expected);
     });
@@ -174,8 +173,7 @@ describe('Clean Water Directive', function () {
             'width': '900px',
         });
         assert.equal(controller.chartOptions.caption.html,
-            '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of AWCs with a source of clean drinking water'
+            '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a source of clean drinking water'
         );
     });
 
@@ -183,9 +181,9 @@ describe('Clean Water Directive', function () {
         var data = {all: 20, in_month: 10, y: 0.5};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Number of AWCs with a source of clean drinking water: <strong>10</strong></p>'
-            + '<p>% of AWCs with a source of clean drinking water: <strong>50.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/><p>Number of AWCs that reported having a source of clean drinking water:' +
+            ' <strong>10</strong></p><p>% of AWCs that reported having a source of clean drinking water:' +
+            ' <strong>50.00%</strong></p>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

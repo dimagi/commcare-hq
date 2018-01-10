@@ -4,7 +4,7 @@ import sys
 import uuid
 from collections import defaultdict
 from contextlib import contextmanager, nested
-from cStringIO import StringIO
+from io import BytesIO
 from hashlib import sha1
 from itertools import chain
 from os.path import join
@@ -93,9 +93,9 @@ class BlobMixin(Document):
         old_meta = self.blobs.get(name)
 
         if isinstance(content, six.text_type):
-            content = StringIO(content.encode("utf-8"))
-        elif isinstance(content, bytes):
-            content = StringIO(content)
+            content = BytesIO(content.encode("utf-8"))
+        elif isinstance(content, six.binary_type):
+            content = BytesIO(content)
 
         bucket = self._blobdb_bucket()
         # do we need to worry about BlobDB reading beyond content_length?
@@ -405,7 +405,7 @@ class DeferredBlobMixin(BlobMixin):
                     ))
             body = self._deferred_blobs[name]["content"]
             if stream:
-                return ClosingContextProxy(StringIO(body))
+                return ClosingContextProxy(BytesIO(body))
             try:
                 body = body.decode("utf-8", "strict")
             except UnicodeDecodeError:

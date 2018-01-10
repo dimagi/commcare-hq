@@ -28,7 +28,7 @@ New tests need to be added to [ab_tests](https://github.com/dimagi/commcare-hq/b
 ### Debugging
 
 Useful localsettings when working with analytics:
-- `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient.
+- `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient. We have test API keys for Google Analytics and Kissmetrics; you can pull these from the [staging vault](https://github.com/dimagi/commcarehq-ansible/#managing-secrets-with-vault).
 - `ANALYTICS_CONFIG.DEBUG`: Analytics code isn't run on every server. Set `DEBUG` to `True` to bypass these checks (you still need to set the API keys, too).
 - `ANALYTICS_CONFIG.LOG_LEVEL`: Controls the client-side logging. Turning it up to `verbose` can help debug.
 

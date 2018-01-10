@@ -901,16 +901,16 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 SumColumn('cases_person_adolescent_girls_15_18')
             ),
             AggregateColumn(
-                '% AWCs with Clean Drinking Water',
+                '% AWCs reported clean drinking water',
                 aggregate_fn=percent_num,
                 columns=[
                     SumColumn('infra_clean_water'),
-                    SumColumn('num_awcs', alias='awcs')
+                    SumColumn('num_awc_infra_last_update', alias='awcs')
                 ],
                 slug='clean_water'
             ),
             AggregateColumn(
-                '% AWCs with functional toilet',
+                '% AWCs reported functional toilet',
                 percent_num,
                 [
                     SumColumn('infra_functional_toilet'),
@@ -919,7 +919,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 slug='functional_toilet'
             ),
             AggregateColumn(
-                '% AWCs with Medicine Kit',
+                '% AWCs reported medicine kit',
                 percent_num,
                 [
                     SumColumn('infra_medicine_kits'),
@@ -928,7 +928,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 slug='medicine_kits'
             ),
             AggregateColumn(
-                '% AWCs with Adult Scale',
+                '% AWCs reported weighing scale for mother and child',
                 percent_num,
                 [
                     SumColumn('infra_adult_weighing_scale'),
@@ -937,7 +937,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 slug='adult_weighing_scale'
             ),
             AggregateColumn(
-                '% AWCs with Baby Scale',
+                '% AWCs reported weighing scale for infants',
                 percent_num,
                 [
                     SumColumn('infra_infant_weighing_scale'),
@@ -1801,47 +1801,47 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             AggregateColumn(
-                'Percentage AWCs with drinking water',
+                'Percentage AWCs reported clean drinking water',
                 percent,
                 [
                     SumColumn('infra_clean_water'),
-                    SumColumn('num_awcs')
+                    SumColumn('num_awc_infra_last_update', alias='awcs')
                 ],
                 slug='percent_with_drinking_water'
             ),
             AggregateColumn(
-                'Percentage AWCs with functional toilet',
+                'Percentage AWCs reported functional toilet',
                 percent,
                 [
                     SumColumn('infra_functional_toilet'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_with_functional_toilet'
             ),
             AggregateColumn(
-                'Percentage AWCs with medicine kit',
+                'Percentage AWCs reported medicine kit',
                 percent,
                 [
                     SumColumn('infra_medicine_kits'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_with_medicine_kit'
             ),
             AggregateColumn(
-                'Percentage AWCs with weighing scale: infants',
+                'Percentage AWCs reported weighing scale: infants',
                 percent,
                 [
                     SumColumn('infra_infant_weighing_scale'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_baby_scale'
             ),
             AggregateColumn(
-                'Percentage AWCs with weighing scale: mother and child',
+                'Percentage AWCs reported weighing scale: mother and child',
                 percent,
                 [
                     SumColumn('infra_adult_weighing_scale'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_adult_scale'
             )
@@ -2205,21 +2205,21 @@ class FactSheetsReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with Medicine Kit',
+                                'header': 'AWCs reported medicine kit',
                                 'slug': 'medicine_kits',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with weighing scale for infants',
+                                'header': 'AWCs reported weighing scale for infants',
                                 'slug': 'baby_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with weighing scale for mother and child',
+                                'header': 'AWCs reported weighing scale for mother and child',
                                 'slug': 'adult_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
@@ -2340,14 +2340,14 @@ class FactSheetsReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with clean drinking water',
+                                'header': 'AWCs reported clean drinking water',
                                 'slug': 'clean_water',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with functional toilet',
+                                'header': 'AWCs reported functional toilet',
                                 'slug': 'functional_toilet',
                                 'average': [],
                                 'format': 'percent'

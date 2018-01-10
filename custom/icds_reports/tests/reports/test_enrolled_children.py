@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_map, \
     get_enrolled_children_data_chart, get_enrolled_children_sector_data
 from django.test import TestCase
@@ -45,8 +45,8 @@ class TestEnrolledChildren(TestCase):
                     ]
                 },
                 "fills": {
-                    "Children": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Children": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -104,8 +104,8 @@ class TestEnrolledChildren(TestCase):
                     ]
                 },
                 "fills": {
-                    "Children": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Children": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -199,7 +199,7 @@ class TestEnrolledChildren(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

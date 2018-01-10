@@ -15,13 +15,8 @@ from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, Da
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, get_status, \
     current_age, exclude_records_by_age_for_column, calculate_date_for_age
+from custom.icds_reports.const import MapColors
 import six
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -296,7 +291,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
-                    "color": BLUE
+                    "color": MapColors.BLUE
                 }
             ],
             [
@@ -312,7 +307,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
-                    "color": BLUE
+                    "color": MapColors.BLUE
                 },
             ]
         ],
@@ -921,7 +916,6 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('num_awcs'),
             clean_water=Sum('infra_clean_water'),
             functional_toilet=Sum('infra_functional_toilet'),
             medicine_kits=Sum('infra_medicine_kits'),

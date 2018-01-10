@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+import csv
 import datetime
+import io
 import json
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from StringIO import StringIO
@@ -28,9 +30,11 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
+    CreditLine,
     Currency,
     DefaultProductPlan,
     EntryPoint,
+    FeatureType,
     Invoice,
     SoftwarePlanEdition,
     StripePaymentMethod,
@@ -56,7 +60,12 @@ from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser
-from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
+from corehq.const import (
+    SERVER_DATE_FORMAT,
+    SERVER_DATETIME_FORMAT_NO_SEC,
+    USER_DATE_FORMAT,
+    USER_MONTH_FORMAT,
+)
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.soft_assert import soft_assert
@@ -756,3 +765,71 @@ def restore_logos(self, domain_name):
             show_stack_trace=True,
         )
         raise e
+
+
+@periodic_task(run_every=crontab(day_of_month=1, hour=5), queue='background_queue', acks_late=True)
+def send_prepaid_credits_export():
+    headers = [
+        'Account Name', 'Project Space', 'Edition', 'Start Date', 'End Date',
+        '# General Credits', '# Product Credits', '# User Credits', '# SMS Credits', 'Last Date Modified'
+    ]
+
+    body = []
+    for subscription in Subscription.visible_objects.filter(
+        service_type=SubscriptionType.PRODUCT,
+    ).order_by('subscriber__domain', 'id'):
+        general_credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription)
+        product_credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription, is_product=True)
+        user_credit_lines = CreditLine.get_credits_by_subscription_and_features(
+            subscription, feature_type=FeatureType.USER)
+        sms_credit_lines = CreditLine.get_credits_by_subscription_and_features(
+            subscription, feature_type=FeatureType.SMS)
+        all_credit_lines = general_credit_lines | product_credit_lines | user_credit_lines | sms_credit_lines
+
+        body.append([
+            subscription.account.name, subscription.subscriber.domain, subscription.plan_version.plan.edition,
+            subscription.date_start, subscription.date_end,
+            sum(credit_line.balance for credit_line in general_credit_lines),
+            sum(credit_line.balance for credit_line in product_credit_lines),
+            sum(credit_line.balance for credit_line in user_credit_lines),
+            sum(credit_line.balance for credit_line in sms_credit_lines),
+            max(
+                credit_line.last_modified for credit_line in all_credit_lines
+            ).strftime(SERVER_DATETIME_FORMAT_NO_SEC)
+            if all_credit_lines else 'N/A',
+        ])
+
+    for account in BillingAccount.objects.order_by('name', 'id'):
+        general_credit_lines = CreditLine.get_credits_for_account(account)
+        product_credit_lines = CreditLine.get_credits_for_account(account, is_product=True)
+        user_credit_lines = CreditLine.get_credits_for_account(account, feature_type=FeatureType.USER)
+        sms_credit_lines = CreditLine.get_credits_for_account(account, feature_type=FeatureType.SMS)
+        all_credit_lines = general_credit_lines | product_credit_lines | user_credit_lines | sms_credit_lines
+
+        body.append([
+            account.name, '', '', '', '',
+            sum(credit_line.balance for credit_line in general_credit_lines),
+            sum(credit_line.balance for credit_line in product_credit_lines),
+            sum(credit_line.balance for credit_line in user_credit_lines),
+            sum(credit_line.balance for credit_line in sms_credit_lines),
+            max(
+                credit_line.last_modified for credit_line in all_credit_lines
+            ).strftime(SERVER_DATETIME_FORMAT_NO_SEC)
+            if all_credit_lines else 'N/A',
+        ])
+
+    file_obj = io.BytesIO()
+    writer = csv.writer(file_obj)
+    writer.writerow(headers)
+    for row in body:
+        writer.writerow([
+            val.encode('utf-8') if isinstance(val, six.text_type) else six.binary_type(val)
+            for val in row
+        ])
+
+    date_string = datetime.datetime.utcnow().strftime(SERVER_DATE_FORMAT)
+    filename = datetime.datetime.utcnow().strftime('prepaid-credits-export_%s.csv' % date_string)
+    send_HTML_email(
+        'Prepaid Credits Export - %s' % date_string, settings.ACCOUNTS_EMAIL, 'See attached file.',
+        file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
+    )

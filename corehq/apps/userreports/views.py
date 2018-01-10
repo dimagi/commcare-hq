@@ -1419,7 +1419,6 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
     def page_context(self):
         return {
             'datasource_display_name': self.config.display_name,
-            'datasource_description': self.config.description,
             'filter_summary': self.configured_filter_summary(),
             'indicator_summary': self._add_links_to_output(self.indicator_summary()),
             'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),
