@@ -1603,8 +1603,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     user_location_id = StringProperty()
 
     is_anonymous = BooleanProperty(default=False)
-    login_attempts = IntegerProperty(default=0)
-    attempt_date = DateProperty()
 
     @classmethod
     def wrap(cls, data):
