@@ -7,7 +7,7 @@ from corehq.apps.sms.api import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.logging import notify_exception
-from corehq.apps.smsforms.app import _get_responses, start_session
+from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent, Keyword, KeywordAction
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
@@ -241,7 +241,7 @@ def _handle_structured_sms(domain, args, contact_id, session_id,
                 raise StructuredSMSException(response_text=error_msg,
                     xformsresponse=current_question)
 
-        responses = _get_responses(domain, contact_id, answer, 
+        responses = get_responses(domain, contact_id, answer,
             yield_responses=True, session_id=session_id,
             update_timestamp=False)
         current_question = responses[-1]

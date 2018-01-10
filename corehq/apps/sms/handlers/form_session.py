@@ -10,7 +10,7 @@ from corehq.apps.sms.messages import *
 from corehq.apps.sms.util import format_message_list, get_date_format
 from touchforms.formplayer.api import current_question
 from corehq.apps.smsforms.app import (
-    _get_responses,
+    get_responses,
     _responses_to_text,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -86,7 +86,7 @@ def answer_next_question(v, text, msg, session):
     )
 
     if valid:
-        responses = _get_responses(v.domain, v.owner_id, text,
+        responses = get_responses(v.domain, v.owner_id, text,
             yield_responses=True)
 
         if has_invalid_response(responses):

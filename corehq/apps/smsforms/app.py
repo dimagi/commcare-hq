@@ -85,7 +85,7 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
         return (session, _responses_to_text(responses))
 
 
-def _get_responses(domain, recipient, text, yield_responses=False, session_id=None, update_timestamp=True):
+def get_responses(domain, recipient, text, yield_responses=False, session_id=None, update_timestamp=True):
     """
     Try to process this message like a session-based submission against
     an xform.
