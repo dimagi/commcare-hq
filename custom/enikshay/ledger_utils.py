@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from datetime import datetime
 from collections import defaultdict
-from xml.etree import cElementTree as ElementTree
 
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.form_processor.exceptions import LedgerValueNotFound
@@ -95,10 +94,7 @@ def _ledger_update_xml(episode_case_id, entry_id, ledger_value):
     balance.entity_id = episode_case_id
     balance.date = datetime.utcnow()
     balance.section_id = EPISODE_LEDGER_SECTION_ID
-    entry = Entry()
-    entry.id = entry_id
-    entry.quantity = ledger_value
-    balance.entry = entry
+    balance.entry = Entry(id=entry_id, quantity=ledger_value)
     return balance
 
 
@@ -106,6 +102,6 @@ def bulk_update_ledger_cases(domain, ledger_updates):
     case_blocks = []
     for episode_case_id, entry_id, balance in ledger_updates:
         balance = _ledger_update_xml(episode_case_id, entry_id, balance)
-        case_blocks.append(ElementTree.tostring(balance.as_xml()))
+        case_blocks.append(balance.as_string())
     if case_blocks:
         submit_case_blocks(case_blocks, domain, device_id=LEDGER_UPDATE_DEVICE_ID)
