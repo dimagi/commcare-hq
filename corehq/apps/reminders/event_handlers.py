@@ -327,9 +327,10 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, log
 
 
 def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logged_event):
+    current_event = reminder.current_event
     if reminder.callback_try_count > 0:
         # Handle timeouts
-        if handler.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
+        if handler.submit_partial_forms and (reminder.callback_try_count == len(current_event.callback_timeout_intervals)):
             # Submit partial form completions
             for session_id in reminder.xforms_session_ids:
                 submit_unfinished_form(session_id, handler.include_case_side_effects)
@@ -354,7 +355,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
         # Get the app, module, and form
         try:
-            form_unique_id = reminder.current_event.form_unique_id
+            form_unique_id = current_event.form_unique_id
             form = Form.get_form(form_unique_id)
             app = form.get_app()
             module = form.get_module()
@@ -404,6 +405,22 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
                 # Start the new session
                 try:
+                    if current_event.callback_timeout_intervals:
+                        if handler.submit_partial_forms:
+                            expire_after = sum(current_event.callback_timeout_intervals)
+                            reminder_intervals = current_event.callback_timeout_intervals[:-1]
+                        else:
+                            expire_after = SQLXFormsSession.DEFAULT_EXPIRY
+                            reminder_intervals = current_event.callback_timeout_intervals
+
+                        submit_partially_completed_forms = handler.submit_partial_forms
+                        include_case_updates_in_partial_submissions = handler.include_case_side_effects
+                    else:
+                        expire_after = SQLXFormsSession.DEFAULT_EXPIRY
+                        reminder_intervals = []
+                        submit_partially_completed_forms = False
+                        include_case_updates_in_partial_submissions = False
+
                     session, responses = start_session(
                         SQLXFormsSession.create_session_object(
                             reminder.domain,
@@ -411,9 +428,10 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                             verified_number.phone_number if verified_number else unverified_number,
                             app,
                             form,
-                            reminder_intervals=reminder.current_event.callback_timeout_intervals,
-                            submit_partially_completed_forms=handler.submit_partial_forms,
-                            include_case_updates_in_partial_submissions=handler.include_case_side_effects
+                            expire_after=expire_after,
+                            reminder_intervals=reminder_intervals,
+                            submit_partially_completed_forms=submit_partially_completed_forms,
+                            include_case_updates_in_partial_submissions=include_case_updates_in_partial_submissions
                         ),
                         reminder.domain,
                         recipient,
