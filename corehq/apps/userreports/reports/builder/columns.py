@@ -311,9 +311,18 @@ class CountColumn(ColumnOption):
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         return {
+            "column_id": "count",
             "display_name": "Count",
-            "type": "count",
-            "column_id": "count"
+            "type": "boolean",
+            "filter": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "constant",
+                    "constant": 1
+                },
+                "property_value": 1
+            }
         }
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
