@@ -397,7 +397,7 @@ class PercentageColumn(ReportColumn):
         def _raw(data):
             if data['denom']:
                 try:
-                    return round(data['num'] / data['denom'], 3)
+                    return float(round(data['num'] / data['denom'], 3))
                 except (ValueError, TypeError):
                     raise BadData()
             else:
