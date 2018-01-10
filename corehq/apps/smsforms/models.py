@@ -20,8 +20,8 @@ class SQLXFormsSession(models.Model):
     """
     Keeps information about an SMS XForm session.
     """
-    # Default expiry of 90 days
-    DEFAULT_EXPIRY = 90 * 24 * 60
+    # Default expiry of 7 days
+    DEFAULT_EXPIRY = 7 * 24 * 60
 
     # generic properties
     couch_id = models.CharField(db_index=True, max_length=50)
