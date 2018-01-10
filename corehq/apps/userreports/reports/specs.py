@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import namedtuple
 import json
 
@@ -173,7 +174,7 @@ class FieldColumn(ReportColumn):
             total = sum(row[column_name] for row in data)
             for row in data:
                 row[column_name] = '{:.0%}'.format(
-                    float(row[column_name]) / total
+                    row[column_name] / total
                 )
 
     def get_column_config(self, data_source_config, lang):
@@ -396,7 +397,7 @@ class PercentageColumn(ReportColumn):
         def _raw(data):
             if data['denom']:
                 try:
-                    return round(float(data['num']) / float(data['denom']), 3)
+                    return round(data['num'] / data['denom'], 3)
                 except (ValueError, TypeError):
                     raise BadData()
             else:
