@@ -29,6 +29,9 @@ def form_session_handler(v, text, msg):
         return True
 
     if session:
+        session.phone_number = v.phone_number
+        session.save()
+
         # Metadata to be applied to the inbound message
         inbound_metadata = MessageMetadata(
             workflow=session.workflow,

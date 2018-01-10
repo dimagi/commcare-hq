@@ -408,6 +408,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                         SQLXFormsSession.create_session_object(
                             reminder.domain,
                             recipient,
+                            verified_number.phone_number if verified_number else unverified_number,
                             app,
                             form,
                             reminder_intervals=reminder.current_event.callback_timeout_intervals,

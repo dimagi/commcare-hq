@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import jsonfield
 import uuid
 from datetime import datetime, timedelta
+from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from couchdbkit import MultipleResultsFound
 from django.db import models
@@ -44,6 +45,9 @@ class SQLXFormsSession(models.Model):
                                     default=XFORMS_SESSION_SMS)
     workflow = models.CharField(null=True, blank=True, max_length=20)
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
+
+    # The phone number to use for correspondence on this survey
+    phone_number = models.CharField(max_length=126)
 
     # The number of minutes after which this session should expire, starting from the start_date.
     expire_after = models.IntegerField(default=DEFAULT_EXPIRY)
@@ -168,7 +172,7 @@ class SQLXFormsSession(models.Model):
 
 
     @classmethod
-    def create_session_object(cls, domain, contact, app, form, expire_after=DEFAULT_EXPIRY,
+    def create_session_object(cls, domain, contact, phone_number, app, form, expire_after=DEFAULT_EXPIRY,
             reminder_intervals=None, submit_partially_completed_forms=False,
             include_case_updates_in_partial_submissions=False):
 
@@ -185,6 +189,7 @@ class SQLXFormsSession(models.Model):
             user_id=contact.get_id,
             app_id=app.get_id,
             session_type=XFORMS_SESSION_SMS,
+            phone_number=strip_plus(phone_number),
             expire_after=expire_after,
             session_is_open=True,
             reminder_intervals=reminder_intervals or [],
