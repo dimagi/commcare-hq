@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from cStringIO import StringIO
 from couchdbkit import ResourceNotFound
 from datetime import datetime, timedelta
@@ -75,7 +76,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     def _update_progress(event_count, item_count, items_in_table):
         if task and now() - last_update[0] > upate_period:
             last_update[0] = now()
-            processed = event_count * 10 + (10. * item_count / items_in_table)
+            processed = event_count * 10 + (10 * item_count / items_in_table)
             processed = min(processed, total_events)  # limit at 100%
             DownloadBase.set_progress(task, processed, total_events)
 
