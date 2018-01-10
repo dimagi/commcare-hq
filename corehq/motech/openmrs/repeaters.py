@@ -12,6 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.toggles import OPENMRS_INTEGRATION
 from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
+from corehq.motech.openmrs.const import XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.handler import send_openmrs_data
 from corehq.motech.openmrs.repeater_helpers import (
@@ -55,7 +56,16 @@ class OpenmrsRepeater(CaseRepeater):
         return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, case):
-        return True
+        """
+        Applies superclass rules, and whether the case was last updated
+        by importing from OpenMRS. Do not forward OpenMRS updates back
+        to OpenMRS.
+        """
+        if super(OpenmrsRepeater, self).allowed_to_forward(case):
+            last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
+            from_openmrs = last_form.xmlns == XMLNS_OPENMRS
+            return not from_openmrs
+        return False
 
     def get_payload(self, repeat_record):
         payload = super(OpenmrsRepeater, self).get_payload(repeat_record)
