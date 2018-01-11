@@ -170,7 +170,6 @@ class SQLXFormsSession(models.Model):
             return None
         return objs[0]
 
-
     @classmethod
     def create_session_object(cls, domain, contact, phone_number, app, form, expire_after=MAX_SESSION_LENGTH,
             reminder_intervals=None, submit_partially_completed_forms=False,

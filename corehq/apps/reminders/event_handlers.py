@@ -330,7 +330,10 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
     current_event = reminder.current_event
     if reminder.callback_try_count > 0:
         # Handle timeouts
-        if handler.submit_partial_forms and (reminder.callback_try_count == len(current_event.callback_timeout_intervals)):
+        if (
+            handler.submit_partial_forms and
+            (reminder.callback_try_count == len(current_event.callback_timeout_intervals))
+        ):
             # Submit partial form completions
             for session_id in reminder.xforms_session_ids:
                 submit_unfinished_form(session_id, handler.include_case_side_effects)
