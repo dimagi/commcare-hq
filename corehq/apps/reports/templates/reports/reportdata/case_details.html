@@ -15,6 +15,8 @@
     {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
     {# import error: http://manage.dimagi.com/default.asp?223100 #}
     {% include 'cloudcare/includes/formplayer-inline.html' %}
+    <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
+    <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
     <script src="{% static "reports/js/case_details.js" %}"></script>
 {% endblock %}
 
@@ -32,9 +34,6 @@
         CASE_DETAILS.xform_ajax_url = "{% url 'case_form_data' case.domain case.case_id 'placeholder-form-id' %}".replace('placeholder-form-id/', '');
         CASE_DETAILS.timezone_offset = {{ timezone_offset }};
     </script>
-    <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
-    <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
-    <script src="{% static "case/js/case_details.js" %}"></script>
 
     <div id="report-content">
     <div id="tabbed-content-container">
