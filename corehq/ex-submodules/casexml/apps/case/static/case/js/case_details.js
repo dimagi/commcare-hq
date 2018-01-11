@@ -55,29 +55,6 @@ function XFormDataModel(data) {
     self.readable_name = ko.observable(data.readable_name);
 };
 
-function FormTypeFacetModel(data) {
-    var self = this;
-    //{"form_type_facets": {"_type": "terms", "total": 854, "terms": [{"count": 605, "term": "dots_form"}, {"count": 168, "term": "data"}, {"count": 75, "term": "progress_note"}, {"count": 6, "term": "bloodwork"}], "other": 0, "missing": 0},
-    self.form_name = ko.observable(data.term);
-    self.form_count = ko.observable(data.count);
-};
-
-function FormDateHistogram(data) {
-    var self = this;
-    self.es_time = ko.observable(data.time);
-    self.form_count = ko.observable(data.count);
-};
-
-function getParameterByName(name, url) {
-    if (!url) url = window.location.href;
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
 function XFormListViewModel() {
     var self = this;
 
@@ -96,16 +73,24 @@ function XFormListViewModel() {
 
     self.data_loading = ko.observable(false);
 
+    self.getParameterByName = function(name, url) {
+        if (!url) url = window.location.href;
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    };
+
     var api_url = CASE_DETAILS.xform_api_url;
-
-
     var init = function() {
         var hash = window.location.hash.split('?');
         if (hash[0] !== '#!history') {
             return;
         }
 
-        var formId = getParameterByName('form_id', window.location.hash);
+        var formId = self.getParameterByName('form_id', window.location.hash);
         if (formId) {
             self.get_xform_data(formId);
             self.selected_xform_doc_id(formId);
