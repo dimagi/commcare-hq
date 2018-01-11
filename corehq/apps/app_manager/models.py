@@ -4654,7 +4654,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    vellum_case_management = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=True)
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
@@ -5732,8 +5732,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  date_created=datetime.datetime.utcnow(), vellum_case_management=True)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], date_created=datetime.datetime.utcnow())
         return app
 
     def add_module(self, module):
