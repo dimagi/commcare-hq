@@ -383,7 +383,12 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }());
 
                 this.saveAttempted = ko.observable(false);
-                this.useXpathExpression = ko.observable(this.original.use_xpath_expression);
+                var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
+                this.useXpathExpression = ko.observable(
+                    hqImport('hqwebapp/js/toggles').toggleEnabled('USE_XPATH_EXPRESSION')
+                    && addOns.calc_xpaths
+                    && this.original.useXpathExpression
+                );
                 this.useXpathExpression.subscribe(function(){
                     that.fire('change');
                 });
@@ -561,7 +566,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                             has_nodeset: column.hasNodeset,
                         }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));
                     }
-                    column.use_xpath_expression = this.useXpathExpression();
                     return column;
                 },
                 setGrip: function (grip) {
@@ -661,7 +665,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         column.header.val(getPropertyTitle(this.val()));
                         column.header.fire("change");
                     });
-                    if (column.original.hasAutocomplete) {
+                    var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
+                    if (column.original.hasAutocomplete || (
+                        column.original.useXpathExpression && !column.useXpathExpression()
+                    )) {
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                     }
                     return column;
@@ -893,6 +900,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     } else {
                         this.columns.splice(index, 0, column);
                     }
+                    column.useXpathExpression(!!columnConfiguration.useXpathExpression);
                 },
                 pasteCallback: function (data, index) {
                     try {
@@ -915,6 +923,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 },
                 addGraph: function () {
                     this.addItem({hasAutocomplete: false, format: 'graph'});
+                },
+                addXpathExpression: function () {
+                    this.addItem({hasAutocomplete: false, useXpathExpression: true});
                 }
             };
             return Screen;

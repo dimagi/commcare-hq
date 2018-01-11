@@ -47,8 +47,9 @@
                         <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
                         {% if request|toggle_enabled:'USE_XPATH_EXPRESSION' %}
                         <div>
-                            <input type="checkbox" data-bind="checked: useXpathExpression">
-                            {% trans "Use xpath expression" %}
+                            <!-- ko if: useXpathExpression -->
+                                {% trans "Xpath Expression" %}
+                            <!-- /ko -->
                         </div>
                         {% endif %}
                         <div data-bind="visible: showWarning">
