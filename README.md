@@ -102,7 +102,7 @@ Create a project. The following command will do some basic setup, create a super
 project-name, email, and password given here are specific to your local development environment. Ignore warnings
 related to Raven for the following three commands.
 
-    $ ./manage.py bootstrap <project-name> <email> <password>
+    $ ./manage.py make_superuser <email>
 
 To set up elasticsearch indexes run the following:
 

@@ -3,12 +3,11 @@ from __future__ import print_function
 from __future__ import absolute_import
 import getpass
 from django.core.management.base import BaseCommand, CommandError
-from django.conf import settings
 from email_validator import validate_email, EmailSyntaxError
 
 
 class Command(BaseCommand):
-    help = "Create a superuser."
+    help = "Make a new superuser or make an existing user a superuser."
 
     def add_arguments(self, parser):
         parser.add_argument(
