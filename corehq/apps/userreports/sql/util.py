@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import hashlib
 
 
-def get_column_name(path):
+def get_column_name(path, suffix=None):
     """
     :param path: xpath from form or case
     :return: column name for postgres
@@ -21,5 +21,6 @@ def get_column_name(path):
         end = end.encode('unicode-escape')
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end)).hexdigest()[:8]
 
-    new_parts = path[-54:].split("/")
-    return "_".join(new_parts + [_hash(parts)])
+    new_parts = path.split("/")
+    full_name = "_".join(filter(None, new_parts + [_hash(parts), suffix]))
+    return full_name[-63:]

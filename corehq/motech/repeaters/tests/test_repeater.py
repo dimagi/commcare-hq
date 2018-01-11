@@ -850,7 +850,6 @@ class TestRepeaterPause(BaseRepeaterTest):
         self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
 
     @run_with_all_backends
-    @flag_enabled('ENABLE_REPEATER_EDIT_AND_PAUSE')
     def test_trigger_when_paused(self):
         # not paused
         with patch.object(RepeatRecord, 'fire') as mock_fire:

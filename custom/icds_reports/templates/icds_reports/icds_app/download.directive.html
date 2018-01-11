@@ -9,13 +9,20 @@
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
         <div class="alert alert-success" ng-show="$ctrl.showPdfMessage">
-            <strong>Info!</strong> "You will recive a email with link to the reports soon."
+            <strong>Info!</strong> "You will receive an email with a link to download the reports shortly. Please check the email that is associated with your ICDS-CAS Dashboard login."
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
             <strong>Please make the following selections before you can export:</strong>
             <ul>
                 <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
                 <li ng-if="$ctrl.selectedFilterOptions().length === 0" style="padding: 5px;">Select at least one filter</li>
+            </ul>
+        </div>
+        <div class="alert alert-info col-md-12" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected() && $ctrl.hasErrorsISSNIPExport()">
+            <strong>Please make the following selections before you can export:</strong>
+            <ul>
+                <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location to enable AWCs filter</li>
+                <li ng-if="!$ctrl.isAWCsSelected()" style="padding: 5px;">Select at least a one AWCs</li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -163,7 +170,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div style="margin-bottom: 15px;" class="col-sm-6">
-                        <ui-select multiple ng-model="$ctrl.selectedAWCs" theme="bootstrap">
+                        <ui-select multiple ng-disabled="!$ctrl.isDistrictOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
                             <ui-select-match placeholder="Please select AWCs"><span ng-bind="$item.name"></span></ui-select-match>
                               <ui-select-choices repeat="location.location_id as location in $ctrl.awcLocations | propsFilter: {name: $select.search}">
                                   <div ng-bind-html="location.name | highlight: $select.search"></div>
@@ -213,7 +220,7 @@
                         <input ng-if="$ctrl.isChildBeneficiaryListSelected()" type="hidden" ng-repeat="filter in $ctrl.selectedFilterOptions()" name="filter[]" ng-value="filter.id"/>
                         <button type="submit"
                                 class="btn btn-default normalButton orangeButton"
-                                ng-disabled="$ctrl.hasErrors()">
+                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
                             Export
                         </button>
                     </form>

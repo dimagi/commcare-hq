@@ -31,7 +31,7 @@ We welcome contributions, see our [CONTRIBUTING.rst](CONTRIBUTING.rst) document 
 Setting up CommCare HQ for developers
 -------------------------------------
 
-Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI.
+Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
 
 ### Downloading and configuring CommCare HQ
 
@@ -82,6 +82,10 @@ Enter `localsettings.py` and do the following:
 
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
+Note that if you want to run everything except for riakcs (which you often do not need for a development environment),
+the command to run is
+
+    $ ./scripts/docker up -d postgres couch redis elasticsearch kafka
 
 ### Set up your django environment
 
@@ -91,6 +95,7 @@ The easiest way to do this is using the docker instructions below.
 Populate your database:
 
     $ ./manage.py sync_couch_views
+    $ ./manage.py create_kafka_topics
     $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
     $ ./manage.py compilejsi18n
 
@@ -128,7 +133,7 @@ with NodeJS. An up-to-date version is available on the NodeSource repository.
 
 2. Install bower:
 
-        $ `sudo npm -g install bower`
+        $ sudo npm -g install bower
 
 3. Run bower with:
 
@@ -546,7 +551,16 @@ that you have a 32bit version of Python installed.
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
   
-+ If you encounter an error stemming from any Python modules when running `./manage.py sync_couch_views` for the first time, the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
++ When running `./manage.py sync_couch_views`:
+    + If you encounter an error stemming from any Python modules when running `./manage.py sync_couch_views` for the first time, the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
+    + If you encounter an error stemming from an Incompatible Library Version of libxml2.2.dylib on Mac OS X, try running the following commands:
+        
+            $ brew install libxml2
+	        $ brew install libxslt
+	        $ brew link libxml2 --force
+	        $ brew link libxslt --force
+	
+	+ If you encounter an authorization error related to CouchDB, try going to your `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
 
 + On Windows, to get python-magic to work you will need to install the following dependencies.
   Once they are installed make sure the install folder is on the path.

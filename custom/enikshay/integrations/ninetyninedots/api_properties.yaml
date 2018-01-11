@@ -181,7 +181,6 @@ api_params:
   choices:
     private:
       - fdc
-      - private
       - private_drugs
     public:
       - schedule_mwf
@@ -312,11 +311,11 @@ api_params:
     public: marital_status
   choices:
     public:
-      - unmarried
       - married
-      - widowed
-      - separated
       - single
+      - other
+      # legacy
+      - unmarried
 - api_param_name: occupation
   direction: 1
   case_type:
@@ -420,30 +419,44 @@ api_params:
       - pediatric
       - plhiv
       - known_patient_contact
+      - diabetes
+      - health_care_worker
       - migrant
-      - slum_dweller
+      - miner
+      - prison
+      - refugee
+      - tobacco
+      - urban_slum
       - other
+      - not_applicable
+      # legacy
+      - prison_inmate
+      - slum_dweller
+      - tribal_population
 - api_param_name: key_populations
   direction: 1
   case_type:
     public: occurrence
   case_property:
     public: key_populations
-  choices:
+  validator: custom.enikshay.integrations.ninetyninedots.api_spec.checkbox_validator
+  validator_values:
     public:
       - known_patient_contact
-      - prison_inmate
-      - prison  # replacing prison_inmate
-      - miner
-      - migrant
-      - refugee
-      - slum_dweller
-      - health_care_worker
-      - tribal_population
-      - urban_slum
       - diabetes
-      - not_applicable
+      - health_care_worker
+      - migrant
+      - miner
+      - prison
+      - refugee
+      - tobacco
+      - urban_slum
       - other
+      - not_applicable
+      # legacy
+      - prison_inmate
+      - slum_dweller
+      - tribal_population
 - api_param_name: key_populations_other_detail
   direction: 1
   case_type:

@@ -28,11 +28,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
                             u' have a higher risk of mortality',
-                    'average': 17.593528816986854,
+                    'average': 19.817997977755308,
                     'extended_info': [
                         {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '4,945'},
-                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '5.66%'},
-                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '0.00%'},
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '3.44%'},
+                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.22%'},
                         {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '17.59%'},
                         {'indicator': '% Normal (0 - 5 years):', 'value': '76.74%'}]
                 },
@@ -86,11 +86,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
                             u' have a higher risk of mortality',
-                    'average': 18.94736842105263,
+                    'average': 20.63157894736842,
                     'extended_info': [
                         {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '475'},
-                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '4.42%'},
-                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '0.00%'},
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '2.74%'},
+                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '1.68%'},
                         {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.95%'},
                         {'indicator': '% Normal (0 - 5 years):', 'value': '76.63%'}
                     ]

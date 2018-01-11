@@ -70,11 +70,11 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
             "extended_info": [
                 {
                     'indicator': 'Total number of AWCs that were open yesterday:',
-                    'value': indian_formatted_number(valid_total)
+                    'value': indian_formatted_number(in_day_total)
                 },
                 {
                     'indicator': 'Total number of AWCs that have been launched:',
-                    'value': indian_formatted_number(in_day_total)
+                    'value': indian_formatted_number(valid_total)
                 },
                 {
                     'indicator': '% of AWCs open yesterday:',

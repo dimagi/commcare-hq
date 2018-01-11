@@ -4654,7 +4654,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    vellum_case_management = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=True)
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
@@ -5534,10 +5534,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        if toggles.PHONE_HEARTBEAT.enabled(self.domain):
-            apk_heartbeat_url = self.heartbeat_url
-        else:
-            apk_heartbeat_url = None
+        apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -5735,8 +5732,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  date_created=datetime.datetime.utcnow(), vellum_case_management=True)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], date_created=datetime.datetime.utcnow())
         return app
 
     def add_module(self, module):

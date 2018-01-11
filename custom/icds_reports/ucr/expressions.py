@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from datetime import datetime
+
 from jsonobject.base_properties import DefaultProperty
+from six.moves import filter
+from six.moves import map
+
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
@@ -8,11 +12,10 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.elastic import mget_query
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
-from six.moves import filter
-from six.moves import map
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -176,13 +179,7 @@ class FormsInDateExpressionSpec(JsonObject):
             context.set_cache_value(cache_key, count)
             return count
 
-        if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
-            def _clean(f):
-                del f['timeEnd']  # for parity with what comes out of Riak
-                return f
-
-            xforms = list(map(_clean, xforms))
-        else:
+        if not ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
             form_ids = [x['_id'] for x in xforms]
             xforms = FormAccessors(domain).get_forms(form_ids)
             xforms = FormsInDateExpressionSpec._get_form_json_list(case_id, xforms, context, domain)
@@ -233,9 +230,6 @@ class FormsInDateExpressionSpec(JsonObject):
     def _bulk_get_form_json_from_es(forms):
         form_ids = [form.form_id for form in forms]
         es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids, source=True)
-        for f in es_forms:
-            # for parity with what comes out of Riak
-            del f['timeEnd']
         return {
             f['_id']: f for f in es_forms
         }
@@ -373,35 +367,18 @@ def parent_id(spec, context):
     spec = {
         'type': 'nested',
         'argument_expression': {
-            'type': 'array_index',
-            'array_expression': {
-                'type': 'filter_items',
-                'items_expression': {
-                    'type': 'root_doc',
-                    'expression': {
-                        'datatype': 'array',
-                        'type': 'property_name',
-                        'property_name': 'indices'
-                    }
-                },
-                'filter_expression': {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'property_value': 'parent',
-                    'expression': {
-                        'type': 'property_name',
-                        'property_name': 'identifier'
-                    }
+            'type': 'indexed_case',
+            'case_expression': {
+                'type': 'root_doc',
+                'expression': {
+                    'type': 'identity'
                 }
             },
-            'index_expression': {
-                'type': 'constant',
-                'constant': 0
-            }
+            'index': 'parent'
         },
         'value_expression': {
             'type': 'property_name',
-            'property_name': 'referenced_id'
+            'property_name': '_id'
         }
     }
     return ExpressionFactory.from_spec(spec, context)
@@ -409,44 +386,24 @@ def parent_id(spec, context):
 
 def parent_parent_id(spec, context):
     spec = {
-        'type': 'related_doc',
-        'related_doc_type': 'CommCareCase',
-        'doc_id_expression': {
-            'type': 'icds_parent_id'
-        },
-        'value_expression': {
-            'type': 'nested',
-            'argument_expression': {
-                'type': 'array_index',
-                'array_expression': {
-                    'type': 'filter_items',
-                    'items_expression': {
-                        'type': 'root_doc',
-                        'expression': {
-                            'datatype': 'array',
-                            'type': 'property_name',
-                            'property_name': 'indices'
-                        }
-                    },
-                    'filter_expression': {
-                        'type': 'boolean_expression',
-                        'operator': 'eq',
-                        'property_value': 'parent',
-                        'expression': {
-                            'type': 'property_name',
-                            'property_name': 'identifier'
-                        }
+        'type': 'nested',
+        'argument_expression': {
+            'type': 'indexed_case',
+            'case_expression': {
+                'type': 'indexed_case',
+                'case_expression': {
+                    'type': 'root_doc',
+                    'expression': {
+                        'type': 'identity'
                     }
                 },
-                'index_expression': {
-                    'type': 'constant',
-                    'constant': 0
-                }
+                'index': 'parent'
             },
-            'value_expression': {
-                'type': 'property_name',
-                'property_name': 'referenced_id'
-            }
+            'index': 'parent'
+        },
+        'value_expression': {
+            'type': 'property_name',
+            'property_name': '_id'
         }
     }
     return ExpressionFactory.from_spec(spec, context)
@@ -781,3 +738,49 @@ def get_app_version(spec, context):
 
 def datetime_now(spec, context):
     return DateTimeNow.wrap(spec)
+
+
+def icds_get_related_docs_ids(case_id):
+    """gets a related case id from an ICDS ccs_record or child_health case. Expects the hierarchy:
+                                      /---->  ccs_record
+         household -----> person  --<
+                                      \---->  child_health
+
+    This could likely be optimized pretty easily to take in multiple case_ids but we
+    don't currently have an interface to do so
+    """
+    db = CaseAccessors('icds-cas')
+    try:
+        current_case = db.get_case(case_id)
+    except CaseNotFound:
+        return []
+    if not current_case.indices or current_case.type not in ('ccs_record', 'child_health'):
+        return []
+
+    try:
+        person_case = db.get_case(current_case.indices[0].referenced_id)
+    except CaseNotFound:
+        return []
+    if not person_case.indices or person_case.type != 'person':
+        return []
+
+    try:
+        house_case = db.get_case(person_case.indices[0].referenced_id)
+    except CaseNotFound:
+        return []
+    if house_case.type != 'household':
+        return []
+
+    person_case_ids = [
+        case.case_id
+        for case in db.get_reverse_indexed_cases([house_case.case_id])
+        if case.type == 'person'
+    ]
+    if not person_case_ids:
+        return []
+
+    return [
+        case.case_id
+        for case in db.get_reverse_indexed_cases(person_case_ids)
+        if case.case_id != case_id and case.type in ('ccs_record', 'child_health')
+    ]

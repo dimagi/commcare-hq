@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 import datetime
 import logging
@@ -66,7 +67,7 @@ def fmt_product_rate_dict(product_name, product_rate=None):
     """
     This will be turned into a JSON representation of this SoftwareProductRate
     """
-    from corehq.apps.accounting.models import SoftwareProductRate, SoftwareProductType
+    from corehq.apps.accounting.models import SoftwareProductRate
 
     if product_rate is None:
         try:
@@ -78,7 +79,7 @@ def fmt_product_rate_dict(product_name, product_rate=None):
             product_rate = SoftwareProductRate.objects.create(name=product_name, is_active=True)
     return {
         'name': product_rate.name,
-        'product_type': SoftwareProductType.COMMCARE,
+        'product_type': 'CommCare',  # TODO - kill product_type
         'rate_id': product_rate.id,
         'monthly_fee': product_rate.monthly_fee.__str__(),
     }

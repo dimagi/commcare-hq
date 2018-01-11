@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-19 21:46+0000\n"
+"POT-Creation-Date: 2018-01-09 21:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2017\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -2143,16 +2143,16 @@ msgstr ""
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:148
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:157
 msgid "Form successfully saved"
 msgstr "Formulaire enregistré"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:367
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:24
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:376
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:395
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:404
 msgid "Please wait..."
 msgstr "Veuillez patienter..."
 
@@ -2166,7 +2166,7 @@ msgstr ""
 msgid "Completed: "
 msgstr "Complété:"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:51
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:52
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -2558,13 +2558,13 @@ msgstr "Chargement des diffusions..."
 
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:26
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:62
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:23
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:24
 msgid "Showing _START_ to _END_ of _TOTAL_ broadcasts"
 msgstr "Affichage _DÉBUT_ jusqu’à la _FIN_ du _TOTAL_ des diffusions"
 
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:27
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:63
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:24
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:25
 msgid "(filtered from _MAX_ total broadcasts)"
 msgstr "(trié à partir du _MAX_ total des diffusions)"
 
@@ -2961,56 +2961,74 @@ msgstr "Supprimer invitation"
 msgid "Are you sure you want to delete this invitation?"
 msgstr "Êtes  vous certain de vouloir supprimer cette invitation?"
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:19
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:20
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:71
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:72
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:21
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:22
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:93
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:94
 msgid "There are no messages to display."
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:21
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:73
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:23
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:95
 msgid "Show _MENU_ messages per page"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:22
-msgid "Loading messages..."
-msgstr ""
-
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:45
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:42
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:52
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:56
 msgid "Active"
 msgstr "Actif"
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:45
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:42
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:54
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:58
 msgid "Inactive"
 msgstr "Inactif "
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:74
-msgid "Loading Messages..."
-msgstr ""
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:68
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:82
+#, fuzzy
+#| msgid "Inactive"
+msgid "Deactivate"
+msgstr "Inactif "
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:75
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:73
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:88
+#, fuzzy
+#| msgid "Active"
+msgid "Activate"
+msgstr "Actif"
+
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:96
 msgid "Showing _START_ to _END_ of _TOTAL_ messages"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:76
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:97
 msgid "(filtered from _MAX_ total messages)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:19
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:20
-msgid "There are no alerts to display."
-msgstr ""
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:146
+#, fuzzy
+#| msgid "Are you sure you want to delete this request?"
+msgid "Are you sure you want to delete this scheduled message?"
+msgstr "Êtes-vous certain de vouloir supprimer cette requête?"
 
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:20
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:21
-msgid "Loading alerts..."
+msgid "There are no alerts to display."
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:22
 msgid "Showing _START_ to _END_ of _TOTAL_ alerts"
 msgstr ""
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:63
+msgid "Rule is processing"
+msgstr ""
+
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:138
+#, fuzzy
+#| msgid "Are you sure you want to delete this invitation?"
+msgid "Are you sure you want to delete this conditional message?"
+msgstr "Êtes  vous certain de vouloir supprimer cette invitation?"
 
 #: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:94
 msgid "last"

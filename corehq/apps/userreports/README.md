@@ -2024,6 +2024,7 @@ Following are some custom expressions that are currently available.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
 - `get_case_forms`: A way to get a list of forms submitted for a case.
 - `get_subcases`: A way to get a list of subcases (child cases) for a case.
+- `indexed_case`: A way to get an indexed case from another case.
 
 You can find examples of these in [practical examples](examples/examples.md).
 
