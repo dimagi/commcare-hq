@@ -51,7 +51,7 @@ def get_default_consumption(domain, product_id, location_type, case_id):
     consumption = get_default_monthly_consumption(domain, product_id, location_type, case_id)
 
     if consumption:
-        return consumption / DAYS_IN_MONTH
+        return Decimal(consumption / DAYS_IN_MONTH)
     else:
         return None
 
@@ -130,6 +130,6 @@ def get_loaded_default_consumption(consumption_dict, domain, product_id, locatio
     consumption = get_loaded_default_monthly_consumption(consumption_dict, domain, product_id, location_type, case_id)
 
     if consumption:
-        return consumption / DAYS_IN_MONTH
+        return Decimal(consumption / DAYS_IN_MONTH)
     else:
         return None
