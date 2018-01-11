@@ -69,6 +69,10 @@ hqDefine("reports/js/case_details", function() {
             }
         };
 
+        self.initQuery = function() {
+            self.query("");
+        };
+
         self.query.subscribe(function() {
             self.currentPage(1);
             self.totalPages(Math.ceil(_.filter(self.propertyNames, self.matchesQuery).length / self.itemsPerPage) || 1);
@@ -119,7 +123,7 @@ hqDefine("reports/js/case_details", function() {
 
         self.init = function() {
             self.properties = _.extend({}, options.properties);
-            self.query("");
+            self.initQuery();
             self.currentPage(1);
             self.render();
         };
