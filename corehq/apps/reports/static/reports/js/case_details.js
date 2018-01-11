@@ -135,7 +135,7 @@ hqDefine("reports/js/case_details", function() {
 
         self.format_user = function(username) {
             if (username === undefined || username === null) {
-                return "Unknown";
+                return gettext("Unknown");
             }
             return username.split('@')[0];
         };
@@ -148,8 +148,8 @@ hqDefine("reports/js/case_details", function() {
         };
 
         self.format_date = function(isodatestring) {
-            if (isodatestring == "" || isodatestring == null) {
-                return 'present';
+            if (!isodatestring) {
+                return gettext('present');
             }
             //parse and format the date timestamps - seconds since epoch into date object
             var date = new Date(isodatestring.split('+')[0]);
@@ -164,15 +164,12 @@ hqDefine("reports/js/case_details", function() {
             // minutes part from the timestamp
             var minutes = self.pad_zero(date.getUTCMinutes());
 
-            // seconds part from the timestamp
-            var seconds = self.pad_zero(date.getUTCSeconds());
-
             var year = date.getUTCFullYear();
             var month = date.getUTCMonth() + 1;
             var day = date.getUTCDate();
 
             return  year + '-' + month + '-' + day + ' ' + hours + ":" + minutes;
-        }
+        };
 
         self.received_on = ko.observable(self.format_date(data.received_on));
         self.userID = ko.observable(data.user.id);
@@ -229,11 +226,7 @@ hqDefine("reports/js/case_details", function() {
                 "success": function(data) {
                     $("#xform_data_panel").html(data);
                 },
-                "error": function(data) {
-                    console.log("get xform error");
-                    console.log(data);
-                },
-            })
+            });
         };
 
         init();
@@ -278,18 +271,14 @@ hqDefine("reports/js/case_details", function() {
                 "url":  api_url,
                 "data": {
                     'start_range': start_range,
-                    'end_range': end_range
+                    'end_range': end_range,
                 },
                 "success": function(data) {
                     self.xform_history_cb(data);
                 },
-                "error": function(data) {
-                    console.log("Error");
-                    console.log(data);
-                },
-                "complete": function(data) {
+                "complete": function() {
                     self.data_loading(false);
-                }
+                },
             });
         }, this).extend({deferred: true});
 
