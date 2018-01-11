@@ -106,7 +106,7 @@ hqDefine("reports/js/case_details", function() {
                 success: function() {
                     window.location.reload();
                 },
-                error: function(xhr, status, message) {
+                error: function() {
                     hqImport("hqwebapp/js/alert_user").alert_user(gettext('Something unexpected happened. Please try again, or report an issue if the problem persists'), 'danger');
                     $button.enableButton();
                     if (options.error) {
