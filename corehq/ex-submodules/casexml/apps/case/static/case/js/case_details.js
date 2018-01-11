@@ -3,59 +3,55 @@ $(function () {
     $("#properties").koApplyBindings();
 });
 
-function pad_zero(val) {
-    if (val < 10) {
-        return "0" + val;
-    } else {
-        return val;
-    }
-}
-
-function format_date(isodatestring) {
-    if (isodatestring == "" || isodatestring == null) {
-        return 'present';
-    }
-    //parse nad format the date timestamps - seconds since epoch into date object
-    var date = new Date(isodatestring.split('+')[0]);
-
-    // Get the TZ offset based the project's timezone and create a new date
-    // object with that as it's "UTC" date
-    var _configuredTZOffset = CASE_DETAILS.timezone_offset;
-    date = new Date(date.getTime() + _configuredTZOffset);
-
-    // hours part from the timestamp
-    var hours = pad_zero(date.getUTCHours());
-    // minutes part from the timestamp
-    var minutes = pad_zero(date.getUTCMinutes());
-
-    // seconds part from the timestamp
-    var seconds = pad_zero(date.getUTCSeconds());
-
-    var year = date.getUTCFullYear();
-    var month = date.getUTCMonth() + 1;
-    var day = date.getUTCDate();
-
-    //return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' + second_str;
-    //return  year + '/' + month + '/' + day;
-    return  year + '-' + month + '-' + day + ' ' + hours + ":" + minutes;
-
-}
-
-function format_user(username) {
-    if (username === undefined || username === null) {
-        return "Unknown";
-    }
-    else {
-        return username.split('@')[0];
-    }
-}
-
 function XFormDataModel(data) {
     var self = this;
     self.id = ko.observable(data.id);
-    self.received_on = ko.observable(format_date(data.received_on));
+
+
+    self.format_user = function(username) {
+        if (username === undefined || username === null) {
+            return "Unknown";
+        }
+        return username.split('@')[0];
+    };
+
+    self.pad_zero = function(val) {
+        if (val < 10) {
+            return "0" + val;
+        }
+        return val;
+    };
+
+    self.format_date = function(isodatestring) {
+        if (isodatestring == "" || isodatestring == null) {
+            return 'present';
+        }
+        //parse nad format the date timestamps - seconds since epoch into date object
+        var date = new Date(isodatestring.split('+')[0]);
+
+        // Get the TZ offset based the project's timezone and create a new date
+        // object with that as it's "UTC" date
+        var _configuredTZOffset = CASE_DETAILS.timezone_offset;
+        date = new Date(date.getTime() + _configuredTZOffset);
+
+        // hours part from the timestamp
+        var hours = self.pad_zero(date.getUTCHours());
+        // minutes part from the timestamp
+        var minutes = self.pad_zero(date.getUTCMinutes());
+
+        // seconds part from the timestamp
+        var seconds = self.pad_zero(date.getUTCSeconds());
+
+        var year = date.getUTCFullYear();
+        var month = date.getUTCMonth() + 1;
+        var day = date.getUTCDate();
+
+        return  year + '-' + month + '-' + day + ' ' + hours + ":" + minutes;
+    }
+
+    self.received_on = ko.observable(self.format_date(data.received_on));
     self.userID = ko.observable(data.user.id);
-    self.username = ko.observable(format_user(data.user.username));
+    self.username = ko.observable(self.format_user(data.user.username));
     self.readable_name = ko.observable(data.readable_name);
 };
 
