@@ -448,7 +448,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
 
 @location_safe
-class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
+class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     slug = 'aggregate_user_status'
 
     report_template_path = "reports/async/aggregate_user_status.html"
@@ -468,7 +468,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
-        super(AggregateAppStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+        super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @memoized
     def user_query(self):
