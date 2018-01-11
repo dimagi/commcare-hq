@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import jsonfield
 import pytz
 import re
@@ -1292,7 +1293,7 @@ class CaseRuleUndoer(object):
         form_ids = list(self.get_submission_queryset().values_list('form_id', flat=True))
         form_id_chunks = chunked(form_ids, chunk_size)
         if progress_bar:
-            length = len(form_ids) / chunk_size
+            length = len(form_ids) // chunk_size
             if len(form_ids) % chunk_size > 0:
                 length += 1
             form_id_chunks = with_progress_bar(form_id_chunks, length=length)
