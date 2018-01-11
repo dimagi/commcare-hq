@@ -165,6 +165,8 @@ class FormsInDateExpressionSpec(JsonObject):
         # TODO(Emord) this will eventually break down when cases have a lot of
         # forms associated with them. perhaps change to intersecting two sets
         xforms = FormsInDateExpressionSpec._get_filtered_forms_from_es(case_id, xform_ids, context)
+        print('found {} xforms'.format(len(xforms)))
+        print(xforms)
         if self.xmlns:
             xforms = [x for x in xforms if x['xmlns'] in xmlns_tuple]
         if from_date:
@@ -196,8 +198,10 @@ class FormsInDateExpressionSpec(JsonObject):
         cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids),
                      es_toggle_enabled)
         if context.get_cache_value(cache_key) is not None:
+            print('cache hit')
             return context.get_cache_value(cache_key)
 
+        print('cache miss')
         source = True if es_toggle_enabled else ['form.meta.timeEnd', 'xmlns', '_id']
         forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
         context.set_cache_value(cache_key, forms)
