@@ -179,13 +179,7 @@ class FormsInDateExpressionSpec(JsonObject):
             context.set_cache_value(cache_key, count)
             return count
 
-        if ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
-            def _clean(f):
-                del f['timeEnd']  # for parity with what comes out of Riak
-                return f
-
-            xforms = list(map(_clean, xforms))
-        else:
+        if not ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
             form_ids = [x['_id'] for x in xforms]
             xforms = FormAccessors(domain).get_forms(form_ids)
             xforms = FormsInDateExpressionSpec._get_form_json_list(case_id, xforms, context, domain)
@@ -236,9 +230,6 @@ class FormsInDateExpressionSpec(JsonObject):
     def _bulk_get_form_json_from_es(forms):
         form_ids = [form.form_id for form in forms]
         es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids, source=True)
-        for f in es_forms:
-            # for parity with what comes out of Riak
-            del f['timeEnd']
         return {
             f['_id']: f for f in es_forms
         }
