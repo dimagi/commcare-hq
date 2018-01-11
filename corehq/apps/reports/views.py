@@ -1499,20 +1499,24 @@ def edit_case_view(request, domain, case_id):
 
     case = _get_case_or_404(domain, case_id)
     user = request.couch_user
+
     update = {}
     for name, value in case.dynamic_case_properties().items():
         if name in request.POST and request.POST[name] != value:
             update[name] = request.POST[name]
 
+    case_block_kwargs = {}
+    if update:
+        case_block_kwargs['update'] = update
+
     # User may also update external_id; see CaseDisplayWrapper.dynamic_properties
     if 'external_id' in request.POST and request.POST['external_id'] != case.external_id:
-        case.external_id = request.POST['external_id']
+        case_block_kwargs['external_id'] = request.POST['external_id']
 
-    if update:
+    if case_block_kwargs:
         submit_case_blocks([CaseBlock(
             case_id=case_id,
-            external_id=case.external_id,
-            update=update,
+            **case_block_kwargs
         ).as_string()], domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case")
         messages.success(request, _(u'Case properties saved for %s.' % case.name))
     else:
