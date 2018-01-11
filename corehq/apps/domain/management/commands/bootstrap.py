@@ -2,6 +2,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from django.core.management.base import BaseCommand
+import time
 
 
 class Command(BaseCommand):
@@ -19,6 +20,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain_name, username, passwd, **options):
-        print(u"The bootstrap command doesn't exist anymore. "
-              u"Please use `./manage.py make_superuser {username}` "
+        print()
+        print(u"The bootstrap command doesn't exist anymore.")
+        print()
+        time.sleep(2)
+        print(u"Please use `./manage.py make_superuser {username}` "
               u"and then create a domain in the UI instead.".format(username=username))
+        print()
