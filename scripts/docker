@@ -114,12 +114,17 @@ function usage() {
 
 CMD="$1"
 shift
-if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
+if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
     if [ "$CMD" == "hqtest" ]; then
         CMD="$1"
         shift
         if [ -z "$CMD" ]; then
             CMD=help
+        fi
+    else
+        if [ "$CMD" == "py3test" ]; then
+            CMD=test
+            DOCKERFILE=Dockerfile-py3
         fi
     fi
     export COMPOSE_FILE=docker/hq-compose.yml
@@ -170,6 +175,7 @@ else
     export KAFKA_ADVERTISED_HOST_NAME="$KAFKA_ADVERTISED_HOST_NAME"
 fi
 # export variables for compose file (they must be set or it complains)
+export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
