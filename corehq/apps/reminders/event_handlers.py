@@ -410,13 +410,13 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                             expire_after = sum(current_event.callback_timeout_intervals)
                             reminder_intervals = current_event.callback_timeout_intervals[:-1]
                         else:
-                            expire_after = SQLXFormsSession.DEFAULT_EXPIRY
+                            expire_after = SQLXFormsSession.MAX_SESSION_LENGTH
                             reminder_intervals = current_event.callback_timeout_intervals
 
                         submit_partially_completed_forms = handler.submit_partial_forms
                         include_case_updates_in_partial_submissions = handler.include_case_side_effects
                     else:
-                        expire_after = SQLXFormsSession.DEFAULT_EXPIRY
+                        expire_after = SQLXFormsSession.MAX_SESSION_LENGTH
                         reminder_intervals = []
                         submit_partially_completed_forms = False
                         include_case_updates_in_partial_submissions = False

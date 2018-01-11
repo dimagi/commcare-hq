@@ -20,8 +20,8 @@ class SQLXFormsSession(models.Model):
     """
     Keeps information about an SMS XForm session.
     """
-    # Default expiry of 7 days
-    DEFAULT_EXPIRY = 7 * 24 * 60
+    # Maximum session length of 7 days
+    MAX_SESSION_LENGTH = 7 * 24 * 60
 
     # generic properties
     couch_id = models.CharField(db_index=True, max_length=50)
@@ -50,7 +50,7 @@ class SQLXFormsSession(models.Model):
     phone_number = models.CharField(max_length=126)
 
     # The number of minutes after which this session should expire, starting from the start_date.
-    expire_after = models.IntegerField(default=DEFAULT_EXPIRY)
+    expire_after = models.IntegerField(default=MAX_SESSION_LENGTH)
 
     # True if the session is still open. An open session allows answers to come in to the survey.
     session_is_open = models.BooleanField(default=True)
@@ -172,7 +172,7 @@ class SQLXFormsSession(models.Model):
 
 
     @classmethod
-    def create_session_object(cls, domain, contact, phone_number, app, form, expire_after=DEFAULT_EXPIRY,
+    def create_session_object(cls, domain, contact, phone_number, app, form, expire_after=MAX_SESSION_LENGTH,
             reminder_intervals=None, submit_partially_completed_forms=False,
             include_case_updates_in_partial_submissions=False):
 

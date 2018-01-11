@@ -1165,7 +1165,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         "numbers separated by commas."
                     ))
 
-            if sum(timeouts_int) > SQLXFormsSession.DEFAULT_EXPIRY:
+            if sum(timeouts_int) > SQLXFormsSession.MAX_SESSION_LENGTH:
                 raise ValidationError(_("Timeout intervals must add up to less than 7 days."))
 
             return timeouts_int
