@@ -103,11 +103,10 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-Create a project. The following command will do some basic setup, create a superuser, and create a project. The
-project-name, email, and password given here are specific to your local development environment. Do not include upper-case letters in your project-name. Ignore warnings
-related to Raven for the following three commands.
+Create a superuser for your local environment. (Ignore warnings
+related to Raven for the following three commands.)
 
-    $ ./manage.py bootstrap <project-name> <email> <password>
+    $ ./manage.py make_superuser <email>
 
 To set up elasticsearch indexes run the following:
 
