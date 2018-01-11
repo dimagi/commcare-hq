@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
 def _simulate_indicator_saves(indicators, docs, configs):
     for indicator in indicators:
-        _simulate_async_indicator_save(indicator, docs[indicator.doc_id, configs])
+        _simulate_async_indicator_save(indicator, docs[indicator.doc_id], configs)
 
 
 def _simulate_async_indicator_save(indicator, doc, configs):
