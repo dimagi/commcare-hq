@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-import importlib
 from collections import defaultdict
+import importlib
 import os
 
-from celery.schedules import crontab
 from django.contrib import messages
 import settingshelper as helper
 
@@ -915,7 +914,7 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min
 ASYNC_INDICATORS_TO_QUEUE = 10000
-ASYNC_INDICATOR_QUEUE_CRONTAB = crontab(minute="*/5")
+ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
