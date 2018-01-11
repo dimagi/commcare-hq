@@ -385,7 +385,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 this.saveAttempted = ko.observable(false);
                 var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
                 this.useXpathExpression = ko.observable(
-                    hqImport('hqwebapp/js/toggles').toggleEnabled('USE_XPATH_EXPRESSION')
+                    hqImport('hqwebapp/js/toggles').toggleEnabled('CALCULATED_PROPERTY_IN_CASE_LIST')
                     && addOns.calc_xpaths
                     && this.original.useXpathExpression
                 );

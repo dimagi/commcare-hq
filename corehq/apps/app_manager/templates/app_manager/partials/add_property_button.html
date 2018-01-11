@@ -5,7 +5,7 @@
         <i class="fa fa-plus"></i>
         {% trans "Add Property" %}
     </button>
-    {% if request|toggle_enabled:'GRAPH_CREATION' or request|toggle_enabled:'USE_XPATH_EXPRESSION' %}
+    {% if request|toggle_enabled:'GRAPH_CREATION' or request|toggle_enabled:'CALCULATED_PROPERTY_IN_CASE_LIST' %}
       <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
           <span class="caret"></span>
       </button>
@@ -21,7 +21,7 @@
             <!-- /ko -->
           {% endif %}
 
-          {% if request|toggle_enabled:'USE_XPATH_EXPRESSION' %}
+          {% if request|toggle_enabled:'CALCULATED_PROPERTY_IN_CASE_LIST' %}
             <!-- ko if: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
             <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
             <!-- /ko -->
