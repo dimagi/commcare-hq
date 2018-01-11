@@ -665,7 +665,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         column.header.val(getPropertyTitle(this.val()));
                         column.header.fire("change");
                     });
-                    var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
                     if (column.original.hasAutocomplete || (
                         column.original.useXpathExpression && !column.useXpathExpression()
                     )) {
