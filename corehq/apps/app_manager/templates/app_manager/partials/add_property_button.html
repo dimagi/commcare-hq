@@ -23,10 +23,10 @@
 
           {% if request|toggle_enabled:'USE_XPATH_EXPRESSION' %}
             <!-- ko if: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
-            <li data-bind="click: addXpathExpression"><a>{% trans "Xpath Expression" %}</a></li>
+            <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
             <!-- /ko -->
             <!-- ko ifnot: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
-            <li class="disabled"><a>{% trans "Xpath Expression <small>(Requires Add-On)</small>" %}</a></li>
+            <li class="disabled"><a>{% trans "Calculated Property <small>(Requires Add-On)</small>" %}</a></li>
             <!-- /ko -->
           {% endif %}
       </ul>
