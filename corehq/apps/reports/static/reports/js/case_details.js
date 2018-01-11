@@ -98,12 +98,20 @@ hqDefine("reports/js/case_details", function() {
         };
 
         self.submitForm = function(model, e) {
-            $(e.currentTarget).disableButton();
+            var $button = $(e.currentTarget);
+            $button.disableButton();
             $.post({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
                 data: self.properties,
                 success: function() {
                     window.location.reload();
+                },
+                error: function(xhr, status, message) {
+                    hqImport("hqwebapp/js/alert_user").alert_user(gettext('Something unexpected happened. Please try again, or report an issue if the problem persists'), 'danger');
+                    $button.enableButton();
+                    if (options.error) {
+                        options.error.apply();
+                    }
                 },
             });
             return true;
@@ -137,6 +145,9 @@ hqDefine("reports/js/case_details", function() {
             $editPropertiesModal.koApplyBindings(new EditPropertiesModel({
                 properties: initial_page_data('dynamic_properties'),
                 propertyNames: initial_page_data('dynamic_properties_names'),
+                error: function() {
+                    $editPropertiesModal.modal('hide');
+                },
             }));
         }
     });

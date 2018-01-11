@@ -1511,7 +1511,7 @@ def edit_case_view(request, domain, case_id):
     if update:
         submit_case_blocks([CaseBlock(
             case_id=case_id,
-            owner_id=case.owner_id,
+            external_id=case.external_id,
             update=update,
         ).as_string()], domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case")
         messages.success(request, _(u'Case properties saved for %s.' % case.name))
