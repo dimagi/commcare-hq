@@ -38,7 +38,8 @@ class Command(BaseCommand):
             'docs': docs,
             'configs': configs,
         }
-        cProfile.runctx('_simulate_indicator_saves', {}, local_variables, 'async_ucr_stats.log')
+        cProfile.runctx('_simulate_indicator_saves(indicators, docs, configs)', {},
+                        local_variables, 'async_ucr_stats.log')
         print_profile_stats('async_ucr_stats.log', sort_by)
 
 
