@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 
@@ -81,8 +82,8 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         return new_subscription
 
     def test_app_icon_permissions(self):
-        LOGO_HOME = u'hq_logo_android_home'
-        LOGO_LOGIN = u'hq_logo_android_login'
+        LOGO_HOME = 'hq_logo_android_home'
+        LOGO_LOGIN = 'hq_logo_android_login'
 
         advanced_sub = self._subscribe_to_advanced()
 

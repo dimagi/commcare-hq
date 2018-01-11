@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from decimal import Decimal
 import itertools
@@ -867,7 +868,7 @@ class Subscriber(models.Model):
         app_label = 'accounting'
 
     def __unicode__(self):
-        return u"DOMAIN %s" % self.domain
+        return "DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
         assert new_plan_version

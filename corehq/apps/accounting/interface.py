@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 
 from django.urls import reverse
@@ -677,7 +678,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             except BillingContactInfo.DoesNotExist:
                 contact_info = BillingContactInfo()
 
-            plan_name = u"{name} v{version}".format(
+            plan_name = "{name} v{version}".format(
                 name=invoice.subscription.plan_version.plan.name,
                 version=invoice.subscription.plan_version.version,
             )
