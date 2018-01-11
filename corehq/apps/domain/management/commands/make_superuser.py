@@ -53,4 +53,4 @@ class Command(BaseCommand):
         if is_staff_changed:
             print(u"→ User {} can now access django admin".format(couch_user.username))
         else:
-            print(u"✓ User {} can use access django admin".format(couch_user.username))
+            print(u"✓ User {} can access django admin".format(couch_user.username))
