@@ -517,14 +517,11 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             @property
             @memoized
             def percent_series(self):
-                def _pct(val, total):
-                    return (100. * float(val) / float(total)) if total else 0
-
                 return [
                     {
                         'series': 0,
                         'x': row['x'],
-                        'y': _pct(row['y'], self.user_count)
+                        'y': self._pct(row['y'], self.user_count)
                     }
                     for row in self.total_series
                 ]
@@ -539,6 +536,14 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                     [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
                     [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
                 ]
+
+            @property
+            def total_percent(self):
+                return '{0:.0f}%'.format(self._pct(self.total, self.user_count))
+
+            @staticmethod
+            def _pct(val, total):
+                return (100. * float(val) / float(total)) if total else 0
 
         query = self.user_query().run()
 
@@ -620,6 +625,4 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             'submission_series': submission_series,
             'sync_series': sync_series,
             'total_users': total_users,
-            'ever_submitted': submission_series.bucket_series.total,
-            'ever_synced': sync_series.bucket_series.total,
         }
