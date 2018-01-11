@@ -166,7 +166,10 @@ class FormsInDateExpressionSpec(JsonObject):
         # forms associated with them. perhaps change to intersecting two sets
         xforms = FormsInDateExpressionSpec._get_filtered_forms_from_es(case_id, xform_ids, context)
         print('found {} xforms'.format(len(xforms)))
-        print(xforms)
+        for f in xforms:
+            if 'timeEnd' not in f:
+                print('no timeend found for {}'.format(f))
+
         if self.xmlns:
             xforms = [x for x in xforms if x['xmlns'] in xmlns_tuple]
         if from_date:
