@@ -50,9 +50,6 @@
                     <li class="active">
                         <a href="#properties" data-toggle="tab">
                             {% trans "Case Properties" %}
-                            {% if show_properties_edit %}
-                                <i class="fa fa-edit clickable" id="edit-dynamic-properties-trigger"></i>
-                            {% endif %}
                         </a>
                     </li>
                     {% endif %}
@@ -259,17 +256,32 @@
     {% if can_edit_data %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
+        {% if show_properties_edit %}
+            <button type="button" class="btn btn-default pull-left" id="edit-dynamic-properties-trigger">
+                <i class="fa fa-edit"></i>
+                {% trans 'Edit Case' %}
+            </button>
+        {% endif %}
         {% if show_case_rebuild %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
-                 <button type="submit" class="btn btn-info disable-on-submit" >{% trans 'Resave Case' %}</button>
+                <button type="submit" class="btn btn-default disable-on-submit" >
+                    <i class="fa fa-save"></i>
+                    {% trans 'Resave Case' %}
+                </button>
             </form>
             <form action="{% url 'rebuild_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
-                 <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
+                <button type="submit" class="btn btn-default disable-on-submit" >
+                    <i class="fa fa-cubes"></i>
+                    {% trans 'Rebuild Case' %}
+                </button>
             </form>
         {% endif %}
         {% if not case.closed and not is_usercase %}
             <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case" class="pull-left">{% csrf_token %}
-                 <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
+                <button type="submit" class="btn btn-danger disable-on-submit" >
+                    <i class="fa fa-archive"></i>
+                    {% trans 'Close Case' %}
+                </button>
             </form>
         {% endif %}
         </div>
