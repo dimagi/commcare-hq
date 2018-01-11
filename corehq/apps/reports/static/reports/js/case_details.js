@@ -151,12 +151,12 @@ hqDefine("reports/js/case_details", function() {
             if (isodatestring == "" || isodatestring == null) {
                 return 'present';
             }
-            //parse nad format the date timestamps - seconds since epoch into date object
+            //parse and format the date timestamps - seconds since epoch into date object
             var date = new Date(isodatestring.split('+')[0]);
 
             // Get the TZ offset based the project's timezone and create a new date
             // object with that as it's "UTC" date
-            var _configuredTZOffset = CASE_DETAILS.timezone_offset;
+            var _configuredTZOffset = hqImport("hqwebapp/js/initial_page_data").get('timezone_offset');
             date = new Date(date.getTime() + _configuredTZOffset);
 
             // hours part from the timestamp
@@ -208,7 +208,7 @@ hqDefine("reports/js/case_details", function() {
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         };
 
-        var api_url = CASE_DETAILS.xform_api_url;
+        var api_url = hqImport("hqwebapp/js/initial_page_data").get('xform_api_url');
         var init = function() {
             var hash = window.location.hash.split('?');
             if (hash[0] !== '#!history') {
@@ -223,27 +223,23 @@ hqDefine("reports/js/case_details", function() {
         };
 
         self.get_xform_data = function(xform_id) {
-            //method for getting individual xform via GET
             $.cachedAjax({
                 "type": "GET",
-                "url": CASE_DETAILS.xform_ajax_url + xform_id + "/",
+                "url": hqImport("hqwebapp/js/initial_page_data").reverse('case_form_data', xform_id),
                 "success": function(data) {
                     $("#xform_data_panel").html(data);
-                    //$("#xform_data_panel").html('<h2>selected ' + xform_id + "</h2>");
                 },
                 "error": function(data) {
                     console.log("get xform error");
                     console.log(data);
                 },
-                "complete": function(data) {
-                }
             })
         };
 
         init();
 
         self.xform_history_cb = function(data) {
-            self.total_rows(CASE_DETAILS.xform_ids.length);
+            self.total_rows(hqImport("hqwebapp/js/initial_page_data").get('xform_ids').length);
             var mapped_xforms = $.map(data, function (item) {
                 return new XFormDataModel(item);
             });

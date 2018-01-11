@@ -24,17 +24,13 @@
 
 {% initial_page_data 'dynamic_properties_names' dynamic_properties_names %}
 {% initial_page_data 'dynamic_properties' dynamic_properties %}
+{% initial_page_data 'timezone_offset' timezone_offset %}
+{% initial_page_data 'xform_api_url' xform_api_url %}
+{% initial_page_data 'xform_ids' case.xform_ids %}
+{% registerurl "case_form_data" case.domain case.case_id '---' %}
 {% registerurl "edit_case" case.domain case.case_id %}
 
 <div class="hq-generic-report">
-    <script>
-        var CASE_DETAILS = {};
-        CASE_DETAILS.xform_api_url = "{{ xform_api_url }}";
-        CASE_DETAILS.xform_ids = {{ case.xform_ids|JSON }};
-        CASE_DETAILS.xform_ajax_url = "{% url 'case_form_data' case.domain case.case_id 'placeholder-form-id' %}".replace('placeholder-form-id/', '');
-        CASE_DETAILS.timezone_offset = {{ timezone_offset }};
-    </script>
-
     <div id="report-content">
     <div id="tabbed-content-container">
         <div class="row">
