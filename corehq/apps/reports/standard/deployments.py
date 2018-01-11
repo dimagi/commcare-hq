@@ -513,7 +513,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
 
-        class BucketSeries(namedtuple('Bucket', 'data_series total_series total')):
+        class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
             @memoized
             def percent_series(self):
@@ -524,7 +524,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                     {
                         'series': 0,
                         'x': row['x'],
-                        'y': _pct(row['y'], self.total)
+                        'y': _pct(row['y'], self.user_count)
                     }
                     for row in self.total_series
                 ]
@@ -547,7 +547,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         last_sync_buckets = aggregations[1].raw_buckets
         total_users = query.total
 
-        def _buckets_to_series(buckets):
+        def _buckets_to_series(buckets, user_count):
             # start with N days of empty data
             # add bucket info to the data series
             # add last bucket
@@ -602,19 +602,19 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
                     'y': running_total + extra,
                 }
             )
-            return BucketSeries(daily_series, running_total_series, total)
+            return BucketSeries(daily_series, running_total_series, total, user_count)
 
         submission_series = SeriesData(
             id='submission',
             title=_('Users who have Submitted'),
             chart_color='#004abf',
-            bucket_series=_buckets_to_series(last_submission_buckets)
+            bucket_series=_buckets_to_series(last_submission_buckets, total_users)
         )
         sync_series = SeriesData(
             id='sync',
             title=_('Users who have Synced'),
             chart_color='#f58220',
-            bucket_series=_buckets_to_series(last_sync_buckets),
+            bucket_series=_buckets_to_series(last_sync_buckets, total_users),
         )
         return {
             'submission_series': submission_series,
