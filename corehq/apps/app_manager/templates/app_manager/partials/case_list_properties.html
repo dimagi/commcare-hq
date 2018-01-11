@@ -48,7 +48,7 @@
                         {% if request|toggle_enabled:'USE_XPATH_EXPRESSION' %}
                         <div>
                             <!-- ko if: useXpathExpression -->
-                                {% trans "Xpath Expression" %}
+                                <div class="label label-info">{% trans "Xpath Expression" %}</div>
                             <!-- /ko -->
                         </div>
                         {% endif %}
