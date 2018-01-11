@@ -250,6 +250,7 @@
     {% endif %}
 
     {% if can_edit_data %}
+    {% if show_properties_edit or show_case_rebuild or not case.closed and not is_usercase %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
         {% if show_properties_edit %}
@@ -282,6 +283,7 @@
         {% endif %}
         </div>
     </div>
+    {% endif %}
     {% endif %}
 </div>
 {% endblock %}
