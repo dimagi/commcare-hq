@@ -17,9 +17,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         'map': {route: '/awcs_covered/map', label: 'Map View'},
         'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
     };
-    vm.data = {
-        legendTitle: 'Total AWCs that have launched ICDS CAS',
-    };
+    vm.data = {};
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
@@ -28,9 +26,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
-    vm.rightLegend = {
-        info: 'Total AWCs that have launched ICDS CAS',
-    };
     vm.message = storageService.getKey('message') || false;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
@@ -66,7 +61,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<p>' + vm.rightLegend.info + '</p>' +
             '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div>';
     };
 

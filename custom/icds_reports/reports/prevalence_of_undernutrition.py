@@ -59,7 +59,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         normal = row['normal'] or 0
 
         moderately_underweight_total += moderately_underweight
-        severely_underweight_total += severely_underweight_total
+        severely_underweight_total += severely_underweight
         normal_total += normal
         valid_total += valid
 
