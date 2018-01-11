@@ -231,7 +231,7 @@ def delete_data_source_task(domain, config_id):
 
 
 @periodic_task(
-    run_every='*/5', queue=settings.CELERY_PERIODIC_QUEUE
+    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
 )
 def run_queue_async_indicators_task():
     """ASYNC_INDICATOR_QUEUE_TIMES will be of the format:
