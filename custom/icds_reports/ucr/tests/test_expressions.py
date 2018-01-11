@@ -122,6 +122,18 @@ class TestFormsExpressionSpecWithFilter(TestCase):
         self.assertEqual(len(forms), 1)
         self.assertEqual(forms[0]['_id'], self.forms[0]['_id'])
 
+    def test_results_from_cache(self):
+        # reuse the context to test an edge case in caching
+        expression_1 = self._make_expression('iteration - 1', 'iteration + 1')
+        context = EvaluationContext({"domain": self.domain}, 0)
+        forms = expression_1(self.case.to_json(), context)
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms[0]['_id'], self.forms[0]['_id'])
+        expression_2 = self._make_expression('iteration - 2', 'iteration + 1')
+        forms = expression_2(self.case.to_json(), context)
+        self.assertEqual(len(forms), 1)
+        self.assertEqual(forms[0]['_id'], self.forms[0]['_id'])
+
     def test_from_outside_date_range(self):
         expression = self._make_expression('iteration - 2', 'iteration - 1')
         context = EvaluationContext({"domain": self.domain}, 0)
