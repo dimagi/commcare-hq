@@ -52,8 +52,19 @@
                                 <span ng-show="!isMultimediaDownload">{% trans "Collecting Data" %}</span>
                                 <span ng-show="isMultimediaDownload">{% trans "Collecting Multimedia" %}</span>
                         </button>
+                        {% if request|toggle_enabled:"EMAIL_EXPORT_WHEN_DONE_BUTTON" %}
+                        <button type="button"
+                                class="btn btn-primary btn-full-width"
+                                ng-show="!isDownloadReady"
+                                ng-init="sendEmailFlag = false"
+                                ng-disabled="sendEmailFlag"
+                                ng-click="sendEmailUponCompletion(); sendEmailFlag = true;">
+                                {% trans "Email me when this is done" %}
+                                <i class="fa fa-check" ng-show="sendEmailFlag"></i>
+                        </button>
+                        {% endif %}
                         {% if show_sync_to_dropbox %}
-                        <button button="submit"
+                        <button type="submit"
                                 class="btn btn-default btn-full-width"
                                 style="margin-top: 5px;"
                                 ng-disabled="!isDownloadReady && !isMultimediaDownload"

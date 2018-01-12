@@ -2675,6 +2675,11 @@ class DataFile(models.Model):
         return super(DataFile, self).delete(using, keep_parents)
 
 
+class EmailRequests(models.Model):
+    domain_name = models.CharField(max_length=255)
+    downloads_processing = models.CharField(max_length=255)
+
+
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
 CASE_HISTORY_TABLE = [PathNode(name='actions', is_repeat=True)]
