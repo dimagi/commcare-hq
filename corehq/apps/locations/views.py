@@ -33,6 +33,7 @@ from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.tasks import download_locations_async, import_locations_async
+from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
 from custom.enikshay.user_setup import ENikshayLocationFormSet
@@ -230,6 +231,13 @@ class LocationsListView(BaseLocationView):
             return list(map(to_json, locs))
         else:
             return [to_json(user.get_sql_location(self.domain))]
+
+class LocationsSearchView(EmwfOptionsView):
+    @property
+    def data_sources(self):
+        return [
+            (self.get_locations_size, self.get_locations),
+        ]
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):

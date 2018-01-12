@@ -163,6 +163,7 @@
     <div class="row">
         <div class="col-sm-8">
             <h2>{% trans "Manage Organization Structure" %}</h2>
+
             <p>
                 {% blocktrans %}
                     The Organization feature allows you to represent the real-world 
@@ -227,6 +228,50 @@
 {% endif %}
 
 <hr />
+
+<label for="location_search" class="col-xs-4 col-md-3 col-lg-2 control-label">Location</label>
+<div class="col-xs-8 col-md-8 col-lg-9">
+
+        <select type="text"
+            id="location_search"
+            class="span4 form-control"
+            placeholder="Specify location"
+            name="location_search"></select>
+
+        <span class="help-block">
+            <i class="fa fa-info-circle"></i>
+            To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
+        </span>
+
+</div>
+
+<link href="{% static 'select2/dist/css/select2.min.css' %}" rel="stylesheet"/>
+<script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+<script>
+    $(function () {
+
+            $('#location_search').select2({
+                ajax: {
+                    url: '{% url 'location_search' domain %}',
+                    dataType: 'json',
+                    data: function (params) {
+                        console.log(params);
+                        return {
+                            q: params.term,
+                            page_limit: 10,
+                            page: params.page,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        var more = data.more || (params.page * 10) < data.total;
+                        return {results: data.results, more: more};
+                    }
+                },
+            });
+
+    });
+</script>
+
 
 {% if has_location_types %}
     <script type="text/html" id="location-template">
