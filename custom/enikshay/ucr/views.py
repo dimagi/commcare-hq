@@ -28,13 +28,12 @@ class MonitoredReport(CustomConfigurableReport):
         """
         now = datetime.utcnow()
 
-        oldest_indicator = (
-            AsyncIndicator.objects
-            .filter(indicator_config_ids__contains=[self.spec.config_id])
-            .aggregate(Min('date_created'))
-        )
-        if oldest_indicator['date_created__min'] is not None:
-            hours_behind = (now - oldest_indicator['date_created__min']).total_seconds() / (60 * 60)
+        try:
+            oldest_indicator = (
+                AsyncIndicator.objects
+                .filter(indicator_config_ids__contains=[self.spec.config_id])
+            )[0]
+            hours_behind = (now - oldest_indicator.date_created).total_seconds() / (60 * 60)
             return int(1 + (hours_behind // 12)) * 12
-
-        return None
+        except IndexError:
+            return None
