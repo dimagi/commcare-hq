@@ -24,7 +24,7 @@ class TestInfantsWeightScale(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs that reported having a weighing scale for infants",
-                    "average": 80.0,
+                    "average": 80.54298642533936,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a weighing scale for infants:', 'value': "24"},
                         {'indicator': '% of AWCs with a weighing scale for infants:', 'value': '80.00%'}
