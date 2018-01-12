@@ -958,6 +958,7 @@ DECLARE
 	_tablename5 text;
 	_child_health_tablename text;
 	_ccs_record_tablename text;
+	_ccs_record_monthly_tablename text;
 	_daily_attendance_tablename text;
 	_awc_location_tablename text;
 	_thr_tablename text;
@@ -1004,6 +1005,7 @@ BEGIN
 	_tablename5 := 'agg_awc' || '_' || _start_date || '_5';
 	_child_health_tablename := 'agg_child_health';
 	_ccs_record_tablename := 'agg_ccs_record';
+	_ccs_record_monthly_tablename := 'ccs_record_monthly' || '_' || _start_date;
 	_thr_tablename := 'agg_thr_data' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
@@ -1169,14 +1171,10 @@ BEGIN
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
 		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) ||
-                  ' AND (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
+                  ' AND ' || quote_literal(_month_end_6yr) || ' <= dob' ||
                   ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
       ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
-		'sum(CASE WHEN (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_6yr) || ' <= dob' ||
                   ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
       ' THEN seeking_services ELSE 0 END) as cases_person_beneficiary, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
@@ -1188,6 +1186,21 @@ BEGIN
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
 		'GROUP BY awc_id) ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
+
+
+  -- Update ccs_record cases_person_has_aadhaar and cases_person_beneficiary
+  -- pregnant and lactating both imply that the case is open, alive and seeking services in the month
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'cases_person_has_aadhaar = cases_person_has_aadhaar + ut.ccs_has_aadhar, ' ||
+    'cases_person_beneficiary = cases_person_beneficiary + ut.ccs_beneficiary ' ||
+  'FROM (SELECT ' ||
+    'awc_id, ' ||
+    'sum(has_aadhar_id) as ccs_has_aadhar, ' ||
+    'count(*) as ccs_beneficiary ' ||
+    'FROM ' || quote_ident(_ccs_record_monthly_tablename) || ' ' ||
+    'WHERE pregnant = 1 OR lactating = 1 ' ||
+    'GROUP BY awc_id) ut ' ||
+  'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET thr_score = ' ||
