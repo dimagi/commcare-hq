@@ -7,9 +7,7 @@ register = template.Library()
 def get_value(data, prop):
     try:
         return int(data[prop])
-    except ValueError:
-        return 0
-    except KeyError:
+    except (ValueError, KeyError, TypeError):
         return 0
 
 
