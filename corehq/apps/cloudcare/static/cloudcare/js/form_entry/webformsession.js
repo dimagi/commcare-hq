@@ -1,4 +1,4 @@
-/*global Formplayer */
+/*global Formplayer, FormplayerFrontend */
 
 // IE compliance
 if (!Array.prototype.indexOf) {
@@ -149,6 +149,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
     requestParams['debuggerEnabled'] = self.debuggerEnabled;
+    requestParams['tz_offset_millis'] = FormplayerFrontend.request('timezoneOffset');
     if (this.blockingRequestInProgress) {
         return;
     }

@@ -11,6 +11,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.request('currentUser'),
                 lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
+                timezoneOffsetMillis = FormplayerFrontend.request('timezoneOffset'),
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -74,6 +75,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "sortIndex": params.sortIndex,
                 "preview": params.preview,
                 "geo_location": lastRecordedLocation,
+                "tz_offset_millis": timezoneOffsetMillis,
             });
             options.url = formplayerUrl + '/' + route;
 
