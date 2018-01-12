@@ -27,7 +27,7 @@ class TestPrevalenceOfStunting(TestCase):
                             "the WHO Child Growth Standards median.<br/><br/>Stunting "
                             "is a sign of chronic undernutrition and has long "
                             "lasting harmful consequences on the growth of a child",
-                    "average": "2.77",
+                    "average": "2.73",
                     'extended_info': [
                         {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
                         {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',

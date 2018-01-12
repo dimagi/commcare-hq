@@ -26,7 +26,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
                             "<br/><br/>Early initiation of breastfeeding ensure the newborn "
                             "recieves the 'first milk' rich in nutrients"
                             " and encourages exclusive breastfeeding practice",
-                    "average": 57.142857142857146,
+                    "average": 54.16666666666667,
                     'extended_info': [
                         {'indicator': 'Total Number of Children born in the given month:', 'value': "7"},
                         {
