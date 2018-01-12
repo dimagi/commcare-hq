@@ -1,6 +1,6 @@
+# Based on Dockerfile. Use diff to compare them.
 FROM python:3.6
 MAINTAINER Dimagi <devops@dimagi.com>
-# Based on ../../Dockerfile. Use diff to compare them.
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
@@ -15,10 +15,10 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 
 RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jdk
 
-COPY ../../requirements/requirements.txt \
-     ../../requirements/dev-requirements.txt \
-     ../../requirements/test-requirements.txt \
-     ../../package.json \
+COPY requirements/requirements.txt \
+     requirements/dev-requirements.txt \
+     requirements/test-requirements.txt \
+     package.json \
      /vendor/
 
 # prefer https for git checkouts made by pip

@@ -1,6 +1,6 @@
+# When changing this file, also update Dockerfile-py3
 FROM python:2.7
 MAINTAINER Dimagi <devops@dimagi.com>
-# When changing this file, also update docker/py3/Dockerfile
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
