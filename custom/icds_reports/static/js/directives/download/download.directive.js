@@ -351,7 +351,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.goToLink = function () {
         window.open($rootScope.issnip_report_link);
-    }
+    };
 
 }
 

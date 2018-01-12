@@ -774,7 +774,6 @@ hr {
 .issnip-spinner-container {
     display: flex;
     align-items: center;
-    width: 100%;
     border: 2px solid #aad1f9;
     transition: opacity  0.1s linear;
     padding: 10px;

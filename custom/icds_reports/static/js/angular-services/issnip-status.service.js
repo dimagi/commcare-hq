@@ -4,10 +4,10 @@ window.angular.module('icdsApp').factory('issnipStatusService', ['$http', functi
     return {
         getStatus: function(task_id) {
             return $http.get(url('issnip_pdf_status'), {
-                params: {task_id: task_id}
+                params: {task_id: task_id},
             }).then(function(response) {
                 return response.data;
             });
-        }
+        },
     };
 }]);
