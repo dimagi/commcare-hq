@@ -1,8 +1,6 @@
-version: '3'
 web:
-  build:
-    context: .
-    dockerfile: "${DOCKERFILE}"
+  build: .
+  dockerfile: "${DOCKERFILE}"
   environment:
     COMMCAREHQ_BOOTSTRAP: "yes"
     DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379 KAFKA:9092 ELASTICSEARCH:9200 RIAKCS:9980"
