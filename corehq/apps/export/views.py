@@ -20,7 +20,7 @@ from corehq.apps.analytics.tasks import send_hubspot_form, \
 from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, EmailRequests
+from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, EmailRequest
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
@@ -2484,11 +2484,7 @@ def can_download_daily_saved_export(export, domain, couch_user):
 @login_and_domain_required
 def add_export_email_request(request, domain):
     download_id = request.POST['download_id']
-    print('\n\n')
-    print(download_id);
-    print(get_download_context(download_id));
-    print('\n\n')
-    EmailRequests.objects.create(domain_name=domain, downloads_processing=download_id)
+    EmailRequest.objects.create(domain=domain, download_id=download_id)
     return HttpResponse()
 
 
