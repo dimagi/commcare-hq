@@ -3,8 +3,6 @@ from __future__ import division
 
 from datetime import datetime
 
-from django.db.models import Min
-
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 
