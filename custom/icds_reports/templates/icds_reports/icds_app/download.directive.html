@@ -8,9 +8,6 @@
         <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
-        <div class="alert alert-success" ng-show="$ctrl.showPdfMessage">
-            <strong>Info!</strong> "You will receive an email with a link to download the reports shortly. Please check the email that is associated with your ICDS-CAS Dashboard login."
-        </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
             <strong>Please make the following selections before you can export:</strong>
             <ul>
@@ -225,6 +222,13 @@
                         </button>
                     </form>
                 </div>
+            </div>
+            <div class="issnip-spinner-container" ng-if="$ctrl.showProgressBar() || $ctrl.readyToDownload()">
+                <i ng-if="$ctrl.showProgressBar()" class="fa fa-circle-o-notch fa-spin"></i>
+                <span ng-if="$ctrl.showProgressBar()">Preparing your ISSNIP report...</span>
+                <span ng-if="$ctrl.readyToDownload()">Your ISSNIP report is ready to be downloaded</span>
+                <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
+                   ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>
         </div>
     </div>

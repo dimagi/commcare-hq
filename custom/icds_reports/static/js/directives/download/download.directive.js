@@ -1,16 +1,29 @@
 /* global moment */
 
-function DownloadController($scope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures) {
+function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
+                            issnipStatusService) {
     var vm = this;
 
     vm.months = [];
     vm.years = [];
-    vm.showPdfMessage = $location.search()['show_pdf_message'] || false;
-    setTimeout(function() {
-        $scope.$apply(function() {
-            vm.showPdfMessage = false;
+    vm.task_id = $location.search()['task_id'] || '';
+    $rootScope.issnip_report_link = '';
+
+    var getISSNIPStatus = function () {
+        issnipStatusService.getStatus(vm.task_id).then(function (resp) {
+            if (resp.task_ready) {
+                clearInterval(statusCheck);
+                $rootScope.issnip_task_id = '';
+                $rootScope.issnip_report_link = resp.task_result.link;
+            }
         });
-    }, 3000);
+    };
+
+    if (vm.task_id) {
+        $rootScope.issnip_task_id = vm.task_id;
+        $location.search('task_id', null);
+        var statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
+    }
 
     vm.filterOptions = [
         {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
@@ -327,9 +340,23 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
     vm.isAWCsSelected = function() {
         return vm.selectedAWCs.length > 0;
     };
+
+    vm.showProgressBar = function () {
+        return $rootScope.issnip_task_id;
+    };
+
+    vm.readyToDownload = function () {
+        return $rootScope.issnip_report_link;
+    };
+
+    vm.goToLink = function () {
+        window.open($rootScope.issnip_report_link);
+    };
+
 }
 
-DownloadController.$inject = ['$scope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId', 'haveAccessToFeatures'];
+DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
+    'haveAccessToFeatures', 'issnipStatusService'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

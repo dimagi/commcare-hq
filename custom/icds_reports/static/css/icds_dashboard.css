@@ -771,3 +771,22 @@ table.dataTable td {
 hr {
     border-top: 2px solid #eee;
 }
+
+.issnip-spinner-container {
+    display: flex;
+    align-items: center;
+    border: 2px solid #aad1f9;
+    transition: opacity  0.1s linear;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+.issnip-spinner-container a {
+    margin-left: 10px;
+}
+
+.issnip-spinner-container span {
+    margin-left: 5px;
+}
+

@@ -221,7 +221,7 @@ def _find_stagnant_cases(adapter):
 india_timezone = pytz.timezone('Asia/Kolkata')
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue')
 def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
 
     utc_now = datetime.now(pytz.utc)
@@ -271,11 +271,14 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
         cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
 
     params = {
-        'domain': 'icds-cas',
+        'domain': domain,
         'uuid': cache_key,
         'format': pdf_format
     }
-    send_report_download_email(
-        'ISSNIP monthly register',
-        user,
-        reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain}))
+
+    return {
+        'domain': domain,
+        'uuid': cache_key,
+        'format': pdf_format,
+        'link': reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain})
+    }
