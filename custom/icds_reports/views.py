@@ -4,6 +4,7 @@ import requests
 
 from datetime import datetime, date
 
+from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -685,7 +686,7 @@ class ExportIndicatorView(View):
                     location_type__code=AWC_LOCATION_TYPE_CODE
                 ).location_ids()
             pdf_format = request.POST.get('pdfformat')
-            prepare_issnip_monthly_register_reports.delay(
+            task = prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
                 self.request.couch_user,
                 awcs,
@@ -693,8 +694,9 @@ class ExportIndicatorView(View):
                 month,
                 year
             )
+            task_id = task.task_id
             url = redirect('icds_dashboard', domain=self.kwargs['domain'])
-            return redirect(url.url + '#/download?show_pdf_message=true')
+            return redirect(url.url + '#/download?task_id=' + task_id)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1745,3 +1747,23 @@ class DownloadPDFReport(View):
             response = HttpResponse(client.get(uuid), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
             return response
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CheckPDFReportStatus(View):
+    def get(self, request, *args, **kwargs):
+        task_id = self.request.GET.get('task_id', None)
+
+        res = AsyncResult(task_id)
+        status = res.ready()
+
+        if status:
+            task_result = prepare_issnip_monthly_register_reports.AsyncResult(task_id)
+            result = task_result.get()
+            return JsonResponse(
+                {
+                    'task_ready': status,
+                    'task_result': result
+                }
+            )
+        return JsonResponse({'task_ready': status})
