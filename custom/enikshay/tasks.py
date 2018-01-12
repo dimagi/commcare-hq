@@ -864,7 +864,7 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
 def run_duplicate_occurrences_and_episodes_reconciliation():
     run_model_reconciliation(
         'duplicate_occurrences_and_episodes_reconciliation',
-        recipient='sshah@dimagi.com',
+        email='sshah@dimagi.com',
         commit=False
     )
 
@@ -873,7 +873,7 @@ def run_duplicate_occurrences_and_episodes_reconciliation():
 def run_drug_resistance_reconciliation():
     run_model_reconciliation(
         'drug_resistance_reconciliation',
-        recipient='sshah@dimagi.com',
+        email='sshah@dimagi.com',
         commit=False
     )
 
@@ -882,7 +882,7 @@ def run_drug_resistance_reconciliation():
 def run_multiple_open_referrals_reconciliation():
     run_model_reconciliation(
         'multiple_open_referrals_reconciliation',
-        recipient=['kmehrotra@dimagi.com', 'jdaniel@dimagi.com'],
+        email=['kmehrotra@dimagi.com', 'jdaniel@dimagi.com'],
         commit=False
     )
 
@@ -891,7 +891,7 @@ def run_multiple_open_referrals_reconciliation():
 def run_investigations_reconciliation():
     run_model_reconciliation(
         'investigations_reconciliation',
-        recipient=['mkangia@dimagi.com'],
+        email=['mkangia@dimagi.com'],
         commit=False
     )
 
