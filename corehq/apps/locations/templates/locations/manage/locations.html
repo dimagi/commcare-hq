@@ -229,6 +229,8 @@
 
 <hr />
 
+{% if request|toggle_enabled:'LOCATION_SEARCH' %}
+
 <label for="location_search" class="col-xs-4 col-md-3 col-lg-2 control-label">Location</label>
 <div class="col-xs-8 col-md-8 col-lg-9">
 
@@ -244,6 +246,8 @@
         </span>
 
 </div>
+
+{% endif %}
 
 <link href="{% static 'select2/dist/css/select2.min.css' %}" rel="stylesheet"/>
 <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>

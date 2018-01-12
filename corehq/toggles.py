@@ -1460,3 +1460,10 @@ ENABLE_REPEATER_EDIT_AND_PAUSE = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )
+
+LOCATION_SEARCH = StaticToggle(
+    'location_search',
+    "Allow search for location in organization structure",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
