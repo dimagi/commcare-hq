@@ -17,12 +17,12 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         open_sessions = SQLXFormsSession.objects.filter(
-            phone_number__isnull=True,
+            current_action_due__isnull=True,
             end_time__isnull=True
         )
 
         closed_sessions = SQLXFormsSession.objects.filter(
-            phone_number__isnull=True,
+            current_action_due__isnull=True,
             end_time__isnull=False
         )
 
