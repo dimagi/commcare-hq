@@ -3,7 +3,7 @@ cython==0.23.4
 restkit==4.2.2
 iso8601==0.1.11
 jsonobject==0.7.1
-jsonobject-couchdbkit==0.9.0.0
+#jsonobject-couchdbkit==0.9.0.0
 celery==3.1.18
 # required by django-digest
 decorator==4.0.11
@@ -28,7 +28,7 @@ kafka-python==0.9.5
 mock==2.0.0
 openpyxl==2.2.5
 Pillow==2.7.0
-phonenumberslite==7.1.0
+phonenumberslite==8.8.9
 psycopg2==2.7.3.1
 psycogreen==1.0
 pycrypto==2.6.1
@@ -96,7 +96,7 @@ dnspython==1.15.0
 raven==6.1.0
 quickcache==0.1.0
 zeep==1.6.0
-ethiopian_date==0.1.1
+#ethiopian_date==0.1.1
 architect==0.5.6
 contextlib2==0.5.4
 hiredis==0.2.0
