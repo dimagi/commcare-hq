@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import io
 import logging
@@ -1228,8 +1229,8 @@ def _get_uppercase_unicode_regexp():
     upper_group = u"".join(uppers)
     return re.compile(upper_group, re.UNICODE)
 
-SPECIAL = re.compile(ur"\W", re.UNICODE)
-NUMBER = re.compile(ur"\d", re.UNICODE)  # are there other unicode numerals?
+SPECIAL = re.compile(r"\W", re.UNICODE)
+NUMBER = re.compile(r"\d", re.UNICODE)  # are there other unicode numerals?
 UPPERCASE = _get_uppercase_unicode_regexp()
 
 
