@@ -1461,3 +1461,11 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+
+AADHAAR_DEMO_AUTH_INTEGRATION = StaticToggle(
+    'aadhaar_demo_auth_integration',
+    'ICDS: Enable aadhaar demo auth',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)

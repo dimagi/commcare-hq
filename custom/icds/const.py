@@ -25,3 +25,7 @@ ENGLISH = 'en'
 HINDI = 'hin'
 TELUGU = 'tel'
 MARATHI = 'mar'
+AADHAAR_NUMBER_CASE_PROPERTY = "aadhar_number"
+DOB_CASE_PROPERTY = "dob"
+GENDER_CASE_PROPERTY = "sex"
+

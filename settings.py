@@ -910,6 +910,7 @@ AUTHPROXY_CERT = None
 
 ENIKSHAY_PRIVATE_API_USERS = {}
 ENIKSHAY_PRIVATE_API_PASSWORD = None
+AADHAAR_AUTH_CONFIG_FILE_PATH = None
 
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min

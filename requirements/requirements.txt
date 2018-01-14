@@ -105,3 +105,4 @@ ddtrace==0.9.2
 django-prbac==0.0.5
 html5lib==1.0b8
 xhtml2pdf==0.0.6
+git+git://github.com/dimagi/aadhaar-demo-auth@mk-add-features#aadhaar_demo_auth

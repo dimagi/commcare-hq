@@ -9,9 +9,10 @@ from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.chunked import chunked
 
 from corehq.util.log import with_progress_bar
+from custom.icds.const import AADHAAR_NUMBER_CASE_PROPERTY
 
 CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'modified_on',
-                    'name', 'aadhar_number', 'dob', 'died']
+                    'name', AADHAAR_NUMBER_CASE_PROPERTY, 'dob', 'died']
 
 SOURCE_FIELDS = CHILD_PROPERTIES + ['indices']
 
