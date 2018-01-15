@@ -259,9 +259,11 @@ class ENikshay2BMigrator(object):
 
         phone_number = person.get_case_property('phone_number')
         if phone_number:
+            number = phonenumbers.parse(phone_number, "IN")
+            number.italian_leading_zero = False
             props['contact_phone_number'] = strip_plus(
                 phonenumbers.format_number(
-                    phonenumbers.parse(phone_number, "IN"),
+                    number,
                     phonenumbers.PhoneNumberFormat.E164)
             )
 
