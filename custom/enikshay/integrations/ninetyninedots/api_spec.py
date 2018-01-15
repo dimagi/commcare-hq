@@ -250,8 +250,8 @@ def _format_number(phonenumber):
     if phonenumber:
         return phonenumbers.format_number(
             phonenumber,
-            phonenumbers.PhoneNumberFormat.INTERNATIONAL
-        ).replace(" ", "")
+            phonenumbers.PhoneNumberFormat.E164
+        )
 
 
 def noop(*args, **kwargs):
