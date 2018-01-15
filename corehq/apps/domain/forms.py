@@ -18,6 +18,7 @@ from crispy_forms.helper import FormHelper
 from dateutil.relativedelta import relativedelta
 from django import forms
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
@@ -635,6 +636,9 @@ class DomainGlobalSettingsForm(forms.Form):
         return cleaned_data
 
     def _save_logo_configuration(self, domain):
+        """
+        :raises IOError: if unable to save (e.g. PIL is unable to save PNG in CMYK mode)
+        """
         if self.can_use_custom_logo:
             logo = self.cleaned_data['logo']
             if logo:
@@ -688,7 +692,10 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
-        self._save_logo_configuration(domain)
+        try:
+            self._save_logo_configuration(domain)
+        except IOError as err:
+            messages.error(request, _('Unable to save custom logo: {}').format(err))
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
         domain.save()
