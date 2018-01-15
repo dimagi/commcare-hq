@@ -884,50 +884,47 @@ def get_updated_fields(existing_properties, new_properties):
 
 @task(queue='background_queue', ignore_result=True)
 def run_model_reconciliation(command_name, email, person_case_ids=None, commit=False):
-    call_command(command_name,
-                 recipient=email,
-                 person_case_ids=person_case_ids,
-                 commit=commit)
+    if settings.SERVER_ENVIRONMENT == "enikshay":
+        call_command(command_name,
+                     recipient=email,
+                     person_case_ids=person_case_ids,
+                     commit=commit)
 
 
 @periodic_task(run_every=crontab(hour=6, minute=30), queue='background_queue')
 def run_duplicate_occurrences_and_episodes_reconciliation():
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        run_model_reconciliation(
-            'duplicate_occurrences_and_episodes_reconciliation',
-            email='sshah@dimagi.com',
-            commit=False
-        )
+    run_model_reconciliation(
+        'duplicate_occurrences_and_episodes_reconciliation',
+        email='sshah@dimagi.com',
+        commit=False
+    )
 
 
 @periodic_task(run_every=crontab(hour=7), queue='background_queue')
 def run_drug_resistance_reconciliation():
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        run_model_reconciliation(
-            'drug_resistance_reconciliation',
-            email='sshah@dimagi.com',
-            commit=False
-        )
+    run_model_reconciliation(
+        'drug_resistance_reconciliation',
+        email='sshah@dimagi.com',
+        commit=False
+    )
 
 
 @periodic_task(run_every=crontab(hour=7, minute=30), queue='background_queue')
 def run_multiple_open_referrals_reconciliation():
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        run_model_reconciliation(
-            'multiple_open_referrals_reconciliation',
-            email=['kmehrotra@dimagi.com', 'jdaniel@dimagi.com'],
-            commit=False
-        )
+    run_model_reconciliation(
+        'multiple_open_referrals_reconciliation',
+        email=['kmehrotra@dimagi.com', 'jdaniel@dimagi.com'],
+        commit=False
+    )
 
 
 @periodic_task(run_every=crontab(hour=8), queue='background_queue')
 def run_investigations_reconciliation():
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        run_model_reconciliation(
-            'investigations_reconciliation',
-            email=['mkangia@dimagi.com'],
-            commit=False
-        )
+    run_model_reconciliation(
+        'investigations_reconciliation',
+        email=['mkangia@dimagi.com'],
+        commit=False
+    )
 
 
 @task
