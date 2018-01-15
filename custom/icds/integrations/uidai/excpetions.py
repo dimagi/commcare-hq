@@ -1,0 +1,2 @@
+class AadhaarPayloadException(Exception):
+    pass

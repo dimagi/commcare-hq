@@ -8,7 +8,7 @@ from corehq.toggles import AADHAAR_DEMO_AUTH_INTEGRATION
 from custom.enikshay.integrations.utils import case_properties_changed
 from custom.icds.const import AADHAAR_NUMBER_CASE_PROPERTY
 from custom.icds.integrations.uidai.repeater_generator import AadhaarDemoAuthRepeaterGenerator
-from aadhar_demo_auth.authenticate import AuthenticateAadhaarDemographicDetails
+from aadhaar_demo_auth.authenticate import AuthenticateAadhaarDemographicDetails
 
 
 class AadhaarDemoAuthRepeater(CaseRepeater):
@@ -43,13 +43,14 @@ class AadhaarDemoAuthRepeater(CaseRepeater):
             person_matches = AuthenticateAadhaarDemographicDetails(
                 payload['aadhaar_number'],
                 {"Pi":
-                    {"name": payload['name'],
-                     "gender": payload['gender'],
-                     "dob": payload['dob'],
+                    {"name": payload.get('name'),
+                     "gender": payload.get('gender'),
+                     "dob": payload.get('dob'),
                      }
                  },
-                {'ip': payload['ip'],
-                 'unique_id': payload['device_id'],
+                {
+                    'ip': payload.get('ip'),
+                    'unique_id': payload.get('device_id'),
                  },
                 config_file_path=settings.AADHAAR_AUTH_CONFIG_FILE_PATH
             ).authenticate()

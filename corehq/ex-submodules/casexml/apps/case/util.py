@@ -238,3 +238,10 @@ def get_all_changes_to_case_property(case, case_property_name):
             case_property_changes.append(property_changed_info)
 
     return case_property_changes
+
+
+def get_latest_change_to_case_property(case, case_property_name):
+    for transaction in reversed(case.actions):
+        property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
+        if property_changed_info:
+            return property_changed_info

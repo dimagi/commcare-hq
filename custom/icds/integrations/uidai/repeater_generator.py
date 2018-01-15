@@ -8,16 +8,22 @@ from custom.icds.const import (
     GENDER_CASE_PROPERTY,
 )
 from corehq.apps.hqcase.utils import update_case
+from casexml.apps.case.util import get_latest_change_to_case_property
+
+from custom.icds.integrations.uidai.excpetions import AadhaarPayloadException
 
 
 class AadhaarDemoAuthRepeaterGenerator(BasePayloadGenerator):
     def get_payload(self, repeat_record, person_case):
         server_ip = socket.gethostbyname(socket.gethostname())
-        last_case_action = person_case.get_form_transactions()[-1]
+        device_id = None
         try:
-            device_id = last_case_action.form.metadata.deviceID
-        except AttributeError as e:
-            pass
+            last_change_info = get_latest_change_to_case_property(person_case, AADHAAR_NUMBER_CASE_PROPERTY)
+            if last_change_info:
+                transaction = last_change_info.case_transaction
+                device_id = transaction.form.metadata.deviceID
+        except AttributeError:
+            raise AadhaarPayloadException("Could not determine device ID")
         return {
             'aadhaar_number': person_case.get_case_property(AADHAAR_NUMBER_CASE_PROPERTY),
             'name': person_case.name,
