@@ -11,6 +11,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.base import View
 
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from custom.champ.sqldata import TargetsDataSource, UICFromEPMDataSource, UICFromCCDataSource, \
@@ -20,12 +21,23 @@ from custom.champ.utils import PREVENTION_XMLNS, POST_TEST_XMLNS, ACCOMPAGNEMENT
     SUIVI_MEDICAL_XMLNS, ENHANCED_PEER_MOBILIZATION, CHAMP_CAMEROON, TARGET_XMLNS
 
 
-def get_user_ids_for_group(group_id):
-    if group_id:
+def get_user_ids_for_group(groups):
+    users = []
+    for group_id in groups:
         group = Group.get(group_id)
-        users = group.get_user_ids()
-        return users
-    return None
+        users.extend(group.get_user_ids())
+    return users
+
+
+def get_age_ranges(ages):
+    ranges = []
+    for age in ages:
+        if age != '50+ yrs' and age != '':
+            start_end = age.split(" ")[0].split("-")
+            ranges.append({'start': start_end[0], 'end': start_end[1]})
+        elif age == '50+ yrs':
+            ranges.append({'start': 50, 'end': 200})
+    return ranges
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -38,33 +50,34 @@ class PrevisionVsAchievementsView(View):
     def get_target_data(self, domain):
         config = {
             'domain': domain,
-            'district': self.post_data.get('target_district', None),
-            'cbo': self.post_data.get('target_cbo', None),
-            'clienttype': self.post_data.get('target_clienttype', None),
-            'userpl': self.post_data.get('target_userpl', None),
+            'district': self.post_data.get('target_district', []),
+            'cbo': self.post_data.get('target_cbo', []),
+            'userpl': self.post_data.get('target_userpl', []),
             'fiscal_year': self.post_data.get('target_fiscal_year', None)
         }
-        client_type = self.post_data.get('target_clienttype', None)
-        if client_type:
-            if client_type == 'client_fsw':
-                client_type = 'cfsw'
-            client_type = client_type.lower()
 
-        config.update({'client_type': client_type})
+        clienttype = self.post_data.get('target_clienttype', [])
+        for idx, type in enumerate(clienttype):
+            if type == 'client_fsw':
+                type = 'cfsw'
+            clienttype[idx] = type.lower()
+
+        config.update({'clienttype': clienttype})
         target_data = TargetsDataSource(config=config).data
         return target_data
 
     def get_kp_prev_achievement(self, domain):
         config = {
             'domain': domain,
-            'age': self.post_data.get('kp_prev_age', None),
-            'district': self.post_data.get('kp_prev_district', None),
+            'age': get_age_ranges(self.post_data.get('kp_prev_age', [])),
+            'district': self.post_data.get('kp_prev_district', []),
             'visit_date_start': self.post_data.get('kp_prev_visit_date_start', None),
             'visit_date_end': self.post_data.get('kp_prev_visit_date_end', None),
             'activity_type': self.post_data.get('kp_prev_activity_type', None),
             'type_visit': self.post_data.get('kp_prev_visit_type', None),
-            'client_type': self.post_data.get('kp_prev_client_type', None),
-            'user_id': get_user_ids_for_group(self.post_data.get('kp_prev_user_group', None)),
+            'client_type': self.post_data.get('kp_prev_client_type', []),
+            'user_id': get_user_ids_for_group(self.post_data.get('kp_prev_user_group', [])),
+            'want_hiv_test': self.post_data.get('kp_prev_want_hiv_test', None),
         }
         achievement = UICFromEPMDataSource(config=config).data
         return achievement.get(PREVENTION_XMLNS, {}).get('uic', 0)
@@ -76,10 +89,10 @@ class PrevisionVsAchievementsView(View):
             'posttest_date_end': self.post_data.get('htc_tst_post_date_end', None),
             'hiv_test_date_start': self.post_data.get('htc_tst_hiv_test_date_start', None),
             'hiv_test_date_end': self.post_data.get('htc_tst_hiv_test_date_end', None),
-            'age_range': self.post_data.get('htc_tst_age_range', None),
-            'district': self.post_data.get('htc_tst_district', None),
-            'client_type': self.post_data.get('htc_tst_client_type', None),
-            'user_id': get_user_ids_for_group(self.post_data.get('htc_tst_user_group', None)),
+            'age_range': self.post_data.get('htc_tst_age_range', []),
+            'district': self.post_data.get('htc_tst_district', []),
+            'client_type': self.post_data.get('htc_tst_client_type', []),
+            'user_id': get_user_ids_for_group(self.post_data.get('htc_tst_user_group', [])),
         }
         achievement = UICFromCCDataSource(config=config).data
         return achievement.get(POST_TEST_XMLNS, {}).get('uic', 0)
@@ -91,10 +104,10 @@ class PrevisionVsAchievementsView(View):
             'posttest_date_end': self.post_data.get('htc_pos_post_date_end', None),
             'hiv_test_date_start': self.post_data.get('htc_pos_hiv_test_date_start', None),
             'hiv_test_date_end': self.post_data.get('htc_pos_hiv_test_date_end', None),
-            'age_range': self.post_data.get('htc_pos_age_range', None),
-            'district': self.post_data.get('htc_pos_district', None),
-            'client_type': self.post_data.get('htc_pos_client_type', None),
-            'user_id': get_user_ids_for_group(self.post_data.get('htc_pos_user_group', None)),
+            'age_range': self.post_data.get('htc_pos_age_range', []),
+            'district': self.post_data.get('htc_pos_district', []),
+            'client_type': self.post_data.get('htc_pos_client_type', []),
+            'user_id': get_user_ids_for_group(self.post_data.get('htc_pos_user_group', [])),
         }
         achievement = HivStatusDataSource(config=config).data
         return achievement.get(POST_TEST_XMLNS, {}).get('uic', 0)
@@ -102,13 +115,13 @@ class PrevisionVsAchievementsView(View):
     def get_care_new_achivement(self, domain):
         config = {
             'domain': domain,
-            'hiv_status': self.post_data.get('care_new_hiv_status', None),
-            'client_type': self.post_data.get('care_new_client_type', None),
-            'age_range': self.post_data.get('care_new_age_range', None),
-            'district': self.post_data.get('care_new_district', None),
+            'hiv_status': self.post_data.get('care_new_hiv_status', []),
+            'client_type': self.post_data.get('care_new_client_type', []),
+            'age_range': self.post_data.get('care_new_age_range', []),
+            'district': self.post_data.get('care_new_district', []),
             'date_handshake_start': self.post_data.get('care_new_date_handshake_start', None),
             'date_handshake_end': self.post_data.get('care_new_date_handshake_end', None),
-            'user_id': get_user_ids_for_group(self.post_data.get('care_new_user_group', None)),
+            'user_id': get_user_ids_for_group(self.post_data.get('care_new_user_group', [])),
         }
         achievement = FormCompletionDataSource(config=config).data
         return achievement.get(ACCOMPAGNEMENT_XMLNS, {}).get('uic', 0)
@@ -116,13 +129,13 @@ class PrevisionVsAchievementsView(View):
     def get_tx_new_achivement(self, domain):
         config = {
             'domain': domain,
-            'hiv_status': self.post_data.get('tx_new_hiv_status', None),
-            'client_type': self.post_data.get('tx_new_client_type', None),
-            'age_range': self.post_data.get('tx_new_age_range', None),
-            'district': self.post_data.get('tx_new_district', None),
+            'hiv_status': self.post_data.get('tx_new_hiv_status', []),
+            'client_type': self.post_data.get('tx_new_client_type', []),
+            'age_range': self.post_data.get('tx_new_age_range', []),
+            'district': self.post_data.get('tx_new_district', []),
             'first_art_date_start': self.post_data.get('tx_new_first_art_date_start', None),
             'first_art_date_end': self.post_data.get('tx_new_first_art_date_end', None),
-            'user_id': get_user_ids_for_group(self.post_data.get('tx_new_user_group', None)),
+            'user_id': get_user_ids_for_group(self.post_data.get('tx_new_user_group', [])),
         }
         achievement = FirstArtDataSource(config=config).data
         return achievement.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0)
@@ -130,14 +143,14 @@ class PrevisionVsAchievementsView(View):
     def get_tx_undetect_achivement(self, domain):
         config = {
             'domain': domain,
-            'hiv_status': self.post_data.get('tx_undetect_hiv_status', None),
-            'client_type': self.post_data.get('tx_undetect_client_type', None),
-            'age_range': self.post_data.get('tx_undetect_age_range', None),
-            'district': self.post_data.get('tx_undetect_district', None),
+            'hiv_status': self.post_data.get('tx_undetect_hiv_status', []),
+            'client_type': self.post_data.get('tx_undetect_client_type', []),
+            'age_range': self.post_data.get('tx_undetect_age_range', []),
+            'district': self.post_data.get('tx_undetect_district', []),
             'date_last_vl_test_start': self.post_data.get('tx_undetect_date_last_vl_test_start', None),
             'date_last_vl_test_end': self.post_data.get('tx_undetect_date_last_vl_test_end', None),
             'undetect_vl': self.post_data.get('tx_undetect_undetect_vl', None),
-            'user_id': get_user_ids_for_group(self.post_data.get('tx_undetect_user_group', None)),
+            'user_id': get_user_ids_for_group(self.post_data.get('tx_undetect_user_group', [])),
         }
         achievement = LastVLTestDataSource(config=config).data
         return achievement.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0)
@@ -188,11 +201,11 @@ class PrevisionVsAchievementsTableView(View):
     def generate_data(self, domain):
         config = {
             'domain': domain,
-            'district': self.post_data.get('district', None),
+            'district': self.post_data.get('district', []),
             'type_visit': self.post_data.get('visit_type', None),
             'activity_type': self.post_data.get('activity_type', None),
-            'client_type': self.post_data.get('client_type', None),
-            'organization': self.post_data.get('organization', None),
+            'client_type': self.post_data.get('client_type', []),
+            'organization': self.post_data.get('organization', []),
             'visit_date_start': self.post_data.get('visit_date_start', None),
             'visit_date_end': self.post_data.get('visit_date_end', None),
             'posttest_date_start': self.post_data.get('post_date_start', None),
@@ -205,12 +218,13 @@ class PrevisionVsAchievementsTableView(View):
             'date_last_vl_test_end': self.post_data.get('date_last_vl_test_end', None),
             'fiscal_year': self.post_data.get('fiscal_year', None),
         }
-        client_type = self.post_data.get('client_type', None)
-        if client_type:
-            if client_type == 'client_fsw':
-                client_type = 'cfsw'
-            client_type = client_type.lower()
-        config.update({'clienttype': client_type})
+        clienttype = self.post_data.get('target_clienttype', [])
+        target_client_types = []
+        for type in clienttype:
+            if type == 'client_fsw':
+                type = 'cfsw'
+            target_client_types.append(type.lower())
+        config.update({'clienttype': target_client_types})
 
         targets = TargetsDataSource(config=config).data
         kp_prev = UICFromEPMDataSource(config=config).data
@@ -258,11 +272,11 @@ class ServiceUptakeView(View):
 
         config = {
             'domain': domain,
-            'district': self.post_data.get('district', None),
+            'district': self.post_data.get('district', []),
             'type_visit': self.post_data.get('visit_type', None),
             'activity_type': self.post_data.get('activity_type', None),
-            'client_type': self.post_data.get('client_type', None),
-            'organization': self.post_data.get('organization', None),
+            'client_type': self.post_data.get('client_type', []),
+            'organization': self.post_data.get('organization', []),
             'visit_date_start': start_date,
             'visit_date_end': end_date,
             'posttest_date_start': start_date,
@@ -412,3 +426,34 @@ class OrganizationsFilter(View):
         return JsonResponse(data={
             'options': options + [{'id': loc.location_id, 'value': loc.name} for loc in locations]
         })
+
+
+class HierarchyFilter(View):
+    def get(self, request, *args, **kwargs):
+        domain = self.kwargs['domain']
+        districts = FixtureDataItem.get_item_list(domain, 'district')
+        cbos = FixtureDataItem.get_item_list(domain, 'cbo')
+        clienttypes = FixtureDataItem.get_item_list(domain, 'clienttype')
+        userpls = FixtureDataItem.get_item_list(domain, 'userpl')
+
+        def to_filter_format(data, parent_key=None):
+            locations = []
+            for row in data:
+                loc_id = row.fields['id'].field_list[0].field_value
+                loc = dict(
+                    id=loc_id,
+                    value=loc_id
+                )
+                if parent_key:
+                    parent_id = row.fields[parent_key].field_list[0].field_value
+                    loc.update({'parent_id': parent_id})
+                locations.append(loc)
+            return locations
+
+        hierarchy = {
+            'districts': to_filter_format(districts),
+            'cbos': to_filter_format(cbos, 'district_id'),
+            'clienttypes': to_filter_format(clienttypes, 'cbo_id'),
+            'userpls': to_filter_format(userpls, 'clienttype_id')
+        }
+        return JsonResponse(data=hierarchy)

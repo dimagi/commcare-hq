@@ -17,10 +17,10 @@
                         <div class="col-md-1"></div>
                         <div class="col-md-2">
                             <label>District:</label>
-                            <ui-select ng-model="mainCtrl.filters.district" theme="bootstrap">
-                                <ui-select-match placeholder="District"><span ng-bind="$select.selected.value"></span></ui-select-match>
-                                <ui-select-choices repeat="district.id as district in mainCtrl.districts">
-                                    <div ng-bind="district.value | highlight: $select.search"></div>
+                            <ui-select multiple ng-model="mainCtrl.filters.district" theme="bootstrap">
+                                <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
+                                <ui-select-choices repeat="district.id as district in mainCtrl.districts | propsFilter: {value: $select.search}">
+                                    <div ng-bind="district.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -29,7 +29,7 @@
                             <ui-select ng-model="mainCtrl.filters.visit_type" theme="bootstrap">
                                 <ui-select-match placeholder="Visit Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="visit.id as visit in mainCtrl.visitsTypes">
-                                    <div ng-bind="visit.value | highlight: $select.search"></div>
+                                    <div ng-bind="visit.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -38,25 +38,25 @@
                             <ui-select ng-model="mainCtrl.filters.activity_type" theme="bootstrap">
                                 <ui-select-match placeholder="Activity Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="activity.id as activity in mainCtrl.activityTypes">
-                                    <div ng-bind="activity.value | highlight: $select.search"></div>
+                                    <div ng-bind="activity.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
                         <div class="col-md-2">
                             <label>Client Type:</label>
-                            <ui-select ng-model="mainCtrl.filters.client_type" theme="bootstrap">
-                                <ui-select-match placeholder="Client Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                            <ui-select multiple ng-model="mainCtrl.filters.client_type" theme="bootstrap">
+                                <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                 <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
-                                    <div ng-bind="client.value | highlight: $select.search"></div>
+                                    <div ng-bind="client.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
                         <div class="col-md-2">
                             <label>Organization:</label>
-                            <ui-select ng-model="mainCtrl.filters.organization" theme="bootstrap">
-                                <ui-select-match placeholder="Organization"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                            <ui-select multiple ng-model="mainCtrl.filters.organization" theme="bootstrap">
+                                <ui-select-match placeholder="Organization"><span ng-bind="$item.value"></span></ui-select-match>
                                 <ui-select-choices repeat="organization.id as organization in mainCtrl.organizations | propsFilter: {value: $select.search}">
-                                    <div ng-bind-html="organization.value | highlight: $select.search"></div>
+                                    <div ng-bind-html="organization.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -69,7 +69,7 @@
                             <ui-select ng-model="mainCtrl.filters.month_start" theme="bootstrap">
                                 <ui-select-match placeholder="Month"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="month.id as month in mainCtrl.months">
-                                    <div ng-bind="month.value | highlight: $select.search"></div>
+                                    <div ng-bind="month.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -78,7 +78,7 @@
                             <ui-select ng-model="mainCtrl.filters.year_start" theme="bootstrap">
                                 <ui-select-match placeholder="Year"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="year.id as year in mainCtrl.years">
-                                    <div ng-bind="year.value | highlight: $select.search"></div>
+                                    <div ng-bind="year.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -87,7 +87,7 @@
                             <ui-select ng-model="mainCtrl.filters.month_end" theme="bootstrap">
                                 <ui-select-match placeholder="Month"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="month.id as month in mainCtrl.months">
-                                    <div ng-bind="month.value | highlight: $select.search"></div>
+                                    <div ng-bind="month.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>
@@ -96,7 +96,7 @@
                             <ui-select ng-model="mainCtrl.filters.year_end" theme="bootstrap">
                                 <ui-select-match placeholder="Year"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="year.id as year in mainCtrl.years">
-                                    <div ng-bind="year.value | highlight: $select.search"></div>
+                                    <div ng-bind="year.value"></div>
                                 </ui-select-choices>
                             </ui-select>
                         </div>

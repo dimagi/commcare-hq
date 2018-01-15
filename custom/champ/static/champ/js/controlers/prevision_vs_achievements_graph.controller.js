@@ -8,6 +8,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
     var defaultStartDate = moment(new Date(currentYear, 0, 1)).format('YYYY-MM-DD');
     var defaultEndDate = moment().format('YYYY-MM-DD');
     var defaultDate = {startDate: defaultStartDate, endDate: defaultEndDate};
+
+    vm.kp_prev_age = {id: '', value: 'All'},
     vm.kp_prev_visit_date = defaultDate;
     vm.htc_tst_post_date = defaultDate;
     vm.htc_pos_post_date = defaultDate;
@@ -43,16 +45,24 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         tx_new_first_art_date_start: vm.tx_new_first_art_date.startDate,
         tx_new_first_art_date_end: vm.tx_new_first_art_date.endDate,
         tx_undetect_date_last_vl_test_start: vm.tx_undetect_date_last_vl_test.startDate,
-        tx_undetect_fdate_last_vl_test_end: vm.tx_undetect_date_last_vl_test.endDate,
+        tx_undetect_date_last_vl_test_end: vm.tx_undetect_date_last_vl_test.endDate,
+        target_district: [],
+        target_cbo: [],
+        target_userpl: [],
+        target_clienttype: [],
     };
 
     vm.districts = [];
+    vm.districtsTmp = [];
     vm.visitsTypes = [];
     vm.activityTypes = [];
     vm.clientTypes = [];
+    vm.clienttypes = [];
     vm.cbos = [];
+    vm.cbosTmp = [];
     vm.fiscalYears = [];
     vm.userpls = [];
+    vm.userplsTmp = [];
     vm.groups = [];
 
     vm.hivStatuses = [
@@ -96,6 +106,12 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         {id: '20-24 yrs', value: '20-24 yrs'},
         {id: '25-50 yrs', value: '25-50 yrs'},
         {id: '50+ yrs', value: '50+ yrs'},
+    ];
+
+    vm.want_hiv_test = [
+        {id: '', value: 'All'},
+        {id: 'yes', value: 'Yes'},
+        {id: 'no', value: 'No'},
     ];
 
     vm.ages = [];
@@ -193,21 +209,42 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         vm.filters.tx_undetect_date_last_vl_test_end = vm.tx_undetect_date_last_vl_test.endDate.format('YYYY-MM-DD');
     }, true);
 
+    $scope.$watch(function () {
+        return vm.kp_prev_age;
+    }, function (newValue, oldValue) {
+        if (newValue === oldValue) {
+            return;
+        }
+        if (vm.kp_prev_age.id !== '' && vm.kp_prev_age.id !== '50+ yrs') {
+            var ranges = vm.kp_prev_age.id.split(" ")[0].split("-");
+            vm.filters.kp_prev_age_start = ranges[0];
+            vm.filters.kp_prev_age_end = ranges[1];
+        } else if (vm.kp_prev_age.id === '50+ yrs') {
+            vm.filters.kp_prev_age_start = 50;
+            vm.filters.kp_prev_age_end = 200;
+        } else {
+            vm.filters.kp_prev_age_start = '';
+            vm.filters.kp_prev_age_end = '';
+        }
+
+    }, true);
+
     vm.getData = function() {
         reportsDataService.getPrevisionVsAchievementsData(vm.filters).then(function (response) {
             vm.chartData = response.data.chart;
-            filtersService.districtFilter().then(function (response) {
-                vm.districts = response.data.options;
-            });
-            filtersService.targetCBOFilter().then(function (response) {
-                vm.cbos = response.data.options;
-            });
-            filtersService.targetUserplFilter().then(function (response) {
-                vm.userpls = response.data.options;
-            });
             filtersService.groupsFilter().then(function (response) {
                 vm.groups = response.data.options;
             });
+            filtersService.hierarchy().then(function (response) {
+                vm.districtsTmp = response.data.districts;
+                vm.cbosTmp = response.data.cbos;
+                vm.clienttypes = response.data.clienttypes;
+                vm.userplsTmp = response.data.userpls;
+
+                vm.districts = vm.districtsTmp.slice();
+                vm.cbos = vm.cbosTmp.slice();
+                vm.userpls = vm.userplsTmp.slice();
+            })
         });
     };
     vm.getData();
@@ -220,7 +257,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 "top": 20,
                 "right": 20,
                 "bottom": 60,
-                "left": 50,
+                "left": 100,
             },
             "clipEdge": true,
             "staggerLabels": false,
@@ -237,6 +274,93 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
             },
         },
     };
+
+    vm.districtOnSelect = function ($item) {
+        vm.filters.target_cbo = [];
+        vm.filters.target_userpl = [];
+        vm.filters.target_clienttype = [];
+
+        var ids = $item.map(function(loc) { return loc.id });
+
+        if ($item.length === 0) {
+            vm.cbos = vm.cbosTmp.slice();
+            vm.userpls = vm.userplsTmp.slice();
+        } else {
+            vm.cbos = vm.cbosTmp.slice().filter(function (item) {
+                return ids.indexOf(item.parent_id) !== -1;
+            });
+            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+                var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
+                    var cbos = vm.cbosTmp.slice().filter(function (cbo) {
+                        return ids.indexOf(cbo.parent_id) !== -1;
+                    }).map(function (cbo) { return cbo.id });
+                    return cbos.indexOf(clienttype.parent_id) !== -1
+                }).map(function (ct) { return ct.id });
+                return clienttypes.indexOf(item.parent_id) !== -1
+            })
+        }
+
+    };
+
+    vm.cboOnSelect = function ($item) {
+        vm.filters.target_userpl = [];
+        vm.filters.target_clienttype = [];
+
+        var ids = $item.map(function(loc) { return loc.id });
+
+        if ($item.length === 0) {
+            vm.userpls = vm.userplsTmp.slice();
+        } else {
+            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+                var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
+                    return ids.indexOf(clienttype.parent_id) !== -1;
+                }).map(function (ct) { return ct.id });
+                return clienttypes.indexOf(item.parent_id) !== -1
+            })
+        }
+    };
+
+    vm.clienttypeOnSelect = function ($item) {
+        vm.filters.target_userpl = [];
+
+        var ids = $item.map(function(type) {
+            if (type.id === 'client_fsw') {
+                return 'cfsw'
+            }
+            return type.id.toLowerCase()
+        });
+
+        var selectedCbo = vm.filters.target_cbo;
+        var selectedDistrict = vm.filters.target_district;
+        if (selectedCbo.length > 0) {
+            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+                var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
+                    var type = clienttype.id.split("_")[0];
+                    return selectedCbo.indexOf(clienttype.parent_id) !== -1 && ids.indexOf(type) !== -1;
+                }).map(function (ct) { return ct.id });
+                return clienttypes.indexOf(item.parent_id) !== -1
+            })
+        } else if (selectedDistrict.length > 0) {
+            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+                var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
+                    var cbos = vm.cbosTmp.slice().filter(function (cbo) {
+                        return selectedDistrict.indexOf(cbo.parent_id) !== -1;
+                    }).map(function (cbo) { return cbo.id });
+                    var type = clienttype.id.split("_")[0];
+                    return cbos.indexOf(clienttype.parent_id) !== -1 && ids.indexOf(type) !== -1;
+                }).map(function (ct) { return ct.id });
+                return clienttypes.indexOf(item.parent_id) !== -1
+            })
+        } else {
+            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+                var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
+                    var type = clienttype.id.split("_")[0];
+                    return ids.indexOf(type) !== -1;
+                }).map(function (ct) { return ct.id });
+                return clienttypes.indexOf(item.parent_id) !== -1
+            })
+        }
+    }
 }
 
 PrevisionVsAchievementsGraphController.$inject = ['$scope', 'reportsDataService', 'filtersService'];
