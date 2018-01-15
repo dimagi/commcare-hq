@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.read_only import ReadOnlyObject
 from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -20,8 +21,8 @@ class FluffPillowProcessor(PillowProcessor):
         self.document_class = indicator_class.document_class
         self.save_direct_to_sql = indicator_class().save_direct_to_sql
         self.deleted_types = indicator_class.deleted_types
-        self.doc_type = indicator_class.document_class._doc_type
         self.wrapper = indicator_class.wrapper or indicator_class.document_class
+        self.doc_type = self.wrapper._doc_type
         self.delete_filtered = delete_filtered
 
         self._assert_valid()
@@ -71,6 +72,13 @@ class FluffPillowProcessor(PillowProcessor):
 
     def change_transform(self, doc_dict):
         delete = False
+        if self.document_class == XFormInstanceSQL:
+            # this is an invalid attribute for XFormInstance
+            doc_dict.pop('user_id', None)
+        elif self.document_class == CommCareCaseSQL:
+            # this is an invalid attribute for CommCareCase
+            doc_dict.pop('modified_by', None)
+            doc_dict.pop('deletion_id', None)
         doc = self.wrapper.wrap(doc_dict)
         doc = ReadOnlyObject(doc)
 
@@ -164,7 +172,7 @@ def get_multi_fluff_pillow(indicator_classes, name, kafka_topic, delete_filtered
         for cls in indicator_classes
     ]
     domains = list(set(d for cls in indicator_classes for d in cls.domains))
-    doc_types = list(set(cls.document_class._doc_type for cls in indicator_classes))
+    doc_types = list(set(cls.document_class.doc_type for cls in indicator_classes))
     assert len(doc_types) == 1
 
     return FluffPillow(

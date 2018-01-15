@@ -8,6 +8,7 @@ from fluff.filters import ORFilter, ANDFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.topics import CASE, FORM, CASE_SQL, FORM_SQL
 from corehq.fluff.calculators.xform import FormPropertyFilter
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from custom.intrahealth import (
     COMMANDE_XMLNSES,
     INTRAHEALTH_DOMAINS,
@@ -45,7 +46,8 @@ def _get_all_forms():
 
 
 class CouvertureFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL
+    wrapper = XFormInstance
     document_filter = ORFilter([
         FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]),
         FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1]),
@@ -67,7 +69,8 @@ class CouvertureFluff(fluff.IndicatorDocument):
 
 
 class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL
+    wrapper = XFormInstance
     document_filter = ORFilter([
         FormPropertyFilter(xmlns=COMMANDE_XMLNSES[0]),
         FormPropertyFilter(xmlns=COMMANDE_XMLNSES[1]),
@@ -86,7 +89,8 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
 
 
 class IntraHealthFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL
+    wrapper = XFormInstance
     document_filter = ORFilter(
         [
             ANDFilter([
@@ -127,7 +131,8 @@ class IntraHealthFluff(fluff.IndicatorDocument):
 
 
 class RecapPassageFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL
+    wrapper = XFormInstance
     document_filter = ANDFilter([
         ORFilter(
             [FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[0]), FormPropertyFilter(xmlns=OPERATEUR_XMLNSES[1])]
@@ -154,7 +159,8 @@ class RecapPassageFluff(fluff.IndicatorDocument):
 
 
 class TauxDeRuptureFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL
+    wrapper = XFormInstance
     document_filter = ANDFilter([
         FormPropertyFilter(xmlns=RAPTURE_XMLNSES[0]),
         IsExistFormPropertyFilter(xmlns=RAPTURE_XMLNSES[0], property_path="form", property_value='district')
@@ -167,13 +173,14 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     district_name = flat_field(lambda f: f.form['district'])
-    PPS_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
+    PPS_name = flat_field(lambda f: CommCareCaseSQL.get(f.form['case']['@case_id']).name)
 
     total_stock = report_calcs.RupturesDeStocks('pps_stocked_out')
 
 
 class LivraisonFluff(fluff.IndicatorDocument):
-    document_class = XFormInstance
+    document_class = XFormInstanceSQL
+    wrapper = XFormInstance
     document_filter = FormPropertyFilter(xmlns=LIVRAISON_XMLNSES[0])
 
     domains = INTRAHEALTH_DOMAINS
@@ -184,12 +191,13 @@ class LivraisonFluff(fluff.IndicatorDocument):
     duree_moyenne_livraison = report_calcs.DureeMoyenneLivraison()
 
     region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
-    district_id = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).location_id)
-    district_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
+    district_id = flat_field(lambda f: CommCareCaseSQL.get(f.form['case']['@case_id']).location_id)
+    district_name = flat_field(lambda f: CommCareCaseSQL.get(f.form['case']['@case_id']).name)
 
 
 class RecouvrementFluff(fluff.IndicatorDocument):
-    document_class = CommCareCase
+    document_class = CommCareCaseSQL
+    wrapper = CommCareCase
     kafka_topic = CASE_SQL if settings.SERVER_ENVIRONMENT == 'pna' else CASE
 
     document_filter = ANDFilter([
