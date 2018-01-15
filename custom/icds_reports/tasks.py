@@ -22,6 +22,7 @@ from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -58,8 +59,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
     monthly_dates.append(date)
 
-    if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
-        with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
+    db_alias = get_icds_ucr_db_alias()
+    if db_alias:
+        with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
             _update_aggregate_locations_tables(cursor)
 
@@ -123,8 +125,9 @@ def aggregate_tables(self, current_task, future_tasks):
     else:
         raise ValueError("Invalid aggregation type {}".format(aggregation_type))
 
-    if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
-        with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
+    db_alias = get_icds_ucr_db_alias()
+    if db_alias:
+        with connections[db_alias].cursor() as cursor:
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
                 celery_task_logger.info(
