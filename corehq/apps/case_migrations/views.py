@@ -54,8 +54,7 @@ def get_related_case_ids(domain, case_id):
     from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
     case = CaseAccessors(domain).get_case(case_id)
     child_cases = {c.case_id for c in get_case_hierarchy(case, {})['case_list']}
-    indexed_cases = {index_info.referenced_id for index_info in case.indices}
-    return child_cases | indexed_cases
+    return child_cases
 
 
 @domain_admin_required

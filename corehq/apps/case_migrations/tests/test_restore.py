@@ -52,9 +52,9 @@ class TestRelatedCases(TestCase):
 
     def test_get_related_case_ids(self):
         related_ids = get_related_case_ids(self.domain, self.dad.case_id)
+        # cases "above" this one should not be included
         self.assertItemsEqual(
             related_ids,
-            [self.greatgranddad.case_id, self.granddad.case_id,
-             self.dad.case_id, self.kid.case_id, self.kid2.case_id,
+            [self.dad.case_id, self.kid.case_id, self.kid2.case_id,
              self.grandkid.case_id]
         )
