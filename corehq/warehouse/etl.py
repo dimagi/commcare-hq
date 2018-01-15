@@ -35,7 +35,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         return {}
 
     @classmethod
-    def load(cls, batch):
+    def load(cls, batch, append=False):
         from corehq.warehouse.models.shared import WarehouseTable
         '''
         Bulk loads records for a dim or fact table from
@@ -44,6 +44,14 @@ class CustomSQLETLMixin(BaseETLMixin):
 
         assert issubclass(cls, WarehouseTable)
         database = db_for_read_write(cls)
+        if append:
+            batches = cls.objects.distinct('batch').values_list('batch', flat=True)
+            if batches:
+                oldest = Batch.objects.filter(pk__in=batches).order_by('start_datetime').first()
+                if batch.start_datetime < oldest.start_datetime:
+                    batch.end_datetime = oldest.start_datetime
+                else:
+                    return
         with connections[database].cursor() as cursor:
             cursor.execute(cls._sql_query_template(cls.slug, batch))
 
