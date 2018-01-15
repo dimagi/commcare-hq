@@ -383,7 +383,19 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }());
 
                 this.saveAttempted = ko.observable(false);
+                var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
+                this.useXpathExpression = ko.observable(
+                    hqImport('hqwebapp/js/toggles').toggleEnabled('CALCULATED_PROPERTY_IN_CASE_LIST')
+                    && addOns.calc_xpaths
+                    && this.original.useXpathExpression
+                );
+                this.useXpathExpression.subscribe(function(){
+                    that.fire('change');
+                });
                 this.showWarning = ko.computed(function() {
+                    if(this.useXpathExpression()) {
+                        return false;
+                    }
                     if (this.isTab) {
                         // Data tab missing its nodeset
                         return this.hasNodeset && !this.nodeset.observableVal();
@@ -653,7 +665,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                         column.header.val(getPropertyTitle(this.val()));
                         column.header.fire("change");
                     });
-                    if (column.original.hasAutocomplete) {
+                    if (column.original.hasAutocomplete || (
+                        column.original.useXpathExpression && !column.useXpathExpression()
+                    )) {
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                     }
                     return column;
@@ -885,6 +899,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     } else {
                         this.columns.splice(index, 0, column);
                     }
+                    column.useXpathExpression(!!columnConfiguration.useXpathExpression);
                 },
                 pasteCallback: function (data, index) {
                     try {
@@ -907,6 +922,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 },
                 addGraph: function () {
                     this.addItem({hasAutocomplete: false, format: 'graph'});
+                },
+                addXpathExpression: function () {
+                    this.addItem({hasAutocomplete: false, useXpathExpression: true});
                 }
             };
             return Screen;
