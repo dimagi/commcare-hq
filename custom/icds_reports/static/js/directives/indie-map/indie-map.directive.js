@@ -211,7 +211,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     var tooltipWithContent = d3.selectAll("#locPopup, #locPopup *");
 
     function equalToEventTarget() {
-        return this == d3.event.target;
+        return this === d3.event.target;
     }
 
     d3.select("body").on("click", function () {
