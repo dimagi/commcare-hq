@@ -47,7 +47,6 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - jls/data-corrections-cases # Jenny 1/4
-  - jls/source-maps # Jenny 1/10
   - je/cythonized-jsonobject # j$ 1/8
   - np/tb/xpath-expression # NP 1/10
   - np/tb/markdown # NP 1/10
