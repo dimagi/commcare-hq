@@ -1,6 +1,6 @@
+from __future__ import absolute_import
 import json
 import csv
-from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 from corehq.apps.userreports.models import DataSourceConfiguration
 
