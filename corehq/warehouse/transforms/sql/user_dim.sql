@@ -48,7 +48,6 @@ SELECT
 FROM {{ user_staging }}
 ON CONFLICT (user_id) DO UPDATE
 SET domain = EXCLUDED.domain,
-    user_id = EXCLUDED.user_id,
     username = EXCLUDED.username,
     user_type = EXCLUDED.user_type,
     first_name = EXCLUDED.first_name,
@@ -62,5 +61,4 @@ SET domain = EXCLUDED.domain,
     date_joined = EXCLUDED.date_joined,
     deleted = EXCLUDED.deleted,
     dim_last_modified = EXCLUDED.dim_last_modified,
-    dim_created_on = EXCLUDED.dim_created_on,
     batch_id = EXCLUDED.batch_id;

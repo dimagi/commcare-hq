@@ -50,8 +50,7 @@ SELECT
 FROM
     {{ domain_staging }}
 ON CONFLICT (domain_id) DO UPDATE
-SET domain_id = EXCLUDED.domain_id,
-    domain = EXCLUDED.domain,
+SET domain = EXCLUDED.domain,
     default_timezone = EXCLUDED.default_timezone,
     hr_name = EXCLUDED.hr_name,
     creating_user_id = EXCLUDED.creating_user_id,
@@ -67,5 +66,4 @@ SET domain_id = EXCLUDED.domain_id,
     domain_last_modified = EXCLUDED.domain_last_modified,
     domain_created_on = EXCLUDED.domain_created_on,
     dim_last_modified = EXCLUDED.dim_last_modified,
-    dim_created_on = EXCLUDED.dim_created_on,
     batch_id = EXCLUDED.batch_id;
