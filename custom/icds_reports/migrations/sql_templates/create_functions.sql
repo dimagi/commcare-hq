@@ -394,7 +394,9 @@ BEGIN
 		'sum(wasting_normal), ' ||
 		'sum(stunting_normal), ' ||
 		'sum(valid_all_registered_in_month), ' ||
-		'sum(ebf_no_info_recorded) ' ||
+		'sum(ebf_no_info_recorded), ' ||
+    'sum(CASE WHEN nutrition_status_weighed = 1 and height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+    'sum(CASE WHEN born_in_month = 1 and nutrition_status_weighed = 1 THEN 1 ELSE 0 END) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
     'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND (dob IS NULL OR dob <= ' || quote_literal(_aggregation_delay) || ') '
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
@@ -454,7 +456,9 @@ BEGIN
 	    'sum(wasting_normal), ' ||
 	    'sum(stunting_normal), ' ||
 	    'sum(valid_all_registered_in_month), ' ||
-	    'sum(ebf_no_info_recorded) ';
+	    'sum(ebf_no_info_recorded), ' ||
+      'sum(weighed_and_height_measured_in_month), ' ||
+      'sum(weighed_and_born_in_month) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
