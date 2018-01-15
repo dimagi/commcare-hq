@@ -4,10 +4,7 @@ property table layout with multiple (optionally named) tables of some number of
 rows of possibly differing length, where each row consists of a number of names
 and values which are calculated based on an expression and a data source.
 
-Supports psuedo-tables using dls (heights are adjusted using JavaScript) and
-real tables.
-
-See render_case() in casexml for an example of the display definition format.
+Supports psuedo-tables using dls and real tables.
 
 """
 
@@ -233,35 +230,6 @@ def get_tables_as_columns(*args, **kwargs):
         del section['rows']
 
     return sections
-
-
-@register.simple_tag
-def render_tables(tables, options=None):
-    options = options or {}
-    id = options.get('id')
-    style = options.get('style', 'dl')
-    assert style in ('table', 'dl')
-
-    if id is None:
-        import uuid
-        id = "a" + str(uuid.uuid4())
-   
-    if style == 'table':
-        return render_to_string("hqwebapp/proptable/property_table.html", {
-            "tables": tables,
-            "id": id
-        })
-
-    else:
-        adjust_heights = options.get('adjust_heights', True)
-        put_loners_in_wells = options.get('put_loners_in_wells', True)
-
-        return render_to_string("hqwebapp/proptable/dl_property_table.html", {
-            "tables": tables,
-            "id": id,
-            "adjust_heights": adjust_heights,
-            "put_loners_in_wells": put_loners_in_wells
-        })
 
 
 def get_default_definition(keys, num_columns=1, name=None, assume_phonetimes=True):
