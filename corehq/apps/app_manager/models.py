@@ -2032,7 +2032,6 @@ class DetailColumn(IndexedSchema):
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
-    calc_xpath = StringProperty(default=".")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
@@ -2094,7 +2093,6 @@ class DetailColumn(IndexedSchema):
             data['hasAutocomplete'] = False
             data['field'] = dot_interpolate(data.get('calc_xpath', '.'), data.get('field', ''))
             data['format'] = 'plain'
-            data['calc_xpath'] = '.'
 
         return super(DetailColumn, cls).wrap(data)
 
