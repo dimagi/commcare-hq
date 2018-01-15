@@ -98,8 +98,8 @@ function ProgressReportController($scope, $location, progressReportService,
             return 'black';
         }
 
-        var currentData = data[index].html;
-        var previousMonthData = data[index - 1].html;
+        var currentData = data[index].html.toFixed(2);
+        var previousMonthData = data[index - 1].html.toFixed(2);
 
         var colors = (reverse ? ['red', 'green'] : ['green', 'red']);
 
