@@ -186,7 +186,7 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         for db_name in get_db_aliases_for_partitioned_query():
             attachments = _get_query(db_name, max_age)
             while attachments.exists():
-                for attachment in attachments[10000]:
+                for attachment in attachments[:10000]:
                     paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
                     deleted_attachments.append(attachment.pk)
 
