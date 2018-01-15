@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import datetime
-from cStringIO import StringIO
+import io
 from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
@@ -255,7 +255,7 @@ def send_status_email(domain, async_result):
     recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
     cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
 
-    csv_file = StringIO()
+    csv_file = io.BytesIO()
     writer = UnicodeWriter(csv_file)
     writer.writerow(['Episode ID', 'Domain', 'Updater Class', 'Error'])
     writer.writerows(errors)
