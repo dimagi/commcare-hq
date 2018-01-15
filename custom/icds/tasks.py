@@ -167,35 +167,33 @@ def run_user_indicators(phased_rollout=True):
                 run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator, language_code)
 
 
-@periodic_task(run_every=crontab(minute=0, hour='22'))
-def delete_old_images():
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
-        return
+if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    @periodic_task(run_every=crontab(minute=0, hour='22'))
+    def delete_old_images():
+        start = datetime.utcnow()
+        max_age = start - timedelta(days=90)
+        db = get_blob_db()
+        paths = []
+        deleted_attachments = []
 
-    start = datetime.utcnow()
-    max_age = start - timedelta(days=90)
-    db = get_blob_db()
-    paths = []
-    deleted_attachments = []
+        def _get_query(db_name, max_age):
+            return XFormAttachmentSQL.objects.using(db_name).filter(
+                content_type='image/jpeg',
+                form__domain='icds-cas',
+                form__received_on__lt=max_age
+            )
 
-    def _get_query(db_name, max_age):
-        return XFormAttachmentSQL.objects.using(db_name).filter(
-            content_type='image/jpeg',
-            form__domain='icds-cas',
-            form__received_on__lt=max_age
-        )
-
-    for db_name in get_db_aliases_for_partitioned_query():
-        attachments = _get_query(db_name, max_age)
-        while attachments.exists():
-            for attachment in attachments[10000]:
-                paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
-                deleted_attachments.append(attachment.pk)
-
-            if paths:
-                db.bulk_delete(paths)
-                XFormAttachmentSQL.objects.using(db_name).filter(pk__in=deleted_attachments).delete()
-                paths = []
-                deleted_attachments = []
-
+        for db_name in get_db_aliases_for_partitioned_query():
             attachments = _get_query(db_name, max_age)
+            while attachments.exists():
+                for attachment in attachments[10000]:
+                    paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
+                    deleted_attachments.append(attachment.pk)
+
+                if paths:
+                    db.bulk_delete(paths)
+                    XFormAttachmentSQL.objects.using(db_name).filter(pk__in=deleted_attachments).delete()
+                    paths = []
+                    deleted_attachments = []
+
+                attachments = _get_query(db_name, max_age)
