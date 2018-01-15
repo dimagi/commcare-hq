@@ -11,7 +11,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.request('currentUser'),
                 lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
-                timezoneOffsetMillis = FormplayerFrontend.request('timezoneOffset'),
+                timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
