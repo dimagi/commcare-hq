@@ -2023,6 +2023,7 @@ class DetailColumn(IndexedSchema):
     header = DictProperty()
     model = StringProperty()
     field = StringProperty()
+    useXpathExpression = BooleanProperty(default=False)
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
@@ -2086,6 +2087,14 @@ class DetailColumn(IndexedSchema):
         if isinstance(data.get('enum'), dict):
             data['enum'] = sorted({'key': key, 'value': value}
                                   for key, value in data['enum'].items())
+
+        # Lazy migration: xpath expressions from format to first-class property
+        if data.get('format') == 'calculate':
+            data['useXpathExpression'] = True
+            data['hasAutocomplete'] = False
+            data['field'] = dot_interpolate(data.get('calc_xpath', '.'), data.get('field', ''))
+            data['format'] = 'plain'
+            data['calc_xpath'] = '.'
 
         return super(DetailColumn, cls).wrap(data)
 
