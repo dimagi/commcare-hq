@@ -25,3 +25,10 @@ SELECT
     now(),
     '{{ batch_id }}'
 FROM {{ application_staging }}
+ON CONFLICT (application_id) DO UPDATE
+SET domain = EXCLUDED.domain,
+    name = EXCLUDED.name,
+    application_last_modified = EXCLUDED.application_last_modified,
+    deleted = EXCLUDED.deleted,
+    dim_last_modified = EXCLUDED.dim_last_modified,
+    batch_id = EXCLUDED.batch_id;

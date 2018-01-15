@@ -46,3 +46,19 @@ SELECT
     now(),
     '{{ batch_id }}'
 FROM {{ user_staging }}
+ON CONFLICT (user_id) DO UPDATE
+SET domain = EXCLUDED.domain,
+    username = EXCLUDED.username,
+    user_type = EXCLUDED.user_type,
+    first_name = EXCLUDED.first_name,
+    last_name = EXCLUDED.last_name,
+    email = EXCLUDED.email,
+    doc_type = EXCLUDED.doc_type,
+    is_active = EXCLUDED.is_active,
+    is_staff = EXCLUDED.is_staff,
+    is_superuser = EXCLUDED.is_superuser,
+    last_login = EXCLUDED.last_login,
+    date_joined = EXCLUDED.date_joined,
+    deleted = EXCLUDED.deleted,
+    dim_last_modified = EXCLUDED.dim_last_modified,
+    batch_id = EXCLUDED.batch_id;
