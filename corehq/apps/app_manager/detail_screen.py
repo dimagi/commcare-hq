@@ -481,21 +481,6 @@ class Filter(HideShortColumn):
         return []
 
 
-@register_format_type('calculate')
-class Calculate(FormattedDetailColumn):
-
-    @property
-    def variables(self):
-        variables = {}
-        if re.search(r'\$lang', self.column.calc_xpath):
-            variables['lang'] = self.id_strings.current_language()
-        return variables
-
-    @property
-    def xpath_function(self):
-        return dot_interpolate(self.column.calc_xpath, self.xpath)
-
-
 @register_format_type('address')
 class Address(HideShortColumn):
     template_form = 'address'
