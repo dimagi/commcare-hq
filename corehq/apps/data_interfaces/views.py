@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import csv
 import io
 import json
@@ -238,7 +239,7 @@ class ArchiveFormView(DataInterfaceSection):
             if bulk_file.size > self.MAX_SIZE:
                 raise BulkUploadCasesException(_(u"File size too large. "
                                                  "Please upload file less than"
-                                                 " {size} Megabytes").format(size=self.MAX_SIZE / self.ONE_MB))
+                                                 " {size} Megabytes").format(size=self.MAX_SIZE // self.ONE_MB))
 
         except KeyError:
             raise BulkUploadCasesException(_("No files uploaded"))

@@ -82,7 +82,7 @@
                                     <td>Owned/rented/Others: {{ data.report.infrastructure_data|icds_type_of_building }}</td>
                                 </tr>
                                 <tr>
-                                    <td>Whether drinking water available at AWC? (Y/N): {{ data.report.agg_awc_monthly_data|icds_format:"infra_clean_water" }}</td>
+                                    <td>Whether drinking water available at AWC? (Y/N): {{ data.report.agg_awc_monthly_data.infra_clean_water|yesno }}</td>
                                     <td></td>
                                 </tr>
                                 <tr>

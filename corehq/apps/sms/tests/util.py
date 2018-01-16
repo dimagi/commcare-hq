@@ -76,11 +76,13 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             TOUCHFORMS_API_PASSWORD = "123"
         3. Start touchforms
     """
-
     users = None
     apps = None
     keywords = None
     groups = None
+
+    # Always start the test live server on port 8081
+    port = 8081
 
     def create_domain(self, domain):
         domain_obj = Domain(name=domain)

@@ -34,7 +34,7 @@ Initial setup
     If all goes according to plan you should be able to log into CommCare: http://localhost:8000 using
     the login details above.
     
-    You can create another user and domain with `$ ./manage.py bootstrap DOMAIN EMAIL PASSWORD`
+    You can create another user and domain with `$ ./manage.py make_superuser <email>`
     
     On Mac, run `docker-machine ip` to get the VM's IP address, which replaces `localhost` in the URL.
 

@@ -184,3 +184,5 @@ DUMMY_VALUES = {
 }
 
 LOCATION_SITE_CODE_MEHSANA = 'dto_gu_msn'
+EPISODE_LEDGER_FIXTURE = "adherence_ledger_values"
+EPISODE_LEDGER_SECTION_ID = "adherence"

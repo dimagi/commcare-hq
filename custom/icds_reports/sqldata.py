@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from StringIO import StringIO
 from collections import OrderedDict
+from io import BytesIO
 import datetime
 
 import pytz
@@ -178,7 +178,7 @@ class ExportableMixin(object):
         return order_by
 
     def to_export(self, format, location):
-        export_file = StringIO()
+        export_file = BytesIO()
         excel_data = self.get_excel_data(location)
 
         export_from_tables(excel_data, export_file, format)

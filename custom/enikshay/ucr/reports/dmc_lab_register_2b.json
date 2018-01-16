@@ -4,8 +4,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "test_2b_v4",
     "report_id": "dmc_lab_register_2b",

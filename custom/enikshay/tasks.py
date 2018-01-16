@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import datetime
-from cStringIO import StringIO
+import io
 from dimagi.utils.csv import UnicodeWriter
 from collections import defaultdict, namedtuple
 import pytz
@@ -11,7 +11,7 @@ from celery.task import periodic_task, task
 from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.utils.dateparse import parse_datetime, parse_date
+from django.utils.dateparse import parse_date
 from django.core.management import call_command
 from soil import MultipleTaskDownload
 
@@ -26,13 +26,20 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from custom.enikshay.ledger_utils import (
+    ledger_needs_update,
+    get_expected_fixture_value,
+    ledger_entry_id_for_adherence,
+    bulk_update_ledger_cases,
+)
 
-from .case_utils import (
+from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     get_prescription_vouchers_from_episode,
     get_private_diagnostic_test_cases_from_episode,
     get_prescription_from_voucher,
     get_person_case_from_episode,
+    get_adherence_cases_by_date,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from .const import (
@@ -56,8 +63,9 @@ import six
 
 logger = get_task_logger(__name__)
 
-DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source')
-BatchStatus = namedtuple('BatchStatus', 'update_count noupdate_count success_count errors case_batches duration')
+DoseStatus = namedtuple('DoseStatus', 'taken missed unknown source value')
+BatchStatus = namedtuple('BatchStatus',
+                         'update_count noupdate_count success_count errors case_batches ledger_batches duration')
 
 CACHE_KEY = "reconciliation-task-{}"
 cache = get_redis_client()
@@ -156,18 +164,23 @@ class EpisodeUpdater(object):
         error_count = 0
         success_count = 0
         case_batches = 0
+        ledger_batches = 0
 
         errors = []
         with Timer() as t:
             batch_size = 100
-            updates = []
+            case_updates = []
+            ledger_updates = []
             for episode in self._get_open_episode_cases(case_ids):
                 did_error = False
                 update_json = {}
                 for updater in self.updaters:
                     try:
-                        potential_update = updater(self.domain, episode).update_json()
-                        update_json.update(get_updated_fields(episode.dynamic_case_properties(), potential_update))
+                        _updater = updater(self.domain, episode)
+                        case_update = _updater.update_json()
+                        if hasattr(_updater, 'ledger_updates'):
+                            ledger_updates.extend(_updater.ledger_updates())
+                        update_json.update(get_updated_fields(episode.dynamic_case_properties(), case_update))
                     except Exception as e:
                         did_error = True
                         error = [episode.case_id, episode.domain, updater.__name__, e]
@@ -179,19 +192,26 @@ class EpisodeUpdater(object):
                     success_count += 1
 
                 if update_json:
-                    updates.append((episode.case_id, update_json, False))
+                    case_updates.append((episode.case_id, update_json, False))
                     update_count += 1
                 else:
                     noupdate_count += 1
-                if len(updates) >= batch_size:
-                    bulk_update_cases(self.domain, updates, device_id)
-                    updates = []
+                if len(case_updates) >= batch_size:
+                    bulk_update_cases(self.domain, case_updates, device_id)
+                    case_updates = []
                     case_batches += 1
+                if len(ledger_updates) >= batch_size:
+                    bulk_update_ledger_cases(self.domain, ledger_updates)
+                    ledger_updates = []
+                    ledger_batches += 1
 
-            if len(updates) > 0:
-                bulk_update_cases(self.domain, updates, device_id)
+            if len(case_updates) > 0:
+                bulk_update_cases(self.domain, case_updates, device_id)
+            if len(ledger_updates) > 0:
+                bulk_update_ledger_cases(self.domain, ledger_updates)
 
-        return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, t.interval)
+        return BatchStatus(update_count, noupdate_count, success_count, errors, case_batches, ledger_batches,
+                           t.interval)
 
     def _get_open_episode_cases(self, case_ids):
         case_accessor = CaseAccessors(self.domain)
@@ -235,7 +255,7 @@ def send_status_email(domain, async_result):
     recipient = "{}@{}.{}".format('commcarehq-ops+admins', 'dimagi', 'com')
     cc = "{}@{}.{}".format('frener', 'dimagi', 'com')
 
-    csv_file = StringIO()
+    csv_file = io.BytesIO()
     writer = UnicodeWriter(csv_file)
     writer.writerow(['Episode ID', 'Domain', 'Updater Class', 'Error'])
     writer.writerows(errors)
@@ -282,6 +302,7 @@ class EpisodeAdherenceUpdate(object):
         self.date_today_in_india = datetime.datetime.now(pytz.timezone(ENIKSHAY_TIMEZONE)).date()
         self.purge_date = self.date_today_in_india - datetime.timedelta(days=30)
         self._cache_dose_taken_by_date = False
+        self.dose_status_by_date = {}
 
     @memoized
     def get_fixture_column(self, fixture_column_name):
@@ -385,22 +406,22 @@ class EpisodeAdherenceUpdate(object):
         debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
 
         adherence_cases = self.get_valid_adherence_cases()
-        dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
+        self.dose_status_by_date = calculate_dose_status_by_day(adherence_cases)
         doses_per_week = self.get_doses_per_week()
 
         update = {
-            'adherence_total_doses_taken': self.count_doses_taken(dose_status_by_date),
+            'adherence_total_doses_taken': self.count_doses_taken(self.dose_status_by_date),
             'doses_per_week': doses_per_week
         }
-        update.update(self.get_adherence_scores(dose_status_by_date))
+        update.update(self.get_adherence_scores(self.dose_status_by_date))
         update.update(self.get_aggregated_scores(
             latest_adherence_date,
             adherence_schedule_date_start,
-            dose_status_by_date
+            self.dose_status_by_date
         ))
-        update.update(self.get_ip_followup_test_threshold_dates(dose_status_by_date))
-        update.update(self.get_cp_followup_test_threshold_dates(dose_status_by_date))
-        update.update(self.get_outcome_due_threshold_dates(dose_status_by_date))
+        update.update(self.get_ip_followup_test_threshold_dates(self.dose_status_by_date))
+        update.update(self.get_cp_followup_test_threshold_dates(self.dose_status_by_date))
+        update.update(self.get_outcome_due_threshold_dates(self.dose_status_by_date))
 
         return self.check_and_return(update)
 
@@ -622,6 +643,17 @@ class EpisodeAdherenceUpdate(object):
         else:
             return None
 
+    def ledger_updates(self):
+        _updates = []
+        for dose_date, dose_status in self.dose_status_by_date.items():
+            if dose_status.source and dose_status.value:
+                expected_value = get_expected_fixture_value(self.domain, dose_status.source, dose_status.value)
+                if expected_value:
+                    entry_id = ledger_entry_id_for_adherence(dose_date)
+                    if ledger_needs_update(self.domain, self.episode.case_id, entry_id, expected_value):
+                        _updates.append((self.episode.case_id, entry_id, expected_value))
+        return _updates
+
 
 class EpisodeVoucherUpdate(object):
     """
@@ -793,28 +825,26 @@ def calculate_dose_status_by_day(adherence_cases):
     adherence_cases: list of 'adherence' case dicts that come from elasticsearch
     Returns: {day: DoseStatus(taken, missed, unknown, source)}
     """
-
-    adherence_cases_by_date = defaultdict(list)
-    for case in adherence_cases:
-        adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
-        adherence_cases_by_date[adherence_date].append(case)
-
-    status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True, source=False))
+    adherence_cases_by_date = get_adherence_cases_by_date(adherence_cases)
+    status_by_day = defaultdict(lambda: DoseStatus(taken=False, missed=False, unknown=True,
+                                                   source=False, value=None))
     for day, cases in six.iteritems(adherence_cases_by_date):
-        case = _get_relevent_case(cases)
+        case = get_primary_adherence_case(cases)
         if not case:
             pass  # unknown
         elif case.get('adherence_value') in DOSE_TAKEN_INDICATORS:
             source = case.get('adherence_report_source') or case.get('adherence_source')
-            status_by_day[day] = DoseStatus(taken=True, missed=False, unknown=False, source=source)
+            status_by_day[day] = DoseStatus(taken=True, missed=False, unknown=False, source=source,
+                                            value=case.get('adherence_value'))
         elif case.get('adherence_value') == DOSE_MISSED:
-            status_by_day[day] = DoseStatus(taken=False, missed=True, unknown=False, source=False)
+            status_by_day[day] = DoseStatus(taken=False, missed=True, unknown=False, source=False,
+                                            value=case.get('adherence_value'))
         else:
             pass  # unknown
     return status_by_day
 
 
-def _get_relevent_case(cases):
+def get_primary_adherence_case(cases):
     """
     If there are multiple cases on one day filter to a single case as per below
     1. Find most relevant case
@@ -854,15 +884,56 @@ def get_updated_fields(existing_properties, new_properties):
 
 @task(queue='background_queue', ignore_result=True)
 def run_model_reconciliation(command_name, email, person_case_ids=None, commit=False):
-    call_command(command_name,
-                 recipient=email,
-                 person_case_ids=person_case_ids,
-                 commit=commit)
+    if settings.SERVER_ENVIRONMENT == "enikshay":
+        call_command(command_name,
+                     recipient=email,
+                     person_case_ids=person_case_ids,
+                     commit=commit)
+
+
+@periodic_task(run_every=crontab(hour=6, minute=30), queue='background_queue')
+def run_duplicate_occurrences_and_episodes_reconciliation():
+    run_model_reconciliation(
+        'duplicate_occurrences_and_episodes_reconciliation',
+        email='sshah@dimagi.com',
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=7), queue='background_queue')
+def run_drug_resistance_reconciliation():
+    run_model_reconciliation(
+        'drug_resistance_reconciliation',
+        email='sshah@dimagi.com',
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=7, minute=30), queue='background_queue')
+def run_multiple_open_referrals_reconciliation():
+    run_model_reconciliation(
+        'multiple_open_referrals_reconciliation',
+        email=['kmehrotra@dimagi.com', 'jdaniel@dimagi.com'],
+        commit=False
+    )
+
+
+@periodic_task(run_every=crontab(hour=8), queue='background_queue')
+def run_investigations_reconciliation():
+    run_model_reconciliation(
+        'investigations_reconciliation',
+        email=['mkangia@dimagi.com'],
+        commit=False
+    )
 
 
 @task
 def update_single_episode(domain, episode_case):
-    update_json = EpisodeAdherenceUpdate(domain, episode_case).update_json()
+    updater = EpisodeAdherenceUpdate(domain, episode_case)
+    update_json = updater.update_json()
+    ledger_updates = updater.ledger_updates()
     if update_json:
         update_case(domain, episode_case.case_id, update_json,
                     device_id="%s.%s" % (__name__, 'update_single_episode'))
+    if ledger_updates:
+        bulk_update_ledger_cases(domain, ledger_updates)

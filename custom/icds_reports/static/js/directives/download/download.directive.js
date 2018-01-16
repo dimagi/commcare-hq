@@ -1,16 +1,29 @@
 /* global moment */
 
-function DownloadController($scope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures) {
+function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
+                            issnipStatusService) {
     var vm = this;
 
     vm.months = [];
     vm.years = [];
-    vm.showPdfMessage = $location.search()['show_pdf_message'] || false;
-    setTimeout(function() {
-        $scope.$apply(function() {
-            vm.showPdfMessage = false;
+    vm.task_id = $location.search()['task_id'] || '';
+    $rootScope.issnip_report_link = '';
+
+    var getISSNIPStatus = function () {
+        issnipStatusService.getStatus(vm.task_id).then(function (resp) {
+            if (resp.task_ready) {
+                clearInterval(statusCheck);
+                $rootScope.issnip_task_id = '';
+                $rootScope.issnip_report_link = resp.task_result.link;
+            }
         });
-    }, 3000);
+    };
+
+    if (vm.task_id) {
+        $rootScope.issnip_task_id = vm.task_id;
+        $location.search('task_id', null);
+        var statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
+    }
 
     vm.filterOptions = [
         {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
@@ -70,6 +83,7 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
     ];
 
     vm.awcLocations = [];
+    vm.selectedAWCs = [];
 
     vm.indicators = [
         {id: 1, name: 'Child'},
@@ -237,9 +251,11 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
     };
 
     vm.onSelectForISSNIP = function ($item, level) {
-        locationsService.getAwcLocations($item.location_id).then(function (data) {
+        var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        locationsService.getAwcLocations(selectedLocationId).then(function (data) {
             vm.awcLocations = [ALL_OPTION].concat(data);
         });
+        vm.selectedAWCs = [];
         vm.onSelect($item, level);
     };
 
@@ -260,6 +276,14 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+    };
+
+    vm.onSelectAWCs = function($item) {
+        if ($item.location_id === 'all') {
+            vm.selectedAWCs = [$item];
+        } else if (vm.selectedAWCs.indexOf('all') !== -1) {
+            vm.selectedAWCs = [$item];
+        }
     };
 
     vm.getAwcs = function () {
@@ -287,6 +311,10 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
         return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
     };
 
+    vm.hasErrorsISSNIPExport = function() {
+        return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
+    };
+
     vm.isVisible = function(level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all');
     };
@@ -308,9 +336,27 @@ function DownloadController($scope, $location, locationHierarchy, locationsServi
     vm.isDistrictOrBelowSelected = function() {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
     };
+
+    vm.isAWCsSelected = function() {
+        return vm.selectedAWCs.length > 0;
+    };
+
+    vm.showProgressBar = function () {
+        return $rootScope.issnip_task_id;
+    };
+
+    vm.readyToDownload = function () {
+        return $rootScope.issnip_report_link;
+    };
+
+    vm.goToLink = function () {
+        window.open($rootScope.issnip_report_link);
+    };
+
 }
 
-DownloadController.$inject = ['$scope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId', 'haveAccessToFeatures'];
+DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
+    'haveAccessToFeatures', 'issnipStatusService'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

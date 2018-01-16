@@ -34,7 +34,7 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, valid_total, in_month_total = generate_data_for_map(
+    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'children',
@@ -56,7 +56,7 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
         "label": "Percent Children (6-8 months) initiated Complementary Feeding{}".format(chosen_filters),
         "fills": fills,
         "rightLegend": {
-            "average": (in_month_total * 100) / float(valid_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of children between 6 - 8 months given timely introduction to solid, "
                 "semi-solid or soft food."

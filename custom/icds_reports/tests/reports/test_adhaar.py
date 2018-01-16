@@ -23,7 +23,7 @@ class TestAdhaar(TestCase):
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
                             "whose Aadhaar identification has been captured",
-                    "average": 26.2,
+                    "average": 26.486806467831137,
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',

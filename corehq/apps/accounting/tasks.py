@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import csv
 import datetime
 import io
 import json
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-from StringIO import StringIO
 from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
@@ -510,7 +511,7 @@ def weekly_digest():
 
     table.extend([_fmt_row(sub) for sub in ending_in_forty_days])
 
-    file_to_attach = StringIO()
+    file_to_attach = io.BytesIO()
     export_from_tables(
         [['End in 40 Days', table]],
         file_to_attach,

@@ -27,94 +27,90 @@
         </a>
     </td>
     <td>
-        {% if request|toggle_enabled:'ENABLE_REPEATER_EDIT_AND_PAUSE' %}
-            {% if repeater.is_case_repeater %}
-            <a class="btn btn-default" href="{% url 'edit_case_repeater' domain repeater.get_id %}">
-            {% elif repeater.is_form_repeater %}
-            <a class="btn btn-default" href="{% url 'edit_form_repeater' domain repeater.get_id %}">
-            {% else %}
-            <a class="btn btn-default" href="{% url 'edit_repeater' domain repeater.get_id %}?repeater_type={{ cls }}">
-            {% endif %}
-            {% trans "Edit"%}
-            </a>
+        {% if repeater.is_case_repeater %}
+        <a class="btn btn-default" href="{% url 'edit_case_repeater' domain repeater.get_id %}">
+        {% elif repeater.is_form_repeater %}
+        <a class="btn btn-default" href="{% url 'edit_form_repeater' domain repeater.get_id %}">
+        {% else %}
+        <a class="btn btn-default" href="{% url 'edit_repeater' domain repeater.get_id %}?repeater_type={{ cls }}">
         {% endif %}
+        {% trans "Edit"%}
+        </a>
         <a
             class="btn btn-default"
             href="
             {% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}"
             >
-            {% trans "View forwarded records" %}
+            {% trans "View records" %}
         </a>
-        {% if request|toggle_enabled:'ENABLE_REPEATER_EDIT_AND_PAUSE' %}
-            {% if repeater.paused %}
-            <a class="btn btn-success" href="#resume_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
-                    class="fa fa-toggle-right"></i> {% trans "Resume" %}</a>
+        {% if repeater.paused %}
+        <a class="btn btn-default" href="#resume_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
+                class="fa fa-toggle-right"></i> {% trans "Resume" %}</a>
 
-            <div class="modal fade" id="resume_forwarding_{{ repeater.get_id }}">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title">{% trans "Resume Forwarding" %}</h4>
-                        </div>
-                        <form name="resume_repeater" action="{% url 'resume_repeater' domain repeater.get_id %}"
-                              method="post">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <p>
-                                    {% blocktrans with repeater.url as repeat_url %}
-                                        Are you sure you want to resume forwarding to: "{{ repeat_url }}" ?
-                                        <br/>
-                                        All records enqueued for this forwarder with be triggered
-                                        once forwarding is resumed.
-                                    {% endblocktrans %}
-                                </p>
-                            </div>
-                            <div class="modal-footer">
-                                <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-                                <button type="submit" class="btn btn-success"><i
-                                        class="fa fa-toggle-right"></i> {% trans 'Resume Forwarding' %}
-                                </button>
-                            </div>
-                        </form>
+        <div class="modal fade" id="resume_forwarding_{{ repeater.get_id }}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">{% trans "Resume Forwarding" %}</h4>
                     </div>
+                    <form name="resume_repeater" action="{% url 'resume_repeater' domain repeater.get_id %}"
+                          method="post">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>
+                                {% blocktrans with repeater.url as repeat_url %}
+                                    Are you sure you want to resume forwarding to: "{{ repeat_url }}" ?
+                                    <br/>
+                                    All records enqueued for this forwarder with be triggered
+                                    once forwarding is resumed.
+                                {% endblocktrans %}
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+                            <button type="submit" class="btn btn-default"><i
+                                    class="fa fa-toggle-right"></i> {% trans 'Resume Forwarding' %}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            {% else %}
-            <a class="btn btn-warning" href="#pause_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
-                    class="fa fa-pause"></i> {% trans "Pause" %}</a>
+        </div>
+        {% else %}
+        <a class="btn btn-default" href="#pause_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
+                class="fa fa-pause"></i> {% trans "Pause" %}</a>
 
-            <div class="modal fade" id="pause_forwarding_{{ repeater.get_id }}">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title">{% trans "Pause Forwarding" %}</h4>
-                        </div>
-                        <form name="pause_repeater" action="{% url 'pause_repeater' domain repeater.get_id %}"
-                              method="post">
-                            {% csrf_token %}
-                            <div class="modal-body">
-                                <p>
-                                    {% blocktrans with repeater.url as repeat_url %}
-                                        Are you sure you want to pause forwarding to: "{{ repeat_url }}" ?
-                                        <br/>
-                                        Please note that new records would get enqueued but would get triggered
-                                        only when forwarding is resumed.
-                                    {% endblocktrans %}
-                                </p>
-                            </div>
-                            <div class="modal-footer">
-                                <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-                                <button type="submit" class="btn btn-warning"><i
-                                        class="fa fa-pause"></i> {% trans 'Pause Forwarding' %}
-                                </button>
-                            </div>
-                        </form>
+        <div class="modal fade" id="pause_forwarding_{{ repeater.get_id }}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">{% trans "Pause Forwarding" %}</h4>
                     </div>
+                    <form name="pause_repeater" action="{% url 'pause_repeater' domain repeater.get_id %}"
+                          method="post">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>
+                                {% blocktrans with repeater.url as repeat_url %}
+                                    Are you sure you want to pause forwarding to: "{{ repeat_url }}" ?
+                                    <br/>
+                                    Please note that new records would get enqueued but would get triggered
+                                    only when forwarding is resumed.
+                                {% endblocktrans %}
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
+                            <button type="submit" class="btn btn-default"><i
+                                    class="fa fa-pause"></i> {% trans 'Pause Forwarding' %}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            {% endif %}
+        </div>
         {% endif %}
         {% if cls == 'OpenmrsRepeater' and gefingerpoken %}
         <a class="btn btn-default" href="{% url 'openmrs_edit_config' domain repeater.get_id %}">

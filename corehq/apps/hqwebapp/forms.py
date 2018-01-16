@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
+from corehq import toggles
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
@@ -37,7 +38,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         return decode_password(self.cleaned_data['password'], self.clean_username())
 
     def clean(self):
-        lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password.'))
+        lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
 
         username = self.cleaned_data.get('username')
         if username is None:
@@ -51,12 +52,12 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
             user = CouchUser.get_by_username(username)
-            if user and user.is_web_user() and user.is_locked_out():
+            if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
                 raise ValidationError(lockout_message)
             else:
                 raise
         user = CouchUser.get_by_username(username)
-        if user and user.is_web_user() and user.is_locked_out():
+        if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
             raise ValidationError(lockout_message)
         return cleaned_data
 

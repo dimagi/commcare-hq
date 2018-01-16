@@ -24,7 +24,7 @@ class TestChildrenInitiated(TestCase):
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 8 months"
                             " given timely introduction to solid, semi-solid or soft food.",
-                    "average": 85.0,
+                    "average": 84.65473145780052,
                     'extended_info': [
                         {'indicator': 'Total number of children between age 6 - 8 months:', 'value': "40"},
                         {

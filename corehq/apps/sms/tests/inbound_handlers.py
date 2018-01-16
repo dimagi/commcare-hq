@@ -299,7 +299,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Mobile worker creates a case via structured sms
@@ -382,7 +382,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: positional args with custom delimiter
@@ -432,7 +432,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: named args with custom delimiter
@@ -482,7 +482,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: named args with custom delimiter and joining character
@@ -532,7 +532,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test leaving fields blank via structured sms

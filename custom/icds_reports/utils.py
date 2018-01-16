@@ -217,7 +217,11 @@ def percent_increase(prop, data, prev_data):
         current = data[0][prop]
     if prev_data:
         previous = prev_data[0][prop]
-    return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
+
+    if previous:
+        return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
+    else:
+        return "Data in the previous reporting period was 0"
 
 
 def percent_diff(property, current_data, prev_data, all):
@@ -235,7 +239,11 @@ def percent_diff(property, current_data, prev_data, all):
 
     current_percent = current / float(curr_all) * 100
     prev_percent = prev / float(prev_all) * 100
-    return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
+
+    if prev_percent:
+        return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
+    else:
+        return "Data in the previous reporting period was 0"
 
 
 def get_value(data, prop):
@@ -357,6 +365,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
     valid_total = 0
     in_month_total = 0
+    values_to_calculate_average = []
 
     for row in data:
         valid = row[denom_prop] or 0
@@ -373,6 +382,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
     for data_for_location in six.itervalues(data_for_map):
         value = data_for_location[num_prop] * 100 / (data_for_location[denom_prop] or 1)
+        values_to_calculate_average.append(value)
         fill_format = '%s%%-%s%%'
         if value < fill_key_lower:
             data_for_location.update({'fillKey': (fill_format % (0, fill_key_lower))})
@@ -381,7 +391,8 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         elif value >= fill_key_bigger:
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
-    return data_for_map, valid_total, in_month_total
+    average = sum(values_to_calculate_average) / float(len(values_to_calculate_average) or 1)
+    return data_for_map, valid_total, in_month_total, average
 
 
 def calculate_date_for_age(dob, date):
@@ -477,7 +488,7 @@ def indian_formatted_number(number):
 @quickcache(['domain', 'location_id', 'show_test'], timeout=5 * 60)
 def get_child_locations(domain, location_id, show_test):
     if location_id:
-        locations = SQLLocation.objects.get(location_id=location_id).get_children()
+        locations = SQLLocation.objects.get(domain=domain, location_id=location_id).get_children()
     else:
         locations = SQLLocation.objects.filter(domain=domain, location_type__code=const.LocationTypes.STATE)
 

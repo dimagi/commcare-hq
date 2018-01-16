@@ -241,15 +241,17 @@ def unwrap_phone_number(param, val, sector):
 
 def _parse_number(number):
     if number:
-        return phonenumbers.parse(number, "IN")
+        phone_number = phonenumbers.parse(number, "IN")
+        phone_number.italian_leading_zero = False
+        return phone_number
 
 
 def _format_number(phonenumber):
     if phonenumber:
         return phonenumbers.format_number(
             phonenumber,
-            phonenumbers.PhoneNumberFormat.INTERNATIONAL
-        ).replace(" ", "")
+            phonenumbers.PhoneNumberFormat.E164
+        )
 
 
 def noop(*args, **kwargs):

@@ -742,7 +742,7 @@ class UserInvitationView(object):
                     track_workflow(request.POST['email'],
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
-                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request)
+                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
                 if CouchUser.get_by_username(invitation.email):

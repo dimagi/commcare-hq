@@ -22,6 +22,7 @@ from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -58,8 +59,9 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
     monthly_dates.append(date)
 
-    if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
-        with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
+    db_alias = get_icds_ucr_db_alias()
+    if db_alias:
+        with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
             _update_aggregate_locations_tables(cursor)
 
@@ -123,8 +125,9 @@ def aggregate_tables(self, current_task, future_tasks):
     else:
         raise ValueError("Invalid aggregation type {}".format(aggregation_type))
 
-    if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:
-        with connections[settings.ICDS_UCR_DATABASE_ALIAS].cursor() as cursor:
+    db_alias = get_icds_ucr_db_alias()
+    if db_alias:
+        with connections[db_alias].cursor() as cursor:
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
                 celery_task_logger.info(
@@ -169,7 +172,7 @@ def aggregate_tables(self, current_task, future_tasks):
 
 @periodic_task(
     queue='background_queue',
-    run_every=crontab(day_of_week='sunday', minute=0, hour=21),
+    run_every=crontab(day_of_week='sunday,wednesday', minute=0, hour=21),
     acks_late=True
 )
 def recalculate_stagnant_cases():
@@ -209,7 +212,7 @@ def recalculate_stagnant_cases():
 
 
 def _find_stagnant_cases(adapter):
-    stagnant_date = datetime.utcnow() - timedelta(days=45)
+    stagnant_date = datetime.utcnow() - timedelta(days=26)
     table = adapter.get_table()
     query = adapter.get_query_object()
     query = query.with_entities(table.columns.doc_id).filter(
@@ -221,7 +224,7 @@ def _find_stagnant_cases(adapter):
 india_timezone = pytz.timezone('Asia/Kolkata')
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue')
 def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
 
     utc_now = datetime.now(pytz.utc)
@@ -271,11 +274,14 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
         cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
 
     params = {
-        'domain': 'icds-cas',
+        'domain': domain,
         'uuid': cache_key,
         'format': pdf_format
     }
-    send_report_download_email(
-        'ISSNIP monthly register',
-        user,
-        reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain}))
+
+    return {
+        'domain': domain,
+        'uuid': cache_key,
+        'format': pdf_format,
+        'link': reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain})
+    }
