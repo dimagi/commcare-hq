@@ -5,7 +5,6 @@ from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 
 
 class TestICDSCASReach(TestCase):
-
     def test_data(self):
         self.assertDictEqual(
             get_cas_reach_data(
@@ -27,11 +26,11 @@ class TestICDSCASReach(TestCase):
                             "color": "red",
                             "percent": 0.0,
                             "value": 19,
-                            "label": "AWCs covered",
+                            "label": "AWCs Launched",
                             "frequency": "month",
                             "help_text": (
                                 "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
-                                "if they have submitted at least one Household Registration form. "
+                                "after submitting at least one Household Registration form. "
                             )
                         },
                         {
@@ -113,12 +112,11 @@ class TestICDSCASReach(TestCase):
                             "all": 50,
                             "frequency": "month",
                             "format": "div",
-                            "help_text": "Total AWCs that have launched ICDS-CAS. "
-                                         "AWCs are considered launched if they have submitted"
-                                         " at least one Household Registration form. ",
+                            "help_text": "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
+                                         "after submitting at least one Household Registration form. ",
                             "percent": 0.0,
                             "value": 19,
-                            "label": "AWCs covered"
+                            "label": "AWCs Launched"
                         },
                         {
                             "redirect": "awc_daily_status",
@@ -197,12 +195,11 @@ class TestICDSCASReach(TestCase):
                             "all": 50,
                             "frequency": "month",
                             "format": "div",
-                            "help_text": "Total AWCs that have launched ICDS-CAS. "
-                                         "AWCs are considered launched if they have submitted"
-                                         " at least one Household Registration form. ",
+                            "help_text": "Total AWCs that have launched ICDS-CAS. AWCs are considered launched "
+                                         "after submitting at least one Household Registration form. ",
                             "percent": 0.0,
                             "value": 19,
-                            "label": "AWCs covered"
+                            "label": "AWCs Launched"
                         },
                         {
                             "redirect": "awc_daily_status",

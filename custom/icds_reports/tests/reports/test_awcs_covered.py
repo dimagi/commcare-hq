@@ -24,6 +24,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
+                        "Total AWCs that have launched ICDS-CAS. "
+                        "AWCs are considered launched after submitting at least "
+                        "one Household Registration form. <br /><br />"
                         'Number of AWCs launched: 19 <br />'
                         'Number of States launched: 2'
                     )
@@ -73,6 +76,9 @@ class TestAWCSCovered(TestCase):
             {
                 "rightLegend": {
                     "info": (
+                        "Total AWCs that have launched ICDS-CAS. "
+                        "AWCs are considered launched after submitting at least "
+                        "one Household Registration form. <br /><br />"
                         'Number of AWCs launched: 8 <br />'
                         'Number of Blocks launched: 2'
                     )
@@ -189,6 +195,9 @@ class TestAWCSCovered(TestCase):
             ),
             {
                 "info": (
+                    "Total AWCs that have launched ICDS-CAS. "
+                    "AWCs are considered launched after submitting at least "
+                    "one Household Registration form. <br /><br />"
                     "Number of AWCs launched: 3 <br />"
                     "Number of Supervisors launched: 2"
                 ),
