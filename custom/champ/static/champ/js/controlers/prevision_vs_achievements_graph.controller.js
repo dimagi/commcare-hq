@@ -246,7 +246,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 vm.districts = vm.districtsTmp.slice();
                 vm.cbos = vm.cbosTmp.slice();
                 vm.userpls = vm.userplsTmp.slice();
-            })
+            });
         });
     };
     vm.getData();
@@ -301,11 +301,11 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var cbos = vm.cbosTmp.slice().filter(function (cbo) {
                         return ids.indexOf(cbo.parent_id) !== -1;
-                    }).map(function (cbo) { return cbo.id });
-                    return cbos.indexOf(clienttype.parent_id) !== -1
-                }).map(function (ct) { return ct.id });
-                return clienttypes.indexOf(item.parent_id) !== -1
-            }))
+                    }).map(function (cbo) { return cbo.id; });
+                    return cbos.indexOf(clienttype.parent_id) !== -1;
+                }).map(function (ct) { return ct.id; });
+                return clienttypes.indexOf(item.parent_id) !== -1;
+            }));
 
         }
 
@@ -331,18 +331,18 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var cbos = vm.cbosTmp.slice().filter(function (cbo) {
                         return selectedDistrict.indexOf(cbo.parent_id) !== -1;
-                    }).map(function (cbo) { return cbo.id });
-                    return cbos.indexOf(clienttype.parent_id) !== -1
-                }).map(function (ct) { return ct.id });
-                return clienttypes.indexOf(item.parent_id) !== -1
-            }))
+                    }).map(function (cbo) { return cbo.id; });
+                    return cbos.indexOf(clienttype.parent_id) !== -1;
+                }).map(function (ct) { return ct.id; });
+                return clienttypes.indexOf(item.parent_id) !== -1;
+            }));
         } else {
             vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     return ids.indexOf(clienttype.parent_id) !== -1;
-                }).map(function (ct) { return ct.id });
-                return clienttypes.indexOf(item.parent_id) !== -1
-            }))
+                }).map(function (ct) { return ct.id; });
+                return clienttypes.indexOf(item.parent_id) !== -1;
+            });
         }
     };
 
@@ -357,9 +357,9 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
 
         var ids = vm.filters.target_clienttype.map(function(type) {
             if (type === 'client_fsw') {
-                return 'cfsw'
+                return 'cfsw';
             }
-            return type.toLowerCase()
+            return type.toLowerCase();
         });
 
         var selectedCbo = vm.filters.target_cbo;
@@ -369,28 +369,28 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var type = clienttype.id.split("_")[0];
                     return selectedCbo.indexOf(clienttype.parent_id) !== -1 && (ids.indexOf(type) !== -1 || ids.indexOf('') !== -1 || ids.length === 0);
-                }).map(function (ct) { return ct.id });
-                return clienttypes.indexOf(item.parent_id) !== -1
-            }))
+                }).map(function (ct) { return ct.id; });
+                return clienttypes.indexOf(item.parent_id) !== -1;
+            }));
         } else if (selectedDistrict.indexOf('') === -1 && selectedDistrict.length > 0) {
             vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var cbos = vm.cbosTmp.slice().filter(function (cbo) {
                         return selectedDistrict.indexOf(cbo.parent_id) !== -1;
-                    }).map(function (cbo) { return cbo.id });
+                    }).map(function (cbo) { return cbo.id; });
                     var type = clienttype.id.split("_")[0];
                     return cbos.indexOf(clienttype.parent_id) !== -1 && (ids.indexOf(type) !== -1 || ids.indexOf('') !== -1 || ids.length === 0);
-                }).map(function (ct) { return ct.id });
-                return clienttypes.indexOf(item.parent_id) !== -1
-            }))
+                }).map(function (ct) { return ct.id; });
+                return clienttypes.indexOf(item.parent_id) !== -1;
+            }));
         } else {
             vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var type = clienttype.id.split("_")[0];
                     return ids.indexOf(type) !== -1;
-                }).map(function (ct) { return ct.id });
-                return clienttypes.indexOf(item.parent_id) !== -1
-            }))
+                }).map(function (ct) { return ct.id; });
+                return clienttypes.indexOf(item.parent_id) !== -1;
+            }));
         }
     };
 
@@ -400,7 +400,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         } else if (vm.filters[property].indexOf('') !== -1) {
             vm.filters[property] = [$item.id];
         }
-    }
+    };
 }
 
 PrevisionVsAchievementsGraphController.$inject = ['$scope', 'reportsDataService', 'filtersService'];

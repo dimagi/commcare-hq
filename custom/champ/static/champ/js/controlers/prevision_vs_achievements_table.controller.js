@@ -138,7 +138,7 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         } else if (vm.filters[property].indexOf('') !== -1) {
             vm.filters[property] = [$item.id];
         }
-    }
+    };
 }
 
 PrevisionVsAchievementsTableController.$inject = ['$scope', 'reportsDataService', 'filtersService'];

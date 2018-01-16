@@ -104,7 +104,7 @@ function ServiceUptakeController(reportsDataService, filtersService) {
         } else if (vm.filters[property].indexOf('') !== -1) {
             vm.filters[property] = [$item.id];
         }
-    }
+    };
 }
 
 ServiceUptakeController.$inject = ['reportsDataService', 'filtersService'];

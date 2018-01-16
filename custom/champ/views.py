@@ -435,9 +435,9 @@ class HierarchyFilter(View):
 
         def to_filter_format(data, parent_key=None):
             locations = [dict(
-                    id='',
-                    value='All'
-                )]
+                id='',
+                value='All'
+            )]
             for row in data:
                 loc_id = row.fields['id'].field_list[0].field_value
                 loc = dict(
