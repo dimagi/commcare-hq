@@ -680,7 +680,7 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 
 # If an error still has not been processed in this number of minutes, enqueue it
 # again.
-PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
+PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60 * 24
 
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
