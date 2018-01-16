@@ -239,7 +239,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_reverse_indexed_cases(domain, case_ids):
+    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -383,10 +383,6 @@ class CaseAccessors(object):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
     def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
-        # TODO only the SQL version accepts these args, how should we handle?
-        # assert is_sql or case_types is None and is_closed is None
-        # Mimic the functionality in memory for couch?
-        # Change couch view and reindex?
         return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids, case_types, is_closed)
 
     def get_attachment_content(self, case_id, attachment_id):
