@@ -342,7 +342,7 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                     return ids.indexOf(clienttype.parent_id) !== -1;
                 }).map(function (ct) { return ct.id; });
                 return clienttypes.indexOf(item.parent_id) !== -1;
-            });
+            }));
         }
     };
 
