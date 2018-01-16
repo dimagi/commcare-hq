@@ -53,6 +53,7 @@ from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
+from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
@@ -2089,9 +2090,10 @@ class DetailColumn(IndexedSchema):
 
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':
+            property_xpath = PropertyXpathGenerator(None, None, None, super(DetailColumn, cls).wrap(data)).xpath
+            data['field'] = dot_interpolate(data.get('calc_xpath', '.'), property_xpath)
             data['useXpathExpression'] = True
             data['hasAutocomplete'] = False
-            data['field'] = dot_interpolate(data.get('calc_xpath', '.'), data.get('field', ''))
             data['format'] = 'plain'
 
         return super(DetailColumn, cls).wrap(data)
