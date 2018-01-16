@@ -1,12 +1,14 @@
 from __future__ import absolute_import
-from copy import copy
+import copy
 from datetime import datetime, timedelta, date
+from functools import partial
 import itertools
 import json
 from wsgiref.util import FileWrapper
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.data_dictionary.util import get_all_case_properties
 from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -15,7 +17,9 @@ from corehq.apps.locations.permissions import conditionally_location_safe, \
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
+from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
 import langcodes
@@ -36,6 +40,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.http.response import (
     HttpResponse,
@@ -59,11 +64,13 @@ from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.util import get_all_changes_to_case_property
 from casexml.apps.stock.models import StockTransaction
+from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -115,6 +122,7 @@ from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
     location_restricted_exception, user_can_access_case
@@ -179,6 +187,10 @@ from corehq.apps.hqwebapp.decorators import (
 )
 import six
 from six.moves import range
+
+
+# Number of columns in case property history popup
+DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
 
 datespan_default = datespan_in_request(
@@ -1292,24 +1304,100 @@ class CaseDetailsView(BaseProjectReportSectionView):
                 "but there are other forms that updated the case. "
                 "To fix this you can archive the other forms listed here."
             ))
+
+        from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_default_definition
+        wrapped_case = get_wrapped_case(self.case_instance)
+        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
+        timezone = timezone.localize(datetime.utcnow()).tzinfo
+        _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
+        display = self.request.project.get_case_display(self.case_instance) or wrapped_case.get_display_config()
+        show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
+
+        def _get_case_url(case_id):
+            return absolute_reverse(self.urlname, args=[self.domain, case_id])
+
+        data = copy.deepcopy(wrapped_case.to_full_dict())
+        default_properties = _get_tables_as_rows(data, display)
+        dynamic_data = wrapped_case.dynamic_properties()
+        all_property_names = get_all_case_properties(self.domain, [self.case_instance.type])
+        try:
+            all_property_names = all_property_names[self.case_instance.type]
+            all_property_names.remove('name')
+        except KeyError:
+            all_property_names = set()
+        all_property_names = list(all_property_names)
+        all_property_names.sort()
+
+        for section in display:
+            for row in section['layout']:
+                for item in row:
+                    dynamic_data.pop(item.get("expr"), None)
+
+        if dynamic_data:
+            dynamic_keys = sorted(dynamic_data.keys())
+            definition = get_default_definition(
+                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+
+            info_url = None
+            if toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request) \
+                    or toggles.SUPPORT.enabled_for_request(self.request):
+                info_url = reverse('case_property_changes', args=[self.domain, self.case_id, '__placeholder__'])
+
+            dynamic_properties = _get_tables_as_rows(
+                dynamic_data,
+                definition,
+                info_url=info_url,
+            )
+        else:
+            dynamic_properties = None
+
+        the_time_is_now = datetime.utcnow()
+        tz_offset_ms = int(timezone.utcoffset(the_time_is_now).total_seconds()) * 1000
+        tz_abbrev = timezone.localize(the_time_is_now).tzname()
+
+        # ledgers
+        def _product_name(product_id):
+            try:
+                return SQLProduct.objects.get(product_id=product_id).name
+            except SQLProduct.DoesNotExist:
+                return (_('Unknown Product ("{}")').format(product_id))
+
+        ledger_map = LedgerAccessors(self.domain).get_case_ledger_state(self.case_id, ensure_form_id=True)
+        for section, product_map in ledger_map.items():
+            product_tuples = sorted(
+                (_product_name(product_id), product_map[product_id]) for product_id in product_map
+            )
+            ledger_map[section] = product_tuples
+
+        repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
+
+        can_edit_data = self.request.couch_user.can_edit_data
+
         return {
             "case_id": self.case_id,
             "case": self.case_instance,
-            "case_display_options": {
-                "display": self.request.project.get_case_display(self.case_instance),
-                "timezone": get_timezone_for_user(self.request.couch_user, self.domain),
-                "get_case_url": lambda case_id: absolute_reverse(
-                    self.urlname, args=[self.domain, case_id]),
-                "show_transaction_export": toggles.COMMTRACK.enabled(
-                    self.request.user.username),
-                "property_details_enabled": (
-                    toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request)
-                    or toggles.SUPPORT.enabled_for_request(self.request)
-                ),
-            },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
-            "can_edit_data": self.request.couch_user.can_edit_data,
-            'is_usercase': self.case_instance.type == USERCASE_TYPE,
+            "can_edit_data": can_edit_data,
+            "is_usercase": self.case_instance.type == USERCASE_TYPE,
+
+            "default_properties_as_table": default_properties,
+            "dynamic_properties_names": all_property_names,
+            "dynamic_properties": dynamic_data,
+            "dynamic_properties_as_table": dynamic_properties,
+            "show_properties_edit": can_edit_data and has_privilege(self.request, privileges.DATA_CLEANUP),
+            "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
+            "timezone": timezone,
+            "tz_abbrev": tz_abbrev,
+            "case_hierarchy_options": {
+                "show_view_buttons": True,
+                "get_case_url": _get_case_url,
+                "timezone": timezone
+            },
+            "ledgers": ledger_map,
+            "timezone_offset": tz_offset_ms,
+            "show_transaction_export": show_transaction_export,
+            "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
+            "repeat_records": repeat_records,
         }
 
 
@@ -1409,6 +1497,40 @@ def case_xml(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
+
+
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+def edit_case_view(request, domain, case_id):
+    if not (has_privilege(request, privileges.DATA_CLEANUP)):
+        raise Http404()
+
+    case = _get_case_or_404(domain, case_id)
+    user = request.couch_user
+
+    update = {}
+    for name, value in case.dynamic_case_properties().items():
+        if name in request.POST and request.POST[name] != value:
+            update[name] = request.POST[name]
+
+    case_block_kwargs = {}
+    if update:
+        case_block_kwargs['update'] = update
+
+    # User may also update external_id; see CaseDisplayWrapper.dynamic_properties
+    if 'external_id' in request.POST and request.POST['external_id'] != case.external_id:
+        case_block_kwargs['external_id'] = request.POST['external_id']
+
+    if case_block_kwargs:
+        submit_case_blocks([CaseBlock(
+            case_id=case_id,
+            **case_block_kwargs
+        ).as_string()], domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case")
+        messages.success(request, _(u'Case properties saved for %s.' % case.name))
+    else:
+        messages.success(request, _(u'No changes made to %s.' % case.name))
+    return JsonResponse({'success': 1})
 
 
 @require_case_view_permission
