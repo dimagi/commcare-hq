@@ -8,6 +8,7 @@ from wsgiref.util import FileWrapper
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.data_dictionary.util import get_all_case_properties
 from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -1318,6 +1319,14 @@ class CaseDetailsView(BaseProjectReportSectionView):
         data = copy.deepcopy(wrapped_case.to_full_dict())
         default_properties = _get_tables_as_rows(data, display)
         dynamic_data = wrapped_case.dynamic_properties()
+        all_property_names = get_all_case_properties(self.domain, [self.case_instance.type])
+        try:
+            all_property_names = all_property_names[self.case_instance.type]
+            all_property_names.remove('name')
+        except KeyError:
+            all_property_names = set()
+        all_property_names = list(all_property_names)
+        all_property_names.sort()
 
         for section in display:
             for row in section['layout']:
@@ -1372,7 +1381,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
 
             "default_properties_as_table": default_properties,
-            "dynamic_properties_names": dynamic_data.keys(),
+            "dynamic_properties_names": all_property_names,
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
             "show_properties_edit": can_edit_data and has_privilege(self.request, privileges.DATA_CLEANUP),
