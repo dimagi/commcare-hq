@@ -21,15 +21,20 @@
             <!-- /ko -->
           {% endif %}
 
-          {% if request|toggle_enabled:'CALCULATED_PROPERTY_IN_CASE_LIST' %}
-            <!-- ko if: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
-            <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
-            <!-- /ko -->
-            <!-- ko ifnot: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
-            <li class="disabled"><a>{% trans "Calculated Property <small>(Requires Add-On)</small>" %}</a></li>
-            <!-- /ko -->
-          {% endif %}
+          <!-- ko if: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
+          <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
+          <!-- /ko -->
       </ul>
+    {% else %}
+      <!-- ko if: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
+      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu">
+          <li data-bind="click: addProperty"><a>{% trans "Property" %}</a></li>
+          <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
+      </ul>
+      <!-- /ko -->
     {% endif %}
 </div>
 {{ request|toggle_tag_info:"GRAPH_CREATION" }}
