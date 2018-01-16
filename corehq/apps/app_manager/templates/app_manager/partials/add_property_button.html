@@ -5,19 +5,36 @@
         <i class="fa fa-plus"></i>
         {% trans "Add Property" %}
     </button>
-    {% if request|toggle_enabled:'GRAPH_CREATION' %}
+    {% if request|toggle_enabled:'GRAPH_CREATION' or request|toggle_enabled:'CALCULATED_PROPERTY_IN_CASE_LIST' %}
       <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
           <span class="caret"></span>
       </button>
       <ul class="dropdown-menu">
           <li data-bind="click: addProperty"><a>{% trans "Property" %}</a></li>
-          <!-- ko if: hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17") -->
-          <li data-bind="click: addGraph"><a>{% trans "Graph" %}</a></li>
-          <!-- /ko -->
-          <!-- ko ifnot: hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17") -->
-          <li class="disabled"><a>{% trans "Graph <small>(upgrade to 2.17 or greater)</small>" %}</a></li>
+
+          {% if request|toggle_enabled:'GRAPH_CREATION' %}
+            <!-- ko if: hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17") -->
+            <li data-bind="click: addGraph"><a>{% trans "Graph" %}</a></li>
+            <!-- /ko -->
+            <!-- ko ifnot: hqImport('app_manager/js/app_manager').checkCommcareVersion("2.17") -->
+            <li class="disabled"><a>{% trans "Graph <small>(upgrade to 2.17 or greater)</small>" %}</a></li>
+            <!-- /ko -->
+          {% endif %}
+
+          <!-- ko if: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
+          <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
           <!-- /ko -->
       </ul>
+    {% else %}
+      <!-- ko if: hqImport("hqwebapp/js/initial_page_data").get("add_ons").calc_xpaths -->
+      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu">
+          <li data-bind="click: addProperty"><a>{% trans "Property" %}</a></li>
+          <li data-bind="click: addXpathExpression"><a>{% trans "Calculated Property" %}</a></li>
+      </ul>
+      <!-- /ko -->
     {% endif %}
 </div>
 {{ request|toggle_tag_info:"GRAPH_CREATION" }}
