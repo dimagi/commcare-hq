@@ -352,9 +352,9 @@ BEGIN
 		'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
-		'sum(nutrition_status_normal), ' || -- should this also check for nutrition_status_weighed
-    'sum(CASE WHEN nutrition_status_moderately_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN nutrition_status_severely_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN nutrition_status_normal = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN nutrition_status_moderately_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN nutrition_status_severely_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(wer_eligible), ' ||
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed), ' ||
@@ -384,10 +384,10 @@ BEGIN
 		'5, ' ||
 		'sum(pnc_eligible), ' ||
 		'sum(height_eligible), ' ||
-    'sum(CASE WHEN wasting_moderate = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN wasting_severe = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN stunting_moderate = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN stunting_severe = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN wasting_moderate = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN wasting_severe = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_moderate = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_severe = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(cf_initiated), ' ||
 		'sum(cf_initiation_eligible), ' ||
 		'sum(height_measured_in_month), ' ||
@@ -395,8 +395,8 @@ BEGIN
 		'sum(stunting_normal), ' ||
 		'sum(valid_all_registered_in_month), ' ||
 		'sum(ebf_no_info_recorded), ' ||
-    'sum(CASE WHEN nutrition_status_weighed = 1 and height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN born_in_month = 1 and nutrition_status_weighed = 1 THEN 1 ELSE 0 END) ' ||
+		'sum(CASE WHEN nutrition_status_weighed = 1 and height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN born_in_month = 1 and nutrition_status_weighed = 1 THEN 1 ELSE 0 END) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
     'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND (dob IS NULL OR dob <= ' || quote_literal(_aggregation_delay) || ') '
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
