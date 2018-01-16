@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
-from cStringIO import StringIO
+import io
+
 from couchdbkit import ResourceNotFound
 from datetime import datetime, timedelta
 
@@ -29,7 +30,7 @@ def prepare_fixture_download(table_ids, domain, task, download_id):
         header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
         value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
 
-    file = StringIO()
+    file = io.BytesIO()
     format = Format.XLS_2007
     export_raw(tuple(header_groups), tuple(value_groups), file, format)
     return expose_cached_download(
