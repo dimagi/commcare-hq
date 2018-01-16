@@ -596,6 +596,10 @@ ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
+# http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
+# Keep messages in the events queue only for 2 hours
+CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
