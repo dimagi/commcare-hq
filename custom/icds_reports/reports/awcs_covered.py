@@ -99,14 +99,16 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     fills.update({'Not launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
-    info = _("Total AWCs that have launched ICDS-CAS. " +
-             "AWCs are considered launched after submitting at least one Household Registration form. <br /><br />" +
+    info = _("Total AWCs that have launched ICDS-CAS. "
+             "AWCs are considered launched after submitting at least"
+             " one Household Registration form. <br /><br />"
              "Number of AWCs launched: %s" % indian_formatted_number(total_awcs)
     )
     if level != 5:
         info = _(
-            "Total AWCs that have launched ICDS-CAS. " +
-            "AWCs are considered launched after submitting at least one Household Registration form. <br /><br />" +
+            "Total AWCs that have launched ICDS-CAS. "
+            "AWCs are considered launched after submitting at least"
+            " one Household Registration form. <br /><br />"
             "Number of AWCs launched: %s <br />" % indian_formatted_number(total_awcs) +
             "Number of %s launched: %s" % (prop.title(), indian_formatted_number(total))
         )
@@ -202,14 +204,16 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     total = sum([(x[prop] or 0) for x in six.itervalues(tooltips_data)])
 
     info = _(
-        "Total AWCs that have launched ICDS-CAS. " +
-        "AWCs are considered launched after submitting at least one Household Registration form. <br /><br />" +
+        "Total AWCs that have launched ICDS-CAS. "
+        "AWCs are considered launched after submitting at least"
+        " one Household Registration form. <br /><br />"
         "Number of AWCs launched: %d" % total_awcs
     )
     if level != 5:
         info = _(
-            "Total AWCs that have launched ICDS-CAS. " +
-            "AWCs are considered launched after submitting at least one Household Registration form. <br /><br />" +
+            "Total AWCs that have launched ICDS-CAS. "
+            "AWCs are considered launched after submitting at least"
+            " one Household Registration form. <br /><br />"
             "Number of AWCs launched: %d <br />" % total_awcs +
             "Number of %s launched: %d" % (prop.title(), total)
         )
