@@ -1,4 +1,5 @@
 /* global moment */
+var ALL_OPTION = {id: '', value: 'All'};
 
 function PrevisionVsAchievementsGraphController($scope, reportsDataService, filtersService) {
     var vm = this;
@@ -9,7 +10,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
     var defaultEndDate = moment().format('YYYY-MM-DD');
     var defaultDate = {startDate: defaultStartDate, endDate: defaultEndDate};
 
-    vm.kp_prev_age = {id: '', value: 'All'},
+
+    vm.kp_prev_age = ALL_OPTION;
     vm.kp_prev_visit_date = defaultDate;
     vm.htc_tst_post_date = defaultDate;
     vm.htc_pos_post_date = defaultDate;
@@ -280,16 +282,22 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         vm.filters.target_userpl = [];
         vm.filters.target_clienttype = [];
 
-        var ids = $item.map(function(loc) { return loc.id });
+        if ($item.id === '') {
+            vm.filters.target_district = [$item.id];
+        } else if (vm.filters.target_district.indexOf('') !== -1) {
+            vm.filters.target_district = [$item.id];
+        }
 
-        if ($item.length === 0) {
+        var ids = vm.filters.target_district;
+
+        if (ids.length === 0 || $item.id === '') {
             vm.cbos = vm.cbosTmp.slice();
             vm.userpls = vm.userplsTmp.slice();
         } else {
-            vm.cbos = vm.cbosTmp.slice().filter(function (item) {
+            vm.cbos = [ALL_OPTION].concat(vm.cbosTmp.slice().filter(function (item) {
                 return ids.indexOf(item.parent_id) !== -1;
-            });
-            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+            }));
+            vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var cbos = vm.cbosTmp.slice().filter(function (cbo) {
                         return ids.indexOf(cbo.parent_id) !== -1;
@@ -297,7 +305,8 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
                     return cbos.indexOf(clienttype.parent_id) !== -1
                 }).map(function (ct) { return ct.id });
                 return clienttypes.indexOf(item.parent_id) !== -1
-            })
+            }))
+
         }
 
     };
@@ -306,59 +315,90 @@ function PrevisionVsAchievementsGraphController($scope, reportsDataService, filt
         vm.filters.target_userpl = [];
         vm.filters.target_clienttype = [];
 
-        var ids = $item.map(function(loc) { return loc.id });
+        if ($item.id === '') {
+            vm.filters.target_cbo = [$item.id];
+        } else if (vm.filters.target_cbo.indexOf('') !== -1) {
+            vm.filters.target_cbo = [$item.id];
+        }
 
-        if ($item.length === 0) {
+        var ids = vm.filters.target_cbo;
+
+        var selectedDistrict = vm.filters.target_district;
+        if ((ids.indexOf('') !== -1 || ids.length === 0) && (selectedDistrict.indexOf('') !== -1 || selectedDistrict.length === 0)) {
             vm.userpls = vm.userplsTmp.slice();
+        } else if ((ids.indexOf('') !== -1 || ids.length === 0) && selectedDistrict.indexOf('') === -1) {
+            vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
+                var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
+                    var cbos = vm.cbosTmp.slice().filter(function (cbo) {
+                        return selectedDistrict.indexOf(cbo.parent_id) !== -1;
+                    }).map(function (cbo) { return cbo.id });
+                    return cbos.indexOf(clienttype.parent_id) !== -1
+                }).map(function (ct) { return ct.id });
+                return clienttypes.indexOf(item.parent_id) !== -1
+            }))
         } else {
-            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+            vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     return ids.indexOf(clienttype.parent_id) !== -1;
                 }).map(function (ct) { return ct.id });
                 return clienttypes.indexOf(item.parent_id) !== -1
-            })
+            }))
         }
     };
 
     vm.clienttypeOnSelect = function ($item) {
         vm.filters.target_userpl = [];
 
-        var ids = $item.map(function(type) {
-            if (type.id === 'client_fsw') {
+        if ($item.id === '') {
+            vm.filters.target_clienttype = [$item.id];
+        } else if (vm.filters.target_clienttype.indexOf('') !== -1) {
+            vm.filters.target_clienttype = [$item.id];
+        }
+
+        var ids = vm.filters.target_clienttype.map(function(type) {
+            if (type === 'client_fsw') {
                 return 'cfsw'
             }
-            return type.id.toLowerCase()
+            return type.toLowerCase()
         });
 
         var selectedCbo = vm.filters.target_cbo;
         var selectedDistrict = vm.filters.target_district;
-        if (selectedCbo.length > 0) {
-            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+        if (selectedCbo.indexOf('') === -1 && selectedCbo.length > 0) {
+            vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var type = clienttype.id.split("_")[0];
-                    return selectedCbo.indexOf(clienttype.parent_id) !== -1 && ids.indexOf(type) !== -1;
+                    return selectedCbo.indexOf(clienttype.parent_id) !== -1 && (ids.indexOf(type) !== -1 || ids.indexOf('') !== -1 || ids.length === 0);
                 }).map(function (ct) { return ct.id });
                 return clienttypes.indexOf(item.parent_id) !== -1
-            })
-        } else if (selectedDistrict.length > 0) {
-            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+            }))
+        } else if (selectedDistrict.indexOf('') === -1 && selectedDistrict.length > 0) {
+            vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var cbos = vm.cbosTmp.slice().filter(function (cbo) {
                         return selectedDistrict.indexOf(cbo.parent_id) !== -1;
                     }).map(function (cbo) { return cbo.id });
                     var type = clienttype.id.split("_")[0];
-                    return cbos.indexOf(clienttype.parent_id) !== -1 && ids.indexOf(type) !== -1;
+                    return cbos.indexOf(clienttype.parent_id) !== -1 && (ids.indexOf(type) !== -1 || ids.indexOf('') !== -1 || ids.length === 0);
                 }).map(function (ct) { return ct.id });
                 return clienttypes.indexOf(item.parent_id) !== -1
-            })
+            }))
         } else {
-            vm.userpls = vm.userplsTmp.slice().filter(function(item) {
+            vm.userpls = [ALL_OPTION].concat(vm.userplsTmp.slice().filter(function(item) {
                 var clienttypes = vm.clienttypes.slice().filter(function(clienttype) {
                     var type = clienttype.id.split("_")[0];
                     return ids.indexOf(type) !== -1;
                 }).map(function (ct) { return ct.id });
                 return clienttypes.indexOf(item.parent_id) !== -1
-            })
+            }))
+        }
+    };
+
+    vm.onSelectOption = function($item, property) {
+        if ($item.id === '') {
+            vm.filters[property] = [$item.id];
+        } else if (vm.filters[property].indexOf('') !== -1) {
+            vm.filters[property] = [$item.id];
         }
     }
 }

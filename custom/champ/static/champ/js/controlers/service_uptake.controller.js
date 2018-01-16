@@ -97,6 +97,14 @@ function ServiceUptakeController(reportsDataService, filtersService) {
             },
         },
     };
+
+    vm.onSelectOption = function($item, property) {
+        if ($item.id === '') {
+            vm.filters[property] = [$item.id];
+        } else if (vm.filters[property].indexOf('') !== -1) {
+            vm.filters[property] = [$item.id];
+        }
+    }
 }
 
 ServiceUptakeController.$inject = ['reportsDataService', 'filtersService'];

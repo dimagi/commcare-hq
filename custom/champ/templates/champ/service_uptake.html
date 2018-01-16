@@ -17,7 +17,7 @@
                         <div class="col-md-1"></div>
                         <div class="col-md-2">
                             <label>District:</label>
-                            <ui-select multiple ng-model="mainCtrl.filters.district" theme="bootstrap">
+                            <ui-select multiple ng-model="mainCtrl.filters.district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'district')" on-select="mainCtrl.onSelectOption($item, 'district')">
                                 <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                                 <ui-select-choices repeat="district.id as district in mainCtrl.districts | propsFilter: {value: $select.search}">
                                     <div ng-bind="district.value"></div>
@@ -44,7 +44,7 @@
                         </div>
                         <div class="col-md-2">
                             <label>Client Type:</label>
-                            <ui-select multiple ng-model="mainCtrl.filters.client_type" theme="bootstrap">
+                            <ui-select multiple ng-model="mainCtrl.filters.client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'client_type')" on-select="mainCtrl.onSelectOption($item, 'client_type')">
                                 <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                 <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
                                     <div ng-bind="client.value"></div>
@@ -53,7 +53,7 @@
                         </div>
                         <div class="col-md-2">
                             <label>Organization:</label>
-                            <ui-select multiple ng-model="mainCtrl.filters.organization" theme="bootstrap">
+                            <ui-select multiple ng-model="mainCtrl.filters.organization" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'organization')" on-select="mainCtrl.onSelectOption($item, 'organization')">
                                 <ui-select-match placeholder="Organization"><span ng-bind="$item.value"></span></ui-select-match>
                                 <ui-select-choices repeat="organization.id as organization in mainCtrl.organizations | propsFilter: {value: $select.search}">
                                     <div ng-bind-html="organization.value"></div>

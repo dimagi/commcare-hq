@@ -16,7 +16,7 @@
                     <div class="col-md-1"></div>
                     <div class="col-md-2">
                         <label>District:</label>
-                        <ui-select multiple ng-model="mainCtrl.filters.target_district" theme="bootstrap" on-remove="mainCtrl.districtOnSelect($select.selected)" on-select="mainCtrl.districtOnSelect($select.selected)">
+                        <ui-select multiple ng-model="mainCtrl.filters.target_district" theme="bootstrap" on-remove="mainCtrl.districtOnSelect($item)" on-select="mainCtrl.districtOnSelect($item)">
                             <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                             <ui-select-choices repeat="district.id as district in mainCtrl.districts | propsFilter: {value: $select.search}">
                                 <div ng-bind="district.value"></div>
@@ -25,7 +25,7 @@
                     </div>
                     <div class="col-md-2">
                       <label>CBO:</label>
-                      <ui-select multiple ng-model="mainCtrl.filters.target_cbo" theme="bootstrap" on-remove="mainCtrl.cboOnSelect($select.selected)" on-select="mainCtrl.cboOnSelect($select.selected)">
+                      <ui-select multiple ng-model="mainCtrl.filters.target_cbo" theme="bootstrap" on-remove="mainCtrl.cboOnSelect($item)" on-select="mainCtrl.cboOnSelect($item)">
                             <ui-select-match placeholder="CBO"><span ng-bind="$item.value"></span></ui-select-match>
                             <ui-select-choices repeat="cbo.id as cbo in mainCtrl.cbos | propsFilter: {value: $select.search}">
                                 <div ng-bind="cbo.value"></div>
@@ -34,7 +34,7 @@
                     </div>
                     <div class="col-md-2">
                         <label>Client Type:</label>
-                        <ui-select multiple ng-model="mainCtrl.filters.target_clienttype" theme="bootstrap"  on-remove="mainCtrl.clienttypeOnSelect($select.selected)" on-select="mainCtrl.clienttypeOnSelect($select.selected)">
+                        <ui-select multiple ng-model="mainCtrl.filters.target_clienttype" theme="bootstrap"  on-remove="mainCtrl.clienttypeOnSelect($item)" on-select="mainCtrl.clienttypeOnSelect($item)">
                             <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                             <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes | propsFilter: {value: $select.search}">
                                 <div ng-bind="client.value"></div>
@@ -72,9 +72,9 @@
                     <div class="form-horizontal">
                         <h4 style="text-align: center;">KP PREV Filters:</h4>
                         <div class="form-group">
-                            <label class="control-label col-sm-3">Age:</label>
+                            <label class="control-label col-sm-3">Age Range:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.kp_prev_age" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.kp_prev_age" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'kp_prev_age')" on-select="mainCtrl.onSelectOption($item, 'kp_prev_age')">
                                     <ui-select-match placeholder="Age"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
                                         <div ng-bind="ageRange.value"></div>
@@ -85,7 +85,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">District:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple class="col-sm-8" ng-model="mainCtrl.filters.kp_prev_district" theme="bootstrap">
+                                <ui-select multiple class="col-sm-8" ng-model="mainCtrl.filters.kp_prev_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'kp_prev_district')" on-select="mainCtrl.onSelectOption($item, 'kp_prev_district')">
                                     <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="district.id as district in mainCtrl.districts">
                                         <div ng-bind="district.value"></div>
@@ -114,7 +114,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Client Type:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.kp_prev_client_type" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.kp_prev_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'kp_prev_client_type')" on-select="mainCtrl.onSelectOption($item, 'kp_prev_client_type')">
                                     <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
                                         <div ng-bind="client.value"></div>
@@ -131,7 +131,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">User Group:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple class="col-sm-8" ng-model="mainCtrl.filters.kp_prev_user_group" theme="bootstrap">
+                                <ui-select multiple class="col-sm-8" ng-model="mainCtrl.filters.kp_prev_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'kp_prev_user_group')" on-select="mainCtrl.onSelectOption($item, 'kp_prev_user_group')">
                                     <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="group.id as group in mainCtrl.groups">
                                         <div ng-bind="group.value"></div>
@@ -170,7 +170,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Age Range:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.htc_tst_age_range" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.htc_tst_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_age_range')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_age_range')">
                                     <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
                                         <div ng-bind="ageRange.value"></div>
@@ -181,7 +181,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">District:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.htc_tst_district" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.htc_tst_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_district')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_district')">
                                     <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="district.id as district in mainCtrl.districts">
                                         <div ng-bind="district.value"></div>
@@ -192,7 +192,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Client Type:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.htc_tst_client_type" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.htc_tst_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_client_type')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_client_type')">
                                     <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
                                         <div ng-bind="client.value"></div>
@@ -203,7 +203,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">User Group:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple class="col-sm-8" ng-model="mainCtrl.filters.htc_tst_user_group" theme="bootstrap">
+                                <ui-select multiple class="col-sm-8" ng-model="mainCtrl.filters.htc_tst_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_user_group')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_user_group')">
                                     <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="group.id as group in mainCtrl.groups">
                                         <div ng-bind="group.value"></div>
@@ -221,7 +221,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Age Range:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_age_range" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_age_range')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_age_range')">
                                     <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
                                         <div ng-bind="ageRange.value"></div>
@@ -232,7 +232,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">District:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_district" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_district')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_district')">
                                     <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="district.id as district in mainCtrl.districts">
                                         <div ng-bind="district.value"></div>
@@ -243,7 +243,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Client Type:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_client_type" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_client_type')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_client_type')">
                                     <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
                                         <div ng-bind="client.value"></div>
@@ -266,7 +266,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">User Group:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_user_group" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.htc_pos_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_user_group')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_user_group')">
                                     <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="group.id as group in mainCtrl.groups">
                                         <div ng-bind="group.value"></div>
@@ -284,7 +284,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Age Range:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.care_new_age_range" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.care_new_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_age_range')" on-select="mainCtrl.onSelectOption($item, 'care_new_age_range')">
                                     <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
                                         <div ng-bind="ageRange.value"></div>
@@ -295,7 +295,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">District:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.care_new_district" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.care_new_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_district')" on-select="mainCtrl.onSelectOption($item, 'care_new_district')">
                                     <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="district.id as district in mainCtrl.districts">
                                         <div ng-bind="district.value"></div>
@@ -306,7 +306,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Client Type:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.care_new_client_type" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.care_new_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_client_type')" on-select="mainCtrl.onSelectOption($item, 'care_new_client_type')">
                                     <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
                                         <div ng-bind="client.value"></div>
@@ -317,7 +317,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">HIV status:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.care_new_hiv_status" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.care_new_hiv_status" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_hiv_status')" on-select="mainCtrl.onSelectOption($item, 'care_new_hiv_status')">
                                     <ui-select-match placeholder="HIV Status"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="hiv.id as hiv in mainCtrl.hivStatuses">
                                         <div ng-bind="hiv.value"></div>
@@ -333,7 +333,7 @@
                         </div>
                         <div class="form-group">
                             <label class="control-label col-sm-3">User Group:</label>
-                            <ui-select class="col-sm-8" ng-model="mainCtrl.filters.care_new_user_group" theme="bootstrap">
+                            <ui-select class="col-sm-8" ng-model="mainCtrl.filters.care_new_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_user_group')" on-select="mainCtrl.onSelectOption($item, 'care_new_user_group')">
                                 <ui-select-match placeholder="User Group"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="group.id as group in mainCtrl.groups">
                                     <div ng-bind="group.value"></div>
@@ -350,7 +350,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Age Range:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_age_range" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_age_range')" on-select="mainCtrl.onSelectOption($item, 'tx_new_age_range')">
                                     <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
                                         <div ng-bind="ageRange.value"></div>
@@ -361,7 +361,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">District:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_district" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_district')" on-select="mainCtrl.onSelectOption($item, 'tx_new_district')">
                                     <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="district.id as district in mainCtrl.districts">
                                         <div ng-bind="district.value"></div>
@@ -372,7 +372,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Client Type:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_client_type" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_client_type')" on-select="mainCtrl.onSelectOption($item, 'tx_new_client_type')">
                                     <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
                                         <div ng-bind="client.value"></div>
@@ -389,7 +389,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">HIV status:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_hiv_status" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_hiv_status" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_hiv_status')" on-select="mainCtrl.onSelectOption($item, 'tx_new_hiv_status')">
                                     <ui-select-match placeholder="HIV Status"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="hiv.id as hiv in mainCtrl.hivStatuses">
                                         <div ng-bind="hiv.value"></div>
@@ -400,7 +400,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">User Group:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_user_group" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_new_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_user_group')" on-select="mainCtrl.onSelectOption($item, 'tx_new_user_group')">
                                     <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="group.id as group in mainCtrl.groups">
                                         <div ng-bind="group.value"></div>
@@ -418,7 +418,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Age Range:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_age_range" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_age_range')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_age_range')">
                                     <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
                                         <div ng-bind="ageRange.value"></div>
@@ -429,7 +429,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">District:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_district" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_district')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_district')">
                                     <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="district.id as district in mainCtrl.districts">
                                         <div ng-bind="district.value"></div>
@@ -440,7 +440,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Client Type:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_client_type" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_client_type')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_client_type')">
                                     <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
                                         <div ng-bind="client.value"></div>
@@ -451,7 +451,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">Undetect VL:</label>
                             <ui-select class="col-sm-8" ng-model="mainCtrl.filters.tx_undetect_vl" theme="bootstrap">
-                                <ui-select-match placeholder="Undetect VL:"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                                <ui-select-match placeholder="Undetect VL"><span ng-bind="$select.selected.value"></span></ui-select-match>
                                 <ui-select-choices repeat="undetected_vl.id as undetected_vl in mainCtrl.undetectvl">
                                     <div ng-bind="undetected_vl.value"></div>
                                 </ui-select-choices>
@@ -460,7 +460,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">HIV status:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_hiv_status" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_hiv_status" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_hiv_status')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_hiv_status')">
                                     <ui-select-match placeholder="HIV Status"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="hiv.id as hiv in mainCtrl.hivStatuses">
                                         <div ng-bind="hiv.value"></div>
@@ -477,7 +477,7 @@
                         <div class="form-group">
                             <label class="control-label col-sm-3">User Group:</label>
                             <div class="col-sm-8">
-                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_user_group" theme="bootstrap">
+                                <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_user_group')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_user_group')">
                                     <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
                                     <ui-select-choices repeat="group.id as group in mainCtrl.groups">
                                         <div ng-bind="group.value"></div>
