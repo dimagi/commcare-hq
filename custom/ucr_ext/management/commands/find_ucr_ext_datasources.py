@@ -25,8 +25,15 @@ class Command(BaseCommand):
             writer.writerow(headers)
 
             for config in DataSourceConfiguration.all():
-                doc_json = json.dumps(config)
-                if "ext_" in doc_json:
+                try:
+                    doc_json = json.dumps(config.to_json())
+                except:
+                    writer.writerow([
+                        config.domain,
+                        "bad-" + config._id
+                    ])
+
+                if '"ext_' in doc_json:
                     writer.writerow([
                         config.domain,
                         config._id
