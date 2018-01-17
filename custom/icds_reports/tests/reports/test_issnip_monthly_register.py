@@ -99,7 +99,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         data = ISSNIPMonthlyReport(config=config).agg_child_health_monthly
         self.assertEqual(data['boys_normal_0_3'], 1)
         self.assertEqual(data['girls_normal_0_3'], 1)
-        self.assertEqual(data['boys_normal_3_5'], 8)
+        self.assertEqual(data['boys_normal_3_5'], 7)
         self.assertEqual(data['girls_normal_3_5'], 7)
         self.assertEqual(data['boys_moderately_0_3'], 1)
         self.assertEqual(data['girls_moderately_0_3'], 0)

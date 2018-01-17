@@ -28,13 +28,13 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
                             u' have a higher risk of mortality',
-                    'average': 19.8488634036453,
+                    'average': 15.166496006553349,
                     'extended_info': [
                         {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '4,945'},
-                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '3.44%'},
-                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.22%'},
-                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '17.59%'},
-                        {'indicator': '% Normal (0 - 5 years):', 'value': '76.74%'}]
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '29.63%'},
+                        {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.02%'},
+                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '13.14%'},
+                        {'indicator': '% Normal (0 - 5 years):', 'value': '55.21%'}]
                 },
                 'fills': OrderedDict(
                     [
@@ -48,18 +48,18 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'st1': {
                         'total': 2375,
                         'severely_underweight': 40,
-                        'moderately_underweight': 450,
-                        'fillKey': '20%-35%',
+                        'moderately_underweight': 320,
+                        'fillKey': '0%-20%',
                         'original_name': ["st1"],
-                        'normal': 1820
+                        'normal': 1225
                     },
                     'st2': {
                         'total': 2570,
-                        'severely_underweight': 70,
-                        'moderately_underweight': 420,
+                        'severely_underweight': 60,
+                        'moderately_underweight': 330,
                         'original_name': ["st2"],
                         'fillKey': '0%-20%',
-                        'normal': 1975
+                        'normal': 1505
                     }
                 },
                 'slug': 'moderately_underweight',
@@ -86,13 +86,13 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
                             u' have a higher risk of mortality',
-                    'average': 20.63157894736842,
+                    'average': 15.157894736842104,
                     'extended_info': [
                         {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '475'},
-                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '2.74%'},
+                        {'indicator': '% Unweighed (0 - 5 years):', 'value': '33.26%'},
                         {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '1.68%'},
-                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.95%'},
-                        {'indicator': '% Normal (0 - 5 years):', 'value': '76.63%'}
+                        {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '13.47%'},
+                        {'indicator': '% Normal (0 - 5 years):', 'value': '51.58%'}
                     ]
                 },
                 'fills': OrderedDict(
@@ -106,11 +106,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 'data': {
                     'block_map': {
                         'severely_underweight': 8,
-                        'moderately_underweight': 90,
-                        'normal': 364,
+                        'moderately_underweight': 64,
+                        'normal': 245,
                         'total': 475,
                         'original_name': ['b1', 'b2'],
-                        'fillKey': '20%-35%'
+                        'fillKey': '0%-20%'
                     }
                 },
                 'slug': 'moderately_underweight',
@@ -131,23 +131,23 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 "location_type": "State",
                 "bottom_five": [
                     {
-                        "loc_name": "st2",
-                        "percent": 19.06614785992218
+                        "loc_name": "st1",
+                        "percent": 15.157894736842104
                     },
                     {
-                        "loc_name": "st1",
-                        "percent": 20.63157894736842
-                    }
+                        "loc_name": "st2",
+                        "percent": 15.17509727626459
+                    },
                 ],
                 "top_five": [
                     {
-                        "loc_name": "st2",
-                        "percent": 19.06614785992218
+                        "loc_name": "st1",
+                        "percent": 15.157894736842104
                     },
                     {
-                        "loc_name": "st1",
-                        "percent": 20.63157894736842
-                    }
+                        "loc_name": "st2",
+                        "percent": 15.17509727626459
+                    },
                 ],
                 "chart_data": [
                     {
@@ -166,12 +166,12 @@ class TestPrevalenceOfUndernutrition(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.6144814090019569,
+                                "y": 0.5048923679060665,
                                 "x": 1491004800000,
                                 "all": 5110
                             },
                             {
-                                "y": 0.7674418604651163,
+                                "y": 0.5520728008088979,
                                 "x": 1493596800000,
                                 "all": 4945
                             }
@@ -194,12 +194,12 @@ class TestPrevalenceOfUndernutrition(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.1771037181996086,
+                                "y": 0.15655577299412915,
                                 "x": 1491004800000,
                                 "all": 5110
                             },
                             {
-                                "y": 0.17593528816986856,
+                                "y": 0.13144590495449948,
                                 "x": 1493596800000,
                                 "all": 4945
                             }
@@ -227,7 +227,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                                 "all": 5110
                             },
                             {
-                                "y": 0.022244691607684528,
+                                "y": 0.020222446916076844,
                                 "x": 1493596800000,
                                 "all": 4945
                             }
@@ -237,13 +237,13 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 ],
                 "all_locations": [
                     {
-                        "loc_name": "st2",
-                        "percent": 19.06614785992218
+                        "loc_name": "st1",
+                        "percent": 15.157894736842104
                     },
                     {
-                        "loc_name": "st1",
-                        "percent": 20.63157894736842
-                    }
+                        "loc_name": "st2",
+                        "percent": 15.17509727626459
+                    },
                 ]
             }
         )
@@ -270,20 +270,20 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     u"s2": {
                         "total": 326,
                         "severely_underweight": 4,
-                        "moderately_underweight": 74,
-                        "normal": 236
+                        "moderately_underweight": 54,
+                        "normal": 124
                     },
                     u"s1": {
                         "total": 144,
                         "severely_underweight": 8,
-                        "moderately_underweight": 42,
-                        "normal": 92
+                        "moderately_underweight": 36,
+                        "normal": 90
                     },
                     None: {
                         "total": 235,
                         "severely_underweight": 6,
-                        "moderately_underweight": 58,
-                        "normal": 164
+                        "moderately_underweight": 45,
+                        "normal": 107
                     }
                 },
                 "chart_data": [
@@ -294,20 +294,19 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "values": [
                             [
                                 None,
-                                0.2723404255319149
+                                0.2170212765957447
                             ],
                             [
                                 "s1",
-                                0.3472222222222222
+                                0.3055555555555556
                             ],
                             [
                                 "s2",
-                                0.2392638036809816
+                                0.17791411042944785
                             ]
                         ],
                         "key": ""
                     }
                 ]
             }
-
         )

@@ -30,13 +30,13 @@ class TestPrevalenceOfSevere(TestCase):
                             "status for a child who has severe wasting (weight-for-height) below -3 "
                             "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
                             "that has moderate wasting (weight-for-height) below -2Z.",
-                    "average": "1.06",
+                    "average": "0.85",
                     'extended_info': [
                         {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
                         {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
                          'value': '32'},
-                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.70%'},
-                        {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.21%'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.91%'},
+                        {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
                         {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '0.85%'},
                         {'indicator': '% Normal (6 - 60 months):', 'value': '2.24%'}
                     ]
@@ -58,7 +58,7 @@ class TestPrevalenceOfSevere(TestCase):
                         "fillKey": "0%-5%"
                     },
                     "st2": {
-                        "severe": 2,
+                        "severe": 0,
                         "moderate": 4,
                         "normal": 16,
                         "total_measured": 25,
@@ -141,23 +141,23 @@ class TestPrevalenceOfSevere(TestCase):
                 "location_type": "State",
                 "bottom_five": [
                     {
+                        "loc_name": "st2",
+                        "percent": 0.8163265306122449
+                    },
+                    {
                         "loc_name": "st1",
                         "percent": 0.89086859688196
                     },
-                    {
-                        "loc_name": "st2",
-                        "percent": 1.2244897959183674
-                    }
                 ],
                 "top_five": [
                     {
+                        "loc_name": "st2",
+                        "percent": 0.8163265306122449
+                    },
+                    {
                         "loc_name": "st1",
                         "percent": 0.89086859688196
                     },
-                    {
-                        "loc_name": "st2",
-                        "percent": 1.2244897959183674
-                    }
                 ],
                 "chart_data": [
                     {
@@ -232,12 +232,12 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.002074688796680498,
+                                "y": 0.001037344398340249,
                                 "x": 1491004800000,
                                 "all": 964
                             },
                             {
-                                "y": 0.002129925452609159,
+                                "y": 0.0,
                                 "x": 1493596800000,
                                 "all": 939
                             }
@@ -247,13 +247,13 @@ class TestPrevalenceOfSevere(TestCase):
                 ],
                 "all_locations": [
                     {
+                        "loc_name": "st2",
+                        "percent": 0.8163265306122449
+                    },
+                    {
                         "loc_name": "st1",
                         "percent": 0.89086859688196
                     },
-                    {
-                        "loc_name": "st2",
-                        "percent": 1.2244897959183674
-                    }
                 ]
             }
         )
