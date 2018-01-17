@@ -8,10 +8,14 @@ from django.conf import settings
 
 from couchexport.models import Format
 
+from dimagi.utils.django.email import send_HTML_email
+
 from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload, BlobDownload
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import is_alive, heartbeat_enabled
 from soil.progress import get_task_status
+
+from corehq.util.view_utils import absolute_reverse
 
 
 def expose_cached_download(payload, expiry, file_extension, mimetype=None,
@@ -86,6 +90,20 @@ def get_download_context(download_id, message=None, require_result=False):
         'has_file': download_data is not None and download_data.has_file,
         'custom_message': message,
     }
+
+
+def process_email_request(download_id, email_address):
+    dropbox_url = absolute_reverse('dropbox_upload', args=(download_id,))
+    try:
+        allow_dropbox_sync = get_download_context(download_id).get('allow_dropbox_sync', False)
+    except TaskFailedError:
+        allow_dropbox_sync = False
+    download_url = "{}?get_file".format(absolute_reverse('retrieve_download', args=(download_id,)))
+    email_body = 'Your CommCare export is ready! Click on the link below to download your ' + \
+                 'requested data:\n' + download_url
+    dropbox_message = '\n\nYou can also upload your data to Dropbox with the link below:\n' + \
+                      dropbox_url if allow_dropbox_sync else ''
+    send_HTML_email('CommCare Export Complete', email_address, email_body + dropbox_message)
 
 
 def get_task(task_id):
