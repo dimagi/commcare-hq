@@ -1510,9 +1510,14 @@ def edit_case_view(request, domain, case_id):
     user = request.couch_user
 
     update = {}
-    for name, value in case.dynamic_case_properties().items():
-        if name in request.POST and request.POST[name] != value:
-            update[name] = request.POST[name]
+    old_properties = case.dynamic_case_properties()
+    for name in request.POST:
+        if name != 'external_id':       # handled separately below
+            if name in old_properties:  # updating property
+                if old_properties[name] != request.POST[name]:
+                    update[name] = request.POST[name]
+            elif request.POST[name]:    # new property
+                update[name] = request.POST[name]
 
     case_block_kwargs = {}
     if update:
