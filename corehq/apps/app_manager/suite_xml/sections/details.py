@@ -171,7 +171,10 @@ class DetailContributor(SectionContributor):
                     self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
                 ).fields
-                d.fields.extend(fields)
+                for field in fields:
+                    if column_info.column.useXpathExpression:
+                        field.template.text.xpath_function = column_info.column.field
+                    d.fields.append(field)
 
             # Add actions
             if detail_type.endswith('short') and not module.put_in_root:

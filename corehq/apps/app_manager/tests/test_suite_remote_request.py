@@ -30,12 +30,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.module.case_type = 'case'
         # chosen xpath just used to reference more instances - not considered valid to use in apps
         self.module.case_details.short.columns.append(
-            DetailColumn(header={"en": "report_name"}, model="case", format="calculate", field="whatever",
-                         calc_xpath="instance('reports')/report[1]/name")
+            DetailColumn.wrap(dict(header={"en": "report_name"}, model="case", format="calculate", field="whatever",
+                                   calc_xpath="instance('reports')/report[1]/name"))
         )
         self.module.case_details.long.columns.append(
-            DetailColumn(header={"en": "ledger_name"}, model="case", format="calculate", field="whatever",
-                         calc_xpath="instance('ledgerdb')/ledgers/name/name")
+            DetailColumn.wrap(dict(header={"en": "ledger_name"}, model="case", format="calculate", field="whatever",
+                                   calc_xpath="instance('ledgerdb')/ledgers/name/name"))
         )
         self.module.search_config = CaseSearch(
             command_label={'en': 'Search Patients Nationally'},
