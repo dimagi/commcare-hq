@@ -201,6 +201,17 @@ class SQLXFormsSession(models.Model):
 
         return session
 
+    @classmethod
+    def get_contact_id_from_session_id(cls, session_id):
+        result = list(cls.objects.filter(session_id=session_id).values_list('connection_id', flat=True))
+
+        if len(result) == 0:
+            raise cls.DoesNotExist
+        elif len(result) > 1:
+            raise cls.MultipleObjectsReturned
+
+        return result[0]
+
     @property
     def current_action_is_a_reminder(self):
         return self.current_reminder_num < len(self.reminder_intervals)
