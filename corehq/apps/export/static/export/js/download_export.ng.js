@@ -295,7 +295,7 @@
                         method: 'POST',
                         dataType: 'json',
                         url: '../../../../../add_export_email_request/',
-                        data: { download_id: $scope.download_id }
+                        data: { download_id: $scope.download_id },
                     });
                 } else {
                     $scope.sendEmailUponCompletion();
