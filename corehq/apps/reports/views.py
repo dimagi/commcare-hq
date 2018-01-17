@@ -1489,6 +1489,7 @@ def case_xml(request, domain, case_id):
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
+
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_GET
@@ -1504,6 +1505,7 @@ def case_property_names(request, domain, case_id):
     all_property_names.sort()
 
     return json_response(all_property_names)
+
 
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
