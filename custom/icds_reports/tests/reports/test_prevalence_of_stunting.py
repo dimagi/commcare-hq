@@ -27,14 +27,14 @@ class TestPrevalenceOfStunting(TestCase):
                             "the WHO Child Growth Standards median.<br/><br/>Stunting "
                             "is a sign of chronic undernutrition and has long "
                             "lasting harmful consequences on the growth of a child",
-                    "average": "2.73",
+                    "average": "1.99",
                     'extended_info': [
                         {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
                         {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
                          'value': '32'},
-                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '95.63%'},
-                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '1.70%'},
-                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '1.06%'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.38%'},
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '1.17%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '0.85%'},
                         {'indicator': '% Normal (6 - 60 months):', 'value': '1.60%'}
                     ]
                 },
@@ -46,8 +46,8 @@ class TestPrevalenceOfStunting(TestCase):
                 },
                 "data": {
                     "st1": {
-                        "severe": 3,
-                        "moderate": 5,
+                        "severe": 2,
+                        "moderate": 3,
                         "normal": 2,
                         "total_measured": 7,
                         "total": 449,
@@ -55,7 +55,7 @@ class TestPrevalenceOfStunting(TestCase):
                         "fillKey": "0%-25%"
                     },
                     "st2": {
-                        "severe": 13,
+                        "severe": 9,
                         "moderate": 5,
                         "normal": 13,
                         "total_measured": 25,
@@ -88,14 +88,14 @@ class TestPrevalenceOfStunting(TestCase):
                             "the WHO Child Growth Standards median.<br/><br/>Stunting "
                             "is a sign of chronic undernutrition and has long "
                             "lasting harmful consequences on the growth of a child",
-                    "average": "1.78",
+                    "average": "1.11",
                     'extended_info': [
                         {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '449'},
                         {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
                          'value': '7'},
-                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '97.77%'},
-                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '0.67%'},
-                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '1.11%'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '98.44%'},
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '0.45%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '0.67%'},
                         {'indicator': '% Normal (6 - 60 months):', 'value': '0.45%'}
                     ]
                 },
@@ -107,11 +107,11 @@ class TestPrevalenceOfStunting(TestCase):
                 },
                 "data": {
                     'block_map': {
-                        'moderate': 5,
+                        'moderate': 3,
                         'total_measured': 7,
                         'normal': 2,
                         'original_name': ['b1', 'b2'],
-                        'severe': 3,
+                        'severe': 2,
                         'total': 449,
                         'fillKey': '0%-25%'
                     }
@@ -136,21 +136,21 @@ class TestPrevalenceOfStunting(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 1.78173719376392
+                        "percent": 1.1135857461024499
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 3.673469387755102
+                        "percent": 2.857142857142857
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 1.78173719376392
+                        "percent": 1.1135857461024499
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 3.673469387755102
+                        "percent": 2.857142857142857
                     }
                 ],
                 "chart_data": [
@@ -203,7 +203,7 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 964
                             },
                             {
-                                "y": 0.010649627263045794,
+                                "y": 0.008519701810436636,
                                 "x": 1493596800000,
                                 "all": 939
                             }
@@ -226,12 +226,12 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.008298755186721992,
+                                "y": 0.005186721991701245,
                                 "x": 1491004800000,
                                 "all": 964
                             },
                             {
-                                "y": 0.01703940362087327,
+                                "y": 0.011714589989350373,
                                 "x": 1493596800000,
                                 "all": 939
                             }
@@ -242,11 +242,11 @@ class TestPrevalenceOfStunting(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 1.78173719376392
+                        "percent": 1.1135857461024499
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 3.673469387755102
+                        "percent": 2.857142857142857
                     }
                 ]
             }
