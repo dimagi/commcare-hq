@@ -354,6 +354,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             {'age_tranche__in': [0, 6, 72]},
             'height_eligible'
         )
+        weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'weighed_and_height_measured_in_month'
+        )
 
         queryset = AggChildHealthMonthly.objects.filter(
             month=date, **config
@@ -370,6 +374,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             eligible=Sum('fully_immunized_eligible'),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
             height_eli=Sum(height_eligible),
+            weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
             stunting=Sum(stunting_moderate) + Sum(stunting_severe),
             low_birth=Sum('low_birth_weight_in_month'),
             birth=Sum('bf_at_birth'),
@@ -464,16 +469,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
