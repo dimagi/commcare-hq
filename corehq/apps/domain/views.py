@@ -1822,8 +1822,10 @@ class EmailOnDowngradeView(View):
         )
 
         send_mail_async.delay(
-            'Subscription downgrade for {}'.format(request.domain),
-            message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+            '{}Subscription downgrade for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
         )
         return json_response({'success': True})
 

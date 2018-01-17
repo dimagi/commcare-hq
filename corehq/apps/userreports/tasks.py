@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
@@ -231,10 +231,28 @@ def delete_data_source_task(domain, config_id):
 
 
 @periodic_task(
-    run_every=settings.ASYNC_INDICATOR_QUEUE_CRONTAB, queue=settings.CELERY_PERIODIC_QUEUE
+    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
 )
 def run_queue_async_indicators_task():
-    queue_async_indicators.delay()
+    """ASYNC_INDICATOR_QUEUE_TIMES will be of the format:
+    {
+        '*': [(begin_hour, end_hour), (begin_hour, end_hour), ...] catch all for days
+        '1': [(begin_hour, end_hour), ...] hours for Monday (Monday 1, Sunday 7)
+    }
+    All times UTC
+    """
+    if not settings.ASYNC_INDICATOR_QUEUE_TIMES:
+        queue_async_indicators.delay()
+        return
+
+    hours_for_today = settings.ASYNC_INDICATOR_QUEUE_TIMES.get(date.today().isoweekday())
+    if not hours_for_today:
+        hours_for_today = settings.ASYNC_INDICATOR_QUEUE_TIMES.get('*')
+
+    for valid_hours in hours_for_today:
+        if valid_hours[0] <= datetime.utcnow().hour <= valid_hours[1]:
+            queue_async_indicators.delay()
+            break
 
 
 @serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)

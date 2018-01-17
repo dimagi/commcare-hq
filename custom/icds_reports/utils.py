@@ -365,6 +365,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
     valid_total = 0
     in_month_total = 0
+    values_to_calculate_average = []
 
     for row in data:
         valid = row[denom_prop] or 0
@@ -381,6 +382,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
     for data_for_location in six.itervalues(data_for_map):
         value = data_for_location[num_prop] * 100 / (data_for_location[denom_prop] or 1)
+        values_to_calculate_average.append(value)
         fill_format = '%s%%-%s%%'
         if value < fill_key_lower:
             data_for_location.update({'fillKey': (fill_format % (0, fill_key_lower))})
@@ -389,7 +391,8 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         elif value >= fill_key_bigger:
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
-    return data_for_map, valid_total, in_month_total
+    average = sum(values_to_calculate_average) / float(len(values_to_calculate_average) or 1)
+    return data_for_map, valid_total, in_month_total, average
 
 
 def calculate_date_for_age(dob, date):

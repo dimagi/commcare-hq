@@ -441,41 +441,45 @@ def update_broadcast_last_sent_timestamp(broadcast_class, schedule_id):
 
 @no_result_task(queue='reminder_queue')
 def handle_alert_schedule_instance(schedule_instance_id):
-    try:
-        instance = get_alert_schedule_instance(schedule_instance_id)
-    except AlertScheduleInstance.DoesNotExist:
-        return
+    with CriticalSection(['handle-alert-schedule-instance-%s' % schedule_instance_id.hex]):
+        try:
+            instance = get_alert_schedule_instance(schedule_instance_id)
+        except AlertScheduleInstance.DoesNotExist:
+            return
 
-    if _handle_schedule_instance(instance, save_alert_schedule_instance):
-        update_broadcast_last_sent_timestamp(ImmediateBroadcast, instance.alert_schedule_id)
+        if _handle_schedule_instance(instance, save_alert_schedule_instance):
+            update_broadcast_last_sent_timestamp(ImmediateBroadcast, instance.alert_schedule_id)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_timed_schedule_instance(schedule_instance_id):
-    try:
-        instance = get_timed_schedule_instance(schedule_instance_id)
-    except TimedScheduleInstance.DoesNotExist:
-        return
+    with CriticalSection(['handle-timed-schedule-instance-%s' % schedule_instance_id.hex]):
+        try:
+            instance = get_timed_schedule_instance(schedule_instance_id)
+        except TimedScheduleInstance.DoesNotExist:
+            return
 
-    if _handle_schedule_instance(instance, save_timed_schedule_instance):
-        update_broadcast_last_sent_timestamp(ScheduledBroadcast, instance.timed_schedule_id)
+        if _handle_schedule_instance(instance, save_timed_schedule_instance):
+            update_broadcast_last_sent_timestamp(ScheduledBroadcast, instance.timed_schedule_id)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
-    try:
-        instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
-    except CaseAlertScheduleInstance.DoesNotExist:
-        return
+    with CriticalSection(['handle-case-alert-schedule-instance-%s' % schedule_instance_id.hex]):
+        try:
+            instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
+        except CaseAlertScheduleInstance.DoesNotExist:
+            return
 
-    _handle_schedule_instance(instance, save_case_schedule_instance)
+        _handle_schedule_instance(instance, save_case_schedule_instance)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
-    try:
-        instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
-    except CaseTimedScheduleInstance.DoesNotExist:
-        return
+    with CriticalSection(['handle-case-timed-schedule-instance-%s' % schedule_instance_id.hex]):
+        try:
+            instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
+        except CaseTimedScheduleInstance.DoesNotExist:
+            return
 
-    _handle_schedule_instance(instance, save_case_schedule_instance)
+        _handle_schedule_instance(instance, save_case_schedule_instance)

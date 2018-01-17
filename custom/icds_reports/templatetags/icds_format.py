@@ -4,6 +4,13 @@ from django import template
 register = template.Library()
 
 
+def get_value(data, prop):
+    try:
+        return int(data[prop])
+    except (ValueError, KeyError, TypeError):
+        return 0
+
+
 @register.filter(name='icds_format')
 def icds_format(data, prop):
     if data:
@@ -20,8 +27,8 @@ def icds_type_of_building(data):
         'ICDS', 'Other'
     ]
     if data:
-        where_housed = int(data['where_housed']) or 0
-        building = int(data['provided_building']) or 0
+        where_housed = get_value(data, 'where_housed')
+        building = get_value(data, 'provided_building')
         if where_housed == 3:
             return provided_buildings[building]
         else:
@@ -39,8 +46,8 @@ def icds_toilet_type(value):
 @register.filter(name='icds_material_available')
 def icds_material_available(data):
     if data:
-        kit_available = data['preschool_kit_available']
-        kit_usable = data['preschool_kit_usable']
+        kit_available = data['preschool_kit_available'] if 'preschool_kit_available' in data else False
+        kit_usable = data['preschool_kit_usable'] if 'preschool_kit_available' in data else False
         return 'Yes' if kit_available and kit_usable else 'No'
     else:
         return 'No'

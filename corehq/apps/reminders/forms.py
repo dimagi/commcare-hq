@@ -26,6 +26,7 @@ from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.models import Keyword
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
@@ -1163,6 +1164,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         "Timeout intervals must be a list of positive "
                         "numbers separated by commas."
                     ))
+
+            if sum(timeouts_int) > SQLXFormsSession.MAX_SESSION_LENGTH:
+                raise ValidationError(_("Timeout intervals must add up to less than 7 days."))
+
             return timeouts_int
         return []
 

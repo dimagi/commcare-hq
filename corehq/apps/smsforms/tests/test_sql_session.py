@@ -13,13 +13,8 @@ from six.moves import range
 class SQLSessionTestCase(TestCase):
 
     def test_get_by_session_id(self):
-        session_id = uuid.uuid4().hex
-        sql_session = SQLXFormsSession.objects.create(
-            session_id=session_id,
-            start_time=datetime.utcnow(),
-            modified_time=datetime.utcnow(),
-        )
-        self.assertEqual(sql_session.pk, SQLXFormsSession.by_session_id(session_id).pk)
+        sql_session = _make_session()
+        self.assertEqual(sql_session.pk, SQLXFormsSession.by_session_id(sql_session.session_id).pk)
 
     def test_get_by_session_id_not_found(self):
         self.assertEqual(None, SQLXFormsSession.by_session_id(uuid.uuid4().hex))
@@ -168,6 +163,9 @@ def _arbitrary_session_properties(**kwargs):
     def arbitrary_bool():
         return random.choice([True, False])
 
+    def arbitrary_int(min_value, max_value):
+        return random.randint(min_value, max_value)
+
     properties = {
         'connection_id': arbitrary_string(),
         'session_id': arbitrary_string(),
@@ -184,6 +182,14 @@ def _arbitrary_session_properties(**kwargs):
         'session_type': random.choice(XFORMS_SESSION_TYPES),
         'workflow': arbitrary_string(20),
         'reminder_id': arbitrary_string(),
+        'phone_number': arbitrary_string(10),
+        'expire_after': arbitrary_int(60, 1000),
+        'session_is_open': arbitrary_bool(),
+        'reminder_intervals': [],
+        'current_reminder_num': 0,
+        'current_action_due': arbitrary_date(),
+        'submit_partially_completed_forms': arbitrary_bool(),
+        'include_case_updates_in_partial_submissions': arbitrary_bool(),
     }
     properties.update(kwargs)
     return properties

@@ -5,8 +5,7 @@
         "enikshay-performance-test"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode",
     "report_id": "summary_of_treatment_outcome",

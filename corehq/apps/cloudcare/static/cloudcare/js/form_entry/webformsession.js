@@ -149,6 +149,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
     requestParams['debuggerEnabled'] = self.debuggerEnabled;
+    requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
     if (this.blockingRequestInProgress) {
         return;
     }

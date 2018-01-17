@@ -2,7 +2,7 @@
 hqDefine("reports/js/aggregate_app_status", function() {
     function aggregateTooltip(key, x, y, e, graph) {
         return '<p><strong>' + key + '</strong></p>' +
-           '<p>' + e.value + ' since ' + x + '</p>';
+           '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
     }
     function setupCharts(data, div, customTooltip) {
         nv.addGraph(function() {

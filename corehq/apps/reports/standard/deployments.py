@@ -448,7 +448,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
 
 
 @location_safe
-class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
+class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     slug = 'aggregate_user_status'
 
     report_template_path = "reports/async/aggregate_user_status.html"
@@ -468,7 +468,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
-        super(AggregateAppStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+        super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
 
     @memoized
     def user_query(self):
@@ -513,18 +513,15 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
 
-        class BucketSeries(namedtuple('Bucket', 'data_series total_series total')):
+        class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
             @memoized
             def percent_series(self):
-                def _pct(val, total):
-                    return (100. * float(val) / float(total)) if total else 0
-
                 return [
                     {
                         'series': 0,
                         'x': row['x'],
-                        'y': _pct(row['y'], self.total)
+                        'y': self._pct(row['y'], self.user_count)
                     }
                     for row in self.total_series
                 ]
@@ -540,6 +537,14 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                     [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
                 ]
 
+            @property
+            def total_percent(self):
+                return '{0:.0f}%'.format(self._pct(self.total, self.user_count))
+
+            @staticmethod
+            def _pct(val, total):
+                return (100. * float(val) / float(total)) if total else 0
+
         query = self.user_query().run()
 
         aggregations = query.aggregations
@@ -547,7 +552,7 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
         last_sync_buckets = aggregations[1].raw_buckets
         total_users = query.total
 
-        def _buckets_to_series(buckets):
+        def _buckets_to_series(buckets, user_count):
             # start with N days of empty data
             # add bucket info to the data series
             # add last bucket
@@ -602,24 +607,22 @@ class AggregateAppStatusReport(ProjectReport, ProjectReportParametersMixin):
                     'y': running_total + extra,
                 }
             )
-            return BucketSeries(daily_series, running_total_series, total)
+            return BucketSeries(daily_series, running_total_series, total, user_count)
 
         submission_series = SeriesData(
             id='submission',
             title=_('Users who have Submitted'),
             chart_color='#004abf',
-            bucket_series=_buckets_to_series(last_submission_buckets)
+            bucket_series=_buckets_to_series(last_submission_buckets, total_users)
         )
         sync_series = SeriesData(
             id='sync',
             title=_('Users who have Synced'),
             chart_color='#f58220',
-            bucket_series=_buckets_to_series(last_sync_buckets),
+            bucket_series=_buckets_to_series(last_sync_buckets, total_users),
         )
         return {
             'submission_series': submission_series,
             'sync_series': sync_series,
             'total_users': total_users,
-            'ever_submitted': submission_series.bucket_series.total,
-            'ever_synced': sync_series.bucket_series.total,
         }

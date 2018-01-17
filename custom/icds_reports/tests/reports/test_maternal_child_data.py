@@ -21,7 +21,7 @@ class TestMaternalChildData(TestCase):
                     [
                         {
                             "redirect": "underweight_children",
-                            "color": "red",
+                            "color": "green",
                             "all": 989,
                             "frequency": "month",
                             "format": "percent_and_div",
@@ -30,8 +30,8 @@ class TestMaternalChildData(TestCase):
                                          " of the WHO Child Growth Standards median. "
                                          "Children who are moderately or severely underweight"
                                          " have a higher risk of mortality.",
-                            "percent": 3.336703741152685,
-                            "value": 196,
+                            "percent": -11.425682507583417,
+                            "value": 150,
                             "label": "Underweight (Weight-for-Age)"
                         },
                         {
@@ -45,8 +45,8 @@ class TestMaternalChildData(TestCase):
                                          "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of"
                                          " acute undernutrition usually as a consequence of insufficient "
                                          "food intake or a high incidence of infectious diseases.",
-                            "percent": 242.20802271920482,
-                            "value": 10,
+                            "percent": 310.6496272630458,
+                            "value": 8,
                             "label": "Wasting (Weight-for-Height)"
                         }
                     ],
@@ -61,8 +61,8 @@ class TestMaternalChildData(TestCase):
                                          " standard deviations of the WHO Child Growth Standards median. "
                                          "Stunting is a sign of chronic undernutrition and has "
                                          "long lasting harmful consequences on the growth of a child",
-                            "percent": 122.43521476748312,
-                            "value": 26,
+                            "percent": 116.73174772216308,
+                            "value": 19,
                             "label": "Stunting (Height-for-Age)"
                         },
                         {

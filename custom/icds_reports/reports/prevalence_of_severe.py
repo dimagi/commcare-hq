@@ -76,9 +76,11 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         data_for_map[on_map_name]['total_measured'] += total_measured
         data_for_map[on_map_name]['original_name'].append(name)
 
+    values = []
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total'] or 1)
+        values.append(value)
         if value < 5:
             data_for_location.update({'fillKey': '0%-5%'})
         elif 5 <= value <= 7:
@@ -105,7 +107,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % (((severe_total + moderate_total) * 100) / float(valid_total or 1)),
+            "average": "%.2f" % ((sum(values)) / float(len(values) or 1)),
             "info": _((
                 "Percentage of children between {} enrolled for ICDS services with "
                 "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "

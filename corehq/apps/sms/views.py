@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-from StringIO import StringIO
 import base64
+import io
 from datetime import datetime, timedelta, time
 import re
 import json
@@ -1753,7 +1753,7 @@ def download_sms_translations(request, domain):
     for row in rows:
         row.append(_MESSAGES.get(row[0]))
 
-    temp = StringIO()
+    temp = io.BytesIO()
     headers = (("translations", tuple(columns)),)
     data = (("translations", tuple(rows)),)
     export_raw(headers, data, temp)

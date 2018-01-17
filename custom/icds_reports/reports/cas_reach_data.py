@@ -67,9 +67,9 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
         'records': [
             [
                 {
-                    'label': _('AWCs covered'),
+                    'label': _('AWCs Launched'),
                     'help_text': _('Total AWCs that have launched ICDS-CAS. '
-                                   'AWCs are considered launched if they have submitted at least '
+                                   'AWCs are considered launched after submitting at least '
                                    'one Household Registration form. '),
                     'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
                     'color': 'green' if percent_increase(

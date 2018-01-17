@@ -206,6 +206,24 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return html;
     };
 
+    vm.locPopup = false;
+    var tooltip = d3.select("#locPopup");
+    var tooltipWithContent = d3.selectAll("#locPopup, #locPopup *");
+
+    function equalToEventTarget() {
+        return this === d3.event.target;
+    }
+
+    d3.select("body").on("click", function () {
+        var outside = tooltipWithContent.filter(equalToEventTarget).empty();
+        if (outside && vm.locPopup) {
+            tooltip.classed("hidden", true);
+            vm.locPopup = false;
+        } else {
+            vm.locPopup = true;
+        }
+    });
+
     vm.updateMap = function (geography) {
         if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
             var html = "";
@@ -213,10 +231,13 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
             });
             var css = 'display: block; left: ' + event.clientX + 'px; top: ' + event.clientY + 'px;';
-            var ele = d3.select('#locPopup')
-                .attr('style', css)
+
+            var popup = d3.select('#locPopup');
+            popup.classed("hidden", false);
+            popup.attr('style', css)
                 .html(html);
-            $compile(ele[0])($scope);
+
+            $compile(popup[0])($scope);
         } else {
             var location = geography.id || geography;
             if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
@@ -232,6 +253,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 storageService.setKey('search', $location.search());
             });
         }
+
     };
 
 }

@@ -7,7 +7,7 @@ from corehq.apps.sms.api import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.logging import notify_exception
-from corehq.apps.smsforms.app import _get_responses, start_session
+from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent, Keyword, KeywordAction
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
@@ -241,9 +241,7 @@ def _handle_structured_sms(domain, args, contact_id, session_id,
                 raise StructuredSMSException(response_text=error_msg,
                     xformsresponse=current_question)
 
-        responses = _get_responses(domain, contact_id, answer, 
-            yield_responses=True, session_id=session_id,
-            update_timestamp=False)
+        responses = get_responses(domain, session_id, answer)
         current_question = responses[-1]
 
         form_complete = is_form_complete(current_question)
@@ -346,14 +344,29 @@ def get_app_module_form(form_unique_id, logged_subevent=None):
         return (None, None, None, True, MSG_FORM_NOT_FOUND)
 
 
-def start_session_with_error_handling(domain, contact, app, module, form,
+def start_session_for_structured_sms(domain, contact, phone_number, app, module, form,
         case_id, keyword, logged_subevent=None):
     """
     Returns (session, responses, error, error_code)
     """
     try:
-        session, responses = start_session(domain, contact, app, module,
-            form, case_id=case_id, yield_responses=True)
+        session, responses = start_session(
+            SQLXFormsSession.create_session_object(
+                domain,
+                contact,
+                phone_number.phone_number,
+                app,
+                form,
+                expire_after=0,
+            ),
+            domain,
+            contact,
+            app,
+            module,
+            form,
+            case_id=case_id,
+            yield_responses=True
+        )
         if logged_subevent:
             logged_subevent.xforms_session_id = session.pk
             logged_subevent.save()
@@ -404,8 +417,8 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
             verified_number, send_response, logged_event, logged_subevent)
         return False
 
-    session, responses, error_occurred, error_code = start_session_with_error_handling(
-        domain, contact, app, module, form, case_id, keyword, logged_subevent)
+    session, responses, error_occurred, error_code = start_session_for_structured_sms(
+        domain, contact, verified_number, app, module, form, case_id, keyword, logged_subevent)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
         clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,

@@ -42,7 +42,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         config['date'] = (date - relativedelta(days=1)).date()
         data = get_data_for(config)
 
-    data_for_map, valid_total, in_day_total = generate_data_for_map(
+    data_for_map, valid_total, in_day_total, average = generate_data_for_map(
         data,
         loc_level,
         'in_day',
@@ -62,7 +62,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         "label": "Percent AWCs Open Yesterday",
         "fills": fills,
         "rightLegend": {
-            "average": (in_day_total or 0) * 100 / float(valid_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of Angwanwadi Centers that were open yesterday."
             )),
@@ -70,11 +70,11 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
             "extended_info": [
                 {
                     'indicator': 'Total number of AWCs that were open yesterday:',
-                    'value': indian_formatted_number(valid_total)
+                    'value': indian_formatted_number(in_day_total)
                 },
                 {
                     'indicator': 'Total number of AWCs that have been launched:',
-                    'value': indian_formatted_number(in_day_total)
+                    'value': indian_formatted_number(valid_total)
                 },
                 {
                     'indicator': '% of AWCs open yesterday:',

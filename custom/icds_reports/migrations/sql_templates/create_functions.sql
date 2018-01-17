@@ -319,7 +319,6 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
-	_aggregation_delay date;
 	_rollup_text text;
 	_rollup_text2 text;
 BEGIN
@@ -334,7 +333,6 @@ BEGIN
 	_null_value = NULL;
 	_blank_value = '';
 	_no_text = 'no';
-	_aggregation_delay = ($1 + INTERVAL ' - 4 DAYS')::DATE;
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
@@ -352,9 +350,9 @@ BEGIN
 		'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
-		'sum(nutrition_status_normal), ' ||
-		'sum(nutrition_status_moderately_underweight), ' ||
-		'sum(nutrition_status_severely_underweight), ' ||
+		'sum(CASE WHEN nutrition_status_normal = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN nutrition_status_moderately_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN nutrition_status_severely_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(wer_eligible), ' ||
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed), ' ||
@@ -384,19 +382,21 @@ BEGIN
 		'5, ' ||
 		'sum(pnc_eligible), ' ||
 		'sum(height_eligible), ' ||
-		'sum(wasting_moderate), ' ||
-		'sum(wasting_severe), ' ||
-		'sum(stunting_moderate), ' ||
-		'sum(stunting_severe), ' ||
+		'sum(CASE WHEN wasting_moderate = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN wasting_severe = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_moderate = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_severe = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(cf_initiated), ' ||
 		'sum(cf_initiation_eligible), ' ||
 		'sum(height_measured_in_month), ' ||
 		'sum(wasting_normal), ' ||
 		'sum(stunting_normal), ' ||
 		'sum(valid_all_registered_in_month), ' ||
-		'sum(ebf_no_info_recorded) ' ||
+		'sum(ebf_no_info_recorded), ' ||
+		'sum(CASE WHEN nutrition_status_weighed = 1 and height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN born_in_month = 1 and nutrition_status_weighed = 1 THEN 1 ELSE 0 END) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
-    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND (dob IS NULL OR dob <= ' || quote_literal(_aggregation_delay) || ') '
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -454,7 +454,9 @@ BEGIN
 	    'sum(wasting_normal), ' ||
 	    'sum(stunting_normal), ' ||
 	    'sum(valid_all_registered_in_month), ' ||
-	    'sum(ebf_no_info_recorded) ';
+	    'sum(ebf_no_info_recorded), ' ||
+      'sum(weighed_and_height_measured_in_month), ' ||
+      'sum(weighed_and_born_in_month) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
@@ -568,7 +570,6 @@ DECLARE
 	_null_value text;
 	_blank_value text;
 	_no_text text;
-	_aggregation_delay date;
 	_rollup_text text;
 	_rollup_text2 text;
 BEGIN
@@ -583,7 +584,6 @@ BEGIN
 	_blank_value = '';
 	_no_text = 'no';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
-	_aggregation_delay = ($1 + INTERVAL ' - 4 DAYS')::DATE;
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
@@ -638,7 +638,7 @@ BEGIN
 		'sum(lactating_all), ' ||
 		'sum(pregnant_all) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' ' ||
-    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' AND (add IS NULL OR add <= ' || quote_literal(_aggregation_delay) || ') ' ||
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -958,6 +958,7 @@ DECLARE
 	_tablename5 text;
 	_child_health_tablename text;
 	_ccs_record_tablename text;
+	_ccs_record_monthly_tablename text;
 	_daily_attendance_tablename text;
 	_awc_location_tablename text;
 	_thr_tablename text;
@@ -1004,6 +1005,7 @@ BEGIN
 	_tablename5 := 'agg_awc' || '_' || _start_date || '_5';
 	_child_health_tablename := 'agg_child_health';
 	_ccs_record_tablename := 'agg_ccs_record';
+	_ccs_record_monthly_tablename := 'ccs_record_monthly' || '_' || _start_date;
 	_thr_tablename := 'agg_thr_data' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
@@ -1169,14 +1171,10 @@ BEGIN
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
 		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) ||
-                  ' AND (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
+                  ' AND ' || quote_literal(_month_end_6yr) || ' <= dob' ||
                   ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
       ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
-		'sum(CASE WHEN (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_6yr) || ' <= dob' ||
                   ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
       ' THEN seeking_services ELSE 0 END) as cases_person_beneficiary, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
@@ -1188,6 +1186,21 @@ BEGIN
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
 		'GROUP BY awc_id) ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
+
+
+  -- Update ccs_record cases_person_has_aadhaar and cases_person_beneficiary
+  -- pregnant and lactating both imply that the case is open, alive and seeking services in the month
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'cases_person_has_aadhaar = cases_person_has_aadhaar + ut.ccs_has_aadhar, ' ||
+    'cases_person_beneficiary = cases_person_beneficiary + ut.ccs_beneficiary ' ||
+  'FROM (SELECT ' ||
+    'awc_id, ' ||
+    'sum(has_aadhar_id) as ccs_has_aadhar, ' ||
+    'count(*) as ccs_beneficiary ' ||
+    'FROM ' || quote_ident(_ccs_record_monthly_tablename) || ' ' ||
+    'WHERE pregnant = 1 OR lactating = 1 ' ||
+    'GROUP BY awc_id) ut ' ||
+  'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET thr_score = ' ||

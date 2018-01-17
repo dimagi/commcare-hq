@@ -314,6 +314,8 @@ api_params:
       - married
       - single
       - other
+      # legacy
+      - unmarried
 - api_param_name: occupation
   direction: 1
   case_type:
@@ -427,6 +429,10 @@ api_params:
       - urban_slum
       - other
       - not_applicable
+      # legacy
+      - prison_inmate
+      - slum_dweller
+      - tribal_population
 - api_param_name: key_populations
   direction: 1
   case_type:

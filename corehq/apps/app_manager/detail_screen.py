@@ -119,7 +119,12 @@ class FormattedDetailColumn(object):
         )
         return header
 
-    variables = None
+    @property
+    def variables(self):
+        variables = {}
+        if re.search(r'\$lang', self.column.field):
+            variables['lang'] = self.id_strings.current_language()
+        return variables
 
     @property
     def template(self):
@@ -356,7 +361,7 @@ class Enum(FormattedDetailColumn):
 
     @property
     def variables(self):
-        variables = {}
+        variables = super(Enum, self).variables
         for item in self.column.enum:
             v_key = item.key_as_variable
             v_val = self.id_strings.detail_column_enum_variable(
@@ -479,21 +484,6 @@ class Filter(HideShortColumn):
     @property
     def fields(self):
         return []
-
-
-@register_format_type('calculate')
-class Calculate(FormattedDetailColumn):
-
-    @property
-    def variables(self):
-        variables = {}
-        if re.search(r'\$lang', self.column.calc_xpath):
-            variables['lang'] = self.id_strings.current_language()
-        return variables
-
-    @property
-    def xpath_function(self):
-        return dot_interpolate(self.column.calc_xpath, self.xpath)
 
 
 @register_format_type('markdown')
