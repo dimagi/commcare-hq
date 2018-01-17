@@ -30,6 +30,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
             severely_underweight=Sum('nutrition_status_severely_underweight'),
             normal=Sum('nutrition_status_normal'),
             valid=Sum('nutrition_status_weighed'),
+            wer_eligible=Sum('wer_eligible'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -49,9 +50,11 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     severely_underweight_total = 0
     normal_total = 0
     valid_total = 0
+    eligible_total = 0
 
     for row in get_data_for(config):
         valid = row['valid'] or 0
+        eligible = row['wer_eligible'] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
         severely_underweight = row['severely_underweight'] or 0
@@ -62,6 +65,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         severely_underweight_total += severely_underweight
         normal_total += normal
         valid_total += valid
+        eligible_total += eligible
 
         data_for_map[on_map_name]['severely_underweight'] += severely_underweight
         data_for_map[on_map_name]['moderately_underweight'] += moderately_underweight
@@ -89,8 +93,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
     average = ((sum(values)) / float(len(values) or 1))
 
-    sum_of_indicators = moderately_underweight_total + severely_underweight_total + normal_total
-    percent_unweighed = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
+    percent_unweighed = (eligible_total - valid_total) * 100 / float(eligible_total or 1)
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 5 years')
 
