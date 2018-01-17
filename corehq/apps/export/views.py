@@ -10,7 +10,8 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
 from django.db.models import Sum
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, StreamingHttpResponse
+from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
+    StreamingHttpResponse, HttpResponseServerError
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -127,7 +128,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
-from soil.util import get_download_context
+from soil.util import get_download_context, process_email_request
 from soil.progress import get_task_status
 from six.moves import map
 
@@ -2483,8 +2484,18 @@ def can_download_daily_saved_export(export, domain, couch_user):
 
 @login_and_domain_required
 def add_export_email_request(request, domain):
-    download_id = request.POST['download_id']
-    EmailRequest.objects.create(domain=domain, download_id=download_id)
+    download_id = request.POST.get('download_id')
+    email_address = request.couch_user.get_email()
+    try:
+        download_context = get_download_context(download_id)
+    except TaskFailedError:
+        return HttpResponseServerError()
+    if download_id is None or email_address is None:
+        return HttpResponseBadRequest()
+    if download_context.get('is_ready', False):
+        process_email_request(download_id, email_address)
+    else:
+        EmailRequest.objects.create(domain=domain, download_id=download_id, email_address=email_address)
     return HttpResponse()
 
 
