@@ -86,6 +86,13 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 format='date',
                 case_tile_field='date'
             ),
+            DetailColumn(
+                header={'en': 'f'},
+                model='case',
+                field="'*italics*'",
+                format='markdown',
+                case_tile_field='italics'
+            ),
         ]
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
