@@ -350,9 +350,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             {'age_tranche': 72},
             'nutrition_status_weighed'
         )
-        height_eligible = exclude_records_by_age_for_column(
+        height_measured_in_month = exclude_records_by_age_for_column(
             {'age_tranche__in': [0, 6, 72]},
-            'height_eligible'
+            'height_measured_in_month'
         )
         weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
             {'age_tranche__in': [0, 6, 72]},
@@ -373,7 +373,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             ),
             eligible=Sum('fully_immunized_eligible'),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
-            height_eli=Sum(height_eligible),
+            height_measured_in_month=Sum(height_measured_in_month),
             weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
             stunting=Sum(stunting_moderate) + Sum(stunting_severe),
             low_birth=Sum('low_birth_weight_in_month'),
@@ -498,16 +498,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
