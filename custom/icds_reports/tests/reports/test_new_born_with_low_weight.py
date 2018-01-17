@@ -123,7 +123,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 100.0
                     }
                 ],
                 "top_five": [
@@ -133,7 +133,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 100.0
                     }
                 ],
                 "chart_data": [
@@ -157,13 +157,13 @@ class TestNewBornWithLowWeight(TestCase):
                             {
                                 "y": 0.0,
                                 "x": 1491004800000,
-                                "all": 8,
+                                "all": 3,
                                 "low_birth": 0
                             },
                             {
-                                "y": 0.2857142857142857,
+                                "y": 0.6666666666666666,
                                 "x": 1493596800000,
-                                "all": 7,
+                                "all": 3,
                                 "low_birth": 2
                             }
                         ],
@@ -177,7 +177,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 100.0
                     }
                 ]
             }
