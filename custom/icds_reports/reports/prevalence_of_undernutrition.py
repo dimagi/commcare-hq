@@ -29,7 +29,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
             normal=Sum('nutrition_status_normal'),
-            valid=Sum('wer_eligible'),
+            valid=Sum('nutrition_status_weighed'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -264,7 +264,7 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
-        valid=Sum('wer_eligible'),
+        valid=Sum('nutrition_status_weighed'),
         normal=Sum('nutrition_status_normal')
     ).order_by('%s_name' % loc_level)
 

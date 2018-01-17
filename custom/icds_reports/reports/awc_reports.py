@@ -346,9 +346,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             {'age_tranche__in': [0, 6, 72]},
             'stunting_severe'
         )
-        wer_eligible = exclude_records_by_age_for_column(
+        nutrition_status_weighed = exclude_records_by_age_for_column(
             {'age_tranche': 72},
-            'wer_eligible'
+            'nutrition_status_weighed'
         )
         height_eligible = exclude_records_by_age_for_column(
             {'age_tranche__in': [0, 6, 72]},
@@ -363,7 +363,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             underweight=(
                 Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid_wer_eligible=Sum(wer_eligible),
+            valid_weighed=Sum(nutrition_status_weighed),
             immunized=(
                 Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
             ),
@@ -434,16 +434,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_wer_eligible'
+                        'valid_weighed'
                     ),
                     'color': 'red' if percent_diff(
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_wer_eligible'
+                        'valid_weighed'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'underweight'),
-                    'all': get_value(this_month_data, 'valid_wer_eligible'),
+                    'all': get_value(this_month_data, 'valid_weighed'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },

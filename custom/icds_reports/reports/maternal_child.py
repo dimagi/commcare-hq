@@ -38,9 +38,9 @@ def get_maternal_child_data(domain, config, show_test=False):
             {'age_tranche__in': [0, 6, 72]},
             'stunting_severe'
         )
-        wer_eligible = exclude_records_by_age_for_column(
+        nutrition_status_weighed = exclude_records_by_age_for_column(
             {'age_tranche': 72},
-            'wer_eligible'
+            'nutrition_status_weighed'
         )
         height_eligible = exclude_records_by_age_for_column(
             {'age_tranche__in': [0, 6, 72]},
@@ -55,7 +55,7 @@ def get_maternal_child_data(domain, config, show_test=False):
             underweight=(
                 Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid=Sum(wer_eligible),
+            valid=Sum(nutrition_status_weighed),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
             stunting=Sum(stunting_moderate) + Sum(stunting_severe),
             height_eli=Sum(height_eligible),
