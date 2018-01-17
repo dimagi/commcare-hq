@@ -85,13 +85,13 @@ For more on Django JS I18n, check out https://docs.djangoproject.com/en/1.7/topi
 
 ## Django URLs
 
-Just like you might use the `{% url %}` tag to resolve a URL in a template
+Just like you might use `{% url ... %}` to resolve a URL in a template
 
 ```
 <a href="{% url 'all_widget_info' domain %}">Widget Info</a>
 ```
 
-You can use `{% registerurl %}` to make a URL available in javascript, through the initial_page_data.reverse utility (modeled after Django's python `reverse` function).
+(or `reverse(...)` to resolve a URL in python), you can use `{% registerurl %}` to make a URL available in javascript, through the initial_page_data.reverse utility (modeled after Django's python `reverse` function).
 
 in template
 ```
@@ -101,7 +101,7 @@ in template
 in js
 
 ```
-var urllib = hqImport('hqwebapp/js/initial_page_data.js');
+var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js');
 
 $.get(initial_page_data.reverse('all_widget_info')).done(function () {...});
 ```
