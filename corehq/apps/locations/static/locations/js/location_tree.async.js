@@ -45,6 +45,26 @@ function LocationTreeViewModel(hierarchy) {
     };
 }
 
+function LocationSearchViewModel() {
+    var model = this;
+    this.root=ko.observable();
+
+    this.l__selected_location_id = ko.observable();
+    this.uuid = ko.computed(function () {
+        if (!model.l__selected_location_id()) {
+            return;
+        }
+        return (model.l__selected_location_id().split("l__")[1]);
+    });
+
+    this.name = ko.observable();
+    this.can_edit = ko.observable();
+    this.is_archived = ko.observable();
+    this.show_archive_action_button = ko.computed(function() {
+        return !show_inactive || this.is_archived();
+    }, this);
+}
+
 function LocationModel(data, root, depth) {
     var loc = this;
 
