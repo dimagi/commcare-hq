@@ -93,8 +93,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     fills.update({'38%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    sum_of_indicators = moderate_total + severe_total + normal_total
-    percent_unmeasured = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
+    percent_unmeasured = (valid_total - measured_total) * 100 / float(valid_total or 1)
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
 
@@ -130,15 +129,15 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
                 },
                 {
                     'indicator': '% Severely stunted{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (severe_total * 100 / float(total_measured or 1))
+                    'value': '%.2f%%' % (severe_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Moderately stunted{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (moderate_total * 100 / float(total_measured or 1))
+                    'value': '%.2f%%' % (moderate_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Normal{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (normal_total * 100 / float(total_measured or 1))
+                    'value': '%.2f%%' % (normal_total * 100 / float(measured_total or 1))
                 }
             ]
         },

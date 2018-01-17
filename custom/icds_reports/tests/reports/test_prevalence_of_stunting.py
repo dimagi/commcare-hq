@@ -9,6 +9,7 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class TestPrevalenceOfStunting(TestCase):
+    maxDiff = None
 
     def test_map_data(self):
         self.assertDictEqual(
@@ -32,10 +33,10 @@ class TestPrevalenceOfStunting(TestCase):
                         {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
                         {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
                          'value': '32'},
-                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.38%'},
-                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '1.17%'},
-                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '0.85%'},
-                        {'indicator': '% Normal (6 - 60 months):', 'value': '1.60%'}
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.59%'},
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '34.38%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '25.00%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '40.62%'}
                     ]
                 },
                 "fills": {
@@ -57,7 +58,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "st2": {
                         "severe": 9,
                         "moderate": 5,
-                        "normal": 13,
+                        "normal": 11,
                         "total_measured": 25,
                         "total": 490,
                         'original_name': ["st2"],
@@ -94,9 +95,9 @@ class TestPrevalenceOfStunting(TestCase):
                         {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
                          'value': '7'},
                         {'indicator': '% Unmeasured (6 - 60 months):', 'value': '98.44%'},
-                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '0.45%'},
-                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '0.67%'},
-                        {'indicator': '% Normal (6 - 60 months):', 'value': '0.45%'}
+                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '28.57%'},
+                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '42.86%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '28.57%'}
                     ]
                 },
                 "fills": {
@@ -135,23 +136,23 @@ class TestPrevalenceOfStunting(TestCase):
                 "location_type": "State",
                 "bottom_five": [
                     {
-                        "loc_name": "st1",
-                        "percent": 1.1135857461024499
+                        "loc_name": "st2",
+                        "percent": 56.0
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 2.857142857142857
-                    }
+                        "loc_name": "st1",
+                        "percent": 71.42857142857143
+                    },
                 ],
                 "top_five": [
                     {
-                        "loc_name": "st1",
-                        "percent": 1.1135857461024499
+                        "loc_name": "st2",
+                        "percent": 56.0
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 2.857142857142857
-                    }
+                        "loc_name": "st1",
+                        "percent": 71.42857142857143
+                    },
                 ],
                 "chart_data": [
                     {
@@ -170,14 +171,14 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.0031120331950207467,
+                                "y": 0.18181818181818182,
                                 "x": 1491004800000,
-                                "all": 964
+                                "all": 11
                             },
                             {
-                                "y": 0.01597444089456869,
+                                "y": 0.40625,
                                 "x": 1493596800000,
-                                "all": 939
+                                "all": 32
                             }
                         ],
                         "key": "% normal"
@@ -198,14 +199,14 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.004149377593360996,
+                                "y": 0.36363636363636365,
                                 "x": 1491004800000,
-                                "all": 964
+                                "all": 11
                             },
                             {
-                                "y": 0.008519701810436636,
+                                "y": 0.25,
                                 "x": 1493596800000,
-                                "all": 939
+                                "all": 32
                             }
                         ],
                         "key": "% moderately stunted"
@@ -226,14 +227,14 @@ class TestPrevalenceOfStunting(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.005186721991701245,
+                                "y": 0.45454545454545453,
                                 "x": 1491004800000,
-                                "all": 964
+                                "all": 11
                             },
                             {
-                                "y": 0.011714589989350373,
+                                "y": 0.34375,
                                 "x": 1493596800000,
-                                "all": 939
+                                "all": 32
                             }
                         ],
                         "key": "% severely stunted"
@@ -241,13 +242,13 @@ class TestPrevalenceOfStunting(TestCase):
                 ],
                 "all_locations": [
                     {
-                        "loc_name": "st1",
-                        "percent": 1.1135857461024499
+                        "loc_name": "st2",
+                        "percent": 56.0
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 2.857142857142857
-                    }
+                        "loc_name": "st1",
+                        "percent": 71.42857142857143
+                    },
                 ]
             }
         )
@@ -299,7 +300,7 @@ class TestPrevalenceOfStunting(TestCase):
                             ],
                             [
                                 "s2",
-                                0.013333333333333334
+                                0.5
                             ]
                         ],
                         "key": ""
