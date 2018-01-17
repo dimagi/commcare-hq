@@ -77,5 +77,13 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='userstagingtable',
             name='batch',
+        ),
+        migrations.RemoveField(
+            model_name='applicationstagingtable',
+            name='batch',
+        ),
+        migrations.RemoveField(
+            model_name='applicationdim',
+            name='batch',
         )
     ]

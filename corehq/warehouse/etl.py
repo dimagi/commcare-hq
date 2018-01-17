@@ -75,7 +75,7 @@ class CustomSQLETLMixin(BaseETLMixin):
             context[dep] = dep_cls._meta.db_table
         context['start_datetime'] = batch.start_datetime.isoformat()
         context['end_datetime'] = batch.end_datetime.isoformat()
-        context['batch_id'] = batch.batch_id
+        context['batch_id'] = batch.id
         context.update(cls.additional_sql_context())
         return context
 
@@ -113,13 +113,22 @@ class CouchToDjangoETLMixin(BaseETLMixin):
         raise NotImplementedError
 
     @classmethod
-    def load(cls, batch):
+    def load(cls, batch, append=False):
         from corehq.warehouse.models.shared import WarehouseTable
 
         assert issubclass(cls, WarehouseTable)
+        if append:
+            batches = cls.objects.distinct('batch').values_list('batch', flat=True)
+            if batches:
+                oldest = Batch.objects.filter(pk__in=batches).order_by('start_datetime').first()
+                if batch.start_datetime < oldest.start_datetime:
+                    batch.end_datetime = oldest.start_datetime
+                else:
+                    return
+
         record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
 
-        django_batch_records(cls, record_iter, cls.field_mapping(), batch.batch_id)
+        django_batch_records(cls, record_iter, cls.field_mapping(), batch.id)
 
 
 def _render_template(path, context):

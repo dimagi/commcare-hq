@@ -109,4 +109,16 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, to='warehouse.Batch'),
             preserve_default=False,
         ),
+        migrations.AddField(
+            model_name='applicationstagingtable',
+            name='batch',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, to='warehouse.Batch'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='applicationdim',
+            name='batch',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, to='warehouse.Batch'),
+            preserve_default=False,
+        ),
     ]
