@@ -534,7 +534,7 @@ class CaseTileHelper(object):
         from corehq.apps.app_manager.detail_screen import get_column_generator
         default_lang = self.app.default_language if not self.build_profile_id \
             else self.app.build_profiles[self.build_profile_id].langs[0]
-        if column.useXpathExpression and True:
+        if column.useXpathExpression:
             xpath_function = escape(column.field, {'"': '&quot;'})
         else:
             xpath_function = escape(get_column_generator(
