@@ -5,7 +5,7 @@
         <i class="fa fa-plus"></i>
         {% trans "Add Property" %}
     </button>
-    {% if request|toggle_enabled:'GRAPH_CREATION' or request|toggle_enabled:'CALCULATED_PROPERTY_IN_CASE_LIST' %}
+    {% if request|toggle_enabled:'GRAPH_CREATION' %}
       <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
           <span class="caret"></span>
       </button>
