@@ -389,8 +389,8 @@ BEGIN
 		'sum(cf_initiated), ' ||
 		'sum(cf_initiation_eligible), ' ||
 		'sum(height_measured_in_month), ' ||
-		'sum(wasting_normal), ' ||
-		'sum(stunting_normal), ' ||
+		'sum(CASE WHEN wasting_normal = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_normal = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(valid_all_registered_in_month), ' ||
 		'sum(ebf_no_info_recorded), ' ||
 		'sum(CASE WHEN nutrition_status_weighed = 1 and height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
