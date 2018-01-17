@@ -379,6 +379,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             low_birth=Sum('low_birth_weight_in_month'),
             birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
+            weighed_and_born_in_month=Sum('weighed_and_born_in_month'),
             month_ebf=Sum('ebf_in_month'),
             ebf=Sum('ebf_eligible'),
             month_cf=Sum('cf_initiation_in_month'),
@@ -553,16 +554,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'low_birth',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'low_birth',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth'),
-                    'all': get_value(this_month_data, 'born'),
+                    'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },

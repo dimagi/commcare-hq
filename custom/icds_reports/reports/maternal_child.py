@@ -67,6 +67,7 @@ def get_maternal_child_data(domain, config, show_test=False):
             low_birth_weight=Sum('low_birth_weight_in_month'),
             bf_birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
+            weighed_and_born_in_month=Sum('weighed_and_born_in_month'),
             ebf=Sum('ebf_in_month'),
             ebf_eli=Sum('ebf_eligible'),
             cf_initiation=Sum('cf_initiation_in_month'),
@@ -193,16 +194,16 @@ def get_maternal_child_data(domain, config, show_test=False):
                         'low_birth_weight',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'low_birth_weight',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth_weight'),
-                    'all': get_value(this_month_data, 'born'),
+                    'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'low_birth'
