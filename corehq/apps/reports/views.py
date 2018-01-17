@@ -1319,14 +1319,6 @@ class CaseDetailsView(BaseProjectReportSectionView):
         data = copy.deepcopy(wrapped_case.to_full_dict())
         default_properties = _get_tables_as_rows(data, display)
         dynamic_data = wrapped_case.dynamic_properties()
-        all_property_names = get_all_case_properties(self.domain, [self.case_instance.type])
-        try:
-            all_property_names = all_property_names[self.case_instance.type]
-            all_property_names.remove('name')
-        except KeyError:
-            all_property_names = set()
-        all_property_names = list(all_property_names)
-        all_property_names.sort()
 
         for section in display:
             for row in section['layout']:
@@ -1381,7 +1373,6 @@ class CaseDetailsView(BaseProjectReportSectionView):
             "is_usercase": self.case_instance.type == USERCASE_TYPE,
 
             "default_properties_as_table": default_properties,
-            "dynamic_properties_names": all_property_names,
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
             "show_properties_edit": can_edit_data and has_privilege(self.request, privileges.DATA_CLEANUP),
@@ -1498,6 +1489,21 @@ def case_xml(request, domain, case_id):
     version = request.GET.get('version', V2)
     return HttpResponse(case.to_xml(version), content_type='text/xml')
 
+@require_case_view_permission
+@require_permission(Permissions.edit_data)
+@require_GET
+def case_property_names(request, domain, case_id):
+    case = _get_case_or_404(domain, case_id)
+    all_property_names = get_all_case_properties(domain, [case.type])
+    try:
+        all_property_names = all_property_names[case.type]
+        all_property_names.remove('name')
+    except KeyError:
+        all_property_names = set()
+    all_property_names = list(all_property_names)
+    all_property_names.sort()
+
+    return json_response(all_property_names)
 
 @require_case_view_permission
 @require_permission(Permissions.edit_data)

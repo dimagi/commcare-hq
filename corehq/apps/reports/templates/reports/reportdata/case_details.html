@@ -22,12 +22,12 @@
 
 {% block page_content %}
 
-{% initial_page_data 'dynamic_properties_names' dynamic_properties_names %}
 {% initial_page_data 'dynamic_properties' dynamic_properties %}
 {% initial_page_data 'timezone_offset' timezone_offset %}
 {% initial_page_data 'xform_api_url' xform_api_url %}
 {% initial_page_data 'xform_ids' case.xform_ids %}
 {% registerurl "case_form_data" case.domain case.case_id '---' %}
+{% registerurl "case_property_names" case.domain case.case_id %}
 {% registerurl "edit_case" case.domain case.case_id %}
 
 <div class="hq-generic-report">
@@ -198,7 +198,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                    <div class="form-inline pull-right">
+                    <div class="form-inline pull-right" data-bind="visible: !showSpinner()">
                         <div class="input-group input-group-sm">
                             <input type="text" class="form-control" placeholder="{% trans "Search" %}"
                                    data-bind="value: query, valueUpdate: 'afterkeydown'" />
@@ -213,22 +213,37 @@
                         {% trans "Edit Case Properties" %}
                     </h4>
                 </div>
-                <div class="modal-body">
-                    <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
-                    <div class="container-fluid">
-                        <!-- ko foreach: visibleColumns -->
-                            <div data-bind="attr: { 'class': $root.columnClass }">
-                                <!-- ko foreach: $data -->
-                                    <div class="form-group container-fluid">
-                                        <label class="col-sm-6 control-label" data-bind="text: name"></label>
-                                        <div class="col-sm-6">
-                                            <input type="text" class="form-control"
-                                                   data-bind="value: value, attr: { 'data-name': name }, event: { change: $root.propertyChange }" />
+                <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
+                    <div class='alert alert-danger' data-bind="visible: showError">
+                        {% blocktrans %}
+                            Something unexpected happened.
+                            Please refresh the page and try again, or report an issue if the problem persists.
+                        {% endblocktrans %}
+                    </div>
+                    <div class='alert alert-danger' data-bind="visible: showRetry">
+                        {% blocktrans %}
+                            Something unexpected happened.
+                            Please try again, or report an issue if the problem persists.
+                        {% endblocktrans %}
+                    </div>
+                    <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
+                    <div data-bind="visible: !showSpinner()">
+                        <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
+                        <div class="container-fluid">
+                            <!-- ko foreach: visibleColumns -->
+                                <div data-bind="attr: { 'class': $root.columnClass }">
+                                    <!-- ko foreach: $data -->
+                                        <div class="form-group container-fluid">
+                                            <label class="col-sm-6 control-label" data-bind="text: name"></label>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control"
+                                                       data-bind="value: value, attr: { 'data-name': name }, event: { change: $root.propertyChange }" />
+                                            </div>
                                         </div>
-                                    </div>
-                                <!-- /ko -->
-                            </div>
-                        <!-- /ko -->
+                                    <!-- /ko -->
+                                </div>
+                            <!-- /ko -->
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer with-controls">
@@ -242,7 +257,9 @@
                         <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
                     </ul>
                     <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                    <button type="submit" class="btn btn-primary" data-bind="click: submitForm">{% trans "Save" %}</button>
+                    <button type="submit" class="btn btn-primary" data-bind="click: submitForm, attr: { disabled: disallowSave }">
+                        {% trans "Save" %}
+                    </button>
                 </div>
             </div>
         </div>
