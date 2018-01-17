@@ -54,6 +54,10 @@ def get_redis_client():
     return rcache
 
 
+def get_strict_redis_client():
+    return get_redis_client().client.get_client()
+
+
 def key_doc_id(doc_id):
     """
     Redis cache key for a full couch document by doc_id
