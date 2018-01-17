@@ -510,13 +510,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                                 that.filter_xpath_extra.value = input.val();
                                 fireChange();
                             });
-                        } else if (this.val() === 'calculate') {
-                            that.format.ui.parent().append(that.calc_xpath_extra.ui);
-                            var input = that.calc_xpath_extra.ui.find('input');
-                            input.change(function() {
-                                that.calc_xpath_extra.value = input.val();
-                                fireChange();
-                            });
                         } else if (this.val() === 'time-ago') {
                             that.format.ui.parent().append(that.time_ago_extra.ui);
                             var select = that.time_ago_extra.ui.find('select');
@@ -913,9 +906,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     hqImport('analytix/js/google').track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
                     this.addItem({hasAutocomplete: true});
                 },
-                addCalculation: function () {
-                    this.addItem({hasAutocomplete: false, format: 'calculate'});
-                },
                 addGraph: function () {
                     this.addItem({hasAutocomplete: false, format: 'graph'});
                 },
@@ -1107,11 +1097,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
         if (addOns.conditional_enum) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "conditional-enum", label: gettext('Conditional ID Mapping')}
-            );
-        }
-        if (addOns.calc_xpaths) {
-            DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "calculate", label: gettext('Calculate')}
             );
         }
 
