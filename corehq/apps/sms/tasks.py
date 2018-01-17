@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import hashlib
 import math
 from datetime import datetime, timedelta
 from celery.task import task
@@ -133,33 +134,26 @@ def connection_slot_key_base(backend):
     return 'backend-%s-connection-slot-' % backend.couch_id
 
 
-def reserve_connection_slot(backend, max_simultaneous_connections):
+def get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections):
     """
-    There is one redis key per connection slot, numbered from 1 to
-    max_simultaneous_connections.
-    A slot is considered taken if the corresponding redis key exists,
-    or is considered free if it does not exist.
+    Converts phone_number to a number between 0 and max_simultaneous_connections - 1.
+    This is the connection slot number that will need be reserved in order to send
+    the message.
     """
-    with CriticalSection(['reserve-connection-slot-for-%s' % backend.couch_id]):
-        client = get_redis_client()
-        key_base = connection_slot_key_base(backend)
-        slot_keys = client.keys(key_base + '*')
-        reserved_slots = [slot_key.replace(key_base, '') for slot_key in slot_keys]
-
-        for slot_number in range(1, max_simultaneous_connections + 1):
-            slot_string = str(slot_number)
-            if slot_string not in reserved_slots:
-                key = key_base + slot_string
-                client.set(key, 1)
-                client.expire(key, 60)
-                return slot_string
-
-    return None
+    hashed_phone_number = hashlib.sha1(phone_number).hexdigest()
+    return int(hashed_phone_number, base=16) % max_simultaneous_connections
 
 
-def free_connection_slot(backend, slot):
+def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections):
+    """
+    There is one redis lock per connection slot, numbered from 0 to
+    max_simultaneous_connections - 1.
+    A slot is taken if the lock can't be acquired.
+    """
+    slot = get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections)
+    key = 'backend-%s-connection-slot-%s' % (backend.couch_id, slot)
     client = get_redis_client()
-    client.delete(connection_slot_key_base(backend) + slot)
+    return client.lock(key, timeout=60)
 
 
 def handle_outgoing(msg):
@@ -189,8 +183,8 @@ def handle_outgoing(msg):
             return True
 
     if max_simultaneous_connections:
-        connection_slot = reserve_connection_slot(backend, max_simultaneous_connections)
-        if not connection_slot:
+        connection_slot_lock = get_connection_slot_lock(msg.phone_number, backend, max_simultaneous_connections)
+        if not connection_slot_lock.acquire(blocking=False):
             # Requeue the message and try it again shortly
             return True
 
@@ -201,7 +195,7 @@ def handle_outgoing(msg):
     )
 
     if max_simultaneous_connections:
-        free_connection_slot(backend, connection_slot)
+        release_lock(connection_slot_lock, True)
 
     if msg.error:
         remove_from_queue(msg)
