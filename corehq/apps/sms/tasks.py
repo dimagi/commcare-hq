@@ -150,7 +150,7 @@ def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections
     max_simultaneous_connections - 1.
     A slot is taken if the lock can't be acquired.
     """
-    slot = get_connection_slot_from_phone_number(msg.phone_number, max_simultaneous_connections)
+    slot = get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections)
     key = 'backend-%s-connection-slot-%s' % (backend.couch_id, slot)
     client = get_redis_client()
     return client.lock(key, timeout=60)
