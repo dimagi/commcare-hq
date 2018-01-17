@@ -66,7 +66,7 @@
        </style>
       <header>
         <text>
-          <locale id="m0.case_short.case_name_1.header"/>
+          <locale id="m0.case_short.case_calculated_property_1.header"/>
         </text>
       </header>
       <template>
@@ -139,7 +139,7 @@
        </style>
       <header>
         <text>
-          <locale id="m0.case_short.case_name_1.header"/>
+          <locale id="m0.case_short.case_calculated_property_1.header"/>
         </text>
       </header>
       <template>
@@ -164,7 +164,7 @@
        </style>
       <header>
         <text>
-          <locale id="m0.case_short.case_name_1.header"/>
+          <locale id="m0.case_short.case_calculated_property_1.header"/>
         </text>
       </header>
       <template>
