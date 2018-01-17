@@ -19,14 +19,13 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
+from couchdbkit.exceptions import ResourceNotFound
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
-from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
-from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
@@ -60,7 +59,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
@@ -85,8 +84,6 @@ from corehq.apps.userreports.models import (
     get_report_config,
     report_config_id_is_static,
     id_is_static,
-    DataSourceMeta,
-    DataSourceBuildInformation,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -104,7 +101,6 @@ from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
-    delete_data_source_task,
     resume_building_indicators,
     rebuild_indicators_in_place,
 )
@@ -467,9 +463,21 @@ class ConfigureReport(ReportBuilderView):
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
-        self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        try:
+            data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        except ResourceNotFound:
+            self.template_name = 'userreports/report_error.html'
+            if self.existing_report:
+                context = {'report_id': self.existing_report.get_id,
+                           'is_static': self.existing_report.is_static}
+            else:
+                context = {}
+            context['error_message'] = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+            context.update(self.main_context)
+            return self.render_to_response(context)
+
         self._properties_by_column_id = {}
-        for p in self.data_source_builder.data_source_properties.values():
+        for p in data_source_builder.data_source_properties.values():
             column = p.to_report_column_option()
             for agg in column.aggregation_options:
                 indicators = column.get_indicators(agg)
@@ -574,33 +582,6 @@ class ConfigureReport(ReportBuilderView):
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
         }
-
-    def _handle_exception(self, response, exception):
-        if self.existing_report and self.existing_report.report_meta.edited_manually:
-            error_message_base = _(
-                'It looks like this report was edited by hand and is no longer editable in report builder.'
-            )
-            if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
-                error_message = '{} {}'.format(error_message_base, _(
-                    'You can edit the report manually using the <a href="{}">advanced UI</a>.'
-                ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
-            else:
-                error_message = '{} {}'.format(
-                    error_message_base,
-                    _('You can delete and recreate this report using the button below, or '
-                      'report an issue if you believe you are seeing this page in error.')
-                )
-            response['error_message'] = error_message
-            return response
-        elif isinstance(exception, DataSourceConfigurationNotFoundError):
-            response['details'] = None
-            response['error_message'] = '{} {}'.format(
-                str(exception),
-                DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-            )
-            return response
-        else:
-            raise
 
     def _get_bound_form(self, report_data):
         form_class = _get_form_type(report_data['report_type'])
