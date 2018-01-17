@@ -130,10 +130,6 @@ def message_is_stale(msg, utcnow):
         return True
 
 
-def connection_slot_key_base(backend):
-    return 'backend-%s-connection-slot-' % backend.couch_id
-
-
 def get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections):
     """
     Converts phone_number to a number between 0 and max_simultaneous_connections - 1.
