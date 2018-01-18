@@ -60,6 +60,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
@@ -2400,10 +2401,12 @@ class BillingRecord(BillingRecordBase):
         )
 
 
-class InvoicePdf(SafeSaveDocument):
+class InvoicePdf(BlobMixin, SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
+
+    _migrating_blobs_from_couch = True
 
     def generate_pdf(self, invoice):
         self.save()
