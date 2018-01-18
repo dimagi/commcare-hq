@@ -152,7 +152,7 @@ class TestFunctionalToilet(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data.keys()), 5)
+        self.assertEquals(len(data), 5)
         self.assertIn('top_five', data)
         self.assertIn('bottom_five', data)
         self.assertIn('all_locations', data)

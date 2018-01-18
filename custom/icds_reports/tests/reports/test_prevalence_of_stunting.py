@@ -20,7 +20,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data.keys()), 5)
+        self.assertEquals(len(data), 5)
         self.assertIn('rightLegend', data)
         self.assertIn('fills', data)
         self.assertIn('data', data)
@@ -36,7 +36,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )['rightLegend']
-        self.assertEquals(len(data.keys()), 3)
+        self.assertEquals(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('average', data)
         self.assertIn('extended_info', data)

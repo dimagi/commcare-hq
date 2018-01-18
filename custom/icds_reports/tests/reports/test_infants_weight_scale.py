@@ -150,7 +150,7 @@ class TestInfantsWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(len(data.keys()), 5)
+        self.assertEquals(len(data), 5)
         self.assertIn('top_five', data)
         self.assertIn('bottom_five', data)
         self.assertIn('all_locations', data)
@@ -250,7 +250,7 @@ class TestInfantsWeightScale(TestCase):
             location_id='b1',
             loc_level='supervisor'
         )
-        self.assertEquals(len(data.keys()), 3)
+        self.assertEquals(len(data), 3)
         self.assertIn('info', data)
         self.assertIn('tooltips_data', data)
         self.assertIn('chart_data', data)
@@ -334,5 +334,3 @@ class TestInfantsWeightScale(TestCase):
                 }
             }
         )
-
-
