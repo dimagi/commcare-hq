@@ -1,4 +1,12 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+
+{% registerurl 'requeue_repeat_record' case.domain %}
+
+{% block js %}
+    <script src="{% static "case/js/repeat_records.js" %}"></script>
+{% endblock js %}
+
 <table class="table table-striped table-hover">
     <thead>
         <tr>
@@ -31,27 +39,3 @@
         {% endfor %}
     </tbody>
 </table>
-{% block js-inline %}
-    <script>
-     $('.requeue-record-payload').click(function() {
-         var $btn = $(this),
-             recordId = $btn.data().recordId;
-         $btn.disableButton();
-
-         $.post({
-             url: "{% url 'requeue_repeat_record' case.domain %}",
-             data: { record_id: recordId },
-             success: function() {
-                 $btn.removeSpinnerFromButton();
-                 $btn.text(gettext('Requeued'));
-                 $btn.addClass('btn-success');
-             },
-             error: function() {
-                 $btn.removeSpinnerFromButton();
-                 $btn.text(gettext('Failed'));
-                 $btn.addClass('btn-danger');
-             },
-         });
-     });
-    </script>
-{% endblock js-inline %}
