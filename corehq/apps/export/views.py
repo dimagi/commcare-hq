@@ -14,14 +14,14 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, H
     StreamingHttpResponse, HttpResponseServerError
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from corehq.apps.analytics.tasks import send_hubspot_form, \
     HUBSPOT_CREATED_EXPORT_FORM_ID, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, EmailRequest
+from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, EmailExportWhenDoneRequest
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
@@ -109,7 +109,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_angular_js)
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import Permissions, CouchUser
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
 from corehq.apps.analytics.tasks import track_workflow
@@ -2483,20 +2483,26 @@ def can_download_daily_saved_export(export, domain, couch_user):
 
 
 @login_and_domain_required
+@require_POST
 def add_export_email_request(request, domain):
     download_id = request.POST.get('download_id')
-    email_address = request.couch_user.get_email()
+    user_id = request.couch_user.user_id
     try:
         download_context = get_download_context(download_id)
     except TaskFailedError:
-        return HttpResponseServerError()
-    if download_id is None or email_address is None:
-        return HttpResponseBadRequest()
+        return HttpResponseServerError(ugettext_lazy('Export failed'))
+    if download_id is None or user_id is None:
+        return HttpResponseBadRequest(ugettext_lazy('Download ID or User ID blank/not provided'))
     if download_context.get('is_ready', False):
-        process_email_request(download_id, email_address)
+        try:
+            couch_user = CouchUser.get_by_user_id(user_id, domain=domain)
+        except CouchUser.AccountTypeError:
+            return HttpResponseBadRequest(ugettext_lazy('Invalid user'))
+        if couch_user is not None:
+            process_email_request(download_id, couch_user.get_email())
     else:
-        EmailRequest.objects.create(domain=domain, download_id=download_id, email_address=email_address)
-    return HttpResponse()
+        EmailExportWhenDoneRequest.objects.create(domain=domain, download_id=download_id, user_id=user_id)
+    return HttpResponse(ugettext_lazy('Export e-mail request sent.'))
 
 
 @location_safe

@@ -289,12 +289,13 @@
         };
 
         $scope.sendEmailUponCompletion = function () {
-            setTimeout(function () {
+            setTimeout(function () {  // function must wait until download_id is available in the scope
                 if ($scope.download_id !== undefined) {
+                    var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
                     $.ajax({
                         method: 'POST',
                         dataType: 'json',
-                        url: '../../../../../add_export_email_request/',
+                        url: initial_page_data.reverse('add_export_email_request'),
                         data: { download_id: $scope.download_id },
                     });
                 } else {

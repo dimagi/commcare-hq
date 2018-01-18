@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
+{% registerurl 'add_export_email_request' domain %}
 
 <div ng-controller="DownloadProgressController"
      ng-cloak>
@@ -54,7 +55,7 @@
                         </button>
                         {% if request|toggle_enabled:"EMAIL_EXPORT_WHEN_DONE_BUTTON" %}
                         <button type="button"
-                                class="btn btn-primary btn-full-width"
+                                class="btn btn-default btn-full-width"
                                 ng-show="!isDownloadReady"
                                 ng-init="sendEmailFlag = false"
                                 ng-disabled="sendEmailFlag"

@@ -154,7 +154,8 @@ urlpatterns = [
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
     url(r'^add_export_email_request/$',
-        add_export_email_request),
+        add_export_email_request,
+        name='add_export_email_request'),
 
     # Delete export views
     url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",

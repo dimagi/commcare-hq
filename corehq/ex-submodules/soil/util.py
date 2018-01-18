@@ -5,6 +5,7 @@ import tempfile
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
 from couchexport.models import Format
 
@@ -94,16 +95,18 @@ def get_download_context(download_id, message=None, require_result=False):
 
 def process_email_request(download_id, email_address):
     dropbox_url = absolute_reverse('dropbox_upload', args=(download_id,))
+    download_url = "{}?get_file".format(absolute_reverse('retrieve_download', args=(download_id,)))
     try:
         allow_dropbox_sync = get_download_context(download_id).get('allow_dropbox_sync', False)
     except TaskFailedError:
         allow_dropbox_sync = False
-    download_url = "{}?get_file".format(absolute_reverse('retrieve_download', args=(download_id,)))
-    email_body = 'Your CommCare export is ready! Click on the link below to download your ' + \
-                 'requested data:\n' + download_url
-    dropbox_message = '\n\nYou can also upload your data to Dropbox with the link below:\n' + \
-                      dropbox_url if allow_dropbox_sync else ''
-    send_HTML_email('CommCare Export Complete', email_address, email_body + dropbox_message)
+    dropbox_message = ''
+    if allow_dropbox_sync:
+        dropbox_message = ('\n\nYou can also upload your data to Dropbox with the link below:\n'
+                           '{}').format(dropbox_url)
+    email_body = ('Your CommCare export is ready! Click on the link below to download your requested data:\n'
+                  '{}{}').format(download_url, dropbox_message)
+    send_HTML_email(_('CommCare Export Complete'), email_address, _(email_body))
 
 
 def get_task(task_id):
