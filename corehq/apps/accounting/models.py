@@ -8,10 +8,11 @@ from tempfile import NamedTemporaryFile
 
 
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
-from django.db.models import F, Q
+from django.db.models import EmailField, F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -332,7 +333,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         null=True,
         help_text="This is how we link to the salesforce account",
     )
-    created_by = models.CharField(max_length=80, blank=True)
+    created_by = models.EmailField(blank=True)
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     dimagi_contact = models.EmailField(blank=True)
@@ -350,7 +351,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=EntryPoint.NOT_SET,
         choices=EntryPoint.CHOICES,
     )
-    auto_pay_user = models.CharField(max_length=80, null=True, blank=True)
+    auto_pay_user = models.EmailField(blank=True)
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,
@@ -510,11 +511,12 @@ class BillingContactInfo(models.Model):
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
     # TODO - replace with models.ArrayField once django >= 1.9
-    email_list = jsonfield.JSONField(
-        default=list,
-        verbose_name=_("Contact Emails"),
-        help_text=_("We will email communications regarding your account "
-                    "to the emails specified here.")
+    email_list = ArrayField(EmailField(
+    # email_list = jsonfield.JSONField(default=list,
+            verbose_name=_("Contact Emails"),
+            help_text=_("We will email communications regarding your account "
+                        "to the emails specified here."),
+        )
     )
     phone_number = models.CharField(
         max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
