@@ -77,7 +77,7 @@ def get_functional_toilet_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-# @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
