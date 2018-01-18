@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+import re
+from django.conf import settings
 from raven.contrib.django import DjangoClient
 
 from corehq.util.cache_utils import is_rate_limited
@@ -28,7 +30,18 @@ def _get_rate_limit_key(exc_info):
         return RATE_LIMITED_EXCEPTIONS[exc_name]
 
 
+def looks_sensitive(value):
+    couch_database_passwords = set(filter(None, [
+        db['COUCH_PASSWORD'] for db in settings.COUCH_DATABASES.values()
+    ]))
+    regex = re.compile('({})'.format('|'.join(
+        couch_database_passwords
+    )))
+    return regex.search(value)
+
+
 class HQSentryClient(DjangoClient):
+
     def should_capture(self, exc_info):
         ex_value = exc_info[1]
         capture = getattr(ex_value, 'sentry_capture', True)
@@ -38,6 +51,13 @@ class HQSentryClient(DjangoClient):
         if not super(HQSentryClient, self).should_capture(exc_info):
             return False
 
+        try:
+            value = unicode(ex_value)
+            if looks_sensitive(value):
+                return False
+        except Exception:
+            # don't fail if something unexpected happened
+            pass
         rate_limit_key = _get_rate_limit_key(exc_info)
         if rate_limit_key:
             datadog_counter('commcare.sentry.errors.rate_limited', tags=[
