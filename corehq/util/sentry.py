@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 import re
 from django.conf import settings
 from raven.contrib.django import DjangoClient
@@ -52,7 +52,7 @@ class HQSentryClient(DjangoClient):
             return False
 
         try:
-            value = unicode(ex_value)
+            value = str(ex_value)
             if looks_sensitive(value):
                 return False
         except Exception:

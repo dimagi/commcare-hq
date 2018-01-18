@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from django.test import SimpleTestCase, override_settings
 from corehq.util.sentry import looks_sensitive
