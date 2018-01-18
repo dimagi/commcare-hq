@@ -103,7 +103,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         'month', '%s_name' % loc_level
     ).annotate(
         low_birth=Sum('low_birth_weight_in_month'),
-        in_month=Sum('born_in_month'),
+        in_month=Sum('weighed_and_born_in_month'),
     ).order_by('month')
 
     if not show_test:
@@ -175,7 +175,7 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
         *group_by
     ).annotate(
         low_birth=Sum('low_birth_weight_in_month'),
-        in_month=Sum('born_in_month'),
+        in_month=Sum('weighed_and_born_in_month'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:

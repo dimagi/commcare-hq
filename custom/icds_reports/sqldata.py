@@ -360,7 +360,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='severely_underweight'
             ),
@@ -371,7 +373,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='moderately_underweight'
             ),
@@ -382,7 +386,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_normal', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='status_normal'
             ),
@@ -612,7 +618,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 percent_num,
                 [
                     SumColumn('low_birth_weight_in_month'),
-                    AliasColumn('born_in_month')
+                    AliasColumn('weighed_and_born_in_month')
                 ],
                 slug='low_birth_weight'
             )
@@ -1026,7 +1032,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_severe_underweight'
             ),
@@ -1037,7 +1045,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_moderate_underweight'
             ),
@@ -1048,7 +1058,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_normal', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_normal_weight'
             ),

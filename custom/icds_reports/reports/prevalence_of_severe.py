@@ -30,7 +30,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
             severe=Sum('wasting_severe'),
             normal=Sum('wasting_normal'),
             valid=Sum('height_eligible'),
-            total_measured=Sum('height_measured_in_month'),
+            total_measured=Sum('weighed_and_height_measured_in_month'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
@@ -135,15 +135,15 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                 },
                 {
                     'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (severe_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (severe_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (moderate_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (moderate_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Normal{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (normal_total * 100 / float(measured_total or 1))
                 }
             ]
         },
@@ -167,7 +167,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
         normal=Sum('wasting_normal'),
-        valid=Sum('height_eligible'),
+        valid=Sum('weighed_and_height_measured_in_month'),
     ).order_by('month')
 
     if not show_test:
@@ -279,7 +279,7 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         severe=Sum('wasting_severe'),
         valid=Sum('height_eligible'),
         normal=Sum('wasting_normal'),
-        total_measured=Sum('height_measured_in_month'),
+        total_measured=Sum('weighed_and_height_measured_in_month'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
