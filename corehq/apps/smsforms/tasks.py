@@ -22,4 +22,6 @@ def handle_due_survey_action(domain, contact_id, session_id):
             session.save()
         else:
             # End the session
-            pass
+            if not session.submit_partially_completed_forms:
+                session.end(False)
+                session.save()
