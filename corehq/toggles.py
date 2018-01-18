@@ -1468,3 +1468,10 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
+    'email_export_when_done_button',
+    "Show button that emails when export is done",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)

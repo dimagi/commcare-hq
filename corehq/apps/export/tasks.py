@@ -6,14 +6,17 @@ from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.export import get_export_file, rebuild_export, should_rebuild_export
 from corehq.apps.export.dbaccessors import get_case_inferred_schema, get_properly_wrapped_export_instance
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
+from corehq.apps.export.models.new import EmailExportWhenDoneRequest
+from corehq.apps.users.models import CouchUser
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
 from corehq.blobs import get_blob_db
 from couchexport.models import Format
 from dimagi.utils.couch import CriticalSection
-from soil.util import expose_blob_download
+from soil.util import expose_blob_download, process_email_request
 from six.moves import filter
+
 
 logger = logging.getLogger('export_migration')
 
@@ -41,6 +44,21 @@ def populate_export_download_task(export_instances, filters, download_id, filena
             content_disposition=safe_filename_header(filename, file_format.extension),
             download_id=download_id,
         )
+
+    domain = export_instances[0].domain
+    email_requests = EmailExportWhenDoneRequest.objects.filter(
+        domain=domain,
+        download_id=download_id
+    )
+    for email_request in email_requests:
+        try:
+            couch_user = CouchUser.get_by_user_id(email_request.user_id, domain=domain)
+        except CouchUser.AccountTypeError:
+            pass
+        else:
+            if couch_user is not None:
+                process_email_request(download_id, couch_user.get_email())
+    email_requests.delete()
 
 
 @task(queue='background_queue', ignore_result=True)
