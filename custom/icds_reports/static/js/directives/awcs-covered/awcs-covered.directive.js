@@ -219,7 +219,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> ' + vm.data.legendTitle,
+            html: '<i class="fa fa-info-circle"></i> Number of AWCs Launched',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -230,7 +230,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
 
     vm.tooltipContent = function(monthName, value) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + vm.data.legendTitle
             + "<p>Number of AWCs Launched: <strong>" + value + "</strong></p>";
     };
 

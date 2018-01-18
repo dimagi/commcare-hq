@@ -175,9 +175,7 @@ describe('AWCs Covered Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total AWCs that have launched ICDS-CAS. ' +
-            'AWCs are considered launched after submitting at least' +
-            ' one Household Registration form.'
+            'Number of AWCs Launched'
         );
     });
 
@@ -186,9 +184,6 @@ describe('AWCs Covered Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + 'Total AWCs that have launched ICDS-CAS. '
-            + 'AWCs are considered launched after submitting at least'
-            + ' one Household Registration form.'
             + '<p>Number of AWCs Launched: <strong>72</strong></p>';
 
         var result = controller.tooltipContent(month.value, data.y);
