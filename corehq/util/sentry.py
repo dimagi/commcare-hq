@@ -48,6 +48,15 @@ class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
             return self._regex.sub(self.MASK, value)
         return value
 
+    def process(self, data, **kwargs):
+        data = super(HQSanitzeSystemPasswordsProcessor, self).process(data, **kwargs)
+        if 'exception' in data and 'values' in data['exception']:
+            # sentry's data structure is rather silly/complicated
+            for value in data['exception']['values'] or []:
+                if 'value' in value:
+                    value['value'] = self.sanitize('value', value['value'])
+        return data
+
 
 class HQSentryClient(DjangoClient):
 
