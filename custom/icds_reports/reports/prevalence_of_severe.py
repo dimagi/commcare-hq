@@ -109,7 +109,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values_to_calculate_average)) / float(len(values_to_calculate_average) or 1)),
+            "average": "%.2f" % ((sum(values_to_calculate_average)) /
+                                 float(len(values_to_calculate_average) or 1)),
             "info": _((
                 "Percentage of children between {} enrolled for ICDS services with "
                 "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "

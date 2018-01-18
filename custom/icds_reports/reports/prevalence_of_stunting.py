@@ -107,7 +107,8 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values_to_calculate_average)) / float(len(values_to_calculate_average) or 1)),
+            "average": "%.2f" % ((sum(values_to_calculate_average)) /
+                                 float(len(values_to_calculate_average) or 1)),
             "info": _((
                 "Percentage of children ({}) enrolled for ICDS services with height-for-age below "
                 "-2Z standard deviations of the WHO Child Growth Standards median."
