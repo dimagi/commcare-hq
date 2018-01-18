@@ -98,79 +98,143 @@ class TestMedicineKit(TestCase):
             }
         )
 
+    def test_chart_data_keys(self):
+        data = get_medicine_kit_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(len(data.keys()), 5)
+        self.assertIn('top_five', data)
+        self.assertIn('bottom_five', data)
+        self.assertIn('all_locations', data)
+        self.assertIn('chart_data', data)
+        self.assertIn('location_type', data)
+
     def test_chart_data(self):
-        self.assertDictEqual(
-            get_medicine_kit_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
+        data = get_medicine_kit_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['chart_data'],
+            [
+                {
+                    "color": ChartColors.BLUE,
+                    "classed": "dashed",
+                    "strokeWidth": 2,
+                    "values": [
+                        {
+                            "y": 0.0,
+                            "x": 1485907200000,
+                            "in_month": 0
+                        },
+                        {
+                            "y": 0.0,
+                            "x": 1488326400000,
+                            "in_month": 0
+                        },
+                        {
+                            "y": 0.7857142857142857,
+                            "x": 1491004800000,
+                            "in_month": 11
+                        },
+                        {
+                            "y": 0.6666666666666666,
+                            "x": 1493596800000,
+                            "in_month": 20
+                        }
+                    ],
+                    "key": "Percentage of AWCs that reported having a Medicine Kit"
+                }
+            ]
+        )
+
+    def test_chart_data_top_five(self):
+        data = get_medicine_kit_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['top_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 84.61538461538461
                 },
-                loc_level='state'
-            ),
-            {
-                "location_type": "State",
-                "bottom_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 1100.0
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 900.0
-                    }
-                ],
-                "top_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 1100.0
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 900.0
-                    }
-                ],
-                "chart_data": [
-                    {
-                        "color": ChartColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            {
-                                "y": 0.0,
-                                "x": 1485907200000,
-                                "in_month": 0
-                            },
-                            {
-                                "y": 0.0,
-                                "x": 1488326400000,
-                                "in_month": 0
-                            },
-                            {
-                                "y": 5.5,
-                                "x": 1491004800000,
-                                "in_month": 11
-                            },
-                            {
-                                "y": 10.0,
-                                "x": 1493596800000,
-                                "in_month": 20
-                            }
-                        ],
-                        "key": "Percentage of AWCs that reported having a Medicine Kit"
-                    }
-                ],
-                "all_locations": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 1100.0
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 900.0
-                    }
-                ]
-            }
+                {
+                    "loc_name": "st1",
+                    "percent": 52.94117647058823
+                }
+            ]
+        )
+
+    def test_chart_data_bottom_five(self):
+        data = get_medicine_kit_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['bottom_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 84.61538461538461
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 52.94117647058823
+                }
+            ]
+        )
+
+    def test_chart_data_location_type(self):
+        data = get_medicine_kit_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['location_type'], "State")
+
+    def test_chart_data_all_locations(self):
+        data = get_medicine_kit_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['all_locations'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 84.61538461538461
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 52.94117647058823
+                }
+            ]
         )
 
     def test_sector_data(self):
