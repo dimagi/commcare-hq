@@ -53,6 +53,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     valid_total = 0
     measured_total = 0
 
+    values_to_calculate_average = []
     for row in get_data_for(config):
         valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
@@ -61,6 +62,9 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         moderate = row['moderate'] or 0
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
+
+        numerator = moderate + severe
+        values_to_calculate_average.append(numerator * 100 / (valid or 1))
 
         severe_total += severe
         moderate_total += moderate
@@ -75,11 +79,9 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         data_for_map[on_map_name]['total_measured'] += total_measured
         data_for_map[on_map_name]['original_name'].append(name)
 
-    values = []
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total'] or 1)
-        values.append(value)
         if value < 25:
             data_for_location.update({'fillKey': '0%-25%'})
         elif 25 <= value < 38:
@@ -105,7 +107,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values)) / float(len(values) or 1)),
+            "average": "%.2f" % ((sum(values_to_calculate_average)) / float(len(values_to_calculate_average) or 1)),
             "info": _((
                 "Percentage of children ({}) enrolled for ICDS services with height-for-age below "
                 "-2Z standard deviations of the WHO Child Growth Standards median."
