@@ -9,8 +9,24 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from datetime import date, time
+from mock import patch
 
 
+class MockContextManager(object):
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+
+def mock_critical_section_for_smsforms_sessions(contact_id):
+    return MockContextManager()
+
+
+@patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
+       new=mock_critical_section_for_smsforms_sessions)
 class KeywordTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)
@@ -743,6 +759,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user2, "Default SMS Response")
 
 
+@patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
+       new=mock_critical_section_for_smsforms_sessions)
 class PartialFormSubmissionTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)

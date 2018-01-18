@@ -15,7 +15,7 @@ from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
 from corehq.apps.smsforms.app import start_session
-from corehq.apps.smsforms.util import form_requires_input
+from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
@@ -336,7 +336,9 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
         ):
             # Submit partial form completions
             for session_id in reminder.xforms_session_ids:
-                submit_unfinished_form(session_id, handler.include_case_side_effects)
+                contact_id = SQLXFormsSession.get_contact_id_from_session_id(session_id)
+                with critical_section_for_smsforms_sessions(contact_id):
+                    submit_unfinished_form(session_id, handler.include_case_side_effects)
         else:
             # Resend current question
             for session_id in reminder.xforms_session_ids:
@@ -390,8 +392,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                 logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
                 continue
 
-            key = "start-sms-survey-for-contact-%s" % recipient.get_id
-            with CriticalSection([key], timeout=60):
+            with critical_section_for_smsforms_sessions(recipient.get_id):
                 # Get the case to submit the form against, if any
                 if (is_commcarecase(recipient) and
                     not handler.force_surveys_to_use_triggered_case):

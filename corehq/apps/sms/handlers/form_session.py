@@ -14,6 +14,7 @@ from corehq.apps.smsforms.app import (
     _responses_to_text,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from datetime import datetime
 
 
@@ -24,33 +25,34 @@ def form_session_handler(v, text, msg):
     the handler passes. If multiple sessions are open, they are all closed and an
     error message is displayed to the user.
     """
-    multiple, session = get_single_open_session_or_close_multiple(v.domain, v.owner_id)
-    if multiple:
-        send_sms_to_verified_number(v, get_message(MSG_MULTIPLE_SESSIONS, v))
-        return True
+    with critical_section_for_smsforms_sessions(v.owner_id):
+        multiple, session = get_single_open_session_or_close_multiple(v.domain, v.owner_id)
+        if multiple:
+            send_sms_to_verified_number(v, get_message(MSG_MULTIPLE_SESSIONS, v))
+            return True
 
-    if session:
-        session.phone_number = v.phone_number
-        session.modified_time = datetime.utcnow()
-        session.save()
+        if session:
+            session.phone_number = v.phone_number
+            session.modified_time = datetime.utcnow()
+            session.save()
 
-        # Metadata to be applied to the inbound message
-        inbound_metadata = MessageMetadata(
-            workflow=session.workflow,
-            reminder_id=session.reminder_id,
-            xforms_session_couch_id=session._id,
-        )
-        add_msg_tags(msg, inbound_metadata)
+            # Metadata to be applied to the inbound message
+            inbound_metadata = MessageMetadata(
+                workflow=session.workflow,
+                reminder_id=session.reminder_id,
+                xforms_session_couch_id=session._id,
+            )
+            add_msg_tags(msg, inbound_metadata)
 
-        try:
-            answer_next_question(v, text, msg, session)
-        except Exception:
-            # Catch any touchforms errors
-            log_sms_exception(msg)
-            send_sms_to_verified_number(v, get_message(MSG_TOUCHFORMS_DOWN, v))
-        return True
-    else:
-        return False
+            try:
+                answer_next_question(v, text, msg, session)
+            except Exception:
+                # Catch any touchforms errors
+                log_sms_exception(msg)
+                send_sms_to_verified_number(v, get_message(MSG_TOUCHFORMS_DOWN, v))
+            return True
+        else:
+            return False
 
 
 def get_single_open_session_or_close_multiple(domain, contact_id):

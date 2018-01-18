@@ -20,6 +20,8 @@ from corehq.apps.reminders.util import enqueue_reminder_directly, get_two_way_nu
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.smsforms.app import submit_unfinished_form
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
@@ -1003,7 +1005,9 @@ class CaseReminderHandler(Document):
                     if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
                         for session_id in reminder.xforms_session_ids:
-                            submit_unfinished_form(session_id, self.include_case_side_effects)
+                            contact_id = SQLXFormsSession.get_contact_id_from_session_id(session_id)
+                            with critical_section_for_smsforms_sessions(contact_id):
+                                submit_unfinished_form(session_id, self.include_case_side_effects)
                 else:
                     reminder.next_fire = reminder.next_fire + timedelta(minutes = reminder.current_event.callback_timeout_intervals[reminder.callback_try_count])
                     reminder.callback_try_count += 1
@@ -1064,7 +1068,9 @@ class CaseReminderHandler(Document):
                 reminder.xforms_session_ids = old_xforms_session_ids
             elif prev_definition is not None and prev_definition.submit_partial_forms:
                 for session_id in old_xforms_session_ids:
-                    submit_unfinished_form(session_id, prev_definition.include_case_side_effects)
+                    contact_id = SQLXFormsSession.get_contact_id_from_session_id(session_id)
+                    with critical_section_for_smsforms_sessions(contact_id):
+                        submit_unfinished_form(session_id, prev_definition.include_case_side_effects)
     
     def get_active(self, reminder, now, case):
         schedule_not_finished = not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)

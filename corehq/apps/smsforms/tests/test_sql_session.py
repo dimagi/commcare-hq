@@ -7,6 +7,7 @@ from django.test import TestCase
 from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
 from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS, \
     XFORMS_SESSION_IVR
+from mock import patch, Mock
 from six.moves import range
 
 
@@ -140,6 +141,99 @@ class SQLSessionTestCase(TestCase):
 
         session = SQLXFormsSession.get_open_sms_session(domain, contact)
         self.assertEqual(new_session.session_id, session.session_id)
+
+    @patch('corehq.apps.smsforms.models.utcnow')
+    def test_move_to_next_action_with_no_reminders(self, utcnow_mock):
+        utcnow_mock.return_value = datetime(2018, 1, 1, 0, 0)
+        session = SQLXFormsSession.create_session_object(
+            'test',
+            Mock(get_id='contact_id'),
+            '+9990001',
+            Mock(get_id='app_id'),
+            Mock(xmlns='xmlns'),
+            expire_after=24 * 60,
+        )
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 2, 0, 0))
+        self.assertFalse(session.current_action_is_a_reminder)
+
+        utcnow_mock.return_value = datetime(2018, 1, 2, 0, 1)
+        session.move_to_next_action()
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 2, 0, 0))
+        self.assertFalse(session.current_action_is_a_reminder)
+
+    @patch('corehq.apps.smsforms.models.utcnow')
+    def test_move_to_next_action_with_reminders(self, utcnow_mock):
+        utcnow_mock.return_value = datetime(2018, 1, 1, 0, 0)
+        session = SQLXFormsSession.create_session_object(
+            'test',
+            Mock(get_id='contact_id'),
+            '+9990001',
+            Mock(get_id='app_id'),
+            Mock(xmlns='xmlns'),
+            expire_after=24 * 60,
+            reminder_intervals=[30, 60]
+        )
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 1, 0, 30))
+        self.assertTrue(session.current_action_is_a_reminder)
+
+        utcnow_mock.return_value = datetime(2018, 1, 1, 0, 31)
+        session.move_to_next_action()
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 1, 1, 30))
+        self.assertTrue(session.current_action_is_a_reminder)
+
+        utcnow_mock.return_value = datetime(2018, 1, 1, 1, 31)
+        session.move_to_next_action()
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 2, 0, 0))
+        self.assertFalse(session.current_action_is_a_reminder)
+
+        utcnow_mock.return_value = datetime(2018, 1, 2, 0, 1)
+        session.move_to_next_action()
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 2, 0, 0))
+        self.assertFalse(session.current_action_is_a_reminder)
+
+    @patch('corehq.apps.smsforms.models.utcnow')
+    def test_move_to_next_action_with_fast_forwarding(self, utcnow_mock):
+        utcnow_mock.return_value = datetime(2018, 1, 1, 0, 0)
+        session = SQLXFormsSession.create_session_object(
+            'test',
+            Mock(get_id='contact_id'),
+            '+9990001',
+            Mock(get_id='app_id'),
+            Mock(xmlns='xmlns'),
+            expire_after=24 * 60,
+            reminder_intervals=[30, 60]
+        )
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 1, 0, 30))
+        self.assertTrue(session.current_action_is_a_reminder)
+
+        utcnow_mock.return_value = datetime(2018, 1, 3, 0, 0)
+        session.move_to_next_action()
+        self.assertTrue(session.session_is_open)
+        self.assertEqual(session.start_time, datetime(2018, 1, 1, 0, 0))
+        self.assertIsNone(session.end_time)
+        self.assertEqual(session.current_action_due, datetime(2018, 1, 2, 0, 0))
+        self.assertFalse(session.current_action_is_a_reminder)
 
 
 def _make_session(**kwargs):
