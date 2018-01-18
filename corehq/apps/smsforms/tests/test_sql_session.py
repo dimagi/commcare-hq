@@ -7,15 +7,8 @@ from django.test import TestCase
 from corehq.apps.sms.handlers.form_session import get_single_open_session_or_close_multiple
 from corehq.apps.smsforms.models import SQLXFormsSession, XFORMS_SESSION_TYPES, XFORMS_SESSION_SMS, \
     XFORMS_SESSION_IVR
-from mock import patch
+from mock import patch, Mock
 from six.moves import range
-
-
-class MockObject(object):
-
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
 
 
 class SQLSessionTestCase(TestCase):
@@ -154,10 +147,10 @@ class SQLSessionTestCase(TestCase):
         utcnow_mock.return_value = datetime(2018, 1, 1, 0, 0)
         session = SQLXFormsSession.create_session_object(
             'test',
-            MockObject(get_id='contact_id'),
+            Mock(get_id='contact_id'),
             '+9990001',
-            MockObject(get_id='app_id'),
-            MockObject(xmlns='xmlns'),
+            Mock(get_id='app_id'),
+            Mock(xmlns='xmlns'),
             expire_after=24 * 60,
         )
         self.assertTrue(session.session_is_open)
@@ -179,10 +172,10 @@ class SQLSessionTestCase(TestCase):
         utcnow_mock.return_value = datetime(2018, 1, 1, 0, 0)
         session = SQLXFormsSession.create_session_object(
             'test',
-            MockObject(get_id='contact_id'),
+            Mock(get_id='contact_id'),
             '+9990001',
-            MockObject(get_id='app_id'),
-            MockObject(xmlns='xmlns'),
+            Mock(get_id='app_id'),
+            Mock(xmlns='xmlns'),
             expire_after=24 * 60,
             reminder_intervals=[30, 60]
         )
@@ -221,10 +214,10 @@ class SQLSessionTestCase(TestCase):
         utcnow_mock.return_value = datetime(2018, 1, 1, 0, 0)
         session = SQLXFormsSession.create_session_object(
             'test',
-            MockObject(get_id='contact_id'),
+            Mock(get_id='contact_id'),
             '+9990001',
-            MockObject(get_id='app_id'),
-            MockObject(xmlns='xmlns'),
+            Mock(get_id='app_id'),
+            Mock(xmlns='xmlns'),
             expire_after=24 * 60,
             reminder_intervals=[30, 60]
         )
