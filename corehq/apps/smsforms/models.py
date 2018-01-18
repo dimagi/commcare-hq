@@ -229,6 +229,11 @@ class SQLXFormsSession(models.Model):
         else:
             self.current_action_due = self.start_time + timedelta(minutes=self.expire_after)
 
+    def move_to_next_action(self):
+        while self.current_action_is_a_reminder and self.current_action_due < datetime.utcnow():
+            self.current_reminder_num += 1
+            self.set_current_action_due_timestamp()
+
 
 def get_session_by_session_id(id):
     return SQLXFormsSession.by_session_id(id)
