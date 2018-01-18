@@ -1,13 +1,13 @@
 from __future__ import absolute_import
-from collections import defaultdict, namedtuple
+
 import datetime
-from six.moves.urllib.parse import urlencode
 import math
 import operator
+from collections import defaultdict, namedtuple
+
+from django.conf import settings
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from pygooglechart import ScatterChart
-from corehq.apps.locations.dbaccessors import user_ids_at_locations
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import conditionally_location_safe
 import pytz
 
 from corehq import toggles
@@ -18,7 +18,7 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     MissingAggregation,
 )
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_users,
@@ -53,17 +53,16 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
-from django.conf import settings
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django.utils.translation import ugettext_noop
+
 import six
 from functools import reduce
 from six.moves import range
 from six.moves import map
+from six.moves.urllib.parse import urlencode
 
 
 TOO_MUCH_DATA = ugettext_noop(
