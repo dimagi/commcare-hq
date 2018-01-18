@@ -102,11 +102,11 @@ def process_email_request(download_id, email_address):
         allow_dropbox_sync = False
     dropbox_message = ''
     if allow_dropbox_sync:
-        dropbox_message = ('\n\nYou can also upload your data to Dropbox with the link below:\n'
-                           '{}').format(dropbox_url)
-    email_body = ('Your CommCare export is ready! Click on the link below to download your requested data:\n'
-                  '{}{}').format(download_url, dropbox_message)
-    send_HTML_email(_('CommCare Export Complete'), email_address, _(email_body))
+        dropbox_message = _('\n\nYou can also upload your data to Dropbox with the link below:\n'
+                            '{}').format(dropbox_url)
+    email_body = _('Your CommCare export is ready! Click on the link below to download your requested data:\n'
+                   '{}{}').format(download_url, dropbox_message)
+    send_HTML_email(_('CommCare Export Complete'), email_address, email_body)
 
 
 def get_task(task_id):
