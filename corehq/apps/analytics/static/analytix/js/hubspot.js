@@ -1,4 +1,4 @@
-/* globals window */
+/* globals window, hqImport */
 /**
  * Instatiates the Hubspot analytics platform.
  */
@@ -14,18 +14,18 @@ hqDefine('analytix/js/hubspot', [
     utils
 ) {
     'use strict';
-    var _get = initialAnalytics.getFn('hubspot'),
-        _logger = logging.getLoggerForApi('Hubspot'),
+    var _get = hqImport(initialAnalytics).getFn('hubspot'),
+        _logger = hqImport(logging).getLoggerForApi('Hubspot'),
         _ready = $.Deferred();
 
     var _hsq = window._hsq = window._hsq || [];
 
     $(function () {
         var apiId = _get('apiId'),
-            scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
+            scriptUrl = '//js.hs-analytics.net/analytics/' + hqImport(utils).getDateHash() + '/' + apiId + '.js';
 
-        _logger = logging.getLoggerForApi('Hubspot');
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
+        _logger = hqImport(logging).getLoggerForApi('Hubspot');
+        _ready = hqImport(utils).initApi(_ready, apiId, scriptUrl, _logger);
     });
 
     /**

@@ -40,6 +40,16 @@
 
 var COMMCAREHQ_MODULES = {};
 
+function _isRequireJSEnvironment() {
+    return typeof define === 'function' && define.amd && window.USE_REQUIREJS;
+}
+
+function _looksLikeDeferred(obj) {
+    return obj
+           && _.isFunction(obj.state)
+           && _.contains(["pending", "resolved", "rejected"], obj.state());
+}
+
 /*
  * Transitional version of "define" to handle both RequireJS and non-RequireJS pages.
  * Signature deliberately matches that of "define". On non-RequireJS pages, the dependencies
@@ -58,9 +68,10 @@ function hqDefine(path, dependencies, moduleAccessor) {
         'underscore': typeof _ === 'undefined' ? undefined : _,
     };
     (function(factory) {
-        if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+        if (_isRequireJSEnvironment()) {
             define(path, dependencies, factory);
         } else {
+console.log("defining " + path);
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];
@@ -68,8 +79,21 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     args[i] = thirdParty[dependency];
                 } else if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
                     args[i] = hqImport(dependency);
+                } else {
+console.log("dependency not yet defined: " + dependency);
+                    var deferred = $.Deferred();
+                    deferred.then(function(moduleName, moduleResult) {
+//debugger;
+console.log("resolving " + dependency);
+                        COMMCAREHQ_MODULES[moduleName] = moduleResult;
+                    });
+                    args[i] = deferred;
+                    COMMCAREHQ_MODULES[dependency] = deferred;
                 }
             }
+if (path.match(/alert_user/)) {
+    //debugger;
+}
             if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {
                 if (path.match(/\.js$/)) {
                     throw new Error("Error in '" + path + "': module names should not end in .js.");
@@ -77,19 +101,41 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 COMMCAREHQ_MODULES[path] = factory.apply(undefined, args);
             }
             else {
-                throw new Error("The module '" + path + "' has already been defined elsewhere.");
+                if (_looksLikeDeferred(COMMCAREHQ_MODULES[path])) {
+                    COMMCAREHQ_MODULES[path].resolve(path, factory.apply(undefined, args));
+                } else {
+                    throw new Error("The module '" + path + "' has already been defined elsewhere.");
+                }
             }
         }
     }(moduleAccessor));
 }
+
 if (typeof define === 'undefined') {
     define = hqDefine;
 }
 
-function hqImport(path) {
-    if (COMMCAREHQ_MODULES[path] === undefined) {
-        throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
-            'Did you include <script src="' + path + '"></script> on your html page?');
+function hqImport(pathOrModule) {
+    var isPath = _.isString(pathOrModule);
+
+    if (_isRequireJSEnvironment()) {
+        if (isPath) {
+            throw new Error("String path '" + pathOrModule + "' passed to hqImport in a RequireJS environment. Calling code needs to be migrated.");
+        }
+        return pathOrModule;
     }
-    return COMMCAREHQ_MODULES[path];
+
+    if (isPath) {
+        if (COMMCAREHQ_MODULES[pathOrModule] === undefined) {
+            throw new Error("The module '" + pathOrModule + "' has not yet been defined.\n\n" +
+                'Did you include <script src="' + pathOrModule + '"></script> on your html page?');
+        }
+        return COMMCAREHQ_MODULES[pathOrModule];
+    }
+
+    if (_looksLikeDeferred(pathOrModule)) {
+        throw new Error("The imported module appears to still be a promise. Has its script tag been included on your html page?");
+    }
+
+    return pathOrModule;
 }

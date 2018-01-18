@@ -23,7 +23,7 @@ hqDefine('notifications/js/notifications_service', [
     'use strict';
 
     // Workaround for non-RequireJS pages: when `define` doesn't exist, RMI is just a global variable.
-    RMI = RMI || window.RMI;
+    RMI = window.RMI || RMI;
 
     var module = {};
     var _private = {};
@@ -156,15 +156,15 @@ hqDefine('notifications/js/notifications_service', [
 
     $(function () {
         var csrfToken = $("#csrfTokenContainer").val();
-        module.setRMI(initialPageData.reverse('notifications_service'), csrfToken);
+        module.setRMI(hqImport(initialPageData).reverse('notifications_service'), csrfToken);
         module.initService('#js-settingsmenu-notifications');
         module.relativelyPositionUINotify('.alert-ui-notify-relative');
         module.initUINotify('.alert-ui-notify');
 
         $(document).on('click', '.notification-link', function() {
-            googleAnalytics.track.event('Notification', 'Opened Message', this.href);
+            hqImport(googleAnalytics).track.event('Notification', 'Opened Message', this.href);
         });
-        googleAnalytics.track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
+        hqImport(googleAnalytics).track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     });
 
     return module;

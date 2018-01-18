@@ -102,7 +102,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
             // Prevent jumping to the top of the page when link is clicked
             $helpElem.find('a').click(function(event) {
-                googleAnalytics.track.event("Clicked Help Bubble", $(this).data('title'), '-');
+                hqImport(googleAnalytics).track.event("Clicked Help Bubble", $(this).data('title'), '-');
                 event.preventDefault();
             });
         });

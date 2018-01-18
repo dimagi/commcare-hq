@@ -1,4 +1,4 @@
-/* globals JSON */
+/* globals JSON, hqImport */
 hqDefine('analytix/js/logging', [
     'underscore',
     'analytix/js/initial',
@@ -126,7 +126,7 @@ hqDefine('analytix/js/logging', [
 
     var levels = ['warning', 'debug', 'verbose'];
     var Level = function (_levelSlug, _levelPrefix, _logger) {
-        var globalLevel = initialAnalytics.getFn('global')('logLevel'),
+        var globalLevel = hqImport(initialAnalytics).getFn('global')('logLevel'),
             isVisible = levels.indexOf(_levelSlug) <= levels.indexOf(globalLevel),
             _levelData = {
                 slug: _levelSlug,

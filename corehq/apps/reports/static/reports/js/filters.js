@@ -47,7 +47,7 @@ hqDefine("reports/js/filters", [
             if ($filterRange.data("init")) {
                 var separator = $filterRange.data('separator');
                 var report_labels = $filterRange.data('reportLabels');
-                var standardHQReport = standardHQReportModule.getStandardHQReport();
+                var standardHQReport = hqImport(standardHQReportModule).getStandardHQReport();
 
                 $filterRange.createDateRangePicker(
                     report_labels, separator,
@@ -149,7 +149,7 @@ hqDefine("reports/js/filters", [
 
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
-            hqMain.transformHelpTemplate($(this), true);
+            hqImport(hqMain).transformHelpTemplate($(this), true);
         });
     };
 

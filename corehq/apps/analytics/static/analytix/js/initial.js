@@ -1,3 +1,4 @@
+/* global hqImport */
 /**
  *  Fetches all the initialization data needed for the different analytics platforms.
  *  Note that all of this initialization data is undefined until the document is ready.
@@ -13,7 +14,7 @@ hqDefine('analytix/js/initial', [
 ) {
     'use strict';
     var _selector = '.initial-analytics-data',
-        _gather =  initialPageData.gather,
+        _gather =  hqImport(initialPageData).gather,
         _initData = {},
         _abSelector = '.analytics-ab-tests',
         _abTests,

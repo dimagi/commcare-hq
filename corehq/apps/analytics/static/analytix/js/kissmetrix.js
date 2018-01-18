@@ -1,4 +1,4 @@
-/* globals _kmq */
+/* globals _kmq, hqImport */
 
 var _kmq = window._kmq = _kmq || [];
 
@@ -14,10 +14,10 @@ hqDefine('analytix/js/kissmetrix', [
     utils
 ) {
     'use strict';
-    var _get = initialAnalytics.getFn('kissmetrics'),
+    var _get = hqImport(initialAnalytics).getFn('kissmetrics'),
         _allAbTests = {},
         _init = {},
-        _logger = logging.getLoggerForApi('Kissmetrics'),
+        _logger = hqImport(logging).getLoggerForApi('Kissmetrics'),
         _ready = $.Deferred();
 
     window.dataLayer = window.dataLayer || [];
@@ -53,8 +53,8 @@ hqDefine('analytix/js/kissmetrix', [
                 '//doug1izaerwt3.cloudfront.net/' + apiId + '.1.js',
             ];
 
-        _logger = logging.getLoggerForApi('Kissmetrics');
-        _ready = utils.initApi(_ready, apiId, scriptUrls, _logger, function() {
+        _logger = hqImport(logging).getLoggerForApi('Kissmetrics');
+        _ready = hqImport(utils).initApi(_ready, apiId, scriptUrls, _logger, function() {
             // Identify user and HQ instance
             // This needs to happen before any events are sent or any traits are set
             var username = _get('username');
@@ -68,7 +68,7 @@ hqDefine('analytix/js/kissmetrix', [
             }
 
             // Initialize Kissmetrics AB Tests
-            var abTests = initialAnalytics.getAbTests('kissmetrics');
+            var abTests = hqImport(initialAnalytics).getAbTests('kissmetrics');
             _.each(abTests, function (ab, testName) {
                 var test = {};
                 testName = _.last(testName.split('.'));
@@ -102,7 +102,7 @@ hqDefine('analytix/js/kissmetrix', [
     var identifyTraits = function (traits, callbackFn, timeout) {
         _ready.done(function() {
             _logger.debug.log(_logger.fmt.labelArgs(["Traits", "Callback Function", "Timeout"], arguments), 'Identify Traits (Set)');
-            callbackFn = utils.createSafeCallback(callbackFn, timeout);
+            callbackFn = hqImport(utils).createSafeCallback(callbackFn, timeout);
             _kmqPushCommand('set', traits, callbackFn);
         }).fail(function() {
             if (_.isFunction(callbackFn)) {
@@ -121,7 +121,7 @@ hqDefine('analytix/js/kissmetrix', [
     var trackEvent = function (name, properties, callbackFn, timeout) {
         _ready.done(function() {
             _logger.debug.log(arguments, 'RECORD EVENT');
-            callbackFn = utils.createSafeCallback(callbackFn, timeout);
+            callbackFn = hqImport(utils).createSafeCallback(callbackFn, timeout);
             _kmqPushCommand('record', properties, callbackFn, name);
         }).fail(function() {
             if (_.isFunction(callbackFn)) {

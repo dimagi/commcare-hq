@@ -14,16 +14,16 @@ define([
     datatablesConfig,
     filters
 ) {
-    if (initialPageData.get('renderReportTables')) {
-        var reportTables = datatablesConfig.HQReportDataTables(initialPageData.get('dataTablesOptions')),
-            standardHQReport = standardHQReportModule.getStandardHQReport();
+    if (hqImport(initialPageData).get('renderReportTables')) {
+        var reportTables = hqImport(datatablesConfig).HQReportDataTables(hqImport(initialPageData).get('dataTablesOptions')),
+            standardHQReport = hqImport(standardHQReportModule).getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
         reportTables.render();
     }
 
-    filters.init();
+    hqImport(filters).init();
 
     $(function() {
         $('.header-popover').popover({

@@ -1,4 +1,4 @@
-/* globals Array, window */
+/* globals Array, window, hqImport */
 /**
  *  Handles communication with the google analytics API. gtag is the replacement
  *  for Google's old analytics.js (ga).
@@ -17,11 +17,11 @@ hqDefine('analytix/js/google', [
     utils
 ) {
     'use strict';
-    var _get = initialAnalytics.getFn('google'),
-        _global = initialAnalytics.getFn('global'),
+    var _get = hqImport(initialAnalytics).getFn('google'),
+        _global = hqImport(initialAnalytics).getFn('global'),
         _data = {},
         module = {},
-        _logger = logging.getLoggerForApi('Google Analytics'),
+        _logger = hqImport(logging).getLoggerForApi('Google Analytics'),
         _ready = $.Deferred();
 
     var _gtag = function () {
@@ -34,8 +34,8 @@ hqDefine('analytix/js/google', [
         var apiId = _get('apiId'),
             scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
 
-        _logger = logging.getLoggerForApi('Google Analytics');
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function() {
+        _logger = hqImport(logging).getLoggerForApi('Google Analytics');
+        _ready = hqImport(utils).initApi(_ready, apiId, scriptUrl, _logger, function() {
             window.dataLayer = window.dataLayer || [];
             _gtag = function () {
                 window.dataLayer.push(arguments);
@@ -116,7 +116,7 @@ hqDefine('analytix/js/google', [
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
         _ready.done(function() {
-            utils.trackClickHelper(
+            hqImport(utils).trackClickHelper(
                 element,
                 function (callbackFn) {
                     trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);

@@ -1,4 +1,4 @@
-/* global Array, window */
+/* global Array, window, hqImport */
 
 /**
  * Instantiates the Drift analytics and customer support messaging platform.
@@ -17,17 +17,17 @@ hqDefine('analytix/js/drift', [
     hubspot
 ) {
     'use strict';
-    var _get = initialAnalytics.getFn('drift'),
+    var _get = hqImport(initialAnalytics).getFn('drift'),
         _drift = {},
-        _logger = logging.getLoggerForApi('Drift'),
+        _logger = hqImport(logging).getLoggerForApi('Drift'),
         _ready = $.Deferred(); // eslint-disable-line no-unused-vars
 
     $(function () {
         var apiId = _get('apiId'),
-            scriptUrl = "https://js.driftt.com/include/" + utils.getDateHash() + "/" + apiId + '.js';
+            scriptUrl = "https://js.driftt.com/include/" + hqImport(utils).getDateHash() + "/" + apiId + '.js';
 
-        _logger = logging.getLoggerForApi('Drift');
-        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function() {
+        _logger = hqImport(logging).getLoggerForApi('Drift');
+        _ready = hqImport(utils).initApi(_ready, apiId, scriptUrl, _logger, function() {
             _drift = window.driftt = window.drift = window.driftt || [];
             if (!_drift.init && !_drift.invoked ) {
                 _drift.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ];
@@ -47,8 +47,8 @@ hqDefine('analytix/js/drift', [
             _drift.SNIPPET_VERSION = '0.3.1';
 
             _drift.on('emailCapture',function(e){
-                hubspot.identify({email: e.data.email});
-                hubspot.trackEvent('Identified via Drift');
+                hqImport(hubspot).identify({email: e.data.email});
+                hqImport(hubspot).trackEvent('Identified via Drift');
             });
         });
     });

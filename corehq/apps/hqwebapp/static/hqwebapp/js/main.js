@@ -1,3 +1,4 @@
+/* global hqImport */
 hqDefine('hqwebapp/js/main', [
     "jquery",
     "underscore",
@@ -179,7 +180,7 @@ hqDefine('hqwebapp/js/main', [
                                 // this is sending back a full html page, likely login, so no error message.
                                 customError = null;
                             }
-                            alertUser.alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
+                            hqImport(alertUser).alert_user(customError || SaveButton.message.ERROR_SAVING, 'danger');
                             error.apply(this, arguments);
                         };
                         var jqXHR = $.ajax(options);
@@ -277,13 +278,13 @@ hqDefine('hqwebapp/js/main', [
         $(document).on('click', '.track-usage-link', function(e) {
             var $link = $(e.currentTarget),
                 data = $link.data();
-            googleAnalytics.track.click($link, data.category, data.action, data.label, data.value);
+            hqImport(googleAnalytics).track.click($link, data.category, data.action, data.label, data.value);
         });
 
         $(document).on('click', '.mainmenu-tab a', function(e) {
             var data = $(e.currentTarget).closest(".mainmenu-tab").data();
             if (data.category && data.action) {
-                googleAnalytics.track.event(data.category, data.action, data.label);
+                hqImport(googleAnalytics).track.event(data.category, data.action, data.label);
             }
         });
 

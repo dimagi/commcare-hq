@@ -34,15 +34,17 @@ hqDefine("reports/js/standard_hq_report", [
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();
             } else if (typeof HQReport !== 'undefined') {
+                var get = hqImport(initialPageData).get;
+
                 // Standard reports
-                var reportOptions = _.extend({}, initialPageData.get('js_options'), {
+                var reportOptions = _.extend({}, get('js_options'), {
                     emailSuccessMessage: gettext('Report successfully emailed'),
                     emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
                 });
-                if (initialPageData.get('startdate')) {
+                if (get('startdate')) {
                     reportOptions.datespan = {
-                        startdate: initialPageData.get('startdate'),
-                        enddate: initialPageData.get('enddate'),
+                        startdate: get('startdate'),
+                        enddate: get('enddate'),
                     };
                 }
                 var standardHQReport = new HQReport(reportOptions);
@@ -58,7 +60,7 @@ hqDefine("reports/js/standard_hq_report", [
             return asyncReport;
         }
 
-        var reportOptions = initialPageData.get('js_options') || {};
+        var reportOptions = hqImport(initialPageData).get('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
             var asyncHQReport = new HQAsyncReport({
                 standardReport: getStandard(),

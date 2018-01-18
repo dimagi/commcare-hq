@@ -1,3 +1,4 @@
+/* global hqImport */
 define([
     "jquery",
     "knockout",
@@ -67,7 +68,7 @@ define([
         self.casePropertyList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
-        self.saveButton = hqMain.initSaveButton({
+        self.saveButton = hqImport(hqMain).initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function() {
                 var postProperties = [];
@@ -193,14 +194,15 @@ define([
     };
 
     $(function() {
-        var dataUrl = initialPageData.reverse('data_dictionary_json'),
-            casePropertyUrl = initialPageData.reverse('update_case_property'),
-            typeChoices = initialPageData.get('typeChoices'),
+        var reverse = hqImport(initialPageData).reverse,
+            dataUrl = reverse('data_dictionary_json'),
+            casePropertyUrl = reverse('update_case_property'),
+            typeChoices = get('typeChoices'),
             viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function() {
-            googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
+            hqImport(googleAnalytics).track.event('Data Dictionary', 'downloaded data dictionary');
         });
     });
 });
