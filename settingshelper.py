@@ -254,6 +254,7 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
         'processors': (
             'raven.processors.SanitizePasswordsProcessor',
             'raven.processors.RemovePostDataProcessor',
+            'corehq.util.sentry.HQSanitzeSystemPasswordsProcessor',
         ),
         'ignore_exceptions': [
             'KeyboardInterrupt'

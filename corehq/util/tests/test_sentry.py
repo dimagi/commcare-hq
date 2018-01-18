@@ -1,7 +1,8 @@
+# coding=utf-8
 from __future__ import absolute_import
 import uuid
 from django.test import SimpleTestCase, override_settings
-from corehq.util.sentry import looks_sensitive
+from corehq.util.sentry import HQSanitzeSystemPasswordsProcessor
 
 
 class HQSentryTest(SimpleTestCase):
@@ -19,7 +20,29 @@ class HQSentryTest(SimpleTestCase):
             }
             for i, pw in enumerate([couch_pw, couch_pw2])
         }
+        subs = {
+            'pw': couch_pw,
+            'pw2': couch_pw2,
+        }
+        masks = {
+            'pw': '********',
+            'pw2': '********',
+        }
         with override_settings(COUCH_DATABASES=overridden_dbs):
-            self.assertTrue(looks_sensitive('something leaking the {}'.format(couch_pw)))
-            self.assertTrue(looks_sensitive('something else leaking the {}'.format(couch_pw2)))
-            self.assertFalse(looks_sensitive('something not leaking the password'.format(couch_pw)))
+            processor = HQSanitzeSystemPasswordsProcessor(client=None)
+            for test in [
+                '{pw}',
+                'http://username:{pw}@example.com',
+                'p1: {pw}, p2: {pw2}',
+                'no secrets here',
+                u'in दिल्ली  we say {pw}'
+            ]:
+                formatted_test = test.format(**subs)
+                expected_result = test.format(**masks)
+                self.assertEqual(expected_result, processor.sanitize('key', formatted_test))
+
+            for edge_case in [
+                (None, None),
+                ({'foo': 'bar'}, {'foo': 'bar'}),
+            ]:
+                self.assertEqual(edge_case[1], processor.sanitize('key', edge_case[0]))
