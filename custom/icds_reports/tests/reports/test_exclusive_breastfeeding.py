@@ -89,7 +89,7 @@ class TestExclusiveBreastfeeding(TestCase):
                             "if they recieve only breastmilk with "
                             "no additional food, liquids (even water) "
                             "ensuring optimal nutrition and growth between 0 - 6 months",
-                    "average": 65.38461538461539,
+                    "average": 68.78787878787878,
                     'extended_info': [
                         {
                             'indicator': 'Total number of children between ages 0 - 6 months:',
