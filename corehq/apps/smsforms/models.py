@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.messaging.scheduling.util import utcnow
 from couchdbkit import MultipleResultsFound
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -100,7 +101,7 @@ class SQLXFormsSession(models.Model):
         """
         self.session_is_open = False
         self.completed = completed
-        self.modified_time = self.end_time = datetime.utcnow()
+        self.modified_time = self.end_time = utcnow()
 
     @property
     def related_subevent(self):
@@ -175,7 +176,7 @@ class SQLXFormsSession(models.Model):
             reminder_intervals=None, submit_partially_completed_forms=False,
             include_case_updates_in_partial_submissions=False):
 
-        now = datetime.utcnow()
+        now = utcnow()
 
         session = cls(
             couch_id=uuid.uuid4().hex,
@@ -230,7 +231,7 @@ class SQLXFormsSession(models.Model):
             self.current_action_due = self.start_time + timedelta(minutes=self.expire_after)
 
     def move_to_next_action(self):
-        while self.current_action_is_a_reminder and self.current_action_due < datetime.utcnow():
+        while self.current_action_is_a_reminder and self.current_action_due < utcnow():
             self.current_reminder_num += 1
             self.set_current_action_due_timestamp()
 

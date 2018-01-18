@@ -1,7 +1,7 @@
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
+from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
-from datetime import datetime
 
 
 @no_result_task(queue='reminder_queue')
@@ -11,7 +11,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
         if (
             not session
             or not session.session_is_open
-            or session.current_action_due > datetime.utcnow()
+            or session.current_action_due > utcnow()
         ):
             return
 

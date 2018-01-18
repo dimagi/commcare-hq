@@ -5,8 +5,8 @@ from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.smsforms.util import process_sms_form_complete
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.util import utcnow
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
-from datetime import datetime
 from touchforms.formplayer.api import (
     XFormsConfig,
     DigestAuth,
@@ -123,7 +123,7 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
         case_tag_regex = re.compile("^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
         meta_tag_regex = re.compile("^(\{.*\}){0,1}meta$")
         timeEnd_tag_regex = re.compile("^(\{.*\}){0,1}timeEnd$")
-        current_timstamp = json_format_datetime(datetime.utcnow())
+        current_timstamp = json_format_datetime(utcnow())
         for child in root:
             if case_tag_regex.match(child.tag) is not None:
                 # Found the case tag
