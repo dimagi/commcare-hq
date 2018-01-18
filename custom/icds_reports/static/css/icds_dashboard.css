@@ -736,7 +736,7 @@ table.dataTable.fixedHeader-locked {
 }
 
 .locPopup {
-    position: fixed;
+    position: absolute;
     display:none;
     z-index: 90000;
     background-color: white;
@@ -751,7 +751,7 @@ table.dataTable.fixedHeader-locked {
 
 .locPopup > button {
     display: block;
-    margin: 5px auto;
+    margin: 0px auto 5px 0px !important;
 }
 
 table.dataTable,

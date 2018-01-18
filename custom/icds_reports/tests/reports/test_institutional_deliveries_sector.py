@@ -89,7 +89,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
                     "info": "Percentage of pregnant women who delivered in a public or "
                             "private medical facility in the last month. <br/><br/>Delivery in medical"
                             " instituitions is associated with a decrease in maternal mortality rate",
-                    "average": 69.23076923076923,
+                    "average": 61.36363636363637,
                     'extended_info': [
                         {
                             'indicator': 'Total number of pregnant women who delivered in the last month:',

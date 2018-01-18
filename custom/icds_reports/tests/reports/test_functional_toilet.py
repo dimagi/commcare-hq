@@ -72,7 +72,7 @@ class TestFunctionalToilet(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs that reported having a functional toilet",
-                    "average": 47.05882352941177,
+                    "average": 47.22222222222222,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "8"},
                         {'indicator': '% of AWCs with a functional toilet:', 'value': '47.06%'}

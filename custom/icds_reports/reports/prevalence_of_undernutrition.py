@@ -50,6 +50,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     normal_total = 0
     valid_total = 0
 
+    values_to_calculate_average = []
     for row in get_data_for(config):
         valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
@@ -57,6 +58,9 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         severely_underweight = row['severely_underweight'] or 0
         moderately_underweight = row['moderately_underweight'] or 0
         normal = row['normal'] or 0
+
+        numerator = moderately_underweight + severely_underweight
+        values_to_calculate_average.append(numerator * 100 / (valid or 1))
 
         moderately_underweight_total += moderately_underweight
         severely_underweight_total += severely_underweight
@@ -69,11 +73,9 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         data_for_map[on_map_name]['total'] += valid
         data_for_map[on_map_name]['original_name'].append(name)
 
-    values = []
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']
         value = numerator * 100 / (data_for_location['total'] or 1)
-        values.append(value)
         if value < 20:
             data_for_location.update({'fillKey': '0%-20%'})
         elif 20 <= value < 35:
@@ -87,7 +89,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     fills.update({'35%-100%': MapColors.RED})
     fills.update({'defaultFill': MapColors.GREY})
 
-    average = ((sum(values)) / float(len(values) or 1))
+    average = ((sum(values_to_calculate_average)) / float(len(values_to_calculate_average) or 1))
 
     sum_of_indicators = moderately_underweight_total + severely_underweight_total + normal_total
     percent_unweighed = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
