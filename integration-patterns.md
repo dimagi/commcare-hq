@@ -25,7 +25,7 @@ In a Django template, use `initial_page_data` to register a variable. The data c
 Your JavaScript can then include `<script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>` and access this data using the same names as in the Django template:
 
 ```
-var get = hqImport('hqwebapp/js/initial_page_data.js').get,
+var get = hqImport('hqwebapp/js/initial_page_data').get,
     renderReportTables = get('renderReportTables'),
     defaultRows = get('defaultRows'),
     tableOptions = get('tableOptions');
@@ -101,7 +101,7 @@ in template
 in js
 
 ```
-var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js');
+var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
 
 $.get(initial_page_data.reverse('all_widget_info')).done(function () {...});
 ```
@@ -118,7 +118,7 @@ in template
 in js
 
 ```
-var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js');
+var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
 var widgetId = 'xxxx';
 $.get(initial_page_data.reverse('more_widget_info', widgetId)).done(function () {...});
 ```
