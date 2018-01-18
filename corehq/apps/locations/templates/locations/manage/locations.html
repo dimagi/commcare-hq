@@ -54,97 +54,10 @@
 
     var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}';
 
-    archive_loc = function(button, name, loc_id) {
-        var archive_location_modal = $('#archive-location-modal')[0];
 
-        function archive_fn() {
-            $(button).disableButton();
-            $.ajax({
-                type: 'POST',
-                url: loc_archive_url(loc_id),
-                dataType: 'json',
-                error: 'error',
-                success: function (response) {
-                    alert_user(archive_success_message({"name": name}), "success");
-                    remove_elements_after_action(button);
-                }
-            });
-            $(archive_location_modal).modal('hide');
-            hqImport('analytix/js/google').track.event('Organization Structure', 'Archive')
-        }
 
-        var modal_context = {
-            "name": name,
-            "loc_id": loc_id,
-            "archive_fn": archive_fn
-        };
-        ko.cleanNode(archive_location_modal);
-        $(archive_location_modal).koApplyBindings(modal_context);
-        $(archive_location_modal).modal('show');
-    };
 
-    unarchive_loc = function(button, loc_id) {
-        $(button).disableButton();
-        $.ajax({
-            type: 'POST',
-            url: loc_unarchive_url(loc_id),
-            dataType: 'json',
-            error: 'error',
-            success: function (response) {
-                remove_elements_after_action(button);
-            }
-        });
-    };
 
-    delete_loc = function(button, name, loc_id) {
-        var delete_location_modal = $('#delete-location-modal')[0];
-        var modal_context;
-
-        function delete_fn() {
-            if (modal_context.count == modal_context.signOff()) {
-                $(button).disableButton();
-                $.ajax({
-                    type: 'DELETE',
-                    url: loc_delete_url(loc_id),
-                    dataType: 'json',
-                    error: function (response, status, error) {
-                        alert_user(delete_error_message, "warning");
-                        $(button).enableButton();
-                    },
-                    success: function (response) {
-                        if (response.success){
-                            alert_user(delete_success_message({"name": name}), "success");
-                            remove_elements_after_action(button);
-                        }
-                        else {
-                            alert_user(response.message, "warning");
-                            $(button).enableButton();
-                        }
-                    }
-                });
-                $(delete_location_modal).modal('hide');
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Delete')
-            }
-        }
-
-        $.ajax({
-            type: 'GET',
-            url: loc_descendant_url(loc_id),
-            dataType: 'json',
-            success: function (response) {
-                modal_context = {
-                    "name": name,
-                    "loc_id": loc_id,
-                    "delete_fn": delete_fn,
-                    "count": response.count,
-                    "signOff": ko.observable('')
-                };
-                ko.cleanNode(delete_location_modal);
-                ko.applyBindings(modal_context, delete_location_modal);
-                $(delete_location_modal).modal('show');
-            }
-        });
-    };
 
     remove_elements_after_action = function(button) {
         $(button).closest('.loc_section').remove();
@@ -257,7 +170,9 @@
 
     </div>
 
-    <div data-bind="template: { name: 'button-template', if: uuid()}"></div>
+    <div class="button_section">
+        <div data-bind="template: { name: 'button-template', if: selected_location_id(), data: selected_location}"></div>
+    </div>
 </div>
 
 
@@ -298,24 +213,28 @@
                 <div style="float:right;" data-bind="if: can_edit()" id="button-template">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
-                           data-bind="attr: { href: loc_edit_url(uuid()) }">
+                           data-bind="attr: { href: loc_edit_url(uuid())}, visible: !is_deleted() && !is_archived()">
                             {% trans "Edit" %}
                         </a>
                     {% endif %}
 
                     {% if show_inactive %}
                         <button class="btn btn-info"
-                            data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
+                            data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button && !is_deleted()">
                             {% trans "Unarchive" %}
                         </button>
                     {% else %}
                         <button class="btn btn-info"
-                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()); }, visible: show_archive_action_button && !is_deleted()">
+                            <span class='glyphicon glyphicon-ok'
+                                data-bind="visible: is_archived()"></span>
                             {% trans "Archive" %}
                         </button>
                     {% endif %}
                     <button class="btn btn-danger"
-                        data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
+                        data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button && !is_archived()">
+                        <span class='glyphicon glyphicon-ok'
+                                data-bind="visible: is_deleted()"></span>
                         {% trans "Delete" %}
                     </button>
                 </div>

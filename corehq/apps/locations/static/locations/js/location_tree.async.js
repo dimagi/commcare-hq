@@ -47,22 +47,20 @@ function LocationTreeViewModel(hierarchy) {
 
 function LocationSearchViewModel() {
     var model = this;
-    this.root=ko.observable();
-
+    this.selected_location = ko.observable();
     this.l__selected_location_id = ko.observable();
-    this.uuid = ko.computed(function () {
+
+    this.selected_location_id = ko.computed(function () {
         if (!model.l__selected_location_id()) {
             return;
         }
         return (model.l__selected_location_id().split("l__")[1]);
     });
 
-    this.name = ko.observable();
-    this.can_edit = ko.observable();
-    this.is_archived = ko.observable();
-    this.show_archive_action_button = ko.computed(function() {
-        return !show_inactive || this.is_archived();
-    }, this);
+    this.selected_location = ko.computed(function() {
+        return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root}, this);
+    });
+
 }
 
 function LocationModel(data, root, depth) {
@@ -72,6 +70,7 @@ function LocationModel(data, root, depth) {
     this.type = ko.observable();
     this.uuid = ko.observable();
     this.is_archived = ko.observable();
+    this.is_deleted = ko.observable();
     this.can_edit = ko.observable();
     this.children = ko.observableArray();
     this.depth = depth || 0;
@@ -165,5 +164,103 @@ function LocationModel(data, root, depth) {
     this.new_location_tracking = function() {
         hqImport('analytix/js/google').track.event('Organization Structure', '+ New _______');
         return true;
+    };
+
+    archive_loc = function(button, name, loc_id) {
+        var archive_location_modal = $('#archive-location-modal')[0];
+
+        function archive_fn() {
+            $(button).disableButton();
+            $.ajax({
+                type: 'POST',
+                url: loc_archive_url(loc_id),
+                dataType: 'json',
+                error: 'error',
+                success: function (response) {
+                    alert_user(archive_success_message({"name": name}), "success");
+                    $(button).removeSpinnerFromButton();
+                    loc.is_archived(true);
+                    remove_elements_after_action(button);
+                }
+            });
+            $(archive_location_modal).modal('hide');
+            hqImport('analytix/js/google').track.event('Organization Structure', 'Archive')
+        }
+
+        var modal_context = {
+            "name": name,
+            "loc_id": loc_id,
+            "archive_fn": archive_fn
+        };
+        ko.cleanNode(archive_location_modal);
+        $(archive_location_modal).koApplyBindings(modal_context);
+        $(archive_location_modal).modal('show');
+    };
+
+    unarchive_loc = function(button, loc_id) {
+        $(button).disableButton();
+        $.ajax({
+            type: 'POST',
+            url: loc_unarchive_url(loc_id),
+            dataType: 'json',
+            error: 'error',
+            success: function (response) {
+                remove_elements_after_action(button);
+            }
+        });
+    };
+
+    delete_loc = function(button, name, loc_id) {
+        var delete_location_modal = $('#delete-location-modal')[0];
+        var modal_context;
+
+        function delete_fn() {
+            if (modal_context.count == modal_context.signOff()) {
+                $(button).disableButton();
+
+                $.ajax({
+                    type: 'DELETE',
+                    url: loc_delete_url(loc_id),
+                    dataType: 'json',
+                    error: function (response, status, error) {
+                        alert_user(delete_error_message, "warning");
+                        $(button).enableButton();
+                    },
+                    success: function (response) {
+                        if (response.success){
+                            alert_user(delete_success_message({"name": name}), "success");
+                            $(button).removeSpinnerFromButton();
+                            loc.is_deleted(true);
+                            remove_elements_after_action(button);
+
+                        }
+                        else {
+                            alert_user(response.message, "warning");
+
+                        }
+                    }
+                });
+                $(delete_location_modal).modal('hide');
+                hqImport('analytix/js/google').track.event('Organization Structure', 'Delete')
+            }
+        }
+
+        $.ajax({
+            type: 'GET',
+            url: loc_descendant_url(loc_id),
+            dataType: 'json',
+            success: function (response) {
+                modal_context = {
+                    "name": name,
+                    "loc_id": loc_id,
+                    "delete_fn": delete_fn,
+                    "count": response.count,
+                    "signOff": ko.observable('')
+                };
+                ko.cleanNode(delete_location_modal);
+                ko.applyBindings(modal_context, delete_location_modal);
+                $(delete_location_modal).modal('show');
+            }
+        });
     };
 }
