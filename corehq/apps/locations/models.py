@@ -311,15 +311,22 @@ class LocationManager(LocationQueriesMixin, TreeManager):
 
     def filter_path_by_user_input(self, domain, user_input):
         """
-        Returns a queryset including all locations matching the user input
-        and their children. This means "Middlesex" will match:
+        Matches user input against the location paths, separated by slashes.
+        Returns a queryset with all direct matches and their children. Wrapping
+        a section in quotes will return an exact name match on that component.
+        This means Massachusetts/"Middlesex" will match:
             Massachusetts/Middlesex
             Massachusetts/Middlesex/Boston
             Massachusetts/Middlesex/Cambridge
-        It matches by name or site-code
         """
-        direct_matches = self.filter_by_user_input(domain, user_input)
-        return self.get_queryset_descendants(direct_matches, include_self=True)
+        query = self
+        for part in filter(None, user_input.split('/')):
+            if part.startswith('"') and part.endswith('"'):
+                direct_matches = query.filter(name__iexact=part[1:-1])
+            else:
+                direct_matches = query.filter_by_user_input(domain, part)
+            query = self.get_queryset_descendants(direct_matches, include_self=True)
+        return query
 
     def get_locations(self, location_ids):
         return self.filter(location_id__in=location_ids)

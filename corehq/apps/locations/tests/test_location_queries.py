@@ -1,8 +1,13 @@
 from __future__ import absolute_import
-from ..models import SQLLocation
-from .util import LocationHierarchyTestCase
+from nose.tools import with_setup
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.util.test_utils import generate_cases
+
+from ..models import SQLLocation
+from .util import LocationHierarchyTestCase, setup_locations_and_types
 
 
 class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
@@ -23,6 +28,49 @@ class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
     ]
 
 
+class FilterPathTestCase(LocationHierarchyTestCase):
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+            ])
+        ]),
+        ('England', [
+            ('London', [
+                ('London', []),
+            ]),
+            ('Cambridgeshire', [
+                ('Cambridge', []),
+            ]),
+        ]),
+    ]
+
+
+@generate_cases([
+    ('Middlesex', ['Massachusetts/Middlesex',
+                   'Massachusetts/Middlesex/Cambridge',
+                   'Massachusetts/Middlesex/Somerville']),
+    ('Cambridge', ['Massachusetts/Middlesex/Cambridge',
+                   'England/Cambridgeshire',
+                   'England/Cambridgeshire/Cambridge']),
+    ('"Cambridge"', ['Massachusetts/Middlesex/Cambridge',
+                     'England/Cambridgeshire/Cambridge']),
+    ('Engl/Cambridge', ['England/Cambridgeshire',
+                        'England/Cambridgeshire/Cambridge']),
+    ('Eng/"Cambridge"', ['England/Cambridgeshire/Cambridge']),
+    ('"Eng"/Cambridge', []),
+], FilterPathTestCase)
+def test_filter_path_by_user_input(self, input_string, expected):
+    actual = (SQLLocation.objects
+              .filter_path_by_user_input(self.domain, input_string))
+    self.assertItemsEqual(expected, [loc.get_path_display() for loc in actual])
+
+
 class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
 
     def test_filter_by_user_input(self):
@@ -30,14 +78,6 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
                           .filter_by_user_input(self.domain, "Middlesex"))
         self.assertItemsEqual(
             ['Middlesex'],
-            [loc.name for loc in middlesex_locs]
-        )
-
-    def test_filter_path_by_user_input(self):
-        middlesex_locs = (SQLLocation.objects
-                          .filter_path_by_user_input(self.domain, "Middlesex"))
-        self.assertItemsEqual(
-            ['Middlesex', 'Cambridge', 'Somerville'],
             [loc.name for loc in middlesex_locs]
         )
 
