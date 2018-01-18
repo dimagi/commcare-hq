@@ -11,114 +11,184 @@ from django.test import TestCase
 class TestPrevalenceOfStunting(TestCase):
     maxDiff = None
 
+    def test_map_data_keys(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(len(data.keys()), 5)
+        self.assertIn('rightLegend', data)
+        self.assertIn('fills', data)
+        self.assertIn('data', data)
+        self.assertIn('slug', data)
+        self.assertIn('label', data)
+
+    def test_map_data_right_legend_keys(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )['rightLegend']
+        self.assertEquals(len(data.keys()), 3)
+        self.assertIn('info', data)
+        self.assertIn('average', data)
+        self.assertIn('extended_info', data)
+
     def test_map_data(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
         self.assertDictEqual(
-            get_prevalence_of_stunting_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ),
+            data['data'],
             {
-                "rightLegend": {
-                    "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "
-                            "height-for-age below -2Z standard deviations of "
-                            "the WHO Child Growth Standards median.<br/><br/>Stunting "
-                            "is a sign of chronic undernutrition and has long "
-                            "lasting harmful consequences on the growth of a child",
-                    "average": "1.99",
-                    'extended_info': [
-                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
-                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
-                         'value': '32'},
-                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.59%'},
-                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '34.38%'},
-                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '25.00%'},
-                        {'indicator': '% Normal (6 - 60 months):', 'value': '40.62%'}
-                    ]
+                "st1": {
+                    "severe": 2,
+                    "moderate": 3,
+                    "normal": 2,
+                    "total_measured": 7,
+                    "total": 449,
+                    'original_name': ["st1"],
+                    "fillKey": "0%-25%"
                 },
-                "fills": {
-                    "0%-25%": MapColors.PINK,
-                    "25%-38%": MapColors.ORANGE,
-                    "38%-100%": MapColors.RED,
-                    "defaultFill": MapColors.GREY
-                },
-                "data": {
-                    "st1": {
-                        "severe": 2,
-                        "moderate": 3,
-                        "normal": 2,
-                        "total_measured": 7,
-                        "total": 449,
-                        'original_name': ["st1"],
-                        "fillKey": "0%-25%"
-                    },
-                    "st2": {
-                        "severe": 9,
-                        "moderate": 5,
-                        "normal": 11,
-                        "total_measured": 25,
-                        "total": 490,
-                        'original_name': ["st2"],
-                        "fillKey": "0%-25%"
-                    }
-                },
-                "slug": "severe",
-                "label": "Percent of Children Stunted (6 - 60 months)"
+                "st2": {
+                    "severe": 9,
+                    "moderate": 5,
+                    "normal": 11,
+                    "total_measured": 25,
+                    "total": 490,
+                    'original_name': ["st2"],
+                    "fillKey": "0%-25%"
+                }
             }
         )
 
-    def test_map_name_is_different_data(self):
+    def test_map_data_right_legend_info(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        expected = (
+            "Percentage of children (6 - 60 months) enrolled for ICDS services with "
+            "height-for-age below -2Z standard deviations of "
+            "the WHO Child Growth Standards median.<br/><br/>Stunting "
+            "is a sign of chronic undernutrition and has long "
+            "lasting harmful consequences on the growth of a child"
+        )
+        self.assertEquals(data['rightLegend']['info'], expected)
+
+    def test_map_data_right_legend_average(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['rightLegend']['average'], "1.99")
+
+    def test_map_data_right_legend_extended_info(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['rightLegend']['extended_info'],
+            [
+                {'indicator': 'Total Children (6 - 60 months) eligible to have height measured:', 'value': '939'},
+                {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                 'value': '32'},
+                {'indicator': '% Unmeasured (6 - 60 months):', 'value': '96.59%'},
+                {'indicator': '% Severely stunted (6 - 60 months):', 'value': '34.38%'},
+                {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '25.00%'},
+                {'indicator': '% Normal (6 - 60 months):', 'value': '40.62%'}
+            ]
+        )
+
+    def test_map_data_fills(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
         self.assertDictEqual(
-            get_prevalence_of_stunting_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'aggregation_level': 3
-                },
-                loc_level='block',
-            ),
+            data['fills'],
             {
-                "rightLegend": {
-                    "info": "Percentage of children (6 - 60 months) enrolled for ICDS services with "
-                            "height-for-age below -2Z standard deviations of "
-                            "the WHO Child Growth Standards median.<br/><br/>Stunting "
-                            "is a sign of chronic undernutrition and has long "
-                            "lasting harmful consequences on the growth of a child",
-                    "average": "1.11",
-                    'extended_info': [
-                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '449'},
-                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
-                         'value': '7'},
-                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '98.44%'},
-                        {'indicator': '% Severely stunted (6 - 60 months):', 'value': '28.57%'},
-                        {'indicator': '% Moderately stunted (6 - 60 months):', 'value': '42.86%'},
-                        {'indicator': '% Normal (6 - 60 months):', 'value': '28.57%'}
-                    ]
-                },
-                "fills": {
-                    "0%-25%": MapColors.PINK,
-                    "25%-38%": MapColors.ORANGE,
-                    "38%-100%": MapColors.RED,
-                    "defaultFill": MapColors.GREY
-                },
-                "data": {
-                    'block_map': {
-                        'moderate': 3,
-                        'total_measured': 7,
-                        'normal': 2,
-                        'original_name': ['b1', 'b2'],
-                        'severe': 2,
-                        'total': 449,
-                        'fillKey': '0%-25%'
-                    }
-                },
-                "slug": "severe",
-                "label": "Percent of Children Stunted (6 - 60 months)"
+                "0%-25%": MapColors.PINK,
+                "25%-38%": MapColors.ORANGE,
+                "38%-100%": MapColors.RED,
+                "defaultFill": MapColors.GREY
+            }
+        )
+
+    def test_map_data_slug(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['slug'], 'severe')
+
+    def test_map_data_label(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['label'], 'Percent of Children Stunted (6 - 60 months)')
+
+    def test_map_name_two_locations_represent_by_one_topojson(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'aggregation_level': 3
+            },
+            loc_level='block',
+        )
+        self.assertDictEqual(
+            data['data'],
+            {
+                'block_map': {
+                    'moderate': 3,
+                    'total_measured': 7,
+                    'normal': 2,
+                    'original_name': ['b1', 'b2'],
+                    'severe': 2,
+                    'total': 449,
+                    'fillKey': '0%-25%'
+                }
             }
         )
 
