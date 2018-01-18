@@ -745,6 +745,9 @@ class Detail(OrderedXmlObject, IdNode):
         return len(self.variables.node.getchildren()) > 0
 
     def get_variables(self):
+        """
+        :returns: List of DetailVariable objects
+        """
         return [self.variables.mapper.to_python(node) for node in self.variables.node.getchildren()]
 
     def get_all_xpaths(self):
