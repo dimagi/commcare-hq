@@ -554,8 +554,8 @@ class BillingContactInfo(models.Model):
 
     def __init__(self, *args, **kwargs):
         super(BillingContactInfo, self).__init__(*args, **kwargs)
-        if self.email_list == '[]':
-            self.email_list = []
+        # if self.email_list == '[]':
+        #     self.email_list = []
 
     @property
     def full_name(self):
