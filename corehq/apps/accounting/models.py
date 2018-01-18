@@ -19,7 +19,6 @@ from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.models import Role
 
-import jsonfield
 import stripe
 
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
@@ -510,13 +509,15 @@ class BillingContactInfo(models.Model):
     last_name = models.CharField(
         max_length=50, null=True, blank=True, verbose_name=_("Last Name")
     )
-    # TODO - replace with models.ArrayField once django >= 1.9
-    email_list = ArrayField(EmailField(
-    # email_list = jsonfield.JSONField(default=list,
+    emails = ArrayField(
+        EmailField(
             verbose_name=_("Contact Emails"),
             help_text=_("We will email communications regarding your account "
                         "to the emails specified here."),
-        )
+
+        ),
+        blank=True, null=True  # TODO - should default to empty list
+
     )
     phone_number = models.CharField(
         max_length=20, null=True, blank=True, verbose_name=_("Phone Number")
@@ -1513,7 +1514,7 @@ class Subscription(models.Model):
         emails |= {e for e in WebUser.get_dimagi_emails_by_domain(domain_name)}
         if not self.is_trial:
             billing_contact_emails = (
-                self.account.billingcontactinfo.email_list
+                self.account.billingcontactinfo.emails
                 if BillingContactInfo.objects.filter(account=self.account).exists() else []
             )
             if not billing_contact_emails:
@@ -1794,7 +1795,7 @@ class Invoice(InvoiceBase):
     def contact_emails(self):
         try:
             billing_contact_info = BillingContactInfo.objects.get(account=self.account)
-            contact_emails = billing_contact_info.email_list
+            contact_emails = billing_contact_info.emails
         except BillingContactInfo.DoesNotExist:
             contact_emails = []
 

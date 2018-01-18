@@ -139,7 +139,7 @@ class BillingContactInfoResource(ModelResource):
         resource_name = 'billing_contact_info'
 
     def dehydrate_emails(self, bundle):
-        return ','.join(bundle.obj.email_list)
+        return ','.join(bundle.obj.emails)
 
 
 class BillingAccountResource(ModelResource):

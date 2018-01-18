@@ -1372,8 +1372,8 @@ class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
 class EditBillingAccountInfoForm(forms.ModelForm):
 
     email_list = forms.CharField(
-        label=BillingContactInfo._meta.get_field('email_list').verbose_name,
-        help_text=BillingContactInfo._meta.get_field('email_list').help_text,
+        label=BillingContactInfo._meta.get_field('emails').verbose_name,
+        help_text=BillingContactInfo._meta.get_field('emails').help_text,
     )
 
     class Meta:
@@ -1396,7 +1396,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         try:
             kwargs['instance'] = self.account.billingcontactinfo
             kwargs['initial'] = {
-                'email_list': ','.join(self.account.billingcontactinfo.email_list),
+                'email_list': ','.join(self.account.billingcontactinfo.emails),
             }
 
         except BillingContactInfo.DoesNotExist:
@@ -1492,7 +1492,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
     @transaction.atomic
     def save(self, commit=True):
         billing_contact_info = super(EditBillingAccountInfoForm, self).save(commit=False)
-        billing_contact_info.email_list = self.cleaned_data['email_list']
+        billing_contact_info.emails = self.cleaned_data['email_list']
         billing_contact_info.account = self.account
         billing_contact_info.save()
 
@@ -1800,8 +1800,8 @@ class InternalSubscriptionManagementForm(forms.Form):
             account.save()
         contact_info, _ = BillingContactInfo.objects.get_or_create(account=account)
         for email in self.account_emails:
-            if email not in contact_info.email_list:
-                contact_info.email_list.append(email)
+            if email not in contact_info.emails:
+                contact_info.emails.append(email)
         contact_info.save()
         return account
 
@@ -1830,7 +1830,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     def current_contact_emails(self):
         if self.should_autocomplete_account:
             try:
-                return ','.join(self.current_subscription.account.billingcontactinfo.email_list)
+                return ','.join(self.current_subscription.account.billingcontactinfo.emails)
             except BillingContactInfo.DoesNotExist:
                 pass
         return None

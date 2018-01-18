@@ -89,7 +89,7 @@ def arbitrary_contact_info(account, web_user_creator):
         account=account,
         first_name=data_gen.arbitrary_firstname(),
         last_name=data_gen.arbitrary_lastname(),
-        email_list=[web_user_creator],
+        emails=[web_user_creator],
         phone_number="+15555555",
         company_name="Company Name",
         first_line="585 Mass Ave",

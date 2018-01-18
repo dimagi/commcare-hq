@@ -129,7 +129,7 @@ class BillingAccountBasicForm(forms.Form):
                 'name': account.name,
                 'salesforce_account_id': account.salesforce_account_id,
                 'currency': account.currency.code,
-                'email_list': ','.join(contact_info.email_list),
+                'email_list': ','.join(contact_info.emails),
                 'is_active': account.is_active,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
@@ -272,7 +272,7 @@ class BillingAccountBasicForm(forms.Form):
         contact_info, _ = BillingContactInfo.objects.get_or_create(
             account=account,
         )
-        contact_info.email_list = self.cleaned_data['email_list']
+        contact_info.emails = self.cleaned_data['email_list']
         contact_info.save()
 
         return account
@@ -673,7 +673,7 @@ class SubscriptionForm(forms.Form):
                 not self.cleaned_data['do_not_invoice']
                 and (
                     not BillingContactInfo.objects.filter(account=account).exists()
-                    or not account.billingcontactinfo.email_list
+                    or not account.billingcontactinfo.emails
                 )
             ):
                 from corehq.apps.accounting.views import ManageBillingAccountView
