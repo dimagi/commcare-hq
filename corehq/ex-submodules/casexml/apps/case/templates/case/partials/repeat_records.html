@@ -6,6 +6,7 @@
             <th>{% trans "URL" %}</th>
             <th>{% trans "Status" %}</th>
             <th>{% trans "Attempts" %}</th>
+            <th>{% trans "Action" %}</th>
         </tr>
     </thead>
     <tbody>
@@ -19,7 +20,38 @@
                         <div>{{ attempt.datetime }}: {{ attempt.message }}</div>
                     {% endfor %}
                 </td>
+                <td>
+                    <a class="btn btn-default requeue-record-payload"
+                       role="button"
+                       data-record-id="{{ repeat_record.record_id }}">
+                        {% trans "Requeue Request" %}
+                    </a>
+                </td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
+{% block js-inline %}
+    <script>
+     $('.requeue-record-payload').click(function() {
+         var $btn = $(this),
+             recordId = $btn.data().recordId;
+         $btn.disableButton();
+
+         $.post({
+             url: "{% url 'requeue_repeat_record' case.domain %}",
+             data: { record_id: recordId },
+             success: function() {
+                 $btn.removeSpinnerFromButton();
+                 $btn.text(gettext('Requeued'));
+                 $btn.addClass('btn-success');
+             },
+             error: function() {
+                 $btn.removeSpinnerFromButton();
+                 $btn.text(gettext('Failed'));
+                 $btn.addClass('btn-danger');
+             },
+         });
+     });
+    </script>
+{% endblock js-inline %}
