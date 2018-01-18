@@ -77,7 +77,7 @@ class TestNewBornWithLowWeight(TestCase):
                             "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
                             "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
                             " and chronic diseases later in life",
-                    "average": 50.0,
+                    "average": 66.66666666666667,
                     'extended_info': [
                         {'indicator': 'Total Number of Newborns born in given month:', 'value': "4"},
                         {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},

@@ -70,7 +70,7 @@ class TestMedicineKit(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs that reported having a Medicine Kit",
-                    "average": 52.94117647058823,
+                    "average": 53.47222222222222,
                     'extended_info': [
                         {'indicator': 'Total number of AWCs with a Medicine Kit:', 'value': "9"},
                         {'indicator': '% of AWCs with a Medicine Kit:', 'value': '52.94%'}

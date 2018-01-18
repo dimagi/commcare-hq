@@ -96,7 +96,7 @@ class TestImmunizationCoverage(TestCase):
                             "This includes the following immunizations:<br/>"
                             "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
                             "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
-                    "average": 14.834205933682373,
+                    "average": 14.909190638712824,
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',

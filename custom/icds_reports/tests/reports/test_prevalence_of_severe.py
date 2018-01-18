@@ -94,7 +94,7 @@ class TestPrevalenceOfSevere(TestCase):
                             "status for a child who has severe wasting (weight-for-height) below -3 "
                             "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
                             "that has moderate wasting (weight-for-height) below -2Z.",
-                    "average": "0.89",
+                    "average": "0.90",
                     'extended_info': [
                         {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '449'},
                         {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',

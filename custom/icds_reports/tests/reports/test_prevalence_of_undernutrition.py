@@ -86,7 +86,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                             u' of the WHO Child Growth Standards median.'
                             u' <br/><br/>Children who are moderately or severely underweight'
                             u' have a higher risk of mortality',
-                    'average': 22.71293375394322,
+                    'average': 22.743014091234773,
                     'extended_info': [
                         {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '317'},
                         {'indicator': '% Unweighed (0 - 5 years):', 'value': '33.26%'},
