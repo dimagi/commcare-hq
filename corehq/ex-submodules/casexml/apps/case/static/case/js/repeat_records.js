@@ -5,7 +5,7 @@ $(function(){
             reverse = hqImport('hqwebapp/js/initial_page_data').reverse;
         $btn.disableButton();
         $.post({
-            url: reverse('requeue_repeat_record'),
+            url: reverse('requeue_repeat_record'), // this url is added to the page in case_details.html
             data: { record_id: recordId },
             success: function() {
                 $btn.removeSpinnerFromButton();
