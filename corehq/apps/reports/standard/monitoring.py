@@ -851,11 +851,12 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             get_counts_by_user = get_completed_counts_by_user
 
-        results = get_counts_by_user(
-            self.domain,
-            datespan,
-        )
+        if EMWF.show_all_mobile_workers(self.request.GET.getlist(EMWF.slug)):
+            user_ids = None  # Don't restrict query by user ID
+        else:
+            user_ids = [u.user_id for u in self.all_users]
 
+        results = get_counts_by_user(self.domain, datespan, user_ids)
         return self.users_sorted_by_count(results, order)
 
     def users_sorted_by_count(self, count_dict, order):
