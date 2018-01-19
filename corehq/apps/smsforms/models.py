@@ -54,7 +54,7 @@ class SQLXFormsSession(models.Model):
     expire_after = models.IntegerField(null=True)
 
     # True if the session is still open. An open session allows answers to come in to the survey.
-    session_is_open = models.NullBooleanField()
+    session_is_open = models.NullBooleanField(default=True)
 
     # A list of integers representing the intervals, in minutes, that reminders should be sent.
     # A reminder in this context just sends the current question of an open survey to the contact
